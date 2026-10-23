@@ -1,0 +1,365 @@
+{
+  "adapter": "sparkplug",
+  "canonical": {
+    "channels": [
+      {
+        "address": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}",
+        "bindings": {},
+        "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Message type DBIRTH inferred from the file name '03-composition-dbirth.bin'.",
+          "sparkplug_topic": {
+            "device_id": null,
+            "edge_node_id": null,
+            "group_id": null,
+            "message_type": "DBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}",
+        "name": "DBIRTH",
+        "parameters": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The device behind the edge node the payload is about.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}#param.device_id",
+            "name": "device_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The edge node that published the payload.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}#param.edge_node_id",
+            "name": "edge_node_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The Sparkplug group the edge node belongs to.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}#param.group_id",
+            "name": "group_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "protocol": "mqtt"
+      }
+    ],
+    "description": "Inferred from Sparkplug B payloads alone: the topics they were published on were not supplied, so the group, edge node and device are address parameters.",
+    "extras": {
+      "sparkplug": {
+        "capability_limits": [],
+        "input": "payload",
+        "payloads": [
+          {
+            "label": "03-composition-dbirth.bin",
+            "messageType": "DBIRTH",
+            "messageTypeEvidence": "Message type DBIRTH inferred from the file name '03-composition-dbirth.bin'.",
+            "metricCount": 6,
+            "seq": 1,
+            "timestamp": 1786000001000
+          }
+        ]
+      }
+    },
+    "format": "sparkplug",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "03-composition-dbirth",
+      "namespace": "spBv1.0"
+    },
+    "paradigm": "event",
+    "protocol": "mqtt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "A payload names no edge node; the operations are grouped under one service."
+        },
+        "key": "Sparkplug",
+        "name": "Sparkplug",
+        "operations": [
+          {
+            "channel_ref": "spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}",
+            "deprecated": false,
+            "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "provenance": "inferred",
+              "provenance_evidence": "Message type DBIRTH inferred from the file name '03-composition-dbirth.bin'.",
+              "sparkplug_message_type": "DBIRTH",
+              "sparkplug_sources": [
+                "03-composition-dbirth.bin"
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+                "extras": {
+                  "provenance": "inferred",
+                  "provenance_evidence": "Message type DBIRTH inferred from the file name '03-composition-dbirth.bin'.",
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/{group_id}/DBIRTH/{edge_node_id}/{device_id}#event.DBIRTH",
+                "name": "DBIRTH",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "DBIRTH",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DBIRTH",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "03-composition-dbirth",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Metrics carried by the DBIRTH payload (03-composition-dbirth.bin).",
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Metrics observed in 03-composition-dbirth.bin.",
+          "sparkplug_message_type": "DBIRTH",
+          "sparkplug_sources": [
+            "03-composition-dbirth.bin"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 5,
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "DBIRTH.Device Control/Rebirth",
+            "name": "Device Control/Rebirth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 2,
+              "sparkplug_datatype": "Float",
+              "sparkplug_properties": {
+                "engUnit": "bar",
+                "quality": 192
+              }
+            },
+            "field_number": null,
+            "key": "DBIRTH.Inputs/Pressure",
+            "name": "Inputs/Pressure",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 3,
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "DBIRTH.Inputs/Running",
+            "name": "Inputs/Running",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Process temperature at the inlet.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 1,
+              "sparkplug_datatype": "Double",
+              "sparkplug_properties": {
+                "engHigh": 150.0,
+                "engLow": -40.0,
+                "engUnit": "degC",
+                "quality": 192
+              }
+            },
+            "field_number": null,
+            "key": "DBIRTH.Inputs/Temperature",
+            "name": "Inputs/Temperature",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 4,
+              "sparkplug_datatype": "Double",
+              "sparkplug_properties": {
+                "engUnit": "degC",
+                "writable": true
+              }
+            },
+            "field_number": null,
+            "key": "DBIRTH.Outputs/Setpoint",
+            "name": "Outputs/Setpoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 03-composition-dbirth.bin.",
+              "sparkplug_alias": 6,
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "DBIRTH.Properties/Serial",
+            "name": "Properties/Serial",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "DBIRTH",
+        "key_type": null,
+        "kind": "record",
+        "name": "DBIRTH",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "sparkplug/03-composition-dbirth.bin",
+  "counts": {
+    "channels": 1,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "sparkplug"
+  },
+  "fingerprint": "sha256:0190caa04ebf786e49cc637352409448a9b32ef4f58a964d48693c14a811fe7b",
+  "lint": {
+    "findings": 6,
+    "grade": "A",
+    "report_fingerprint": "01da48f9c56910b30a546fc0765edaec3296f7ea41f39fa646da0e2bcfbf9dab",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

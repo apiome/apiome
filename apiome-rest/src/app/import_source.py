@@ -1215,6 +1215,10 @@ def load_builtin_import_sources() -> None:
     # OPC UA NodeSet2 information model, with a native analyzer for its address space.
     from . import opcua_nodeset_import_source as _opcua_nodeset  # noqa: F401
 
+    # ``sparkplug_import_source`` (FMT-9.2) self-registers the ``sparkplug`` adapter — MQTT
+    # Sparkplug B payloads (binary intake) and topic-namespace descriptions, event paradigm.
+    from . import sparkplug_import_source as _sparkplug  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

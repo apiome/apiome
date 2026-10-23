@@ -77,7 +77,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | --- | --- | --- | --- | --- |
 | `asyncapi/` | AsyncAPI 2.x/3.0 | event | top-level `asyncapi:` version | 14 |
 | `cloudevents/` | CloudEvents 1.0 | event | `specversion` + `type` + `source` envelope | 11 |
-| `sparkplug/` | MQTT Sparkplug B (pending #5469) | event | `spBv1.0/...` topic namespace, or a Sparkplug protobuf `Payload` on the binary intake path | 15 |
+| `sparkplug/` | MQTT Sparkplug B | event | `spBv1.0/...` topic namespace, or a Sparkplug protobuf `Payload` on the binary intake path | 15 |
 | `xregistry/` | CNCF xRegistry | event | `schemagroups` / `messagegroups` / `endpoints` collections keyed by id | 11 |
 
 ### Graph
@@ -2164,31 +2164,39 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-unresolvable-wsdl-definition.xml`** — The FMT-10.3 acceptance case: a project with a missing WSDL.
 
-### `sparkplug/` — MQTT Sparkplug B (pending #5469)
+### `sparkplug/` — MQTT Sparkplug B
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-topic-namespace.json` | minimal | `sparkplug` ≥ 0.8 | valid | `topic-namespace`, `node-topics`, `pending-adapter` |
-| `02-typical-nbirth.bin` | typical | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `NBIRTH`, `bdSeq`, `node-control`, `properties`, `pending-adapter` |
-| `03-composition-dbirth.bin` | composition | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `DBIRTH`, `aliases`, `property-set`, `metadata`, `engineering-units`, `pending-adapter` |
-| `04-stress-ddata-all-datatypes.bin` | stress | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `all-datatypes`, `is-null`, `is-historical`, `is-transient`, `payload-uuid`, `alias-only-metric`, `pending-adapter` |
-| `05-real-world-namespace-description.json` | real-world | `sparkplug` ≥ 0.8 | valid | `topic-namespace`, `devices`, `metric-catalogue`, `NCMD`, `DCMD`, `STATE`, `broker`, `pending-adapter` |
-| `06-typical-ddata.bin` ⚠ | typical | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `DDATA`, `alias-only-metric`, `pending-adapter` |
-| `07-session-set/dbirth.bin` | multi-file (root) | `sparkplug` ≥ 0.8 | valid | `DBIRTH`, `aliases`, `property-set`, `binary-intake`, `pending-adapter` |
-| `07-session-set/ddata.bin` ⚠ | multi-file (member) | `sparkplug` (no guarantee) | valid | `DDATA`, `alias-only-metric`, `binary-intake`, `pending-adapter` |
-| `07-session-set/ddeath.bin` ⚠ | multi-file (member) | `sparkplug` (no guarantee) | valid | `DDEATH`, `bdSeq`, `binary-intake`, `pending-adapter` |
-| `negative/01-syntactic-malformed-wire-format.bin` | — | `sparkplug` (no guarantee) | invalid | `negative`, `syntactic`, `malformed-varint-length`, `pending-adapter` |
-| `negative/02-semantic-no-metrics.bin` | — | `sparkplug` (no guarantee) | invalid | `negative`, `semantic`, `no-metrics`, `pending-adapter` |
-| `negative/03-truncated-mid-metric.bin` | — | `sparkplug` (no guarantee) | invalid | `negative`, `truncated`, `mid-metric`, `pending-adapter` |
-| `negative/04-wrong-format-protobuf-schema.proto` ⚠ | — | `sparkplug` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf-schema`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `sparkplug` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-topic-namespace-mismatch.json` | — | `sparkplug` (no guarantee) | invalid | `negative`, `semantic`, `namespace-mismatch`, `group-mismatch`, `missing-edge-node`, `pending-adapter` |
+| `01-minimal-topic-namespace.json` | minimal | `sparkplug` ≥ 0.8 | valid | `topic-namespace`, `node-topics` |
+| `02-typical-nbirth.bin` | typical | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `NBIRTH`, `bdSeq`, `node-control`, `properties` |
+| `03-composition-dbirth.bin` ⚠ | composition | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `DBIRTH`, `aliases`, `property-set`, `metadata`, `engineering-units` |
+| `04-stress-ddata-all-datatypes.bin` ⚠ | stress | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `all-datatypes`, `is-null`, `is-historical`, `is-transient`, `payload-uuid`, `alias-only-metric` |
+| `05-real-world-namespace-description.json` | real-world | `sparkplug` ≥ 0.8 | valid | `topic-namespace`, `devices`, `metric-catalogue`, `NCMD`, `DCMD`, `STATE`, `broker` |
+| `06-typical-ddata.bin` ⚠ | typical | `sparkplug` ≥ 0.8 | valid | `binary-intake`, `DDATA`, `alias-only-metric` |
+| `07-session-set/dbirth.bin` ⚠ | multi-file (root) | `sparkplug` ≥ 0.8 | valid | `DBIRTH`, `aliases`, `property-set`, `binary-intake` |
+| `07-session-set/ddata.bin` ⚠ | multi-file (member) | `sparkplug` (no guarantee) | valid | `DDATA`, `alias-only-metric`, `binary-intake` |
+| `07-session-set/ddeath.bin` ⚠ | multi-file (member) | `sparkplug` (no guarantee) | valid | `DDEATH`, `bdSeq`, `binary-intake` |
+| `negative/01-syntactic-malformed-wire-format.bin` ⚠ | — | `sparkplug` (no guarantee) | invalid | `negative`, `syntactic`, `invalid-wire-type` |
+| `negative/02-semantic-no-metrics.bin` | — | `sparkplug` (no guarantee) | invalid | `negative`, `semantic`, `no-metrics` |
+| `negative/03-truncated-mid-metric.bin` | — | `sparkplug` (no guarantee) | invalid | `negative`, `truncated`, `mid-metric` |
+| `negative/04-wrong-format-protobuf-schema.proto` ⚠ | — | `sparkplug` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf-schema` |
+| `negative/05-encoding-utf16.json` | — | `sparkplug` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-topic-namespace-mismatch.json` | — | `sparkplug` (no guarantee) | invalid | `negative`, `semantic`, `namespace-mismatch`, `group-mismatch`, `missing-edge-node` |
+
+> ⚠ **`03-composition-dbirth.bin`** — Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed.
+
+> ⚠ **`04-stress-ddata-all-datatypes.bin`** — Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed.
 
 > ⚠ **`06-typical-ddata.bin`** — Alias-only metrics: without the matching DBIRTH the names cannot be resolved, so the import must report inferred, unnamed metrics rather than inventing names.
+
+> ⚠ **`07-session-set/dbirth.bin`** — Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed.
 
 > ⚠ **`07-session-set/ddata.bin`** — Fileset member: alias-only metrics that are only nameable through the DBIRTH in the same set.
 
 > ⚠ **`07-session-set/ddeath.bin`** — Fileset member: the death certificate closing the session opened by the DBIRTH.
+
+> ⚠ **`negative/01-syntactic-malformed-wire-format.bin`** — Length-consistent at the top level, so the reader cannot mistake it for a cut-off payload: the metric inside uses wire type 7, which protobuf does not define. Rewritten for FMT-9.2 — the staged fixture declared a metric longer than the file, which reads as truncated.
 
 > ⚠ **`negative/04-wrong-format-protobuf-schema.proto`** — The Sparkplug payload *schema* rather than a payload: the shipped grpc adapter's input, not this one's.
 

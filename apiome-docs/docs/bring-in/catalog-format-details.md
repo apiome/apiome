@@ -57,7 +57,7 @@ Each analysis is **immutable for its source revision**. Re-importing the item (o
 analyzer upgrade) mints a *new* analysis with new node ids — node deep links are only
 stable within one analysis, and the tab says so if a linked node is gone. The record
 carries its own provenance: a `schemaVersion`, the `sha256:` hash of the exact source
-analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `ncpdp@1.0.0`, `opcua-nodeset@1.0.0`, `cobolcopybook@1.1.0`, or the
+analyzed, and an analyzer stamp (`edix12@1.1.0`, `edifact@1.1.0`, `tradacoms@1.0.0`, `idoc@1.0.0`, `swift-mt@1.0.0`, `nacha@1.0.0`, `dicom@1.0.0`, `ncpdp@1.0.0`, `opcua-nodeset@1.0.0`, `sparkplug@1.0.0`, `cobolcopybook@1.1.0`, or the
 format-agnostic `generic@1.0.0`) with tool versions, so every claim is attributable.
 
 ## Statuses
@@ -422,6 +422,26 @@ whole nodeset, address space included:
 Each node is located by the line it opens on. Variable values are never read. Because references
 are the deepest level, a nodeset larger than the budget keeps every node and loses references
 first, and the record is `partial`.
+
+## The Sparkplug B analysis
+
+For MQTT Sparkplug B payloads ([how to import them](./sparkplug-import.md)) the tab renders each
+payload in Sparkplug's own terms:
+
+- **payload**, one per file. It shows the inferred `messageType` and the reason
+  (`messageTypeEvidence`), the `timestamp`, `seq`, `uuid`, metric count and size in bytes.
+- **metric**, under its payload. It shows the name (or `alias:<n>` for an alias-only metric), the
+  `alias`, `datatype`, its own `timestamp` and its `flags` (`historical`, `transient`, `null`).
+  The metric's **value** is an observed value, so it follows the value-visibility policy: by
+  default only its presence and length are kept.
+- Under each metric, its **property** entries (`engUnit`, `engLow` … with their values, which are
+  metadata rather than telemetry), its **metadata**, a `DataSet`'s **column** names and types, or a
+  template's **member** metrics.
+
+A namespace description renders as **namespace**: its **topics**, each with its parsed group,
+message type, edge node and device, then a **node** and one **device** per catalogue, listing their
+metrics. The record hashes the payload bytes themselves, and a metric is addressed by its payload
+and name (`ddata.bin/Inputs/Temperature`).
 
 ## The COBOL copybook inspector
 

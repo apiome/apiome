@@ -173,7 +173,7 @@ up the `∥` rows in parallel.**
 
 | # | Ticket | Depends on |
 | --- | --- | --- |
-| 1 ∥ | [FMT-9.2 MQTT Sparkplug B #5469](https://github.com/apiome/apiome/issues/5469) · [FMT-9.3 ROS 2 interfaces #5470](https://github.com/apiome/apiome/issues/5470) | — (Protobuf / IDL reuse) |
+| 1 ∥ | [FMT-9.2 MQTT Sparkplug B #5469](https://github.com/apiome/apiome/issues/5469) ✅ · [FMT-9.3 ROS 2 interfaces #5470](https://github.com/apiome/apiome/issues/5470) | — (Protobuf / IDL reuse) |
 | 2 ∥ | [FMT-9.4 SHACL, JSON-LD, OWL/RDFS #5471](https://github.com/apiome/apiome/issues/5471) · [FMT-9.5 LwM2M / IPSO, Matter #5472](https://github.com/apiome/apiome/issues/5472) | — |
 | 3 ✅ | [FMT-9.1 OPC UA NodeSet2 #5468](https://github.com/apiome/apiome/issues/5468) | — (XL; XML reader from FMT-EPIC-4) |
 

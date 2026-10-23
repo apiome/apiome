@@ -1,0 +1,220 @@
+{
+  "adapter": "sparkplug",
+  "canonical": {
+    "channels": [
+      {
+        "address": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+        "bindings": {},
+        "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+        "name": "NBIRTH Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+        "bindings": {},
+        "description": "Edge node data: changed node metrics, by name or alias.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NDATA",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+        "name": "NDATA Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+        "bindings": {},
+        "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NDEATH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+        "name": "NDEATH Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      }
+    ],
+    "description": null,
+    "extras": {
+      "sparkplug": {
+        "capability_limits": [],
+        "deviceIds": [],
+        "edgeNodeId": "Line1",
+        "groupId": "PlantAmsterdam",
+        "input": "namespace",
+        "topicCount": 3
+      }
+    },
+    "format": "sparkplug",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "PlantAmsterdam/Line1",
+      "namespace": "spBv1.0"
+    },
+    "paradigm": "event",
+    "protocol": "mqtt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "PlantAmsterdam/Line1",
+        "name": "Line1",
+        "operations": [
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+            "deprecated": false,
+            "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "sparkplug_message_type": "NBIRTH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NBIRTH/Line1#event.NBIRTH",
+                "name": "NBIRTH",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NBIRTH Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+            "deprecated": false,
+            "description": "Edge node data: changed node metrics, by name or alias.",
+            "extras": {
+              "action": "publish",
+              "sparkplug_message_type": "NDATA"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NDATA/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node data: changed node metrics, by name or alias.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NDATA/Line1#event.NDATA",
+                "name": "NDATA",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NDATA Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+            "deprecated": false,
+            "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+            "extras": {
+              "action": "publish",
+              "sparkplug_message_type": "NDEATH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NDEATH/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NDEATH/Line1#event.NDEATH",
+                "name": "NDEATH",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NDEATH Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "PlantAmsterdam/Line1",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "sparkplug/01-minimal-topic-namespace.json",
+  "counts": {
+    "channels": 3,
+    "operations": 3,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "sparkplug"
+  },
+  "fingerprint": "sha256:2dcf9b45c0e9f6e8848e8e671a03b10abfc5bd7df5e15e884e2ba03fc11239b1",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "ecea3e4812bfd027e1c0af56a9090e086a81df03ffe2a13146951dca86ac615f",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,456 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/07-session-set/dbirth.bin",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "metric": 8,
+        "payload": 3,
+        "property": 5
+      },
+      "maxDepth": 3,
+      "nodeCount": 16,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:7ccc31b208bc0d6d15d50884e36c46256f019fb12bf4e56c1ff0068abfc77245",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "messageType": "DBIRTH",
+          "messageTypeEvidence": "Message type DBIRTH inferred from the file name 'dbirth.bin'.",
+          "metricCount": 5,
+          "seq": 0,
+          "size": 290,
+          "timestamp": 1786100000000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 0,
+              "datatype": "UInt64",
+              "timestamp": 1786100000000,
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "dbirth.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "dbirth.bin/bdSeq"
+            },
+            "name": "bdSeq",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "11",
+            "valueLength": 2,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 1,
+              "datatype": "Double",
+              "timestamp": 1786100000000,
+              "valueField": "double_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "degC"
+                },
+                "children": [],
+                "id": "0.1.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": -30.0
+                },
+                "children": [],
+                "id": "0.1.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engLow",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": 10.0
+                },
+                "children": [],
+                "id": "0.1.2",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engHigh",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "dbirth.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "dbirth.bin/Inputs/Temperature"
+            },
+            "name": "Inputs/Temperature",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "4.5",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 2,
+              "datatype": "Boolean",
+              "timestamp": 1786100000000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "dbirth.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "dbirth.bin/Inputs/DoorOpen"
+            },
+            "name": "Inputs/DoorOpen",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "false",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 3,
+              "datatype": "Double",
+              "timestamp": 1786100000000,
+              "valueField": "double_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "degC"
+                },
+                "children": [],
+                "id": "0.3.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Boolean",
+                  "value": true
+                },
+                "children": [],
+                "id": "0.3.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "writable",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "dbirth.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "dbirth.bin/Outputs/SetPoint"
+            },
+            "name": "Outputs/SetPoint",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "4.0",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 4,
+              "datatype": "String",
+              "timestamp": 1786100000000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "dbirth.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "dbirth.bin/Properties/Serial"
+            },
+            "name": "Properties/Serial",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "CCU-000042",
+            "valueLength": 10,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "dbirth.bin",
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": null
+        },
+        "name": "dbirth.bin",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      },
+      {
+        "attributes": {
+          "messageType": "DDATA",
+          "messageTypeEvidence": "Message type DDATA inferred from the file name 'ddata.bin'.",
+          "metricCount": 2,
+          "seq": 1,
+          "size": 46,
+          "timestamp": 1786100060000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 1,
+              "datatype": "Double",
+              "timestamp": 1786100060000,
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "1.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "ddata.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "ddata.bin/alias:1"
+            },
+            "name": "alias:1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "5.1",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 2,
+              "datatype": "Boolean",
+              "timestamp": 1786100060000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "1.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "ddata.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "ddata.bin/alias:2"
+            },
+            "name": "alias:2",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "true",
+            "valueLength": 4,
+            "valuePresent": true
+          }
+        ],
+        "id": "1",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "ddata.bin",
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 1,
+          "path": null
+        },
+        "name": "ddata.bin",
+        "ordinal": 1,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      },
+      {
+        "attributes": {
+          "messageType": "DDEATH",
+          "messageTypeEvidence": "Message type DDEATH inferred from the file name 'ddeath.bin'.",
+          "metricCount": 1,
+          "seq": 2,
+          "size": 31,
+          "timestamp": 1786100120000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 0,
+              "datatype": "UInt64",
+              "timestamp": 1786100120000,
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "2.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "ddeath.bin",
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "ddeath.bin/bdSeq"
+            },
+            "name": "bdSeq",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "11",
+            "valueLength": 2,
+            "valuePresent": true
+          }
+        ],
+        "id": "2",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "ddeath.bin",
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 2,
+          "path": null
+        },
+        "name": "ddeath.bin",
+        "ordinal": 2,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

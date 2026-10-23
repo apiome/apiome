@@ -719,6 +719,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['industrial', 'automation', 'companion specification', 'address space', 'iot', 'xml', 'namespace'],
   },
   {
+    id: 'sparkplug-import',
+    title: 'Import MQTT Sparkplug B payloads',
+    summary: 'Catalog Sparkplug B topics and metrics as an event-driven MQTT API.',
+    page: 'apiome-docs/docs/bring-in/sparkplug-import.md',
+    section: 'reference',
+    keywords: ['industrial', 'iot', 'telemetry', 'topic', 'metric', 'alias', 'nbirth', 'ddata', 'edge node'],
+  },
+  {
     id: 'trpc-router-import',
     title: 'Import a tRPC router',
     summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',

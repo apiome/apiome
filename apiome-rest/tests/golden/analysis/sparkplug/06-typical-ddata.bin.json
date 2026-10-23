@@ -1,0 +1,173 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/06-typical-ddata.bin",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "metric": 3,
+        "payload": 1
+      },
+      "maxDepth": 2,
+      "nodeCount": 4,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:6e349a488798a9b609e2b3c45c870f5b7e75c25686752fbc462dfbbb34de3a7a",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "messageType": "DDATA",
+          "messageTypeEvidence": "Message type DDATA inferred from the file name '06-typical-ddata.bin'.",
+          "metricCount": 3,
+          "seq": 3,
+          "size": 64,
+          "timestamp": 1786000003000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 1,
+              "datatype": "Double",
+              "timestamp": 1786000003000,
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "06-typical-ddata.bin/alias:1"
+            },
+            "name": "alias:1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "22.4",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 2,
+              "datatype": "Float",
+              "timestamp": 1786000003000,
+              "valueField": "float_value"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "06-typical-ddata.bin/alias:2"
+            },
+            "name": "alias:2",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "1.0169999599456787",
+            "valueLength": 18,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 3,
+              "datatype": "Boolean",
+              "timestamp": 1786000003000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "06-typical-ddata.bin/alias:3"
+            },
+            "name": "alias:3",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "true",
+            "valueLength": 4,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": null
+        },
+        "name": "06-typical-ddata.bin",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

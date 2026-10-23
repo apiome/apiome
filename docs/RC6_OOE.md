@@ -210,7 +210,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 89 | 4 | C4 | [#5451](https://github.com/apiome/apiome/issues/5451) | FMT-6.7 | DICOM SOP class and structured-report import | — | Stretch |
 | 90 | 4 | C4 | [#5454](https://github.com/apiome/apiome/issues/5454) | FMT-6.10 | Implementation-guide capability statements for every EDI family | FMT-6.1…6.9 | Stretch |
 | 91 | 4 | C4 | [#5406](https://github.com/apiome/apiome/issues/5406) | FMT-EPIC-6 | B2B / EDI / vertical depth | close after FMT-6.1…6.10 | Stretch |
-| 92 | 4 | C5 | [#5469](https://github.com/apiome/apiome/issues/5469) | FMT-9.2 | MQTT Sparkplug B import | — | Stretch |
 | 93 | 4 | C5 | [#5470](https://github.com/apiome/apiome/issues/5470) | FMT-9.3 | ROS 2 interface import (`.msg` / `.srv` / `.action`) | — | Stretch |
 | 94 | 4 | C5 | [#5471](https://github.com/apiome/apiome/issues/5471) | FMT-9.4 | SHACL, JSON-LD and OWL/RDFS import | — | Stretch |
 | 95 | 4 | C5 | [#5472](https://github.com/apiome/apiome/issues/5472) | FMT-9.5 | LwM2M / IPSO and Matter device-model import | — | Stretch |

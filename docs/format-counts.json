@@ -1,15 +1,15 @@
 {
   "version": "1",
-  "capability_registry_version": "30",
-  "total": 82,
-  "importable": 82,
+  "capability_registry_version": "31",
+  "total": 83,
+  "importable": 83,
   "exportable": 51,
   "round_trip": 51,
-  "import_only": 31,
+  "import_only": 32,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 81,
+  "catalog": 82,
   "toolchain_gated": 9,
   "paradigms": [
     {
@@ -29,8 +29,8 @@
     {
       "id": "event",
       "label": "Event-driven",
-      "total": 3,
-      "importable": 3,
+      "total": 4,
+      "importable": 4,
       "exportable": 2
     },
     {

@@ -167,6 +167,8 @@ from .proto_editions import (
 from .pydantic_normalizer import PYDANTIC_EXTRAS_KEY
 from .pydantic_parser import PARTIAL_LIMITS as PYDANTIC_PARTIAL_LIMITS
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
+from .sparkplug_normalizer import PARTIAL_LIMITS as SPARKPLUG_PARTIAL_LIMITS
+from .sparkplug_normalizer import SPARKPLUG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
 from .trpc_normalizer import TRPC_EXTRAS_KEY
 from .trpc_parser import PARTIAL_LIMITS as TRPC_PARTIAL_LIMITS
@@ -269,6 +271,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # node counts, declared limits). Our own bookkeeping about the read — a type's own
         # references and modelling rules ride under their `opcua_*` keys and read as partial.
         OPCUA_EXTRAS_KEY,
+        # FMT-9.2: the Sparkplug projection record (input kind, payloads and their inferred
+        # message types, namespace identity, declared limits). Our own bookkeeping about the read
+        # — a metric's alias, datatype and properties ride under their `sparkplug_*` keys.
+        SPARKPLUG_EXTRAS_KEY,
         # FMT-8.5: the CUE / Pkl / Dhall projection records (root file, files, exports, validated
         # instances, declared limits) sit under the format's own key. Our own bookkeeping.
         CUE_FORMAT,
@@ -1219,6 +1225,7 @@ def _document_scope_rows(
     ledger.extend(_trpc_capability_rows(api))
     ledger.extend(_pydantic_capability_rows(api))
     ledger.extend(_opcua_capability_rows(api))
+    ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
@@ -2038,6 +2045,24 @@ def _opcua_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     """
     return _graded_limit_rows(
         api, format_key="opcua-nodeset", extras_key=OPCUA_EXTRAS_KEY, partial=OPCUA_PARTIAL_LIMITS
+    )
+
+
+def _sparkplug_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-9.2 Sparkplug B declared limits as document-scoped ledger rows.
+
+    An unresolved alias, an inferred or unknown datatype, an unknown message type and an
+    unresolved template keep their field or channel, so they are ``partially-mapped``; skipped
+    extension fields and a payload's opaque body are ``not-parsed-by-adapter``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="sparkplug", extras_key=SPARKPLUG_EXTRAS_KEY, partial=SPARKPLUG_PARTIAL_LIMITS
     )
 
 

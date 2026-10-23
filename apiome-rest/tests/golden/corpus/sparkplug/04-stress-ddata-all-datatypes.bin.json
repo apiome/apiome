@@ -1,0 +1,697 @@
+{
+  "adapter": "sparkplug",
+  "canonical": {
+    "channels": [
+      {
+        "address": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}",
+        "bindings": {},
+        "description": "Device data: changed device metrics, by name or alias.",
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Message type DDATA inferred from the file name '04-stress-ddata-all-datatypes.bin'.",
+          "sparkplug_topic": {
+            "device_id": null,
+            "edge_node_id": null,
+            "group_id": null,
+            "message_type": "DDATA",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}",
+        "name": "DDATA",
+        "parameters": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The device behind the edge node the payload is about.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}#param.device_id",
+            "name": "device_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The edge node that published the payload.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}#param.edge_node_id",
+            "name": "edge_node_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The Sparkplug group the edge node belongs to.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}#param.group_id",
+            "name": "group_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "protocol": "mqtt"
+      }
+    ],
+    "description": "Inferred from Sparkplug B payloads alone: the topics they were published on were not supplied, so the group, edge node and device are address parameters.",
+    "extras": {
+      "sparkplug": {
+        "capability_limits": [
+          {
+            "construct": "sparkplug.alias_unresolved",
+            "count": 1,
+            "detail": "A DATA payload names its metrics only by the alias its BIRTH certificate gave them; without that BIRTH the name is unknown, so the field keeps the placeholder alias:<n>.",
+            "locations": [
+              "DDATA.alias:1"
+            ]
+          }
+        ],
+        "input": "payload",
+        "payloads": [
+          {
+            "label": "04-stress-ddata-all-datatypes.bin",
+            "messageType": "DDATA",
+            "messageTypeEvidence": "Message type DDATA inferred from the file name '04-stress-ddata-all-datatypes.bin'.",
+            "metricCount": 21,
+            "seq": 2,
+            "timestamp": 1786000002000,
+            "uuid": "6b2c1a7e-0f4d-4a2b-9c31-0000000000ff"
+          }
+        ]
+      }
+    },
+    "format": "sparkplug",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "04-stress-ddata-all-datatypes",
+      "namespace": "spBv1.0"
+    },
+    "paradigm": "event",
+    "protocol": "mqtt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "A payload names no edge node; the operations are grouped under one service."
+        },
+        "key": "Sparkplug",
+        "name": "Sparkplug",
+        "operations": [
+          {
+            "channel_ref": "spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}",
+            "deprecated": false,
+            "description": "Device data: changed device metrics, by name or alias.",
+            "extras": {
+              "action": "publish",
+              "provenance": "inferred",
+              "provenance_evidence": "Message type DDATA inferred from the file name '04-stress-ddata-all-datatypes.bin'.",
+              "sparkplug_message_type": "DDATA",
+              "sparkplug_sources": [
+                "04-stress-ddata-all-datatypes.bin"
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device data: changed device metrics, by name or alias.",
+                "extras": {
+                  "provenance": "inferred",
+                  "provenance_evidence": "Message type DDATA inferred from the file name '04-stress-ddata-all-datatypes.bin'.",
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/{group_id}/DDATA/{edge_node_id}/{device_id}#event.DDATA",
+                "name": "DDATA",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "DDATA",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DDATA",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "04-stress-ddata-all-datatypes",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Metrics carried by the DDATA payload (04-stress-ddata-all-datatypes.bin).",
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Metrics observed in 04-stress-ddata-all-datatypes.bin.",
+          "sparkplug_message_type": "DDATA",
+          "sparkplug_sources": [
+            "04-stress-ddata-all-datatypes.bin"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 20,
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Boolean",
+            "name": "All/Boolean",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 25,
+              "sparkplug_datatype": "Bytes"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Bytes",
+            "name": "All/Bytes",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 24,
+              "sparkplug_datatype": "DateTime"
+            },
+            "field_number": null,
+            "key": "DDATA.All/DateTime",
+            "name": "All/DateTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "timestamp",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 19,
+              "sparkplug_datatype": "Double"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Double",
+            "name": "All/Double",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 18,
+              "sparkplug_datatype": "Float"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Float",
+            "name": "All/Float",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 27,
+              "sparkplug_datatype": "Double",
+              "sparkplug_flags": [
+                "historical"
+              ]
+            },
+            "field_number": null,
+            "key": "DDATA.All/Historical",
+            "name": "All/Historical",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 11,
+              "sparkplug_datatype": "Int16"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Int16",
+            "name": "All/Int16",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 12,
+              "sparkplug_datatype": "Int32"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Int32",
+            "name": "All/Int32",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 13,
+              "sparkplug_datatype": "Int64"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Int64",
+            "name": "All/Int64",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 10,
+              "sparkplug_datatype": "Int8"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Int8",
+            "name": "All/Int8",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 26,
+              "sparkplug_datatype": "Double",
+              "sparkplug_flags": [
+                "null"
+              ]
+            },
+            "field_number": null,
+            "key": "DDATA.All/NullMetric",
+            "name": "All/NullMetric",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 21,
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "DDATA.All/String",
+            "name": "All/String",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 22,
+              "sparkplug_datatype": "Text"
+            },
+            "field_number": null,
+            "key": "DDATA.All/Text",
+            "name": "All/Text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 28,
+              "sparkplug_datatype": "Double",
+              "sparkplug_flags": [
+                "transient"
+              ]
+            },
+            "field_number": null,
+            "key": "DDATA.All/Transient",
+            "name": "All/Transient",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 15,
+              "sparkplug_datatype": "UInt16"
+            },
+            "field_number": null,
+            "key": "DDATA.All/UInt16",
+            "name": "All/UInt16",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 16,
+              "sparkplug_datatype": "UInt32"
+            },
+            "field_number": null,
+            "key": "DDATA.All/UInt32",
+            "name": "All/UInt32",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 17,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "DDATA.All/UInt64",
+            "name": "All/UInt64",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 14,
+              "sparkplug_datatype": "UInt8"
+            },
+            "field_number": null,
+            "key": "DDATA.All/UInt8",
+            "name": "All/UInt8",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 23,
+              "sparkplug_datatype": "UUID"
+            },
+            "field_number": null,
+            "key": "DDATA.All/UUID",
+            "name": "All/UUID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uuid",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Metric carrying a full property set and metadata.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 04-stress-ddata-all-datatypes.bin.",
+              "sparkplug_alias": 29,
+              "sparkplug_datatype": "Double",
+              "sparkplug_metadata": {
+                "contentType": "application/octet-stream",
+                "size": 4
+              },
+              "sparkplug_properties": {
+                "assetId": "ASSET-0042",
+                "critical": true,
+                "deadband": 0.5,
+                "engHigh": 1000.0,
+                "engLow": 0.0,
+                "engUnit": "kPa"
+              }
+            },
+            "field_number": null,
+            "key": "DDATA.All/WithProperties",
+            "name": "All/WithProperties",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Alias-only metric 1 in 04-stress-ddata-all-datatypes.bin: its name is declared by the BIRTH certificate, which was not supplied.",
+              "sparkplug_alias": 1,
+              "sparkplug_datatype": "Double"
+            },
+            "field_number": null,
+            "key": "DDATA.alias:1",
+            "name": "alias:1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "DDATA",
+        "key_type": null,
+        "kind": "record",
+        "name": "DDATA",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "sparkplug/04-stress-ddata-all-datatypes.bin",
+  "counts": {
+    "channels": 1,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "sparkplug"
+  },
+  "fingerprint": "sha256:54fcb03409ccfc218ab6b731e9b987e51575f50e565c589ce43abb2406c5a25c",
+  "lint": {
+    "findings": 21,
+    "grade": "C",
+    "report_fingerprint": "9f58fb60623f218dd5c7a002d17c1093b13fb6fad90aea9bb3e2de3f3b7f36ab",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 21,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

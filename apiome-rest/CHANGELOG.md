@@ -5,6 +5,46 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.430.0] - 2026-10-22
+
+### Added
+- **MQTT Sparkplug B import (#5469, FMT-9.2)**: a `sparkplug` import source (alias `sparkplug-b`; file, URL, paste and
+  fileset) reads Sparkplug B payloads and topic-namespace descriptions onto the **event** paradigm.
+  - A binary payload (`.bin`) arrives through the binary intake SPI (`accepts_bytes` / `parse_bytes`) and is decoded
+    against the Eclipse Tahu `sparkplug_b.proto` schema by a hand-written wire reader (`app.sparkplug_payload`) — a
+    top-level element running past the buffer is `INPUT_TRUNCATED`, a fault inside a complete metric is
+    `INPUT_MALFORMED`, a payload with no metrics `INPUT_SEMANTIC_INVALID`. Unknown (extension) fields are skipped and
+    declared.
+  - Each topic becomes an MQTT channel whose address is the topic and whose components (namespace, group, message
+    type, edge node, device, host) are recorded in `extras.sparkplug_topic`; BIRTH / DATA / DEATH are `publish`,
+    NCMD / DCMD / STATE `subscribe`. The metrics are the event message's payload record: Sparkplug datatypes map to
+    canonical scalars (`Int8`…`UInt64` → `int8`…`uint64`, `DateTime` → `timestamp`, `UUID` → `uuid` …), arrays to
+    lists, a `DataSet` to a list of a synthesized row record, a template instance to its definition's record. The
+    alias, Sparkplug datatype, property set, metadata and flags stay in the field's extras.
+  - A payload does not carry its topic: the message type is inferred from a message-type token in the file name, else
+    from the metrics (a lone `bdSeq` is an NDEATH); the group, edge node and device are address parameters, and every
+    construct of a payload-only import is stamped `inferred` (FMT-8.6).
+  - A fileset of payloads (a session) names alias-only DATA metrics through the BIRTH in the same set; alone, such a
+    metric keeps the placeholder `alias:<n>` and a `sparkplug.alias_unresolved` limit.
+  - A topic-namespace description (JSON, `"namespace": "spBv1.0"`) declares the topics and the edge node's and each
+    device's metric catalogue; topics contradicting the declared namespace, group, edge node or host application are
+    refused with `INPUT_SEMANTIC_INVALID`, every contradiction listed. Its broker becomes a server and its `qos` /
+    `retained` each operation's MQTT binding.
+  - A native analyzer (`sparkplug@1.0.0`) describes each payload and metric (values under the value-visibility
+    policy) and hashes the payload bytes, not the lossy text decode.
+  - Declared limits ride in `extras.sparkplug.capability_limits` and become coverage-ledger rows; capability registry
+    v31, version coverage, MCP toolset goldens and the round-trip matrix row (import-only) are added.
+- **Binary fileset members**: `IntakeFileset.binary_members` keeps the exact bytes of every archive member that is not
+  UTF-8 text (`member_bytes()` reads either form); archive root detection now passes those bytes to the sniffers, and
+  `.bin` members are root candidates.
+
+### Fixed
+- **Sparkplug corpus fixtures**: the staged `PropertyValue` and `MetaData` field numbers in three payloads did not match
+  `sparkplug_b.proto` and were re-encoded; the malformed-wire-format negative was rewritten so it is broken inside a
+  complete metric rather than cut short.
+
+The OpenAPI version moves to 1.294.0.
+
 ## [1.429.1] - 2026-10-22
 
 ### Fixed

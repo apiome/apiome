@@ -1555,6 +1555,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "sparkplug": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Sparkplug B (spBv1.0, Sparkplug 2.2 and 3.0)",
+                format_key="sparkplug",
+                support=VersionSupport.UNGATED,
+                note="Payloads carry no version and the topic namespace element is `spBv1.0` in "
+                "both Sparkplug 2.2 and 3.0; the reader decodes the Eclipse Tahu "
+                "`sparkplug_b.proto` schema both share, and accepts both `STATE` topic forms "
+                "(`STATE/<host>` and `spBv1.0/STATE/<host>`).",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pydantic": VersionCoverage(
         reads=[
             FormatVersion(

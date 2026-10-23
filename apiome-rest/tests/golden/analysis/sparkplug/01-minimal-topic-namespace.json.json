@@ -1,0 +1,174 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/01-minimal-topic-namespace.json",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "group": 1,
+        "namespace": 1,
+        "node": 1,
+        "topic": 3
+      },
+      "maxDepth": 3,
+      "nodeCount": 6,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:0741d94ff65c2c6f6c877c881a73273136039285b3503828ea87e0646e731187",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "deviceCount": 0,
+          "edgeNodeId": "Line1",
+          "groupId": "PlantAmsterdam",
+          "topicCount": 3
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 3
+            },
+            "children": [
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NBIRTH",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NDATA",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NDEATH",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "topics",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "metricCount": 0
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "node",
+            "label": null,
+            "location": null,
+            "name": "Line1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "namespace",
+        "label": null,
+        "location": null,
+        "name": "sparkplug/01-minimal-topic-namespace.json",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

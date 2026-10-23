@@ -1,0 +1,275 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/02-typical-nbirth.bin",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "metric": 7,
+        "payload": 1
+      },
+      "maxDepth": 2,
+      "nodeCount": 8,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:8a66b8af6f6ec64c6899d0040e498e1b2cca5e5ca96ec0650e97da2da845773e",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "messageType": "NBIRTH",
+          "messageTypeEvidence": "Message type NBIRTH inferred from the file name '02-typical-nbirth.bin'.",
+          "metricCount": 7,
+          "seq": 0,
+          "size": 285,
+          "timestamp": 1786000000000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 0,
+              "datatype": "UInt64",
+              "timestamp": 1786000000000,
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "02-typical-nbirth.bin/bdSeq"
+            },
+            "name": "bdSeq",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "7",
+            "valueLength": 1,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "Boolean",
+              "timestamp": 1786000000000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "02-typical-nbirth.bin/Node Control/Rebirth"
+            },
+            "name": "Node Control/Rebirth",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "false",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "Boolean",
+              "timestamp": 1786000000000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "02-typical-nbirth.bin/Node Control/Next Server"
+            },
+            "name": "Node Control/Next Server",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "false",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "String",
+              "timestamp": 1786000000000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "02-typical-nbirth.bin/Properties/Hardware Make"
+            },
+            "name": "Properties/Hardware Make",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "Example Automation",
+            "valueLength": 18,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "String",
+              "timestamp": 1786000000000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "02-typical-nbirth.bin/Properties/Hardware Model"
+            },
+            "name": "Properties/Hardware Model",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "EdgeNode-4000",
+            "valueLength": 13,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "String",
+              "timestamp": 1786000000000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "02-typical-nbirth.bin/Properties/FW"
+            },
+            "name": "Properties/FW",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "3.4.1",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "datatype": "String",
+              "timestamp": 1786000000000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 6,
+              "path": "02-typical-nbirth.bin/Properties/OS"
+            },
+            "name": "Properties/OS",
+            "ordinal": 6,
+            "redacted": false,
+            "value": "Linux 6.6",
+            "valueLength": 9,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": null
+        },
+        "name": "02-typical-nbirth.bin",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

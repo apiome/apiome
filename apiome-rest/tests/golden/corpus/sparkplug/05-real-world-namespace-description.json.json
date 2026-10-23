@@ -1,0 +1,1168 @@
+{
+  "adapter": "sparkplug",
+  "canonical": {
+    "channels": [
+      {
+        "address": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01",
+        "bindings": {},
+        "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Capper01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01",
+        "name": "DBIRTH Capper01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01",
+        "bindings": {},
+        "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Filler01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01",
+        "name": "DBIRTH Filler01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01",
+        "bindings": {},
+        "description": "Command to the device: metrics to write.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Filler01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DCMD",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01",
+        "name": "DCMD Filler01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01",
+        "bindings": {},
+        "description": "Device data: changed device metrics, by name or alias.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Capper01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DDATA",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01",
+        "name": "DDATA Capper01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01",
+        "bindings": {},
+        "description": "Device data: changed device metrics, by name or alias.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Filler01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DDATA",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01",
+        "name": "DDATA Filler01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01",
+        "bindings": {},
+        "description": "Device death certificate: the device is offline.",
+        "extras": {
+          "sparkplug_topic": {
+            "device_id": "Filler01",
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "DDEATH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01",
+        "name": "DDEATH Filler01",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+        "bindings": {},
+        "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+        "name": "NBIRTH Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NCMD/Line1",
+        "bindings": {},
+        "description": "Command to the edge node: metrics to write.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NCMD",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NCMD/Line1",
+        "name": "NCMD Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+        "bindings": {},
+        "description": "Edge node data: changed node metrics, by name or alias.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NDATA",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+        "name": "NDATA Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+        "bindings": {},
+        "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+        "extras": {
+          "sparkplug_topic": {
+            "edge_node_id": "Line1",
+            "group_id": "PlantAmsterdam",
+            "message_type": "NDEATH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+        "name": "NDEATH Line1",
+        "parameters": [],
+        "protocol": "mqtt"
+      },
+      {
+        "address": "spBv1.0/STATE/SCADA-Primary",
+        "bindings": {},
+        "description": "The host application's online state (a JSON payload, not protobuf).",
+        "extras": {
+          "sparkplug_topic": {
+            "host_id": "SCADA-Primary",
+            "message_type": "STATE",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/STATE/SCADA-Primary",
+        "name": "STATE SCADA-Primary",
+        "parameters": [],
+        "protocol": "mqtt"
+      }
+    ],
+    "description": "Topic namespace and metric catalogue for a packaging line, as an edge-of-network node advertises it.",
+    "extras": {
+      "sparkplug": {
+        "capability_limits": [],
+        "deviceIds": [
+          "Filler01",
+          "Capper01"
+        ],
+        "edgeNodeId": "Line1",
+        "groupId": "PlantAmsterdam",
+        "hostApplicationId": "SCADA-Primary",
+        "input": "namespace",
+        "topicCount": 11
+      }
+    },
+    "format": "sparkplug",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "PlantAmsterdam/Line1",
+      "namespace": "spBv1.0"
+    },
+    "paradigm": "event",
+    "protocol": "mqtt",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "sparkplug_broker": {
+            "cleanSession": true,
+            "keepAliveSeconds": 30,
+            "qos": 0
+          }
+        },
+        "name": "broker",
+        "protocol": "mqtt",
+        "url": "ssl://mqtt.internal.example.com:8883",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "PlantAmsterdam/Line1",
+        "name": "Line1",
+        "operations": [
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01",
+            "deprecated": false,
+            "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DBIRTH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01#event.DBIRTH",
+                "name": "DBIRTH",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1.Capper01",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DBIRTH Capper01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01",
+            "deprecated": false,
+            "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DBIRTH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device birth certificate: every device metric, with its datatype, alias and properties.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01#event.DBIRTH",
+                "name": "DBIRTH",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1.Filler01",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DBIRTH Filler01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01",
+            "deprecated": false,
+            "description": "Device data: changed device metrics, by name or alias.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DDATA"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device data: changed device metrics, by name or alias.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01#event.DDATA",
+                "name": "DDATA",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1.Capper01",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DDATA Capper01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01",
+            "deprecated": false,
+            "description": "Device data: changed device metrics, by name or alias.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DDATA"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device data: changed device metrics, by name or alias.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01#event.DDATA",
+                "name": "DDATA",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1.Filler01",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DDATA Filler01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01",
+            "deprecated": false,
+            "description": "Device death certificate: the device is offline.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DDEATH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Device death certificate: the device is offline.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01#event.DDEATH",
+                "name": "DDEATH",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DDEATH Filler01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+            "deprecated": false,
+            "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0,
+                  "retain": false
+                }
+              },
+              "sparkplug_message_type": "NBIRTH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NBIRTH/Line1#event.NBIRTH",
+                "name": "NBIRTH",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NBIRTH Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+            "deprecated": false,
+            "description": "Edge node data: changed node metrics, by name or alias.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "NDATA"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NDATA/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node data: changed node metrics, by name or alias.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NDATA/Line1#event.NDATA",
+                "name": "NDATA",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NDATA Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+            "deprecated": false,
+            "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+            "extras": {
+              "action": "publish",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0,
+                  "retain": false
+                }
+              },
+              "sparkplug_message_type": "NDEATH"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/PlantAmsterdam/NDEATH/Line1",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node death certificate: carries the bdSeq of the session it closes.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/PlantAmsterdam/NDEATH/Line1#event.NDEATH",
+                "name": "NDEATH",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NDEATH Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01",
+            "deprecated": false,
+            "description": "Command to the device: metrics to write.",
+            "extras": {
+              "action": "subscribe",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "DCMD"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "subscribe spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Command to the device: metrics to write.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "subscribe spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01#event.DCMD",
+                "name": "DCMD",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1.Filler01",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "DCMD Filler01",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/PlantAmsterdam/NCMD/Line1",
+            "deprecated": false,
+            "description": "Command to the edge node: metrics to write.",
+            "extras": {
+              "action": "subscribe",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0
+                }
+              },
+              "sparkplug_message_type": "NCMD"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "subscribe spBv1.0/PlantAmsterdam/NCMD/Line1",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Command to the edge node: metrics to write.",
+                "extras": {
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "subscribe spBv1.0/PlantAmsterdam/NCMD/Line1#event.NCMD",
+                "name": "NCMD",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PlantAmsterdam.Line1",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NCMD Line1",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "spBv1.0/STATE/SCADA-Primary",
+            "deprecated": false,
+            "description": "The host application's online state (a JSON payload, not protobuf).",
+            "extras": {
+              "action": "subscribe",
+              "bindings": {
+                "mqtt": {
+                  "qos": 0,
+                  "retain": true
+                }
+              },
+              "sparkplug_message_type": "STATE"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "subscribe spBv1.0/STATE/SCADA-Primary",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The host application's online state (a JSON payload, not protobuf).",
+                "extras": {
+                  "sparkplug_encoding": "json"
+                },
+                "headers": [],
+                "key": "subscribe spBv1.0/STATE/SCADA-Primary#event.STATE",
+                "name": "STATE",
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "STATE SCADA-Primary",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "PlantAmsterdam/Line1",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Metrics of the edge node Line1.",
+        "enum_values": [],
+        "extras": {
+          "sparkplug_endpoint": "node"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "Boolean",
+              "sparkplug_properties": {
+                "writable": true
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Node Control/Next Server",
+            "name": "Node Control/Next Server",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "Boolean",
+              "sparkplug_properties": {
+                "writable": true
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Node Control/Rebirth",
+            "name": "Node Control/Rebirth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Properties/FW",
+            "name": "Properties/FW",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Properties/Hardware Make",
+            "name": "Properties/Hardware Make",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Properties/Hardware Model",
+            "name": "Properties/Hardware Model",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Properties/OS",
+            "name": "Properties/OS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 0,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.bdSeq",
+            "name": "bdSeq",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PlantAmsterdam.Line1",
+        "key_type": null,
+        "kind": "record",
+        "name": "Line1",
+        "namespace": "PlantAmsterdam",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Capping head",
+        "enum_values": [],
+        "extras": {
+          "sparkplug_endpoint": "device"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 22,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Capper01.Counters/Good",
+            "name": "Counters/Good",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 21,
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Capper01.Inputs/Running",
+            "name": "Inputs/Running",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 20,
+              "sparkplug_datatype": "Double",
+              "sparkplug_properties": {
+                "engUnit": "Nm"
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Capper01.Inputs/Torque",
+            "name": "Inputs/Torque",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PlantAmsterdam.Line1.Capper01",
+        "key_type": null,
+        "kind": "record",
+        "name": "Capper01",
+        "namespace": "PlantAmsterdam.Line1",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Rotary filler",
+        "enum_values": [],
+        "extras": {
+          "sparkplug_endpoint": "device"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 7,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Counters/Good",
+            "name": "Counters/Good",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 8,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Counters/Rejected",
+            "name": "Counters/Rejected",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 5,
+              "sparkplug_datatype": "Boolean",
+              "sparkplug_properties": {
+                "writable": true
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Device Control/Rebirth",
+            "name": "Device Control/Rebirth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 2,
+              "sparkplug_datatype": "Float",
+              "sparkplug_properties": {
+                "engUnit": "bar"
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Inputs/Pressure",
+            "name": "Inputs/Pressure",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 3,
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Inputs/Running",
+            "name": "Inputs/Running",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 1,
+              "sparkplug_datatype": "Double",
+              "sparkplug_properties": {
+                "engHigh": 150,
+                "engLow": -40,
+                "engUnit": "degC"
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Inputs/Temperature",
+            "name": "Inputs/Temperature",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 4,
+              "sparkplug_datatype": "Double",
+              "sparkplug_properties": {
+                "engUnit": "degC",
+                "writable": true
+              }
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Outputs/Setpoint",
+            "name": "Outputs/Setpoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "sparkplug_alias": 6,
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "PlantAmsterdam.Line1.Filler01.Properties/Serial",
+            "name": "Properties/Serial",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PlantAmsterdam.Line1.Filler01",
+        "key_type": null,
+        "kind": "record",
+        "name": "Filler01",
+        "namespace": "PlantAmsterdam.Line1",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "sparkplug/05-real-world-namespace-description.json",
+  "counts": {
+    "channels": 11,
+    "operations": 11,
+    "servers": 1,
+    "services": 1,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "sparkplug"
+  },
+  "fingerprint": "sha256:2c794e9c0408011ad4818fd0ca81d644e658d779264e132471349b3d16c9f890",
+  "lint": {
+    "findings": 18,
+    "grade": "B",
+    "report_fingerprint": "e4670ddcdd917e2ce60cd163892451855aa5be837a6583e0d7269688a49cc21a",
+    "score": 82,
+    "severity_counts": {
+      "error": 0,
+      "info": 18,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

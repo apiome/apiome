@@ -1,0 +1,25 @@
+---
+slug: sparkplug-import
+title: Import MQTT Sparkplug B payloads
+description: Catalog Sparkplug B topics and metrics as an event-driven MQTT API.
+authors: [apiome]
+---
+
+Sparkplug B is how industrial edge nodes publish telemetry over MQTT. Apiome now imports Sparkplug
+B payloads, or a description of the topic namespace, into the catalog as an event-driven API.
+[What gets imported](/bring-in/sparkplug-import).
+
+{/* truncate */}
+
+- **Topics become channels.** Each topic is an MQTT channel with its group, message type, edge node
+  and device recorded. Commands and the host application's state are subscribed, births, data and
+  deaths are published.
+- **Metrics become the message schema.** Sparkplug datatypes map to scalars, arrays to lists,
+  `DataSet` metrics to row records and templates to their definitions. Aliases, engineering units
+  and the other properties stay on each field.
+- **DATA payloads are named through their BIRTH.** Import a session's payloads in one archive and
+  every alias-only metric gets its name. Alone, it keeps an `alias:<n>` placeholder and the
+  coverage ledger says so.
+- **Payloads alone are labelled inferred.** A payload does not say which topic it came from, so its
+  message type comes from the file name or its metrics, and every construct is marked inferred.
+- **Metric values stay under Format details**, behind the value-visibility policy.
