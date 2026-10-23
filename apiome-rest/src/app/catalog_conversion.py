@@ -119,7 +119,9 @@ def _captured_fileset(item: Dict[str, Any], raw: str) -> Optional[IntakeFileset]
         raise ImportSourceError(
             f"The captured archive cannot be unpacked: {exc}", code="INPUT_ARCHIVE_INVALID"
         ) from exc
-    return IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
+    return IntakeFileset.from_members(
+        unpacked.members, root=unpacked.root_path, binary_members=unpacked.binary_members
+    )
 
 
 def _source_withheld(item: Dict[str, Any]) -> Optional[str]:

@@ -28,6 +28,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   asyncapi: 'https://www.asyncapi.com/docs/reference/specification/latest',
   cloudevents: 'https://cloudevents.io/',
   xregistry: 'https://xregistry.io/',
+  sparkplug: 'https://sparkplug.eclipse.org/specification/',
 
   // REST (non-OpenAPI)
   raml: 'https://raml.org/specs/300',

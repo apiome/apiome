@@ -93,6 +93,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   asyncapi: 'AsyncAPI',
   cloudevents: 'CloudEvents',
   xregistry: 'CNCF xRegistry',
+  sparkplug: 'MQTT Sparkplug B',
   graphql: 'GraphQL',
   protobuf: 'gRPC / Protobuf',
   grpc: 'gRPC / Protobuf',

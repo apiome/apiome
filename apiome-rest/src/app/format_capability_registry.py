@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "30"
+REGISTRY_VERSION = "31"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2522,6 +2522,71 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "import with `INPUT_REFERENCE_UNRESOLVED`; a reference into another model's namespace "
             "is declared unresolved and the import continues.",
             "OPC UA *output* is not implemented; a NodeSet2 import is exported through another "
+            "target's emitter.",
+        ],
+    ),
+    "sparkplug": _Seed(
+        # FMT-9.2: a native analyzer describes every payload and metric (values under the policy);
+        # the canonical model holds the topics as channels and the metrics as message schemas.
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "payload (inferred message type, timestamp, seq, uuid) → metric (name or alias, "
+            "datatype, flags) → its property set, metadata, DataSet columns and Template members; "
+            "a topic-namespace description → its topics (each parsed into group, message type, "
+            "edge node and device) and the metric catalogues of the edge node and each device."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.PATH_ONLY,
+            note=(
+                "A metric is addressed by its payload and its position among the payload's metrics "
+                "(``ddata.bin/Inputs/Temperature``); a fileset member's metrics also name the file "
+                "they came from. A protobuf payload has no lines."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.FULL,
+            note=(
+                "Metric values are plant telemetry, so the stored record keeps whatever the "
+                "value-visibility policy allows. Names, aliases, datatypes, flags and property-set "
+                "entries (engineering units, ranges) describe the metric and are always shown."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "sparkplug.dataset_rows",
+                    "sparkplug.metric_values",
+                    "sparkplug.payload_body",
+                    "sparkplug.unknown_fields",
+                ]
+            ),
+            note=(
+                "Each topic → an MQTT `Channel` whose address is the topic, its components (group, "
+                "message type, edge node, device, host) in `extras['sparkplug_topic']`; an unknown "
+                "component is an address parameter. Each channel gets one operation — `publish` for "
+                "BIRTH, DATA and DEATH, `subscribe` for NCMD, DCMD and STATE — whose event message "
+                "carries a `RECORD` of metrics. A metric's datatype maps to a canonical scalar "
+                "(`Int8`…`UInt64` → `int8`…`uint64`, `Float`/`Double`, `Boolean`, `String`/`Text` → "
+                "`string`, `DateTime` → `timestamp`, `UUID`, `Bytes`/`File` → `bytes`), an array to a "
+                "list, a DataSet to a list of a synthesized row record and a template instance to its "
+                "definition's record; the alias, the Sparkplug datatype, property set, metadata and "
+                "flags stay in the field's extras. A payload-only import stamps every construct "
+                "`inferred`. Declared limits are counted in `extras['sparkplug']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A payload does not carry its topic: the message type is inferred from a message-type "
+            "token in the file name (`…-ddata.bin`), else from the metrics (a lone `bdSeq` is an "
+            "NDEATH, `bdSeq` among named metrics an NBIRTH); the group, edge node and device stay "
+            "address parameters.",
+            "A DATA payload names its metrics only by alias. Imported beside its BIRTH in a "
+            "fileset, the names are resolved; alone, each keeps the placeholder `alias:<n>` and "
+            "the coverage ledger says so.",
+            "A topic-namespace description whose topics contradict its declared namespace, group, "
+            "edge node or host application is refused with `INPUT_SEMANTIC_INVALID`.",
+            "Sparkplug *output* is not implemented; an import is exported through another "
             "target's emitter.",
         ],
     ),

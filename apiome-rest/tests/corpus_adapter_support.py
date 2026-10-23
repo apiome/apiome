@@ -36,6 +36,7 @@ from app.import_source import (
     resolve_import_source_key,
 )
 from app.proto_descriptor import DESCRIPTOR_SET_SUFFIXES
+from app.sparkplug_parser import PAYLOAD_SUFFIXES as SPARKPLUG_PAYLOAD_SUFFIXES
 from app.toolchain_packaging import probe_tool
 
 __all__ = [
@@ -142,10 +143,14 @@ def valid_entries() -> List[CorpusEntry]:
 #: Every corpus suffix that names a *binary* artifact rather than source text. One tuple,
 #: contributed by each adapter that has a binary form (IXH-7.5's protobuf descriptor sets,
 #: FMT-4.5's Arrow IPC payloads, FMT-7.3's Apigee proxy bundle zips, FMT-6.7's DICOM Part 10
-#: files), so a new binary format is
+#: files, FMT-9.2's Sparkplug B payloads), so a new binary format is
 #: added in its own module rather than respelled here.
 BINARY_ENTRY_SUFFIXES: tuple[str, ...] = (
-    DESCRIPTOR_SET_SUFFIXES + ARROW_IPC_SUFFIXES + APIGEE_BUNDLE_SUFFIXES + DICOM_PART10_SUFFIXES
+    DESCRIPTOR_SET_SUFFIXES
+    + ARROW_IPC_SUFFIXES
+    + APIGEE_BUNDLE_SUFFIXES
+    + DICOM_PART10_SUFFIXES
+    + SPARKPLUG_PAYLOAD_SUFFIXES
 )
 
 
@@ -221,14 +226,22 @@ def build_fileset(entry: CorpusEntry, *, root_text: Optional[str] = None) -> Int
         The fileset, rooted at the entry's own filename.
     """
     set_dir = entry.absolute_path.parent
-    members = {
-        path.name: path.read_text(encoding="utf-8")
-        for path in sorted(set_dir.iterdir())
-        if path.is_file()
-    }
+    members: Dict[str, str] = {}
+    binary: Dict[str, bytes] = {}
+    for path in sorted(set_dir.iterdir()):
+        if not path.is_file():
+            continue
+        data = path.read_bytes()
+        try:
+            members[path.name] = data.decode("utf-8")
+        except UnicodeDecodeError:
+            # A binary member (FMT-9.2: a Sparkplug payload) is decoded exactly as archive
+            # intake decodes it, with its exact bytes beside the text.
+            members[path.name] = data.decode("utf-8", errors="replace")
+            binary[path.name] = data
     if root_text is not None:
         members[entry.absolute_path.name] = root_text
-    return IntakeFileset.from_members(members, root=entry.absolute_path.name)
+    return IntakeFileset.from_members(members, root=entry.absolute_path.name, binary_members=binary)
 
 
 def build_fileset_archive(entry: CorpusEntry) -> bytes:

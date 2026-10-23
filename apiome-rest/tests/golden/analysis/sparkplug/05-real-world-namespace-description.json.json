@@ -1,0 +1,828 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/05-real-world-namespace-description.json",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "device": 2,
+        "group": 1,
+        "metric": 18,
+        "namespace": 1,
+        "node": 1,
+        "topic": 11
+      },
+      "maxDepth": 3,
+      "nodeCount": 34,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:d20341ea5950099f3eadd05bffc4cceb13809270079cb4c9490d145e9502458a",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "deviceCount": 2,
+          "edgeNodeId": "Line1",
+          "groupId": "PlantAmsterdam",
+          "hostApplicationId": "SCADA-Primary",
+          "topicCount": 11
+        },
+        "children": [
+          {
+            "attributes": {
+              "count": 11
+            },
+            "children": [
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NBIRTH",
+                  "namespace": "spBv1.0",
+                  "retained": false
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NBIRTH/Line1",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NDEATH",
+                  "namespace": "spBv1.0",
+                  "retained": false
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NDEATH/Line1",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NDATA",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NDATA/Line1",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "direction": "inbound",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "NCMD",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/NCMD/Line1",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Filler01",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DBIRTH",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Filler01",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Filler01",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DDEATH",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.5",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DDEATH/Line1/Filler01",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Filler01",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DDATA",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.6",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DDATA/Line1/Filler01",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Filler01",
+                  "direction": "inbound",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DCMD",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.7",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DCMD/Line1/Filler01",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Capper01",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DBIRTH",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.8",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DBIRTH/Line1/Capper01",
+                "ordinal": 8,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "device_id": "Capper01",
+                  "edge_node_id": "Line1",
+                  "group_id": "PlantAmsterdam",
+                  "message_type": "DDATA",
+                  "namespace": "spBv1.0"
+                },
+                "children": [],
+                "id": "0.0.9",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/PlantAmsterdam/DDATA/Line1/Capper01",
+                "ordinal": 9,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "host_id": "SCADA-Primary",
+                  "message_type": "STATE",
+                  "namespace": "spBv1.0",
+                  "retained": true
+                },
+                "children": [],
+                "id": "0.0.10",
+                "kind": "topic",
+                "label": null,
+                "location": null,
+                "name": "spBv1.0/STATE/SCADA-Primary",
+                "ordinal": 10,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "group",
+            "label": null,
+            "location": null,
+            "name": "topics",
+            "ordinal": null,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "metricCount": 7
+            },
+            "children": [
+              {
+                "attributes": {
+                  "alias": 0,
+                  "datatype": "UInt64"
+                },
+                "children": [],
+                "id": "0.1.0",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/bdSeq"
+                },
+                "name": "bdSeq",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "Boolean",
+                  "writable": true
+                },
+                "children": [],
+                "id": "0.1.1",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Node Control/Rebirth"
+                },
+                "name": "Node Control/Rebirth",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "Boolean",
+                  "writable": true
+                },
+                "children": [],
+                "id": "0.1.2",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Node Control/Next Server"
+                },
+                "name": "Node Control/Next Server",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "String"
+                },
+                "children": [],
+                "id": "0.1.3",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Properties/Hardware Make"
+                },
+                "name": "Properties/Hardware Make",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "String"
+                },
+                "children": [],
+                "id": "0.1.4",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Properties/Hardware Model"
+                },
+                "name": "Properties/Hardware Model",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "String"
+                },
+                "children": [],
+                "id": "0.1.5",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Properties/FW"
+                },
+                "name": "Properties/FW",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "datatype": "String"
+                },
+                "children": [],
+                "id": "0.1.6",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Line1/Properties/OS"
+                },
+                "name": "Properties/OS",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "node",
+            "label": null,
+            "location": null,
+            "name": "Line1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "metricCount": 8
+            },
+            "children": [
+              {
+                "attributes": {
+                  "alias": 1,
+                  "datatype": "Double",
+                  "engHigh": 150,
+                  "engLow": -40,
+                  "engUnit": "degC"
+                },
+                "children": [],
+                "id": "0.2.0",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Inputs/Temperature"
+                },
+                "name": "Inputs/Temperature",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 2,
+                  "datatype": "Float",
+                  "engUnit": "bar"
+                },
+                "children": [],
+                "id": "0.2.1",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Inputs/Pressure"
+                },
+                "name": "Inputs/Pressure",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 3,
+                  "datatype": "Boolean"
+                },
+                "children": [],
+                "id": "0.2.2",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Inputs/Running"
+                },
+                "name": "Inputs/Running",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 4,
+                  "datatype": "Double",
+                  "engUnit": "degC",
+                  "writable": true
+                },
+                "children": [],
+                "id": "0.2.3",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Outputs/Setpoint"
+                },
+                "name": "Outputs/Setpoint",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 5,
+                  "datatype": "Boolean",
+                  "writable": true
+                },
+                "children": [],
+                "id": "0.2.4",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Device Control/Rebirth"
+                },
+                "name": "Device Control/Rebirth",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 6,
+                  "datatype": "String"
+                },
+                "children": [],
+                "id": "0.2.5",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Properties/Serial"
+                },
+                "name": "Properties/Serial",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 7,
+                  "datatype": "UInt64"
+                },
+                "children": [],
+                "id": "0.2.6",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Counters/Good"
+                },
+                "name": "Counters/Good",
+                "ordinal": 6,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 8,
+                  "datatype": "UInt64"
+                },
+                "children": [],
+                "id": "0.2.7",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Filler01/Counters/Rejected"
+                },
+                "name": "Counters/Rejected",
+                "ordinal": 7,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.2",
+            "kind": "device",
+            "label": null,
+            "location": null,
+            "name": "Filler01",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "metricCount": 3
+            },
+            "children": [
+              {
+                "attributes": {
+                  "alias": 20,
+                  "datatype": "Double",
+                  "engUnit": "Nm"
+                },
+                "children": [],
+                "id": "0.3.0",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Capper01/Inputs/Torque"
+                },
+                "name": "Inputs/Torque",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 21,
+                  "datatype": "Boolean"
+                },
+                "children": [],
+                "id": "0.3.1",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Capper01/Inputs/Running"
+                },
+                "name": "Inputs/Running",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "alias": 22,
+                  "datatype": "UInt64"
+                },
+                "children": [],
+                "id": "0.3.2",
+                "kind": "metric",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": null,
+                  "length": null,
+                  "line": null,
+                  "offset": null,
+                  "ordinal": null,
+                  "path": "Capper01/Counters/Good"
+                },
+                "name": "Counters/Good",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "device",
+            "label": null,
+            "location": null,
+            "name": "Capper01",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "namespace",
+        "label": null,
+        "location": null,
+        "name": "sparkplug/05-real-world-namespace-description.json",
+        "ordinal": null,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

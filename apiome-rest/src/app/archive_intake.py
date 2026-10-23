@@ -13,7 +13,7 @@ import io
 import re
 import tarfile
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Dict, List, Mapping, Optional, Tuple
 
@@ -60,6 +60,8 @@ _ROOT_CANDIDATE_SUFFIXES: Tuple[str, ...] = (
     ".asyncapi.json",
     # FMT-7.3: an Apigee proxy bundle is all XML (`apiproxy/<name>.xml` is its manifest).
     ".xml",
+    # FMT-9.2: a set of binary Sparkplug B payloads (a BIRTH and the DATA payloads after it).
+    ".bin",
 )
 
 
@@ -97,6 +99,8 @@ class UnpackedArchive:
     root_path: str
     detection: FormatDetection
     ambiguous_roots: Tuple[str, ...] = ()
+    #: Exact bytes of the members that are not UTF-8 text (see :class:`~app.fileset.IntakeFileset`).
+    binary_members: Dict[str, bytes] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -244,6 +248,20 @@ def _decode_member_bytes(data: bytes, *, path: str, max_file_bytes: int, where: 
     return data.decode("utf-8", errors="replace")
 
 
+def _keep_binary(binary: Optional[Dict[str, bytes]], name: str, data: bytes) -> None:
+    """Record a member's exact bytes in ``binary`` when they are not UTF-8 text (FMT-9.2).
+
+    The member's text decode is lossy for such bytes; a binary-aware adapter (Sparkplug B payloads)
+    reads the original from here. Valid UTF-8 is not repeated — its text re-encodes exactly.
+    """
+    if binary is None:
+        return
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        binary[name] = data
+
+
 def _read_zip_member(
     archive: zipfile.ZipFile,
     info: zipfile.ZipInfo,
@@ -299,6 +317,7 @@ def _unpack_zip(
     policy: ArchivePolicy,
     where: str,
     ignored: Optional[List[IgnoredMember]] = None,
+    binary: Optional[Dict[str, bytes]] = None,
 ) -> Dict[str, str]:
     try:
         archive = zipfile.ZipFile(io.BytesIO(raw))
@@ -360,6 +379,7 @@ def _unpack_zip(
             members[name] = _decode_member_bytes(
                 data, path=name, max_file_bytes=policy.max_file_bytes, where=where
             )
+            _keep_binary(binary, name, data)
     finally:
         archive.close()
 
@@ -419,6 +439,7 @@ def _unpack_tar(
     policy: ArchivePolicy,
     where: str,
     ignored: Optional[List[IgnoredMember]] = None,
+    binary: Optional[Dict[str, bytes]] = None,
 ) -> Dict[str, str]:
     mode = "r:gz" if raw[:2] == b"\x1f\x8b" else "r:"
     try:
@@ -487,6 +508,7 @@ def _unpack_tar(
             members[name] = _decode_member_bytes(
                 data, path=name, max_file_bytes=policy.max_file_bytes, where=where
             )
+            _keep_binary(binary, name, data)
     finally:
         archive.close()
 
@@ -501,6 +523,7 @@ def unpack_archive_members(
     source_label: Optional[str] = None,
     policy: Optional[ArchivePolicy] = None,
     ignored: Optional[List[IgnoredMember]] = None,
+    binary: Optional[Dict[str, bytes]] = None,
 ) -> Dict[str, str]:
     """Unpack a zip/tar archive into validated text members, without choosing a root.
 
@@ -518,6 +541,8 @@ def unpack_archive_members(
             appended to it as an :class:`IgnoredMember` (IXH-3.5). Purely an
             out-parameter — the unpack never reads it, so collecting cannot change
             what an import ingests.
+        binary: Optional collector; when given, the exact bytes of every member that is not
+            UTF-8 text are stored in it by path (FMT-9.2). An out-parameter like ``ignored``.
 
     Returns:
         Member text keyed by module-relative path.
@@ -535,9 +560,9 @@ def unpack_archive_members(
         )
 
     if raw[:2] == b"PK":
-        members = _unpack_zip(raw, policy=active, where=where, ignored=ignored)
+        members = _unpack_zip(raw, policy=active, where=where, ignored=ignored, binary=binary)
     else:
-        members = _unpack_tar(raw, policy=active, where=where, ignored=ignored)
+        members = _unpack_tar(raw, policy=active, where=where, ignored=ignored, binary=binary)
 
     # Compression ratio: uncompressed UTF-8 member bytes vs compressed archive size.
     uncompressed = sum(len(text.encode("utf-8", errors="replace")) for text in members.values())
@@ -573,16 +598,18 @@ def unpack_archive(
             an explicit ``root_path``, or no detectable root candidate.
     """
     where = f" ({source_label})" if source_label else ""
-    members = unpack_archive_members(raw, source_label=source_label, policy=policy)
+    binary: Dict[str, bytes] = {}
+    members = unpack_archive_members(raw, source_label=source_label, policy=policy, binary=binary)
 
     root, detection, ambiguous = resolve_fileset_root(
-        members, explicit_root=root_path, where=where
+        members, explicit_root=root_path, where=where, binary_members=binary
     )
     return UnpackedArchive(
         members=members,
         root_path=root,
         detection=detection,
         ambiguous_roots=ambiguous,
+        binary_members=binary,
     )
 
 
@@ -601,7 +628,9 @@ def _member_import_boost(path: str, text: str, members: Mapping[str, str]) -> fl
     return boost
 
 
-def rank_root_candidates(members: Mapping[str, str]) -> List[RootCandidate]:
+def rank_root_candidates(
+    members: Mapping[str, str], binary_members: Optional[Mapping[str, bytes]] = None
+) -> List[RootCandidate]:
     """Rank every member that could serve as the fileset's root, best first.
 
     The ranking rule is the one :func:`resolve_fileset_root` decides with: detection
@@ -612,6 +641,8 @@ def rank_root_candidates(members: Mapping[str, str]) -> List[RootCandidate]:
 
     Args:
         members: Member text keyed by module-relative path.
+        binary_members: Exact bytes of the members that are not UTF-8 text, handed to
+            detection as ``data`` so a binary format (FMT-9.2) can be recognised.
 
     Returns:
         The candidates sorted by score descending, then path ascending. Empty when no
@@ -622,9 +653,7 @@ def rank_root_candidates(members: Mapping[str, str]) -> List[RootCandidate]:
         lower = path.lower()
         if not any(lower.endswith(suffix) for suffix in _ROOT_CANDIDATE_SUFFIXES):
             continue
-        detection = detect_format(
-            DetectionInput(text=members[path], filename=path),
-        )
+        detection = detect_format(_member_detection_input(members, binary_members, path))
         if not detection.matched or detection.detected is None:
             continue
         confidence = detection.detected.confidence
@@ -640,9 +669,19 @@ def rank_root_candidates(members: Mapping[str, str]) -> List[RootCandidate]:
     return scored
 
 
-def _root_candidates(members: Mapping[str, str]) -> List[str]:
+def _member_detection_input(
+    members: Mapping[str, str], binary_members: Optional[Mapping[str, bytes]], path: str
+) -> DetectionInput:
+    """The detection input for one member: its text, plus its exact bytes when it is binary."""
+    data = (binary_members or {}).get(path)
+    return DetectionInput(text=members[path], filename=path, data=data)
+
+
+def _root_candidates(
+    members: Mapping[str, str], binary_members: Optional[Mapping[str, bytes]] = None
+) -> List[str]:
     """The ranked root-candidate paths (the path-only view of :func:`rank_root_candidates`)."""
-    return [candidate.path for candidate in rank_root_candidates(members)]
+    return [candidate.path for candidate in rank_root_candidates(members, binary_members)]
 
 
 def resolve_fileset_root(
@@ -651,6 +690,7 @@ def resolve_fileset_root(
     explicit_root: Optional[str],
     where: str,
     label: str = "Archive",
+    binary_members: Optional[Mapping[str, bytes]] = None,
 ) -> Tuple[str, FormatDetection, Tuple[str, ...]]:
     """Choose the root document of a fileset and detect its format.
 
@@ -667,6 +707,7 @@ def resolve_fileset_root(
         where: Source-label suffix appended to error messages (already parenthesised).
         label: Noun naming the input in error messages ("Archive", "Repository
             selection"), so a git failure does not talk about archives.
+        binary_members: Exact bytes of the members that are not UTF-8 text (FMT-9.2).
 
     Returns:
         ``(root_path, detection, ambiguous_runner_ups)``.
@@ -683,29 +724,27 @@ def resolve_fileset_root(
             raise ArchiveIntakeError(
                 f"{label} root {normalised!r} was not found among the resolved members{where}"
             )
-        detection = detect_format(
-            DetectionInput(text=members[normalised], filename=normalised),
-        )
+        detection = detect_format(_member_detection_input(members, binary_members, normalised))
         if not detection.matched:
             raise ArchiveIntakeError(
                 f"Could not detect a supported format for {label.lower()} root {normalised!r}{where}"
             )
         return normalised, detection, ()
 
-    candidates = _root_candidates(members)
+    candidates = _root_candidates(members, binary_members)
     if not candidates:
         raise ArchiveIntakeError(
             f"{label} contains no document with a recognisable import format{where}"
         )
     if len(candidates) == 1:
         root = candidates[0]
-        detection = detect_format(DetectionInput(text=members[root], filename=root))
+        detection = detect_format(_member_detection_input(members, binary_members, root))
         return root, detection, ()
 
     first = candidates[0]
     second = candidates[1]
-    det_first = detect_format(DetectionInput(text=members[first], filename=first))
-    det_second = detect_format(DetectionInput(text=members[second], filename=second))
+    det_first = detect_format(_member_detection_input(members, binary_members, first))
+    det_second = detect_format(_member_detection_input(members, binary_members, second))
     if (
         det_first.detected
         and det_second.detected
@@ -717,7 +756,7 @@ def resolve_fileset_root(
             f"(candidates: {', '.join(candidates[:5])}){where}"
         )
     root = candidates[0]
-    detection = detect_format(DetectionInput(text=members[root], filename=root))
+    detection = detect_format(_member_detection_input(members, binary_members, root))
     return root, detection, tuple(candidates[1:5])
 
 

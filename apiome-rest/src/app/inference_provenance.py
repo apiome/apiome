@@ -120,6 +120,7 @@ INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "pkl": "Anonymous types are synthesized.",
     "dhall": "Anonymous types are synthesized.",
     "opcua-nodeset": "The request and response records a method's arguments become are synthesized.",
+    "sparkplug": "Every construct of a payload-only import is inferred: a payload does not carry its topic.",
 }
 
 

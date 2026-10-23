@@ -507,7 +507,7 @@
       "marker": "`<con:soapui-project>` root in the eviware config namespace"
     },
     "sparkplug": {
-      "label": "MQTT Sparkplug B (pending #5469)",
+      "label": "MQTT Sparkplug B",
       "category": "event-messaging",
       "paradigm": "event",
       "marker": "`spBv1.0/...` topic namespace, or a Sparkplug protobuf `Payload` on the binary intake path"
@@ -26085,7 +26085,7 @@
     {
       "path": "sparkplug/01-minimal-topic-namespace.json",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26093,8 +26093,7 @@
       },
       "features": [
         "topic-namespace",
-        "node-topics",
-        "pending-adapter"
+        "node-topics"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -26105,7 +26104,7 @@
     {
       "path": "sparkplug/02-typical-nbirth.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26116,8 +26115,7 @@
         "NBIRTH",
         "bdSeq",
         "node-control",
-        "properties",
-        "pending-adapter"
+        "properties"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -26128,7 +26126,7 @@
     {
       "path": "sparkplug/03-composition-dbirth.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26140,19 +26138,19 @@
         "aliases",
         "property-set",
         "metadata",
-        "engineering-units",
-        "pending-adapter"
+        "engineering-units"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "rung": "composition"
+      "rung": "composition",
+      "notes": "Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed."
     },
     {
       "path": "sparkplug/04-stress-ddata-all-datatypes.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26165,19 +26163,19 @@
         "is-historical",
         "is-transient",
         "payload-uuid",
-        "alias-only-metric",
-        "pending-adapter"
+        "alias-only-metric"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "rung": "stress"
+      "rung": "stress",
+      "notes": "Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed."
     },
     {
       "path": "sparkplug/05-real-world-namespace-description.json",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26190,8 +26188,7 @@
         "NCMD",
         "DCMD",
         "STATE",
-        "broker",
-        "pending-adapter"
+        "broker"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -26202,7 +26199,7 @@
     {
       "path": "sparkplug/06-typical-ddata.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26211,8 +26208,7 @@
       "features": [
         "binary-intake",
         "DDATA",
-        "alias-only-metric",
-        "pending-adapter"
+        "alias-only-metric"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -26224,7 +26220,7 @@
     {
       "path": "sparkplug/07-session-set/dbirth.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26234,20 +26230,20 @@
         "DBIRTH",
         "aliases",
         "property-set",
-        "binary-intake",
-        "pending-adapter"
+        "binary-intake"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "rung": "multi-file",
-      "fileset_role": "root"
+      "fileset_role": "root",
+      "notes": "Re-encoded for FMT-9.2: the staged bytes put PropertyValue and MetaData fields on numbers the Tahu sparkplug_b.proto does not assign (string_value on 9, description on 9); only those tags changed."
     },
     {
       "path": "sparkplug/07-session-set/ddata.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26256,8 +26252,7 @@
       "features": [
         "DDATA",
         "alias-only-metric",
-        "binary-intake",
-        "pending-adapter"
+        "binary-intake"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -26270,7 +26265,7 @@
     {
       "path": "sparkplug/07-session-set/ddeath.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "valid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26279,8 +26274,7 @@
       "features": [
         "DDEATH",
         "bdSeq",
-        "binary-intake",
-        "pending-adapter"
+        "binary-intake"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -26293,7 +26287,7 @@
     {
       "path": "sparkplug/negative/01-syntactic-malformed-wire-format.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26302,20 +26296,20 @@
       "features": [
         "negative",
         "syntactic",
-        "malformed-varint-length",
-        "pending-adapter"
+        "invalid-wire-type"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "failure_class": "syntactic",
-      "expected_error_code": "INPUT_MALFORMED"
+      "expected_error_code": "INPUT_MALFORMED",
+      "notes": "Length-consistent at the top level, so the reader cannot mistake it for a cut-off payload: the metric inside uses wire type 7, which protobuf does not define. Rewritten for FMT-9.2 \u2014 the staged fixture declared a metric longer than the file, which reads as truncated."
     },
     {
       "path": "sparkplug/negative/02-semantic-no-metrics.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26324,8 +26318,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-metrics",
-        "pending-adapter"
+        "no-metrics"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -26337,7 +26330,7 @@
     {
       "path": "sparkplug/negative/03-truncated-mid-metric.bin",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26346,8 +26339,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-metric",
-        "pending-adapter"
+        "mid-metric"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -26359,7 +26351,7 @@
     {
       "path": "sparkplug/negative/04-wrong-format-protobuf-schema.proto",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26368,8 +26360,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "protobuf-schema",
-        "pending-adapter"
+        "protobuf-schema"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -26382,7 +26373,7 @@
     {
       "path": "sparkplug/negative/05-encoding-utf16.json",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26391,8 +26382,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -26404,7 +26394,7 @@
     {
       "path": "sparkplug/negative/06-semantic-topic-namespace-mismatch.json",
       "format": "sparkplug",
-      "adapter_key": null,
+      "adapter_key": "sparkplug",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "sparkplug",
@@ -26415,8 +26405,7 @@
         "semantic",
         "namespace-mismatch",
         "group-mismatch",
-        "missing-edge-node",
-        "pending-adapter"
+        "missing-edge-node"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

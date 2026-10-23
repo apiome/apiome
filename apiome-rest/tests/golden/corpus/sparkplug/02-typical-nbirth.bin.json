@@ -1,0 +1,346 @@
+{
+  "adapter": "sparkplug",
+  "canonical": {
+    "channels": [
+      {
+        "address": "spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
+        "bindings": {},
+        "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Message type NBIRTH inferred from the file name '02-typical-nbirth.bin'.",
+          "sparkplug_topic": {
+            "edge_node_id": null,
+            "group_id": null,
+            "message_type": "NBIRTH",
+            "namespace": "spBv1.0"
+          }
+        },
+        "key": "spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
+        "name": "NBIRTH",
+        "parameters": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The edge node that published the payload.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/NBIRTH/{edge_node_id}#param.edge_node_id",
+            "name": "edge_node_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The Sparkplug group the edge node belongs to.",
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "A Sparkplug payload does not carry the topic it was published on, so this component of the address is unknown."
+            },
+            "field_number": null,
+            "key": "spBv1.0/{group_id}/NBIRTH/{edge_node_id}#param.group_id",
+            "name": "group_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "protocol": "mqtt"
+      }
+    ],
+    "description": "Inferred from Sparkplug B payloads alone: the topics they were published on were not supplied, so the group, edge node and device are address parameters.",
+    "extras": {
+      "sparkplug": {
+        "capability_limits": [],
+        "input": "payload",
+        "payloads": [
+          {
+            "label": "02-typical-nbirth.bin",
+            "messageType": "NBIRTH",
+            "messageTypeEvidence": "Message type NBIRTH inferred from the file name '02-typical-nbirth.bin'.",
+            "metricCount": 7,
+            "seq": 0,
+            "timestamp": 1786000000000
+          }
+        ]
+      }
+    },
+    "format": "sparkplug",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "02-typical-nbirth",
+      "namespace": "spBv1.0"
+    },
+    "paradigm": "event",
+    "protocol": "mqtt",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "A payload names no edge node; the operations are grouped under one service."
+        },
+        "key": "Sparkplug",
+        "name": "Sparkplug",
+        "operations": [
+          {
+            "channel_ref": "spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
+            "deprecated": false,
+            "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+            "extras": {
+              "action": "publish",
+              "provenance": "inferred",
+              "provenance_evidence": "Message type NBIRTH inferred from the file name '02-typical-nbirth.bin'.",
+              "sparkplug_message_type": "NBIRTH",
+              "sparkplug_sources": [
+                "02-typical-nbirth.bin"
+              ]
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
+            "kind": "publish",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "Edge node birth certificate: every node metric, with its datatype, alias and properties.",
+                "extras": {
+                  "provenance": "inferred",
+                  "provenance_evidence": "Message type NBIRTH inferred from the file name '02-typical-nbirth.bin'.",
+                  "sparkplug_encoding": "protobuf"
+                },
+                "headers": [],
+                "key": "publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}#event.NBIRTH",
+                "name": "NBIRTH",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "NBIRTH",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "NBIRTH",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "02-typical-nbirth",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Metrics carried by the NBIRTH payload (02-typical-nbirth.bin).",
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred",
+          "provenance_evidence": "Metrics observed in 02-typical-nbirth.bin.",
+          "sparkplug_message_type": "NBIRTH",
+          "sparkplug_sources": [
+            "02-typical-nbirth.bin"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Node Control/Next Server",
+            "name": "Node Control/Next Server",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "Boolean"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Node Control/Rebirth",
+            "name": "Node Control/Rebirth",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Properties/FW",
+            "name": "Properties/FW",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Properties/Hardware Make",
+            "name": "Properties/Hardware Make",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Properties/Hardware Model",
+            "name": "Properties/Hardware Model",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_datatype": "String"
+            },
+            "field_number": null,
+            "key": "NBIRTH.Properties/OS",
+            "name": "Properties/OS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "provenance": "inferred",
+              "provenance_evidence": "Observed in the payload 02-typical-nbirth.bin.",
+              "sparkplug_alias": 0,
+              "sparkplug_datatype": "UInt64"
+            },
+            "field_number": null,
+            "key": "NBIRTH.bdSeq",
+            "name": "bdSeq",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "NBIRTH",
+        "key_type": null,
+        "kind": "record",
+        "name": "NBIRTH",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "sparkplug/02-typical-nbirth.bin",
+  "counts": {
+    "channels": 1,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "sparkplug"
+  },
+  "fingerprint": "sha256:8346e07a3df7a70efc0367efc70365f6cc929008fbe2b2be8c6800f4dc5a99ca",
+  "lint": {
+    "findings": 8,
+    "grade": "A",
+    "report_fingerprint": "71984e343f470321c114ba5636317d35554e4a6e07ed88f637ea6fac0c009b59",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 8,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

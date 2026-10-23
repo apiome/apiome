@@ -2,7 +2,7 @@
 
 Fixtures for **FMT-9.2** ([#5469](https://github.com/apiome/apiome/issues/5469)). Sparkplug B defines
 the payload **and** the topic namespace for industrial MQTT, and it rides AsyncAPI's MQTT bindings,
-which Apiome already supports. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+which Apiome already supports. Entries import with the `sparkplug` adapter.
 
 **Two inputs, one model.**
 
@@ -18,6 +18,9 @@ schema.
 
 > **The `.bin` fixtures are hand-encoded**, byte by byte, by the corpus authoring script — no Sparkplug
 > library was used and no real device was recorded. Timestamps are fixed so the bytes are reproducible.
+> FMT-9.2 corrected the `PropertyValue` and `MetaData` field numbers in `03`, `04` and
+> `07-session-set/dbirth.bin` to the Eclipse Tahu `sparkplug_b.proto` numbering, and rewrote
+> `negative/01` so it is broken *inside* a complete metric (wire type 7) rather than cut short.
 
 | File | Rung | What it exercises |
 | --- | --- | --- |
@@ -28,7 +31,7 @@ schema.
 | `05-real-world-namespace-description.json` | real-world | A line's full namespace: broker settings, eleven topics including `NCMD`/`DCMD` inbound and a retained `STATE`, two devices with their metric catalogues. |
 | `06-typical-ddata.bin` | typical | A **DDATA** carrying three alias-only metrics — unreadable without the DBIRTH. |
 | `07-session-set/` | multi-file | DBIRTH → DDATA → DDEATH: the alias-only DDATA is nameable only through the DBIRTH. |
-| `negative/` | — | A length-delimited field that runs past the buffer, a payload with no metrics, a truncated payload, the Sparkplug **`.proto` schema** (which describes the payloads rather than being one), UTF-16, and topics whose namespace/group/edge-node segments contradict the declared identity. |
+| `negative/` | — | A metric using a wire type protobuf does not define, a payload with no metrics, a truncated payload, the Sparkplug **`.proto` schema** (which describes the payloads rather than being one), UTF-16, and topics whose namespace/group/edge-node segments contradict the declared identity. |
 
 **Provenance rule.** Where only payloads are supplied, everything is `inferred`: a DDATA alone cannot
 name its metrics, and the adapter must say so rather than inventing names.

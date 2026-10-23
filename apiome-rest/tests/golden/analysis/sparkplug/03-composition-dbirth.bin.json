@@ -1,0 +1,411 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/03-composition-dbirth.bin",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "metadata": 1,
+        "metric": 6,
+        "payload": 1,
+        "property": 8
+      },
+      "maxDepth": 3,
+      "nodeCount": 16,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:f1ab3462b7cc474c71cead018d9a3a79086a8ab7947ead61c0879873c6d40db2",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "messageType": "DBIRTH",
+          "messageTypeEvidence": "Message type DBIRTH inferred from the file name '03-composition-dbirth.bin'.",
+          "metricCount": 6,
+          "seq": 1,
+          "size": 431,
+          "timestamp": 1786000001000
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 1,
+              "datatype": "Double",
+              "timestamp": 1786000001000,
+              "valueField": "double_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "degC"
+                },
+                "children": [],
+                "id": "0.0.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": -40.0
+                },
+                "children": [],
+                "id": "0.0.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engLow",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": 150.0
+                },
+                "children": [],
+                "id": "0.0.2",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engHigh",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Int32",
+                  "value": 192
+                },
+                "children": [],
+                "id": "0.0.3",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "quality",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "description": "Process temperature at the inlet."
+                },
+                "children": [],
+                "id": "0.0.4",
+                "kind": "metadata",
+                "label": null,
+                "location": null,
+                "name": "metadata",
+                "ordinal": null,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "03-composition-dbirth.bin/Inputs/Temperature"
+            },
+            "name": "Inputs/Temperature",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "21.5",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 2,
+              "datatype": "Float",
+              "timestamp": 1786000001000,
+              "valueField": "float_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "bar"
+                },
+                "children": [],
+                "id": "0.1.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Int32",
+                  "value": 192
+                },
+                "children": [],
+                "id": "0.1.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "quality",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "03-composition-dbirth.bin/Inputs/Pressure"
+            },
+            "name": "Inputs/Pressure",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "1.0130000114440918",
+            "valueLength": 18,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 3,
+              "datatype": "Boolean",
+              "timestamp": 1786000001000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "03-composition-dbirth.bin/Inputs/Running"
+            },
+            "name": "Inputs/Running",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "true",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 4,
+              "datatype": "Double",
+              "timestamp": 1786000001000,
+              "valueField": "double_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "degC"
+                },
+                "children": [],
+                "id": "0.3.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Boolean",
+                  "value": true
+                },
+                "children": [],
+                "id": "0.3.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "writable",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.3",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "03-composition-dbirth.bin/Outputs/Setpoint"
+            },
+            "name": "Outputs/Setpoint",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "22.0",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 5,
+              "datatype": "Boolean",
+              "timestamp": 1786000001000,
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "03-composition-dbirth.bin/Device Control/Rebirth"
+            },
+            "name": "Device Control/Rebirth",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "false",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 6,
+              "datatype": "String",
+              "timestamp": 1786000001000,
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "03-composition-dbirth.bin/Properties/Serial"
+            },
+            "name": "Properties/Serial",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "DEV-000412",
+            "valueLength": 10,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": null
+        },
+        "name": "03-composition-dbirth.bin",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

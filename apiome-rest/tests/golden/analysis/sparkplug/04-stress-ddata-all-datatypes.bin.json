@@ -1,0 +1,771 @@
+{
+  "adapter": "sparkplug",
+  "corpus_path": "sparkplug/04-stress-ddata-all-datatypes.bin",
+  "document": {
+    "analyzer": {
+      "key": "sparkplug",
+      "toolVersions": {},
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "sparkplug.aliases",
+        "sparkplug.datasets",
+        "sparkplug.datatypes",
+        "sparkplug.metadata",
+        "sparkplug.metric_values",
+        "sparkplug.metrics",
+        "sparkplug.payloads",
+        "sparkplug.property_sets",
+        "sparkplug.templates",
+        "sparkplug.topic_namespace"
+      ],
+      "unsupported": [
+        "sparkplug.dataset_rows",
+        "sparkplug.extensions",
+        "sparkplug.payload_body"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "metadata": 1,
+        "metric": 21,
+        "payload": 1,
+        "property": 6
+      },
+      "maxDepth": 3,
+      "nodeCount": 29,
+      "truncated": false,
+      "warningCount": 0
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "sparkplug",
+    "sourceHash": "sha256:60072eeb73d586ed9b2a832d06144f3fd61917b220ea9ffd677feaca178fcffa",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "messageType": "DDATA",
+          "messageTypeEvidence": "Message type DDATA inferred from the file name '04-stress-ddata-all-datatypes.bin'.",
+          "metricCount": 21,
+          "seq": 2,
+          "size": 810,
+          "timestamp": 1786000002000,
+          "uuid": "6b2c1a7e-0f4d-4a2b-9c31-0000000000ff"
+        },
+        "children": [
+          {
+            "attributes": {
+              "alias": 10,
+              "datatype": "Int8",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 0,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Int8"
+            },
+            "name": "All/Int8",
+            "ordinal": 0,
+            "redacted": false,
+            "value": "127",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 11,
+              "datatype": "Int16",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 1,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Int16"
+            },
+            "name": "All/Int16",
+            "ordinal": 1,
+            "redacted": false,
+            "value": "32000",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 12,
+              "datatype": "Int32",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 2,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Int32"
+            },
+            "name": "All/Int32",
+            "ordinal": 2,
+            "redacted": false,
+            "value": "2000000",
+            "valueLength": 7,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 13,
+              "datatype": "Int64",
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 3,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Int64"
+            },
+            "name": "All/Int64",
+            "ordinal": 3,
+            "redacted": false,
+            "value": "9000000000",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 14,
+              "datatype": "UInt8",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 4,
+              "path": "04-stress-ddata-all-datatypes.bin/All/UInt8"
+            },
+            "name": "All/UInt8",
+            "ordinal": 4,
+            "redacted": false,
+            "value": "255",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 15,
+              "datatype": "UInt16",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 5,
+              "path": "04-stress-ddata-all-datatypes.bin/All/UInt16"
+            },
+            "name": "All/UInt16",
+            "ordinal": 5,
+            "redacted": false,
+            "value": "65535",
+            "valueLength": 5,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 16,
+              "datatype": "UInt32",
+              "valueField": "int_value"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 6,
+              "path": "04-stress-ddata-all-datatypes.bin/All/UInt32"
+            },
+            "name": "All/UInt32",
+            "ordinal": 6,
+            "redacted": false,
+            "value": "4000000000",
+            "valueLength": 10,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 17,
+              "datatype": "UInt64",
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "0.7",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 7,
+              "path": "04-stress-ddata-all-datatypes.bin/All/UInt64"
+            },
+            "name": "All/UInt64",
+            "ordinal": 7,
+            "redacted": false,
+            "value": "18000000000000000000",
+            "valueLength": 20,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 18,
+              "datatype": "Float",
+              "valueField": "float_value"
+            },
+            "children": [],
+            "id": "0.8",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 8,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Float"
+            },
+            "name": "All/Float",
+            "ordinal": 8,
+            "redacted": false,
+            "value": "3.5",
+            "valueLength": 3,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 19,
+              "datatype": "Double",
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "0.9",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 9,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Double"
+            },
+            "name": "All/Double",
+            "ordinal": 9,
+            "redacted": false,
+            "value": "2.718281828",
+            "valueLength": 11,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 20,
+              "datatype": "Boolean",
+              "valueField": "boolean_value"
+            },
+            "children": [],
+            "id": "0.10",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 10,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Boolean"
+            },
+            "name": "All/Boolean",
+            "ordinal": 10,
+            "redacted": false,
+            "value": "true",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 21,
+              "datatype": "String",
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.11",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 11,
+              "path": "04-stress-ddata-all-datatypes.bin/All/String"
+            },
+            "name": "All/String",
+            "ordinal": 11,
+            "redacted": false,
+            "value": "text",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 22,
+              "datatype": "Text",
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.12",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 12,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Text"
+            },
+            "name": "All/Text",
+            "ordinal": 12,
+            "redacted": false,
+            "value": "longer text value",
+            "valueLength": 17,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 23,
+              "datatype": "UUID",
+              "valueField": "string_value"
+            },
+            "children": [],
+            "id": "0.13",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 13,
+              "path": "04-stress-ddata-all-datatypes.bin/All/UUID"
+            },
+            "name": "All/UUID",
+            "ordinal": 13,
+            "redacted": false,
+            "value": "6b2c1a7e-0f4d-4a2b-9c31-000000000001",
+            "valueLength": 36,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 24,
+              "datatype": "DateTime",
+              "valueField": "long_value"
+            },
+            "children": [],
+            "id": "0.14",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 14,
+              "path": "04-stress-ddata-all-datatypes.bin/All/DateTime"
+            },
+            "name": "All/DateTime",
+            "ordinal": 14,
+            "redacted": false,
+            "value": "1786000000000",
+            "valueLength": 13,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 25,
+              "datatype": "Bytes",
+              "valueField": "bytes_value"
+            },
+            "children": [],
+            "id": "0.15",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 15,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Bytes"
+            },
+            "name": "All/Bytes",
+            "ordinal": 15,
+            "redacted": false,
+            "value": null,
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 26,
+              "datatype": "Double",
+              "flags": [
+                "null"
+              ]
+            },
+            "children": [],
+            "id": "0.16",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 16,
+              "path": "04-stress-ddata-all-datatypes.bin/All/NullMetric"
+            },
+            "name": "All/NullMetric",
+            "ordinal": 16,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": false
+          },
+          {
+            "attributes": {
+              "alias": 27,
+              "datatype": "Double",
+              "flags": [
+                "historical"
+              ],
+              "timestamp": 1785999940000,
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "0.17",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 17,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Historical"
+            },
+            "name": "All/Historical",
+            "ordinal": 17,
+            "redacted": false,
+            "value": "20.1",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 28,
+              "datatype": "Double",
+              "flags": [
+                "transient"
+              ],
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "0.18",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 18,
+              "path": "04-stress-ddata-all-datatypes.bin/All/Transient"
+            },
+            "name": "All/Transient",
+            "ordinal": 18,
+            "redacted": false,
+            "value": "20.2",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 29,
+              "datatype": "Double",
+              "valueField": "double_value"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "kPa"
+                },
+                "children": [],
+                "id": "0.19.0",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engUnit",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": 0.0
+                },
+                "children": [],
+                "id": "0.19.1",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engLow",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Double",
+                  "value": 1000.0
+                },
+                "children": [],
+                "id": "0.19.2",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "engHigh",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Float",
+                  "value": 0.5
+                },
+                "children": [],
+                "id": "0.19.3",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "deadband",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "Boolean",
+                  "value": true
+                },
+                "children": [],
+                "id": "0.19.4",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "critical",
+                "ordinal": 4,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "type": "String",
+                  "value": "ASSET-0042"
+                },
+                "children": [],
+                "id": "0.19.5",
+                "kind": "property",
+                "label": null,
+                "location": null,
+                "name": "assetId",
+                "ordinal": 5,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "contentType": "application/octet-stream",
+                  "description": "Metric carrying a full property set and metadata.",
+                  "size": 4
+                },
+                "children": [],
+                "id": "0.19.6",
+                "kind": "metadata",
+                "label": null,
+                "location": null,
+                "name": "metadata",
+                "ordinal": null,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.19",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 19,
+              "path": "04-stress-ddata-all-datatypes.bin/All/WithProperties"
+            },
+            "name": "All/WithProperties",
+            "ordinal": 19,
+            "redacted": false,
+            "value": "42.0",
+            "valueLength": 4,
+            "valuePresent": true
+          },
+          {
+            "attributes": {
+              "alias": 1,
+              "datatype": "Double",
+              "valueField": "double_value"
+            },
+            "children": [],
+            "id": "0.20",
+            "kind": "metric",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": null,
+              "length": null,
+              "line": null,
+              "offset": null,
+              "ordinal": 20,
+              "path": "04-stress-ddata-all-datatypes.bin/alias:1"
+            },
+            "name": "alias:1",
+            "ordinal": 20,
+            "redacted": false,
+            "value": "21.9",
+            "valueLength": 4,
+            "valuePresent": true
+          }
+        ],
+        "id": "0",
+        "kind": "payload",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": null,
+          "length": null,
+          "line": null,
+          "offset": null,
+          "ordinal": 0,
+          "path": null
+        },
+        "name": "04-stress-ddata-all-datatypes.bin",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": []
+  },
+  "snapshot_version": 1
+}

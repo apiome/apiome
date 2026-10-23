@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 82
+- **Formats gated:** 83
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -78,6 +78,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `raml` | RAML | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `raml` |
 | `relaxng` | RELAX NG | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `smithy` | Smithy | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `smithy` |
+| `sparkplug` | MQTT Sparkplug B | event | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `sql-ddl` | SQL DDL | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `swift-mt` | SWIFT MT | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `thrift` | Thrift | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `thrift` |
@@ -167,6 +168,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `raml` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `relaxng` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `smithy` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `sparkplug` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `sql-ddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `swift-mt` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `thrift` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -203,4 +205,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `owl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `sparkplug`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `owl`, `pli`, `ros2`, `schematron`, `shacl`, `soapui`, `thunder-client`, `vsam-idcams`

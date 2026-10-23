@@ -87,6 +87,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('opcua-nodeset')?.sourceKind).toBe('opcua-nodeset');
     expect(catalogAdapterForFormat('nodeset2')?.sourceKind).toBe('opcua-nodeset');
     expect(catalogAdapterForFormat('opcua')?.sourceKind).toBe('opcua-nodeset');
+    // FMT-9.2: MQTT Sparkplug B, under its key and alias, on the event paradigm.
+    expect(catalogAdapterForFormat('sparkplug')?.sourceKind).toBe('sparkplug');
+    expect(catalogAdapterForFormat('sparkplug-b')?.sourceKind).toBe('sparkplug');
     // FMT-8.5: CUE, Pkl and Dhall.
     expect(catalogAdapterForFormat('cue')?.sourceKind).toBe('cue');
     expect(catalogAdapterForFormat('pkl')?.sourceKind).toBe('pkl');
@@ -142,7 +145,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'smithy', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -377,6 +380,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('grpc')).toBe('rpc');
     expect(paradigmForFormat('graphql')).toBe('graph');
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
+    expect(paradigmForFormat('sparkplug')).toBe('event');
     expect(paradigmForFormat('thrift')).toBe('rpc');
     expect(paradigmForFormat('connectrpc')).toBe('rpc');
     expect(paradigmForFormat('flatbuffers')).toBe('dataschema');

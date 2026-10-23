@@ -525,7 +525,9 @@ def _resolve_intake(payload: Dict[str, Any], options: Dict[str, Any]) -> _Resolv
             str(exc), code=getattr(exc, "code", None) or "INPUT_ARCHIVE_INVALID"
         ) from exc
 
-    fileset = IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
+    fileset = IntakeFileset.from_members(
+        unpacked.members, root=unpacked.root_path, binary_members=unpacked.binary_members
+    )
     return _ResolvedIntake(
         raw_bytes=raw_bytes,
         text=None,
@@ -628,7 +630,11 @@ def resolve_intake_remote_refs(
                 members[label] = json.dumps(
                     outcome.documents[label], separators=(",", ":")
                 )
-            fileset = IntakeFileset.from_members(members, root=intake.fileset.root)
+            fileset = IntakeFileset.from_members(
+                members,
+                root=intake.fileset.root,
+                binary_members=intake.fileset.binary_members,
+            )
         else:
             # Key order is preserved (never sorted): a JSON Schema's ``properties`` order
             # carries into the canonical model's field order, so re-serializing sorted would
