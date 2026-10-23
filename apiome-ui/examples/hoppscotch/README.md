@@ -2,8 +2,7 @@
 
 Fixtures for **FMT-10.1** ([#5473](https://github.com/apiome/apiome/issues/5473)). Hoppscotch is the
 open-source client teams choose when they leave Postman; it imports from OpenAPI, Postman, Insomnia
-and HAR, and Apiome cannot read its collection JSON at all. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+and HAR. The `hoppscotch` adapter imports these collections, with their environments, as one API.
 
 **Detection markers.** A top-level `v` (collection schema version) with `name`, `folders[]` and
 `requests[]`, where each request carries `endpoint`, `method`, `params`, `headers` and an `auth`
@@ -22,5 +21,5 @@ Hoppscotch collection from a Postman one.
 | `negative/` | — | Missing brace, a collection with no requests anywhere, truncation, a **Postman v2.1** collection, UTF-16, and requests with an empty endpoint and an unresolvable variable. |
 
 **Credential rule.** Every credential-shaped value is `""` or a `<<variable>>`; the environment marks
-`apiKey` with `"secret": true`. FMT-10.1 still requires the scrub gate to be asserted — a saved
-Hoppscotch request *can* carry a literal token, and it must never be persisted.
+`apiKey` with `"secret": true`. A saved Hoppscotch request *can* carry a literal token; the adapter never reads auth
+credentials and scrubs every other value, and `tests/test_hoppscotch_import.py` asserts it.

@@ -1,0 +1,124 @@
+{
+  "adapter": "hoppscotch",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "hoppscotch": {
+        "capability_limits": [],
+        "collection_versions": [
+          "6"
+        ],
+        "environments": [],
+        "folders": [],
+        "requests": 1,
+        "variables": []
+      },
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /ping": 1
+      }
+    },
+    "format": "hoppscotch",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Ping",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "hoppscotch/01-minimal-collection.json"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Ping",
+        "name": "Ping",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/ping"
+                ],
+                "template": "/ping"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "hoppscotch/01-minimal-collection.json"
+              ],
+              "source_label": "Ping",
+              "source_location": "requests/0"
+            },
+            "http_method": "GET",
+            "http_path": "/ping",
+            "key": "GET /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Ping",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "hoppscotch/01-minimal-collection.json",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "hoppscotch"
+  },
+  "fingerprint": "sha256:f25c186336ed2edb0893b93fb42dac046e877bb8827e8726bf3c39be08bd3b57",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "8c9b74acea48097b52c67a3d4974ea2484ec2b92055f36ae6ddf15106060732c",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,162 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "x-auth-folder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-auth-folder"
+        ],
+        "type": "object"
+      },
+      "name": "GET_deep",
+      "operation": "GET /deep"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-auth-folder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-auth-folder"
+        ],
+        "type": "object"
+      },
+      "name": "GET_keyed",
+      "operation": "GET /keyed"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-auth-folder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-auth-folder"
+        ],
+        "type": "object"
+      },
+      "name": "GET_legacy",
+      "operation": "GET /legacy"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-auth-folder": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-auth-folder"
+        ],
+        "type": "object"
+      },
+      "name": "GET_protected",
+      "operation": "GET /protected"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "sampleId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "x-request-id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sampleId",
+          "content-type",
+          "x-request-id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "PATCH_samples_sampleId_status",
+      "operation": "PATCH /samples/{sampleId}/status"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "variables": {}
+        },
+        "required": [
+          "content-type",
+          "query",
+          "variables"
+        ],
+        "type": "object"
+      },
+      "name": "POST_graphql",
+      "operation": "POST /graphql"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "assay": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "replicates": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "assay",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "POST_samples",
+      "operation": "POST /samples"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "attachment": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "attachment",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "POST_samples_upload",
+      "operation": "POST /samples/upload"
+    }
+  ]
+}

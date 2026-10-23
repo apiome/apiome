@@ -103,6 +103,7 @@ PROVENANCE_STAMP_KEYS = frozenset({PROVENANCE_KEY, PROVENANCE_EVIDENCE_KEY})
 INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "http-file": "Every construct is inferred from the requests in the file.",
     "postman": "Request and response schemas are inferred from example bodies.",
+    "hoppscotch": "Every construct is inferred from the saved requests in the collection.",
     "kong": "Paths recovered from regex patterns are inferred.",
     "gateway-api": "Paths recovered from regex patterns are inferred.",
     "envoy-xds": "Every route is inferred from the route table.",

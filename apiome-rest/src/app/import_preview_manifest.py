@@ -138,6 +138,8 @@ from .export_projection import (
 )
 from .format_lint_capabilities import FormatLintCapability, capability_for_format
 from .gateway_family import flavor_for
+from .hoppscotch_normalizer import HOPPSCOTCH_EXTRAS_KEY
+from .hoppscotch_normalizer import PARTIAL_LIMITS as HOPPSCOTCH_PARTIAL_LIMITS
 from .import_preflight import run_import_preflight
 from .import_source import (
     DiffChangeKind,
@@ -290,6 +292,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-9.3: the ROS 2 projection record (input kind, interfaces, packages, declared limits).
         # Our own bookkeeping — a field's written type rides under `ros2_type`.
         ROS2_EXTRAS_KEY,
+        # FMT-10.1: the Hoppscotch projection record (collection versions, environments, folders,
+        # variable names, declared limits). Our own bookkeeping — never a credential.
+        HOPPSCOTCH_EXTRAS_KEY,
         # FMT-9.5: the LwM2M and Matter projection records (input kind, objects / clusters and
         # device types, declared limits). Our own bookkeeping.
         LWM2M_EXTRAS_KEY,
@@ -1251,6 +1256,7 @@ def _document_scope_rows(
     ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_ros2_capability_rows(api))
+    ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_device_model_capability_rows(api))
     ledger.extend(_linked_data_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
@@ -2106,6 +2112,23 @@ def _ros2_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         One ledger row per declared limit (see :func:`_graded_limit_rows`).
     """
     return _graded_limit_rows(api, format_key="ros2", extras_key=ROS2_EXTRAS_KEY, partial=ROS2_PARTIAL_LIMITS)
+
+
+def _hoppscotch_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-10.1 Hoppscotch declared limits as document-scoped ledger rows.
+
+    A withheld credential keeps its auth scheme and a secret variable keeps its name, so those
+    are ``partially-mapped``; a pre-request or test script is not modelled at all.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="hoppscotch", extras_key=HOPPSCOTCH_EXTRAS_KEY, partial=HOPPSCOTCH_PARTIAL_LIMITS
+    )
 
 
 def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

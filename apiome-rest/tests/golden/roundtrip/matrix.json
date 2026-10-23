@@ -100591,6 +100591,2633 @@
       "unexplained": []
     },
     {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 10,
+      "emit_format": "apigee",
+      "emit_key": "apigee",
+      "loss_approx": 5,
+      "loss_drop": 1,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'DELETE /v2/orders/{segment1}', removed operation 'GET /v2/orders/{orderId}', added operation 'GET /v2/orders/{segment1}', removed service 'Orders API', added service 'default' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'DELETE /v2/orders/{segment1}', removed operation 'GET /v2/orders/{orderId}', added operation 'GET /v2/orders/{segment1}', removed service 'Orders API', added service 'default')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 11,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders API#DELETE /v2/orders/{orderId}', added operation 'Orders API#GET /v2/orders', added operation 'Orders API#GET /v2/orders/{orderId}', added operation 'Orders API#POST /v2/orders', removed operation 'POST /v2/orders', changed root '', changed service 'Orders API', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders API#DELETE /v2/orders/{orderId}', added operation 'Orders API#GET /v2/orders', added operation 'Orders API#GET /v2/orders/{orderId}', added operation 'Orders API#POST /v2/orders', removed operation 'POST /v2/orders', changed root '', changed service 'Orders API', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders API#DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders API#GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders API#GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders API#POST /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to ASN.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', added type 'OrdersAPI.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', added type 'OrdersAPI.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "OrdersAPI.PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Property \"sample_count\" is not expected to be here (observed: Re-import failed: Property \"sample_count\" is not expected to be here)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Apache Avro",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "aws-apigateway",
+      "emit_key": "aws-apigateway",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to AWS API Gateway",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "azure-apim",
+      "emit_key": "azure-apim",
+      "loss_approx": 5,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Azure API Management",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: type object 'LossKind' has no attribute 'DROP' (observed: Emit failed: type object 'LossKind' has no attribute 'DROP')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 12,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders_API.DELETE__v2_orders__orderId_', added operation 'Orders_API.GET__v2_orders', added operation 'Orders_API.GET__v2_orders__orderId_', added operation 'Orders_API.POST__v2_orders', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders_API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders_API.DELETE__v2_orders__orderId_', added operation 'Orders_API.GET__v2_orders', added operation 'Orders_API.GET__v2_orders__orderId_', added operation 'Orders_API.POST__v2_orders', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders_API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.DELETE__v2_orders__orderId_"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.GET__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.GET__v2_orders__orderId_"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.POST__v2_orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders_API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 6,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to CORBA IDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added type 'Exported.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added type 'Exported.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Exported.PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 6,
+      "emit_format": "envoy-xds",
+      "emit_key": "envoy-xds",
+      "loss_approx": 6,
+      "loss_drop": 1,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": null,
+      "source_format": "hoppscotch",
+      "status": "pass",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 12,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'GET /PostOrderRequest', added operation 'GET /PostOrderRequest/{id}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'POST /PostOrderRequest', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'PostOrderRequest.PostOrderRequest', removed type 'PostOrderRequest', added type 'PostOrderRequest.PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'GET /PostOrderRequest', added operation 'GET /PostOrderRequest/{id}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'POST /PostOrderRequest', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'PostOrderRequest.PostOrderRequest', removed type 'PostOrderRequest', added type 'PostOrderRequest.PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /PostOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /PostOrderRequest/{id}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "PostOrderRequest.PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "PostOrderRequest.PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', removed service 'Orders API', added service 'orders-api'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', removed service 'Orders API', added service 'orders-api'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "orders-api"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: PostOrderRequestInput fields cannot be resolved.  (observed: Emit failed: PostOrderRequestInput fields cannot be resolved. )",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 8,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "unexplained: removed service 'Orders API', added service 'hoppscotch->http-file' (observed: unexplained: removed service 'Orders API', added service 'hoppscotch->http-file')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "hoppscotch->http-file"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "istio",
+      "emit_key": "istio",
+      "loss_approx": 6,
+      "loss_drop": 1,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "unexplained: removed service 'Orders API', added service 'orders-api' (observed: unexplained: removed service 'Orders API', added service 'orders-api')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "orders-api"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', added type 'Orders API', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', added type 'Orders API', removed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Orders API"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', added type 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', added type 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 9,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', added service 'postorderrequests.example.com', removed type 'PostOrderRequest', added type 'example.com/v1.PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', added service 'postorderrequests.example.com', removed type 'PostOrderRequest', added type 'example.com/v1.PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "postorderrequests.example.com"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 4,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', removed service 'Orders API', added service 'Orders-API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', removed service 'Orders API', added service 'Orders-API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders-API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 16,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 2,
+      "loss_drop": 1,
+      "loss_ok": 4,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'hoppscotch->llm-tools.DELETE_v2_orders_orderId', added operation 'hoppscotch->llm-tools.GET_v2_orders', added operation 'hoppscotch->llm-tools.GET_v2_orders_orderId', added operation 'hoppscotch->llm-tools.POST_v2_orders', removed service 'Orders API', added service 'hoppscotch->llm-tools', added type 'DELETE_v2_orders_orderIdParams', added type 'GET_v2_ordersParams', added type 'GET_v2_orders_orderIdParams', added type 'POST_v2_ordersParams', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'hoppscotch->llm-tools.DELETE_v2_orders_orderId', added operation 'hoppscotch->llm-tools.GET_v2_orders', added operation 'hoppscotch->llm-tools.GET_v2_orders_orderId', added operation 'hoppscotch->llm-tools.POST_v2_orders', removed service 'Orders API', added service 'hoppscotch->llm-tools', added type 'DELETE_v2_orders_orderIdParams', added type 'GET_v2_ordersParams', added type 'GET_v2_orders_orderIdParams', added type 'POST_v2_ordersParams', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "hoppscotch->llm-tools.DELETE_v2_orders_orderId"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "hoppscotch->llm-tools.GET_v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "hoppscotch->llm-tools.GET_v2_orders_orderId"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "hoppscotch->llm-tools.POST_v2_orders"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "hoppscotch->llm-tools"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "DELETE_v2_orders_orderIdParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "GET_v2_ordersParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "GET_v2_orders_orderIdParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "POST_v2_ordersParams"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 12,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'GET /Orders API', added operation 'GET /Orders API({key})', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'POST /Orders API', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders API.Orders API', added type 'Orders API.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', added operation 'GET /Orders API', added operation 'GET /Orders API({key})', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'POST /Orders API', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders API.Orders API', added type 'Orders API.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /Orders API({key})"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /Orders API"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders API.Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Orders API.PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 7,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 6,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (hoppscotch->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (hoppscotch->oncrpc))",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'default', changed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', changed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Order"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 12,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders_API.DELETE__v2_orders__orderId_', added operation 'Orders_API.GET__v2_orders', added operation 'Orders_API.GET__v2_orders__orderId_', added operation 'Orders_API.POST__v2_orders', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders_API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', added operation 'Orders_API.DELETE__v2_orders__orderId_', added operation 'Orders_API.GET__v2_orders', added operation 'Orders_API.GET__v2_orders__orderId_', added operation 'Orders_API.POST__v2_orders', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added service 'Orders_API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.DELETE__v2_orders__orderId_"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.GET__v2_orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.GET__v2_orders__orderId_"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Orders_API.POST__v2_orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders_API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', changed type 'PostOrderRequest'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "traefik",
+      "emit_key": "traefik",
+      "loss_approx": 6,
+      "loss_drop": 1,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "unexplained: removed service 'Orders API', added service 'Orders-API' (observed: unexplained: removed service 'Orders API', added service 'Orders-API')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders-API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 8,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added type 'Exported.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', changed root '', removed service 'Orders API', added type 'Exported.PostOrderRequest', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Exported.PostOrderRequest"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 14,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 4,
+      "loss_drop": 0,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'apiome:orders-api.orders-api.delete-v2-orders-order-id', added operation 'apiome:orders-api.orders-api.get-v2-orders', added operation 'apiome:orders-api.orders-api.get-v2-orders-order-id', added operation 'apiome:orders-api.orders-api.post-v2-orders', changed root '', removed service 'Orders API', added service 'apiome:orders-api.orders-api', added service 'apiome:orders-api.orders-api-world', removed type 'PostOrderRequest', added type 'apiome:orders-api.types.post-order-request'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'apiome:orders-api.orders-api.delete-v2-orders-order-id', added operation 'apiome:orders-api.orders-api.get-v2-orders', added operation 'apiome:orders-api.orders-api.get-v2-orders-order-id', added operation 'apiome:orders-api.orders-api.post-v2-orders', changed root '', removed service 'Orders API', added service 'apiome:orders-api.orders-api', added service 'apiome:orders-api.orders-api-world', removed type 'PostOrderRequest', added type 'apiome:orders-api.types.post-order-request'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-api.orders-api.delete-v2-orders-order-id"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-api.orders-api.get-v2-orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-api.orders-api.get-v2-orders-order-id"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-api.orders-api.post-v2-orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:orders-api.orders-api"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:orders-api.orders-api-world"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "apiome:orders-api.types.post-order-request"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 13,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "DELETE /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/{orderId}",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'http://example.com/service.Orders API.DELETE /v2/orders/{orderId}', added operation 'http://example.com/service.Orders API.GET /v2/orders', added operation 'http://example.com/service.Orders API.GET /v2/orders/{orderId}', added operation 'http://example.com/service.Orders API.POST /v2/orders', changed root '', removed service 'Orders API', added service 'http://example.com/service.Orders API', removed type 'PostOrderRequest', added type 'http://example.com/service.PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: removed operation 'DELETE /v2/orders/{orderId}', removed operation 'GET /v2/orders', removed operation 'GET /v2/orders/{orderId}', removed operation 'POST /v2/orders', added operation 'http://example.com/service.Orders API.DELETE /v2/orders/{orderId}', added operation 'http://example.com/service.Orders API.GET /v2/orders', added operation 'http://example.com/service.Orders API.GET /v2/orders/{orderId}', added operation 'http://example.com/service.Orders API.POST /v2/orders', changed root '', removed service 'Orders API', added service 'http://example.com/service.Orders API', removed type 'PostOrderRequest', added type 'http://example.com/service.PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.Orders API.DELETE /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.Orders API.GET /v2/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.Orders API.GET /v2/orders/{orderId}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.Orders API.POST /v2/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.Orders API"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PostOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http://example.com/service.PostOrderRequest"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 7,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 4,
+      "loss_ok": 1,
+      "loss_synth": 2,
+      "matched_count": 5,
+      "overclaims": [
+        {
+          "construct": "PostOrderRequest",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "Orders API"
+        }
+      ]
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 2,
+      "loss_drop": 0,
+      "loss_ok": 5,
+      "loss_synth": 2,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "hoppscotch",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "http-file/02-typical-vars-auth.http",
       "diff_count": 5,
       "emit_format": "apiblueprint",
@@ -279921,6 +282548,7 @@
     "haproxy",
     "hl7v2",
     "hl7v3",
+    "hoppscotch",
     "http-file",
     "idoc",
     "iso20022",

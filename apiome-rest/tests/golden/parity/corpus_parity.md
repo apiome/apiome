@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 89
+- **Formats gated:** 90
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -51,6 +51,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `haproxy` | HAProxy configuration | rest | 10 | 6 | 0 | 0 | 16 | 6/6 | 8 | — |
 | `hl7v2` | HL7 v2 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `hl7v2` |
 | `hl7v3` | HL7 v3 / CDA | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `hoppscotch` | Hoppscotch collection | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `http-file` | HTTP Request File | rest | 10 | 5 | 0 | 0 | 15 | 6/6 | 8 | `http-file` |
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
 | `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
@@ -147,6 +148,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `haproxy` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `hl7v2` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `hl7v3` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `hoppscotch` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `http-file` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `idoc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `iso20022` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -217,4 +219,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `hoppscotch`, `ims`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `ims`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`

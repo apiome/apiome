@@ -154,7 +154,7 @@ up the `∥` rows in parallel.**
 
 | # | Ticket | Depends on |
 | --- | --- | --- |
-| 1 ∥ | [FMT-10.2 Thunder Client #5475](https://github.com/apiome/apiome/issues/5475) · [FMT-10.1 Hoppscotch #5473](https://github.com/apiome/apiome/issues/5473) | — (reuse the Postman collection projection) |
+| 1 ∥ | [FMT-10.2 Thunder Client #5475](https://github.com/apiome/apiome/issues/5475) · [FMT-10.1 Hoppscotch #5473](https://github.com/apiome/apiome/issues/5473) ✅ | — (reuse the Postman collection projection) |
 | 2 | [FMT-10.3 SoapUI / ReadyAPI #5477](https://github.com/apiome/apiome/issues/5477) | — (reuses WSDL intake) |
 | 3 | [FMT-10.4 Client-workspace emit modes #5479](https://github.com/apiome/apiome/issues/5479) | 10.1–10.3 |
 | ∥ | [MFX-35.1 SQL DDL emitter #4311](https://github.com/apiome/apiome/issues/4311) → [MFX-35.2 DBML + Prisma #4312](https://github.com/apiome/apiome/issues/4312) | — (closes the data-platform round trip opened by FMT-5.6) |

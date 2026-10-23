@@ -180,7 +180,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 53 | 3 | C1 | [#5407](https://github.com/apiome/apiome/issues/5407) | FMT-EPIC-7 | Gateway & infrastructure route sources | close after FMT-7.1…7.7 | Core |
 | 60 | 3 | C2 | [#5408](https://github.com/apiome/apiome/issues/5408) | FMT-EPIC-8 | Code-first & type-system sources | close after FMT-8.1…8.6 | Core |
 | 61 | 3 | C3 | [#5475](https://github.com/apiome/apiome/issues/5475) | FMT-10.2 | Thunder Client collection import | — | Core |
-| 62 | 3 | C3 | [#5473](https://github.com/apiome/apiome/issues/5473) | FMT-10.1 | Hoppscotch collection import | — | Core |
 | 63 | 3 | C3 | [#5477](https://github.com/apiome/apiome/issues/5477) | FMT-10.3 | SoapUI / ReadyAPI project import | — | Core |
 | 64 | 3 | C3 | [#5479](https://github.com/apiome/apiome/issues/5479) | FMT-10.4 | Client-workspace emit modes | FMT-10.1–10.3 | Core |
 | 65 | 3 | C3 | [#5410](https://github.com/apiome/apiome/issues/5410) | FMT-EPIC-10 | Client workspace long tail | close after FMT-10.1…10.4 | Core |

@@ -243,7 +243,7 @@
       "marker": "`<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace"
     },
     "hoppscotch": {
-      "label": "Hoppscotch collections (pending #5473)",
+      "label": "Hoppscotch collections",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType`"
@@ -12278,7 +12278,7 @@
     {
       "path": "hoppscotch/01-minimal-collection.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12286,8 +12286,7 @@
       },
       "features": [
         "single-request",
-        "no-auth",
-        "pending-adapter"
+        "no-auth"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12298,7 +12297,7 @@
     {
       "path": "hoppscotch/02-typical-orders-collection.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12309,8 +12308,7 @@
         "inactive-params",
         "request-variables",
         "test-script",
-        "collection-headers",
-        "pending-adapter"
+        "collection-headers"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12321,7 +12319,7 @@
     {
       "path": "hoppscotch/03-environment-set/collection.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12329,8 +12327,7 @@
       },
       "features": [
         "multi-file",
-        "environment-variables",
-        "pending-adapter"
+        "environment-variables"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12342,7 +12339,7 @@
     {
       "path": "hoppscotch/03-environment-set/environment.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12351,8 +12348,7 @@
       "features": [
         "multi-file",
         "environment-file",
-        "secret-flag",
-        "pending-adapter"
+        "secret-flag"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12364,7 +12360,7 @@
     {
       "path": "hoppscotch/04-stress-auth-and-bodies.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12380,8 +12376,7 @@
         "oauth2-auth",
         "nested-folders",
         "disabled-headers",
-        "scripts",
-        "pending-adapter"
+        "scripts"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12392,7 +12387,7 @@
     {
       "path": "hoppscotch/05-real-world-payments-collection.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12402,8 +12397,7 @@
         "token-capture",
         "idempotency-key",
         "feature-folders",
-        "inherited-auth",
-        "pending-adapter"
+        "inherited-auth"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12414,7 +12408,7 @@
     {
       "path": "hoppscotch/06-typical-nested-folders.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12423,8 +12417,7 @@
       "features": [
         "nested-folders",
         "operation-groups",
-        "request-variables",
-        "pending-adapter"
+        "request-variables"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12435,7 +12428,7 @@
     {
       "path": "hoppscotch/07-composition-inherited-auth.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "valid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12445,8 +12438,7 @@
         "auth-inheritance",
         "nested-folders",
         "folder-headers",
-        "request-override",
-        "pending-adapter"
+        "request-override"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -12457,7 +12449,7 @@
     {
       "path": "hoppscotch/negative/01-syntactic-missing-brace.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12466,8 +12458,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-brace",
-        "pending-adapter"
+        "missing-brace"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12479,7 +12470,7 @@
     {
       "path": "hoppscotch/negative/02-semantic-no-requests.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12488,8 +12479,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-requests",
-        "pending-adapter"
+        "no-requests"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12501,7 +12491,7 @@
     {
       "path": "hoppscotch/negative/03-truncated-mid-request.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12510,8 +12500,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-endpoint",
-        "pending-adapter"
+        "mid-endpoint"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12523,7 +12512,7 @@
     {
       "path": "hoppscotch/negative/04-wrong-format-postman.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12532,8 +12521,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "postman",
-        "pending-adapter"
+        "postman"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12545,7 +12533,7 @@
     {
       "path": "hoppscotch/negative/05-encoding-utf16.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12554,8 +12542,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -12567,7 +12554,7 @@
     {
       "path": "hoppscotch/negative/06-semantic-request-without-endpoint.json",
       "format": "hoppscotch",
-      "adapter_key": null,
+      "adapter_key": "hoppscotch",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "hoppscotch",
@@ -12577,8 +12564,7 @@
         "negative",
         "semantic",
         "empty-endpoint",
-        "unresolvable-variable",
-        "pending-adapter"
+        "unresolvable-variable"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

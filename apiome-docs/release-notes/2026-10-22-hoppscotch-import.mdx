@@ -1,0 +1,25 @@
+---
+slug: hoppscotch-import
+title: Import a Hoppscotch collection
+description: Catalog a Hoppscotch collection and its environments as one inferred REST API.
+authors: [apiome]
+---
+
+Hoppscotch is the open-source client teams choose when they leave Postman. Apiome now imports a
+Hoppscotch collection, with the environments its variables come from, into the catalog as one REST
+API. [What gets imported](/bring-in/hoppscotch-import).
+
+{/* truncate */}
+
+- **Folders become operation groups.** Each operation is tagged with the folder path its requests
+  sit in, however deeply the folders nest.
+- **Requests become operations.** `<<variables>>` in a path become path parameters, active query
+  parameters and headers become parameters, and auth inherited from a folder or the collection is
+  resolved per request.
+- **Bodies become schemas.** JSON, URL-encoded and multipart bodies get inferred schemas from the
+  same engine as cURL, `.http` and Postman imports, and keep their media types.
+- **Environments become server variables.** Upload the collection and its environment together
+  and `<<baseUrl>>` gets its value.
+- **Credentials are never kept.** Auth is read as a scheme and names only, every other value is
+  scrubbed, and the secret scrubber now also redacts the `token` field and the
+  `{"key": …, "value": …}` pairs that client exports store credentials in.
