@@ -77,7 +77,8 @@ palette and choose the action. Focus moves into the dialog that opens; `Tab` thr
 form and press `↵` on the primary button. `Esc` cancels and returns focus to where you were.
 
 ### Import a specification
-Press **`I`** on a list page (or **`⌘ K`** → *Import a spec*). In the wizard, `Tab` between the
+Press **`I`** on a list page (or **`⌘ K`** → *Import a spec*). In the wizard, press **`1`**–**`5`**
+to choose one of the first five sources — each card shows its number — or `Tab` between the
 source options and use `↵` to choose; progress (“Import running: step 3 of 8”) is announced as
 it changes, and the result is announced when the job finishes.
 
@@ -119,6 +120,7 @@ is added there without a row here.
 | `G then M` | Members | Outside a text field |
 | `N` | New item | A list page |
 | `I` | Import | A list page |
+| `1–5` | Choose one of the first five import sources | The Import specification wizard's Source step |
 | `↑ ↓` | Move between rows | A focused table |
 | `↵` | Open the focused row | A focused table |
 | `X` | Select the focused row | A focused table |

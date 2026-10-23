@@ -73,6 +73,7 @@ const IMPORT_PRELUDES = [
   '.imp-wizard',
   // HIVE-11.11: the fitted Projects wizard and the recent-imports list under the tiles.
   '.imp-wizard--fit',
+  '.imp-card__key',
   '.imp-recent',
   '.imp-recent__head',
   '.imp-recent__title',

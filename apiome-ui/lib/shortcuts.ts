@@ -544,6 +544,23 @@ export const DATA_TABLE_SHORTCUTS: readonly ShortcutDefinition[] = [
   { id: 'list-actions', scope: 'list', description: 'Reach the row’s actions', keys: ['.'] },
 ];
 
+/**
+ * `1` – `5` on the Import specification wizard's Source step: choose one of the first five
+ * import sources.
+ *
+ * Declared here so the sheet prints it while the Source step is open, and implemented by
+ * `ImportSourceCards` itself — like {@link DATA_TABLE_SHORTCUTS} — because five keys for "the
+ * Nth card" are one row to a reader, not five chords the engine should each own. The cards'
+ * own listener applies the engine's rules: never while typing, never with a modifier, never
+ * on a key something else already answered.
+ */
+export const IMPORT_SOURCE_SHORTCUT: ShortcutDefinition = {
+  id: 'import-source',
+  scope: 'dialog',
+  description: 'Choose one of the first five import sources',
+  keys: ['1–5'],
+};
+
 /* -------------------------------------------------------------------------
    Grouping, for the sheet
    ------------------------------------------------------------------------- */
@@ -569,6 +586,7 @@ export const SHORTCUT_DISPLAY_ORDER: readonly string[] = [
   'list-import',
   ...DATA_TABLE_SHORTCUTS.map((shortcut) => shortcut.id),
   COPY_PROJECT_LINK_SHORTCUT.id,
+  IMPORT_SOURCE_SHORTCUT.id,
 ];
 
 /** One section of the sheet: a scope's heading and the bindings live in it. */

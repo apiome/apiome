@@ -155,6 +155,7 @@ jest.mock('@/app/components/ade/dashboard/PreviewPanel', () => ({
 }));
 
 // eslint-disable-next-line import/first
+import { getActiveShortcuts } from '@/app/hooks/useShortcuts';
 import ImportDialog from '@/app/components/ade/dashboard/ImportDialog';
 // eslint-disable-next-line import/first
 import ImportExecutionPanel from '@/app/components/ade/dashboard/ImportExecutionPanel';
@@ -302,6 +303,53 @@ describe('the Source step', () => {
     const { container } = renderWizard();
     await screen.findByRole('button', { name: /gRPC/ });
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+  });
+});
+
+describe('number keys on the Source step', () => {
+  it('chooses the first five cards with 1–5, and shows each card its key', async () => {
+    renderWizard();
+    const file = await screen.findByRole('button', { name: /File Upload/ });
+    expect(file).toHaveAttribute('aria-keyshortcuts', '1');
+    expect(screen.getByRole('button', { name: /SwaggerHub/ })).toHaveAttribute('aria-keyshortcuts', '5');
+    // Only five are numbered; the sixth and the "Coming soon" card are not.
+    expect(screen.getByRole('button', { name: /Postman Collection/ })).not.toHaveAttribute('aria-keyshortcuts');
+    await waitFor(() => expect(screen.getByRole('button', { name: /gRPC/ })).not.toHaveAttribute('aria-keyshortcuts'));
+    expect(document.querySelectorAll('.imp-card__key')).toHaveLength(5);
+
+    fireEvent.keyDown(window, { key: '1' });
+    expect(await screen.findByText(IMPORT_WIZARD_COPY.dropTitle)).toBeInTheDocument();
+  });
+
+  it('opens the URL intake with 2', async () => {
+    renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    fireEvent.keyDown(window, { key: '2' });
+    expect(await screen.findByRole('tab', { name: /URL Import/, selected: true })).toBeInTheDocument();
+  });
+
+  it('ignores a digit pressed with a modifier', async () => {
+    renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    fireEvent.keyDown(window, { key: '1', ctrlKey: true });
+    fireEvent.keyDown(window, { key: '1', metaKey: true });
+    expect(screen.queryByText(IMPORT_WIZARD_COPY.dropTitle)).not.toBeInTheDocument();
+  });
+
+  it('puts one 1–5 row in the shortcut sheet while the Source step is open', async () => {
+    const { unmount } = renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    await waitFor(() => expect(getActiveShortcuts().some((binding) => binding.id === 'import-source')).toBe(true));
+    unmount();
+    await waitFor(() => expect(getActiveShortcuts().some((binding) => binding.id === 'import-source')).toBe(false));
+  });
+
+  it('stops answering once a source is chosen, so a digit types in the intake', async () => {
+    renderWizard();
+    fireEvent.click(await screen.findByRole('button', { name: /File Upload/ }));
+    await screen.findByText(IMPORT_WIZARD_COPY.dropTitle);
+    fireEvent.keyDown(window, { key: '2' });
+    expect(screen.queryByRole('tab', { name: /URL Import/, selected: true })).not.toBeInTheDocument();
   });
 });
 

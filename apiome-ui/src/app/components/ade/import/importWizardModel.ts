@@ -754,3 +754,40 @@ export function catalogImportFooterFor(state: CatalogImportFooterState): ImportF
     keepAnyway: null,
   };
 }
+
+// ---------------------------------------------------------------------------------------
+// Number keys on the Source step
+// ---------------------------------------------------------------------------------------
+
+/** How many source cards get a number key: `1` – `5`. */
+export const IMPORT_SOURCE_HOTKEY_COUNT = 5;
+
+/** One source card's number key. */
+export interface ImportSourceHotkey {
+  /** The key to press, `'1'` – `'5'`. */
+  key: string;
+  /** The card it chooses (`ImportSourceCard.key`). */
+  cardKey: string;
+  /** The intake panel it opens. */
+  panel: string;
+  /** The card's title, for the shortcut sheet. */
+  label: string;
+}
+
+/**
+ * Number the Source step's cards `1` – `5`, in the order they are drawn.
+ *
+ * Only cards that can be chosen are numbered — a "Coming soon" card has no intake, so a key
+ * that chose it would do nothing — and numbering skips over it rather than leaving a gap.
+ *
+ * @param cards The cards, in display order.
+ * @returns One entry per numbered card, at most {@link IMPORT_SOURCE_HOTKEY_COUNT}.
+ */
+export function importSourceHotkeys(
+  cards: ReadonlyArray<{ key: string; label: string; panel: string | null }>
+): ImportSourceHotkey[] {
+  return cards
+    .filter((card): card is { key: string; label: string; panel: string } => card.panel !== null)
+    .slice(0, IMPORT_SOURCE_HOTKEY_COUNT)
+    .map((card, index) => ({ key: String(index + 1), cardKey: card.key, panel: card.panel, label: card.label }));
+}
