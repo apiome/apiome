@@ -252,8 +252,14 @@
      layout into horizontal scroll — the one thing DESIGN.md §5 forbids. */
   --rail-w: 16.5rem;          /* 264px */
   --rail-w-collapsed: 4rem;   /* 64px */
-  --page-max: 1440px;
+  /* The page cap is a safety limit for very wide screens, not a column width: up to it,
+     pages fill the space beside the rail (see `--page-gutter`). */
+  --page-max: 2400px;
   --page-narrow: 920px;
+  /* The page's side gutter: the density's `--page-pad`, or 2.5 % of the space beside the
+     rail when that is more — so content always spans at least 95 % of it. The percentage
+     resolves where it is used (`.page-header__inner`, `.page-body`), against the page. */
+  --page-gutter: max(var(--page-pad), 2.5%);
   --content-max: 1200px;
 
   /* ---- Animation keyframes for Radix UI ------------------------------- */
@@ -1196,7 +1202,7 @@ html[data-rail="collapsed"] {
 .page-header__inner {
   max-width: var(--page-width);
   margin-inline: auto;
-  padding: var(--space-5) var(--page-pad) 0;
+  padding: var(--space-5) var(--page-gutter) 0;
 }
 
 /* The title and the description, and why their type is here rather than in a
@@ -1272,7 +1278,7 @@ html[data-rail="collapsed"] {
   flex-direction: column;
   gap: var(--space-6);
   margin-inline: auto;
-  padding: var(--space-6) var(--page-pad) var(--space-12);
+  padding: var(--space-6) var(--page-gutter) var(--space-12);
 }
 
 /* Content that begins immediately under the header — a full-bleed table, a

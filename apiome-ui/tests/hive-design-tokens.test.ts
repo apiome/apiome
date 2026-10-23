@@ -168,7 +168,7 @@ describe('@theme token layer — ticket scope list', () => {
     // viewport, and a cap that grew with the scale would force horizontal scroll.
     expect(resolveToken('--rail-w', layer)).toBe('16.5rem');
     expect(resolveToken('--rail-w-collapsed', layer)).toBe('4rem');
-    expect(resolveToken('--page-max', layer)).toBe('1440px');
+    expect(resolveToken('--page-max', layer)).toBe('2400px');
   });
 });
 

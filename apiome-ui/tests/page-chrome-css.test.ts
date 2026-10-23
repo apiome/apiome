@@ -74,8 +74,18 @@ function declarationsOf(prelude: string): Map<string, string> {
 
 describe('page chrome — the content cap', () => {
   it('states both caps as tokens, at the widths DESIGN.md §5.3 gives', () => {
-    expect(resolveToken('--page-max', tokens)).toBe('1440px');
+    // `--page-max` is a safety cap for very wide screens; below it a page fills the space
+    // beside the rail, less its gutter.
+    expect(resolveToken('--page-max', tokens)).toBe('2400px');
     expect(resolveToken('--page-narrow', tokens)).toBe('920px');
+  });
+
+  it('fills at least 95 % of the space beside the rail: a gutter of the density pad or 2.5 %', () => {
+    expect(resolveToken('--page-gutter', tokens)).toBe('max(var(--page-pad), 2.5%)');
+    for (const prelude of ['.page-header__inner', '.page-body']) {
+      expect(declarationsOf(prelude).get('padding')).toContain('var(--page-gutter)');
+      expect(declarationsOf(prelude).get('padding')).not.toContain('var(--page-pad)');
+    }
   });
 
   it('decides the width in one place, which both parts of the page read', () => {
