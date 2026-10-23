@@ -69,6 +69,42 @@ export function mapBetterAuthSession(data: BetterAuthSessionData | null | undefi
   };
 }
 
+/** What starting a single sign-on resolved to. */
+export type SsoSignInStart = 'redirecting' | 'no-provider' | 'failed';
+
+/**
+ * Start an enterprise single sign-on (EID-1.1, #5011) for a work email.
+ *
+ * Better Auth's SSO plugin finds the enabled provider whose verified domain covers the email and
+ * answers with the IdP's sign-in URL (an OIDC authorize request or a SAML AuthnRequest), which this
+ * navigates to. Failures after the IdP returns land on `/login?error=<code>` (the plugin's
+ * `errorCallbackURL`, retargeted to a stable `sso-*` code by the server).
+ *
+ * @param email The work email the user typed.
+ * @param callbackUrl Where to go after signing in; defaults to the current page.
+ * @returns `redirecting` when the browser is on its way to the IdP; `no-provider` when no enabled
+ *   provider covers the domain (the page says so inline); `failed` for anything else.
+ */
+export async function signInWithSso(email: string, callbackUrl?: string): Promise<SsoSignInStart> {
+  const callbackURL = callbackUrl ?? window.location.href;
+  try {
+    const res = await authClient.signIn.sso({
+      email: email.trim().toLowerCase(),
+      callbackURL,
+      errorCallbackURL: '/login',
+    });
+    const url = (res?.data as { url?: string } | undefined)?.url;
+    if (url) {
+      browserNavigate(url);
+      return 'redirecting';
+    }
+    const status = (res?.error as { status?: number } | undefined)?.status;
+    return status === 404 || status === 400 ? 'no-provider' : 'failed';
+  } catch {
+    return 'failed';
+  }
+}
+
 /**
  * Sign in via Better Auth and navigate on completion, matching the `signIn(provider, …)` contract.
  *

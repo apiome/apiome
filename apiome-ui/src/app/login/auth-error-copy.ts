@@ -98,6 +98,49 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'info',
     text: 'An account with this email already exists. Sign in with your password or use "Continue with GitHub/GitLab" without create-account mode.',
   },
+  // --- Enterprise SSO (EID-1.1, #5011; `lib/auth/sso-resolution.ts` SSO_ERROR_CODES) ---
+  'sso-token-invalid': {
+    type: 'error',
+    text: 'Apiome could not verify the sign-in token from your single sign-on provider. Try again; if it keeps happening, ask your administrator to check the OIDC connection.',
+    retry: true,
+  },
+  'sso-assertion-invalid': {
+    type: 'error',
+    text: 'Apiome could not verify the SAML response from your single sign-on provider. Try again; if it keeps happening, ask your administrator to check the SAML connection.',
+    retry: true,
+  },
+  'sso-assertion-replayed': {
+    type: 'error',
+    text: 'That sign-in response was already used. Start single sign-on again from this page.',
+    retry: true,
+  },
+  'sso-binding-unsupported': {
+    type: 'error',
+    text: 'Your single sign-on provider answered in a way Apiome does not accept. Ask your administrator to send sign-in responses over HTTP-POST.',
+  },
+  'sso-discovery-failed': {
+    type: 'error',
+    text: 'Apiome could not reach your single sign-on provider. Try again in a moment, or ask your administrator.',
+    retry: true,
+  },
+  'sso-state-invalid': {
+    type: 'error',
+    text: 'Your single sign-on attempt expired. Start it again from this page.',
+    retry: true,
+  },
+  'sso-provider-not-found': {
+    type: 'error',
+    text: 'Single sign-on is not set up for that email domain. Sign in another way, or ask your administrator.',
+    retry: true,
+  },
+  'sso-email-domain-mismatch': {
+    type: 'error',
+    text: 'Your single sign-on provider returned an email address outside the domains it is set up for. Ask your administrator to check the connection.',
+  },
+  'sso-account-not-linked': {
+    type: 'error',
+    text: 'An account with your email already exists but could not be linked to single sign-on. Sign in another way, or ask your administrator.',
+  },
   SignupSessionExpired: {
     type: 'error',
     text: 'Your signup session expired. Please start again from Create account.',

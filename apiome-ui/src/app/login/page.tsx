@@ -4,6 +4,7 @@ import { resolveCallbackUrl } from '@lib/auth/cookie-options';
 import { resolvePostLoginRouteForUser } from '@lib/auth/post-login-routing';
 import { providerSummaries } from '@lib/auth/provider-registry';
 import { resolveProviderEnv } from '@lib/auth/provider-config-resolver';
+import { resolveSsoProviders } from '@lib/auth/sso-provider-resolver';
 import LoginClient from '@/app/login/LoginClient';
 
 export default async function LoginPage({
@@ -39,5 +40,16 @@ export default async function LoginPage({
     (provider) => provider.enabled
   );
 
-  return <LoginClient error={params.error} callbackUrl={callbackUrl} ssoProviders={ssoProviders} />;
+  // Enterprise SSO (EID-1.1): offered when any workspace IdP is enabled with a verified domain. The
+  // list itself stays server-side — the page only learns that one exists, never which domains.
+  const enterpriseSso = (await resolveSsoProviders()).providers.length > 0;
+
+  return (
+    <LoginClient
+      error={params.error}
+      callbackUrl={callbackUrl}
+      ssoProviders={ssoProviders}
+      enterpriseSso={enterpriseSso}
+    />
+  );
 }

@@ -48,6 +48,11 @@ const config: Config = {
     // The server instance reaches these two through the OAuth second-factor hook (TFA-1.1 #5655).
     '^better-auth/cookies$': '<rootDir>/tests/__mocks__/better-auth-cookies.ts',
     '^better-auth/crypto$': '<rootDir>/tests/__mocks__/better-auth-crypto.ts',
+    // Enterprise SSO (EID-1.1 #5011): the plugin and its client are ESM-only too.
+    '^@better-auth/sso$': '<rootDir>/tests/__mocks__/better-auth-sso.ts',
+    '^@better-auth/sso/client$': '<rootDir>/tests/__mocks__/better-auth-sso-client.ts',
+    // ESM-only; reached through the SSO id-token check (`lib/auth/sso-resolution.ts`).
+    '^jose$': '<rootDir>/tests/__mocks__/jose.ts',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-markdown|remark-gfm|unified|bail|is-plain-obj|trough|vfile|unist-.*|unified|remark-.*|mdast-.*|micromark.*|decode-named-character-reference|character-entities|property-information|hast-util-whitespace|space-separated-tokens|comma-separated-tokens|pretty-bytes|@seriousme/openapi-schema-validator|uuid)/)',

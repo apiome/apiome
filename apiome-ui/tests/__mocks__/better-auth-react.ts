@@ -20,6 +20,7 @@ export function createAuthClient(): unknown {
       email: async () => ({ data: null, error: null }),
       oauth2: async () => ({ data: null, error: null }),
       social: async () => ({ data: null, error: null }),
+      sso: async () => ({ data: null, error: null }),
     },
     signOut: async () => ({ data: null, error: null }),
     updateUser: async () => ({ data: null, error: null }),

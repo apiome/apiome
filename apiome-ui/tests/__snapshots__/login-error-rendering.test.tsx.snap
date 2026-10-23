@@ -954,6 +954,600 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 </div>
 `;
 
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-account-not-linked 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    An account with your email already exists but could not be linked to single sign-on. Sign in another way, or ask your administrator.
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-assertion-invalid 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Apiome could not verify the SAML response from your single sign-on provider. Try again; if it keeps happening, ask your administrator to check the SAML connection.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-assertion-replayed 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    That sign-in response was already used. Start single sign-on again from this page.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-binding-unsupported 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Your single sign-on provider answered in a way Apiome does not accept. Ask your administrator to send sign-in responses over HTTP-POST.
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-discovery-failed 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Apiome could not reach your single sign-on provider. Try again in a moment, or ask your administrator.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-email-domain-mismatch 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Your single sign-on provider returned an email address outside the domains it is set up for. Ask your administrator to check the connection.
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-provider-not-found 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Single sign-on is not set up for that email domain. Sign in another way, or ask your administrator.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-state-invalid 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Your single sign-on attempt expired. Start it again from this page.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for sso-token-invalid 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Apiome could not verify the sign-in token from your single sign-on provider. Try again; if it keeps happening, ask your administrator to check the OIDC connection.
+  </div>
+  <div
+    class="flex shrink-0 items-center gap-1.5"
+  >
+    <a
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      href="/login?callbackUrl=%2Fade"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-rotate-ccw"
+        fill="none"
+        height="24"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+        />
+        <path
+          d="M3 3v5h5"
+        />
+      </svg>
+      Try again
+    </a>
+  </div>
+</div>
+`;
+
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for unverified-email 1`] = `
 <div
   aria-live="assertive"

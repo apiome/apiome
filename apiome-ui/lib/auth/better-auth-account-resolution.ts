@@ -40,6 +40,7 @@ import {
   type ResolutionStore,
 } from './account-resolution';
 import { resolutionStore } from './resolution-store';
+import { SSO_CALLBACK_PREFIXES } from './sso-provider-resolver';
 
 /**
  * OAuth providers this adapter dispatches through the resolution engine — the shared provider
@@ -191,6 +192,15 @@ export function oauthProviderFromCallbackPath(path: unknown): string | null {
     if (path.startsWith(prefix)) {
       const slug = path.slice(prefix.length).split(/[/?#]/, 1)[0];
       return slug.length > 0 ? slug : null;
+    }
+  }
+  // Enterprise SSO (EID-1.1, #5011): the plugin's OIDC callback and SAML ACS complete a sign-in
+  // too, so the second-factor challenge (TFA-1.1) applies to them. Reported as `sso:<id>`, the
+  // plugin's provider id — the engine itself runs in the SSO database hooks (`sso-resolution.ts`).
+  for (const prefix of SSO_CALLBACK_PREFIXES) {
+    if (path.startsWith(prefix)) {
+      const id = path.slice(prefix.length).split(/[/?#]/, 1)[0];
+      return id.length > 0 ? `sso:${id}` : null;
     }
   }
   return null;

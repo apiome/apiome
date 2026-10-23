@@ -132,6 +132,27 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * An enterprise SSO identity kind: `sso:<slug>` (EID-1.1, #5011). Same shape as the V312 CHECK on
+ * `external_auth_providers.provider` and the REST `auth_events` vocabulary.
+ */
+export const SSO_IDENTITY_KIND_PATTERN = /^sso:[a-z0-9][a-z0-9-]{1,27}$/;
+
+/**
+ * Whether a provider's verified-email claim may auto-link an existing account.
+ *
+ * The OAuth providers in {@link AUTO_LINK_TRUSTED_PROVIDERS}, plus every enterprise SSO identity
+ * (`sso:<slug>`, EID-1.1): an SSO provider is registered by an installation admin for domains that
+ * admin verified, and the SSO hooks (`sso-resolution.ts`) refuse any email outside those domains and
+ * any OIDC email the IdP did not mark verified before the engine sees it.
+ *
+ * @param provider The identity kind.
+ * @returns True when a verified email from it is trusted.
+ */
+export function isAutoLinkTrustedProvider(provider: string): boolean {
+  return AUTO_LINK_TRUSTED_PROVIDERS.has(provider) || SSO_IDENTITY_KIND_PATTERN.test(provider);
+}
+
+/**
  * Providers an already-signed-in user may explicitly link via `api/auth/link/[provider]`
  * (OLO-2.2, #4194). This is the OAuth-provider vocabulary — `credentials` is a sign-in method,
  * not a linkable identity, and V181 pins the same slugs at the DB level. The link route refuses
@@ -383,7 +404,7 @@ export function resolveAccountDecision(input: ResolutionInput): ResolutionDecisi
     return { action: 'reject', code: AUTH_ERROR_CODES.EMAIL_REQUIRED };
   }
 
-  const emailProven = input.emailVerified && AUTO_LINK_TRUSTED_PROVIDERS.has(input.provider);
+  const emailProven = input.emailVerified && isAutoLinkTrustedProvider(input.provider);
   if (!emailProven) {
     // (d) Unverified email → structured rejection. Never auto-link, never create an account.
     return { action: 'reject', code: AUTH_ERROR_CODES.UNVERIFIED_EMAIL };

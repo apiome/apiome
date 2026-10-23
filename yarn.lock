@@ -289,6 +289,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@authenio/xml-encryption@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@authenio/xml-encryption@npm:6.0.2"
+  dependencies:
+    "@xmldom/xmldom": "npm:^0.8.13"
+    escape-html: "npm:^1.0.3"
+  checksum: 10c0/fe5eddd53ef153929a8318f40da4d977dade807cae3a8552cf8e9c0a79591e6be80fc2871eba686f40b87ef5a81bb22dbc3cad8fd1ea87672dea52845dc3865c
+  languageName: node
+  linkType: hard
+
 "@axe-core/playwright@npm:^4.12.1":
   version: 4.12.1
   resolution: "@axe-core/playwright@npm:4.12.1"
@@ -2047,6 +2057,25 @@ __metadata:
     prisma:
       optional: true
   checksum: 10c0/775856570f9e3b3b9f53fdf9b6da19f976f62f9af481b5a2da81d080c3118fa8723386679a5794ae7b9458a276d7701958782ef6ed63df21e56e59f360649289
+  languageName: node
+  linkType: hard
+
+"@better-auth/sso@npm:1.6.25":
+  version: 1.6.25
+  resolution: "@better-auth/sso@npm:1.6.25"
+  dependencies:
+    fast-xml-parser: "npm:^5.8.0"
+    jose: "npm:^6.1.3"
+    samlify: "npm:^2.13.1"
+    tldts: "npm:^6.1.0"
+    zod: "npm:^4.3.6"
+  peerDependencies:
+    "@better-auth/core": ^1.6.25
+    "@better-auth/utils": 0.4.2
+    "@better-fetch/fetch": 1.3.1
+    better-auth: ^1.6.25
+    better-call: 1.3.7
+  checksum: 10c0/9200a3f24bfb138d66466d7b3b7bf84184401ef41098d9ce230b2e8ed5fb84d7fa65ad63b83248302090c03f75733aa9f2f36b8838b8d742f3cba98b995df11d
   languageName: node
   linkType: hard
 
@@ -5296,6 +5325,13 @@ __metadata:
   version: 2.2.0
   resolution: "@noble/hashes@npm:2.2.0"
   checksum: 10c0/cad8630c504d6b9271984f685cd0af9101b40988fc2dfbe17ccdf068a9941f95cc5c9957d89e9ca4b7ca94c15cb35f93510c5d53a09fbcc83ee503b93d0a1034
+  languageName: node
+  linkType: hard
+
+"@nodable/entities@npm:^3.0.1":
+  version: 3.1.0
+  resolution: "@nodable/entities@npm:3.1.0"
+  checksum: 10c0/a1a2a081949a72da17846dc44962dc95a2bf5268867407fc4f6b686acda4dc5e9fd85f0398999969309b9f7fe0fbe85947a91c1ddac47eba8f9b58224c36f6fb
   languageName: node
   linkType: hard
 
@@ -9796,6 +9832,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xmldom/is-dom-node@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@xmldom/is-dom-node@npm:1.0.1"
+  checksum: 10c0/138d5e74441b16f065ce360d81737673986d93f14d5bb09b1e3bcfc2b18fae70b86beb9b7bfbffe916dd36b3bdab012acaa81cc0b49450acadfd66978b62827f
+  languageName: node
+  linkType: hard
+
+"@xmldom/xmldom@npm:^0.8.13, @xmldom/xmldom@npm:^0.8.15":
+  version: 0.8.15
+  resolution: "@xmldom/xmldom@npm:0.8.15"
+  checksum: 10c0/59d09b85824b684fba5a0a224d5b43abea1a0d745e8d8b8136a7013e996eb6da122fdbb3deb32ed1621923a10e1937b1f7917cea43481d9d5b976e8c1ff836c1
+  languageName: node
+  linkType: hard
+
+"@xmldom/xmldom@npm:^0.9.12":
+  version: 0.9.12
+  resolution: "@xmldom/xmldom@npm:0.9.12"
+  checksum: 10c0/0a9ef38e203213717dde8d16c62743c26c37eb4195aeb4f286550a0aec2145c063a6c3633f253c29f75202f922d7c961d1acaad4dd93e5db1ef05c813354d178
+  languageName: node
+  linkType: hard
+
 "@xtuc/ieee754@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xtuc/ieee754@npm:1.2.0"
@@ -10128,6 +10185,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"anynum@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "anynum@npm:1.0.1"
+  checksum: 10c0/cfda92c9215722fc4b15faa33d0eb3d5dfd28fba6cb67c1f50d214feaa7ba6497814a3e110777853585de6d91c8c962a1ae425b637d3598d9f9d8f6f6802e5bb
+  languageName: node
+  linkType: hard
+
 "apiome-browse@workspace:apiome-browse":
   version: 0.0.0-use.local
   resolution: "apiome-browse@workspace:apiome-browse"
@@ -10226,6 +10290,7 @@ __metadata:
   resolution: "apiome-ui@workspace:apiome-ui"
   dependencies:
     "@axe-core/playwright": "npm:^4.12.1"
+    "@better-auth/sso": "npm:1.6.25"
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
@@ -10288,6 +10353,7 @@ __metadata:
     jest: "npm:^30.3.0"
     jest-axe: "npm:^10.0.0"
     jest-environment-jsdom: "npm:^30.3.0"
+    jose: "npm:6.2.4"
     json-schema-faker: "npm:^0.5.9"
     jsonwebtoken: "npm:^9.0.3"
     jspdf: "npm:^4.2.1"
@@ -14240,6 +14306,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-xml-builder@npm:^1.2.0":
+  version: 1.3.1
+  resolution: "fast-xml-builder@npm:1.3.1"
+  dependencies:
+    path-expression-matcher: "npm:^1.6.2"
+    xml-naming: "npm:^0.3.0"
+  checksum: 10c0/5aaf30465e6ba4ae9780eb3916878d5bd40763a3fd6b8b079a76aabe8f3e9e852327280e7c1be2b63ec141424b6ec61b7ab8acca8b3948779b164b004a294b4c
+  languageName: node
+  linkType: hard
+
+"fast-xml-parser@npm:^5.8.0":
+  version: 5.11.2
+  resolution: "fast-xml-parser@npm:5.11.2"
+  dependencies:
+    "@nodable/entities": "npm:^3.0.1"
+    fast-xml-builder: "npm:^1.2.0"
+    is-unsafe: "npm:^2.0.0"
+    path-expression-matcher: "npm:^1.6.2"
+    strnum: "npm:^2.4.2"
+    xml-naming: "npm:^0.3.0"
+  bin:
+    fxparser: src/cli/cli.js
+  checksum: 10c0/8e8f947b150c0ecc97fb2a7298faa3e9d3e6720a7773446f17bbadf6f6ef4aff5c3e6ef9b6df81dc9b0abe9480bbcbe13b2ce4b1a27098de31e9190681116312
+  languageName: node
+  linkType: hard
+
 "fastq@npm:^1.6.0":
   version: 1.19.1
   resolution: "fastq@npm:1.19.1"
@@ -16080,6 +16172,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-unsafe@npm:^2.0.0":
+  version: 2.0.2
+  resolution: "is-unsafe@npm:2.0.2"
+  checksum: 10c0/3f92f6534e326ae13f4a4733d0d6b9f06f2b7ab80d99c1973eb32b33b00cf9bc7a8505e3260f36209c9109f56a46bb64cc6bd0a27e37fee08cd35892a2b6ae44
+  languageName: node
+  linkType: hard
+
 "is-weakmap@npm:^2.0.2":
   version: 2.0.2
   resolution: "is-weakmap@npm:2.0.2"
@@ -16816,7 +16915,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^6.1.3":
+"jose@npm:6.2.4, jose@npm:^6.1.3":
   version: 6.2.4
   resolution: "jose@npm:6.2.4"
   checksum: 10c0/aaba866d71a8cd5bfd7c2c228367318df99f36318d7c6f1e7bca835c3bdd74ea3fe38783277f7bf7c9703ae24338bb3642a6ccdef6aa54c006d29a9711e6f782
@@ -19750,6 +19849,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-expression-matcher@npm:^1.6.2":
+  version: 1.6.2
+  resolution: "path-expression-matcher@npm:1.6.2"
+  checksum: 10c0/8241302f563de367a81acacd417055a22dd3792a84700569dc2a7888da31aa18eb01131c55f05200c92790b6c45b01fee1984b02540cc5f15726ba1b73a8a075
+  languageName: node
+  linkType: hard
+
 "path-is-absolute@npm:^1.0.0":
   version: 1.0.1
   resolution: "path-is-absolute@npm:1.0.1"
@@ -22251,6 +22357,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"samlify@npm:^2.13.1":
+  version: 2.15.1
+  resolution: "samlify@npm:2.15.1"
+  dependencies:
+    "@authenio/xml-encryption": "npm:^6.0.2"
+    "@xmldom/xmldom": "npm:^0.9.12"
+    xml: "npm:^1.0.1"
+    xml-crypto: "npm:^6.4.0"
+    xml-escape: "npm:^1.1.0"
+    xpath: "npm:^0.0.35"
+  checksum: 10c0/1a5dbbccb9fb405222204080fe6519493808e0687d56dcc8c9116fbd96fda45891d5014c8180e0ef5b384526070c4e9b88c86abfca357e9fa8d08bbb04ddd1f6
+  languageName: node
+  linkType: hard
+
 "sax@npm:^1.2.4, sax@npm:^1.5.0":
   version: 1.6.1
   resolution: "sax@npm:1.6.1"
@@ -23167,6 +23287,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"strnum@npm:^2.4.2":
+  version: 2.5.1
+  resolution: "strnum@npm:2.5.1"
+  dependencies:
+    anynum: "npm:^1.0.1"
+  checksum: 10c0/8624abed504759ec6f3e1511823c15f39ab3161a9f7c5905fed54d95c4e5a41e02e2e9fb538da3ed6c6f667a978df9c4456aed8146ddfb7b2790001cd2afda7c
+  languageName: node
+  linkType: hard
+
 "style-to-js@npm:^1.0.0":
   version: 1.1.21
   resolution: "style-to-js@npm:1.1.21"
@@ -23523,7 +23652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts@npm:^6.1.32, tldts@npm:^6.1.86":
+"tldts@npm:^6.1.0, tldts@npm:^6.1.32, tldts@npm:^6.1.86":
   version: 6.1.86
   resolution: "tldts@npm:6.1.86"
   dependencies:
@@ -25121,6 +25250,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"xml-crypto@npm:^6.4.0":
+  version: 6.4.0
+  resolution: "xml-crypto@npm:6.4.0"
+  dependencies:
+    "@xmldom/is-dom-node": "npm:^1.0.1"
+    "@xmldom/xmldom": "npm:^0.8.15"
+    xpath: "npm:^0.0.33"
+  checksum: 10c0/3ec9e16f81ae230d38b57b1f4dfcb573c0e0d0f6dc3440f41f1db28e45ee2abfa2a2993c21bdc4e8605b433c8002e1d7192bbaeae29d9948ab87403091dcf4ee
+  languageName: node
+  linkType: hard
+
+"xml-escape@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "xml-escape@npm:1.1.0"
+  checksum: 10c0/973cef0e383c373d1ccbacbba33ac49e7f2afd60d2710ed1308e153d2aa3b3189477f79315eb10eed43b7221add040a5eab18107170b658559e4d29ce7653a76
+  languageName: node
+  linkType: hard
+
 "xml-js@npm:^1.6.11":
   version: 1.6.11
   resolution: "xml-js@npm:1.6.11"
@@ -25139,10 +25286,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"xml-naming@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "xml-naming@npm:0.3.0"
+  checksum: 10c0/48bfc4fe888cdf1c3eceb7853632ebce59e4aa71f0ae33c3f9ce1fbd3213caad293457de0a311114491f0d4efcfba70977dcba3a4f66dfed8c92edbb938056bf
+  languageName: node
+  linkType: hard
+
+"xml@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "xml@npm:1.0.1"
+  checksum: 10c0/04bcc9b8b5e7b49392072fbd9c6b0f0958bd8e8f8606fee460318e43991349a68cbc5384038d179ff15aef7d222285f69ca0f067f53d071084eb14c7fdb30411
+  languageName: node
+  linkType: hard
+
 "xmlchars@npm:^2.2.0":
   version: 2.2.0
   resolution: "xmlchars@npm:2.2.0"
   checksum: 10c0/b64b535861a6f310c5d9bfa10834cf49127c71922c297da9d4d1b45eeaae40bf9b4363275876088fbe2667e5db028d2cd4f8ee72eed9bede840a67d57dab7593
+  languageName: node
+  linkType: hard
+
+"xpath@npm:^0.0.33":
+  version: 0.0.33
+  resolution: "xpath@npm:0.0.33"
+  checksum: 10c0/ac2c04142c0f38e75f0d899b6818b08a0e8163aab5d6fd8a292f31a6e925ab08ee48feb1f447049c5bbcb8926b7241c79d1d4a51386e6f6f2d76ac5784917b9d
+  languageName: node
+  linkType: hard
+
+"xpath@npm:^0.0.35":
+  version: 0.0.35
+  resolution: "xpath@npm:0.0.35"
+  checksum: 10c0/146b51762d37e1f3dac1121e5bcfbb5c85f0e70aa8a47a2a64bd6c5e285de95549361470de4dc9170851f6ce19f79fe78bb853285cc63da6e792992ecfbe2ecc
   languageName: node
   linkType: hard
 

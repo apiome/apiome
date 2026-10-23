@@ -411,6 +411,14 @@ describe('oauthProviderFromCallbackPath', () => {
     expect(oauthProviderFromCallbackPath('/callback/')).toBeNull();
     expect(oauthProviderFromCallbackPath(undefined)).toBeNull();
   });
+
+  test('recognises the enterprise SSO completion routes, so the second factor applies (EID-1.1)', () => {
+    expect(oauthProviderFromCallbackPath('/sso/callback/sso-acme')).toBe('sso:sso-acme');
+    expect(oauthProviderFromCallbackPath('/sso/saml2/sp/acs/sso-acme')).toBe('sso:sso-acme');
+    expect(oauthProviderFromCallbackPath('/sso/saml2/callback/:providerId')).toBe('sso::providerId');
+    expect(oauthProviderFromCallbackPath('/sso/saml2/sp/metadata')).toBeNull();
+    expect(oauthProviderFromCallbackPath('/sign-in/sso')).toBeNull();
+  });
 });
 
 describe('oauthResolutionHandler — OAuth callback hook', () => {
