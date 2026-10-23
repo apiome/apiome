@@ -90,7 +90,7 @@ describe('every metric is `rem`, so the font scale reaches chrome as well as typ
   it('keeps the page and content caps in px: they are measured against the viewport', () => {
     // A cap that grew with the font scale would widen a wide layout past the window and
     // produce the horizontal scrollbar DESIGN.md §5 forbids.
-    expect(resolveToken('--page-max', layer)).toBe('1440px');
+    expect(resolveToken('--page-max', layer)).toBe('2400px');
     expect(resolveToken('--content-max', layer)).toBe('1200px');
   });
 

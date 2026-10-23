@@ -99,7 +99,8 @@
   /* Layout */
   --rail-w: 264px;
   --rail-w-collapsed: 64px;
-  --page-max: 1440px;
+  --page-max: 2400px;
+  --page-gutter: max(var(--page-pad), 2.5%);
   --content-max: 1200px;
 
   /* Density (comfortable) */
@@ -368,7 +369,7 @@ html[data-rail="collapsed"] .rail__collapse i { transform: rotate(180deg); }
    (tables, diagrams, code) must scroll inside its own container. */
 .page { display: flex; flex-direction: column; min-height: 100vh; overflow-x: clip; }
 .page-header { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg-canvas) 86%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--border); }
-.page-header__inner { max-width: var(--page-max); margin: 0 auto; padding: 18px var(--page-pad) 0; }
+.page-header__inner { max-width: var(--page-max); margin: 0 auto; padding: 18px var(--page-gutter) 0; }
 .page-header__row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding-bottom: 16px; flex-wrap: wrap; }
 .page-header__row > :first-child { min-width: 0; flex: 1 1 380px; }
 .page-header--with-tabs .page-header__row { padding-bottom: 8px; }
@@ -379,7 +380,7 @@ html[data-rail="collapsed"] .rail__collapse i { transform: rotate(180deg); }
 .page-desc { margin-top: 4px; font-size: var(--fs-sm); color: var(--fg-muted); max-width: 72ch; }
 .page-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 2px; flex-wrap: wrap; justify-content: flex-end; }
 .page-actions > .btn { flex-shrink: 0; }
-.page-body { flex: 1; width: 100%; max-width: var(--page-max); margin: 0 auto; padding: var(--space-6) var(--page-pad) var(--space-12); display: flex; flex-direction: column; gap: var(--space-6); }
+.page-body { flex: 1; width: 100%; max-width: var(--page-max); margin: 0 auto; padding: var(--space-6) var(--page-gutter) var(--space-12); display: flex; flex-direction: column; gap: var(--space-6); }
 .page-body--narrow { max-width: 920px; }
 .page-body--flush { padding-top: 0; }
 .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }

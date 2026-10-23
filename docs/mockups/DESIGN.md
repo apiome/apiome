@@ -207,7 +207,9 @@ tooltips on hover and hairlines between groups.
 Sticky, translucent (backdrop blur), 1 px hairline. Contains breadcrumb (12 px),
 title (24 px/600/-0.02em, optional badge), one-line description, right-aligned
 actions (**one** primary + secondaries + overflow), optional underline tab row.
-Content max-width 1440 px; reading/forms pages use `.page-body--narrow` (920 px).
+Content fills the space beside the rail: the side gutter is `--page-pad` or 2.5 % of that
+space, whichever is larger, so content spans at least 95 % of it, up to a 2400 px safety cap
+(`--page-max`). Reading/forms pages use `.page-body--narrow` (920 px).
 
 ### 5.4 Overlays
 * **Dialog** — 560 px default (`sm 440 · lg 760 · xl 960 · full`), 20 px radius,

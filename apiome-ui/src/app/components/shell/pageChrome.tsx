@@ -27,9 +27,10 @@ import { cn } from '@lib/utils';
  *
  * ### Width is inherited, not passed
  *
- * The content cap is a custom property, `--page-width`, declared at `--page-max` (1440 px)
+ * The content cap is a custom property, `--page-width`, declared at `--page-max` (2400 px — a
+ * safety cap; below it the page fills the space beside the rail, less its `--page-gutter`)
  * on `html` and re-declared by `narrow` (920 px). Both the header's inner and the body read
- * it, so a page cannot end up with a 1440 px title over a 920 px column by setting one and
+ * it, so a page cannot end up with a full-width title over a 920 px column by setting one and
  * forgetting the other — see the "Page chrome" section of `globals.css`, which
  * `tests/page-chrome-css.test.ts` pins.
  *
@@ -51,7 +52,7 @@ export interface PageProps extends React.HTMLAttributes<HTMLDivElement> {
   /** The header and the body, in that order. */
   children: React.ReactNode;
   /**
-   * Content cap for the body: `default` is 1440 px, `narrow` is 920 px for form and
+   * Content cap for the body: `default` fills the page (up to 2400 px), `narrow` is 920 px for form and
    * reading pages. The header spans `default` either way.
    */
   width?: PageWidth;
