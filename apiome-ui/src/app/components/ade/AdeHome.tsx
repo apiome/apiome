@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { FolderKanban, Globe, LogOut, Settings2, Sparkles } from 'lucide-react';
+import { FolderKanban, Globe, LogOut, Settings2, ShieldCheck } from 'lucide-react';
 
 import { BrandMark } from '../brand';
 import { Avatar } from '@/app/components/ui/Avatar';
-import { badgeVariants } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
+import { ComingNext } from '@/app/components/ui/ComingNext';
 import { ICON_SIZE, ICON_STROKE_WIDTH } from '@/app/components/ui/iconSizes';
 import CommandPaletteHost from '@/app/components/shell/CommandPaletteHost';
 import ShortcutsHost from '@/app/components/shell/ShortcutsHost';
 import { LAUNCHER_ROUTE } from '@/app/components/shell/appShellRoutes';
+import { useControlPanelVisit } from '../shell/controlPanelVisit';
 import { markWhatsNewSeen } from '../shell/whatsNewSeen';
 import PreferencesDrawerHost from './preferences/PreferencesDrawerHost';
 import { openPreferences } from './preferences/preferencesDrawerBus';
@@ -27,7 +28,6 @@ import type { ExternalHomeCard } from '@lib/external-links';
 import { formatWorkspaceMeta } from '@lib/auth/tenant-membership-context-mapping';
 import type { LauncherSummary } from '@lib/db/launcher-summary';
 import { findPlatformNavItem } from '@lib/platform-nav';
-import { cn } from '@lib/utils';
 
 import AppLaunchCard from './launcher/AppLaunchCard';
 import HoneycombOrnament from './launcher/HoneycombOrnament';
@@ -38,9 +38,10 @@ import {
   countLabel,
   firstNameOf,
   greetingFor,
+  lastOpenedFooter,
   launcherApps,
+  launcherComingNext,
   LAUNCHER_RESOURCES,
-  LAUNCHER_ROADMAP,
 } from './launcher/launcherModel';
 
 /**
@@ -55,10 +56,19 @@ import {
  * carrying one identity hue. It replaced a zinc page with four `rgba()` glows and a Tailwind
  * gradient pair per card, none of which could follow a theme.
  *
- * The information architecture is unchanged. Every line in the mockup's **Keeps (1:1)** list
- * is still here: the build badge opening What's new, preferences, the account chip, sign out,
- * the greeting and headline, the ordered application grid, the resource rows and the dashed
- * roadmap panel, and the footer's version and copyright.
+ * Every line in the mockup's **Keeps (1:1)** list is still here: the build badge opening
+ * What's new, preferences, the account chip, sign out, the greeting and headline, the ordered
+ * application grid, the resource rows, and the footer's version and copyright.
+ *
+ * ### Only what opens (HIVE-12.5, #5612)
+ *
+ * Authority for this pass: `docs/mockups/proposals/launcher-focused.html`, callouts 2 and 3.
+ * The grid and the Resources panel draw only destinations that can be opened. What is not
+ * shipped — a host's disabled card, Community, Marketplace — is named once on the
+ * `ComingNext` line under the grid, whose only control is a link to What's new. The dashed
+ * "On the roadmap" panel is gone (its one row was a disabled button); HIVE-12.6 puts
+ * "Recently shipped" in its place. The hero lost its eyebrow pill and filler paragraph and
+ * gained an "n need attention" chip.
  *
  * ### The commercial slot
  *
@@ -119,7 +129,19 @@ export default function AdeHome({
   const { data: session } = useAuthSession();
   const [showWhatsNew, setShowWhatsNew] = useState(false);
 
+  // When the Control Panel was last open on this device; `null` until after mount.
+  const controlPanelOpenedAt = useControlPanelVisit();
+
   const apps = launcherApps(commercialHomeCards);
+  const comingNext = launcherComingNext(commercialHomeCards);
+
+  /** Open What's new — from the build badge or the Coming next line. */
+  const openWhatsNew = () => {
+    // The launcher's badge and the rail's user menu (HIVE-3.4, #5290) show the same notes
+    // for the same build, so reading them here has to clear the rail's unread dot as well.
+    markWhatsNewSeen();
+    setShowWhatsNew(true);
+  };
   const firstName = firstNameOf(session?.user?.name);
   const currentTenantId =
     (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id ?? null;
@@ -138,13 +160,7 @@ export default function AdeHome({
         <button
           type="button"
           className="launch-ver"
-          onClick={() => {
-            // The launcher's badge and the rail's user menu (HIVE-3.4, #5290) show the
-            // same notes for the same build, so reading them here has to clear the
-            // rail's unread dot as well.
-            markWhatsNewSeen();
-            setShowWhatsNew(true);
-          }}
+          onClick={openWhatsNew}
           title="View what’s new"
         >
           <span className="launch-ver__dot" aria-hidden="true" />
@@ -194,10 +210,6 @@ export default function AdeHome({
       <main className="launch-row">
         <section className="launch-hero">
           <HoneycombOrnament />
-          <div className={cn(badgeVariants({ variant: 'honey', size: 'lg' }), 'inline-flex')}>
-            <Sparkles size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-            Apiome platform
-          </div>
           {/* The greeting is the reader's *own* time of day, so the server's hour is not
               the right answer and the client's correction is not a mismatch worth warning
               about — the one case React documents `suppressHydrationWarning` for. */}
@@ -209,10 +221,6 @@ export default function AdeHome({
             <br />
             <span className="launch-display__accent">specification workspace</span>
           </h1>
-          <div className="launch-lede">
-            Govern projects and versions, publish to the public catalog, and manage your API
-            specification workspace from one place.
-          </div>
 
           {summary ? (
             <div className="launch-chips">
@@ -233,6 +241,19 @@ export default function AdeHome({
                 <Globe aria-hidden />
                 {summary.publishedCount} published
               </Link>
+              {/* Only when something does: a "0 need attention" chip is noise. The count is
+                  Home's Needs attention definition, and the chip leads to where the
+                  findings are worked off. */}
+              {summary.attentionCount > 0 ? (
+                <Link
+                  className="launch-chip"
+                  href={navHref('lint-workspace')}
+                  data-testid="launch-chip-attention"
+                >
+                  <ShieldCheck aria-hidden />
+                  {summary.attentionCount} need attention
+                </Link>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -246,9 +267,18 @@ export default function AdeHome({
           </div>
           <div className="launch-grid">
             {apps.map((app) => (
-              <AppLaunchCard key={app.id} app={app} />
+              <AppLaunchCard
+                key={app.id}
+                app={app}
+                footerLabel={
+                  app.primary ? lastOpenedFooter(app.footerLabel, controlPanelOpenedAt) : undefined
+                }
+              />
             ))}
           </div>
+          {/* Inside the Applications section, right after the tiles: the keyboard order is
+              tiles → Follow in What's new → Resources. */}
+          <ComingNext items={comingNext} onFollow={openWhatsNew} />
         </section>
 
         <div className="launch-lower">
@@ -257,39 +287,13 @@ export default function AdeHome({
               <h2 id="launch-resources" className="launch-caps">
                 Resources
               </h2>
-              <span className="launch-eyebrow__sub">Learn, connect, and extend your workflow.</span>
+              <span className="launch-eyebrow__sub">Learn, then get back to work.</span>
             </div>
             {LAUNCHER_RESOURCES.map((item) => (
               <ResourceRow key={item.id} item={item} />
             ))}
           </Card>
 
-          <section
-            className="launch-panel launch-panel--dashed"
-            aria-labelledby="launch-roadmap"
-          >
-            <div className="launch-eyebrow">
-              <h2 id="launch-roadmap" className="launch-caps">
-                On the roadmap
-              </h2>
-            </div>
-            <div className="launch-eyebrow__sub">
-              Governance and compliance tooling is in development.
-            </div>
-            {LAUNCHER_ROADMAP.map((item) => (
-              <ResourceRow key={item.id} item={item} />
-            ))}
-            {/* Two of six cells lit: the comb as a progress bar, saying the same thing the
-                sentence above already did — hence hidden from assistive technology. */}
-            <div className="launch-hexrow" aria-hidden="true">
-              <span className="is-on" />
-              <span className="is-on" />
-              <span className="is-accent" />
-              <span />
-              <span />
-              <span />
-            </div>
-          </section>
         </div>
       </main>
 

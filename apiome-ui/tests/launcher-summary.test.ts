@@ -15,6 +15,7 @@ import { getAuthSession } from './__mocks__/server-session';
 
 const mockLoadContext = jest.fn();
 const mockDashboardStats = jest.fn();
+const mockQuery = jest.fn();
 
 jest.mock('../lib/auth/tenant-membership-context', () => ({
   loadTenantMembershipContext: () => mockLoadContext(),
@@ -22,6 +23,11 @@ jest.mock('../lib/auth/tenant-membership-context', () => ({
 
 jest.mock('../lib/db/helper', () => ({
   getDashboardStats: (userId: string) => mockDashboardStats(userId),
+}));
+
+// The pool the attention count (HIVE-12.5) reads through.
+jest.mock('../lib/db/db', () => ({
+  query: (sql: string, params: unknown[]) => mockQuery(sql, params),
 }));
 
 import { getLauncherSummaryForSession } from '../lib/db/launcher-summary';
@@ -48,6 +54,8 @@ beforeEach(() => {
   (getAuthSession as jest.Mock).mockReset();
   mockLoadContext.mockReset();
   mockDashboardStats.mockReset();
+  mockQuery.mockReset();
+  mockQuery.mockResolvedValue({ rows: [{ attention_count: 0 }] });
   jest.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
@@ -65,6 +73,7 @@ describe('launcher summary', () => {
       workspace: { id: 'tenant-1', name: 'Acme Corp', role: 'owner', licenseName: 'Free' },
       projectCount: 3,
       publishedCount: 5,
+      attentionCount: 0,
     });
     expect(mockDashboardStats).toHaveBeenCalledWith('user-1');
   });
@@ -76,11 +85,13 @@ describe('launcher summary', () => {
       workspace: null,
       projectCount: 0,
       publishedCount: 0,
+      attentionCount: 0,
     });
     // The acting user comes from the server session; with none there is nobody to read for,
-    // and neither source is touched.
+    // and no source is touched.
     expect(mockLoadContext).not.toHaveBeenCalled();
     expect(mockDashboardStats).not.toHaveBeenCalled();
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 
   it('claims no workspace when the session is not in one', async () => {
@@ -113,6 +124,7 @@ describe('launcher summary', () => {
       workspace: null,
       projectCount: 3,
       publishedCount: 5,
+      attentionCount: 0,
     });
   });
 
@@ -147,5 +159,43 @@ describe('launcher summary', () => {
       projectCount: 0,
       publishedCount: 0,
     });
+  });
+
+  it('counts the revisions that need attention, for the session’s own user (HIVE-12.5)', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue(SESSION);
+    mockLoadContext.mockResolvedValue(CONTEXT);
+    mockDashboardStats.mockResolvedValue(STATS);
+    mockQuery.mockResolvedValue({ rows: [{ attention_count: 2 }] });
+
+    await expect(getLauncherSummaryForSession()).resolves.toMatchObject({ attentionCount: 2 });
+    const [sql, params] = mockQuery.mock.calls[0];
+    // Home's Needs attention definition: unpublished, blocking, in the reader's workspaces.
+    expect(sql).toContain('v.published = false');
+    expect(sql).toContain("'severity_counts'->>'error')::int > 0");
+    expect(sql).toContain('apiome.tenant_users WHERE user_id = $1');
+    expect(params).toEqual(['user-1']);
+  });
+
+  it('keeps every other chip when the attention count faults', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue(SESSION);
+    mockLoadContext.mockResolvedValue(CONTEXT);
+    mockDashboardStats.mockResolvedValue(STATS);
+    mockQuery.mockRejectedValue(new Error('database is down'));
+
+    await expect(getLauncherSummaryForSession()).resolves.toEqual({
+      workspace: { id: 'tenant-1', name: 'Acme Corp', role: 'owner', licenseName: 'Free' },
+      projectCount: 3,
+      publishedCount: 5,
+      attentionCount: 0,
+    });
+  });
+
+  it('reads a malformed count as zero rather than drawing a nonsense chip', async () => {
+    (getAuthSession as jest.Mock).mockResolvedValue(SESSION);
+    mockLoadContext.mockResolvedValue(CONTEXT);
+    mockDashboardStats.mockResolvedValue(STATS);
+    mockQuery.mockResolvedValue({ rows: [{ attention_count: 'many' }] });
+
+    await expect(getLauncherSummaryForSession()).resolves.toMatchObject({ attentionCount: 0 });
   });
 });

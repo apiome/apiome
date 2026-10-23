@@ -124,6 +124,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Versions: **New version** asks whether to **Copy paths** when you copy from a version — classes are always copied, and paths come too unless you untick it
   - Navigation: **Tenants** moves from the rail to the workspace switcher's last row, **Manage workspaces…**, and the **Data browser** and **Migrations** tools get rows in your user menu — all three are still in ⌘K
   - Navigation: the **Workspace** group in the rail starts folded, showing how many pages it holds, so the rail fits a laptop screen without scrolling — click its heading to open it, and the rail remembers your choice
+  - Launcher: only apps you can open get a card — **Control Panel** (now with when you last opened it), your plan's apps and **Browser**. Products not available yet are named on one **Coming next** line that links to What's new, and the hero shows how many versions **need attention**
   - Lint posture and Sunset timeline open closer to the data: Lint posture's four tiles and grades card fold into one summary line with grade chips (**Show stats** opens them), and the Sunset timeline's warning banner becomes a **Where these warnings come from** link
   - Versions: **Heatmap** in a version's **Actions** menu shows its classes as tiles colored by complexity, recent change, how many classes reference them, or documentation completeness
   - Favorite projects: your pinned projects are listed in a **Favorite projects** card on Profile and lead the command palette (⌘K) under **Favorites**

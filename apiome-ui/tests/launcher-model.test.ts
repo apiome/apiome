@@ -3,8 +3,10 @@
  *
  * `src/app/components/ade/launcher/launcherModel.ts` decides three things the page itself
  * must not: where a host-injected card lands in the grid, what hue it gets when its host
- * declared none or declared nonsense, and how a disabled tile names itself. All three are
- * assertions about *data*, so they are made here rather than through a render.
+ * declared none or declared nonsense, and how a tile names itself. HIVE-12.5 (#5612) adds
+ * two more: an unshipped product is never a tile but a tag on the "Coming next" line, and the
+ * Control Panel's footer says when it was last opened. All of these are assertions about
+ * *data*, so they are made here rather than through a render.
  */
 
 import {
@@ -15,8 +17,12 @@ import {
   countLabel,
   firstNameOf,
   greetingFor,
+  lastOpenedFooter,
   launcherApps,
+  launcherComingNext,
   launcherItemLabel,
+  LAUNCHER_COMING_NEXT,
+  LAUNCHER_RESOURCES,
   resolveLauncherTone,
   ANONYMOUS_FIRST_NAME,
 } from '../src/app/components/ade/launcher/launcherModel';
@@ -46,14 +52,21 @@ function homeCard(overrides: Partial<ExternalHomeCard> = {}): ExternalHomeCard {
 
 describe('launcher grid order', () => {
   it('puts the host-injected cards between Control Panel and the Browser', () => {
+    const apps = launcherApps([homeCard(), homeCard({ id: 'tooling', name: 'Tooling Suite' })]);
+
+    expect(apps.map((app) => app.id)).toEqual(['control-panel', 'suite', 'tooling', 'browser']);
+  });
+
+  it('draws only what can be opened (HIVE-12.5)', () => {
     const apps = launcherApps([homeCard(), homeCard({ id: 'developer-suite', enabled: false })]);
 
-    expect(apps.map((app) => app.id)).toEqual([
-      'control-panel',
-      'suite',
-      'developer-suite',
-      'browser',
-    ]);
+    expect(apps.map((app) => app.id)).toEqual(['control-panel', 'suite', 'browser']);
+    expect(apps.every((app) => app.enabled)).toBe(true);
+  });
+
+  it('emphasises the Control Panel, and only it', () => {
+    const apps = launcherApps([homeCard()]);
+    expect(apps.filter((app) => app.primary).map((app) => app.id)).toEqual(['control-panel']);
   });
 
   it('is two cards on an install entitled to nothing', () => {
@@ -108,14 +121,61 @@ describe('a commercial card’s hue', () => {
 });
 
 describe('what a tile calls itself', () => {
-  it('offers to open a shipped product', () => {
-    expect(launcherItemLabel('Control Panel', true)).toBe('Open Control Panel');
+  it('offers to open the product', () => {
+    expect(launcherItemLabel('Control Panel')).toBe('Open Control Panel');
+  });
+});
+
+describe('the Coming next line (HIVE-12.5)', () => {
+  it('names the host’s unshipped products first, then the first-party ones', () => {
+    const items = launcherComingNext([
+      homeCard(),
+      homeCard({ id: 'developer-suite', name: 'Developer Suite', enabled: false }),
+    ]);
+
+    expect(items).toEqual([
+      { id: 'developer-suite', label: 'Developer Suite' },
+      { id: 'community', label: 'Community' },
+      { id: 'marketplace', label: 'Marketplace' },
+    ]);
   });
 
-  it('says why an unshipped one cannot be opened', () => {
-    // The acceptance criterion verbatim: the 60 % opacity and the chip that carry this
-    // visually reach no screen reader.
-    expect(launcherItemLabel('Developer Suite', false)).toBe('Developer Suite (coming soon)');
+  it('never names a product that is also a tile', () => {
+    const cards = [homeCard(), homeCard({ id: 'developer-suite', enabled: false })];
+    const tiles = new Set(launcherApps(cards).map((app) => app.id));
+    expect(launcherComingNext(cards).filter((item) => tiles.has(item.id))).toEqual([]);
+  });
+
+  it('still names the first-party products on an install with no host', () => {
+    expect(launcherComingNext()).toEqual([...LAUNCHER_COMING_NEXT]);
+  });
+
+  it('leaves Resources with destinations that exist', () => {
+    expect(LAUNCHER_RESOURCES.map((item) => item.id)).toEqual(['help']);
+    const resourceIds = new Set(LAUNCHER_RESOURCES.map((item) => item.id));
+    expect(LAUNCHER_COMING_NEXT.filter((item) => resourceIds.has(item.id))).toEqual([]);
+  });
+});
+
+describe('the Control Panel’s “last opened” footer (HIVE-12.5)', () => {
+  const NOW = Date.UTC(2026, 9, 23, 12, 0, 0);
+  const HOUR = 60 * 60 * 1000;
+
+  it('says how long ago', () => {
+    expect(lastOpenedFooter('Included', NOW - 2 * HOUR, NOW)).toBe('Included · last opened 2 hours ago');
+    expect(lastOpenedFooter('Included', NOW - 3 * 24 * HOUR, NOW)).toBe(
+      'Included · last opened 3 days ago'
+    );
+    expect(lastOpenedFooter('Included', NOW - 10_000, NOW)).toBe('Included · last opened just now');
+  });
+
+  it('is the bare label with no stamp', () => {
+    expect(lastOpenedFooter('Included', null, NOW)).toBe('Included');
+  });
+
+  it('ignores a stamp from the future (a skewed clock) or over a year old', () => {
+    expect(lastOpenedFooter('Included', NOW + HOUR, NOW)).toBe('Included');
+    expect(lastOpenedFooter('Included', NOW - 400 * 24 * HOUR, NOW)).toBe('Included');
   });
 });
 

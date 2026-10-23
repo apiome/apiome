@@ -90,6 +90,7 @@ import { openShortcutSheet } from '../src/app/components/shell/shortcutSheetBus'
 import { ThemeProvider } from '../src/app/providers/ThemeProvider';
 import { NAV_COLLAPSED_STORAGE_KEY } from '../src/app/components/shell/navGroupCollapse';
 import { railGroupCountLabel } from '../src/app/components/shell/RailNav';
+import { CONTROL_PANEL_VISIT_STORAGE_KEY } from '../src/app/components/shell/controlPanelVisit';
 import { RAIL_ICON_BREAKPOINT_PX } from '../src/app/components/shell/useIconRail';
 import {
   isPreferencesDrawerMounted,
@@ -552,6 +553,17 @@ describe('AppShell — groups folded by default (HIVE-12.1)', () => {
 
     expect(screen.getByTestId('rail-group-toggle-workspace')).toHaveAttribute('aria-expanded', 'false');
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe('AdeAppShell — the launcher’s “last opened” stamp (HIVE-12.5)', () => {
+  it('records the time whenever a Control Panel page mounts', async () => {
+    const before = Date.now();
+    await renderShell({ pathname: '/ade/dashboard/catalog' });
+
+    const stamp = Number(window.localStorage.getItem(CONTROL_PANEL_VISIT_STORAGE_KEY));
+    expect(stamp).toBeGreaterThanOrEqual(before);
+    expect(stamp).toBeLessThanOrEqual(Date.now());
   });
 });
 

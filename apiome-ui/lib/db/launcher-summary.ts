@@ -14,6 +14,8 @@
  *   switcher makes.
  * - `getDashboardStats()` for the counts, so the launcher and the Control Panel can never
  *   disagree about how many projects exist.
+ * - `countLintAttention()` (HIVE-12.5, #5612) for the "n need attention" chip — the same
+ *   definition Home's **Needs attention** panel lists, from `./lint-attention-query.ts`.
  *
  * Misuse safeguards:
  * - The acting user comes from the server session; the client passes nothing and can spoof
@@ -29,6 +31,10 @@ import { getAuthSession } from '../auth/server-session';
 import { loadTenantMembershipContext } from '../auth/tenant-membership-context';
 import type { TenantMembershipRow } from '../auth/tenant-membership-context-mapping';
 import { getDashboardStats } from './helper';
+import { countLintAttention, type LintAttentionQueryRunner } from './lint-attention-query';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- CommonJS pool singleton
+const connectionPool = require('./db') as { query: LintAttentionQueryRunner };
 
 /** What the launcher's hero says about the reader's position, beyond their name. */
 export type LauncherSummary = {
@@ -38,6 +44,11 @@ export type LauncherSummary = {
    * case the launcher simply draws no workspace chip.
    */
   workspace: TenantMembershipRow | null;
+  /**
+   * Unpublished revisions with blocking lint findings, across the reader's workspaces. The
+   * hero draws "n need attention" only when this is above zero.
+   */
+  attentionCount: number;
   /**
    * Projects across every workspace the reader belongs to — the Control Panel's own
    * "Projects" statistic, not a per-workspace count, so the two surfaces agree.
@@ -52,6 +63,7 @@ const EMPTY_SUMMARY: LauncherSummary = {
   workspace: null,
   projectCount: 0,
   publishedCount: 0,
+  attentionCount: 0,
 };
 
 /**
@@ -98,11 +110,12 @@ export async function getLauncherSummaryForSession(): Promise<LauncherSummary> {
   const userId = user?.user_id;
   if (!userId) return EMPTY_SUMMARY;
 
-  // Both sources are independent and both may fail; `allSettled` is what keeps one outage
-  // from taking the other's chip away as well.
-  const [context, statsJson] = await Promise.allSettled([
+  // The sources are independent and any may fail; `allSettled` is what keeps one outage
+  // from taking the other chips away as well.
+  const [context, statsJson, attention] = await Promise.allSettled([
     loadTenantMembershipContext(),
     getDashboardStats(userId),
+    countLintAttention((sql, params) => connectionPool.query(sql, params), userId),
   ]);
 
   const tenants = context.status === 'fulfilled' ? context.value.tenants : [];
@@ -120,5 +133,6 @@ export async function getLauncherSummaryForSession(): Promise<LauncherSummary> {
     workspace: activeWorkspace(tenants, user?.current_tenant_id),
     projectCount: countFrom(stats, 'total_projects'),
     publishedCount: countFrom(stats, 'published_versions'),
+    attentionCount: attention.status === 'fulfilled' ? attention.value : 0,
   };
 }

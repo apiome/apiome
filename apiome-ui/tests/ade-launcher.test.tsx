@@ -98,6 +98,7 @@ jest.mock('@/app/components/shell/ShortcutsHost', () => ({
 import AdeHome from '../src/app/components/ade/AdeHome';
 import { APP_VERSION_BADGE } from '../lib/app-version';
 import { WHATS_NEW_SEEN_STORAGE_KEY } from '../src/app/components/shell/whatsNewSeen';
+import { CONTROL_PANEL_VISIT_STORAGE_KEY } from '../src/app/components/shell/controlPanelVisit';
 import type { ExternalHomeCard } from '../lib/external-links';
 import type { LauncherSummary } from '../lib/db/launcher-summary';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
@@ -135,6 +136,7 @@ const SUMMARY: LauncherSummary = {
   workspace: { id: 'tenant-1', name: 'Acme Corp', role: 'owner', licenseName: 'Free' },
   projectCount: 3,
   publishedCount: 5,
+  attentionCount: 2,
 };
 
 /**
@@ -224,13 +226,14 @@ describe('launcher — the hero', () => {
     expect(screen.getByText(/Good (morning|afternoon|evening), Ada/)).toBeInTheDocument();
   });
 
-  it('sets the headline and the lede', () => {
+  it('sets the headline, with no eyebrow pill and no filler paragraph (HIVE-12.5)', () => {
     renderLauncher();
 
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent('Your API');
     expect(heading).toHaveTextContent('specification workspace');
-    expect(screen.getByText(/Govern projects and versions/)).toBeInTheDocument();
+    expect(screen.queryByText('Apiome platform')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Govern projects and versions/)).not.toBeInTheDocument();
   });
 
   it('summarises the workspace and the counts, each linking into the app', () => {
@@ -250,6 +253,17 @@ describe('launcher — the hero', () => {
       'href',
       '/ade/dashboard/published'
     );
+    // HIVE-12.5: blocking lint findings, leading to where they are worked off.
+    expect(screen.getByRole('link', { name: '2 need attention' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/lint-workspace'
+    );
+  });
+
+  it('draws no attention chip when nothing needs attention', () => {
+    renderLauncher({ summary: { ...SUMMARY, attentionCount: 0 } });
+    expect(screen.queryByTestId('launch-chip-attention')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '3 projects' })).toBeInTheDocument();
   });
 
   it('draws no chips at all when the summary could not be resolved', () => {
@@ -273,12 +287,8 @@ describe('launcher — the application grid', () => {
     const ids = screen
       .getAllByTestId(/^launch-app-/)
       .map((node) => node.getAttribute('data-testid'));
-    expect(ids).toEqual([
-      'launch-app-control-panel',
-      'launch-app-suite',
-      'launch-app-developer-suite',
-      'launch-app-browser',
-    ]);
+    // The host's unshipped Developer Suite is not a tile: it is named on the Coming next line.
+    expect(ids).toEqual(['launch-app-control-panel', 'launch-app-suite', 'launch-app-browser']);
   });
 
   it('renders commercial cards from entitlements alone', () => {
@@ -320,16 +330,45 @@ describe('launcher — the application grid', () => {
     expect(screen.getByTestId('launch-app-control-panel')).not.toHaveAttribute('target');
   });
 
-  it('makes an unshipped card non-interactive and says why', () => {
+  it('names an unshipped product on the Coming next line instead of drawing it (HIVE-12.5)', () => {
     renderLauncher();
 
-    const developer = screen.getByTestId('launch-app-developer-suite');
-    // A disabled *button*, not a `<div aria-label>`: `aria-label` on a role-less element is
-    // an axe violation, and the suffix has to reach a screen reader somehow.
-    expect(developer.tagName).toBe('BUTTON');
-    expect(developer).toBeDisabled();
-    expect(developer).toHaveAccessibleName('Developer Suite (coming soon)');
-    expect(within(developer).getByText('Coming soon')).toBeInTheDocument();
+    expect(screen.queryByTestId('launch-app-developer-suite')).not.toBeInTheDocument();
+    const line = screen.getByTestId('coming-next');
+    expect(line).toHaveTextContent('Coming next:');
+    expect(
+      within(line)
+        .getAllByTestId(/^coming-next-(?!follow)/)
+        .map((tag) => tag.textContent)
+    ).toEqual(['Developer Suite', 'Community', 'Marketplace']);
+    // Text, not controls: the only interactive thing on the line is the What's new link.
+    expect(within(line).getAllByRole('button')).toHaveLength(1);
+    expect(within(line).queryAllByRole('link')).toHaveLength(0);
+  });
+
+  it('emphasises the Control Panel tile, and only it', () => {
+    renderLauncher();
+    expect(screen.getByTestId('launch-app-control-panel')).toHaveClass('launch-card--primary');
+    expect(screen.getByTestId('launch-app-browser')).not.toHaveClass('launch-card--primary');
+    expect(screen.getByTestId('launch-app-suite')).not.toHaveClass('launch-card--primary');
+  });
+
+  it('says when the Control Panel was last opened on this device', async () => {
+    window.localStorage.setItem(
+      CONTROL_PANEL_VISIT_STORAGE_KEY,
+      String(Date.now() - 2 * 60 * 60 * 1000)
+    );
+    renderLauncher();
+
+    expect(await screen.findByText('Included · last opened 2 hours ago')).toBeInTheDocument();
+  });
+
+  it('says only “Included” when this device has no visit recorded', async () => {
+    renderLauncher();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId('launch-card-foot-control-panel')).toHaveTextContent(/^Included$/);
   });
 
   it('tints each card from its tone rather than from a colour', () => {
@@ -346,8 +385,8 @@ describe('launcher — the application grid', () => {
   });
 });
 
-describe('launcher — resources and the roadmap', () => {
-  it('lists help, community and the marketplace', () => {
+describe('launcher — resources', () => {
+  it('lists Help & docs, and nothing that cannot be opened', () => {
     renderLauncher();
 
     // HIVE-4.9 (#5303): the row points at the in-app Help & docs page, which carries the
@@ -357,24 +396,58 @@ describe('launcher — resources and the roadmap', () => {
     expect(help).toHaveAttribute('href', '/ade/dashboard/help');
     expect(help).not.toHaveAttribute('target');
 
-    for (const id of ['community', 'marketplace']) {
-      const row = screen.getByTestId(`launch-resource-${id}`);
-      expect(row.tagName).toBe('BUTTON');
-      expect(row).toBeDisabled();
-      expect(row).toHaveAccessibleName(/\(coming soon\)$/);
-      expect(within(row).getByText('Soon')).toBeInTheDocument();
-    }
+    // HIVE-12.5: Community and Marketplace moved to the Coming next line.
+    expect(screen.getAllByTestId(/^launch-resource-/)).toHaveLength(1);
   });
 
-  it('keeps Audit in the dashed roadmap panel, disabled', () => {
+  it('has no roadmap panel (HIVE-12.5)', () => {
     renderLauncher();
 
-    const audit = screen.getByTestId('launch-resource-audit');
-    expect(audit).toBeDisabled();
-    expect(within(audit).getByText('Planned')).toBeInTheDocument();
-    expect(
-      screen.getByText('Governance and compliance tooling is in development.')
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId('launch-resource-audit')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'On the roadmap' })).not.toBeInTheDocument();
+  });
+});
+
+describe('launcher — only what opens (HIVE-12.5)', () => {
+  it('has no disabled or aria-disabled control anywhere on the page', () => {
+    const { container } = renderLauncher();
+    expect(container.querySelectorAll('[disabled], [aria-disabled="true"]')).toHaveLength(0);
+  });
+
+  it('tabs from the tiles to the Coming next link, then to Resources', async () => {
+    const user = userEvent.setup();
+    renderLauncher();
+
+    // Start just before the grid: the last hero chip.
+    screen.getByTestId('launch-chip-attention').focus();
+    const order: (string | null)[] = [];
+    for (let step = 0; step < 5; step += 1) {
+      await user.tab();
+      order.push(document.activeElement?.getAttribute('data-testid') ?? null);
+    }
+    expect(order).toEqual([
+      'launch-app-control-panel',
+      'launch-app-suite',
+      'launch-app-browser',
+      'coming-next-follow',
+      'launch-resource-help',
+    ]);
+  });
+
+  it('opens What’s new from the Coming next line, and marks the build read', async () => {
+    const user = userEvent.setup();
+    renderLauncher();
+
+    await user.click(screen.getByRole('button', { name: 'Follow in What’s new' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(window.localStorage.getItem(WHATS_NEW_SEEN_STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('drops the Coming next line’s host tag when the host ships nothing unshipped', () => {
+    renderLauncher({ commercialHomeCards: [SUITE_CARD] });
+    expect(screen.queryByTestId('coming-next-developer-suite')).not.toBeInTheDocument();
+    expect(screen.getByTestId('coming-next-community')).toBeInTheDocument();
   });
 });
 

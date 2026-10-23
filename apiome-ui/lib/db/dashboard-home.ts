@@ -54,6 +54,8 @@ const connectionPool = require('./db') as Pool;
 
 import { getAuthSession } from '../auth/server-session';
 import { queryPinnedProjects } from './pinned-projects-query';
+// The one definition of "needs attention for lint", shared with the launcher's hero chip.
+import { LINT_ATTENTION_FROM_WHERE } from './lint-attention-query';
 import {
   ATTENTION_LIMIT,
   CONTINUE_PROJECT_LIMIT,
@@ -473,14 +475,7 @@ async function loadLintRows(userId: string): Promise<LintRow[]> {
        v.version_id,
        p.name AS project_name,
        (v.quality_report->'severity_counts'->>'error')::int AS error_count
-     FROM apiome.versions v
-     JOIN apiome.projects p ON p.id = v.project_id
-     WHERE p.tenant_id IN ${MEMBER_TENANTS}
-       AND p.deleted_at IS NULL
-       AND v.deleted_at IS NULL
-       AND v.published = false
-       AND jsonb_typeof(v.quality_report->'severity_counts'->'error') = 'number'
-       AND (v.quality_report->'severity_counts'->>'error')::int > 0
+     ${LINT_ATTENTION_FROM_WHERE}
      ORDER BY error_count DESC, v.created_at DESC
      LIMIT $2`,
     [userId, ATTENTION_CANDIDATES],

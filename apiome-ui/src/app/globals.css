@@ -3453,6 +3453,41 @@ p {
    is the React half.
    ========================================================================== */
 
+/* ==========================================================================
+   COMING NEXT (HIVE-12.5, #5612) — proposals/launcher-focused.html `.next-line`
+
+   What is not shipped yet, once, as text: an icon, "Coming next:", one outline
+   tag per product and a link to What's new. `components/ui/ComingNext.tsx` is
+   the React half. The tags are `badgeVariants({ variant: 'outline' })`, which
+   already draws the mockup's `--border-strong` ring, so only the line itself
+   is styled here.
+   ========================================================================== */
+.coming-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.coming-next__icon {
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.coming-next__follow {
+  color: var(--accent-fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+a.coming-next__follow:hover {
+  text-decoration: underline;
+}
+
 /* ---- Hive ornaments (hive.css §19) --------------------------------------
    The honeycomb canvas. Two data URIs rather than one tinted by
    `currentColor`, because a background image cannot read a custom property;
@@ -4569,16 +4604,6 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg);
 }
 
-/* And the lede, for the other half of the same trap: `p { color:
-   var(--fg-muted) }` is unlayered, so a `text-fg-muted` utility here would be
-   dead ink. */
-.launch-lede {
-  margin-top: var(--space-4);
-  max-width: 56ch;
-  font-size: var(--fs-lg);
-  color: var(--fg-muted);
-}
-
 /* ---- Summary chips ------------------------------------------------------
    Where the reader is and what they have, each chip a link into the surface
    that owns it. The hrefs come from the HIVE-3.2 nav model, not from this
@@ -4722,14 +4747,6 @@ button.tfa-reset-notice__close > svg {
   box-shadow: none;
 }
 
-/* The chip a card that has not shipped carries instead of that affordance, in the
-   same corner so the eye finds one or the other in one place. */
-.launch-card__soon {
-  position: absolute;
-  top: var(--card-pad);
-  right: var(--card-pad);
-}
-
 .launch-card__tag {
   margin-top: var(--space-4);
   font-size: var(--fs-2xs);
@@ -4776,12 +4793,14 @@ button.tfa-reset-notice__close > svg {
   gap: var(--space-1);
 }
 
-/* A product that has not shipped. Non-interactive by the element it is rendered
-   as (a `<div>`, never a button or a link — see `AppLaunchCard`); this only
-   says so visually. */
-.launch-card--soon {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* The one emphasised tile (HIVE-12.5): Control Panel, the destination most
+   readers came for. A lifted shadow and a faint accent ring — the mockup's
+   `.app-card--primary` — rather than a fill, so the card's identity hue and the
+   hover lift still read the same as every other tile's. */
+.launch-card--primary {
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* ---- The subject glyph --------------------------------------------------
@@ -4809,7 +4828,7 @@ button.tfa-reset-notice__close > svg {
   height: 2.25rem;
 }
 
-/* ---- Resources and the roadmap ------------------------------------------ */
+/* ---- Resources ----------------------------------------------------------- */
 .launch-lower {
   display: grid;
   grid-template-columns: 1fr;
@@ -4819,6 +4838,12 @@ button.tfa-reset-notice__close > svg {
 
 .launch-lower > * {
   min-width: 0;
+}
+
+/* One panel spans the row (HIVE-12.5): "On the roadmap" is gone, and until
+   HIVE-12.6 puts "Recently shipped" beside it, Resources is alone. */
+.launch-lower > :only-child {
+  grid-column: 1 / -1;
 }
 
 /* Side by side once there is room for both — the mockup's own 7:5 split. Below that
@@ -4832,15 +4857,6 @@ button.tfa-reset-notice__close > svg {
 
 .launch-panel {
   padding: calc(var(--card-pad) * 0.9) var(--card-pad);
-}
-
-/* "On the roadmap" is a promise, not an object, so it is drawn as an outline
-   rather than as a surface — hive.css `.empty--dashed`. */
-.launch-panel--dashed {
-  background: transparent;
-  box-shadow: none;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-lg);
 }
 
 .launch-res {
@@ -4888,36 +4904,6 @@ button.tfa-reset-notice__close > svg {
 
 .launch-res:hover:not(:disabled) .launch-res__title {
   color: var(--accent-fg);
-}
-
-.launch-res:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Six cells of the comb, two lit: how much of the roadmap has been built. Pure
-   ornament, and `aria-hidden` in the markup — the panel says the same thing in
-   words directly above it. */
-.launch-hexrow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-top: var(--space-3);
-}
-
-.launch-hexrow > span {
-  width: 1.125rem;
-  height: 1.25rem;
-  background: var(--bg-inset);
-  clip-path: var(--hex-clip);
-}
-
-.launch-hexrow > span.is-on {
-  background: var(--honey);
-}
-
-.launch-hexrow > span.is-accent {
-  background: var(--accent);
 }
 
 /* ---- The footer --------------------------------------------------------- */
