@@ -226,12 +226,12 @@ More import formats.
 - [x] [#5406](https://github.com/apiome/apiome/issues/5406) FMT-EPIC-6 B2B / EDI / vertical depth
 - [x] [#5407](https://github.com/apiome/apiome/issues/5407) FMT-EPIC-7 Gateway & infrastructure route sources
 - [x] [#5408](https://github.com/apiome/apiome/issues/5408) FMT-EPIC-8 Code-first & type-system sources
-- [ ] [#5409](https://github.com/apiome/apiome/issues/5409) FMT-EPIC-9 Industrial, IoT & semantic web
-- [ ] [#5410](https://github.com/apiome/apiome/issues/5410) FMT-EPIC-10 Client workspace long tail
-- [ ] [#5411](https://github.com/apiome/apiome/issues/5411) FMT-EPIC-11 Mainframe long tail
+- [x] [#5409](https://github.com/apiome/apiome/issues/5409) FMT-EPIC-9 Industrial, IoT & semantic web
+- [x] [#5410](https://github.com/apiome/apiome/issues/5410) FMT-EPIC-10 Client workspace long tail
+- [x] [#5411](https://github.com/apiome/apiome/issues/5411) FMT-EPIC-11 Mainframe long tail
 - [x] [#5447](https://github.com/apiome/apiome/issues/5447) FMT-6.3 SWIFT MT import with MT↔MX projection notes
-- [ ] [#5477](https://github.com/apiome/apiome/issues/5477) FMT-10.3 SoapUI / ReadyAPI project import
-- [ ] [#5484](https://github.com/apiome/apiome/issues/5484) FMT-11.3 VSAM catalog and CICS BMS map import
+- [x] [#5477](https://github.com/apiome/apiome/issues/5477) FMT-10.3 SoapUI / ReadyAPI project import
+- [x] [#5484](https://github.com/apiome/apiome/issues/5484) FMT-11.3 VSAM catalog and CICS BMS map import
 
 #### Legacy v2 project ideas
 
