@@ -258,6 +258,9 @@ describe('the tabs', () => {
     // Subjects (CDG-4.5) is the one optional pane: only schema items list it.
     expect(catalogDetailTabs().map((tab) => tab.id)).toEqual(CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects'));
     expect(catalogDetailTabs({}, { subjects: true }).map((tab) => tab.id)).toEqual([...CATALOG_DETAIL_TAB_IDS]);
+    expect(catalogDetailTabs({}, { dependencies: false }).map((tab) => tab.id)).toEqual(
+      CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects' && id !== 'dependencies')
+    );
     expect(catalogDetailTabs().map((tab) => tab.label)).toEqual([
       'Overview',
       'Format details',

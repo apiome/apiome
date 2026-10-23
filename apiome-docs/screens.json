@@ -288,16 +288,6 @@
       "scrollTo": "[data-testid=\"catalog-cards-bulk-bar\"]"
     },
     {
-      "id": "catalog-owner-filter",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"catalog-table\"]",
-      "data": "fixture:hive-a11y/catalog-owner-filter.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/owners/OwnerCell.tsx",
-        "apiome-ui/src/app/components/ade/owners/OwnerFilter.tsx"
-      ]
-    },
-    {
       "id": "catalog-bulk-convert",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
@@ -813,63 +803,6 @@
       "data": "fixture:hive-a11y/roles.html"
     },
     {
-      "id": "teams",
-      "route": "/ade/dashboard/teams",
-      "waitFor": "[data-testid=\"teams-table\"]",
-      "data": "fixture:hive-a11y/teams.html"
-    },
-    {
-      "id": "team-detail",
-      "route": "/ade/dashboard/teams/payments",
-      "waitFor": "[data-testid=\"team-detail\"]",
-      "data": "fixture:hive-a11y/team-detail.html"
-    },
-    {
-      "id": "ownership-drift",
-      "route": "/ade/dashboard/teams",
-      "waitFor": "[data-testid=\"ownership-drift\"]",
-      "data": "fixture:hive-a11y/ownership-drift.html"
-    },
-    {
-      "id": "dependency-graph",
-      "route": "/ade/dashboard/graph",
-      "waitFor": "[data-testid=\"graph-entities\"]",
-      "data": "fixture:hive-a11y/dependency-graph.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
-        "apiome-ui/src/app/components/ade/graph/DependencyGraphSvg.tsx",
-        "apiome-ui/src/app/components/ade/graph/graphLayoutModel.ts"
-      ]
-    },
-    {
-      "id": "dependencies-tab",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"dependencies-panel\"]",
-      "data": "fixture:hive-a11y/dependencies-tab.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
-        "apiome-ui/src/app/components/ade/graph/DependencyGraphSvg.tsx",
-        "apiome-ui/src/app/components/ade/graph/graphLayoutModel.ts"
-      ]
-    },
-    {
-      "id": "dependencies-runtime",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"suggested-consumers\"]",
-      "data": "fixture:hive-a11y/dependencies-runtime.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/graph/DependenciesPanel.tsx",
-        "apiome-ui/src/app/components/ade/graph/SuggestedConsumers.tsx"
-      ]
-    },
-    {
-      "id": "blast-radius",
-      "route": "/ade/dashboard/graph",
-      "waitFor": "[data-testid=\"blast-radius-answer\"]",
-      "data": "fixture:hive-a11y/blast-radius.html",
-      "sources": ["apiome-ui/src/app/components/ade/graph/BlastRadiusDrawer.tsx"]
-    },
-    {
       "id": "roles-builtin",
       "route": "/ade/dashboard/roles",
       "waitFor": "[data-testid=\"roles-lock-note\"]",
@@ -928,139 +861,6 @@
       "route": "/ade/dashboard/api-keys",
       "waitFor": "[data-testid=\"api-key-create-dialog\"]",
       "data": "fixture:hive-a11y/api-keys-registry-scope.html"
-    },
-    {
-      "id": "catalog-kinds",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"catalog-kinds\"]",
-      "data": "fixture:hive-a11y/catalog-kinds.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/catalog/CatalogKindsPanel.tsx",
-        "apiome-ui/src/app/components/ade/catalog/CatalogEntityList.tsx",
-        "apiome-ui/lib/catalog-entities.ts"
-      ]
-    },
-    {
-      "id": "agent-entity",
-      "route": "/ade/dashboard/catalog/agents/support-bot",
-      "waitFor": "[data-testid=\"agent-detail\"]",
-      "data": "fixture:hive-a11y/agent-entity.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/catalog/agents",
-        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
-        "apiome-ui/lib/catalog-agents.ts"
-      ]
-    },
-    {
-      "id": "model-entity",
-      "route": "/ade/dashboard/catalog/models/claude-3",
-      "waitFor": "[data-testid=\"model-detail\"]",
-      "data": "fixture:hive-a11y/model-entity.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/catalog/models",
-        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
-        "apiome-ui/lib/catalog-agents.ts"
-      ]
-    },
-    {
-      "id": "gateway-config-entity",
-      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
-      "waitFor": "[data-testid=\"gateway-config-detail\"]",
-      "data": "fixture:hive-a11y/gateway-config-entity.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/connectors/environments",
-        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
-        "apiome-ui/lib/gateway-configs.ts"
-      ]
-    },
-    {
-      "id": "backstage-import-report",
-      "route": "/ade/dashboard/catalog/imports/11111111-1111-4111-8111-111111111111",
-      "waitFor": "[data-testid=\"migration-report\"]",
-      "data": "fixture:hive-a11y/backstage-import-report.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/catalog/imports",
-        "apiome-ui/src/app/components/ade/catalogMigrations",
-        "apiome-ui/lib/catalog-migrations.ts"
-      ]
-    },
-    {
-      "id": "import-wizard-compass",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"migration-report\"]",
-      "data": "fixture:hive-a11y/import-wizard-compass.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogImportDialog.tsx",
-        "apiome-ui/src/app/components/ade/catalogMigrations",
-        "apiome-ui/lib/catalog-migrations.ts"
-      ]
-    },
-    {
-      "id": "export-studio-gateway",
-      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
-      "waitFor": "[data-testid=\"export-preserved-percent\"]",
-      "data": "fixture:hive-a11y/export-studio-gateway.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx"
-      ]
-    },
-    {
-      "id": "entity-facts",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"catalog-facts\"]",
-      "data": "fixture:hive-a11y/entity-facts.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/catalogFacts/CatalogFactsPanel.tsx",
-        "apiome-ui/lib/catalog-facts.ts"
-      ]
-    },
-    {
-      "id": "scorecard-kind",
-      "route": "/ade/dashboard/mcp",
-      "waitFor": "[data-testid=\"catalog-facts\"]",
-      "data": "fixture:hive-a11y/scorecard-kind.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/catalogFacts/CatalogFactsPanel.tsx",
-        "apiome-ui/lib/catalog-facts.ts"
-      ]
-    },
-    {
-      "id": "catalog-item-subjects",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "[data-testid=\"catalog-subjects-panel\"]",
-      "data": "fixture:hive-a11y/catalog-item-subjects.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/schemaRegistry/CatalogSubjectsPanel.tsx",
-        "apiome-ui/lib/schema-registry.ts"
-      ]
-    },
-    {
-      "id": "registry-settings",
-      "route": "/ade/dashboard/schema-registry",
-      "waitFor": "[data-testid=\"registry-settings\"]",
-      "data": "fixture:hive-a11y/schema-registry.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/schema-registry",
-        "apiome-ui/lib/schema-registry.ts"
-      ]
-    },
-    {
-      "id": "schema-registry-subjects",
-      "route": "/ade/dashboard/schema-registry",
-      "waitFor": "[data-testid=\"registry-subjects\"]",
-      "scrollTo": "[data-testid=\"registry-subjects\"]",
-      "data": "fixture:hive-a11y/schema-registry.html",
-      "sources": [
-        "apiome-ui/src/app/ade/dashboard/schema-registry",
-        "apiome-ui/lib/schema-registry.ts"
-      ]
-    },
-    {
-      "id": "project-consumers-bindings",
-      "route": "/ade/dashboard/projects/pets/consumers",
-      "waitFor": "[data-testid=\"consumer-bindings-drawer\"]",
-      "data": "fixture:hive-a11y/project-consumers-bindings.html",
-      "sources": ["apiome-ui/src/app/components/ade/consumers/ConsumerBindingsDrawer.tsx"]
     },
     {
       "id": "preferences-account",
@@ -1127,15 +927,6 @@
       "route": "/ade/dashboard/tenants",
       "waitFor": "#tnt-history-heading",
       "data": "fixture:hive-a11y/tenants-drawer-history.html"
-    },
-    {
-      "id": "tenant-ownership-policy",
-      "route": "/ade/dashboard/tenants",
-      "waitFor": "[data-testid=\"tenant-ownership-policy\"]",
-      "data": "fixture:hive-a11y/tenant-ownership-policy.html",
-      "sources": [
-        "apiome-ui/src/app/components/ade/tenants/TenantOwnershipPolicySection.tsx"
-      ]
     },
     {
       "id": "notifications",
@@ -1488,60 +1279,6 @@
       "tags": [
         "legacy"
       ]
-    },
-    {
-      "id": "shadow-apis",
-      "route": "/ade/dashboard/connectors/shadow",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "data": "fixture:hive-a11y/shadow-apis.html"
-    },
-    {
-      "id": "shadow-apis-link",
-      "route": "/ade/dashboard/connectors/shadow",
-      "waitFor": "[data-testid=\"shadow-link-dialog\"]",
-      "data": "fixture:hive-a11y/shadow-apis-link.html"
-    },
-    {
-      "id": "connectors",
-      "route": "/ade/dashboard/connectors",
-      "waitFor": "[data-testid=\"connectors-table\"]",
-      "data": "fixture:hive-a11y/connectors.html"
-    },
-    {
-      "id": "connector-add",
-      "route": "/ade/dashboard/connectors/new",
-      "waitFor": "[data-testid=\"connector-dry-run-result\"]",
-      "data": "fixture:hive-a11y/connector-add.html"
-    },
-    {
-      "id": "connector-add-mcp-registry",
-      "route": "/ade/dashboard/connectors/new",
-      "waitFor": "[data-testid=\"connector-step-scope\"]",
-      "data": "fixture:hive-a11y/connector-add-mcp-registry.html"
-    },
-    {
-      "id": "connector-add-registry",
-      "route": "/ade/dashboard/connectors/new",
-      "waitFor": "[data-testid=\"connector-step-scope\"]",
-      "data": "fixture:hive-a11y/connector-add-registry.html"
-    },
-    {
-      "id": "connector-add-schema-registry",
-      "route": "/ade/dashboard/connectors/new",
-      "waitFor": "[data-testid=\"connector-step-credentials\"]",
-      "data": "fixture:hive-a11y/connector-add-schema-registry.html"
-    },
-    {
-      "id": "connector-detail",
-      "route": "/ade/dashboard/connectors/c1",
-      "waitFor": "[data-testid=\"connector-items\"]",
-      "data": "fixture:hive-a11y/connector-detail.html"
-    },
-    {
-      "id": "connector-runs",
-      "route": "/ade/dashboard/connectors/c1",
-      "waitFor": "[data-testid=\"refresh-runs-ledger\"]",
-      "data": "fixture:hive-a11y/connector-runs.html"
     }
   ]
 }

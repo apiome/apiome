@@ -5,14 +5,14 @@ description: A catch-all team, a require-an-owner publish gate and an ownership 
 authors: [apiome]
 ---
 
-Two workspace settings and a report keep [ownership](/workspace/teams#ownership) from quietly
+Two workspace settings and a report keep [ownership](/reference/rest/owners) from quietly
 decaying.
 
 {/* truncate */}
 
 - **A catch-all team.** Findings on anything without a confirmed owner still land in the Unowned
   findings report, and now also reach the team you choose — set it in the tenant's
-  [Ownership settings](/workspace/tenants#ownership).
+  [Ownership settings](/reference/rest/owners).
 - **Require an owner to publish.** Turn it on and a project needs a confirmed owner team before a
   version can be published (reason `no-owner`). The publish dialog always shows the gate — **Off**,
   **Met** or **Blocked** — so nobody is surprised.

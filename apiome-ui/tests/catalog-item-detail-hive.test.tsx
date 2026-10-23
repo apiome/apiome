@@ -162,6 +162,17 @@ async function renderDetail(item: unknown = ITEM) {
   return view;
 }
 
+// The full tab set includes Dependencies and Subjects, which RC6 holds back with the dependency
+// graph and the schema registry (lib/feature-release.ts): re-open them for these suites.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph,schema-registry';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
   mockPush.mockReset();
@@ -230,6 +241,18 @@ describe('the nine panes', () => {
     );
     expect(screen.getByTestId('catalog-detail-pane-overview')).toBeVisible();
     expect(screen.getByTestId('catalog-detail-pane-versions')).not.toBeVisible();
+  });
+
+  it('leaves Dependencies and Subjects out while their features are held back (RC6)', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      await renderDetail();
+      expect(screen.getAllByRole('tab')).toHaveLength(8);
+      expect(screen.queryByTestId('catalog-detail-tab-dependencies')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('catalog-detail-tab-subjects')).not.toBeInTheDocument();
+    } finally {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph,schema-registry';
+    }
   });
 
   it('adds a Subjects tab to a schema item only (CDG-4.5)', async () => {
@@ -576,6 +599,14 @@ describe('the states', () => {
  * fails quietly in the browser.
  */
 describe('the browser fixtures', () => {
+  // The docs draw the released page: no Dependencies or Subjects tab while those are held back.
+  beforeAll(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph,schema-registry';
+  });
+
   const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-catalog-item');
   const dump = process.env.CATALOG_ITEM_FIXTURE_DUMP === '1';
 

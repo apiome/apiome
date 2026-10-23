@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { Team } from '@lib/owners';
 import { fetchTeams } from './ownersApi';
 
@@ -27,8 +28,11 @@ export interface TeamsState {
  * @returns The teams, the loading flag and any error.
  */
 export function useTeams(): TeamsState {
-  const [state, setState] = React.useState<TeamsState>({ teams: [], loading: true, error: null });
+  // Nothing lists teams while ownership is held back with Teams (lib/feature-release.ts).
+  const released = isFeatureReleased('teams');
+  const [state, setState] = React.useState<TeamsState>({ teams: [], loading: released, error: null });
   React.useEffect(() => {
+    if (!released) return;
     let live = true;
     fetchTeams()
       .then((teams) => live && setState({ teams, loading: false, error: null }))
@@ -38,6 +42,6 @@ export function useTeams(): TeamsState {
     return () => {
       live = false;
     };
-  }, []);
+  }, [released]);
   return state;
 }

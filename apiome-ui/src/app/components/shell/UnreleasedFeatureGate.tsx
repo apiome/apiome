@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { isFeatureReleased, type UnreleasedFeatureId } from '@lib/feature-release';
+import { EMBEDDED_FEATURES, isFeatureReleased, type UnreleasedFeatureId } from '@lib/feature-release';
 import { findPlatformNavItem, platformNavSectionLabel } from '@lib/platform-nav';
 import { GatedState } from '@/app/components/ui/EmptyState';
 import PageHeader from '@/app/components/shell/PageHeader';
@@ -30,9 +30,11 @@ export interface UnreleasedFeatureGateProps {
 export default function UnreleasedFeatureGate({ feature, children }: UnreleasedFeatureGateProps) {
   if (isFeatureReleased(feature)) return <>{children}</>;
 
-  // Off-rail destinations (HIVE-12.2) name their section the way a rail item names its group.
-  const section = platformNavSectionLabel(feature);
-  const label = findPlatformNavItem(feature)?.label ?? 'This page';
+  // Off-rail destinations (HIVE-12.2) name their section the way a rail item names its group;
+  // features embedded in Catalog and Projects carry their own.
+  const embedded = EMBEDDED_FEATURES[feature];
+  const section = platformNavSectionLabel(feature) ?? embedded?.section;
+  const label = findPlatformNavItem(feature)?.label ?? embedded?.label ?? 'This page';
 
   return (
     <Page>

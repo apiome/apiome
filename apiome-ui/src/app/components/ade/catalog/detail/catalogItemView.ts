@@ -387,12 +387,15 @@ export interface CatalogDetailTabCounts {
 export interface CatalogDetailTabOptions {
   /** Show **Subjects** — true for Avro, JSON Schema and Protobuf items (see `isRegistryFormat`). */
   subjects?: boolean;
+  /** Show **Dependencies** — on unless `false` (held back with the dependency graph). */
+  dependencies?: boolean;
 }
 
 /**
  * The tabs, with the counts the mockup shows (and the Subjects count).
  *
- * **Subjects** is listed only when `options.subjects` is set.
+ * **Subjects** is listed only when `options.subjects` is set; **Dependencies** is left out when
+ * `options.dependencies` is `false`.
  *
  * A count of `0` is still a count — "Conversions 0" is a fact the reader can act on, and the
  * mockup's empty-state copy says as much — but a count that has not *loaded* is `null` and
@@ -406,7 +409,11 @@ export function catalogDetailTabs(
   counts: CatalogDetailTabCounts = {},
   options: CatalogDetailTabOptions = {},
 ): CatalogDetailTabView[] {
-  const ids = CATALOG_DETAIL_TAB_IDS.filter((id) => id !== 'subjects' || options.subjects === true);
+  const ids = CATALOG_DETAIL_TAB_IDS.filter(
+    (id) =>
+      (id !== 'subjects' || options.subjects === true) &&
+      (id !== 'dependencies' || options.dependencies !== false),
+  );
   return ids.map((id) => {
     const raw =
       id === 'conversions' ? counts.conversions

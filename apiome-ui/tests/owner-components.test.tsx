@@ -35,6 +35,16 @@ const SUGGESTED: EntityOwner = {
 let confirmReply: { ok: boolean; body: unknown } = { ok: true, body: {} };
 let posted: Array<{ url: string; body: unknown }> = [];
 
+// Ownership is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 beforeEach(() => {
   posted = [];
   confirmReply = {
@@ -118,5 +128,23 @@ describe('the bulk assign control', () => {
     await user.selectOptions(screen.getByLabelText('Team to assign as owner'), 'payments');
     await user.click(screen.getByTestId('bulk-assign-owner'));
     expect(assigned).toEqual(['payments']);
+  });
+});
+
+describe('while ownership is held back (RC6)', () => {
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+  });
+
+  test('the cell, the filter and the bulk control render nothing', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    const { container } = render(
+      <>
+        <OwnerCell owner={SUGGESTED} kind="project" entityId="p-1" />
+        <OwnerFilter teams={TEAMS} value={null} onChange={() => undefined} />
+        <AssignOwnerControl teams={TEAMS} onAssign={async () => undefined} />
+      </>
+    );
+    expect(container).toBeEmptyDOMElement();
   });
 });

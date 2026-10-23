@@ -36,6 +36,7 @@
  */
 
 import { OwnerCell } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
@@ -143,20 +144,25 @@ export function PublishedTable({
         cell: (version) => <VersionCell version={version} />,
         skeletonWidth: '11rem',
       },
-      {
-        id: 'owner',
-        header: 'Owner',
-        cell: (version) => (
-          <OwnerCell
-            owner={parseEntityOwner(version.owner)}
-            kind="project"
-            entityId={version.project_id}
-            testId={`published-owner-${version.id}`}
-            onChange={(owner) => onOwnerChange?.(version.project_id, owner)}
-          />
-        ),
-        skeletonWidth: '6rem',
-      },
+      // Ownership is held back with Teams (lib/feature-release.ts).
+      ...(isFeatureReleased('teams')
+        ? ([
+            {
+              id: 'owner',
+              header: 'Owner',
+              cell: (version) => (
+                <OwnerCell
+                  owner={parseEntityOwner(version.owner)}
+                  kind="project"
+                  entityId={version.project_id}
+                  testId={`published-owner-${version.id}`}
+                  onChange={(owner) => onOwnerChange?.(version.project_id, owner)}
+                />
+              ),
+              skeletonWidth: '6rem',
+            },
+          ] satisfies DataTableColumn<PublishedVersion>[])
+        : []),
       {
         id: 'visibility',
         header: 'Visibility',

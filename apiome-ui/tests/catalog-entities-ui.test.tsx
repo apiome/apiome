@@ -111,6 +111,16 @@ const res = (body: unknown, status = 200) =>
 let calls: string[] = [];
 let summaryFails = false;
 
+// The catalog entity kinds is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 beforeEach(() => {
   calls = [];
   summaryFails = false;
@@ -287,6 +297,21 @@ describe('the catalog home', () => {
     render(<CatalogClient />);
     expect(await screen.findByTestId('catalog-add-model')).toHaveTextContent('Add model');
     expect(screen.queryByTestId('catalog-register-agent')).not.toBeInTheDocument();
+  });
+
+  it('while the other kinds are held back (RC6), reads no summary and stays the catalog-items list', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+    try {
+      searchParams = new URLSearchParams('kind=all');
+      render(<CatalogClient />);
+      await waitFor(() => expect(calls.some((url) => url.startsWith('/api/catalog?') || url === '/api/catalog')).toBe(true));
+      expect(calls.some((url) => url.startsWith('/api/catalog/entities/summary'))).toBe(false);
+      expect(screen.queryByTestId('catalog-kinds')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('catalog-entity-list')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('catalog-import-reports')).not.toBeInTheDocument();
+    } finally {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
+    }
   });
 
   it('leaves the panel out when the summary cannot be read', async () => {

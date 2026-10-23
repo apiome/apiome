@@ -51,3 +51,21 @@ describe('UnreleasedFeatureGate', () => {
     expect(screen.queryByTestId('unreleased-feature-gate')).not.toBeInTheDocument();
   });
 });
+
+describe('UnreleasedFeatureGate — features embedded in Catalog and Projects', () => {
+  it('names an embedded feature and its section, though it has no rail item', () => {
+    render(
+      <UnreleasedFeatureGate feature="consumers">
+        <p>feature body</p>
+      </UnreleasedFeatureGate>
+    );
+
+    expect(screen.queryByText('feature body')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Consumer contracts' })).toBeInTheDocument();
+    // The section crumb, beside the "Go to Projects" action.
+    expect(screen.getByText('Projects', { exact: true })).toBeInTheDocument();
+    expect(screen.getByTestId('unreleased-feature-gate')).toHaveTextContent(
+      'Consumer contracts opens once Catalog and Projects are ready.'
+    );
+  });
+});

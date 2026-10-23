@@ -9,6 +9,7 @@
  * The merge is pure (no React, no fetch) so it can be unit-tested directly.
  */
 
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   Upload,
   Link2,
@@ -323,6 +324,8 @@ export function baseIntakeTiles(cards: ReadonlyArray<ImportSourceCard>): BaseInt
   const byKey = new Map(cards.map((card) => [card.key, card] as const));
   const tiles: BaseIntakeTile[] = [];
   for (const { key, method } of BASE_INTAKE_METHODS) {
+    // Compass staging is held back with the other catalog entity kinds (lib/feature-release.ts).
+    if (method === 'compass' && !isFeatureReleased('catalog-entities')) continue;
     const card = byKey.get(key) ?? CATALOG_ONLY_CARDS[key];
     if (card) tiles.push({ method, card });
   }

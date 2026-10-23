@@ -12,6 +12,7 @@
 import * as React from 'react';
 import { UsersRound } from 'lucide-react';
 import { Alert, Badge } from '@/app/components/ui';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { OwnerGate } from '@lib/owners';
 import { fetchOwnerGate } from './ownersApi';
 
@@ -61,6 +62,9 @@ export function OwnerGatePanel({ projectId, enabled }: OwnerGatePanelProps) {
   }, [enabled, projectId]);
 
   if (!enabled) return null;
+  // While ownership is unreleased (`teams`, lib/feature-release.ts) the card only appears when it
+  // has to: a tenant policy set before the gate still refuses a publish, and that must be said.
+  if (!isFeatureReleased('teams') && gate?.status !== 'blocked') return null;
   if (error) {
     return (
       <Alert variant="warning" data-testid="owner-gate-error">

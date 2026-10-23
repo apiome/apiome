@@ -27,6 +27,16 @@ let policy: OwnershipPolicy = { unowned_findings_team: null, require_owner_to_pu
 let gate: OwnerGate = { status: 'disabled', message: 'The owner gate is off: publishing does not require an owner team.' };
 let puts: unknown[] = [];
 
+// Ownership is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 beforeEach(() => {
   policy = { unowned_findings_team: null, require_owner_to_publish: false };
   puts = [];
@@ -110,6 +120,27 @@ describe('the publish dialog’s owner gate', () => {
     expect(await screen.findByTestId('owner-gate-status')).toHaveTextContent(badge);
     expect(screen.getByTestId('owner-gate-message')).toHaveTextContent(text);
     expect(Boolean(screen.queryByText(/Publishing will be refused/))).toBe(status === 'blocked');
+  });
+
+  test('while ownership is held back, only a blocked gate is shown', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      gate = { status: 'disabled', message: 'The owner gate is off: publishing does not require an owner team.' };
+      const off = render(<OwnerGatePanel projectId="22222222-2222-4222-8222-222222222222" enabled />);
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+      expect(off.container).toBeEmptyDOMElement();
+      off.unmount();
+
+      gate = {
+        status: 'blocked',
+        message: 'This project has no confirmed owner team, and the workspace requires one to publish.',
+        reason: 'no-owner',
+      };
+      render(<OwnerGatePanel projectId="22222222-2222-4222-8222-222222222222" enabled />);
+      expect(await screen.findByTestId('owner-gate-status')).toHaveTextContent('Blocked');
+    } finally {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+    }
   });
 
   test('reads nothing while the dialog is closed', () => {

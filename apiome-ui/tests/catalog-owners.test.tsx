@@ -152,6 +152,16 @@ function mockFetch() {
   }) as unknown as typeof fetch;
 }
 
+// Ownership is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();

@@ -8,6 +8,7 @@ import { toast } from '../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import { RefreshRunsLedger } from '@/app/components/ade/connectors/RefreshRunsLedger';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { ShortcutBinding } from '@lib/shortcuts';
 
 import PageHeader from '@/app/components/shell/PageHeader';
@@ -527,8 +528,9 @@ export default function RepositoriesClient() {
               </Card>
             )}
 
-            {/* CDG-1.7: the shared refresh ledger — Git refreshes and connector runs, interleaved. */}
-            <RefreshRunsLedger limit={10} />
+            {/* CDG-1.7: the shared refresh ledger — Git refreshes and connector runs, interleaved.
+                Held back with Connectors (lib/feature-release.ts). */}
+            {isFeatureReleased('connectors') ? <RefreshRunsLedger limit={10} /> : null}
           </>
         )}
       </PageBody>

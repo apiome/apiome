@@ -31,6 +31,7 @@
  */
 
 import { OwnerCell } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
@@ -248,21 +249,26 @@ export default function ProjectsTable({
         ),
         skeletonWidth: '2.5rem',
       },
-      {
-        id: 'owner',
-        header: 'Owner',
-        cell: (project) => (
-          <OwnerCell
-            owner={parseEntityOwner(project.owner)}
-            kind="project"
-            entityId={project.id}
-            testId={`projects-owner-${project.id}`}
-            readOnly={Boolean(project.deleted_at)}
-            onChange={(owner) => onOwnerChange?.(project.id, owner)}
-          />
-        ),
-        skeletonWidth: '6rem',
-      },
+      // Ownership is held back with Teams (lib/feature-release.ts).
+      ...(isFeatureReleased('teams')
+        ? ([
+            {
+              id: 'owner',
+              header: 'Owner',
+              cell: (project) => (
+                <OwnerCell
+                  owner={parseEntityOwner(project.owner)}
+                  kind="project"
+                  entityId={project.id}
+                  testId={`projects-owner-${project.id}`}
+                  readOnly={Boolean(project.deleted_at)}
+                  onChange={(owner) => onOwnerChange?.(project.id, owner)}
+                />
+              ),
+              skeletonWidth: '6rem',
+            },
+          ] satisfies DataTableColumn<Project>[])
+        : []),
       {
         id: 'status',
         header: 'Status',
@@ -379,12 +385,15 @@ export default function ProjectsTable({
                           <TrendingUp aria-hidden />
                           Open versions
                         </DropdownMenu.Item>
-                        <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
-                          <Link href={projectConsumersHref(project)}>
-                            <Users aria-hidden />
-                            Consumers
-                          </Link>
-                        </DropdownMenu.Item>
+                        {/* Consumer contracts are held back (lib/feature-release.ts). */}
+                        {isFeatureReleased('consumers') ? (
+                          <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
+                            <Link href={projectConsumersHref(project)}>
+                              <Users aria-hidden />
+                              Consumers
+                            </Link>
+                          </DropdownMenu.Item>
+                        ) : null}
                         <DropdownMenu.Item
                           className={MENU_ITEM_CLASS}
                           onSelect={() => onEdit(project)}

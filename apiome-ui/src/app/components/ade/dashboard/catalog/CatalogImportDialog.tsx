@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useImportSources } from '../useImportSources';
 import { baseIntakeTiles } from '../importSourceCatalog';
+import { isFeatureReleased } from '@lib/feature-release';
 import { Dialog, DialogContent } from '../../../ui/Dialog';
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
@@ -771,7 +772,11 @@ export function CatalogImportDialog({
       <DialogContent onCloseAutoFocus={returnFocus} size="full" className="imp-wizard">
         <ImportWizardHead
           title="Import to catalog"
-          description="File, URL, clipboard, a Git repository or a Compass export. Catalog imports are stored in their original format and converted only when you ask."
+          description={
+            isFeatureReleased('catalog-entities')
+              ? 'File, URL, clipboard, a Git repository or a Compass export. Catalog imports are stored in their original format and converted only when you ask.'
+              : 'File, URL, clipboard or a Git repository. Catalog imports are stored in their original format and converted only when you ask.'
+          }
         />
         <ImportWizardSteps
           steps={CATALOG_IMPORT_STEPS}

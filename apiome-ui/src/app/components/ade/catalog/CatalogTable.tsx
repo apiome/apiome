@@ -34,6 +34,7 @@
  */
 
 import { OwnerCell } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
@@ -204,21 +205,26 @@ export default function CatalogTable({
         },
         skeletonWidth: '6rem',
       },
-      {
-        id: 'owner',
-        header: 'Owner',
-        cell: (item) => (
-          <OwnerCell
-            owner={item.owner ?? null}
-            kind="catalog_item"
-            entityId={item.id}
-            testId={`catalog-owner-${item.id}`}
-            readOnly={Boolean(item.deleted_at)}
-            onChange={(owner) => onOwnerChange?.(item.id, owner)}
-          />
-        ),
-        skeletonWidth: '6rem',
-      },
+      // Ownership is held back with Teams (lib/feature-release.ts).
+      ...(isFeatureReleased('teams')
+        ? ([
+            {
+              id: 'owner',
+              header: 'Owner',
+              cell: (item) => (
+                <OwnerCell
+                  owner={item.owner ?? null}
+                  kind="catalog_item"
+                  entityId={item.id}
+                  testId={`catalog-owner-${item.id}`}
+                  readOnly={Boolean(item.deleted_at)}
+                  onChange={(owner) => onOwnerChange?.(item.id, owner)}
+                />
+              ),
+              skeletonWidth: '6rem',
+            },
+          ] satisfies DataTableColumn<CatalogItem>[])
+        : []),
       {
         id: 'quality',
         header: 'Quality',

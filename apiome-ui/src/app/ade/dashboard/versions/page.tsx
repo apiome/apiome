@@ -3131,8 +3131,11 @@ const Versions = () => {
   const showRepositoryTab = Boolean(selectedProjectId);
   /** Every project has a Sources tab (REPO-5.7, #2792): its contributing repositories and provenance. */
   const showSourcesTab = Boolean(selectedProjectId);
-  /** Every project has a Dependencies tab (CDG-3.4, #5969): its edges in the catalog graph. */
-  const showDependenciesTab = Boolean(selectedProjectId);
+  /**
+   * Every project has a Dependencies tab (CDG-3.4, #5969): its edges in the catalog graph — once
+   * the dependency graph is released (lib/feature-release.ts).
+   */
+  const showDependenciesTab = Boolean(selectedProjectId) && isFeatureReleased('dependency-graph');
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
     (versionsMainTab === 'repository' && !showRepositoryTab) ||

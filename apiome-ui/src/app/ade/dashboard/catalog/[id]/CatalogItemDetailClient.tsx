@@ -482,14 +482,20 @@ export function CatalogItemDetailClient({
     else setQualityOpen(true);
   }, [item, orbs]);
 
-  // Subjects (CDG-4.5) is a schema item's tab: Avro, JSON Schema or Protobuf.
-  const hasSubjects = isRegistryFormat(item?.sourceFormat);
-  const tabs = useMemo(() => catalogDetailTabs(tabCounts, { subjects: hasSubjects }), [tabCounts, hasSubjects]);
+  // Subjects (CDG-4.5) is a schema item's tab: Avro, JSON Schema or Protobuf. It and
+  // Dependencies (CDG-3.4) wait for their features' release (lib/feature-release.ts).
+  const hasSubjects = isFeatureReleased('schema-registry') && isRegistryFormat(item?.sourceFormat);
+  const hasDependencies = isFeatureReleased('dependency-graph');
+  const tabs = useMemo(
+    () => catalogDetailTabs(tabCounts, { subjects: hasSubjects, dependencies: hasDependencies }),
+    [tabCounts, hasSubjects, hasDependencies]
+  );
 
-  // A `?tab=subjects` link to an item that has no such tab opens Overview instead.
+  // A `?tab=subjects` or `?tab=dependencies` link to an item without that tab opens Overview.
   useEffect(() => {
     if (item && !hasSubjects && activeTab === 'subjects') setActiveTab('overview');
-  }, [item, hasSubjects, activeTab]);
+    if (!hasDependencies && activeTab === 'dependencies') setActiveTab('overview');
+  }, [item, hasSubjects, hasDependencies, activeTab]);
 
   /** Select and focus the tab at `index`, wrapping around the ends (WAI-ARIA automatic activation). */
   const focusTab = useCallback(
@@ -751,8 +757,11 @@ export function CatalogItemDetailClient({
             onOpenLint={() => selectTab('lint')}
             onOpenSource={showSourceTab}
           />
-          {/* CDG-5.4: the item's scorecard facts, as a plain checklist (no score). */}
-          <CatalogFactsPanel kind="spec" id={item.id} active={activeTab === 'overview'} />
+          {/* CDG-5.4: the item's scorecard facts, as a plain checklist (no score). Held back with
+              the other catalog entity kinds (lib/feature-release.ts). */}
+          {isFeatureReleased('catalog-entities') ? (
+            <CatalogFactsPanel kind="spec" id={item.id} active={activeTab === 'overview'} />
+          ) : null}
         </TabPanel>
 
         <TabPanel id="format" active={activeTab}>
@@ -848,14 +857,16 @@ export function CatalogItemDetailClient({
             onCountChange={setVersionsCount}
           />
         </TabPanel>
-        <TabPanel id="dependencies" active={activeTab}>
-          <DependenciesPanel
-            kind="catalog_item"
-            id={item.id}
-            active={activeTab === 'dependencies'}
-            label={{ name: item.name, slug: item.slug ?? null, owner: null }}
-          />
-        </TabPanel>
+        {hasDependencies ? (
+          <TabPanel id="dependencies" active={activeTab}>
+            <DependenciesPanel
+              kind="catalog_item"
+              id={item.id}
+              active={activeTab === 'dependencies'}
+              label={{ name: item.name, slug: item.slug ?? null, owner: null }}
+            />
+          </TabPanel>
+        ) : null}
         {hasSubjects ? (
           <TabPanel id="subjects" active={activeTab}>
             <CatalogSubjectsPanel

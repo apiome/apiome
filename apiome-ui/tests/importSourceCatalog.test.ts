@@ -374,6 +374,14 @@ describe('filterCardsForVariant (MFI-23.12)', () => {
 });
 
 describe('baseIntakeTiles (MFI-26.1, MFI-29.3)', () => {
+  // The Compass tile is held back with the other catalog entity kinds in RC6 (lib/feature-release.ts).
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities';
+  });
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+
   it('returns the base intake tiles in fixed order from the catalog cards', () => {
     const cards = filterCardsForVariant(mergeImportSourceCards([ASYNCAPI_DESCRIPTOR]), 'catalog');
     const tiles = baseIntakeTiles(cards);
@@ -402,6 +410,11 @@ describe('baseIntakeTiles (MFI-26.1, MFI-29.3)', () => {
   it('omits a base tile whose backing card is absent', () => {
     const withoutUrl = baseImportSourceCards().filter((c) => c.key !== 'url');
     expect(baseIntakeTiles(withoutUrl).map((t) => t.method)).toEqual(['file', 'paste', 'git', 'compass']);
+  });
+
+  it('leaves the Compass tile out while catalog entity kinds are held back (RC6)', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect(baseIntakeTiles(baseImportSourceCards()).map((t) => t.method)).toEqual(['file', 'url', 'paste', 'git']);
   });
 
   it('keeps the Compass tile out of every other import surface (CDG-5.5)', () => {

@@ -10,6 +10,7 @@
 
 import * as React from 'react';
 import { DataTableBulkAction } from '@/app/components/ui';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { Team } from '@lib/owners';
 
 /** Props for {@link AssignOwnerControl}. */
@@ -30,6 +31,8 @@ export interface AssignOwnerControlProps {
  */
 export function AssignOwnerControl({ teams, onAssign, busy = false }: AssignOwnerControlProps) {
   const [team, setTeam] = React.useState('');
+  // Ownership is held back with Teams (lib/feature-release.ts).
+  if (!isFeatureReleased('teams')) return null;
   return (
     <>
       <span className="lw-bulk-rule" aria-hidden />
