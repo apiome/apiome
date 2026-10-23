@@ -65,7 +65,7 @@ jobs:
       security-events: write   # for the SARIF upload
     steps:
       - name: Install the apiome CLI
-        run: curl -fsSL https://get.apio.me | bash
+        run: curl -fsSL https://get.apiome.dev | sh
       - name: Check for breaking changes
         env:
           APIOME_API_KEY: ${{ secrets.APIOME_API_KEY }}
@@ -88,7 +88,7 @@ findings appear under **Security → Code scanning**.
 api-compatibility:
   image: python:3.12
   script:
-    - curl -fsSL https://get.apio.me | bash
+    - curl -fsSL https://get.apiome.dev | sh
     - apiome --json versions compatibility payments-api > compatibility.json
   artifacts:
     when: always

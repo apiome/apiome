@@ -20,7 +20,8 @@ On Linux or macOS, install the `apiome` command with one line — see [Install t
 for the options, upgrading and uninstalling:
 
 ```bash
-curl -fsSL https://get.apio.me | bash
+curl -fsSL https://get.apiome.dev -o get-apiome.sh
+sh ./get-apiome.sh
 apiome --version
 ```
 

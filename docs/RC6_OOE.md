@@ -122,7 +122,7 @@ Start these on day one; none depends on another.
 7. [#5601](https://github.com/apiome/apiome/issues/5601) HIVE-11.5 FactsLine and DismissibleCallout ✅
 8. [#5011](https://github.com/apiome/apiome/issues/5011) EID-1.1 SSO plugin foundation
 9. [#5714](https://github.com/apiome/apiome/issues/5714) AAU-4.1 protocol version matrix and SDK decision
-10. [#5500](https://github.com/apiome/apiome/issues/5500) `get.apiome.dev` installer
+10. [#5500](https://github.com/apiome/apiome/issues/5500) `get.apiome.dev` installer ✅
 
 ## 3. Ticket list
 
@@ -140,7 +140,7 @@ do. Lane C rows are in pick-up order within their wave.
 | 6 | 1 | B | [#5655](https://github.com/apiome/apiome/issues/5655) | TFA-1.1 | Two-factor for accounts without a password (OAuth-only users) **MVP** | — | Core | ✅ |
 | 7 | 1 | B | [#5656](https://github.com/apiome/apiome/issues/5656) | TFA-1.2 | Admin reset of a user's two-factor, with audit **MVP** | — | Core | ✅ |
 | 8 | 1 | C1 | [#5460](https://github.com/apiome/apiome/issues/5460) | FMT-7.6 | Shared GatewayConfigDocument middle for the whole family | — | Core | ✅ |
-| 9 | 1 | D | [#5500](https://github.com/apiome/apiome/issues/5500) | CLI | `get.apiome.dev` install script **MVP** | — | Core |  |
+| 9 | 1 | D | [#5500](https://github.com/apiome/apiome/issues/5500) | CLI | `get.apiome.dev` install script **MVP** | — | Core | ✅ |
 | 10 | 1 | E | [#5597](https://github.com/apiome/apiome/issues/5597) | HIVE-11.1 | StatusStrip component — one row of status chips, one open detail **MVP** | — | Core | ✅ |
 | 11 | 1 | E | [#5601](https://github.com/apiome/apiome/issues/5601) | HIVE-11.5 | FactsLine and DismissibleCallout primitives (+ hive.seen.* persistence) **MVP** | — | Core | ✅ |
 | 12 | 1 | E | [#5608](https://github.com/apiome/apiome/issues/5608) | HIVE-12.1 | Nav model — default-collapsed groups with counts **MVP** | — | Core |  |
@@ -257,7 +257,7 @@ do. Lane C rows are in pick-up order within their wave.
 | B | A new user is offered Authy during onboarding, an OAuth-only user can enrol, a lost phone is recoverable by backup code or admin reset, a tenant can require 2FA, and #2553 is closed |
 | C (core) | FMT-EPIC-7, 8 and 10 are closed, FMT-6.1 and MFX-35.1/35.2 are merged, and the Supported formats page and format counts are regenerated |
 | C (stretch) ✅ | Each of C4, C5 and C6 is either fully merged or moved to RC7 whole — no half waves |
-| D | `curl … get.apiome.dev \| sh` installs the CLI and `apiome login` signs a new account in |
+| D | `curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh` installs the CLI and `apiome login` signs a new account in |
 | E | HIVE-EPIC-11, 12 and 13 are closed and the HIVE-13 gates run without allow-listed exceptions |
 | F | An owner registers an OIDC and a SAML IdP from presets, verifies a domain by DNS TXT, a new user in that domain signs in and is provisioned with the default role, and the audit export returns those events under the retention policy |
 | G | A CIMD-registered host and a 2026-07-28 stateless client connect to `/agent/mcp` with no pasted secret, an existing agent key still works unchanged, and an over-quota request is refused from headers alone |

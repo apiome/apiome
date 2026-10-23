@@ -74,7 +74,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Added pills to supported format list to show the source and type that the API format provides
   - Every format now declares which versions it reads and writes, and which version an export produces by default
 - CLI:
-  - Install the `apiome` command line on Linux or macOS with one line: `curl -fsSL https://get.apio.me | bash` (re-run to upgrade; `--uninstall` to remove)
+  - Install the `apiome` command line on Linux or macOS with one line: `curl -fsSL https://get.apiome.dev | sh` — installs `apiome` system-wide into `/usr/bin` (`/usr/local/bin` on macOS), or into `~/.local/bin` with `--user` (re-run to upgrade; `--uninstall` to remove)
   - `apiome projects update <slug-or-id>` changes a project's name, slug (`--rename`, with confirmation), description or domain — or applies an edited `projects get --json` dump (`--from-file`); `--dry-run` shows the diff, and a project changed by someone else in the meantime is never overwritten (exit 6)
   - `apiome projects delete <slug-or-id>` shows what will be removed, then deletes the project permanently once you type its slug — or archives it restorably with `--archive`; a project with published versions is refused unless `--force` (exit 6)
   - `apiome projects export <slug-or-id>` writes a whole project — versions, classes, paths, tags and migration plans — as one deterministic JSON or YAML document (`--gzip`, `--versions`, `--include`/`--exclude`) for backups, environment diffs and migrations

@@ -1,0 +1,28 @@
+---
+slug: cli-installer
+title: Install the CLI from get.apiome.dev
+description: One download installs the apiome command system-wide, with no Apiome suite.
+authors: [apiome]
+---
+
+The `apiome` command line now installs from `get.apiome.dev`, with no need for the rest of the Apiome
+suite. Download the installer and run it with `sh`:
+
+```bash
+curl -fsSL https://get.apiome.dev -o get-apiome.sh
+sh ./get-apiome.sh
+```
+
+[Install the CLI](/reference/install-the-cli).
+
+{/* truncate */}
+
+- **Runs under any `sh`.** The installer is plain POSIX shell, so `sh ./get-apiome.sh` works on Debian
+  and Ubuntu, where `sh` is dash, as well as on macOS and other Linux distributions.
+- **System-wide by default.** `apiome` goes into `/usr/bin` (`/usr/local/bin` on macOS, where `/usr/bin`
+  is read-only), and its isolated Python and dependencies into `/opt/apiome`. Every user on the machine
+  gets the command. The installer uses `sudo` unless it is already running as root.
+- **Or just for you.** `--user` installs into `~/.local/bin` with no `sudo`, as before. `--bin-dir` puts a
+  system install's command somewhere else.
+- **Same tested build.** It still installs the exact dependency versions the CLI is tested with, checks
+  that `apiome --version` runs, and upgrades when you run it again. `--uninstall` removes it.
