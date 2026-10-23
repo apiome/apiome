@@ -58,7 +58,6 @@ const LAUNCHER_PRELUDES = [
   '.launch-comb__bee',
   '.launch-greet',
   '.launch-display',
-  '.launch-lede',
   '.launch-chips',
   '.launch-chip',
   '.launch-chip:hover',
@@ -73,20 +72,19 @@ const LAUNCHER_PRELUDES = [
   '.launch-card::before',
   '.launch-card__go',
   '.launch-card:hover .launch-card__go',
-  '.launch-card__soon',
   '.launch-card__tag',
   '.launch-card__name',
   '.launch-card__desc',
   '.launch-card__foot',
   '.launch-card__foot > span',
-  '.launch-card--soon',
+  '.launch-card--primary',
   '.launch-tile',
   '.launch-tile > svg',
   '.launch-tile--sm',
   '.launch-lower',
   '.launch-lower > *',
+  '.launch-lower > :only-child',
   '.launch-panel',
-  '.launch-panel--dashed',
   '.launch-res',
   '.launch-res + .launch-res',
   '.launch-res__body',
@@ -94,11 +92,6 @@ const LAUNCHER_PRELUDES = [
   '.launch-res__sub',
   '.launch-res:hover:not(:disabled)',
   '.launch-res:hover:not(:disabled) .launch-res__title',
-  '.launch-res:disabled',
-  '.launch-hexrow',
-  '.launch-hexrow > span',
-  '.launch-hexrow > span.is-on',
-  '.launch-hexrow > span.is-accent',
   '.launch-foot',
 ];
 
@@ -259,10 +252,40 @@ describe('launcher — the unlayered element rules are answered with classes', (
     expect(declarationsOf('.launch-caps').get('font-size')).toBe('var(--fs-2xs)');
   });
 
-  it('colours the lede from a class, for the same reason', () => {
-    // And `p { color: var(--fg-muted) }` is why the lede is a `div` with a class rather
-    // than a `<p>` with `text-fg-muted`.
-    expect(declarationsOf('.launch-lede').get('color')).toBe('var(--fg-muted)');
+});
+
+describe('launcher — only openable tiles (HIVE-12.5)', () => {
+  it('draws no disabled card, row or roadmap panel', () => {
+    // The rules for the states that no longer exist are gone with them, so a later change
+    // cannot quietly bring a "Coming soon" card back by reusing its class.
+    for (const prelude of [
+      '.launch-card--soon',
+      '.launch-card__soon',
+      '.launch-panel--dashed',
+      '.launch-res:disabled',
+      '.launch-hexrow',
+      '.launch-lede',
+    ]) {
+      expect(rules.filter((rule) => rule.prelude === prelude)).toHaveLength(0);
+    }
+  });
+
+  it('emphasises the primary tile with a lifted shadow and a faint accent ring', () => {
+    const shadow = declarationsOf('.launch-card--primary').get('box-shadow') ?? '';
+    expect(shadow).toContain('var(--shadow-md)');
+    expect(shadow).toContain('color-mix(in srgb, var(--accent) 30%, transparent)');
+  });
+
+  it('lets a lone lower panel span the row', () => {
+    expect(declarationsOf('.launch-lower > :only-child').get('grid-column')).toBe('1 / -1');
+  });
+
+  it('draws the Coming next line from tokens, in readable ink', () => {
+    const line = declarationsOf('.coming-next');
+    expect(line.get('font-size')).toBe('var(--fs-sm)');
+    // `--fg-muted`, never the mockup-adjacent `--fg-subtle` / `--fg-faint`, which fail AA.
+    expect(line.get('color')).toBe('var(--fg-muted)');
+    expect(declarationsOf('.coming-next__follow').get('color')).toBe('var(--accent-fg)');
   });
 });
 

@@ -10,6 +10,7 @@ import {
 } from '@lib/platform-nav';
 import { getCommercialAccessForSession } from '@lib/db/commercial-access';
 import AppShell from './AppShell';
+import { recordControlPanelVisit } from './controlPanelVisit';
 import RailFooter from './RailFooter';
 import RailSearchTrigger from './RailSearchTrigger';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
@@ -69,6 +70,14 @@ export default function AdeAppShell({ children }: AdeAppShellProps) {
   const userId = user?.user_id ?? user?.id;
 
   const [injected, setInjected] = React.useState<PlatformNavInjection[]>([]);
+
+  // The launcher's "last opened" line (HIVE-12.5): this shell is the Control Panel, so it
+  // stamps the time on mount and on every page change — the layout keeps it mounted across
+  // navigation, and the stamp should say when the reader was last *here*, not when they
+  // arrived.
+  React.useEffect(() => {
+    recordControlPanelVisit();
+  }, [pathname]);
 
   // Commercial destinations, if this licence has any. `cancelled` guards the state write:
   // a route change can unmount the shell while the entitlement call is still in flight.

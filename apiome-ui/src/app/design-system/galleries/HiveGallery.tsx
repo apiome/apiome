@@ -121,6 +121,7 @@ import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
+import { ComingNextShowcase } from './ComingNextShowcase';
 import { QuietListShowcase } from './QuietListShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
 import { TablesShowcase } from './TablesShowcase';
@@ -1053,6 +1054,14 @@ export function HiveGallery() {
           description="A list page's stats in one tabular line, with Show stats revealing the grid in place, and an explainer that shows once, then lives one click away."
         >
           <QuietListShowcase />
+        </Section>
+
+        <Section
+          id="coming-next"
+          title="Coming next"
+          description="What is not shipped yet, named once as text — never as a disabled card, row or button. The only control is a link to What's new."
+        >
+          <ComingNextShowcase />
         </Section>
       </div>
     </TooltipProvider>

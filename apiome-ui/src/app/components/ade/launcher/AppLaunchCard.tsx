@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, ExternalLink } from 'lucide-react';
 
 import { cardVariants } from '@/app/components/ui/Card';
-import { badgeVariants } from '@/app/components/ui/Badge';
 import { ICON_SIZE, ICON_STROKE_WIDTH } from '@/app/components/ui/iconSizes';
 import { cn } from '@lib/utils';
 
@@ -21,12 +20,10 @@ import { launcherItemLabel, OPENS_IN_NEW_TAB, type LauncherApp } from './launche
  * | --- | --- | --- |
  * | internal | `next/link` | a real link: middle-click, open-in-new-tab, and a client push |
  * | external | `<a target="_blank" rel="noopener noreferrer">` | announces its own new tab |
- * | not shipped | `<button disabled>` | genuinely non-interactive, and `aria-label` is legal on it |
  *
- * The last row is why a disabled card is not a `<div aria-label>`: `aria-label` on an
- * element with no role is an axe `aria-prohibited-attr` violation (the trap HIVE-4.4 hit),
- * and the "(coming soon)" suffix has to reach a screen reader somehow — the 60 % opacity
- * and the chip that carry it visually do not.
+ * There is no third, disabled state any more (HIVE-12.5, #5612): a product that cannot be
+ * opened is not drawn as a card at all — `launcherApps()` leaves it out and the launcher names
+ * it on its "Coming next" line.
  *
  * The card's hue comes from `data-tone`, resolved to tokens by the `.launch-tone` rules in
  * `globals.css`, so no colour is written here and a commercial host's card follows every
@@ -37,37 +34,34 @@ import { launcherItemLabel, OPENS_IN_NEW_TAB, type LauncherApp } from './launche
 export interface AppLaunchCardProps {
   /** The tile to draw. */
   app: LauncherApp;
+  /**
+   * The footer's quiet line, when the page knows more than the model — the Control Panel's
+   * "last opened" time, read from this device after mount. Defaults to `app.footerLabel`.
+   */
+  footerLabel?: string;
 }
 
 /**
- * The card's inner content, shared by all three elements it can be rendered as.
+ * The card's inner content, shared by both elements it can be rendered as.
  *
- * Every child is a `<span>`: the disabled card is a `<button>`, whose content model is
- * phrasing content, so a `<div>` in here would be invalid markup on one of the three paths.
+ * Every child is a `<span>`: the card is an `<a>`, whose content here is phrasing content.
  *
- * @param app The tile to draw.
+ * @param props.app The tile to draw.
+ * @param props.footerLabel The footer's quiet line.
  * @returns The tile's glyph, copy and footer strip.
  */
-function CardBody({ app }: AppLaunchCardProps) {
+function CardBody({ app, footerLabel }: { app: LauncherApp; footerLabel: string }) {
   const Icon = app.icon;
 
   return (
     <>
-      {app.enabled ? (
-        <span className="launch-card__go" aria-hidden="true">
-          {app.external ? (
-            <ArrowUpRight size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} />
-          ) : (
-            <ArrowRight size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} />
-          )}
-        </span>
-      ) : (
-        // `badgeVariants` rather than `<Badge>`: the chip has to be phrasing content, and
-        // `Badge` renders a `<div>` — invalid inside the `<button>` a disabled card is.
-        <span className={cn(badgeVariants({ variant: 'outline' }), 'launch-card__soon')}>
-          Coming soon
-        </span>
-      )}
+      <span className="launch-card__go" aria-hidden="true">
+        {app.external ? (
+          <ArrowUpRight size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} />
+        ) : (
+          <ArrowRight size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} />
+        )}
+      </span>
 
       <span className="launch-tile">
         <Icon aria-hidden strokeWidth={ICON_STROKE_WIDTH} />
@@ -78,8 +72,8 @@ function CardBody({ app }: AppLaunchCardProps) {
       <span className="launch-card__desc">{app.description}</span>
 
       <span className="launch-card__foot">
-        <span>{app.footerLabel}</span>
-        {app.external && app.enabled ? (
+        <span data-testid={`launch-card-foot-${app.id}`}>{footerLabel}</span>
+        {app.external ? (
           <span>
             <ExternalLink size={ICON_SIZE.button} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
             {OPENS_IN_NEW_TAB}
@@ -94,42 +88,34 @@ function CardBody({ app }: AppLaunchCardProps) {
  * An application tile.
  *
  * @param props The tile to draw — see {@link AppLaunchCardProps}.
- * @returns A link, an external link, or a disabled button, according to the tile's state.
+ * @returns A link, or an external link that opens in a new tab.
  */
-export default function AppLaunchCard({ app }: AppLaunchCardProps) {
+export default function AppLaunchCard({ app, footerLabel = app.footerLabel }: AppLaunchCardProps) {
   const className = cn(
-    cardVariants({ hover: app.enabled, link: app.enabled }),
+    cardVariants({ hover: true, link: true }),
     'launch-tone launch-card',
-    !app.enabled && 'launch-card--soon'
+    app.primary && 'launch-card--primary'
   );
   const shared = {
     className,
     'data-tone': app.tone,
     'data-testid': `launch-app-${app.id}`,
-    'aria-label': launcherItemLabel(app.name, app.enabled),
+    'aria-label': launcherItemLabel(app.name),
   };
-
-  if (!app.enabled) {
-    return (
-      <button type="button" disabled {...shared}>
-        <CardBody app={app} />
-      </button>
-    );
-  }
 
   if (app.external) {
     return (
       // `noopener` is what keeps the new tab from reaching back through `window.opener`;
       // `noreferrer` keeps the launcher's URL out of the destination's referrer.
       <a href={app.href} target="_blank" rel="noopener noreferrer" {...shared}>
-        <CardBody app={app} />
+        <CardBody app={app} footerLabel={footerLabel} />
       </a>
     );
   }
 
   return (
     <Link href={app.href} {...shared}>
-      <CardBody app={app} />
+      <CardBody app={app} footerLabel={footerLabel} />
     </Link>
   );
 }
