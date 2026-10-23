@@ -1,0 +1,107 @@
+{/* Withdrawn from docs/bring-in/catalog.mdx for RC6: the catalog entity kinds (`catalog-entities`),
+     the Registry chip and Subjects tab (`schema-registry`), the Dependencies tab (`dependency-graph`)
+     and ownership (`teams`). Restore each piece to where its comment says. */}
+
+{/* 1. This section, right before "How the catalog works" (`catalog-entities`): */}
+
+## Kinds
+
+Above the list, the catalog home counts **everything** in the catalog by **kind**, not only
+catalog items:
+
+| Kind | What it is | Key in the API |
+| --- | --- | --- |
+| **Projects** | Publishable OpenAPI projects | `api` |
+| **Catalog items** | Imported specs in other formats (this page's list) | `spec` |
+| **MCP servers** | MCP endpoints Apiome discovers and grades (**Bring in → MCP servers**) | `mcp_server` |
+| **Consumers** | Applications registered as consumers of a project | `consumer` |
+| **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
+| **Agents** | AI agents and the keys they call with — see [Agents and models](./agents-and-models.mdx) | `agent` |
+| **Models** | The models agents run on | `model` |
+| **Gateway configs** | One per connector environment — see [Environments](./connectors.mdx#environments-gateway-configs) | `gateway_config` |
+| **Components** | Backstage or Compass components, systems and domains you accepted — see [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx) | `component` |
+| **Teams** | The [teams](../workspace/teams.mdx) that own the rest | `team` |
+
+The tiles are the **Kind** filter:
+
+1. **Click a tile** — for example **MCP servers** — to list that kind. **All kinds** lists
+   everything, in name order.
+2. Each row shows the **name** (click it to open its page), the **kind**, the **owner team** and
+   when it was last **updated**. **Type in the filter box** to narrow by name, slug or description;
+   the **owner** filter applies too (teams have no owner, so they drop out while it is set).
+3. **Click “Load more”** for the next page.
+4. **Click “Catalog items”** to go back to the catalog-item cards and table described below.
+
+The address names the kind (`?kind=mcp_server`, `?kind=all`), so you can share the view. You see
+only the kinds your role may view.
+
+<Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
+
+### Home callouts
+
+Under the tiles, three counts point at what needs attention. **Click one** to open the page that
+deals with it:
+
+| Callout | Counts | Opens |
+| --- | --- | --- |
+| **Unowned** | Projects, catalog items, MCP servers, consumers, connectors, agents and models with no confirmed owner team | **Ownership drift** on the [Teams](../workspace/teams.mdx) page |
+| **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence | **Connectors** |
+| **Shadow** | APIs a gateway serves that have no catalog entry | [Shadow APIs](../govern/shadow-apis.mdx) |
+
+A callout you may not see — for example **Shadow** without permission to view imports — is left out.
+
+{/* 2. A bullet of "Find an item", after "Chips" (`schema-registry`): */}
+
+- **Registry** — an Avro, JSON Schema or Protobuf item that backs a
+  [schema registry subject](../ship/schema-registry.mdx) carries a **Registry** chip on its card
+  and table row. Hover it to see the subject names; **click it** to open the item's **Subjects** tab.
+
+{/* 3. The sentence before the tab table read (`schema-registry`): "Nine tabs follow — ten on an Avro, JSON Schema or Protobuf item, which also has **Subjects**:" */}
+
+{/* 4. The last two rows of the tab table (`dependency-graph`, `schema-registry`): */}
+
+| Tab | Shows |
+| --- | --- |
+| **Dependencies** | What the item depends on and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
+| **Subjects** | Avro, JSON Schema and Protobuf items only: the schema registry subjects the item backs, with their versions and schema ids — see [The Subjects tab](../ship/schema-registry.mdx#the-subjects-tab) |
+
+
+{/* 5. The tab ids sentence ended: "`conversions`, `lint`, `test-bench`, `versions`, `dependencies` and `subjects`; an unknown id opens **Overview**, and so does `subjects` on an item that has no **Subjects** tab." */}
+
+{/* 6. Step 2 of "Act on several items at once" ended: "   items; Undelete reaches deleted ones), and **Assign owner**: choose a team, then **click “Assign owner”** to make it the owner of every selected item." (`teams`) */}
+
+{/* 7. "Facts" linked to the Scorecards page: "the [catalog facts](../govern/scorecards.mdx) scorecards will read" (`catalog-entities`); "Provenance" linked [connector](./connectors.mdx) (`connectors`) */}
+
+{/* 8. This section, right before "Delete and restore" (`teams`): */}
+
+## Owner
+
+Each item can have an owner team. Connectors, CODEOWNERS files and the document's own
+`x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
+confirms it.
+
+**In a list**, the **Owner** column (on cards, a line under the summary) names the team. A
+*suggested* owner carries a **Suggested** badge saying where it came from — *Gateway tag*,
+*CODEOWNERS*, *Spec* — and a **“Confirm”** button: **click “Confirm”** to make it the owner; the
+row updates in place. The team's name opens its [team page](../workspace/teams.mdx#team-pages).
+
+**Owner** in the second toolbar row shows only the items one team owns (or is suggested for); the
+choice is kept in the address as `?team=`.
+
+<Screenshot id="catalog-owner-filter" alt="The catalog table filtered to the Payments team: one owned item and two suggested owners with Confirm buttons" />
+
+To give several items an owner at once, tick them and use **Assign owner** in the bulk bar (below).
+See [Teams → Ownership](../workspace/teams.mdx#ownership).
+
+{/* 9. This subsection, at the end of "An item's page", right before "View an item in Designer" (`catalog-entities`, the scorecard facts of CDG-5.4): */}
+
+### Facts
+
+The **Overview** tab ends with the item's **Facts**: the
+[catalog facts](../reference/rest/catalog-entities.md) maturity scorecards will read — owner team, consumers, declared dependencies, whether its source refreshed
+within twice its cadence, where it is deployed and, for a schema item, whether its registry subjects
+set a compatibility level. Each shows **Met**, **Not met**, **Not applicable** or **Not assessed**
+with what it is based on and a link to check it. There is no score until maturity ladders are
+available.
+
+<Screenshot id="entity-facts" alt="A catalog item's Facts: owner present but not contactable, three consumers, no declared dependencies, refreshed within cadence, deployed on two environments, compatibility level not set" />

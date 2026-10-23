@@ -29,6 +29,7 @@
  */
 
 import { OwnerCell } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
@@ -186,7 +187,7 @@ export default function CatalogCard({
         </div>
 
         <p className="cat-card__summary">{catalogSummaryText(item)}</p>
-        {item.owner ? (
+        {item.owner && isFeatureReleased('teams') ? (
           <div className="cat-card__owner cat-card__above">
             <OwnerCell
               owner={item.owner}

@@ -212,7 +212,8 @@ export default function CatalogClient() {
   const searchParams = useSearchParams();
   const identityGroupFilter = searchParams.get('identityGroupId');
   // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
-  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  // Ignored while ownership is held back with Teams (lib/feature-release.ts).
+  const teamFilter = isFeatureReleased('teams') ? sanitizeTeamParam(searchParams.get(TEAM_PARAM)) : null;
   const { teams, loading: teamsLoading } = useTeams();
   const setTeamFilter = React.useCallback(
     (team: string | null) => {
@@ -293,7 +294,8 @@ export default function CatalogClient() {
       setLoadError(null);
       // The Registry chip (CDG-4.5): which schema items back a schema-registry subject. A second,
       // best-effort read — only when there are schema items — so a registry outage hides the chip.
-      if (loaded.some((item) => isRegistryFormat(item.sourceFormat))) {
+      // Not while the schema registry is held back (lib/feature-release.ts).
+      if (isFeatureReleased('schema-registry') && loaded.some((item) => isRegistryFormat(item.sourceFormat))) {
         fetchSubjects()
           .then((subjects) => {
             const byItem = subjectNamesByItem(subjects);
@@ -348,13 +350,14 @@ export default function CatalogClient() {
 
   /**
    * The kinds and callouts (CDG-5.1): a second, best-effort read. When it fails the panel is left
-   * out and the page is the catalog-items list it always was.
+   * out and the page is the catalog-items list it always was — which is also what it is while
+   * the other kinds are held back (`catalog-entities`, lib/feature-release.ts).
    */
   const [kindSummary, setKindSummary] = React.useState<CatalogEntitySummary | null>(null);
   /** Which create dialog is open (CDG-5.2). */
   const [creating, setCreating] = React.useState<'agent' | 'model' | null>(null);
   React.useEffect(() => {
-    if (!currentTenantId) return;
+    if (!currentTenantId || !isFeatureReleased('catalog-entities')) return;
     let live = true;
     fetchEntitySummary(teamFilter)
       .then((next) => live && setKindSummary(next))
@@ -1059,7 +1062,7 @@ export default function CatalogClient() {
             {/* Import is the only write this screen starts, and it needs a signed-in user to
                 attribute the revision to — so it is absent, not disabled, without one. */}
             {/* CDG-5.5: what Backstage scans and Compass uploads staged, waiting for a decision. */}
-            {currentTenantId ? (
+            {currentTenantId && isFeatureReleased('catalog-entities') ? (
               <Button variant="outline" asChild data-testid="catalog-import-reports">
                 <Link href={IMPORT_REPORTS_ROUTE}>Import reports</Link>
               </Button>

@@ -95,6 +95,16 @@ let calls: Call[] = [];
 const res = (body: unknown, status = 200) =>
   ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
 
+// Agents and models is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams,dependency-graph';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 beforeEach(() => {
   calls = [];
   mockPush.mockReset();

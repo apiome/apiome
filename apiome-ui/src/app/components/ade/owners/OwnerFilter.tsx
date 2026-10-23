@@ -9,6 +9,7 @@
  */
 
 import * as React from 'react';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { Team } from '@lib/owners';
 
 /** Props for {@link OwnerFilter}. */
@@ -35,6 +36,8 @@ export function OwnerFilter({ teams, value, onChange, loading = false, testId = 
   const id = React.useId();
   // A slug in the URL that names no loaded team still shows, so the reader can see and clear it.
   const unknown = value && !teams.some((team) => team.slug === value) ? value : null;
+  // Ownership is held back with Teams (lib/feature-release.ts).
+  if (!isFeatureReleased('teams')) return null;
   return (
     <span className="own-filter" data-active={value ? 'true' : 'false'}>
       <label htmlFor={id} className="own-filter__label">

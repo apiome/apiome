@@ -35,6 +35,7 @@ import TenantMcpSettingsPanel from '@/app/ade/dashboard/tenants/TenantMcpSetting
 import TenantMcpKeysSection from './TenantMcpKeysSection';
 import TenantMembersSection from './TenantMembersSection';
 import TenantOwnershipPolicySection from './TenantOwnershipPolicySection';
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   TENANT_MANAGE_SECTIONS,
   TENANT_MANAGE_SECTION_LABELS,
@@ -258,7 +259,8 @@ export default function TenantManageDrawer({
               aria-label="Administration sections"
               className="tnt-manage-nav"
             >
-              {TENANT_MANAGE_SECTIONS.map((entry) => {
+              {/* Ownership is held back with Teams (lib/feature-release.ts). */}
+              {TENANT_MANAGE_SECTIONS.filter((entry) => entry !== 'ownership' || isFeatureReleased('teams')).map((entry) => {
                 const Icon = SECTION_ICONS[entry];
                 return (
                   <TabsTrigger key={entry} value={entry} variant="vertical" size="sm">

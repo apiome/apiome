@@ -12,6 +12,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { isFeatureReleased } from '@lib/feature-release';
 import { Badge, Button } from '@/app/components/ui';
 import {
   ownerDescription,
@@ -47,6 +48,8 @@ export function OwnerCell({ owner, kind, entityId, onChange, readOnly = false, t
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Ownership is held back with Teams (lib/feature-release.ts); lists drop the column too.
+  if (!isFeatureReleased('teams')) return null;
   if (!owner) {
     return (
       <span className="own-cell own-cell--none" data-testid={testId}>

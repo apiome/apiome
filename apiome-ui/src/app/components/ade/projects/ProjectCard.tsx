@@ -28,6 +28,7 @@
  */
 
 import { OwnerCell } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
 import * as React from 'react';
 import Link from 'next/link';
@@ -164,7 +165,7 @@ export default function ProjectCard({
         </div>
 
         <p className="prj-card__summary">{projectSummaryText(project)}</p>
-        {project.owner ? (
+        {project.owner && isFeatureReleased('teams') ? (
           <div className="prj-card__owner prj-card__above">
             <OwnerCell
               owner={parseEntityOwner(project.owner)}
@@ -264,12 +265,15 @@ export default function ProjectCard({
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
-                <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
-                  <Link href={projectConsumersHref(project)}>
-                    <Users aria-hidden />
-                    Consumers
-                  </Link>
-                </DropdownMenu.Item>
+                {/* Consumer contracts are held back (lib/feature-release.ts). */}
+                {isFeatureReleased('consumers') ? (
+                  <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
+                    <Link href={projectConsumersHref(project)}>
+                      <Users aria-hidden />
+                      Consumers
+                    </Link>
+                  </DropdownMenu.Item>
+                ) : null}
                 <DropdownMenu.Item
                   className={MENU_ITEM_CLASS}
                   onSelect={() => onEdit(project)}

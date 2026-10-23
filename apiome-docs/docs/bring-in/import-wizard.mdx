@@ -10,7 +10,7 @@ Apiome has two import wizards, and which one you get depends on where you start:
 | Wizard | Opens from | Sources | Creates |
 | --- | --- | --- | --- |
 | **Import specification** | **Import** on Projects or Versions, **Import a spec** on Home (<Kbd keys="I"/>) | File Upload, URL Import, Clipboard Paste, Git Repository, SwaggerHub, Design with AI | A new [project](../build/projects.mdx) |
-| **Import to catalog** | **Import to catalog** on the [Catalog](./catalog.mdx) | File, URL, clipboard, Git repository, Compass export | A catalog item, in its original format (a Compass export becomes an [import report](./migrate-from-backstage-or-compass.mdx#the-import-report)) |
+| **Import to catalog** | **Import to catalog** on the [Catalog](./catalog.mdx) | File, URL, clipboard, Git repository | A catalog item, in its original format |
 
 The sample files below are in the Apiome repository under `apiome-ui/examples/`. Avoid the
 `negative/` and `adversarial/` folders — those files are broken on purpose.
@@ -99,7 +99,6 @@ Options → Quality → Import**.
 1. **Source** — **File** (drop a source file), **URL** (**Document URL**, then **“Fetch and
    detect”**), **paste** (**Source content**, then **“Detect pasted source”**) or **Git repository**
    (**Repository URL**, **Branch, tag, or commit**, **Path or glob**, then **“Fetch and detect”**).
-   **Compass export** takes a different path; see [Compass export](#compass-export) below.
    Try `apiome-ui/examples/graphql/01-simple-user.graphql` or
    `apiome-ui/examples/asyncapi/01-user-events-2.6.yaml`. Not sure your format is supported?
    **Click “Which formats can I import?”** to open [How the catalog
@@ -112,21 +111,6 @@ Options → Quality → Import**.
 4. **Quality** — a pre-flight lint. **“Import”** when it is clean, or **“Import anyway”**.
 5. **Import** — the item is stored in its original format. Use **Convert to OpenAPI** when you are
    ready.
-
-### Compass export
-
-Moving off Atlassian Compass? Upload its export, and its components and owners arrive as
-suggestions to review. See [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx)
-for how each field maps.
-
-1. **Click “Import to catalog”**, then **click “Compass export”**.
-2. **Click “Choose the Compass export (.json)”** and pick the JSON file (up to 5 MB).
-3. **Click “Import export”.** The wizard jumps to **Import** and shows the import report: **Teams**,
-   **Components** and **Unmapped fields**.
-4. **Click “Create team”**, **“Register component”** or **“Apply to …”** on each suggestion you want,
-   or **“Dismiss”**. You can also come back later: **Import reports** on the Catalog lists the report.
-
-<Screenshot id="import-wizard-compass" alt="Import to catalog on its Import step after a Compass upload: the report's counts, a team and components waiting, and the unmapped fields" />
 
 ## With the CLI or the API
 

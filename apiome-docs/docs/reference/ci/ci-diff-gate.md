@@ -59,7 +59,7 @@ new comments. Requires `permissions.pull-requests: write`.
 Set `comment: false` to skip the comment and only fail/pass the check.
 
 Under each breaking change, the comment says what the change affects in the
-[dependency graph](../../govern/dependency-graph.mdx#in-the-diff-gate-and-the-pr-comment):
+[dependency graph](../rest/graph.md):
 
 ```markdown
 - **Path removed** (`ctg.path_removed`) — `/paths/~1pets~1{petId}`

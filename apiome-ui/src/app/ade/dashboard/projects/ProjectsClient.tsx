@@ -2,6 +2,7 @@
 
 import { AssignOwnerControl, OwnerFilter, assignOwner, useTeams } from '@/app/components/ade/owners';
 import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LayoutGrid, List, Plus, TriangleAlert, Trash2, Undo2, Upload } from 'lucide-react';
@@ -131,7 +132,8 @@ export default function ProjectsClient() {
   const { confirm, alert } = useDialog();
 
   // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
-  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  // Ignored while ownership is held back with Teams (lib/feature-release.ts).
+  const teamFilter = isFeatureReleased('teams') ? sanitizeTeamParam(searchParams.get(TEAM_PARAM)) : null;
   const { teams, loading: teamsLoading } = useTeams();
   const setTeamFilter = React.useCallback(
     (team: string | null) => {

@@ -22,52 +22,6 @@ average quality, how many were converted to OpenAPI, and how many are active or 
 deleted, when **Show deleted** is on). **Click “Show stats”** to open the full statistics in
 place; Apiome remembers the choice in this browser.
 
-## Kinds
-
-Above the list, the catalog home counts **everything** in the catalog by **kind**, not only
-catalog items:
-
-| Kind | What it is | Key in the API |
-| --- | --- | --- |
-| **Projects** | Publishable OpenAPI projects | `api` |
-| **Catalog items** | Imported specs in other formats (this page's list) | `spec` |
-| **MCP servers** | MCP endpoints Apiome discovers and grades (**Bring in → MCP servers**) | `mcp_server` |
-| **Consumers** | Applications registered as consumers of a project | `consumer` |
-| **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
-| **Agents** | AI agents and the keys they call with — see [Agents and models](./agents-and-models.mdx) | `agent` |
-| **Models** | The models agents run on | `model` |
-| **Gateway configs** | One per connector environment — see [Environments](./connectors.mdx#environments-gateway-configs) | `gateway_config` |
-| **Components** | Backstage or Compass components, systems and domains you accepted — see [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx) | `component` |
-| **Teams** | The [teams](../workspace/teams.mdx) that own the rest | `team` |
-
-The tiles are the **Kind** filter:
-
-1. **Click a tile** — for example **MCP servers** — to list that kind. **All kinds** lists
-   everything, in name order.
-2. Each row shows the **name** (click it to open its page), the **kind**, the **owner team** and
-   when it was last **updated**. **Type in the filter box** to narrow by name, slug or description;
-   the **owner** filter applies too (teams have no owner, so they drop out while it is set).
-3. **Click “Load more”** for the next page.
-4. **Click “Catalog items”** to go back to the catalog-item cards and table described below.
-
-The address names the kind (`?kind=mcp_server`, `?kind=all`), so you can share the view. You see
-only the kinds your role may view.
-
-<Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
-
-### Home callouts
-
-Under the tiles, three counts point at what needs attention. **Click one** to open the page that
-deals with it:
-
-| Callout | Counts | Opens |
-| --- | --- | --- |
-| **Unowned** | Projects, catalog items, MCP servers, consumers, connectors, agents and models with no confirmed owner team | **Ownership drift** on the [Teams](../workspace/teams.mdx) page |
-| **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence | **Connectors** |
-| **Shadow** | APIs a gateway serves that have no catalog entry | [Shadow APIs](../govern/shadow-apis.mdx) |
-
-A callout you may not see — for example **Shadow** without permission to view imports — is left out.
-
 ## How the catalog works
 
 On your first visit a note above the list explains what catalog items are. **Click “Learn more”**
@@ -91,9 +45,6 @@ list on [Supported formats](./supported-formats.md).
   **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
   **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
-- **Registry** — an Avro, JSON Schema or Protobuf item that backs a
-  [schema registry subject](../ship/schema-registry.mdx) carries a **Registry** chip on its card
-  and table row. Hover it to see the subject names; **click it** to open the item's **Subjects** tab.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
 - **Cards** or **Table**, at the end of the filter row; cards can be grouped by protocol. Your
@@ -136,7 +87,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 **Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
 **“Convert to OpenAPI Project”**, **“Export”** and **“View code”** — plus **“Open in Designer”**
 when your workspace has the Designer suite (see [View an item in Designer](#view-an-item-in-designer)).
-Nine tabs follow — ten on an Avro, JSON Schema or Protobuf item, which also has **Subjects**:
+Eight tabs follow:
 
 | Tab | Shows |
 | --- | --- |
@@ -148,15 +99,12 @@ Nine tabs follow — ten on an Avro, JSON Schema or Protobuf item, which also ha
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
 | **Versions** | The item's revisions |
-| **Dependencies** | What the item depends on and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
-| **Subjects** | Avro, JSON Schema and Protobuf items only: the schema registry subjects the item backs, with their versions and schema ids — see [The Subjects tab](../ship/schema-registry.mdx#the-subjects-tab) |
 
 The page address names the open tab — `?tab=lint`, `?tab=versions` and so on, with no `?tab=`
 for **Overview** — so you can **copy the address and send it** to land a teammate on the same tab.
 Switching tabs updates the address without reloading the page, and does not add a step to the
 browser's **Back** button. The tab ids are `overview`, `format`, `source`, `provenance`,
-`conversions`, `lint`, `test-bench`, `versions`, `dependencies` and `subjects`; an unknown id
-opens **Overview**, and so does `subjects` on an item that has no **Subjects** tab.
+`conversions`, `lint`, `test-bench` and `versions`; an unknown id opens **Overview**.
 
 While the page or a tab is loading, it shows grey placeholders in the shape of what is coming —
 the header, the tabs and the tiles — so nothing moves when the content arrives. The list does the
@@ -174,7 +122,7 @@ On **Provenance**, an item imported before the import recorded its fingerprint a
 shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
 marked *Derived from the format*.
 
-An item synced by a [connector](./connectors.mdx) shows **Synced by a connector** on the
+An item synced by a connector shows **Synced by a connector** on the
 **Source intake** step. Below it are the **Connector** that synced it (name and kind), the
 **Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
 connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
@@ -188,17 +136,6 @@ connector syncs always land in the catalog, even OpenAPI; convert the item to ma
 <Screenshot id="catalog-item-test-bench" alt="The Test bench tab: a schema picker, a payload editor and test suites" />
 
 <Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
-
-### Facts
-
-The **Overview** tab ends with the item's **Facts**: the [catalog facts](../govern/scorecards.mdx)
-scorecards will read — owner team, consumers, declared dependencies, whether its source refreshed
-within twice its cadence, where it is deployed and, for a schema item, whether its registry subjects
-set a compatibility level. Each shows **Met**, **Not met**, **Not applicable** or **Not assessed**
-with what it is based on and a link to check it. There is no score until maturity ladders are
-available.
-
-<Screenshot id="entity-facts" alt="A catalog item's Facts: owner present but not contactable, three consumers, no declared dependencies, refreshed within cadence, deployed on two environments, compatibility level not set" />
 
 ## View an item in Designer
 
@@ -236,25 +173,6 @@ OpenAPI](./convert-to-openapi.md).
 **Export to another format…** in the item's menu produces a document in another format instead —
 it never creates a project.
 
-## Owner
-
-Each item can have an owner team. Connectors, CODEOWNERS files and the document's own
-`x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
-confirms it.
-
-**In a list**, the **Owner** column (on cards, a line under the summary) names the team. A
-*suggested* owner carries a **Suggested** badge saying where it came from — *Gateway tag*,
-*CODEOWNERS*, *Spec* — and a **“Confirm”** button: **click “Confirm”** to make it the owner; the
-row updates in place. The team's name opens its [team page](../workspace/teams.mdx#team-pages).
-
-**Owner** in the second toolbar row shows only the items one team owns (or is suggested for); the
-choice is kept in the address as `?team=`.
-
-<Screenshot id="catalog-owner-filter" alt="The catalog table filtered to the Payments team: one owned item and two suggested owners with Confirm buttons" />
-
-To give several items an owner at once, tick them and use **Assign owner** in the bulk bar (below).
-See [Teams → Ownership](../workspace/teams.mdx#ownership).
-
 ## Delete and restore
 
 **Delete item** hides an item; turn on **Show deleted** and choose **Undelete item** to bring it
@@ -267,8 +185,7 @@ back. **Permanently delete** asks you to type the item's slug, then **“Delete 
    selection is kept when you switch between Cards and Table.
 2. A bar appears at the bottom of the page: **“Convert N…”**, **“Delete N”** and
    **“Undelete N”**, each counting the items it applies to (Convert and Delete reach live
-   items; Undelete reaches deleted ones), and **Assign owner**: choose a team, then **click
-   “Assign owner”** to make it the owner of every selected item.
+   items; Undelete reaches deleted ones).
 3. **Click the × on the bar** to clear the selection.
 
 <Screenshot id="catalog-bulk-selection" alt="Three catalog cards ticked, with the bulk bar offering Convert 3… and Delete 3" />

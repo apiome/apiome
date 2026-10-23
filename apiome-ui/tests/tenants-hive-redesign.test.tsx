@@ -281,9 +281,15 @@ async function closeDrawer() {
   });
 }
 
+// Tests that re-open a held-back feature (lib/feature-release.ts) set the override themselves.
+afterEach(() => {
+  delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+});
+
 /* -------------------------------------------------------------------------
    1. Per-tenant state is isolated — the defect this ticket closes
    ------------------------------------------------------------------------- */
+
 
 describe('per-tenant isolation', () => {
   it('opens the drawer for the tenant whose Manage was pressed', async () => {
@@ -413,6 +419,25 @@ describe('the drawer is React-owned, not a hidden div', () => {
 
 describe('the five sections', () => {
   it('lists all six in order, Ownership (CDG-2.5) before the history', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+    try {
+      await renderPage();
+      const drawer = await openDrawer('Acme Corp');
+
+      expect(within(drawer).getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual([
+        expect.stringContaining('Members'),
+        'License & plan',
+        'MCP settings',
+        'Per-key capabilities',
+        'Ownership',
+        'Policy history',
+      ]);
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
+  });
+
+  it('leaves Ownership out while ownership is held back with Teams (RC6)', async () => {
     await renderPage();
     const drawer = await openDrawer('Acme Corp');
 
@@ -421,7 +446,6 @@ describe('the five sections', () => {
       'License & plan',
       'MCP settings',
       'Per-key capabilities',
-      'Ownership',
       'Policy history',
     ]);
   });
@@ -1082,6 +1106,8 @@ describe('the docs fixtures', () => {
   });
 
   it('renders the list and every section of the manage drawer', async () => {
+    // The fixtures cover the Ownership section too, which RC6 holds back with Teams.
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
     render(<TenantsPage />);
     expect(await screen.findByText('Northwind Sandbox')).toBeInTheDocument();
     writeA11yFixture('tenants', liveMarkup(document.querySelector('.page') as HTMLElement));

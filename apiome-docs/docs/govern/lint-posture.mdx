@@ -79,7 +79,7 @@ view, share its URL.
 ## Findings reach the owner team
 
 When a lint gate finds **new error-level findings** on a project, catalog item or MCP endpoint, the
-entity's confirmed [owner team](../workspace/teams.mdx#ownership) is told: each member gets a
+entity's confirmed [owner team](../reference/rest/owners.md) is told: each member gets a
 **Lint findings** notification that opens the item's **Lint** tab, and the team's chat channel gets
 one message. It happens at most once an hour per item, and an item with no confirmed owner is listed
 in the **Unowned findings** report instead. See
@@ -167,5 +167,4 @@ request also needs `lint_findings:publish`. Every applied action is recorded and
 ## Where next
 
 - [Reviews and the approval gate](./reviews.mdx)
-- [Scorecards](./scorecards.mdx) — the catalog facts each entity carries, such as an owner team that findings can reach
 - [Lint and check quality](../build/lint-and-quality.md)

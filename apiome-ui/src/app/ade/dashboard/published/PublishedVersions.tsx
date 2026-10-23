@@ -42,6 +42,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { OwnerFilter, useTeams } from '@/app/components/ade/owners';
 import { sanitizeTeamParam, TEAM_PARAM, withTeamParam, type EntityOwner } from '@lib/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import * as React from 'react';
 import Link from 'next/link';
 import { KeyRound } from 'lucide-react';
@@ -137,7 +138,8 @@ export default function PublishedVersions({
   // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied in the read's SQL.
   const router = useRouter();
   const searchParams = useSearchParams();
-  const teamFilter = sanitizeTeamParam(searchParams.get(TEAM_PARAM));
+  // Ignored while ownership is held back with Teams (lib/feature-release.ts).
+  const teamFilter = isFeatureReleased('teams') ? sanitizeTeamParam(searchParams.get(TEAM_PARAM)) : null;
   const { teams, loading: teamsLoading } = useTeams();
   const setTeamFilter = React.useCallback(
     (team: string | null) => {

@@ -594,20 +594,30 @@ describe('the header', () => {
     await screen.findByTestId('versions-table');
   });
 
-  it('opens the project\'s Dependencies tab (CDG-3.4)', async () => {
-    installFetch([
-      {
-        test: /^\/api\/graph\/edges\/project\/[^/]+\?direction=(in|out)&limit=500$/,
-        reply: () => ({ edges: [], total: 0, truncated: false, limit: 500, offset: 0 }),
-      },
-    ]);
+  it('leaves the Dependencies tab out while the dependency graph is held back (RC6)', async () => {
     await renderVersions();
-    const tab = screen.getByTestId('versions-tab-dependencies');
-    fireEvent.click(tab);
-    expect(tab).toHaveAttribute('aria-selected', 'true');
-    expect(await screen.findByText('Nothing depends on this yet')).toBeInTheDocument();
-    expect(calls.filter((c) => c.url.startsWith('/api/graph/edges/project/'))).toHaveLength(2);
-    expect(screen.queryByTestId('versions-table')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('versions-tab-dependencies')).not.toBeInTheDocument();
+  });
+
+  it('opens the project\'s Dependencies tab (CDG-3.4)', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph';
+    try {
+      installFetch([
+        {
+          test: /^\/api\/graph\/edges\/project\/[^/]+\?direction=(in|out)&limit=500$/,
+          reply: () => ({ edges: [], total: 0, truncated: false, limit: 500, offset: 0 }),
+        },
+      ]);
+      await renderVersions();
+      const tab = screen.getByTestId('versions-tab-dependencies');
+      fireEvent.click(tab);
+      expect(tab).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByText('Nothing depends on this yet')).toBeInTheDocument();
+      expect(calls.filter((c) => c.url.startsWith('/api/graph/edges/project/'))).toHaveLength(2);
+      expect(screen.queryByTestId('versions-table')).not.toBeInTheDocument();
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
   });
 
   it('counts unresolved threads on the Discussion tab and opens the project discussion (COL-1.3)', async () => {

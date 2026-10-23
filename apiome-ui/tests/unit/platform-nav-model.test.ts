@@ -35,6 +35,7 @@ import {
 } from '../../lib/platform-nav';
 import { PLATFORM_NAV_ICONS, resolvePlatformNavIcon } from '../../lib/platform-nav-icons';
 import {
+  EMBEDDED_FEATURES,
   UNRELEASED_FEATURE_IDS,
   isFeatureReleased,
   parsePreviewFeatures,
@@ -463,18 +464,32 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       .filter((id) => !shown.has(id));
   }
 
-  it('holds back exactly the unreleased features, and every one of them is a modelled destination', () => {
+  /** The unreleased ids that are rail or off-rail destinations (the rest are embedded features). */
+  const unreleasedDestinations = () => UNRELEASED_FEATURE_IDS.filter((id) => !(id in EMBEDDED_FEATURES));
+
+  it('holds back exactly the unreleased features, each a modelled destination or a named embedded feature', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
       'audit',
+      'catalog-entities',
+      'connectors',
+      'consumers',
+      'dependency-graph',
       'export-studio',
       'mcp',
       'primitives',
+      'schema-registry',
       'sdk-settings',
+      'shadow-apis',
       'style-guides',
+      'teams',
     ]);
-    for (const id of UNRELEASED_FEATURE_IDS) expect(findPlatformNavItem(id)).toBeDefined();
-    expect(hiddenWithTenant().sort()).toEqual([...UNRELEASED_FEATURE_IDS].sort());
+    for (const id of unreleasedDestinations()) expect(findPlatformNavItem(id)).toBeDefined();
+    for (const id of Object.keys(EMBEDDED_FEATURES)) {
+      expect(findPlatformNavItem(id)).toBeUndefined();
+      expect(UNRELEASED_FEATURE_IDS).toContain(id);
+    }
+    expect(hiddenWithTenant().sort()).toEqual(unreleasedDestinations().sort());
   });
 
   it('keeps Catalog and Projects open', () => {
@@ -495,7 +510,11 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
 
   it('re-opens listed features, or all of them, through the preview override', () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' mcp , audit ';
-    expect(hiddenWithTenant().sort()).toEqual(['export-studio', 'primitives', 'sdk-settings', 'style-guides']);
+    expect(hiddenWithTenant().sort()).toEqual(
+      unreleasedDestinations()
+        .filter((id) => id !== 'mcp' && id !== 'audit')
+        .sort()
+    );
 
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'ALL';
     expect(hiddenWithTenant()).toEqual([]);
@@ -522,9 +541,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 15 released destinations in the rail, 20 with every feature previewed', () => {
+  it('leaves 10 released destinations in the rail, 20 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(15);
+    expect(releasedRailCount()).toBe(10);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(20);
   });

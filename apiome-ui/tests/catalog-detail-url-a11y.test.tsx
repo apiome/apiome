@@ -99,6 +99,17 @@ async function renderDetail(search = '') {
   await screen.findByTestId('catalog-detail-tabs');
 }
 
+// The full tab set includes Dependencies and Subjects, which RC6 holds back with the dependency
+// graph and the schema registry (lib/feature-release.ts): re-open them for these suites.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph,schema-registry';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
   mockPush.mockReset();

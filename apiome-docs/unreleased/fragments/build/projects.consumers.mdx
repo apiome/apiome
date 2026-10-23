@@ -1,0 +1,77 @@
+{/* Withdrawn from docs/build/projects.mdx with the consumer registry (`consumers`) and ownership
+     (`teams`) for RC6. Restore each piece to where its comment says. */}
+
+{/* 1. A row of the "Edit, delete and restore" menu table, after "Open versions" (`consumers`): */}
+
+| Item | Does |
+| --- | --- |
+| **Consumers** | Who depends on this API — see below |
+
+{/* 2. The alt text of the "projects-table" screenshot was (`teams`):
+     "The Projects page in Table view: columns for project, description, quality trend, versions, owner,
+     status and creator, with the Owner filter in the toolbar" */}
+
+{/* 3. This section, right after "Edit, delete and restore" (`consumers`): */}
+
+## Consumers
+
+<Route path="/ade/dashboard/projects/[projectId]/consumers" />
+
+**Consumers** lists the teams and services that depend on the API, and which operations and fields
+each one uses. **“Register consumer”** adds one by hand; **“Import Pact file”** adds one from a
+consumer contract.
+
+### Bindings and traffic
+
+A consumer's **contract** says what it declares it uses. Its **bindings** let the
+[usage index](../govern/runtime-usage.mdx#attribute-traffic-to-consumers) recognise its live calls,
+so you can see what it really calls next to what it declares.
+
+1. On **Consumers**, open a consumer's row menu (**⋯**) and choose **Bindings and traffic**.
+2. Under **Bindings**, pick the **Kind**: **Header**, **API key**, **JWT claim** or **User agent**.
+3. Enter the name: the header (`x-client-id`), the header carrying the key (`x-api-key`), the claim
+   (`azp`), or a user-agent pattern such as `billing-service/*`.
+4. For every kind except **User agent**, enter the **Value** this consumer sends. It is hashed
+   before it is stored and is never shown again.
+5. **Click “Add binding”.** Calls ingested from now on are attributed to the consumer.
+
+<Screenshot id="project-consumers-bindings" alt="The Bindings and traffic drawer for Billing Service: an API key and a user-agent binding with when each last matched, the add-binding form, and the declared-vs-observed lists with an Add to contract button" />
+
+Each binding shows its name and when it last matched, never its value. The trash button deletes
+one: it stops matching from the next batch, and calls it already attributed stay with the consumer.
+Until a consumer has a binding that matches, its calls are counted as **anonymous**.
+
+**Declared vs observed** covers the last 30 days:
+
+- **Used, undeclared** lists operations the consumer calls but does not declare. **Click “Add to
+  contract”** to store a new contract revision with that operation added to what is already
+  declared.
+- **Declared and used** lists declared operations with calls, with the count and the last day seen.
+- **Declared, unused** lists declared operations with no calls in the window.
+
+Adding and deleting bindings needs the same permissions as registering and retiring consumers.
+
+A client that calls the API but isn't registered yet is listed as a **suggested consumer** on the
+project's **Dependencies** tab. **“Register consumer”** there registers it together with its
+binding. See [Suggested consumers](../govern/dependency-graph.mdx#suggested-consumers).
+
+{/* 4. This section, right before "With the CLI or the API" (`teams`): */}
+
+## Owner
+
+A project can have an owner team. CODEOWNERS rules for the spec's path and the document's own
+`x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
+confirms it.
+
+**In a list**, the **Owner** column (on cards, a line under the summary) names the team. A
+*suggested* owner carries a **Suggested** badge saying where it came from — *Gateway tag*,
+*CODEOWNERS*, *Spec* — and a **“Confirm”** button: **click “Confirm”** to make it the owner; the
+row updates in place. The team's name opens its [team page](../workspace/teams.mdx#team-pages).
+
+**Owner** in the toolbar shows one team's projects (kept in the address as `?team=`). In **Table**
+view, tick projects and use **Assign owner** in the bar at the bottom of the page to give them all
+the same owner.
+
+On a project's **Consumers**, the **Owner** column is the consumer's owner team and **Contact** is
+the free-text owner it was registered with; **Owner** in the toolbar filters by team there too. See
+[Teams → Ownership](../workspace/teams.mdx#ownership).

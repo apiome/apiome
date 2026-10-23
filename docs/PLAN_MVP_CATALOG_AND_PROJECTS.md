@@ -1,12 +1,17 @@
 # Plan — MVP focus on Catalog and Projects
 
-_Drafted 2026-10-16 from the 1,094 open issues on `apiome/apiome`._
+_Drafted 2026-10-16 from the 1,094 open issues on `apiome/apiome`. Updated 2026-10-23: RC6 is
+re-scoped to Catalog, Projects, sign-in and sign-up ([`docs/RC6_OOE.md`](RC6_OOE.md)), and seven more
+features are held back (§0)._
 
 ## 0. Decision
 
 Until **Catalog** and **Projects** (including Versions, which is reached by drilling into a project)
-are finished and hardened, nothing else gets new work. Six destinations that are not MVP-ready are
-**held back**: they stay in the code but cannot be opened.
+are finished and hardened, nothing else gets new work. Thirteen features that are not MVP-ready are
+**held back**: they stay in the code but cannot be opened. The first six were gated on 2026-10-16;
+the other seven, the Catalog Discovery Graph and contract-testing surfaces, were gated for RC6 on
+2026-10-23. Those seven are also hidden where they sat inside Catalog and Projects screens
+([`RC6_OOE.md` §5.1](RC6_OOE.md#51-held-back-in-the-code)).
 
 | Rail item (id) | Route | Why it is held back |
 | --- | --- | --- |
@@ -16,6 +21,13 @@ are finished and hardened, nothing else gets new work. Six destinations that are
 | SDK settings (`sdk-settings`) | `/ade/dashboard/export/studio?tab=sdk` (old `/ade/dashboard/sdk-settings` redirects) | SDK roadmaps are post-MVP |
 | Style guides (`style-guides`) | `/ade/dashboard/style-guides/**` | Governance roadmap is post-MVP |
 | Access audit (`audit`) | `/ade/dashboard/audit` | Governance roadmap is post-MVP |
+| Connectors (`connectors`) | `/ade/dashboard/connectors/**` | Gateway connectors (CDG-1) are post-RC6 |
+| Shadow APIs (`shadow-apis`) | `/ade/dashboard/connectors/shadow` | Needs Connectors |
+| Dependency graph (`dependency-graph`) | `/ade/dashboard/graph` | CDG-3 is post-RC6 |
+| Teams (`teams`) | `/ade/dashboard/teams/**` | Ownership (CDG-2) is post-RC6 |
+| Schema registry (`schema-registry`) | `/ade/dashboard/schema-registry` | CDG-4 is post-RC6 |
+| Catalog entity kinds (`catalog-entities`, no rail item) | `/ade/dashboard/catalog/{agents,models,components,imports}/**` | CDG-5 is post-RC6 |
+| Consumer contracts (`consumers`, no rail item) | `/ade/dashboard/projects/[projectId]/consumers` | CTG-4.1 is post-RC6 |
 
 Everything else stays enabled — Home, Projects, Catalog, Repositories, Published, Sunset timeline,
 Lint posture, Members, Roles, API keys, Tenants — and is hardened as part of this plan before any
@@ -42,6 +54,9 @@ held-back feature is released.
 
 **Releasing a feature** = remove its id from `UNRELEASED_FEATURE_IDS`, restore its docs pages,
 screenshots and help-catalog entries (`apiome-docs/unreleased/README.md`), and add a release note.
+
+**RC6:** the remaining work is in [`docs/RC6_OOE.md`](RC6_OOE.md): sign-up, two-factor, `apiome
+login`, the HIVE polish on released pages, and the §3 hardening checklist as lane H.
 
 ---
 
@@ -275,6 +290,8 @@ Recommended order with two people: one on A → B, one on A → C; D and E as fi
 
 ## 3. Hardening checklist (Phase F)
 
+Tracked for RC6 as lane H, one issue per check in order: #6208 – #6215 ([`RC6_OOE.md` §2.3](RC6_OOE.md#23-lane-h--hardening)).
+
 Before **any** held-back feature is released, Catalog and Projects must meet all of these:
 
 1. **End-to-end journey:** a Playwright journey covering import → catalog item → convert to project
@@ -299,3 +316,6 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
 Once §3 is green, release one at a time, each with its docs restored:
 **Export studio** (closest to Catalog/Projects) → **Style guides** (Lint posture already depends on
 it) → **Primitives & types** → **SDK settings** → **Access audit** → **MCP servers**.
+The seven RC6 holds follow in the next plan: **Teams** (ownership) first, because the others show
+owners, then **Connectors** with **Shadow APIs**, **Dependency graph**, **Schema registry**, **Catalog
+entity kinds** and **Consumer contracts**.

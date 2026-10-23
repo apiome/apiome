@@ -48,12 +48,12 @@ changing it asks you to confirm the before → after values first.
 
 ## The manage drawer
 
-**Click “Manage”** on a tenant you administer. **Manage *tenant*** opens with six sections down
+**Click “Manage”** on a tenant you administer. **Manage *tenant*** opens with five sections down
 its side; the header shows the slug, the member count and whether it is your current tenant.
 
 <Screenshot id="tenants-drawer-members" alt="Manage Northwind, Members section: five members with their Admin and Member roles, and Add member" />
 
-**License & plan**, **MCP settings**, **Per-key capabilities**, **Ownership** and **Policy history** read the
+**License & plan**, **MCP settings**, **Per-key capabilities** and **Policy history** read the
 *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
 select it first. **Members** works for every tenant you administer. A section keeps its state while
 you look at another, so an unsaved MCP draft survives a glance at the history (the tab shows a dot
@@ -126,27 +126,6 @@ enable-set**, capped by the tenant ceiling.
 To issue a key, **click “Create MCP key”**, enter a **Label** (for example `Prod agent`) and create
 it; **MCP API key created** shows the secret once — copy it and **click “I've saved my key”**. A new
 key inherits the tenant policy. Revoked keys are listed but cannot be edited.
-
-### Ownership
-
-Two settings for entities that have no confirmed [owner team](./teams.mdx#ownership):
-
-<Screenshot id="tenant-ownership-policy" alt="The Ownership section: Platform as the catch-all team and Require an owner to publish switched on" />
-
-- **Catch-all team** — findings on anything without a confirmed owner also go to this team's
-  members and its chat channel (they are still listed in the **Unowned findings** report). Choose
-  **None — the Unowned findings report only** to turn it off. If the chosen team is later deleted,
-  the section warns that unowned findings reach nobody.
-- **Require an owner to publish** — a project with no confirmed owner team cannot publish a version
-  (reason `no-owner`) unless it is force-published with a reason. The publish dialog shows this gate
-  whether it is on or off.
-
-1. Choose the **Catch-all team** and switch **Require an owner to publish** on or off.
-2. **Click “Save changes”.** The change is recorded in the access audit as
-   `ownership_policy.update`.
-
-Changing these needs `teams:edit` (Owner and Admin); anyone with `teams:view` sees them read-only,
-and the [Teams](./teams.mdx) page shows them too.
 
 ### Policy history
 
