@@ -1,0 +1,22 @@
+---
+slug: natural-ddm-import
+title: Import Natural / ADABAS DDM
+description: Catalog an ADABAS file from its DDM listing, with arrays and keys.
+authors: [apiome]
+---
+
+Apiome now imports Natural DDM listings: an ADABAS file's fields with their formats and byte
+lengths, multiple-value fields and periodic groups as arrays, and descriptors as keys.
+[What gets imported](/bring-in/natural-ddm-import).
+
+{/* truncate */}
+
+- **Every field keeps its format and length.** Alphanumeric, numeric, packed, binary, floating
+  point, logical, Unicode, date and time fields map to their types, with the byte length each takes
+  and the assumptions those lengths rest on.
+- **Repeating structure becomes arrays.** Multiple-value fields are lists, and periodic groups are
+  lists of a nested record. Upload a Natural program's view beside the DDM and its `(1:n)` bounds
+  become the arrays' maximum sizes.
+- **Descriptors are declared keys.** Descriptors, unique descriptors and super-, sub- and
+  hyperdescriptors are listed on the file's record, with the source byte ranges each is built from.
+  A descriptor that names a field the DDM never defines is refused.

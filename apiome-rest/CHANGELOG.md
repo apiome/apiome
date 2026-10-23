@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.441.0] - 2026-10-23
+
+### Added
+- **Natural / ADABAS DDM import (#5486, FMT-11.4)**: a `natural-ddm` import source (aliases `ddm`, `adabas`, `natural`;
+  `.ddm`; file, URL, paste, fileset) on the **data_schema** paradigm.
+  - **Reader** (`app.natural_ddm_parser`): the `DDM Name` / `DB` / `File` / `Default Sequence` header, the
+    `T L DB Name F Leng S D Remark` banner, and field lines read by token (a listing that drifts by a column still
+    reads): type prefix (`M` multiple-value, `P` periodic group, `G` group, `R` redefinition, `S` / `Q` / `H` / `N` /
+    `C` derived descriptors), level, two-character short name, name, format (`A N P B F G L U W D T I`), length `n` /
+    `n.d`, suppression (`N` / `F`, or `NU` / `FI` in the remark) and descriptor (`D` / `U`) flags, remark. Members
+    nest under groups, periodic groups and redefined fields; super / sub descriptor sources `AB(1-40),AC(1-1)` are
+    parsed and checked against the declared length. In a fileset, Natural source (`.nsp` / `.nsl` / `.nsa` / `.nsg`
+    / `.nsn` / `.nat`) is read for `DEFINE DATA` `VIEW OF` blocks, whose `(1:n)` bounds become the DDM arrays'
+    occurrence bounds; an "Up to N occurrences" remark is also read as a bound.
+  - **Projection** (`app.natural_ddm_normalizer`): each DDM → a `RECORD` `natural.<file>`; `G` groups → nested
+    records; `P` periodic groups → lists of nested records; `M` fields → lists of their scalar (`max_items` when a bound
+    is stated, `item_max_length` for strings); `R` redefinitions → fields naming the field and position they redefine.
+    `A` / `W` → `string`, `U` → `string` of half its length, `N` / `P` → `decimal` / `integer`, `I` → `integer`, `B` →
+    `bytes`, `F` / `G` → `float` / `double`, `L` → `boolean`, `D` → `date`, `T` → `datetime`. Short name, level,
+    format, length, digits, byte length, descriptor, null suppression and fixed storage are in
+    `extras['natural_ddm']`; `LENGTH_ASSUMPTIONS` is published as `extras['natural_ddm']['lengthAssumptions']`.
+    Descriptors, unique descriptors and derived descriptors with their resolved source ranges are declared key
+    metadata in the file record's `extras['natural_ddm']['descriptors']`.
+  - **Declared limits** (graded ledger rows via `_natural_ddm_capability_rows`): `ddm.record_offsets`,
+    `ddm.unbounded_occurrences`, `ddm.redefinition`, `ddm.lob_field` (partially mapped); `ddm.derived_descriptor`,
+    `ddm.unresolved_view` (not modelled).
+  - **Refusals**: `INPUT_EMPTY`, `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH` (no `DDM Name` header — a COBOL copybook),
+    `INPUT_TRUNCATED` (the last field line stops after its length), `INPUT_MALFORMED` (no banner, an unreadable field
+    line), `INPUT_SEMANTIC_INVALID` (no fields, a bad level, PE in PE, duplicate names, an empty group, over-long
+    redefinitions, a descriptor length that differs from its sources), `INPUT_REFERENCE_UNRESOLVED` (a descriptor
+    source, redefinition, default sequence or view field the DDM does not define).
+  - Staged `natural-ddm` corpus activated (14 entries); corpus goldens, round-trip matrix rows (53 xfails), parity,
+    capability registry v38, version coverage, `SCHEMA_ONLY_FORMATS`, provenance extras key, MCP toolset goldens.
+
 ## [1.440.0] - 2026-10-23
 
 ### Added

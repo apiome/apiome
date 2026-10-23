@@ -2749,6 +2749,49 @@
       "waivers": {}
     },
     {
+      "format_key": "natural-ddm",
+      "label": "Natural / ADABAS DDM",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "natural-ddm"
+      ],
+      "corpus_directories": [
+        "natural-ddm"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "natural-ddm"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "ncpdp",
       "label": "NCPDP SCRIPT / Telecom",
       "paradigm": "data_schema",
@@ -4616,7 +4659,6 @@
   ],
   "export_only_destinations": [],
   "pending_corpus_directories": [
-    "natural-ddm",
     "schematron"
   ]
 }

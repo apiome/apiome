@@ -1,0 +1,194 @@
+{
+  "adapter": "natural-ddm",
+  "canonical": {
+    "channels": [],
+    "description": "Natural / ADABAS data definition modules: 1 file(s). Byte lengths are computed under the assumptions in extras['natural_ddm']['lengthAssumptions']; descriptors are declared key metadata in each file's record.",
+    "extras": {
+      "natural_ddm": {
+        "capability_limits": [
+          {
+            "construct": "ddm.record_offsets",
+            "count": 1,
+            "detail": "ADABAS compresses each record, so fields have a standard length but no fixed position; the record keeps every field's length and no offsets.",
+            "locations": [
+              "BEACON-FILE"
+            ]
+          }
+        ],
+        "ddms": [
+          {
+            "database": "001",
+            "descriptors": 1,
+            "fields": 2,
+            "file": "natural-ddm/01-minimal-ddm.ddm",
+            "fileNumber": "050",
+            "name": "BEACON-FILE",
+            "type": "natural.BEACON-FILE"
+          }
+        ],
+        "files": [
+          "natural-ddm/01-minimal-ddm.ddm"
+        ],
+        "input": "file",
+        "lengthAssumptions": [
+          "A length is the field's standard length: characters for A, digits before the decimal point for N and P (the n of n.d; the d digits follow it), and bytes for every other format.",
+          "One byte per A character in a single-byte EBCDIC code page; U is UTF-16 (two bytes per character), so its character limit is half its length.",
+          "N is zoned decimal, one byte per digit; P is packed decimal, (digits ÷ 2) + 1 bytes with the sign in the last nibble.",
+          "D is a Natural date and T a Natural time, stored packed (4 and 7 bytes); B, I, F and L take their stated length in bytes.",
+          "A length of 0 is a variable-length (LOB) field with no standard length.",
+          "ADABAS stores records compressed, so a field has a standard length but no fixed offset in the record; no offsets are computed."
+        ],
+        "views": []
+      }
+    },
+    "format": "natural-ddm",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "BEACON-FILE",
+      "namespace": "natural"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "BEACON-FILE",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "ADABAS file BEACON-FILE (DB 001, file 050): 2 fields and groups, descriptors BEACON-ID. Lengths are standard lengths; ADABAS records are compressed and have no fixed offsets.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "database": "001",
+            "ddm": "BEACON-FILE",
+            "descriptors": [
+              {
+                "field": "BEACON-ID",
+                "kind": "descriptor",
+                "shortName": "AA",
+                "unique": false
+              }
+            ],
+            "file": "natural-ddm/01-minimal-ddm.ddm",
+            "fileNumber": "050"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AA: format A16, 16 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 16,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 16,
+                "level": 1,
+                "line": 8,
+                "remark": "Beacon identifier",
+                "shortName": "AA",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.BEACON-FILE.BEACON-ID",
+            "name": "BEACON-ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AB: format N14.0, 14 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 14,
+                "decimals": 0,
+                "digits": 14,
+                "format": "N",
+                "kind": "field",
+                "length": 14,
+                "level": 1,
+                "line": 9,
+                "remark": "Timestamp YYYYMMDDHHMMSS",
+                "shortName": "AB",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.BEACON-FILE.SEEN-AT",
+            "name": "SEEN-AT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.BEACON-FILE",
+        "key_type": null,
+        "kind": "record",
+        "name": "BEACON-FILE",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "natural-ddm/01-minimal-ddm.ddm",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "natural-ddm"
+  },
+  "fingerprint": "sha256:a4fa54a78849e86b48488d0bc9df4b7801fbb3d43971bf9433be755d18b0d454",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

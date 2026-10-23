@@ -100,6 +100,7 @@ from .consul_parser import CONSUL_DECLARED_CONSTRUCTS
 from .haproxy_parser import HAPROXY_DECLARED_CONSTRUCTS
 from .nginx_parser import NGINX_CARRIED_DIRECTIVES, NGINX_DECLARED_DIRECTIVES, NGINX_READ_DIRECTIVES
 from .ims_normalizer import IMS_LIMIT_DETAILS
+from .natural_ddm_normalizer import NATURAL_DDM_LIMIT_DETAILS
 from .pli_normalizer import PLI_LIMIT_DETAILS
 from .traefik_parser import TRAEFIK_DECLARED_CONSTRUCTS
 from .tyk_parser import TYK_DECLARED_CONSTRUCTS
@@ -160,7 +161,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "37"
+REGISTRY_VERSION = "38"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -3831,6 +3832,63 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "upload the DBD and PSB together as a fileset to type the sensitive fields.",
             "IMS DBD / PSB *output* is not implemented; an import is exported through another "
             "target's emitter.",
+        ],
+    ),
+    "natural-ddm": _Seed(
+        # FMT-11.4: Natural DDM listings are read by the format-blind walk; the reviewed judgement
+        # is the projection statement — the file to a record, MU / PE to arrays, descriptors to
+        # declared key metadata.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.LINE_NUMBERS,
+            note=(
+                "Every field, group and descriptor carries the 1-based line of its listing line in "
+                "`extras['natural_ddm']['line']`, and every file record names its file; refusal "
+                "messages name the line too."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A DDM describes an ADABAS file without containing any of its records; remarks are "
+                "kept as documentation, never read as values."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(NATURAL_DDM_LIMIT_DETAILS),
+            note=(
+                "Each DDM → a `RECORD` in the `natural` namespace named after the file; a `G` group → "
+                "a nested `RECORD`; a `P` periodic group → a list of a nested `RECORD`; an `M` "
+                "multiple-value field → a list of its scalar, `max_items` set when a Natural view "
+                "in the upload or an 'Up to N occurrences' remark states the bound. `A` / `W` / `U` "
+                "→ `string` with `max_length`; `N` / `P` → `decimal` with decimal places, else "
+                "`integer`; `B` → `bytes`; `F` / `G` → `float` / `double`; `L` → `boolean`; `D` → "
+                "`date`; `T` → `datetime`. Short name, level, format, length, digits and byte length "
+                "are in `extras['natural_ddm']`; an `R` redefinition is a field naming the field and "
+                "position it redefines. Descriptors, unique descriptors and super- / sub- / hyper- / "
+                "phonetic / collation descriptors with their source byte ranges are declared key "
+                "metadata in the file record's `extras['natural_ddm']['descriptors']`. Declared "
+                "limits are in `extras['natural_ddm']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Byte lengths are computed under assumptions the DDM does not state — single-byte "
+            "characters, UTF-16 for `U`, zoned `N` and packed `P` with n.d meaning n integer and d "
+            "decimal digits, packed Natural dates and times — and ADABAS records are compressed, so "
+            "no offsets are computed. Every import names them in "
+            "`extras['natural_ddm']['lengthAssumptions']`.",
+            "A descriptor source, redefinition or default sequence naming a short name the DDM does "
+            "not define is refused with `INPUT_REFERENCE_UNRESOLVED`; a super- or subdescriptor "
+            "whose length differs from its source ranges is refused as `INPUT_SEMANTIC_INVALID`.",
+            "Natural DDM *output* is not implemented; an import is exported through another target's "
+            "emitter.",
         ],
     ),
     "pli": _Seed(

@@ -1,0 +1,668 @@
+{
+  "adapter": "natural-ddm",
+  "canonical": {
+    "channels": [],
+    "description": "Natural / ADABAS data definition modules: 1 file(s). Byte lengths are computed under the assumptions in extras['natural_ddm']['lengthAssumptions']; descriptors are declared key metadata in each file's record.",
+    "extras": {
+      "natural_ddm": {
+        "capability_limits": [
+          {
+            "construct": "ddm.derived_descriptor",
+            "count": 1,
+            "detail": "A super-, sub-, hyper-, phonetic or collation descriptor is a key derived from other fields, not stored data; it is listed with its source byte ranges in extras['natural_ddm']['descriptors'] and not modelled as a field.",
+            "locations": [
+              "CUSTOMER-FILE.S1"
+            ]
+          },
+          {
+            "construct": "ddm.record_offsets",
+            "count": 1,
+            "detail": "ADABAS compresses each record, so fields have a standard length but no fixed position; the record keeps every field's length and no offsets.",
+            "locations": [
+              "CUSTOMER-FILE"
+            ]
+          }
+        ],
+        "ddms": [
+          {
+            "database": "001",
+            "descriptors": 4,
+            "fields": 10,
+            "file": "CUSTOMER.ddm",
+            "fileNumber": "010",
+            "name": "CUSTOMER-FILE",
+            "type": "natural.CUSTOMER-FILE"
+          }
+        ],
+        "files": [
+          "CUSTINQ.nsp",
+          "CUSTOMER.ddm"
+        ],
+        "input": "fileset",
+        "lengthAssumptions": [
+          "A length is the field's standard length: characters for A, digits before the decimal point for N and P (the n of n.d; the d digits follow it), and bytes for every other format.",
+          "One byte per A character in a single-byte EBCDIC code page; U is UTF-16 (two bytes per character), so its character limit is half its length.",
+          "N is zoned decimal, one byte per digit; P is packed decimal, (digits ÷ 2) + 1 bytes with the sign in the last nibble.",
+          "D is a Natural date and T a Natural time, stored packed (4 and 7 bytes); B, I, F and L take their stated length in bytes.",
+          "A length of 0 is a variable-length (LOB) field with no standard length.",
+          "ADABAS stores records compressed, so a field has a standard length but no fixed offset in the record; no offsets are computed."
+        ],
+        "views": [
+          {
+            "ddm": "CUSTOMER-FILE",
+            "ddmResolved": true,
+            "fields": [
+              {
+                "level": 2,
+                "name": "CUSTOMER-NUMBER"
+              },
+              {
+                "level": 2,
+                "name": "CUSTOMER-NAME"
+              },
+              {
+                "level": 2,
+                "name": "CUSTOMER-STATUS"
+              },
+              {
+                "level": 2,
+                "name": "BALANCE"
+              },
+              {
+                "level": 2,
+                "name": "CURRENCY"
+              },
+              {
+                "level": 2,
+                "name": "PHONE-NUMBER",
+                "occurrences": {
+                  "from": 1,
+                  "to": 5
+                }
+              },
+              {
+                "level": 2,
+                "name": "CONTACT",
+                "occurrences": {
+                  "from": 1,
+                  "to": 3
+                }
+              },
+              {
+                "level": 3,
+                "name": "CONTACT-TYPE"
+              },
+              {
+                "level": 3,
+                "name": "CONTACT-VALUE"
+              }
+            ],
+            "file": "CUSTINQ.nsp",
+            "name": "CUSTOMER-VIEW"
+          }
+        ]
+      }
+    },
+    "format": "natural-ddm",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTOMER-FILE",
+      "namespace": "natural"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTOMER-FILE",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "ADABAS file CUSTOMER-FILE (DB 001, file 010): 10 fields and groups, descriptors CUSTOMER-NUMBER, CUSTOMER-NAME, CUSTOMER-STATUS. Lengths are standard lengths; ADABAS records are compressed and have no fixed offsets.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "database": "001",
+            "ddm": "CUSTOMER-FILE",
+            "defaultSequence": {
+              "field": "CUSTOMER-NUMBER",
+              "shortName": "AA"
+            },
+            "descriptors": [
+              {
+                "field": "CUSTOMER-NUMBER",
+                "kind": "unique-descriptor",
+                "shortName": "AA",
+                "unique": true
+              },
+              {
+                "field": "CUSTOMER-NAME",
+                "kind": "descriptor",
+                "shortName": "AB",
+                "unique": false
+              },
+              {
+                "field": "CUSTOMER-STATUS",
+                "kind": "descriptor",
+                "shortName": "AC",
+                "unique": false
+              },
+              {
+                "format": "A",
+                "kind": "superdescriptor",
+                "length": 41,
+                "line": 22,
+                "name": "SUPER-NAME-STATUS",
+                "shortName": "S1",
+                "sources": [
+                  {
+                    "field": "CUSTOMER-NAME",
+                    "from": 1,
+                    "shortName": "AB",
+                    "to": 40
+                  },
+                  {
+                    "field": "CUSTOMER-STATUS",
+                    "from": 1,
+                    "shortName": "AC",
+                    "to": 1
+                  }
+                ],
+                "unique": false
+              }
+            ],
+            "file": "CUSTOMER.ddm",
+            "fileNumber": "010"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AE: format P11.2, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 2,
+                "digits": 13,
+                "format": "P",
+                "kind": "field",
+                "length": 11,
+                "level": 1,
+                "line": 16,
+                "shortName": "AE",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 5,
+            "key": "natural.CUSTOMER-FILE.BALANCE",
+            "name": "BALANCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Periodic group AH.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "periodic-group",
+                "level": 1,
+                "line": 19,
+                "occurrences": {
+                  "maximum": 3,
+                  "source": "view CUSTOMER-VIEW"
+                },
+                "remark": "Periodic group",
+                "shortName": "AH"
+              }
+            },
+            "field_number": 8,
+            "key": "natural.CUSTOMER-FILE.CONTACT",
+            "name": "CONTACT",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "natural.CUSTOMER-FILE.CONTACT",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AF: format A3, 3 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 3,
+                "format": "A",
+                "kind": "field",
+                "length": 3,
+                "level": 1,
+                "line": 17,
+                "shortName": "AF",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 6,
+            "key": "natural.CUSTOMER-FILE.CURRENCY",
+            "name": "CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AB: format A40, 40 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 40,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 40,
+                "level": 1,
+                "line": 13,
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CUSTOMER-FILE.CUSTOMER-NAME",
+            "name": "CUSTOMER-NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AA: format A10, 10 bytes, unique descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 10,
+                "descriptor": {
+                  "unique": true
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 10,
+                "level": 1,
+                "line": 12,
+                "shortName": "AA",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CUSTOMER-FILE.CUSTOMER-NUMBER",
+            "name": "CUSTOMER-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AC: format A1, 1 byte, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 1,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 1,
+                "level": 1,
+                "line": 14,
+                "shortName": "AC",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.CUSTOMER-FILE.CUSTOMER-STATUS",
+            "name": "CUSTOMER-STATUS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AD: format N8.0, 8 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 1,
+                "line": 15,
+                "shortName": "AD",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.CUSTOMER-FILE.DATE-OPENED",
+            "name": "DATE-OPENED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 20
+              },
+              "format": null,
+              "max_items": 5,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AG: format A20, 20 bytes, multiple-value.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 20,
+                "format": "A",
+                "kind": "multiple-value",
+                "length": 20,
+                "level": 1,
+                "line": 18,
+                "occurrences": {
+                  "maximum": 5,
+                  "source": "view CUSTOMER-VIEW"
+                },
+                "shortName": "AG",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 7,
+            "key": "natural.CUSTOMER-FILE.PHONE-NUMBER",
+            "name": "PHONE-NUMBER",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CUSTOMER-FILE",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER-FILE",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Periodic group CONTACT (AH) of ADABAS file CUSTOMER-FILE, level 1.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "periodic-group",
+            "level": 1,
+            "line": 19,
+            "occurrences": {
+              "maximum": 3,
+              "source": "view CUSTOMER-VIEW"
+            },
+            "remark": "Periodic group",
+            "shortName": "AH"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AI: format A2, 2 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 2,
+                "format": "A",
+                "kind": "field",
+                "length": 2,
+                "level": 2,
+                "line": 20,
+                "shortName": "AI",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CUSTOMER-FILE.CONTACT.CONTACT-TYPE",
+            "name": "CONTACT-TYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AJ: format A60, 60 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 60,
+                "format": "A",
+                "kind": "field",
+                "length": 60,
+                "level": 2,
+                "line": 21,
+                "shortName": "AJ",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CUSTOMER-FILE.CONTACT.CONTACT-VALUE",
+            "name": "CONTACT-VALUE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CUSTOMER-FILE.CONTACT",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER-FILE.CONTACT",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "natural-ddm/03-view-set/CUSTOMER.ddm",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "natural-ddm"
+  },
+  "fingerprint": "sha256:390adb931b011e4660b11a2bc55ac7eded4dded2436d594627092e7b4a7ee6df",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
