@@ -36,6 +36,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
   plus the provider tool-schema rules for the dialect the artifact declares);
 * ``wit`` — :func:`app.wit_emitter.validate_wit_document` (a WIT parse through the ``wit``
   adapter);
+* ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
+  and :func:`app.thunder_client_emitter.validate_thunder_client_export` (the emitted collection
+  and environment re-parsed together as one upload through the client's import adapter, FMT-10.4);
 * ``odcs`` — :func:`app.odcs_schema.validate_odcs_document` (a re-parse through the ``odcs``
   adapter **plus** the published ODCS JSON Schema for the version the contract declares —
   the standard's own authority, vendored and run offline);
@@ -903,6 +906,22 @@ async def _validate_apigee(target: str, emit_result: EmitResult, api: CanonicalA
     return await _run_fileset_validator(target, emit_result, validate_apigee_bundle)
 
 
+async def _validate_hoppscotch(target: str, emit_result: EmitResult, api: CanonicalApi) -> EmittedArtifactValidation:
+    """Re-validate an emitted Hoppscotch collection + environment (re-parsed as one upload)."""
+    from .hoppscotch_emitter import validate_hoppscotch_export
+
+    return await _run_fileset_validator(target, emit_result, validate_hoppscotch_export)
+
+
+async def _validate_thunder_client(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Thunder Client collection + environment (re-parsed as one upload)."""
+    from .thunder_client_emitter import validate_thunder_client_export
+
+    return await _run_fileset_validator(target, emit_result, validate_thunder_client_export)
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -944,6 +963,9 @@ _VALIDATORS: Dict[str, _Validator] = {
     "aws-apigateway": _validate_aws_apigateway,
     "azure-apim": _validate_azure_apim,
     "apigee": _validate_apigee,
+    # FMT-10.4 (#5479)
+    "hoppscotch": _validate_hoppscotch,
+    "thunder-client": _validate_thunder_client,
 }
 
 

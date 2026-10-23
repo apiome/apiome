@@ -12,6 +12,7 @@ export {
   EXPORT_TARGET_FAMILIES,
   OTHER_FAMILY,
   familyForParadigm,
+  familyForTarget,
   groupTargetsByFamily,
   type ExportTargetFamily,
   type ExportTargetFamilyGroup,

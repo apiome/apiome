@@ -78,6 +78,8 @@ schema, and an Apigee bundle's references.
 ## Related
 
 - [Understand export fidelity](./export-fidelity.md) — how the fidelity report is worked out.
+- [Export to an API client](./export-to-an-api-client.md) — Hoppscotch and Thunder Client
+  collections.
 - [Import Envoy and Istio routes](../bring-in/envoy-istio-route-import.md) and
   [Import reverse-proxy routes](../bring-in/reverse-proxy-route-import.md) — the import side.
 - [Supported formats](../bring-in/supported-formats.md) — every format and the versions written.

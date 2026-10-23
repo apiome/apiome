@@ -1,0 +1,25 @@
+---
+slug: client-workspace-export
+title: Export to Hoppscotch and Thunder Client
+description: Export any HTTP API as a Hoppscotch or Thunder Client collection, credentials as placeholders.
+authors: [apiome]
+---
+
+Apiome now exports to the API clients it imports from. Any HTTP API can be exported as a Hoppscotch
+or a Thunder Client collection, together with the environment its variables come from, so a
+collection you brought into the catalog can go back out to your team's client.
+[What you get](/ship/export-to-an-api-client).
+
+{/* truncate */}
+
+- **One saved request per operation.** Requests are foldered by tag and written against a
+  `baseUrl` variable. Path parameters use the client's own spelling, optional parameters are saved
+  disabled, and example bodies come from the request schema.
+- **Credentials are placeholders, never values.** Auth is written as `<<accessToken>>` or
+  `{{apiKey}}`-style references, and the environment declares each one empty (secret, in
+  Hoppscotch). Every other value is scrubbed before it is written.
+- **Round-trip.** A collection exported from either client imports back to the same operations,
+  parameters, folders, auth schemes and servers, and both targets have rows in the round-trip
+  matrix.
+- **Checked before download.** Every export is read back by Apiome's own importer for that client,
+  and one that would not import is rejected.

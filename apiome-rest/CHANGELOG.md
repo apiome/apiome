@@ -5,6 +5,46 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.437.0] - 2026-10-22
+
+### Added
+- **Hoppscotch and Thunder Client emit modes (#5479, FMT-10.4)**: two export targets, `hoppscotch` and `thunder-client`,
+  on the **rest** paradigm, keyed like their import adapters so the round-trip matrix joins them without an alias. Both
+  are multi-file: a collection plus the environment its variables come from (`<name>.hoppscotch_collection.json` +
+  `<name>.hoppscotch_environment.json`, collection schema `v` 6 / environment `v` 2; `thunder-collection_<name>.json` +
+  `thunder-environment_<name>.json`, export `version` 1.2, with UUIDv5 ids and no timestamps, so output is
+  byte-stable).
+  - **One shared plan.** `app.client_collection_emit.plan_collection` decides everything both clients share; the emitters
+    (`app.hoppscotch_emitter`, `app.thunder_client_emitter`) only write JSON. One saved request per HTTP operation (one per
+    body media type when a request accepts several), foldered by the first tag split on ` / `, against a `baseUrl`
+    variable (a bare `{variable}` server keeps its own name; a request inferred from absolute URLs keeps its origin, so
+    the importer recovers the same servers). Required query parameters and headers are enabled with their default or
+    observed sample; optional ones are saved disabled. Bodies come from `app.snippet_render.synthesize_body` (made
+    public): JSON text, or fields for URL-encoded and multipart bodies. Auth shared by every request is set once on the
+    collection and inherited.
+  - **No credential value is ever emitted.** Auth blocks reference `accessToken`, `username` / `password`, `apiKey`,
+    `clientId` / `clientSecret`; a header, query parameter, form field or JSON body member whose name is credential-shaped
+    (`app.client_collection.SECRET_NAME_RE`) is a reference whatever the model holds; every other literal passes through
+    the intake secret-scrub gate; server userinfo is stripped. The environment declares every credential variable empty
+    (`"secret": true` in Hoppscotch).
+  - **Auth mapping.** Operation-scoped `bearer`, `basic`, `digest`, `oauth2` (grant type, token URL and scopes kept) and
+    `openIdConnect` (as bearer, recorded) become auth blocks; `apiKey` is an `api-key` block in Hoppscotch and a header or
+    query parameter in Thunder Client (no API-key type; recorded as `auth-as-parameter`); `authorization` and `cookie`
+    become credential headers. A model-scoped (inferred) scheme only rewrites a credential header the call declares
+    (`Authorization: Bearer <<accessToken>>`), never adds one.
+  - **Fidelity.** A shared `ClientCollectionFidelityRulePack` (operations `APPROX`, types `DROP`, channels and event /
+    non-HTTP operations `DROP`, a root `APPROX` unless the model came from the same client). Losses: `additional-tags`,
+    `optional-parameters-disabled`, `responses-not-carried`, `cookie-parameters`, `example-body-omitted`,
+    `additional-servers`, `additional-auth-schemes`, `unrepresentable-auth-scheme`, `types-not-declared`,
+    `channels-dropped`, `api-description`, `synthesized-base-url`.
+  - **Validation gate**: `export_validation` re-parses the emitted pair through the client's own import adapter
+    (`validate_hoppscotch_export`, `validate_thunder_client_export`).
+  - **Round-trip matrix**: `hoppscotch` and `thunder-client` columns; the native and cross-client cells
+    (`hoppscotch`/`thunder-client` × both), `http-file` and `soapui` pass; the other 96 per column carry generated
+    xfails. Every Hoppscotch and Thunder Client corpus fixture re-imports to the same call surface.
+  - Version coverage declares both write versions; supported-formats page, format counts and parity report regenerated
+    (53 exportable formats).
+
 ## [1.436.0] - 2026-10-22
 
 ### Added

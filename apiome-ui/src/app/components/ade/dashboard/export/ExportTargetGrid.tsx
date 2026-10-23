@@ -118,7 +118,11 @@ export function ExportTargetGrid({
   const groups = useMemo<ExportTargetFamilyGroup<ExportTargetCard>[]>(
     () =>
       groupByFamily
-        ? groupTargetsByFamily(ordered, (card) => card.entry.descriptor.paradigm)
+        ? groupTargetsByFamily(
+            ordered,
+            (card) => card.entry.descriptor.paradigm,
+            (card) => card.entry.descriptor.key,
+          )
         : [{ key: 'all', label: '', items: ordered }],
     [groupByFamily, ordered],
   );

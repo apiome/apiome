@@ -41,13 +41,15 @@ notice saying what was ignored.
 The source's name, its version and how many export targets are available. A catalog item also shows
 its format and counts of services, operations, types and channels. **Click “Choose target”.**
 
-<Screenshot id="export-studio-source" alt="Export studio on the Source step: Pet Store API, version 1.2.0, eight export targets" />
+<Screenshot id="export-studio-source" alt="Export studio on the Source step: Pet Store API, version 1.2.0, ten export targets" />
 
 ## 2. Target
 
-**Choose a target format.** Cards are grouped — **REST & HTTP**, **RPC**, **Events**, **Data schema &
-graph**, **Agents & tools**, **Other targets** — and each carries a **fidelity tier** computed for
-*this* source:
+**Choose a target format.** Cards are grouped — **REST & HTTP**, **API clients & collections**,
+**RPC**, **Events**, **Data schema & graph**, **Agents & tools**, **Other targets** — and each carries
+a **fidelity tier** computed for *this* source. **API clients & collections** holds the targets that
+export saved requests rather than a contract: Postman, Hoppscotch, Thunder Client and the `.http`
+request file (see [Export to an API client](./export-to-an-api-client.md)).
 
 | Tier | Means |
 | --- | --- |

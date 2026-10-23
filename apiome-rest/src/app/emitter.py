@@ -679,6 +679,9 @@ def load_builtin_emitters() -> None:
     from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401
     from . import azure_apim_emitter as _azure_apim_emitter  # noqa: F401
     from . import apigee_emitter as _apigee_emitter  # noqa: F401
+    # FMT-10.4 (#5479): the client-workspace emit modes, on the shared client-collection plan.
+    from . import hoppscotch_emitter as _hoppscotch_emitter  # noqa: F401
+    from . import thunder_client_emitter as _thunder_client_emitter  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

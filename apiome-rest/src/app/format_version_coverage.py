@@ -454,8 +454,16 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "are read beside them.",
             )
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="Thunder Client collection export `1.2` with its environment export",
+                format_key="thunder-client",
+                support=VersionSupport.FULL,
+                note="FMT-10.4: a `thunder-collection_*.json` / `thunder-environment_*.json` pair; credentials "
+                "are `{{variable}}` references the environment declares empty.",
+            )
+        ],
+        default_write="Thunder Client collection export `1.2` with its environment export",
     ),
     "soapui": VersionCoverage(
         reads=[
@@ -1039,8 +1047,16 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "Environments are read in both the `value` and the `initialValue` / `currentValue` spelling.",
             )
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="Hoppscotch collection schema `v` 6 with an environment `v` 2",
+                format_key="hoppscotch",
+                support=VersionSupport.FULL,
+                note="FMT-10.4: requests are written at request schema `v` 11; Hoppscotch migrates both files "
+                "forward on import. Credentials are `<<variable>>` references the environment declares secret.",
+            )
+        ],
+        default_write="Hoppscotch collection schema `v` 6 with an environment `v` 2",
     ),
     "iso20022": VersionCoverage(
         reads=[
