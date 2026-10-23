@@ -1,0 +1,20 @@
+---
+slug: revision-dag-queries
+title: Revision ancestors and merge base over the API
+description: Ask for a revision's ancestors, a history window, or two revisions' merge base.
+authors: [apiome]
+---
+
+The revision history graph can now be read directly over the REST API: a revision's ancestors, a
+window of history from several branch tips, and the merge base of two revisions.
+[How revisions link](/build/revision-history).
+
+{/* truncate */}
+
+- **Ancestors with distances.** Ask for a revision's ancestors up to a depth; each comes with how
+  many parent steps away it is, following both parents of a merge.
+- **One request for the whole graph.** A history window from every branch tip returns every
+  revision with its parents in one response, read in a single database query.
+- **Merge base, including when there is none.** Two revisions' best common ancestor is returned,
+  with every candidate when branches merged into each other — and an explicit "disjoint" answer when
+  their histories never met.

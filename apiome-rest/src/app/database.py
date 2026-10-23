@@ -75,6 +75,9 @@ from .revision_deprecation import (
     is_uuid_string,
     successor_revision_id_from_metadata,
 )
+from .revision_dag import RevisionNode
+from .revision_dag import ancestors as revision_ancestors
+from .revision_dag import merge_base as revision_merge_base
 from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
 from .version_path_copy import copy_paths_between_versions
 from .review_lifecycle import (
@@ -13762,72 +13765,82 @@ class Database:
 
     # ==================== Version merge (Git-like three-way) ====================
 
+    def fetch_revision_closure(self, revision_ids: Sequence[str], tenant_id: str) -> List[RevisionNode]:
+        """Load every revision reachable from ``revision_ids`` through parent links, in one query (#2593).
+
+        A recursive CTE follows ``parent_version_id`` and ``merge_parent_version_id`` from the given
+        revisions. ``UNION`` (not ``UNION ALL``) keeps one row per revision, so a diamond after a merge
+        is read once and the walk ends even if bad data ever formed a cycle. Every step stays inside
+        ``tenant_id`` and skips deleted revisions and projects.
+
+        Args:
+            revision_ids: The starting revisions (``versions.id``); ids that are not UUIDs are ignored.
+            tenant_id: The tenant every revision must belong to.
+
+        Returns:
+            The starting revisions that exist and all their ancestors, unordered.
+        """
+        ids = sorted({str(r) for r in revision_ids if r and is_uuid_string(str(r))})
+        if not ids:
+            return []
+        query = """
+            WITH RECURSIVE closure AS (
+                SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id
+                FROM apiome.versions v
+                JOIN apiome.projects p ON p.id = v.project_id
+                WHERE v.id::text = ANY(%s)
+                  AND p.tenant_id = %s
+                  AND v.deleted_at IS NULL
+                  AND p.deleted_at IS NULL
+                UNION
+                SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id
+                FROM apiome.versions v
+                JOIN closure c ON v.id = c.parent_version_id OR v.id = c.merge_parent_version_id
+                JOIN apiome.projects p ON p.id = v.project_id
+                WHERE p.tenant_id = %s
+                  AND v.deleted_at IS NULL
+                  AND p.deleted_at IS NULL
+            )
+            SELECT id::text AS id,
+                   parent_version_id::text AS parent_version_id,
+                   merge_parent_version_id::text AS merge_parent_version_id,
+                   created_at,
+                   version_id
+            FROM closure
+        """
+        rows = self.execute_query(query, (ids, tenant_id, tenant_id)) or []
+        return [
+            RevisionNode(
+                revision_id=str(row["id"]),
+                parent_id=row.get("parent_version_id"),
+                merge_parent_id=row.get("merge_parent_version_id"),
+                created_at=row.get("created_at"),
+                version_label=row.get("version_id"),
+            )
+            for row in rows
+        ]
+
     def collect_revision_ancestors(self, version_id: str, tenant_id: str) -> Set[str]:
-        """All revision ids reachable from ``version_id`` following parent links (including self)."""
-        result: Set[str] = set()
-        stack = [version_id]
-        steps = 0
-        while stack:
-            if steps > 100000:
-                raise RuntimeError("Revision ancestor walk exceeded safety limit")
-            steps += 1
-            vid = stack.pop()
-            if vid in result:
-                continue
-            result.add(vid)
-            row = self.get_version_by_id(vid, tenant_id)
-            if not row:
-                continue
-            for p in (row.get("parent_version_id"), row.get("merge_parent_version_id")):
-                if p and str(p) not in result:
-                    stack.append(str(p))
-        return result
+        """All revision ids reachable from ``version_id`` following parent links (including self).
+
+        One recursive query (:meth:`fetch_revision_closure`) rather than a lookup per revision.
+        ``version_id`` itself is always in the result, even when it does not exist.
+        """
+        closure = self.fetch_revision_closure([version_id], tenant_id)
+        return set(revision_ancestors(closure, [str(version_id)]))
 
     def compute_merge_base_revision_id(
         self, rev_a: str, rev_b: str, tenant_id: str
     ) -> Optional[str]:
-        """Best common ancestor (nearest to tips by creation time) for two revision ids in the same project."""
-        a = self.collect_revision_ancestors(rev_a, tenant_id)
-        b = self.collect_revision_ancestors(rev_b, tenant_id)
-        common = a & b
-        if not common:
-            return None
+        """Best common ancestor of two revisions (``mergeBase(revA, revB)``), ``None`` when disjoint.
 
-        # Cache ancestor sets to avoid O(n²) repeated full graph walks.
-        ancestor_cache: Dict[str, Set[str]] = {rev_a: a, rev_b: b}
-
-        def get_cached_ancestors(vid: str) -> Set[str]:
-            if vid not in ancestor_cache:
-                ancestor_cache[vid] = self.collect_revision_ancestors(vid, tenant_id)
-            return ancestor_cache[vid]
-
-        def is_strict_ancestor(anc: str, desc: str) -> bool:
-            if anc == desc:
-                return False
-            return anc in get_cached_ancestors(desc)
-
-        bases = [
-            c
-            for c in common
-            if not any(c != d and is_strict_ancestor(c, d) for d in common)
-        ]
-        if not bases:
-            return None
-        if len(bases) == 1:
-            return bases[0]
-
-        # Multiple maximal common ancestors (criss-cross history): pick the one
-        # nearest to the branch tips by choosing the most recently created revision.
-        from datetime import datetime, timezone
-
-        _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-
-        def created_at_key(vid: str):
-            row = self.get_version_by_id(vid, tenant_id)
-            ts = row["created_at"] if row and row.get("created_at") else None
-            return ts if ts is not None else _epoch
-
-        return max(bases, key=created_at_key)
+        Loads both ancestor closures in one query and resolves the merge base in memory
+        (:func:`app.revision_dag.merge_base`): of the common ancestors that are an ancestor of no
+        other common ancestor, the most recently created — the one nearest the tips in a
+        criss-cross history.
+        """
+        closure = self.fetch_revision_closure([rev_a, rev_b], tenant_id)
+        return revision_merge_base(closure, str(rev_a), str(rev_b))
 
     def get_prior_published_baseline_revision_id(
         self, project_id: str, tenant_id: str, published_revision_id: str

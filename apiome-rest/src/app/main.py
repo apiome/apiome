@@ -167,6 +167,7 @@ from .verification_target_routes import router as verification_target_router
 from .version_change_report_routes import router as version_change_report_router
 from .version_changelog_routes import router as version_changelog_router
 from .version_merge_routes import router as version_merge_router
+from .revision_graph_routes import router as revision_graph_router
 from .version_tags_routes import router as version_tags_router
 from .versions_routes import router as versions_router
 from .workflow_audit_routes import router as workflow_audit_router
@@ -185,7 +186,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.305.0",
+    version="1.306.0",
 )
 
 
@@ -428,6 +429,9 @@ app.include_router(quality_policy_router)
 app.include_router(verification_policy_router)
 app.include_router(scrub_policy_router)
 app.include_router(version_merge_router)
+# #2593: revision DAG reads (ancestors, history window, merge-base). Their literal segments keep
+# the /{version_record_id} routes of versions_router from shadowing them.
+app.include_router(revision_graph_router)
 app.include_router(workflow_audit_router)
 # version_changelog_router before versions_router so its literal
 # /{tenant_slug}/{project_id}/changelogs route wins over the versions

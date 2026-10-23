@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 54 operations."
+description: "REST endpoints tagged versions: 57 operations."
 sidebar_position: 95
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.305.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.306.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 54 operations
+Tag: `versions` · 57 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -289,6 +289,66 @@ Operation id: `list_merge_session_conflicts_route_v1_versions__tenant_slug___pro
 | 200 | Successful response for list merge session conflicts route. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/versions/{tenant_slug}/{project_id}/revision-graph/history` {#get-revision-history-window-v1-versions-tenant-slug-project-id-revision-graph-history-get}
+
+**Get Revision History Window**
+
+The history window behind the revision graph: everything within ``depth`` of the tips (#2593).
+
+One request returns the whole window — revisions with both parent ids and their distance —
+so the graph needs no request per revision.
+
+Operation id: `get_revision_history_window_v1_versions__tenant_slug___project_id__revision_graph_history_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `tip` | query | array of string or null | no | Revision ids to start from (repeatable); every branch tip when omitted. |
+| `depth` | query | integer | no | Parent steps to walk. |
+| `limit` | query | integer | no | Most revisions to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get revision history window. | `application/json` [`RevisionHistoryWindowResponse`](#schema-revisionhistorywindowresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/revision-graph/merge-base` {#get-revision-merge-base-v1-versions-tenant-slug-project-id-revision-graph-merge-base-get}
+
+**Get Revision Merge Base**
+
+``mergeBase(revA, revB)``: the best common ancestor of two revisions, or null (#2593).
+
+Of the common ancestors that are an ancestor of no other common ancestor, the most recently
+created is the merge base; all of them are listed as ``candidates`` (more than one only in a
+criss-cross history). Disjoint histories return ``mergeBase: null`` and ``disjoint: true``.
+
+Operation id: `get_revision_merge_base_v1_versions__tenant_slug___project_id__revision_graph_merge_base_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `a` | query | string | yes | One revision id. |
+| `b` | query | string | yes | The other revision id. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get revision merge base. | `application/json` [`RevisionMergeBaseResponse`](#schema-revisionmergebaseresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/versions/{tenant_slug}/{project_id}/version-branches` {#list-version-branches-v1-versions-tenant-slug-project-id-version-branches-get}
 
 **List Version Branches**
@@ -553,6 +613,36 @@ Operation id: `get_version_branch_divergence_v1_versions__tenant_slug___project_
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get version branch divergence. | `application/json` [`VersionBranchDivergenceResponse`](#schema-versionbranchdivergenceresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{revision_id}/ancestors` {#get-revision-ancestors-v1-versions-tenant-slug-project-id-revision-id-ancestors-get}
+
+**Get Revision Ancestors**
+
+``ancestors(revX, depth)``: the revision and its ancestors within ``depth`` parent steps (#2593).
+
+Follows both parents of a merge. Each revision carries its distance — the fewest parent steps
+from ``revision_id`` (itself 0).
+
+Operation id: `get_revision_ancestors_v1_versions__tenant_slug___project_id___revision_id__ancestors_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `revision_id` | path | string | yes | Revision UUID (``versions.id``). |
+| `depth` | query | integer | no | Parent steps to walk. |
+| `limit` | query | integer | no | Most revisions to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get revision ancestors. | `application/json` [`RevisionHistoryWindowResponse`](#schema-revisionhistorywindowresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}` {#get-version-v1-versions-tenant-slug-project-id-version-record-id-get}
@@ -2003,6 +2093,30 @@ A revision's live preservation envelope plus its semantic fingerprint.
 | `dialect` | string | yes | OAS dialect the claims were validated under. |
 | `claims` | array of `PreservationClaimBody` | yes | Claims. |
 | `fingerprint` | `SemanticFingerprint` | yes | Semantic fingerprint of the merged (canonical + preserved) document, reporting the intentionally excluded lexical differences. |
+
+### `RevisionHistoryWindowResponse` {#schema-revisionhistorywindowresponse}
+
+A bounded window of the revision DAG reachable from one or more tips (#2593).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `tips` | array of string | yes | The revisions the window starts from. |
+| `depth` | integer | yes | The parent steps walked (after clamping). |
+| `limit` | integer | yes | The most revisions returned (after clamping). |
+| `truncated` | boolean | yes | True when the depth or the limit cut the history short. |
+| `nodes` | array of `RevisionGraphNodeOut` | no | Nearest the tips first, then newest first. |
+
+### `RevisionMergeBaseResponse` {#schema-revisionmergebaseresponse}
+
+``mergeBase(revA, revB)`` — the best common ancestor of two revisions (#2593).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `a` | string | yes | The first revision. |
+| `b` | string | yes | The second revision. |
+| `mergeBase` | `RevisionMergeBaseOut` or null | no | Null when the two histories share no revision (disjoint). |
+| `candidates` | array of string | no | Every best common ancestor, newest first; more than one in a criss-cross history. |
+| `disjoint` | boolean | yes | True when the two revisions have no common ancestor. |
 
 ### `SourceApplyRequest` {#schema-sourceapplyrequest}
 

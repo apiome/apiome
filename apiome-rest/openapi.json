@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.305.0",
+    "version": "1.306.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -31538,7 +31538,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-23T16:48:33Z"
+                          "example": "2026-10-23T17:13:03Z"
                         },
                         "method": {
                           "type": "string",
@@ -45735,6 +45735,412 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for list merge session conflicts routeresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{revision_id}/ancestors": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Revision Ancestors",
+        "description": "``ancestors(revX, depth)``: the revision and its ancestors within ``depth`` parent steps (#2593).\n\nFollows both parents of a merge. Each revision carries its distance \u2014 the fewest parent steps\nfrom ``revision_id`` (itself 0).",
+        "operationId": "get_revision_ancestors_v1_versions__tenant_slug___project_id___revision_id__ancestors_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 0,
+              "description": "Parent steps to walk.",
+              "default": 50,
+              "title": "Depth"
+            },
+            "description": "Parent steps to walk."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "description": "Most revisions to return.",
+              "default": 500,
+              "title": "Limit"
+            },
+            "description": "Most revisions to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Ancestorsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Ancestorsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Ancestors Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Ancestors Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get revision ancestors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionHistoryWindowResponse",
+                  "description": "Response payload for get revision ancestorsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get revision ancestorsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/revision-graph/history": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Revision History Window",
+        "description": "The history window behind the revision graph: everything within ``depth`` of the tips (#2593).\n\nOne request returns the whole window \u2014 revisions with both parent ids and their distance \u2014\nso the graph needs no request per revision.",
+        "operationId": "get_revision_history_window_v1_versions__tenant_slug___project_id__revision_graph_history_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "tip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Get Revision History Windowtip schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision History Windowtip schema."
+                }
+              ],
+              "description": "Revision ids to start from (repeatable); every branch tip when omitted.",
+              "title": "Tip"
+            },
+            "description": "Revision ids to start from (repeatable); every branch tip when omitted."
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 0,
+              "description": "Parent steps to walk.",
+              "default": 50,
+              "title": "Depth"
+            },
+            "description": "Parent steps to walk."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "description": "Most revisions to return.",
+              "default": 500,
+              "title": "Limit"
+            },
+            "description": "Most revisions to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision History Windowauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision History Windowauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision History Window Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision History Window Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get revision history window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionHistoryWindowResponse",
+                  "description": "Response payload for get revision history windowresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get revision history windowresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/revision-graph/merge-base": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Revision Merge Base",
+        "description": "``mergeBase(revA, revB)``: the best common ancestor of two revisions, or null (#2593).\n\nOf the common ancestors that are an ancestor of no other common ancestor, the most recently\ncreated is the merge base; all of them are listed as ``candidates`` (more than one only in a\ncriss-cross history). Disjoint histories return ``mergeBase: null`` and ``disjoint: true``.",
+        "operationId": "get_revision_merge_base_v1_versions__tenant_slug___project_id__revision_graph_merge_base_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "One revision id.",
+              "title": "A"
+            },
+            "description": "One revision id."
+          },
+          {
+            "name": "b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The other revision id.",
+              "title": "B"
+            },
+            "description": "The other revision id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Merge Baseauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Merge Baseauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Merge Base Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Merge Base Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get revision merge base.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionMergeBaseResponse",
+                  "description": "Response payload for get revision merge baseresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get revision merge baseresponse422."
                 }
               }
             }
@@ -112982,7 +113388,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "completed_at": {
             "anyOf": [
@@ -114937,7 +115343,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -115165,7 +115571,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -115932,14 +116338,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -119225,7 +119631,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "74814717-edd4-47bf-a5ca-8d9ec3143314"
+            "example": "ef4b3f8a-a369-4d8b-9813-eb3048508587"
           },
           "method": {
             "type": "string",
@@ -121752,7 +122158,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -123648,7 +124054,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "browse_url": {
             "anyOf": [
@@ -169698,7 +170104,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           }
         },
         "additionalProperties": false,
@@ -170364,6 +170770,239 @@
         ],
         "title": "RevisionDeprecationWarningOut",
         "description": "Structured warning when a revision in the compat pair is deprecated (#507)."
+      },
+      "RevisionGraphNodeOut": {
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for revision graph node."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision graph node."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "parentRevisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for revision graph node."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision graph node."
+              }
+            ],
+            "title": "Parentrevisionid",
+            "description": "First parent (parent_version_id); null for a root."
+          },
+          "mergeParentRevisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for revision graph node."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision graph node."
+              }
+            ],
+            "title": "Mergeparentrevisionid",
+            "description": "Second parent of a merge revision (merge_parent_version_id)."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for revision graph node."
+              },
+              {
+                "type": "string",
+                "description": "Response payload for revision graph node."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision graph node."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "distance": {
+            "type": "integer",
+            "title": "Distance",
+            "description": "Fewest parent steps from the nearest tip (tips are 0).",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "revisionId",
+          "distance"
+        ],
+        "title": "RevisionGraphNodeOut",
+        "description": "One revision in a history window: its parent links and distance from the tips (#2593)."
+      },
+      "RevisionHistoryWindowResponse": {
+        "properties": {
+          "tips": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tips",
+            "description": "The revisions the window starts from.",
+            "maxItems": 1000
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth",
+            "description": "The parent steps walked (after clamping).",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The most revisions returned (after clamping).",
+            "example": 50
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when the depth or the limit cut the history short.",
+            "example": false
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionGraphNodeOut"
+            },
+            "type": "array",
+            "title": "Nodes",
+            "description": "Nearest the tips first, then newest first.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "tips",
+          "depth",
+          "limit",
+          "truncated"
+        ],
+        "title": "RevisionHistoryWindowResponse",
+        "description": "A bounded window of the revision DAG reachable from one or more tips (#2593)."
+      },
+      "RevisionMergeBaseOut": {
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for revision merge base."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision merge base."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for revision merge base."
+              },
+              {
+                "type": "string",
+                "description": "Response payload for revision merge base."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision merge base."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "revisionId"
+        ],
+        "title": "RevisionMergeBaseOut",
+        "description": "A merge-base revision (#2593)."
+      },
+      "RevisionMergeBaseResponse": {
+        "properties": {
+          "a": {
+            "type": "string",
+            "title": "A",
+            "description": "The first revision.",
+            "example": "example"
+          },
+          "b": {
+            "type": "string",
+            "title": "B",
+            "description": "The second revision.",
+            "example": "example"
+          },
+          "mergeBase": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionMergeBaseOut"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for revision merge base."
+              }
+            ],
+            "description": "Null when the two histories share no revision (disjoint)."
+          },
+          "candidates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Candidates",
+            "description": "Every best common ancestor, newest first; more than one in a criss-cross history.",
+            "maxItems": 1000
+          },
+          "disjoint": {
+            "type": "boolean",
+            "title": "Disjoint",
+            "description": "True when the two revisions have no common ancestor.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "disjoint"
+        ],
+        "title": "RevisionMergeBaseResponse",
+        "description": "``mergeBase(revA, revB)`` \u2014 the best common ancestor of two revisions (#2593)."
       },
       "RoleDuplicateRequest": {
         "properties": {
@@ -181120,13 +181759,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           }
         },
         "additionalProperties": false,
@@ -182630,7 +183269,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "detected_by": {
             "anyOf": [
@@ -190836,14 +191475,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-23T16:48:33Z"
+            "example": "2026-10-23T17:13:03Z"
           },
           "outcome": {
             "anyOf": [
