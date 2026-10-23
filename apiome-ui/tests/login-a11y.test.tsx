@@ -17,7 +17,7 @@
  *      success/info politely (role="status").
  */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 jest.mock('@lib/auth/session-client', () => ({
@@ -65,16 +65,6 @@ describe('LoginClient — form field labelling (OLO-3.5)', () => {
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
   });
 
-  it('labels every field in sign-up mode and switches the password token to new-password', () => {
-    render(<LoginClient ssoProviders={[]} emailSignupAvailable />);
-
-    // Switch to sign-up so the email sign-up form (SGN-1.1) renders.
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-
-    expect(screen.getByLabelText('Full name')).toHaveAttribute('autocomplete', 'name');
-    expect(screen.getByLabelText('Email address')).toHaveAttribute('autocomplete', 'email');
-    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
-  });
 });
 
 describe('LoginClient — landmarks and headings (OLO-3.5)', () => {

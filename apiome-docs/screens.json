@@ -16,22 +16,35 @@
       ]
     },
     {
+      "id": "signup",
+      "route": "/signup",
+      "waitFor": "[data-testid=\"signup-card\"]",
+      "data": "fixture:hive-a11y/signup.html"
+    },
+    {
+      "id": "signup-closed",
+      "route": "/signup",
+      "waitFor": "[data-testid=\"signup-notice-closed\"]",
+      "data": "fixture:hive-a11y/signup-closed.html"
+    },
+    {
       "id": "signup-form",
-      "route": "/login",
+      "route": "/signup",
       "waitFor": "[data-testid=\"email-signup-form\"]",
       "data": "fixture:hive-a11y/signup-form.html",
       "sources": [
         "apiome-ui/src/app/login/EmailSignupForm.tsx",
-        "apiome-ui/src/app/login/LoginClient.tsx"
+        "apiome-ui/src/app/signup/SignupClient.tsx"
       ]
     },
     {
       "id": "signup-check-email",
-      "route": "/login",
+      "route": "/signup",
       "waitFor": "[data-testid=\"signup-check-email\"]",
       "data": "fixture:hive-a11y/signup-check-email.html",
       "sources": [
-        "apiome-ui/src/app/login/SignupCheckEmail.tsx"
+        "apiome-ui/src/app/login/SignupCheckEmail.tsx",
+        "apiome-ui/src/app/signup/SignupClient.tsx"
       ]
     },
     {

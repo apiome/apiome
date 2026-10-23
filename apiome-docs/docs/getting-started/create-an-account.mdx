@@ -5,16 +5,24 @@ sidebar_position: 3.5
 tags: [sign-in, accounts, onboarding]
 ---
 
-<Route path="/login" />
+<Route path="/signup" />
 
 You can create an Apiome account with a sign-in provider (GitHub, GitLab, Microsoft or Google, when
 your installation offers them) or with an email address and a password. Either way, you then name
 your first organization and land in the app.
 
+**Go to `/signup`**, or **click “Create one”** under the sign-in form. The page lists every sign-in
+provider your installation offers, then the email form.
+
+<Screenshot id="signup" alt="Create your account: Sign up with GitHub and Sign up with Google, a note that sign-up is open to addresses at northwind.io, then the email form and Already have an account? Sign in" />
+
+If your installation limits sign-up to some email domains, the page says which — for example *Sign-up
+is open to addresses at northwind.io.*
+
 ## With a provider
 
-On the sign-in page, **click “Create one”**, then click your provider's button. The first time,
-Apiome asks you to **finish setting up your account**:
+On **Create your account**, **click “Sign up with …”** for your provider. The first time, Apiome
+asks you to **finish setting up your account**:
 
 1. Enter **Your name**, **Organization name** and **Organization URL slug** — the slug is
    suggested from the name.
@@ -23,12 +31,10 @@ Apiome asks you to **finish setting up your account**:
 
 ## With an email address
 
-1. On the sign-in page, **click “Create one”**. If provider buttons are shown, **click “or use your
-   email”** under them.
-2. Fill in **Full name**, **Email address** and **Password**. The password needs at least 8
-   characters, an uppercase and a lowercase letter, and a number or special character — the hint
-   under the field lists them.
-3. **Click “Create account”.**
+1. On **Create your account**, under **or use your email**, fill in **Full name**, **Email
+   address** and **Password**. The password needs at least 8 characters, an uppercase and a
+   lowercase letter, and a number or special character — the hint under the field lists them.
+2. **Click “Create account”.**
 
 <Screenshot id="signup-form" alt="Create your account: the Full name, Email address and Password fields filled in for Ada Lovelace, with the password rules under the password field and the Create account button" />
 
@@ -36,13 +42,13 @@ Apiome shows **Check your email** and sends a message to the address you entered
 
 <Screenshot id="signup-check-email" alt="Check your email: we sent a link to ada@example.com, with Resend email and Use a different email buttons" />
 
-4. Open the email **Confirm your email for Apiome** and **click “Confirm email”**.
+3. Open the email **Confirm your email for Apiome** and **click “Confirm email”**.
 
 The page says **Email confirmed** and signs you in.
 
 <Screenshot id="signup-verified" alt="Email confirmed: your account is ready, signing you in" />
 
-5. Apiome then walks you through [setting up your first organization](./onboarding.mdx).
+4. Apiome then walks you through [setting up your first organization](./onboarding.mdx).
 
 You cannot sign in with the new account until you confirm the email address.
 
@@ -77,15 +83,24 @@ sign-in page. Sign in with your password or the provider you used before.
 
 ### If email sign-up is not offered
 
-If **Create one** shows *Sign-up with an email address is not available on this server*, your
-installation has no email sender set up. Create your account with a provider, or ask your
+If **Create your account** shows *Sign-up with an email address is not available on this server*,
+your installation has no email sender set up. Create your account with a provider, or ask your
 administrator. Administrators turn email sign-up on in
 [Authentication providers](../admin/auth-providers.mdx#email-sign-up).
 
 ## When you cannot create an account
 
-Your administrator decides who may sign up. If the installation does not accept your sign-up,
-the page says why instead of creating an account:
+Your administrator decides who may sign up. When sign-up is **closed** or **by invitation**, the page
+says so instead of offering buttons and a form, and links you to sign in:
+
+<Screenshot id="signup-closed" alt="Create your account with Sign-up is closed: new account sign-ups are currently disabled on this server, and Already have an account? Sign in" />
+
+- **Sign-up is closed** — ask your administrator for an account.
+- **Sign-up is by invitation** — ask a workspace administrator to set up your account and invite
+  you. Invitations go to existing accounts, so there is no invitation link to enter here.
+
+If sign-up is open but the installation does not accept yours, the page says why instead of
+creating an account:
 
 | Message | What it means | What to do |
 | --- | --- | --- |

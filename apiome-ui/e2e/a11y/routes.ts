@@ -54,13 +54,21 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['signup-oauth.html'] },
   },
   {
-    // Email sign-up (SGN-1.1): the form, check-your-email, and the confirmation page's states.
+    // `/signup` (SGN-1.2): open and closed, the email form, check-your-email (SGN-1.1), and the
+    // confirmation page's states.
     id: 'signup-email',
     mockup: null,
     subject: {
       kind: 'fixtures',
       dir: 'hive-a11y',
-      files: ['signup-form.html', 'signup-check-email.html', 'signup-verified.html', 'signup-verify-expired.html'],
+      files: [
+        'signup.html',
+        'signup-closed.html',
+        'signup-form.html',
+        'signup-check-email.html',
+        'signup-verified.html',
+        'signup-verify-expired.html',
+      ],
     },
   },
   {
