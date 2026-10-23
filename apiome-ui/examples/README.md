@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1467 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1468 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -105,7 +105,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `flatbuffers/` | FlatBuffers | data_schema | `table`/`struct` + `root_type` | 11 |
 | `ims/` | IMS DBD and PSB (pending #5482) | data_schema | `DBD NAME=…,ACCESS=(…)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG` | 14 |
 | `json-schema/` | JSON Schema | data_schema | `$schema` / `type` + `properties` | 17 |
-| `jsonld/` | JSON-LD contexts (pending #5471) | data_schema | top-level `@context` with term definitions (`@id`/`@type`/`@container`) | 14 |
+| `jsonld/` | JSON-LD contexts | data_schema | top-level `@context` with term definitions (`@id`/`@type`/`@container`) | 14 |
 | `jtd/` | JSON Type Definition | data_schema | `properties`/`optionalProperties` | 11 |
 | `k8s-crd/` | Kubernetes CRD | data_schema | `apiVersion: apiextensions.k8s.io/*` + `kind: CustomResourceDefinition` | 12 |
 | `kafka-connect/` | Kafka Connect schema | data_schema | `"type": "struct"` + `fields[].field` | 15 |
@@ -114,13 +114,13 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `natural-ddm/` | Natural / ADABAS DDM (pending #5486) | data_schema | `DDM Name ......` header + the `T L DB Name … F Leng S D Remark` banner | 14 |
 | `odcs/` | Open Data Contract Standard v3.1 | data_schema | `apiVersion: v3.x` + `kind: DataContract` + `schema:` | 15 |
 | `opcua-nodeset/` | OPC UA NodeSet2 (pending #5468) | rpc | `<UANodeSet>` root in the OPC Foundation NodeSet2 namespace | 14 |
-| `owl/` | OWL / RDFS ontologies (pending #5471) | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 14 |
+| `owl/` | OWL / RDFS ontologies | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 15 |
 | `pkl/` | Pkl | data_schema | `module …` + `class`/`typealias` with member constraints and `Listing<…>` types | 14 |
 | `pli/` | PL/I structures (pending #5480) | data_schema | `DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE` | 15 |
 | `pydantic/` | Pydantic models | data_schema | `from pydantic import BaseModel` + `class X(BaseModel):` definitions | 15 |
 | `relaxng/` | RELAX NG (pending #5434) | data_schema | `grammar`/`element` root in the RELAX NG namespace, or a `.rnc` compact grammar | 15 |
 | `schematron/` | Schematron rules | data_schema | `schema`/`pattern` root in `http://purl.oclc.org/dsdl/schematron` | 13 |
-| `shacl/` | SHACL shapes (pending #5471) | data_schema | `sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD) | 15 |
+| `shacl/` | SHACL shapes | data_schema | `sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD) | 15 |
 | `sql-ddl/` | SQL DDL schemas and migrations | data_schema | `CREATE TABLE`/`CREATE VIEW`/`ALTER TABLE … ADD CONSTRAINT` | 15 |
 | `typescript-types/` | TypeScript type declarations | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
 | `vsam-idcams/` | VSAM cluster definitions (pending #5484) | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
@@ -1281,24 +1281,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/03-truncated-mid-token.json`** — Grounded FORMAT_MISMATCH rather than INPUT_MALFORMED: the greedy graphql sniffer claims the truncated JSON at 0.9 (`type` keyword match), while json-schema's own detect cannot claim broken JSON.
 
-### `jsonld/` — JSON-LD contexts (pending #5471)
+### `jsonld/` — JSON-LD contexts
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-context.jsonld` | minimal | `jsonld` ≥ 0.85 | valid | `context`, `vocab`, `keyword-alias`, `pending-adapter` |
-| `02-typical-context.jsonld` | typical | `jsonld` ≥ 0.85 | valid | `typed-term`, `set-container`, `list-container`, `language-container`, `scoped-context`, `pending-adapter` |
-| `03-contexts-set/context.jsonld` | multi-file (root) | `jsonld` ≥ 0.85 | valid | `multi-file`, `context-array`, `relative-context`, `pending-adapter` |
-| `03-contexts-set/shared-context.jsonld` | multi-file (member) | `jsonld` (no guarantee) | valid | `multi-file`, `shared-terms`, `scoped-context`, `pending-adapter` |
-| `04-stress-keyword-coverage.jsonld` | stress | `jsonld` ≥ 0.85 | valid | `index-container`, `id-container`, `type-container`, `graph-container`, `compound-container`, `reverse`, `protected`, `prefix`, `nest`, `direction`, `base`, `json-type`, `pending-adapter` |
-| `05-real-world-catalog-context.jsonld` | real-world | `jsonld` ≥ 0.85 | valid | `dcat`, `dublin-core`, `skos`, `vcard`, `language-map`, `typed-dates`, `scoped-context`, `pending-adapter` |
-| `06-typical-document-with-context.jsonld` | typical | `jsonld` ≥ 0.85 | valid | `context-plus-graph`, `instance-data`, `typed-values`, `pending-adapter` |
-| `07-composition-context-array.jsonld` | composition | `jsonld` ≥ 0.85 | valid | `context-array`, `scoped-context`, `nested-scoped-context`, `type-scoped-values`, `pending-adapter` |
-| `negative/01-syntactic-trailing-comma.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma`, `pending-adapter` |
-| `negative/02-semantic-no-context.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `semantic`, `no-context`, `pending-adapter` |
-| `negative/03-truncated-mid-term.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `truncated`, `mid-term-definition`, `pending-adapter` |
-| `negative/04-wrong-format-json-schema.json` | — | `jsonld` (no guarantee) | invalid | `negative`, `wrong-format`, `json-schema`, `pending-adapter` |
-| `negative/05-encoding-utf16.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-remote-context.jsonld` ⚠ | — | `jsonld` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `remote-context`, `missing-relative-context`, `pending-adapter` |
+| `01-minimal-context.jsonld` | minimal | `jsonld` ≥ 0.85 | valid | `context`, `vocab`, `keyword-alias` |
+| `02-typical-context.jsonld` | typical | `jsonld` ≥ 0.85 | valid | `typed-term`, `set-container`, `list-container`, `language-container`, `scoped-context` |
+| `03-contexts-set/context.jsonld` | multi-file (root) | `jsonld` ≥ 0.85 | valid | `multi-file`, `context-array`, `relative-context` |
+| `03-contexts-set/shared-context.jsonld` | multi-file (member) | `jsonld` (no guarantee) | valid | `multi-file`, `shared-terms`, `scoped-context` |
+| `04-stress-keyword-coverage.jsonld` | stress | `jsonld` ≥ 0.85 | valid | `index-container`, `id-container`, `type-container`, `graph-container`, `compound-container`, `reverse`, `protected`, `prefix`, `nest`, `direction`, `base`, `json-type` |
+| `05-real-world-catalog-context.jsonld` | real-world | `jsonld` ≥ 0.85 | valid | `dcat`, `dublin-core`, `skos`, `vcard`, `language-map`, `typed-dates`, `scoped-context` |
+| `06-typical-document-with-context.jsonld` | typical | `jsonld` ≥ 0.85 | valid | `context-plus-graph`, `instance-data`, `typed-values` |
+| `07-composition-context-array.jsonld` | composition | `jsonld` ≥ 0.85 | valid | `context-array`, `scoped-context`, `nested-scoped-context`, `type-scoped-values` |
+| `negative/01-syntactic-trailing-comma.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `syntactic`, `trailing-comma` |
+| `negative/02-semantic-no-context.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `semantic`, `no-context` |
+| `negative/03-truncated-mid-term.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `truncated`, `mid-term-definition` |
+| `negative/04-wrong-format-json-schema.json` | — | `jsonld` (no guarantee) | invalid | `negative`, `wrong-format`, `json-schema` |
+| `negative/05-encoding-utf16.jsonld` | — | `jsonld` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-remote-context.jsonld` ⚠ | — | `jsonld` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `remote-context`, `missing-relative-context` |
 
 > ⚠ **`negative/06-unresolvable-remote-context.jsonld`** — Remote contexts must resolve under the SSRF guard; an unreachable one is a named unresolved reference, not an empty term map.
 
@@ -1794,24 +1794,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-protobuf.proto` | — | `openrpc` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf-idl` |
 | `negative/05-encoding-utf16.json` | — | `openrpc` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
 
-### `owl/` — OWL / RDFS ontologies (pending #5471)
+### `owl/` — OWL / RDFS ontologies
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-ontology.ttl` | minimal | `owl` ≥ 0.85 | valid | `ontology-header`, `class`, `datatype-property`, `pending-adapter` |
-| `02-typical-classes-and-properties.ttl` | typical | `owl` ≥ 0.85 | valid | `subClassOf`, `object-property`, `domain-range`, `inverseOf`, `FunctionalProperty`, `disjointWith`, `named-individuals`, `pending-adapter` |
-| `03-imports-set/core.ttl` | multi-file (member) | `owl` (no guarantee) | valid | `multi-file`, `shared-classes`, `pending-adapter` |
-| `03-imports-set/domain.ttl` | multi-file (root) | `owl` ≥ 0.85 | valid | `multi-file`, `owl-imports`, `cross-ontology-subclass`, `pending-adapter` |
-| `04-stress-owl-constructs.ttl` ⚠ | stress | `owl` ≥ 0.85 | valid | `qualified-cardinality`, `oneOf`, `datatype-restriction`, `unionOf`, `intersectionOf`, `complementOf`, `someValuesFrom`, `allValuesFrom`, `TransitiveProperty`, `SymmetricProperty`, `propertyChainAxiom`, `sameAs`, `equivalentClass`, `pending-adapter` |
-| `05-real-world-domain-ontology.ttl` | real-world | `owl` ≥ 0.85 | valid | `versionIRI`, `disjoint-subclasses`, `cardinality-restriction`, `skos-code-list`, `language-tagged-labels`, `licence`, `pending-adapter` |
-| `06-typical-rdfxml.owl` | typical | `owl` ≥ 0.85 | valid | `rdf-xml`, `restriction`, `inverseOf`, `disjointWith`, `pending-adapter` |
-| `07-composition-class-hierarchy.ttl` | composition | `owl` ≥ 0.85 | valid | `subClassOf`, `subPropertyOf`, `restriction-inheritance`, `disjointWith`, `pending-adapter` |
-| `negative/01-syntactic-unterminated-iri.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `syntactic`, `unterminated-iri`, `pending-adapter` |
-| `negative/02-semantic-no-classes.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `semantic`, `header-only`, `pending-adapter` |
-| `negative/03-truncated-mid-restriction.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `truncated`, `mid-typed-literal`, `pending-adapter` |
-| `negative/04-wrong-format-shacl.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `wrong-format`, `shacl`, `pending-adapter` |
-| `negative/05-encoding-utf16.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-import.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-owl-imports`, `pending-adapter` |
+| `01-minimal-ontology.ttl` | minimal | `owl` ≥ 0.85 | valid | `ontology-header`, `class`, `datatype-property` |
+| `02-typical-classes-and-properties.ttl` | typical | `owl` ≥ 0.85 | valid | `subClassOf`, `object-property`, `domain-range`, `inverseOf`, `FunctionalProperty`, `disjointWith`, `named-individuals` |
+| `03-imports-set/core.ttl` | multi-file (member) | `owl` (no guarantee) | valid | `multi-file`, `shared-classes` |
+| `03-imports-set/domain.ttl` | multi-file (root) | `owl` ≥ 0.85 | valid | `multi-file`, `owl-imports`, `cross-ontology-subclass` |
+| `04-stress-owl-constructs.ttl` ⚠ | stress | `owl` ≥ 0.85 | valid | `qualified-cardinality`, `oneOf`, `datatype-restriction`, `unionOf`, `intersectionOf`, `complementOf`, `someValuesFrom`, `allValuesFrom`, `TransitiveProperty`, `SymmetricProperty`, `propertyChainAxiom`, `sameAs`, `equivalentClass` |
+| `05-real-world-domain-ontology.ttl` | real-world | `owl` ≥ 0.85 | valid | `versionIRI`, `disjoint-subclasses`, `cardinality-restriction`, `skos-code-list`, `language-tagged-labels`, `licence` |
+| `06-typical-rdfxml.owl` | typical | `owl` ≥ 0.85 | valid | `rdf-xml`, `restriction`, `inverseOf`, `disjointWith` |
+| `07-composition-class-hierarchy.ttl` | composition | `owl` ≥ 0.85 | valid | `subClassOf`, `subPropertyOf`, `restriction-inheritance`, `disjointWith` |
+| `08-typical-rdfs-vocabulary.ttl` | typical | `rdfs` ≥ 0.85 | valid | `rdfs`, `rdf-property`, `subClassOf`, `domain-range` |
+| `negative/01-syntactic-unterminated-iri.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `syntactic`, `unterminated-iri` |
+| `negative/02-semantic-no-classes.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `semantic`, `header-only` |
+| `negative/03-truncated-mid-restriction.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `truncated`, `mid-typed-literal` |
+| `negative/04-wrong-format-shacl.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `wrong-format`, `shacl` |
+| `negative/05-encoding-utf16.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-import.ttl` | — | `owl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-owl-imports` |
 
 > ⚠ **`04-stress-owl-constructs.ttl`** — The second half is open-world reasoning, not record structure; FMT-9.4 requires it declared rather than approximated.
 
@@ -2093,25 +2094,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-nacha.ach`** — The US twin from the same ticket: fixed-width ACH must route to the NACHA parser, not to the ISO 20022 adapter.
 
-### `shacl/` — SHACL shapes (pending #5471)
+### `shacl/` — SHACL shapes
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-shape.ttl` | minimal | `shacl` ≥ 0.85 | valid | `NodeShape`, `property-shape`, `datatype`, `cardinality`, `pending-adapter` |
-| `02-typical-person-shapes.ttl` | typical | `shacl` ≥ 0.85 | valid | `targetClass`, `pattern`, `in`, `severity`, `message`, `class-reference`, `order`, `pending-adapter` |
-| `03-composition-node-shapes.ttl` | composition | `shacl` ≥ 0.85 | valid | `sh-node`, `and`, `or`, `xone`, `sequence-path`, `inverse-path`, `pending-adapter` |
-| `04-stress-constraint-components.ttl` ⚠ | stress | `shacl` ≥ 0.85 | valid | `all-core-components`, `closed`, `ignoredProperties`, `qualifiedValueShape`, `property-pair`, `languageIn`, `uniqueLang`, `property-group`, `sparql-constraint`, `zeroOrMorePath`, `alternativePath`, `pending-adapter` |
-| `05-real-world-dataset-shapes.ttl` | real-world | `shacl` ≥ 0.85 | valid | `dcat`, `publication-profile`, `ordered-properties`, `severity`, `lessThanOrEquals`, `pending-adapter` |
-| `06-typical-shapes.jsonld` | typical | `shacl` ≥ 0.85 | valid | `json-ld-serialization`, `NodeShape`, `pattern`, `in`, `pending-adapter` |
-| `07-stress-cyclic-shape-graph.ttl` ⚠ | stress | `shacl` ≥ 0.85 | valid | `cyclic-shapes`, `mutual-reference`, `self-reference`, `recursion`, `pending-adapter` |
-| `08-imported-shapes-set/core-shapes.ttl` ⚠ | multi-file (member) | `shacl` (no guarantee) | valid | `shared-shapes`, `reusable-node-shapes`, `pending-adapter` |
-| `08-imported-shapes-set/shapes.ttl` | multi-file (root) | `shacl` ≥ 0.85 | valid | `owl-imports`, `sh-node-across-files`, `pending-adapter` |
-| `negative/01-syntactic-missing-dot.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `syntactic`, `missing-statement-terminator`, `pending-adapter` |
-| `negative/02-semantic-no-node-shapes.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `semantic`, `no-shapes`, `pending-adapter` |
-| `negative/03-truncated-mid-property.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `truncated`, `mid-literal`, `pending-adapter` |
-| `negative/04-wrong-format-owl.ttl` ⚠ | — | `shacl` (no guarantee) | invalid | `negative`, `wrong-format`, `owl`, `pending-adapter` |
-| `negative/05-encoding-utf16.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-shape-reference.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-shape`, `pending-adapter` |
+| `01-minimal-shape.ttl` | minimal | `shacl` ≥ 0.85 | valid | `NodeShape`, `property-shape`, `datatype`, `cardinality` |
+| `02-typical-person-shapes.ttl` | typical | `shacl` ≥ 0.85 | valid | `targetClass`, `pattern`, `in`, `severity`, `message`, `class-reference`, `order` |
+| `03-composition-node-shapes.ttl` | composition | `shacl` ≥ 0.85 | valid | `sh-node`, `and`, `or`, `xone`, `sequence-path`, `inverse-path` |
+| `04-stress-constraint-components.ttl` ⚠ | stress | `shacl` ≥ 0.85 | valid | `all-core-components`, `closed`, `ignoredProperties`, `qualifiedValueShape`, `property-pair`, `languageIn`, `uniqueLang`, `property-group`, `sparql-constraint`, `zeroOrMorePath`, `alternativePath` |
+| `05-real-world-dataset-shapes.ttl` | real-world | `shacl` ≥ 0.85 | valid | `dcat`, `publication-profile`, `ordered-properties`, `severity`, `lessThanOrEquals` |
+| `06-typical-shapes.jsonld` | typical | `shacl` ≥ 0.85 | valid | `json-ld-serialization`, `NodeShape`, `pattern`, `in` |
+| `07-stress-cyclic-shape-graph.ttl` ⚠ | stress | `shacl` ≥ 0.85 | valid | `cyclic-shapes`, `mutual-reference`, `self-reference`, `recursion` |
+| `08-imported-shapes-set/core-shapes.ttl` ⚠ | multi-file (member) | `shacl` (no guarantee) | valid | `shared-shapes`, `reusable-node-shapes` |
+| `08-imported-shapes-set/shapes.ttl` | multi-file (root) | `shacl` ≥ 0.85 | valid | `owl-imports`, `sh-node-across-files` |
+| `negative/01-syntactic-missing-dot.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `syntactic`, `missing-statement-terminator` |
+| `negative/02-semantic-no-node-shapes.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `semantic`, `no-shapes` |
+| `negative/03-truncated-mid-property.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `truncated`, `mid-literal` |
+| `negative/04-wrong-format-owl.ttl` ⚠ | — | `shacl` (no guarantee) | invalid | `negative`, `wrong-format`, `owl` |
+| `negative/05-encoding-utf16.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-shape-reference.ttl` | — | `shacl` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-shape` |
 
 > ⚠ **`04-stress-constraint-components.ttl`** — SPARQL constraints and unbounded property paths have no canonical analogue; FMT-9.4 requires them declared, not approximated.
 
@@ -2732,7 +2733,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1467 | `Apache-2.0` |
+| `hand-authored` | 1468 | `Apache-2.0` |
 
 ## Trying an import
 

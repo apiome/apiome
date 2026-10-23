@@ -1,0 +1,506 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": "Customers, orders and the products they contain.",
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.disjointness",
+            "count": 2,
+            "detail": "owl:disjointWith states that no individual is in both classes; the canonical model has no such constraint, so it is kept in extras['owl_disjoint_with'].",
+            "locations": [
+              "Customer",
+              "Order"
+            ]
+          },
+          {
+            "construct": "owl.individual_enumeration",
+            "count": 1,
+            "detail": "The class lists named individuals but is not closed with owl:oneOf; under OWL more members may exist. Apiome lists the asserted individuals as the members of an enum.",
+            "locations": [
+              "OrderStatus"
+            ]
+          },
+          {
+            "construct": "owl.inverse_property",
+            "count": 2,
+            "detail": "owl:inverseOf pairs two properties for inference; both are fields and the pairing is kept in extras['owl_inverse_of'].",
+            "locations": [
+              "Customer.placed",
+              "Order.placedBy"
+            ]
+          },
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "Commerce ontology"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/02-typical-classes-and-properties.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [
+          "https://example.com/commerce"
+        ],
+        "ontology": {
+          "iri": "https://example.com/commerce"
+        }
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Commerce ontology",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Commerce ontology",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#Agent",
+          "rdfs_label": "Agent"
+        },
+        "fields": [],
+        "key": "Agent",
+        "key_type": null,
+        "kind": "record",
+        "name": "Agent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A party that places orders.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#Customer",
+          "owl_disjoint_with": [
+            "ex:Order"
+          ],
+          "owl_superclasses": [
+            "Agent"
+          ],
+          "rdfs_label": "Customer"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#placed",
+              "owl_inverse_of": [
+                "ex:placedBy"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Order",
+              "rdfs_label": "placed"
+            },
+            "field_number": null,
+            "key": "Customer.placed",
+            "name": "placed",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Order",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Customer",
+        "key_type": null,
+        "kind": "record",
+        "name": "Customer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#Order",
+          "owl_disjoint_with": [
+            "ex:Customer"
+          ],
+          "rdfs_label": "Order"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#hasLine",
+              "owl_property_kind": "object",
+              "owl_range": "ex:OrderLine"
+            },
+            "field_number": null,
+            "key": "Order.hasLine",
+            "name": "hasLine",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "OrderLine",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#orderId",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "rdfs_label": "order identifier"
+            },
+            "field_number": null,
+            "key": "Order.orderId",
+            "name": "orderId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#placedAt",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:dateTime"
+            },
+            "field_number": null,
+            "key": "Order.placedAt",
+            "name": "placedAt",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "datetime",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#placedBy",
+              "owl_inverse_of": [
+                "ex:placed"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Customer",
+              "rdfs_label": "placed by"
+            },
+            "field_number": null,
+            "key": "Order.placedBy",
+            "name": "placedBy",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Customer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Order",
+        "key_type": null,
+        "kind": "record",
+        "name": "Order",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#OrderLine",
+          "rdfs_label": "Order line"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#quantity",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:positiveInteger"
+            },
+            "field_number": null,
+            "key": "OrderLine.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#refersTo",
+              "owl_functional": true,
+              "owl_property_kind": "object",
+              "owl_range": "ex:Product"
+            },
+            "field_number": null,
+            "key": "OrderLine.refersTo",
+            "name": "refersTo",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Product",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "OrderLine",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderLine",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.Cancelled",
+            "name": "Cancelled",
+            "value": "https://example.com/commerce#Cancelled"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.New",
+            "name": "New",
+            "value": "https://example.com/commerce#New"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.Paid",
+            "name": "Paid",
+            "value": "https://example.com/commerce#Paid"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OrderStatus.Shipped",
+            "name": "Shipped",
+            "value": "https://example.com/commerce#Shipped"
+          }
+        ],
+        "extras": {
+          "native_id": "https://example.com/commerce#OrderStatus",
+          "provenance": "inferred",
+          "provenance_evidence": "OWL does not close a class over the individuals asserted in it; the enum lists the ones this ontology names."
+        },
+        "fields": [],
+        "key": "OrderStatus",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OrderStatus",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#Organisation",
+          "owl_superclasses": [
+            "Agent"
+          ],
+          "rdfs_label": "Organisation"
+        },
+        "fields": [],
+        "key": "Organisation",
+        "key_type": null,
+        "kind": "record",
+        "name": "Organisation",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/commerce#Product",
+          "rdfs_label": "Product"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#price",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:decimal"
+            },
+            "field_number": null,
+            "key": "Product.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/commerce#sku",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Product.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Product",
+        "key_type": null,
+        "kind": "record",
+        "name": "Product",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "2.3.0"
+  },
+  "corpus_path": "owl/02-typical-classes-and-properties.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:b7ac3d10ac2bb6850f233ba2e5b527a1b0bf512d2a61995709af62dc2da65c34",
+  "lint": {
+    "findings": 16,
+    "grade": "C",
+    "report_fingerprint": "9b2c0fd361a981500c8bc00e8a535942836fe8fe7cbeb2e3c6ee12cfbed1d00e",
+    "score": 70,
+    "severity_counts": {
+      "error": 0,
+      "info": 10,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

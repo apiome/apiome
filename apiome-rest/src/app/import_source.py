@@ -1219,6 +1219,13 @@ def load_builtin_import_sources() -> None:
     # Sparkplug B payloads (binary intake) and topic-namespace descriptions, event paradigm.
     from . import sparkplug_import_source as _sparkplug  # noqa: F401
 
+    # ``shacl_import_source`` / ``owl_import_source`` / ``jsonld_import_source`` (FMT-9.4)
+    # self-register the linked-data adapters — SHACL shapes graphs, OWL / RDFS ontologies and
+    # JSON-LD contexts, data_schema paradigm, over the shared ``rdf_graph`` intake.
+    from . import shacl_import_source as _shacl  # noqa: F401
+    from . import owl_import_source as _owl  # noqa: F401
+    from . import jsonld_import_source as _jsonld  # noqa: F401
+
     # ``ros2_import_source`` (FMT-9.3) self-registers the ``ros2`` adapter — ROS 2 ``.msg`` /
     # ``.srv`` / ``.action`` interfaces and interface packages, rpc paradigm.
     from . import ros2_import_source as _ros2  # noqa: F401

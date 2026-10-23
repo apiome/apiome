@@ -2145,6 +2145,49 @@
       "waivers": {}
     },
     {
+      "format_key": "jsonld",
+      "label": "JSON-LD contexts",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "jsonld"
+      ],
+      "corpus_directories": [
+        "jsonld"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "jsonld"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "jtd",
       "label": "JSON Type Definition",
       "paradigm": "data_schema",
@@ -2892,6 +2935,49 @@
       "waivers": {}
     },
     {
+      "format_key": "owl",
+      "label": "OWL / RDFS ontologies",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "owl"
+      ],
+      "corpus_directories": [
+        "owl"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 8,
+      "golden_directories": [
+        "owl"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "pkl",
       "label": "Pkl",
       "paradigm": "data_schema",
@@ -3159,6 +3245,49 @@
       "goldens": 7,
       "golden_directories": [
         "ros2"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "shacl",
+      "label": "SHACL shapes",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "shacl"
+      ],
+      "corpus_directories": [
+        "shacl"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 8,
+      "golden_directories": [
+        "shacl"
       ],
       "emit_key": null,
       "roundtrip_row": true,
@@ -4089,14 +4218,11 @@
     "cics-bms",
     "hoppscotch",
     "ims",
-    "jsonld",
     "lwm2m",
     "matter",
     "natural-ddm",
-    "owl",
     "pli",
     "schematron",
-    "shacl",
     "soapui",
     "thunder-client",
     "vsam-idcams"

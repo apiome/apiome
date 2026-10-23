@@ -1,0 +1,1164 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [
+          {
+            "construct": "shacl.complex_path",
+            "count": 1,
+            "detail": "A sequence, inverse, alternative or zero-or-one property path is projected to one field named after its steps; the path itself is kept in extras['shacl_path'].",
+            "locations": [
+              "HierarchyShape.label_or_prefLabel"
+            ]
+          },
+          {
+            "construct": "shacl.language_constraint",
+            "count": 2,
+            "detail": "sh:languageIn / sh:uniqueLang constrain language tags, which the canonical string does not carry; they are kept in extras.",
+            "locations": [
+              "CoverageShape.language",
+              "CoverageShape.uniqueLang"
+            ]
+          },
+          {
+            "construct": "shacl.negation",
+            "count": 1,
+            "detail": "sh:not requires values *not* to conform to a shape; the field is kept and the negated shape is in extras['shacl_not'].",
+            "locations": [
+              "CoverageShape.notThis"
+            ]
+          },
+          {
+            "construct": "shacl.open_world_target",
+            "count": 1,
+            "detail": "sh:targetSubjectsOf / sh:targetObjectsOf select focus nodes by the shape of the data graph, not by declaration; Apiome's model is closed-world, so the shape is imported as a type and the target is kept in extras only.",
+            "locations": [
+              "CoverageShape"
+            ]
+          },
+          {
+            "construct": "shacl.property_pair",
+            "count": 4,
+            "detail": "A property-pair constraint (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) compares two properties' values; it has no canonical analogue and is kept in extras.",
+            "locations": [
+              "CoverageShape.mustDiffer",
+              "CoverageShape.mustMatch",
+              "CoverageShape.notAfter",
+              "CoverageShape.startsBefore"
+            ]
+          },
+          {
+            "construct": "shacl.qualified_value_shape",
+            "count": 1,
+            "detail": "A qualified value shape counts only the values that conform to another shape; the field is kept and the qualified cardinality is in extras['shacl_qualified'].",
+            "locations": [
+              "CoverageShape.qualified"
+            ]
+          },
+          {
+            "construct": "shacl.recursive_shape",
+            "count": 1,
+            "detail": "The shape is part of a reference cycle. SHACL leaves validation through recursive shapes undefined; Apiome keeps the cycle as recursive type references and stops there.",
+            "locations": [
+              "HierarchyShape"
+            ]
+          },
+          {
+            "construct": "shacl.sparql_constraint",
+            "count": 1,
+            "detail": "A SPARQL-based constraint (sh:sparql) is arbitrary query logic, not a structural constraint; it is not modelled. Its message and query are kept in extras['shacl_sparql'].",
+            "locations": [
+              "SparqlConstrainedShape"
+            ]
+          },
+          {
+            "construct": "shacl.unbounded_path",
+            "count": 1,
+            "detail": "A zero-or-more / one-or-more property path recurses over the graph without bound; it is projected to one field and the path is kept in extras['shacl_path'].",
+            "locations": [
+              "HierarchyShape.broader_zeroOrMore"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "shacl/04-stress-constraint-components.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "property_groups": [
+          {
+            "iri": "ex:MainGroup",
+            "label": "Main",
+            "order": 1
+          }
+        ],
+        "shapes": [
+          "CoverageShape",
+          "HierarchyShape",
+          "NestedShape",
+          "SparqlConstrainedShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "04-stress-constraint-components",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "04-stress-constraint-components",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#CoverageShape",
+          "shacl_closed": true,
+          "shacl_ignored_properties": [
+            "rdf:type",
+            "rdfs:label"
+          ],
+          "shacl_target_class": [
+            "ex:Thing"
+          ],
+          "shacl_target_node": [
+            "ex:SpecificThing"
+          ],
+          "shacl_target_objects_of": [
+            "ex:measuredBy"
+          ],
+          "shacl_target_subjects_of": [
+            "ex:measures"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#aClass",
+              "shacl_class": "ex:Category",
+              "shacl_path": "ex:aClass"
+            },
+            "field_number": null,
+            "key": "CoverageShape.aClass",
+            "name": "aClass",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "HierarchyShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#aDatatype",
+              "shacl_datatype": "xsd:decimal",
+              "shacl_path": "ex:aDatatype"
+            },
+            "field_number": null,
+            "key": "CoverageShape.aDatatype",
+            "name": "aDatatype",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#aNodeKind",
+              "shacl_node_kind": "BlankNodeOrIRI",
+              "shacl_path": "ex:aNodeKind"
+            },
+            "field_number": null,
+            "key": "CoverageShape.aNodeKind",
+            "name": "aNodeKind",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#atLeastOne",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:atLeastOne"
+            },
+            "field_number": null,
+            "key": "CoverageShape.atLeastOne",
+            "name": "atLeastOne",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#atMostThree",
+              "shacl_max_count": 3,
+              "shacl_path": "ex:atMostThree"
+            },
+            "field_number": null,
+            "key": "CoverageShape.atMostThree",
+            "name": "atMostThree",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "fixed"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#constant",
+              "shacl_has_value": [
+                "fixed"
+              ],
+              "shacl_path": "ex:constant"
+            },
+            "field_number": null,
+            "key": "CoverageShape.constant",
+            "name": "constant",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "unset",
+            "deprecated": false,
+            "description": "Carries description, order, group and default for form generation.",
+            "extras": {
+              "native_id": "https://example.com/ns#documented",
+              "shacl_group": "ex:MainGroup",
+              "shacl_name": "Documented value",
+              "shacl_order": 10,
+              "shacl_path": "ex:documented",
+              "shacl_severity": "Warning"
+            },
+            "field_number": null,
+            "key": "CoverageShape.documented",
+            "name": "documented",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "alpha",
+                "beta",
+                "gamma"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#enumerated",
+              "shacl_path": "ex:enumerated"
+            },
+            "field_number": null,
+            "key": "CoverageShape.enumerated",
+            "name": "enumerated",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#language",
+              "shacl_language_in": [
+                "en",
+                "nl",
+                "de"
+              ],
+              "shacl_path": "ex:language"
+            },
+            "field_number": null,
+            "key": "CoverageShape.language",
+            "name": "language",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": 1.0,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#maxExc",
+              "shacl_path": "ex:maxExc"
+            },
+            "field_number": null,
+            "key": "CoverageShape.maxExc",
+            "name": "maxExc",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 100.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#maxInc",
+              "shacl_path": "ex:maxInc"
+            },
+            "field_number": null,
+            "key": "CoverageShape.maxInc",
+            "name": "maxInc",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#maxLen",
+              "shacl_path": "ex:maxLen"
+            },
+            "field_number": null,
+            "key": "CoverageShape.maxLen",
+            "name": "maxLen",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#minExc",
+              "shacl_path": "ex:minExc"
+            },
+            "field_number": null,
+            "key": "CoverageShape.minExc",
+            "name": "minExc",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#minInc",
+              "shacl_path": "ex:minInc"
+            },
+            "field_number": null,
+            "key": "CoverageShape.minInc",
+            "name": "minInc",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#minLen",
+              "shacl_path": "ex:minLen"
+            },
+            "field_number": null,
+            "key": "CoverageShape.minLen",
+            "name": "minLen",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#mustDiffer",
+              "shacl_path": "ex:mustDiffer",
+              "shacl_property_pair": {
+                "disjoint": "ex:otherValue"
+              }
+            },
+            "field_number": null,
+            "key": "CoverageShape.mustDiffer",
+            "name": "mustDiffer",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#mustMatch",
+              "shacl_path": "ex:mustMatch",
+              "shacl_property_pair": {
+                "equals": "ex:mirroredValue"
+              }
+            },
+            "field_number": null,
+            "key": "CoverageShape.mustMatch",
+            "name": "mustMatch",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#nested",
+              "shacl_path": "ex:nested"
+            },
+            "field_number": null,
+            "key": "CoverageShape.nested",
+            "name": "nested",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "NestedShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#notAfter",
+              "shacl_path": "ex:notAfter",
+              "shacl_property_pair": {
+                "lessThanOrEquals": "ex:limit"
+              }
+            },
+            "field_number": null,
+            "key": "CoverageShape.notAfter",
+            "name": "notAfter",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#notThis",
+              "shacl_not": {
+                "sh:datatype": "xsd:boolean"
+              },
+              "shacl_path": "ex:notThis"
+            },
+            "field_number": null,
+            "key": "CoverageShape.notThis",
+            "name": "notThis",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[a-z0-9-]+$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#pattern",
+              "shacl_flags": "i",
+              "shacl_path": "ex:pattern"
+            },
+            "field_number": null,
+            "key": "CoverageShape.pattern",
+            "name": "pattern",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#qualified",
+              "shacl_path": "ex:qualified",
+              "shacl_qualified": {
+                "disjoint": true,
+                "maxCount": 2,
+                "minCount": 1,
+                "shape": {
+                  "sh:class": "ex:Preferred"
+                }
+              }
+            },
+            "field_number": null,
+            "key": "CoverageShape.qualified",
+            "name": "qualified",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#startsBefore",
+              "shacl_path": "ex:startsBefore",
+              "shacl_property_pair": {
+                "lessThan": "ex:endsAfter"
+              }
+            },
+            "field_number": null,
+            "key": "CoverageShape.startsBefore",
+            "name": "startsBefore",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#uniqueLang",
+              "shacl_path": "ex:uniqueLang",
+              "shacl_unique_lang": true
+            },
+            "field_number": null,
+            "key": "CoverageShape.uniqueLang",
+            "name": "uniqueLang",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "CoverageShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "CoverageShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#HierarchyShape",
+          "shacl_recursive": true,
+          "shacl_target_class": [
+            "ex:Category"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "shacl_class": "ex:Category",
+              "shacl_path": "(ex:broader)*"
+            },
+            "field_number": null,
+            "key": "HierarchyShape.broader_zeroOrMore",
+            "name": "broader_zeroOrMore",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "HierarchyShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "shacl_min_count": 1,
+              "shacl_path": "ex:label | ex:prefLabel"
+            },
+            "field_number": null,
+            "key": "HierarchyShape.label_or_prefLabel",
+            "name": "label_or_prefLabel",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "HierarchyShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "HierarchyShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#NestedShape"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#innerValue",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:innerValue"
+            },
+            "field_number": null,
+            "key": "NestedShape.innerValue",
+            "name": "innerValue",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "NestedShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "NestedShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#SparqlConstrainedShape",
+          "shacl_sparql": [
+            {
+              "message": "Invoice total must equal the sum of its line amounts.",
+              "select": "SELECT $this\n            WHERE {\n                $this <https://example.com/ns#total> ?total .\n                { SELECT $this (SUM(?amount) AS ?sum) WHERE {\n                    $this <https://example.com/ns#line> ?line .\n                    ?line <https://example.com/ns#amount> ?amount .\n                } GROUP BY $this }\n                FILTER (?total != ?sum)\n            }"
+            }
+          ],
+          "shacl_target_class": [
+            "ex:Invoice"
+          ]
+        },
+        "fields": [],
+        "key": "SparqlConstrainedShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "SparqlConstrainedShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/04-stress-constraint-components.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:5500bd4b07bfbd855171a95cb611a4a670cb6168793fd02eebe36efa660add4b",
+  "lint": {
+    "findings": 31,
+    "grade": "D",
+    "report_fingerprint": "8bbf7a606374e229b45d6ba3e4d9341e86bbcdfff2ca0208d95521dc7bcb5fe6",
+    "score": 63,
+    "severity_counts": {
+      "error": 0,
+      "info": 27,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

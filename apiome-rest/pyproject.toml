@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.431.0"
+version = "1.432.0"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -60,6 +60,9 @@ dependencies = [
     # DICOM import (FMT-6.7): the PS3.6 data dictionary and UID registry only. Element bytes are
     # read by app.dicom_part10, which never decodes pixel data.
     "pydicom>=3.0.0",
+    # SHACL / OWL / RDFS import (FMT-9.4): the Turtle, RDF/XML and JSON-LD readers. Remote
+    # documents are never fetched — app.rdf_graph refuses them before rdflib sees the input.
+    "rdflib>=7.0.0",
 ]
 
 [project.optional-dependencies]

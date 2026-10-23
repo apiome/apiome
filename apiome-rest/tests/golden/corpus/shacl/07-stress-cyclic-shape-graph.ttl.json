@@ -1,0 +1,341 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [
+          {
+            "construct": "shacl.logical_alternatives",
+            "count": 2,
+            "detail": "sh:or / sh:xone alternatives are projected as optional fields (or a union of the alternative types); the exclusive-choice semantics are kept in extras['shacl_alternative'].",
+            "locations": [
+              "AShape",
+              "BShape"
+            ]
+          },
+          {
+            "construct": "shacl.recursive_shape",
+            "count": 5,
+            "detail": "The shape is part of a reference cycle. SHACL leaves validation through recursive shapes undefined; Apiome keeps the cycle as recursive type references and stops there.",
+            "locations": [
+              "AShape",
+              "BShape",
+              "KnowsShape",
+              "PersonShape",
+              "TreeShape"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "shacl/07-stress-cyclic-shape-graph.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "shapes": [
+          "AShape",
+          "BShape",
+          "KnowsShape",
+          "PersonShape",
+          "TreeShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "07-stress-cyclic-shape-graph",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "07-stress-cyclic-shape-graph",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#AShape",
+          "shacl_or": [
+            "BShape",
+            {
+              "sh:datatype": "xsd:string"
+            }
+          ],
+          "shacl_recursive": true
+        },
+        "fields": [],
+        "key": "AShape",
+        "key_type": null,
+        "kind": "union",
+        "name": "AShape",
+        "namespace": null,
+        "union_members": [
+          "BShape",
+          "string"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#BShape",
+          "shacl_or": [
+            "AShape",
+            {
+              "sh:datatype": "xsd:integer"
+            }
+          ],
+          "shacl_recursive": true
+        },
+        "fields": [],
+        "key": "BShape",
+        "key_type": null,
+        "kind": "union",
+        "name": "BShape",
+        "namespace": null,
+        "union_members": [
+          "AShape",
+          "integer"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#KnowsShape",
+          "shacl_recursive": true
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#person",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:person"
+            },
+            "field_number": null,
+            "key": "KnowsShape.person",
+            "name": "person",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "PersonShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "KnowsShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "KnowsShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#PersonShape",
+          "shacl_recursive": true,
+          "shacl_target_class": [
+            "ex:Person"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#knows",
+              "shacl_path": "ex:knows"
+            },
+            "field_number": null,
+            "key": "PersonShape.knows",
+            "name": "knows",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "KnowsShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#name",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:name"
+            },
+            "field_number": null,
+            "key": "PersonShape.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PersonShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "PersonShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#TreeShape",
+          "shacl_recursive": true,
+          "shacl_target_class": [
+            "ex:TreeNode"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#child",
+              "shacl_path": "ex:child"
+            },
+            "field_number": null,
+            "key": "TreeShape.child",
+            "name": "child",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "TreeShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "TreeShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "TreeShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/07-stress-cyclic-shape-graph.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:8e491a11d6574da7b38f73bd6837a350a303ab24a187012945300cdeb08a4aba",
+  "lint": {
+    "findings": 10,
+    "grade": "C",
+    "report_fingerprint": "258ed8b700aeee7de192a72d071bb5dc49b7e211e069d63530f4dd88ebd8db28",
+    "score": 75,
+    "severity_counts": {
+      "error": 0,
+      "info": 5,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

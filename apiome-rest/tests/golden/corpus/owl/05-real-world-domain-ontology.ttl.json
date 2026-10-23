@@ -1,0 +1,608 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": "Adverse event cases, reporters, products and outcomes.",
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.disjointness",
+            "count": 2,
+            "detail": "owl:disjointWith states that no individual is in both classes; the canonical model has no such constraint, so it is kept in extras['owl_disjoint_with'].",
+            "locations": [
+              "Consumer",
+              "HealthcareProfessional"
+            ]
+          },
+          {
+            "construct": "owl.individual_enumeration",
+            "count": 1,
+            "detail": "The class lists named individuals but is not closed with owl:oneOf; under OWL more members may exist. Apiome lists the asserted individuals as the members of an enum.",
+            "locations": [
+              "SeriousnessCode"
+            ]
+          },
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "Pharmacovigilance case ontology"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/05-real-world-domain-ontology.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [
+          "https://example.com/pharmacovigilance",
+          "https://example.com/pharmacovigilance/3.1.0"
+        ],
+        "ontology": {
+          "iri": "https://example.com/pharmacovigilance",
+          "license": "https://www.apache.org/licenses/LICENSE-2.0",
+          "version_iri": "https://example.com/pharmacovigilance/3.1.0"
+        }
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Pharmacovigilance case ontology",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Pharmacovigilance case ontology",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#AdverseEvent",
+          "rdfs_label": "Adverse event"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#onsetDate",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:date"
+            },
+            "field_number": null,
+            "key": "AdverseEvent.onsetDate",
+            "name": "onsetDate",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "date",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#outcome",
+              "owl_property_kind": "object",
+              "owl_range": "ex:OutcomeCode"
+            },
+            "field_number": null,
+            "key": "AdverseEvent.outcome",
+            "name": "outcome",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "OutcomeCode",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#seriousness",
+              "owl_property_kind": "object",
+              "owl_range": "ex:SeriousnessCode"
+            },
+            "field_number": null,
+            "key": "AdverseEvent.seriousness",
+            "name": "seriousness",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "SeriousnessCode",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "AdverseEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "AdverseEvent",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Case",
+          "rdfs_label": "Case"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#caseIdentifier",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {
+                "maxCount": 1,
+                "minCount": 1,
+                "on": "xsd:string"
+              }
+            },
+            "field_number": null,
+            "key": "Case.caseIdentifier",
+            "name": "caseIdentifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#hasEvent",
+              "owl_property_kind": "object",
+              "owl_range": "ex:AdverseEvent",
+              "owl_restriction": {
+                "minCount": 1,
+                "on": "ex:AdverseEvent"
+              }
+            },
+            "field_number": null,
+            "key": "Case.hasEvent",
+            "name": "hasEvent",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "AdverseEvent",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#receivedOn",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:date"
+            },
+            "field_number": null,
+            "key": "Case.receivedOn",
+            "name": "receivedOn",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "date",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#reportedBy",
+              "owl_property_kind": "object",
+              "owl_range": "ex:Reporter",
+              "rdfs_label": "reported by"
+            },
+            "field_number": null,
+            "key": "Case.reportedBy",
+            "name": "reportedBy",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Reporter",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#suspectProduct",
+              "owl_property_kind": "object",
+              "owl_range": "ex:Product"
+            },
+            "field_number": null,
+            "key": "Case.suspectProduct",
+            "name": "suspectProduct",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Product",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Case",
+        "key_type": null,
+        "kind": "record",
+        "name": "Case",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Consumer",
+          "owl_disjoint_with": [
+            "ex:HealthcareProfessional"
+          ],
+          "owl_superclasses": [
+            "Reporter"
+          ],
+          "rdfs_label": "Consumer"
+        },
+        "fields": [],
+        "key": "Consumer",
+        "key_type": null,
+        "kind": "record",
+        "name": "Consumer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#HealthcareProfessional",
+          "owl_disjoint_with": [
+            "ex:Consumer"
+          ],
+          "owl_superclasses": [
+            "Reporter"
+          ],
+          "rdfs_label": "Healthcare professional"
+        },
+        "fields": [],
+        "key": "HealthcareProfessional",
+        "key_type": null,
+        "kind": "record",
+        "name": "HealthcareProfessional",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": "Recovered",
+            "extras": {},
+            "key": "OutcomeCode.Recovered",
+            "name": "Recovered",
+            "value": "https://example.com/pharmacovigilance#Recovered"
+          },
+          {
+            "deprecated": false,
+            "description": "Recovering",
+            "extras": {},
+            "key": "OutcomeCode.Recovering",
+            "name": "Recovering",
+            "value": "https://example.com/pharmacovigilance#Recovering"
+          },
+          {
+            "deprecated": false,
+            "description": "Not recovered",
+            "extras": {},
+            "key": "OutcomeCode.NotRecovered",
+            "name": "NotRecovered",
+            "value": "https://example.com/pharmacovigilance#NotRecovered"
+          },
+          {
+            "deprecated": false,
+            "description": "Fatal",
+            "extras": {},
+            "key": "OutcomeCode.Fatal",
+            "name": "Fatal",
+            "value": "https://example.com/pharmacovigilance#Fatal"
+          },
+          {
+            "deprecated": false,
+            "description": "Unknown",
+            "extras": {},
+            "key": "OutcomeCode.Unknown",
+            "name": "Unknown",
+            "value": "https://example.com/pharmacovigilance#Unknown"
+          }
+        ],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#OutcomeCode"
+        },
+        "fields": [],
+        "key": "OutcomeCode",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OutcomeCode",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Party",
+          "rdfs_label": "Party"
+        },
+        "fields": [],
+        "key": "Party",
+        "key_type": null,
+        "kind": "record",
+        "name": "Party",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Product",
+          "rdfs_label": "Product"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/pharmacovigilance#containsSubstance",
+              "owl_property_kind": "object",
+              "owl_range": "ex:Substance"
+            },
+            "field_number": null,
+            "key": "Product.containsSubstance",
+            "name": "containsSubstance",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Substance",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Product",
+        "key_type": null,
+        "kind": "record",
+        "name": "Product",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The person or organisation that reported the case.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Reporter",
+          "owl_superclasses": [
+            "Party"
+          ],
+          "rdfs_label": "Reporter"
+        },
+        "fields": [],
+        "key": "Reporter",
+        "key_type": null,
+        "kind": "record",
+        "name": "Reporter",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": "Non-serious",
+            "extras": {},
+            "key": "SeriousnessCode.NonSerious",
+            "name": "NonSerious",
+            "value": "https://example.com/pharmacovigilance#NonSerious"
+          },
+          {
+            "deprecated": false,
+            "description": "Serious",
+            "extras": {},
+            "key": "SeriousnessCode.Serious",
+            "name": "Serious",
+            "value": "https://example.com/pharmacovigilance#Serious"
+          }
+        ],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#SeriousnessCode",
+          "provenance": "inferred",
+          "provenance_evidence": "OWL does not close a class over the individuals asserted in it; the enum lists the ones this ontology names.",
+          "rdfs_label": "Seriousness"
+        },
+        "fields": [],
+        "key": "SeriousnessCode",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SeriousnessCode",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/pharmacovigilance#Substance",
+          "rdfs_label": "Substance"
+        },
+        "fields": [],
+        "key": "Substance",
+        "key_type": null,
+        "kind": "record",
+        "name": "Substance",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "3.1.0"
+  },
+  "corpus_path": "owl/05-real-world-domain-ontology.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 10
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:fad9d2d0d4e19a0c4eddd1594d3eff3ddeff776d32ab1f2f553adaf57140d013",
+  "lint": {
+    "findings": 19,
+    "grade": "C",
+    "report_fingerprint": "0903b80a9bdb019b315d11ae421530b15c2d856830d20964e1da8246caa32d55",
+    "score": 70,
+    "severity_counts": {
+      "error": 0,
+      "info": 10,
+      "warning": 9
+    }
+  },
+  "snapshot_version": 1
+}

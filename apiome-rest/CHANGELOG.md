@@ -5,6 +5,46 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.432.0] - 2026-10-22
+
+### Added
+- **SHACL, JSON-LD and OWL/RDFS import (#5471, FMT-9.4)**: three import sources on the **data_schema** paradigm
+  (file, URL, paste and fileset), over one hardened linked-data intake (`app.rdf_graph`, new dependency `rdflib`).
+  - `shacl` (alias `shacl-shapes`) reads a SHACL shapes graph in Turtle, RDF/XML or JSON-LD. Each named
+    `sh:NodeShape` becomes a `RECORD` (a shape that is only `sh:or` / `sh:xone` alternatives becomes a `UNION`); each
+    `sh:property` a field named after its path. `sh:datatype` maps XSD types to canonical scalars, `sh:node` names the
+    referenced shape's type, `sh:class` the type of the shape targeting that class (else an IRI string). A property is
+    single-valued at `sh:maxCount 1`, else a list with `min_items` / `max_items`; `sh:minCount` ≥ 1 makes it required.
+    `sh:minInclusive` … `sh:maxExclusive`, `sh:minLength` / `sh:maxLength`, `sh:pattern`, `sh:in` and `sh:hasValue` map to
+    canonical constraints; `sh:node` / `sh:and` on a node shape are inheritance; anonymous shapes are synthesized
+    records. Shape cycles terminate and are declared (`shacl.recursive_shape`).
+  - `owl` (alias `rdfs`) reads an OWL or RDFS ontology in Turtle, RDF/XML or JSON-LD. Classes become `RECORD`s carrying
+    their named superclasses' fields; a property becomes a field of each class in its `rdfs:domain` (sub-properties
+    inherit domain and range) and of each class that restricts it — a list unless `owl:FunctionalProperty` or capped
+    at one, with cardinality restrictions as `min_items` / `max_items`. `owl:oneOf` → `ENUM`, `owl:unionOf` → `UNION`,
+    a faceted `rdfs:Datatype` → `ALIAS` with constraints; a class's individuals without `owl:oneOf` become an enum
+    stamped `inferred`. Every import declares `owl.open_world`: inferred consequences are never imported, and the
+    inference-only axioms (class expressions, quantified restrictions, property characteristics and chains, inverse,
+    equivalence, disjointness, `owl:sameAs` / `owl:differentFrom`) are kept in `owl_*` extras and declared.
+  - `jsonld` (alias `json-ld`) reads a JSON-LD context: one `RECORD` with a field per term, the expanded IRI kept as
+    `native_id` provenance and the definition in `extras.jsonld_definition`. `@type` coercion and `@container`
+    (`@set` / `@list` lists, `@language` → `LanguageMap`, `@index` / `@id` / `@type` keyed maps) become field types;
+    scoped contexts nested records (or an `ENUM` for an `@vocab` term naming values). Prefixes, keyword aliases and
+    class terms are recorded on the root record; context arrays merge in order. Declared: `@vocab` open vocabulary,
+    instance data beside the context, reverse properties, graph containers.
+  - Nothing is fetched. `owl:imports` must resolve to an ontology another upload member declares (well-known W3C /
+    DCMI vocabularies are declared external imports); a JSON-LD `@context` / `@import` reference must be an upload
+    member. Anything else is refused with `INPUT_REFERENCE_UNRESOLVED`, named. RDF/XML passes the hardened XML parser
+    first (no DTD / entities).
+  - Refusals: `INPUT_MALFORMED`, `INPUT_TRUNCATED` (a bracket, list, string or IRI open at end of input; JSON ending
+    mid-value), `INPUT_SEMANTIC_INVALID` (no shapes / no vocabulary / no `@context` / a context with no terms),
+    `INPUT_REFERENCE_UNRESOLVED` (also an undefined `sh:node` shape), `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH`
+    (an ontology sent to SHACL, a shapes graph to OWL, plain JSON to JSON-LD).
+  - Declared limits ride in `extras.{shacl,owl,jsonld}.capability_limits` and become coverage-ledger rows; capability
+    registry v33, version coverage (SHACL Core, OWL 2, RDF Schema 1.1, JSON-LD 1.1 / 1.0), inference-provenance
+    entries, the staged corpus activated plus an RDFS fixture, corpus goldens, MCP toolset goldens and the round-trip
+    matrix rows (import-only).
+
 ## [1.431.0] - 2026-10-22
 
 ### Added

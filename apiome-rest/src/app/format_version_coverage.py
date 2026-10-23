@@ -1585,6 +1585,55 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "shacl": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="SHACL Core (W3C Recommendation, 2017)",
+                format_key="shacl",
+                support=VersionSupport.UNGATED,
+                note="A shapes graph carries no SHACL version marker: SHACL Core node and property "
+                "shapes are read from Turtle, RDF/XML or JSON-LD. SHACL-SPARQL constraints (`sh:sparql`) "
+                "are a declared limit, not modelled.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "owl": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="OWL 2 (W3C Recommendation, 2012)",
+                format_key="owl",
+                support=VersionSupport.UNGATED,
+                note="An ontology carries no OWL language-version marker (`owl:versionInfo` versions "
+                "the ontology, not the language): OWL 2 and OWL 1 class and property axioms are read "
+                "from Turtle, RDF/XML or JSON-LD. OWL/XML, Manchester and functional syntax are not read.",
+            ),
+            FormatVersion(
+                version="RDF Schema 1.1",
+                format_key="rdfs",
+                support=VersionSupport.UNGATED,
+                note="`rdfs:Class`, `rdf:Property`, `rdfs:subClassOf`, `rdfs:domain` and `rdfs:range` "
+                "are read by the same reader as OWL.",
+            ),
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "jsonld": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="JSON-LD 1.1 / 1.0 contexts",
+                format_key="jsonld",
+                support=VersionSupport.UNGATED,
+                note="The reader does not branch on `@version`: JSON-LD 1.0 term definitions and the "
+                "1.1 additions (scoped contexts, `@protected`, `@prefix`, `@nest`, `@import`, "
+                "`@direction`, `@json`) are read alike. Remote contexts are never fetched.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pydantic": VersionCoverage(
         reads=[
             FormatVersion(

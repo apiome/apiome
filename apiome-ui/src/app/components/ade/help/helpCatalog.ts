@@ -727,6 +727,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['industrial', 'iot', 'telemetry', 'topic', 'metric', 'alias', 'nbirth', 'ddata', 'edge node'],
   },
   {
+    id: 'linked-data-import',
+    title: 'Import SHACL, OWL and JSON-LD',
+    summary: 'Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.',
+    page: 'apiome-docs/docs/bring-in/linked-data-import.md',
+    section: 'reference',
+    keywords: ['rdfs', 'jsonld', 'linked data', 'rdf', 'turtle', 'ontology', 'shapes', 'context', 'semantic web', 'iri'],
+  },
+  {
     id: 'ros2-import',
     title: 'Import ROS 2 interfaces',
     summary: 'Catalog ROS 2 messages, services and actions from .msg, .srv and .action files.',

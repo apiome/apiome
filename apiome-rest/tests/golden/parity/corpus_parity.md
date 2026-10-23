@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 84
+- **Formats gated:** 87
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -57,6 +57,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
 | `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `istio` |
 | `json-schema` | JSON Schema | data_schema | 12 | 5 | 0 | 0 | 17 | 5/6 (+1 waived) | 12 | `json-schema` |
+| `jsonld` | JSON-LD contexts | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `jtd` | JSON Type Definition | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `jtd` |
 | `k8s-crd` | Kubernetes CRD | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `k8s-crd` |
 | `kafka-connect` | Kafka Connect Schema | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `kafka-connect` |
@@ -72,12 +73,14 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `opcua-nodeset` | OPC UA NodeSet2 | rpc | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `openapi` | OpenAPI / Swagger | rest | 47 | 12 | 0 | 0 | 59 | 6/6 | 42 | `openapi` |
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
+| `owl` | OWL / RDFS ontologies | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `pkl` | Pkl | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `postman` | Postman | rest | 13 | 11 | 0 | 0 | 24 | 6/6 | 12 | `postman` |
 | `pydantic` | Pydantic models | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `raml` | RAML | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `raml` |
 | `relaxng` | RELAX NG | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `ros2` | ROS 2 interfaces | rpc | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
+| `shacl` | SHACL shapes | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `smithy` | Smithy | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `smithy` |
 | `sparkplug` | MQTT Sparkplug B | event | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `sql-ddl` | SQL DDL | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
@@ -148,6 +151,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `iso8583` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `istio` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `json-schema` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `jsonld` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `jtd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `k8s-crd` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `kafka-connect` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -163,12 +167,14 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `opcua-nodeset` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openapi` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `openrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `owl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pkl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `postman` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pydantic` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `raml` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `relaxng` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `ros2` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `shacl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `smithy` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `sparkplug` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `sql-ddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -207,4 +213,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `hoppscotch`, `ims`, `jsonld`, `lwm2m`, `matter`, `natural-ddm`, `owl`, `pli`, `schematron`, `shacl`, `soapui`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `hoppscotch`, `ims`, `lwm2m`, `matter`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`

@@ -1,0 +1,120 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "ontology"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/01-minimal-ontology.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [
+          "https://example.com/ontology"
+        ],
+        "ontology": {
+          "iri": "https://example.com/ontology"
+        }
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ontology",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ontology",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ontology#Beacon",
+          "rdfs_label": "Beacon"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ontology#identifier",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Beacon.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Beacon",
+        "key_type": null,
+        "kind": "record",
+        "name": "Beacon",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.0.0"
+  },
+  "corpus_path": "owl/01-minimal-ontology.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:c87f9e624dd54bb141b89e872ef34b179c6cdd9408fd637361fd85dd1ab69da9",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "12362d63f4a84e5f3a6dfcf78ca76f17ae974874b92b1992f1b604819ca4a984",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

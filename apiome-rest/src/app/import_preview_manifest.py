@@ -153,11 +153,15 @@ from .inference_provenance import (
     PROVENANCE_STAMP_KEYS,
     provenance_of,
 )
+from .jsonld_normalizer import JSONLD_EXTRAS_KEY
+from .jsonld_normalizer import PARTIAL_LIMITS as JSONLD_PARTIAL_LIMITS
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
 from .odcs_normalizer import ODCS_EXTRAS_KEY
 from .opcua_nodeset_normalizer import OPCUA_EXTRAS_KEY
 from .opcua_nodeset_normalizer import PARTIAL_LIMITS as OPCUA_PARTIAL_LIMITS
+from .owl_normalizer import OWL_EXTRAS_KEY
+from .owl_normalizer import PARTIAL_LIMITS as OWL_PARTIAL_LIMITS
 from .pkl_parser import PARTIAL_LIMITS as PKL_PARTIAL_LIMITS
 from .pkl_parser import PKL_FORMAT
 from .projection_taxonomy import ProjectionReason, ProjectionStatus
@@ -169,6 +173,8 @@ from .pydantic_parser import PARTIAL_LIMITS as PYDANTIC_PARTIAL_LIMITS
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
 from .ros2_normalizer import PARTIAL_LIMITS as ROS2_PARTIAL_LIMITS
 from .ros2_normalizer import ROS2_EXTRAS_KEY
+from .shacl_normalizer import PARTIAL_LIMITS as SHACL_PARTIAL_LIMITS
+from .shacl_normalizer import SHACL_EXTRAS_KEY
 from .sparkplug_normalizer import PARTIAL_LIMITS as SPARKPLUG_PARTIAL_LIMITS
 from .sparkplug_normalizer import SPARKPLUG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
@@ -280,6 +286,11 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-9.3: the ROS 2 projection record (input kind, interfaces, packages, declared limits).
         # Our own bookkeeping — a field's written type rides under `ros2_type`.
         ROS2_EXTRAS_KEY,
+        # FMT-9.4: the SHACL / OWL / JSON-LD projection records (files, ontologies, shapes, resolved
+        # contexts, declared limits). Our own bookkeeping — a construct's IRI rides on `native_id`.
+        SHACL_EXTRAS_KEY,
+        OWL_EXTRAS_KEY,
+        JSONLD_EXTRAS_KEY,
         # FMT-8.5: the CUE / Pkl / Dhall projection records (root file, files, exports, validated
         # instances, declared limits) sit under the format's own key. Our own bookkeeping.
         CUE_FORMAT,
@@ -1232,6 +1243,7 @@ def _document_scope_rows(
     ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_ros2_capability_rows(api))
+    ledger.extend(_linked_data_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
@@ -2085,6 +2097,29 @@ def _ros2_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         One ledger row per declared limit (see :func:`_graded_limit_rows`).
     """
     return _graded_limit_rows(api, format_key="ros2", extras_key=ROS2_EXTRAS_KEY, partial=ROS2_PARTIAL_LIMITS)
+
+
+def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-9.4 SHACL / OWL / JSON-LD declared limits as document-scoped ledger rows.
+
+    A limit whose construct is still a type or field (a complex path, a class expression, an open
+    vocabulary) is ``partially-mapped``; one that is not modelled at all (a SPARQL constraint, OWL's
+    inferred consequences, instance data beside a context) is ``not-parsed-by-adapter``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`); empty for any other format.
+    """
+    for format_key, extras_key, partial in (
+        ("shacl", SHACL_EXTRAS_KEY, SHACL_PARTIAL_LIMITS),
+        ("owl", OWL_EXTRAS_KEY, OWL_PARTIAL_LIMITS),
+        ("jsonld", JSONLD_EXTRAS_KEY, JSONLD_PARTIAL_LIMITS),
+    ):
+        if api.format == format_key:
+            return _graded_limit_rows(api, format_key=format_key, extras_key=extras_key, partial=partial)
+    return []
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

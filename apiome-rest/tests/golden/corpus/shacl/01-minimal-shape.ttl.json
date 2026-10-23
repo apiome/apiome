@@ -1,0 +1,108 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [],
+        "files": [
+          {
+            "path": "shacl/01-minimal-shape.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "shapes": [
+          "BeaconShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "01-minimal-shape",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "01-minimal-shape",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#BeaconShape",
+          "shacl_target_class": [
+            "ex:Beacon"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#identifier",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:identifier"
+            },
+            "field_number": null,
+            "key": "BeaconShape.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BeaconShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "BeaconShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/01-minimal-shape.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:dc1b5c0cc81506abab601302afe636ecab204de786ad9e6ed69731a24753b57e",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "e42be7f0611993521ba5da55b3e1a126237e968a5e54dcd0615016c05c3a79e4",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

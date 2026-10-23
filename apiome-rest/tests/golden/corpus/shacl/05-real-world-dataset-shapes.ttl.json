@@ -1,0 +1,743 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [
+          {
+            "construct": "shacl.language_constraint",
+            "count": 2,
+            "detail": "sh:languageIn / sh:uniqueLang constrain language tags, which the canonical string does not carry; they are kept in extras.",
+            "locations": [
+              "CatalogueShape.title",
+              "DatasetShape.title"
+            ]
+          },
+          {
+            "construct": "shacl.property_pair",
+            "count": 1,
+            "detail": "A property-pair constraint (sh:equals, sh:disjoint, sh:lessThan, sh:lessThanOrEquals) compares two properties' values; it has no canonical analogue and is kept in extras.",
+            "locations": [
+              "DatasetShape.modified"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "shacl/05-real-world-dataset-shapes.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "shapes": [
+          "CatalogueShape",
+          "DatasetShape",
+          "DistributionShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "05-real-world-dataset-shapes",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "05-real-world-dataset-shapes",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Catalogue",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/shapes/catalogue#CatalogueShape",
+          "rdfs_label": "Catalogue",
+          "shacl_target_class": [
+            "dcat:Catalog"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#dataset",
+              "shacl_min_count": 1,
+              "shacl_path": "dcat:dataset"
+            },
+            "field_number": null,
+            "key": "CatalogueShape.dataset",
+            "name": "dataset",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DatasetShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/publisher",
+              "shacl_class": "foaf:Agent",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_node_kind": "IRI",
+              "shacl_path": "dct:publisher"
+            },
+            "field_number": null,
+            "key": "CatalogueShape.publisher",
+            "name": "publisher",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/title",
+              "shacl_datatype": "rdfs:Literal",
+              "shacl_message": "A catalogue must have at least one title, one per language.",
+              "shacl_min_count": 1,
+              "shacl_path": "dct:title",
+              "shacl_severity": "Violation",
+              "shacl_unique_lang": true
+            },
+            "field_number": null,
+            "key": "CatalogueShape.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CatalogueShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "CatalogueShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Dataset",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/shapes/catalogue#DatasetShape",
+          "rdfs_label": "Dataset",
+          "shacl_target_class": [
+            "dcat:Dataset"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": [
+                "http://publications.example.com/resource/frequency/DAILY",
+                "http://publications.example.com/resource/frequency/WEEKLY",
+                "http://publications.example.com/resource/frequency/MONTHLY",
+                "http://publications.example.com/resource/frequency/ANNUAL"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/accrualPeriodicity",
+              "shacl_max_count": 1,
+              "shacl_order": 7,
+              "shacl_path": "dct:accrualPeriodicity"
+            },
+            "field_number": null,
+            "key": "DatasetShape.accrualPeriodicity",
+            "name": "accrualPeriodicity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#contactPoint",
+              "shacl_min_count": 1,
+              "shacl_node_kind": "BlankNodeOrIRI",
+              "shacl_order": 9,
+              "shacl_path": "dcat:contactPoint"
+            },
+            "field_number": null,
+            "key": "DatasetShape.contactPoint",
+            "name": "contactPoint",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": 20,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/description",
+              "shacl_min_count": 1,
+              "shacl_order": 3,
+              "shacl_path": "dct:description"
+            },
+            "field_number": null,
+            "key": "DatasetShape.description",
+            "name": "description",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#distribution",
+              "shacl_message": "A published dataset must have at least one distribution.",
+              "shacl_min_count": 1,
+              "shacl_order": 8,
+              "shacl_path": "dcat:distribution",
+              "shacl_severity": "Violation"
+            },
+            "field_number": null,
+            "key": "DatasetShape.distribution",
+            "name": "distribution",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "DistributionShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/identifier",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_order": 1,
+              "shacl_path": "dct:identifier"
+            },
+            "field_number": null,
+            "key": "DatasetShape.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/issued",
+              "shacl_datatype": "xsd:date",
+              "shacl_max_count": 1,
+              "shacl_order": 4,
+              "shacl_path": "dct:issued"
+            },
+            "field_number": null,
+            "key": "DatasetShape.issued",
+            "name": "issued",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/modified",
+              "shacl_datatype": "xsd:date",
+              "shacl_max_count": 1,
+              "shacl_message": "Modified date should not precede the issued date.",
+              "shacl_order": 5,
+              "shacl_path": "dct:modified",
+              "shacl_property_pair": {
+                "lessThanOrEquals": "dct:issued"
+              },
+              "shacl_severity": "Warning"
+            },
+            "field_number": null,
+            "key": "DatasetShape.modified",
+            "name": "modified",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#theme",
+              "shacl_min_count": 1,
+              "shacl_node_kind": "IRI",
+              "shacl_order": 6,
+              "shacl_path": "dcat:theme"
+            },
+            "field_number": null,
+            "key": "DatasetShape.theme",
+            "name": "theme",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/title",
+              "shacl_min_count": 1,
+              "shacl_order": 2,
+              "shacl_path": "dct:title",
+              "shacl_unique_lang": true
+            },
+            "field_number": null,
+            "key": "DatasetShape.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DatasetShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "DatasetShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/shapes/catalogue#DistributionShape",
+          "shacl_target_class": [
+            "dcat:Distribution"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#accessURL",
+              "shacl_min_count": 1,
+              "shacl_node_kind": "IRI",
+              "shacl_path": "dcat:accessURL"
+            },
+            "field_number": null,
+            "key": "DistributionShape.accessURL",
+            "name": "accessURL",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://www.w3.org/ns/dcat#byteSize",
+              "shacl_datatype": "xsd:nonNegativeInteger",
+              "shacl_max_count": 1,
+              "shacl_path": "dcat:byteSize"
+            },
+            "field_number": null,
+            "key": "DistributionShape.byteSize",
+            "name": "byteSize",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "text/csv",
+                "application/json",
+                "application/xml",
+                "application/parquet"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/format",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "dct:format"
+            },
+            "field_number": null,
+            "key": "DistributionShape.format",
+            "name": "format",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "http://purl.org/dc/terms/license",
+              "shacl_message": "Every distribution must state its licence.",
+              "shacl_min_count": 1,
+              "shacl_node_kind": "IRI",
+              "shacl_path": "dct:license",
+              "shacl_severity": "Violation"
+            },
+            "field_number": null,
+            "key": "DistributionShape.license",
+            "name": "license",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DistributionShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "DistributionShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/05-real-world-dataset-shapes.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:691c8c430b1436b2559c0d456a2183ed96293640400fa0b9f5da49c99d22e9b6",
+  "lint": {
+    "findings": 18,
+    "grade": "C",
+    "report_fingerprint": "b2a4ec07d7324171a74f858f67facc329c1bc458426f6be3a280495c5b8236a6",
+    "score": 79,
+    "severity_counts": {
+      "error": 0,
+      "info": 17,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

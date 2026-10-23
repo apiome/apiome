@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "32"
+REGISTRY_VERSION = "33"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2653,6 +2653,167 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "`INPUT_SEMANTIC_INVALID`.",
             "ROS 2 interface *output* is not implemented; an import is exported through another "
             "target's emitter.",
+        ],
+    ),
+    "shacl": _Seed(
+        # FMT-9.4: a shapes graph is RDF text read by the format-blind walk; the reviewed judgement
+        # is the projection statement — node shapes to records, property shapes to fields.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A shape is located by its IRI, kept as `native_id` on its type (and a property "
+                "shape's path IRI on its field); the file of a fileset member is in "
+                "`extras['rdf_file']`. Turtle lines are not carried as source positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A shapes graph constrains data without containing any: `sh:in`, `sh:hasValue` and "
+                "`sh:defaultValue` are part of the schema and are modelled."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(["shacl.sparql_constraint", "shacl.property_without_path"]),
+            note=(
+                "Each named `sh:NodeShape` → a `RECORD` (a shape that is only `sh:or` / `sh:xone` of "
+                "other shapes → a `UNION`); each `sh:property` → a field named after its path. "
+                "`sh:datatype` maps XSD types to canonical scalars, `sh:node` names the referenced "
+                "shape's type, `sh:class` the type of the shape targeting that class. A property is "
+                "single-valued at `sh:maxCount 1`, else a list (`min_items` / `max_items`), and "
+                "required at `sh:minCount` ≥ 1. Value-range, length, `sh:pattern`, `sh:in` and "
+                "`sh:hasValue` become canonical constraints; `sh:node` / `sh:and` on a node shape are "
+                "inheritance. Severity, messages, targets and the constraints with no canonical "
+                "analogue stay in `shacl_*` extras; declared limits are counted in "
+                "`extras['shacl']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A shape cycle (mutual `sh:node`, `sh:or`, self-reference) is kept as recursive type "
+            "references and declared as `shacl.recursive_shape`: SHACL leaves recursive validation "
+            "undefined.",
+            "`sh:targetSubjectsOf` / `sh:targetObjectsOf` select nodes by the data graph's shape "
+            "(open world) and are declared; `sh:sparql` constraints are not modelled.",
+            "A shape reference the import does not define is refused with "
+            "`INPUT_REFERENCE_UNRESOLVED`, as is an `owl:imports` outside the upload (well-known "
+            "W3C / DCMI vocabularies excepted). Nothing is fetched.",
+            "SHACL *output* is not implemented; an import is exported through another target's emitter.",
+        ],
+    ),
+    "owl": _Seed(
+        # FMT-9.4: an ontology is RDF text read by the format-blind walk; the reviewed judgement is
+        # the projection statement and the open-world boundary.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A class is located by its IRI, kept as `native_id` on its type (and a property's IRI "
+                "on its field); the file of a fileset member is in `extras['rdf_file']`."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "Named individuals are vocabulary (an `owl:oneOf` closes a class over them) and are "
+                "modelled as enum members; an ontology carries no instance data beyond them."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "owl.open_world",
+                    "owl.property_characteristic",
+                    "owl.property_chain",
+                    "owl.class_equivalence",
+                    "owl.disjointness",
+                    "owl.individual_identity",
+                    "owl.property_without_domain",
+                ]
+            ),
+            note=(
+                "Each named `owl:Class` / `rdfs:Class` → a `RECORD` carrying its named superclasses' "
+                "fields (inheritance); `owl:oneOf` → an `ENUM`, `owl:unionOf` → a `UNION`, a named "
+                "`rdfs:Datatype` with facets → an `ALIAS` with constraints. A property becomes a field "
+                "of each class in its `rdfs:domain` (sub-properties inherit domain and range) and of "
+                "each class that restricts it; it is a list unless `owl:FunctionalProperty` or a "
+                "restriction caps it at one, with cardinality restrictions as `min_items` / "
+                "`max_items`. Inference-only axioms stay in `owl_*` extras; declared limits are "
+                "counted in `extras['owl']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "OWL is open-world and inference-driven; Apiome's model is closed-world. Every import "
+            "declares `owl.open_world`: the asserted vocabulary is imported, its inferred "
+            "consequences are not.",
+            "A class with asserted named individuals but no `owl:oneOf` and no properties is listed "
+            "as an enum of those individuals, stamped `inferred` and declared.",
+            "An `owl:imports` the upload does not contain is refused with "
+            "`INPUT_REFERENCE_UNRESOLVED` (well-known W3C / DCMI vocabularies excepted); nothing is "
+            "fetched. OWL/XML, Manchester and functional syntax are not read.",
+            "OWL *output* is not implemented; an import is exported through another target's emitter.",
+        ],
+    ),
+    "jsonld": _Seed(
+        # FMT-9.4: a context is JSON read by the format-blind walk; the reviewed judgement is the
+        # projection statement — terms to property names, IRIs to provenance.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A term is located by its name on the context's root record; the IRI it expands to is "
+                "kept as `native_id` and the definition as written in `extras['jsonld_definition']`."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A context holds no data. Instance data beside it (`@graph`) is counted in "
+                "`extras['jsonld']['instance_data']`, never imported as schema."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(["jsonld.instance_data"]),
+            note=(
+                "The context → one `RECORD` with a field per term (prefixes, keyword aliases and "
+                "class names are recorded in extras instead). `@type: @id` / `@vocab` → an "
+                "IRI-valued string, `@type: xsd:*` → the canonical scalar, `@json` → any; `@set` / "
+                "`@list` → a list, `@language` → a `LanguageMap`, `@index` / `@id` / `@type` → a "
+                "keyed `MAP`; a scoped context → a nested `RECORD` (or an `ENUM` for an `@vocab` "
+                "term whose scoped context only names values). JSON-LD states no cardinality, so "
+                "every field is optional. Declared limits are counted in "
+                "`extras['jsonld']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Remote contexts are never fetched: a context array or `@import` entry must be a "
+            "member of the upload, and one that is not is refused with `INPUT_REFERENCE_UNRESOLVED`.",
+            "`@vocab` makes the vocabulary open (an undefined key still expands); only the defined "
+            "terms are fields, and the open vocabulary is declared.",
+            "A JSON document with no `@context` is refused (`INPUT_SEMANTIC_INVALID`, or "
+            "`FORMAT_MISMATCH` when it reads as another format).",
+            "JSON-LD *output* is not implemented; an import is exported through another target's emitter.",
         ],
     ),
     "pydantic": _Seed(
