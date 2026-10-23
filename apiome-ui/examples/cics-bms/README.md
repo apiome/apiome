@@ -2,8 +2,8 @@
 
 Fixtures for the BMS half of **FMT-11.3** ([#5484](https://github.com/apiome/apiome/issues/5484)). A
 BMS mapset defines the 3270 screen field layout that is, in practice, **the API of a green-screen
-transaction**. The VSAM half lives in `vsam-idcams/`. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+transaction**. The VSAM half lives in `vsam-idcams/`. Read by the `cics-bms` adapter (the
+`mainframe-misc` family).
 
 **Detection marker.** Assembler macro source with `DFHMSD` / `DFHMDI` / `DFHMDF` in the operation
 field, a label in columns 1-8, and `X` continuations in column 72.

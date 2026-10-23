@@ -158,11 +158,11 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "34"
+REGISTRY_VERSION = "35"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
-REVIEW_DATE = "2026-10-22"
+REVIEW_DATE = "2026-10-23"
 
 #: Accepted shape of a format key. The registry resolves an *arbitrary caller-supplied* string
 #: (a stored ``source_format`` whose adapter may have been retired), so the key is constrained
@@ -3645,6 +3645,131 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "Level-66 RENAMES and COPY ... REPLACING are not read by the parser. They are "
             "detected by scanning the source, and each one found makes the record partial with a "
             "stated reason rather than presenting a partial layout as a complete one.",
+        ],
+    ),
+    "vsam-idcams": _Seed(
+        # FMT-11.3: IDCAMS commands and LISTCAT listings are read by the format-blind walk; the
+        # reviewed judgement is the projection statement — a cluster's record envelope (keys,
+        # record size, organisation) to a record, never its fields.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A record is located by its dataset name (`vsam.EXAMPLE_CUSTOMER_KSDS`, the name "
+                "itself in `extras['vsam_idcams']['dataset']`) and the file it came from; command "
+                "lines are named in refusal messages but not carried as source positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A cluster definition describes a file without containing any of its records; "
+                "LISTCAT statistics are activity counters and are not read."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "vsam.generation_data_group",
+                    "vsam.linear_dataset",
+                    "vsam.listcat_statistics",
+                    "vsam.record_layout",
+                    "vsam.unlisted_alternate_index",
+                    "vsam.utility_command",
+                ]
+            ),
+            note=(
+                "Each `DEFINE CLUSTER` (or LISTCAT `CLUSTER` entry) with a record structure → a "
+                "`RECORD` in the `vsam` namespace, named after the dataset. Its primary key "
+                "(`KEYS(length offset)`) → a `PRIMARY_KEY` `bytes` field with `min_length` = "
+                "`max_length` = the key length; each `DEFINE AIX` that `RELATE`s to it → an "
+                "`ALTERNATE_KEY_<qualifier>` field, unique or not, with the `PATH`s over it. "
+                "Organisation (`INDEXED` → KSDS, `NONINDEXED` → ESDS, `NUMBERED` → RRDS / VRRDS), "
+                "record size (fixed when average = maximum), key offsets, share options, free space, "
+                "CI size and storage parameters are declared metadata in `extras['vsam_idcams']`. "
+                "A cluster never gives its record's fields, so every record counts "
+                "`vsam.record_layout`; LINEAR clusters, GDGs and utility commands are counted, not "
+                "modelled. Declared limits are in `extras['vsam_idcams']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "An `INDEXED` cluster without `KEYS` is refused (`INPUT_SEMANTIC_INVALID`) rather than "
+            "given IDCAMS's `KEYS(64 0)` default; a key that ends past the maximum record is refused "
+            "the same way.",
+            "An `AIX` whose `RELATE` target, or a `PATH` whose `PATHENTRY`, is not defined in the "
+            "import is refused with `INPUT_REFERENCE_UNRESOLVED`; upload the base cluster's "
+            "definition with it as a fileset.",
+            "Field-level structure comes from the COBOL copybook or PL/I declaration the programs "
+            "use; import it separately.",
+            "VSAM definition *output* is not implemented; an import is exported through another "
+            "target's emitter.",
+        ],
+    ),
+    "cics-bms": _Seed(
+        # FMT-11.3: BMS macro source is read by the format-blind walk; the reviewed judgement is
+        # the projection statement — maps to records, named fields positioned by row and column.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A field is located by its mapset, map and label (`CUSTSET.CUSTMAP.CUSTID`) and its "
+                "screen position (`extras['cics_bms']['position']`); macro source lines are named in "
+                "refusal messages but not carried as source positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A map describes a screen without containing any transaction data; `INITIAL` "
+                "values are part of the screen definition and are kept as declared metadata."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "bms.edited_picture",
+                    "bms.literal_field",
+                    "bms.occurs_layout",
+                    "bms.symbolic_map_mismatch",
+                    "bms.symbolic_map_positions",
+                ]
+            ),
+            note=(
+                "Each `DFHMDI` map → a `RECORD` namespaced by its `DFHMSD` mapset; each labelled "
+                "`DFHMDF` → a field, numbered in screen order. The type comes from `PICIN`, else "
+                "`PICOUT`: `9` pictures are `integer`, with `V` / `P` `decimal`; alphanumeric and "
+                "edited pictures and unpictured fields are `string` with `max_length` = `LENGTH`. "
+                "`OCCURS=n` is a list of exactly n. Position, length, pictures, `INITIAL`, "
+                "`GRPNAME` and the attributes — protection, numeric-only, intensity, initial "
+                "cursor, modified-data tag, colour, highlight, validation — are declared metadata "
+                "in `extras['cics_bms']`. Unlabelled `DFHMDF` literals are kept on the map, not "
+                "modelled as fields. A symbolic-map copybook read with the mapset names each "
+                "field's L / F / A / I / O entries; read alone it gives the records without "
+                "positions. Declared limits are in `extras['cics_bms']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A map with no named field, a named field with no `POS`, or fields that overlap or fall "
+            "outside the map's `SIZE` are refused with `INPUT_SEMANTIC_INVALID`; a continuation "
+            "line written without the column-72 mark is refused as `INPUT_MALFORMED`.",
+            "The screen is not the schema: a map says nothing about validation rules or what the "
+            "transaction does with a field, and the import does not infer either.",
+            "BMS *output* is not implemented; an import is exported through another target's "
+            "emitter.",
         ],
     ),
     "nginx": _proxy_route_seed(

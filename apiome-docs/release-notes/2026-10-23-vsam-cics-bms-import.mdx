@@ -1,0 +1,26 @@
+---
+slug: vsam-cics-bms-import
+title: Import VSAM cluster definitions and CICS BMS maps
+description: Catalog VSAM record envelopes from IDCAMS and 3270 screens from BMS maps.
+authors: [apiome]
+---
+
+Apiome now imports two mainframe sources as data schemas: VSAM cluster definitions (IDCAMS
+`DEFINE` commands or a `LISTCAT` listing) and CICS BMS maps.
+[What gets imported](/bring-in/vsam-cics-bms-import).
+
+{/* truncate */}
+
+- **Clusters become records with their keys.** Each cluster's primary key and every alternate index
+  over it become fields at their declared offset and length. Record size, organisation (KSDS, ESDS,
+  RRDS, VRRDS) and storage parameters are kept on the record.
+- **The missing field layout is declared.** A cluster definition never gives its record's fields, so
+  each record says so in the coverage ledger and points you to the copybook. Linear datasets, GDGs
+  and utility commands are listed rather than modelled.
+- **Maps become records with positioned fields.** Each BMS map is a record. Its named fields keep
+  their row, column and length, take their type from `PICIN` / `PICOUT`, and carry their
+  attributes (protected, numeric, bright, initial cursor) as declared metadata. Unlabelled literals
+  stay on the map.
+- **Symbolic maps pair with their mapset.** Upload the mapset with its generated copybook and each
+  field names its `L` / `F` / `A` / `I` / `O` entries. A copybook on its own gives the records
+  without screen positions.

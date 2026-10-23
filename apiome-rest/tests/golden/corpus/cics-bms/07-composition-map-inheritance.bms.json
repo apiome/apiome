@@ -1,0 +1,1411 @@
+{
+  "adapter": "cics-bms",
+  "canonical": {
+    "channels": [],
+    "description": "CICS BMS screens: 3 map(s). Field positions, pictures and attributes are declared metadata; the screen says nothing about validation or business meaning.",
+    "extras": {
+      "cics_bms": {
+        "capability_limits": [
+          {
+            "construct": "bms.edited_picture",
+            "count": 1,
+            "detail": "An edited output picture (Z, comma, period, sign, currency or CR / DB insertion) formats a number for display; the field is projected to a string and the picture kept in extras['cics_bms']['picout'].",
+            "locations": [
+              "COMPSET.COMPDTL.DPREM"
+            ]
+          },
+          {
+            "construct": "bms.literal_field",
+            "count": 3,
+            "detail": "An unlabelled DFHMDF is screen text (a title, a prompt, function-key help), not data; it is kept in the map's extras['cics_bms']['literals'] and not modelled as a field.",
+            "locations": [
+              "COMPSET.COMPDTL"
+            ]
+          },
+          {
+            "construct": "bms.occurs_layout",
+            "count": 4,
+            "detail": "An OCCURS field is a list of its occurrence count; the screen positions of the occurrences after the first are not modelled.",
+            "locations": [
+              "COMPSET.COMPLIST.LNUMBER",
+              "COMPSET.COMPLIST.LPARTY",
+              "COMPSET.COMPLIST.LSEL",
+              "COMPSET.COMPLIST.LSTATUS"
+            ]
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "cics-bms/07-composition-map-inheritance.bms"
+        ],
+        "input": "file",
+        "mapsets": [
+          {
+            "maps": [
+              "COMPBASE",
+              "COMPLIST",
+              "COMPDTL"
+            ],
+            "name": "COMPSET",
+            "operands": {
+              "color": "BLUE",
+              "ctrl": [
+                "FREEKB",
+                "FRSET"
+              ],
+              "dsatts": [
+                "COLOR",
+                "HILIGHT"
+              ],
+              "hilight": "OFF",
+              "lang": "COBOL",
+              "mapatts": [
+                "COLOR",
+                "HILIGHT"
+              ],
+              "mode": "INOUT",
+              "storage": "AUTO",
+              "tioapfx": "YES",
+              "type": "&SYSPARM"
+            }
+          }
+        ],
+        "symbolicMaps": []
+      }
+    },
+    "format": "cics-bms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "COMPSET",
+      "namespace": "COMPSET"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "COMPSET",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map COMPBASE of mapset COMPSET: a 24×80 screen with 4 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "1",
+            "file": "cics-bms/07-composition-map-inheritance.bms",
+            "line": "1",
+            "literals": [],
+            "mapset": "COMPSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 50,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 24, column 1; 50 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "initial": "F3=EXIT  F7=PREV  F8=NEXT  ENTER=SELECT",
+                "length": 50,
+                "position": {
+                  "column": 1,
+                  "row": 24
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "COMPSET.COMPBASE.BKEYS",
+            "name": "BKEYS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 22, column 1; 70 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "RED",
+                "inherited": {
+                  "hilight": "OFF"
+                },
+                "length": 70,
+                "position": {
+                  "column": 1,
+                  "row": 22
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "COMPSET.COMPBASE.BMSG",
+            "name": "BMSG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 20; 40 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 40,
+                "position": {
+                  "column": 20,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "COMPSET.COMPBASE.BTITLE",
+            "name": "BTITLE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 66; 8 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 8,
+                "position": {
+                  "column": 66,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "COMPSET.COMPBASE.BUSER",
+            "name": "BUSER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "COMPSET.COMPBASE",
+        "key_type": null,
+        "kind": "record",
+        "name": "COMPBASE",
+        "namespace": "COMPSET",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map COMPDTL of mapset COMPSET: a 24×80 screen with 9 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "1",
+            "file": "cics-bms/07-composition-map-inheritance.bms",
+            "line": "1",
+            "literals": [
+              {
+                "initial": "CONTRACT NUMBER:",
+                "length": 16,
+                "position": {
+                  "column": 5,
+                  "row": 4
+                }
+              },
+              {
+                "initial": "EFFECTIVE DATE :",
+                "length": 16,
+                "position": {
+                  "column": 5,
+                  "row": 6
+                }
+              },
+              {
+                "initial": "PREMIUM        :",
+                "length": 16,
+                "position": {
+                  "column": 5,
+                  "row": 8
+                }
+              }
+            ],
+            "mapset": "COMPSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 6, column 22; 2 characters; unprotected, numeric.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NUM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": true,
+                  "protection": "unprotected"
+                },
+                "group": "DEFFGRP",
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 2,
+                "position": {
+                  "column": 22,
+                  "row": 6
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "COMPSET.COMPDTL.DEFFDD",
+            "name": "DEFFDD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 6, column 25; 2 characters; unprotected, numeric.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NUM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": true,
+                  "protection": "unprotected"
+                },
+                "group": "DEFFGRP",
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 2,
+                "position": {
+                  "column": 25,
+                  "row": 6
+                }
+              }
+            },
+            "field_number": 5,
+            "key": "COMPSET.COMPDTL.DEFFMM",
+            "name": "DEFFMM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 6, column 28; 4 characters; unprotected, numeric.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NUM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": true,
+                  "protection": "unprotected"
+                },
+                "group": "DEFFGRP",
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 4,
+                "position": {
+                  "column": 28,
+                  "row": 6
+                }
+              }
+            },
+            "field_number": 6,
+            "key": "COMPSET.COMPDTL.DEFFYY",
+            "name": "DEFFYY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 50,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 24, column 1; 50 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "initial": "F3=EXIT  F5=SAVE  F12=CANCEL",
+                "length": 50,
+                "position": {
+                  "column": 1,
+                  "row": 24
+                }
+              }
+            },
+            "field_number": 9,
+            "key": "COMPSET.COMPDTL.DKEYS",
+            "name": "DKEYS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 22, column 1; 70 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "RED",
+                "inherited": {
+                  "hilight": "OFF"
+                },
+                "length": 70,
+                "position": {
+                  "column": 1,
+                  "row": 22
+                }
+              }
+            },
+            "field_number": 8,
+            "key": "COMPSET.COMPDTL.DMSG",
+            "name": "DMSG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 22; 12 characters; unprotected, initial cursor.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM",
+                    "IC"
+                  ],
+                  "initialCursor": true,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 12,
+                "picin": "X(12)",
+                "picout": "X(12)",
+                "position": {
+                  "column": 22,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "COMPSET.COMPDTL.DNUMBER",
+            "name": "DNUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 15,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 8, column 22; 15 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 15,
+                "picout": "ZZZ,ZZZ,ZZ9.99",
+                "position": {
+                  "column": 22,
+                  "row": 8
+                }
+              }
+            },
+            "field_number": 7,
+            "key": "COMPSET.COMPDTL.DPREM",
+            "name": "DPREM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 20; 40 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "initial": "CONTRACT DETAIL",
+                "length": 40,
+                "position": {
+                  "column": 20,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "COMPSET.COMPDTL.DTITLE",
+            "name": "DTITLE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 66; 8 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 8,
+                "position": {
+                  "column": 66,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "COMPSET.COMPDTL.DUSER",
+            "name": "DUSER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "COMPSET.COMPDTL",
+        "key_type": null,
+        "kind": "record",
+        "name": "COMPDTL",
+        "namespace": "COMPSET",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map COMPLIST of mapset COMPSET: a 24×80 screen with 8 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "1",
+            "file": "cics-bms/07-composition-map-inheritance.bms",
+            "line": "1",
+            "literals": [],
+            "mapset": "COMPSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 50,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 24, column 1; 50 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "initial": "F3=EXIT  F7=PREV  F8=NEXT  ENTER=SELECT",
+                "length": 50,
+                "position": {
+                  "column": 1,
+                  "row": 24
+                }
+              }
+            },
+            "field_number": 8,
+            "key": "COMPSET.COMPLIST.LKEYS",
+            "name": "LKEYS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 22, column 1; 70 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "RED",
+                "inherited": {
+                  "hilight": "OFF"
+                },
+                "length": 70,
+                "position": {
+                  "column": 1,
+                  "row": 22
+                }
+              }
+            },
+            "field_number": 7,
+            "key": "COMPSET.COMPLIST.LMSG",
+            "name": "LMSG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 12
+              },
+              "format": null,
+              "max_items": 12,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 12,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 5; 12 characters; protected; repeated 12 times.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 12,
+                "occurs": 12,
+                "position": {
+                  "column": 5,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "COMPSET.COMPLIST.LNUMBER",
+            "name": "LNUMBER",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 40
+              },
+              "format": null,
+              "max_items": 12,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 12,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 19; 40 characters; protected; repeated 12 times.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 40,
+                "occurs": 12,
+                "position": {
+                  "column": 19,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 5,
+            "key": "COMPSET.COMPLIST.LPARTY",
+            "name": "LPARTY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 1
+              },
+              "format": null,
+              "max_items": 12,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 12,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 2; 1 character; unprotected; repeated 12 times.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 1,
+                "occurs": 12,
+                "position": {
+                  "column": 2,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "COMPSET.COMPLIST.LSEL",
+            "name": "LSEL",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 1
+              },
+              "format": null,
+              "max_items": 12,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 12,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 61; 1 character; protected; repeated 12 times.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 1,
+                "occurs": 12,
+                "position": {
+                  "column": 61,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 6,
+            "key": "COMPSET.COMPLIST.LSTATUS",
+            "name": "LSTATUS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 20; 40 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "initial": "CONTRACT LIST",
+                "length": 40,
+                "position": {
+                  "column": 20,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "COMPSET.COMPLIST.LTITLE",
+            "name": "LTITLE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 1, column 66; 8 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "inherited": {
+                  "color": "BLUE",
+                  "hilight": "OFF"
+                },
+                "length": 8,
+                "position": {
+                  "column": 66,
+                  "row": 1
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "COMPSET.COMPLIST.LUSER",
+            "name": "LUSER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "COMPSET.COMPLIST",
+        "key_type": null,
+        "kind": "record",
+        "name": "COMPLIST",
+        "namespace": "COMPSET",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cics-bms/07-composition-map-inheritance.bms",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cics-bms"
+  },
+  "fingerprint": "sha256:76637ac2008b49f536ea57e3b79b20bbd798d6285cc60c1a76e95da2ff9fb2ea",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -97,7 +97,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `avro-idl/` | Avro IDL | data_schema / rpc | `protocol … {` or `namespace …;` + `record` declarations in `.avdl` | 14 |
 | `capnproto/` | Cap'n Proto | data_schema | `@0x…` file id + `struct` | 11 |
 | `cddl/` | CDDL (RFC 8610) | data_schema | `name = { … }` rules with `tstr`/`bstr`/`uint` prelude types | 14 |
-| `cics-bms/` | CICS BMS maps (pending #5484) | data_schema | `DFHMSD`/`DFHMDI`/`DFHMDF` macro source with column-72 continuations | 14 |
+| `cics-bms/` | CICS BMS maps | data_schema | `DFHMSD`/`DFHMDI`/`DFHMDF` macro source with column-72 continuations | 14 |
 | `cobol-copybook/` | COBOL copybook | data_schema | level numbers + `PIC` clauses | 13 |
 | `cue/` | CUE | data_schema | `package …` + `#Definition: {…}` with `&`/`\|`/`=~` constraints | 15 |
 | `dbt/` | dbt models and manifests | data_schema | `version: 2` + `models:`/`sources:`, or `metadata.dbt_schema_version` in a manifest | 16 |
@@ -123,7 +123,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `shacl/` | SHACL shapes | data_schema | `sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD) | 15 |
 | `sql-ddl/` | SQL DDL schemas and migrations | data_schema | `CREATE TABLE`/`CREATE VIEW`/`ALTER TABLE … ADD CONSTRAINT` | 15 |
 | `typescript-types/` | TypeScript type declarations | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
-| `vsam-idcams/` | VSAM cluster definitions (pending #5484) | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
+| `vsam-idcams/` | VSAM cluster definitions | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
 | `xsd/` | XML Schema (XSD) | data_schema | `xs:schema` root element | 13 |
 | `zod/` | Zod schemas | data_schema | `import { z } from 'zod'` + exported `z.object(...)` values | 15 |
 
@@ -532,24 +532,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`07-modules-set/common.cddl`** — Fileset member: shared value types with no entry point of their own — CDDL has no include, so the set is the unit of import.
 
-### `cics-bms/` — CICS BMS maps (pending #5484)
+### `cics-bms/` — CICS BMS maps
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-mapset.bms` | minimal | `cics-bms` ≥ 0.9 | valid | `dfhmsd`, `dfhmdi`, `dfhmdf`, `literal-field`, `pending-adapter` |
-| `02-typical-enquiry-map.bms` | typical | `cics-bms` ≥ 0.9 | valid | `picin`, `picout`, `edited-picture`, `message-line`, `color`, `initial-cursor`, `pending-adapter` |
-| `03-mapset-and-copybook-set/ORDRMAP.cpy` ⚠ | multi-file (member) | `cics-bms` (no guarantee) | valid | `multi-file`, `symbolic-map`, `length-attribute-data-triple`, `input-output-redefine`, `pending-adapter` |
-| `03-mapset-and-copybook-set/ORDRSET.bms` | multi-file (root) | `cics-bms` ≥ 0.9 | valid | `multi-file`, `mapset`, `screen-positions`, `pending-adapter` |
-| `04-stress-field-attributes.bms` | stress | `cics-bms` ≥ 0.9 | valid | `attrb-combinations`, `askip`, `dark`, `numeric`, `fset`, `extended-attributes`, `validn`, `occurs`, `grpname`, `second-map`, `pending-adapter` |
-| `05-real-world-order-entry-mapset.bms` | real-world | `cics-bms` ≥ 0.9 | valid | `three-maps`, `repeating-table`, `occurs`, `edited-pictures`, `confirmation-map`, `pending-adapter` |
-| `06-typical-dsect-copybook.cpy` | typical | `cics-bms` ≥ 0.9 | valid | `symbolic-map`, `length-attribute-data-triple`, `input-output-redefine`, `comp-length`, `pending-adapter` |
-| `07-composition-map-inheritance.bms` | composition | `cics-bms` ≥ 0.9 | valid | `shared-chrome`, `mapset-defaults`, `field-group`, `repeating-table`, `multiple-maps`, `pending-adapter` |
-| `negative/01-syntactic-missing-continuation.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `syntactic`, `missing-continuation-mark`, `pending-adapter` |
-| `negative/02-semantic-map-without-fields.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `semantic`, `no-fields`, `pending-adapter` |
-| `negative/03-truncated-mid-field.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `truncated`, `mid-initial-value`, `pending-adapter` |
-| `negative/04-wrong-format-idcams.idcams` | — | `cics-bms` (no guarantee) | invalid | `negative`, `wrong-format`, `vsam-idcams`, `pending-adapter` |
-| `negative/05-encoding-utf16.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-overlapping-field-positions.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `semantic`, `overlapping-fields`, `off-screen-position`, `pending-adapter` |
+| `01-minimal-mapset.bms` | minimal | `cics-bms` ≥ 0.9 | valid | `dfhmsd`, `dfhmdi`, `dfhmdf`, `literal-field` |
+| `02-typical-enquiry-map.bms` | typical | `cics-bms` ≥ 0.9 | valid | `picin`, `picout`, `edited-picture`, `message-line`, `color`, `initial-cursor` |
+| `03-mapset-and-copybook-set/ORDRMAP.cpy` ⚠ | multi-file (member) | `cics-bms` (no guarantee) | valid | `multi-file`, `symbolic-map`, `length-attribute-data-triple`, `input-output-redefine` |
+| `03-mapset-and-copybook-set/ORDRSET.bms` | multi-file (root) | `cics-bms` ≥ 0.9 | valid | `multi-file`, `mapset`, `screen-positions` |
+| `04-stress-field-attributes.bms` | stress | `cics-bms` ≥ 0.9 | valid | `attrb-combinations`, `askip`, `dark`, `numeric`, `fset`, `extended-attributes`, `validn`, `occurs`, `grpname`, `second-map` |
+| `05-real-world-order-entry-mapset.bms` | real-world | `cics-bms` ≥ 0.9 | valid | `three-maps`, `repeating-table`, `occurs`, `edited-pictures`, `confirmation-map` |
+| `06-typical-dsect-copybook.cpy` | typical | `cics-bms` ≥ 0.9 | valid | `symbolic-map`, `length-attribute-data-triple`, `input-output-redefine`, `comp-length` |
+| `07-composition-map-inheritance.bms` | composition | `cics-bms` ≥ 0.9 | valid | `shared-chrome`, `mapset-defaults`, `field-group`, `repeating-table`, `multiple-maps` |
+| `negative/01-syntactic-missing-continuation.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `syntactic`, `missing-continuation-mark` |
+| `negative/02-semantic-map-without-fields.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `semantic`, `no-fields` |
+| `negative/03-truncated-mid-field.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `truncated`, `mid-initial-value` |
+| `negative/04-wrong-format-idcams.idcams` | — | `cics-bms` (no guarantee) | invalid | `negative`, `wrong-format`, `vsam-idcams` |
+| `negative/05-encoding-utf16.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-overlapping-field-positions.bms` | — | `cics-bms` (no guarantee) | invalid | `negative`, `semantic`, `overlapping-fields`, `off-screen-position` |
 
 > ⚠ **`03-mapset-and-copybook-set/ORDRMAP.cpy`** — Fileset member: the generated symbolic map. It carries the record layout; the .bms carries the geometry.
 
@@ -2472,24 +2472,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-raml.raml` | — | `typespec` (no guarantee) | invalid | `negative`, `wrong-format`, `raml-document` |
 | `negative/05-encoding-utf16.tsp` | — | `typespec` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
 
-### `vsam-idcams/` — VSAM cluster definitions (pending #5484)
+### `vsam-idcams/` — VSAM cluster definitions
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-define-cluster.idcams` | minimal | `vsam-idcams` ≥ 0.85 | valid | `define-cluster`, `indexed`, `keys`, `recordsize`, `pending-adapter` |
-| `02-typical-ksds.idcams` | typical | `vsam-idcams` ≥ 0.85 | valid | `jcl-wrapper`, `data-index-subdefinitions`, `freespace`, `shareoptions`, `listcat`, `pending-adapter` |
-| `03-cluster-and-index-set/alternate-index.idcams` ⚠ | multi-file (member) | `vsam-idcams` (no guarantee) | valid | `multi-file`, `alternate-index`, `path`, `bldindex`, `pending-adapter` |
-| `03-cluster-and-index-set/cluster.idcams` | multi-file (root) | `vsam-idcams` ≥ 0.85 | valid | `multi-file`, `base-cluster`, `keys`, `pending-adapter` |
-| `04-stress-cluster-forms.idcams` ⚠ | stress | `vsam-idcams` ≥ 0.85 | valid | `ksds`, `esds`, `rrds`, `vrrds`, `lds`, `space-forms`, `sms-classes`, `alternate-index`, `path`, `gdg`, `spanned`, `reuse`, `pending-adapter` |
-| `05-real-world-account-cluster.idcams` | real-world | `vsam-idcams` ≥ 0.85 | valid | `delete-define`, `two-alternate-indexes`, `unique-and-nonunique`, `paths`, `bldindex`, `sms-classes`, `pending-adapter` |
-| `06-typical-listcat-output.idcams` | typical | `vsam-idcams` ≥ 0.85 | valid | `listcat`, `attributes`, `associations`, `statistics`, `pending-adapter` |
-| `07-composition-alternate-index-family.idcams` | composition | `vsam-idcams` ≥ 0.85 | valid | `base-cluster`, `alternate-index-family`, `paths`, `repro`, `bldindex`, `pending-adapter` |
-| `negative/01-syntactic-unbalanced-parens.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `syntactic`, `unbalanced-parentheses`, `pending-adapter` |
-| `negative/02-semantic-indexed-without-keys.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `semantic`, `indexed-without-keys`, `no-recordsize`, `pending-adapter` |
-| `negative/03-truncated-mid-parameter.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `truncated`, `mid-parameter`, `pending-adapter` |
-| `negative/04-wrong-format-bms.bms` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `wrong-format`, `cics-bms`, `pending-adapter` |
-| `negative/05-encoding-utf16.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-relate-target.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-base-cluster`, `pending-adapter` |
+| `01-minimal-define-cluster.idcams` | minimal | `vsam-idcams` ≥ 0.85 | valid | `define-cluster`, `indexed`, `keys`, `recordsize` |
+| `02-typical-ksds.idcams` | typical | `vsam-idcams` ≥ 0.85 | valid | `jcl-wrapper`, `data-index-subdefinitions`, `freespace`, `shareoptions`, `listcat` |
+| `03-cluster-and-index-set/alternate-index.idcams` ⚠ | multi-file (member) | `vsam-idcams` (no guarantee) | valid | `multi-file`, `alternate-index`, `path`, `bldindex` |
+| `03-cluster-and-index-set/cluster.idcams` | multi-file (root) | `vsam-idcams` ≥ 0.85 | valid | `multi-file`, `base-cluster`, `keys` |
+| `04-stress-cluster-forms.idcams` ⚠ | stress | `vsam-idcams` ≥ 0.85 | valid | `ksds`, `esds`, `rrds`, `vrrds`, `lds`, `space-forms`, `sms-classes`, `alternate-index`, `path`, `gdg`, `spanned`, `reuse` |
+| `05-real-world-account-cluster.idcams` | real-world | `vsam-idcams` ≥ 0.85 | valid | `delete-define`, `two-alternate-indexes`, `unique-and-nonunique`, `paths`, `bldindex`, `sms-classes` |
+| `06-typical-listcat-output.idcams` | typical | `vsam-idcams` ≥ 0.85 | valid | `listcat`, `attributes`, `associations`, `statistics` |
+| `07-composition-alternate-index-family.idcams` | composition | `vsam-idcams` ≥ 0.85 | valid | `base-cluster`, `alternate-index-family`, `paths`, `repro`, `bldindex` |
+| `negative/01-syntactic-unbalanced-parens.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `syntactic`, `unbalanced-parentheses` |
+| `negative/02-semantic-indexed-without-keys.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `semantic`, `indexed-without-keys`, `no-recordsize` |
+| `negative/03-truncated-mid-parameter.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `truncated`, `mid-parameter` |
+| `negative/04-wrong-format-bms.bms` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `wrong-format`, `cics-bms` |
+| `negative/05-encoding-utf16.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-relate-target.idcams` | — | `vsam-idcams` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-base-cluster` |
 
 > ⚠ **`03-cluster-and-index-set/alternate-index.idcams`** — Fileset member: KEYS(8 40) describes an offset into the *base* cluster's record, so the two files must be read together.
 

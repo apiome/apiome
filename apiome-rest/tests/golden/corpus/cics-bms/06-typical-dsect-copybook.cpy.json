@@ -1,0 +1,333 @@
+{
+  "adapter": "cics-bms",
+  "canonical": {
+    "channels": [],
+    "description": "CICS BMS screens: 1 map(s). Field positions, pictures and attributes are declared metadata; the screen says nothing about validation or business meaning.",
+    "extras": {
+      "cics_bms": {
+        "capability_limits": [
+          {
+            "construct": "bms.edited_picture",
+            "count": 1,
+            "detail": "An edited output picture (Z, comma, period, sign, currency or CR / DB insertion) formats a number for display; the field is projected to a string and the picture kept in extras['cics_bms']['picout'].",
+            "locations": [
+              "CUSTMAP.CUSTBAL"
+            ]
+          },
+          {
+            "construct": "bms.symbolic_map_positions",
+            "count": 5,
+            "detail": "A symbolic-map copybook read without its mapset gives the record the program uses but no screen positions; import the mapset source beside it to place the fields.",
+            "locations": [
+              "CUSTMAP.CUSTBAL",
+              "CUSTMAP.CUSTID",
+              "CUSTMAP.CUSTNAME",
+              "CUSTMAP.CUSTSTAT",
+              "CUSTMAP.MSGLINE"
+            ]
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "cics-bms/06-typical-dsect-copybook.cpy"
+        ],
+        "input": "file",
+        "mapsets": [],
+        "symbolicMaps": [
+          "CUSTMAPI"
+        ]
+      }
+    },
+    "format": "cics-bms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTMAP",
+      "namespace": "CUSTMAP"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTMAP",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS symbolic map CUSTMAPI: the record the program uses for map CUSTMAP.",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "symbolicMap": {
+              "file": "cics-bms/06-typical-dsect-copybook.cpy",
+              "inputRecord": "CUSTMAPI",
+              "outputRecord": "CUSTMAPO"
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 15,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Symbolic-map field CUSTBAL; its screen position is in the mapset source.",
+            "extras": {
+              "cics_bms": {
+                "symbolic": {
+                  "entries": {
+                    "A": "CUSTBALA",
+                    "F": "CUSTBALF",
+                    "I": "CUSTBALI",
+                    "L": "CUSTBALL",
+                    "O": "CUSTBALO"
+                  },
+                  "inputPicture": "X(15)",
+                  "outputPicture": "ZZZ,ZZZ,ZZ9.99-"
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "CUSTMAP.CUSTBAL",
+            "name": "CUSTBAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Symbolic-map field CUSTID; its screen position is in the mapset source.",
+            "extras": {
+              "cics_bms": {
+                "symbolic": {
+                  "entries": {
+                    "A": "CUSTIDA",
+                    "F": "CUSTIDF",
+                    "I": "CUSTIDI",
+                    "L": "CUSTIDL",
+                    "O": "CUSTIDO"
+                  },
+                  "inputPicture": "X(10)",
+                  "outputPicture": "X(10)"
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "CUSTMAP.CUSTID",
+            "name": "CUSTID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Symbolic-map field CUSTNAME; its screen position is in the mapset source.",
+            "extras": {
+              "cics_bms": {
+                "symbolic": {
+                  "entries": {
+                    "A": "CUSTNAMEA",
+                    "F": "CUSTNAMEF",
+                    "I": "CUSTNAMEI",
+                    "L": "CUSTNAMEL",
+                    "O": "CUSTNAMEO"
+                  },
+                  "inputPicture": "X(40)",
+                  "outputPicture": "X(40)"
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "CUSTMAP.CUSTNAME",
+            "name": "CUSTNAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Symbolic-map field CUSTSTAT; its screen position is in the mapset source.",
+            "extras": {
+              "cics_bms": {
+                "symbolic": {
+                  "entries": {
+                    "A": "CUSTSTATA",
+                    "F": "CUSTSTATF",
+                    "I": "CUSTSTATI",
+                    "L": "CUSTSTATL",
+                    "O": "CUSTSTATO"
+                  },
+                  "inputPicture": "X(1)",
+                  "outputPicture": "X(1)"
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "CUSTMAP.CUSTSTAT",
+            "name": "CUSTSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Symbolic-map field MSGLINE; its screen position is in the mapset source.",
+            "extras": {
+              "cics_bms": {
+                "symbolic": {
+                  "entries": {
+                    "A": "MSGLINEA",
+                    "F": "MSGLINEF",
+                    "I": "MSGLINEI",
+                    "L": "MSGLINEL",
+                    "O": "MSGLINEO"
+                  },
+                  "inputPicture": "X(60)",
+                  "outputPicture": "X(60)"
+                }
+              }
+            },
+            "field_number": 5,
+            "key": "CUSTMAP.MSGLINE",
+            "name": "MSGLINE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CUSTMAP",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTMAP",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cics-bms/06-typical-dsect-copybook.cpy",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "cics-bms"
+  },
+  "fingerprint": "sha256:91461ec6f0beb13e3f13f447910dd790d06a3e2d78cdbf5b007ccecf85447349",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

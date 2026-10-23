@@ -1,0 +1,318 @@
+{
+  "adapter": "vsam-idcams",
+  "canonical": {
+    "channels": [],
+    "description": "VSAM catalog definitions: 1 record envelope(s). Field layouts are not part of IDCAMS; import the copybook for them.",
+    "extras": {
+      "vsam_idcams": {
+        "alternateIndexes": [
+          {
+            "name": "EXAMPLE.CONTRACT.AIX.PARTY",
+            "relate": "EXAMPLE.CONTRACT.KSDS"
+          },
+          {
+            "name": "EXAMPLE.CONTRACT.AIX.EFFDATE",
+            "relate": "EXAMPLE.CONTRACT.KSDS"
+          }
+        ],
+        "capability_limits": [
+          {
+            "construct": "vsam.record_layout",
+            "count": 1,
+            "detail": "A cluster definition describes the record's envelope — organisation, record size and key positions — and never its fields. The record keeps only its keys; import the COBOL copybook or PL/I declaration the programs use for the field layout.",
+            "locations": [
+              "EXAMPLE.CONTRACT.KSDS"
+            ]
+          },
+          {
+            "construct": "vsam.utility_command",
+            "count": 2,
+            "detail": "A utility command (REPRO, BLDINDEX, DELETE, LISTCAT, SET …) or a non-VSAM DEFINE describes what is done to a file, not its record; it is listed in extras['vsam_idcams']['commands'] and not modelled.",
+            "locations": [
+              "BLDINDEX",
+              "REPRO"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "name": "EXAMPLE.CONTRACT.KSDS",
+            "organisation": "KSDS"
+          }
+        ],
+        "commands": [
+          {
+            "datasets": [
+              "EXAMPLE.CONTRACT.EXTRACT",
+              "EXAMPLE.CONTRACT.KSDS"
+            ],
+            "verb": "REPRO"
+          },
+          {
+            "datasets": [
+              "EXAMPLE.CONTRACT.KSDS",
+              "EXAMPLE.CONTRACT.AIX.PARTY",
+              "EXAMPLE.CONTRACT.AIX.EFFDATE"
+            ],
+            "verb": "BLDINDEX"
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "vsam-idcams/07-composition-alternate-index-family.idcams"
+        ],
+        "gdgs": [],
+        "input": "file",
+        "paths": [
+          {
+            "entry": "EXAMPLE.CONTRACT.AIX.PARTY",
+            "name": "EXAMPLE.CONTRACT.PATH.PARTY",
+            "update": true
+          },
+          {
+            "entry": "EXAMPLE.CONTRACT.AIX.EFFDATE",
+            "name": "EXAMPLE.CONTRACT.PATH.EFFDATE",
+            "update": true
+          }
+        ]
+      }
+    },
+    "format": "vsam-idcams",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EXAMPLE.CONTRACT.KSDS",
+      "namespace": "vsam"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EXAMPLE.CONTRACT.KSDS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM KSDS EXAMPLE.CONTRACT.KSDS; fixed 400-byte records; primary key 12 bytes at offset 0. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "controlIntervalSize": 8192,
+            "dataComponent": "EXAMPLE.CONTRACT.KSDS.DATA",
+            "dataset": "EXAMPLE.CONTRACT.KSDS",
+            "file": "vsam-idcams/07-composition-alternate-index-family.idcams",
+            "freeSpace": {
+              "controlArea": 20,
+              "controlInterval": 10
+            },
+            "indexComponent": "EXAMPLE.CONTRACT.KSDS.INDEX",
+            "organisation": "KSDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 400,
+              "fixed": true,
+              "maximum": 400
+            },
+            "shareOptions": {
+              "crossRegion": 2,
+              "crossSystem": 3
+            },
+            "storage": {
+              "space": {
+                "primary": 300,
+                "secondary": 60,
+                "unit": "cylinders"
+              }
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 8,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Alternate key (non-unique) of index EXAMPLE.CONTRACT.AIX.EFFDATE: 8 bytes at offset 87 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "index": "EXAMPLE.CONTRACT.AIX.EFFDATE",
+                "indexRecordSize": {
+                  "average": 60,
+                  "fixed": false,
+                  "maximum": 2048
+                },
+                "length": 8,
+                "offset": 87,
+                "paths": [
+                  "EXAMPLE.CONTRACT.PATH.EFFDATE"
+                ],
+                "role": "alternate",
+                "storage": {
+                  "space": {
+                    "primary": 40,
+                    "secondary": 10,
+                    "unit": "cylinders"
+                  }
+                },
+                "unique": false,
+                "upgrade": true
+              }
+            },
+            "field_number": 3,
+            "key": "vsam.EXAMPLE_CONTRACT_KSDS.ALTERNATE_KEY_EFFDATE",
+            "name": "ALTERNATE_KEY_EFFDATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 40,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Alternate key (non-unique) of index EXAMPLE.CONTRACT.AIX.PARTY: 40 bytes at offset 12 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "index": "EXAMPLE.CONTRACT.AIX.PARTY",
+                "indexRecordSize": {
+                  "average": 100,
+                  "fixed": false,
+                  "maximum": 2048
+                },
+                "length": 40,
+                "offset": 12,
+                "paths": [
+                  "EXAMPLE.CONTRACT.PATH.PARTY"
+                ],
+                "role": "alternate",
+                "storage": {
+                  "space": {
+                    "primary": 60,
+                    "secondary": 15,
+                    "unit": "cylinders"
+                  }
+                },
+                "unique": false,
+                "upgrade": true
+              }
+            },
+            "field_number": 2,
+            "key": "vsam.EXAMPLE_CONTRACT_KSDS.ALTERNATE_KEY_PARTY",
+            "name": "ALTERNATE_KEY_PARTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 12,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Primary key: 12 bytes at offset 0 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "length": 12,
+                "offset": 0,
+                "role": "primary",
+                "unique": true
+              }
+            },
+            "field_number": 1,
+            "key": "vsam.EXAMPLE_CONTRACT_KSDS.PRIMARY_KEY",
+            "name": "PRIMARY_KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "vsam.EXAMPLE_CONTRACT_KSDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_CONTRACT_KSDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "vsam-idcams/07-composition-alternate-index-family.idcams",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.92,
+    "format": "vsam-idcams"
+  },
+  "fingerprint": "sha256:5dc1b6947fb2dc341824cb5e47c1f7313831b013f3d8cc0249b47eee06a94dbb",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

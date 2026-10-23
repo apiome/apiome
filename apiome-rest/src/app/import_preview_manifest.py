@@ -160,6 +160,7 @@ from .jsonld_normalizer import PARTIAL_LIMITS as JSONLD_PARTIAL_LIMITS
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
 from .lwm2m_normalizer import LWM2M_EXTRAS_KEY
 from .lwm2m_normalizer import PARTIAL_LIMITS as LWM2M_PARTIAL_LIMITS
+from .mainframe_misc_normalizer import BMS_EXTRAS_KEY, BMS_PARTIAL_LIMITS, VSAM_EXTRAS_KEY, VSAM_PARTIAL_LIMITS
 from .matter_normalizer import MATTER_EXTRAS_KEY
 from .matter_normalizer import PARTIAL_LIMITS as MATTER_PARTIAL_LIMITS
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
@@ -296,6 +297,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-9.3: the ROS 2 projection record (input kind, interfaces, packages, declared limits).
         # Our own bookkeeping — a field's written type rides under `ros2_type`.
         ROS2_EXTRAS_KEY,
+        # FMT-11.3: the VSAM and CICS BMS projection records (clusters, keys, maps, field positions
+        # and attributes, declared limits) sit under each sub-format's own key. Our own bookkeeping.
+        VSAM_EXTRAS_KEY,
+        BMS_EXTRAS_KEY,
         # FMT-10.1: the Hoppscotch projection record (collection versions, environments, folders,
         # variable names, declared limits). Our own bookkeeping — never a credential.
         HOPPSCOTCH_EXTRAS_KEY,
@@ -1267,6 +1272,7 @@ def _document_scope_rows(
     ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_ros2_capability_rows(api))
+    ledger.extend(_mainframe_misc_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
@@ -2216,6 +2222,24 @@ def _device_model_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="lwm2m", extras_key=LWM2M_EXTRAS_KEY, partial=LWM2M_PARTIAL_LIMITS
     ) + _graded_limit_rows(api, format_key="matter", extras_key=MATTER_EXTRAS_KEY, partial=MATTER_PARTIAL_LIMITS)
+
+
+def _mainframe_misc_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-11.3 VSAM / CICS BMS declared limits as document-scoped ledger rows.
+
+    A record without its field layout, an edited picture, a repeated field and a symbolic-map
+    mismatch keep their construct (``partially-mapped``); a LINEAR cluster, a GDG, a utility
+    command, a LISTCAT statistics section and a screen literal are not modelled.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit of whichever sub-format ``api`` is.
+    """
+    return _graded_limit_rows(
+        api, format_key="vsam-idcams", extras_key=VSAM_EXTRAS_KEY, partial=VSAM_PARTIAL_LIMITS
+    ) + _graded_limit_rows(api, format_key="cics-bms", extras_key=BMS_EXTRAS_KEY, partial=BMS_PARTIAL_LIMITS)
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

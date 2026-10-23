@@ -1,0 +1,170 @@
+{
+  "adapter": "cics-bms",
+  "canonical": {
+    "channels": [],
+    "description": "CICS BMS screens: 1 map(s). Field positions, pictures and attributes are declared metadata; the screen says nothing about validation or business meaning.",
+    "extras": {
+      "cics_bms": {
+        "capability_limits": [
+          {
+            "construct": "bms.literal_field",
+            "count": 1,
+            "detail": "An unlabelled DFHMDF is screen text (a title, a prompt, function-key help), not data; it is kept in the map's extras['cics_bms']['literals'] and not modelled as a field.",
+            "locations": [
+              "PINGSET.PINGMAP"
+            ]
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "cics-bms/01-minimal-mapset.bms"
+        ],
+        "input": "file",
+        "mapsets": [
+          {
+            "maps": [
+              "PINGMAP"
+            ],
+            "name": "PINGSET",
+            "operands": {
+              "lang": "COBOL",
+              "mode": "INOUT",
+              "storage": "AUTO",
+              "tioapfx": "YES",
+              "type": "&SYSPARM"
+            }
+          }
+        ],
+        "symbolicMaps": []
+      }
+    },
+    "format": "cics-bms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "PINGSET",
+      "namespace": "PINGSET"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "PINGSET",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map PINGMAP of mapset PINGSET: a 24×80 screen with 1 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "file": "cics-bms/01-minimal-mapset.bms",
+            "literals": [
+              {
+                "initial": "PING SCREEN",
+                "length": 12,
+                "position": {
+                  "column": 1,
+                  "row": 1
+                }
+              }
+            ],
+            "mapset": "PINGSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 3, column 1; 8 characters; unprotected, initial cursor.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "IC"
+                  ],
+                  "initialCursor": true,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "length": 8,
+                "position": {
+                  "column": 1,
+                  "row": 3
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "PINGSET.PINGMAP.PINGVAL",
+            "name": "PINGVAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PINGSET.PINGMAP",
+        "key_type": null,
+        "kind": "record",
+        "name": "PINGMAP",
+        "namespace": "PINGSET",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cics-bms/01-minimal-mapset.bms",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cics-bms"
+  },
+  "fingerprint": "sha256:6b3e6e6fe6265c5108b200410a18d133d4740a362677fdc1189aabafc07f3087",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

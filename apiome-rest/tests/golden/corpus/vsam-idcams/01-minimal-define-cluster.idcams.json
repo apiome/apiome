@@ -1,0 +1,155 @@
+{
+  "adapter": "vsam-idcams",
+  "canonical": {
+    "channels": [],
+    "description": "VSAM catalog definitions: 1 record envelope(s). Field layouts are not part of IDCAMS; import the copybook for them.",
+    "extras": {
+      "vsam_idcams": {
+        "alternateIndexes": [],
+        "capability_limits": [
+          {
+            "construct": "vsam.record_layout",
+            "count": 1,
+            "detail": "A cluster definition describes the record's envelope — organisation, record size and key positions — and never its fields. The record keeps only its keys; import the COBOL copybook or PL/I declaration the programs use for the field layout.",
+            "locations": [
+              "EXAMPLE.BEACON.KSDS"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "name": "EXAMPLE.BEACON.KSDS",
+            "organisation": "KSDS"
+          }
+        ],
+        "commands": [],
+        "family": "mainframe-misc",
+        "files": [
+          "vsam-idcams/01-minimal-define-cluster.idcams"
+        ],
+        "gdgs": [],
+        "input": "file",
+        "paths": []
+      }
+    },
+    "format": "vsam-idcams",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EXAMPLE.BEACON.KSDS",
+      "namespace": "vsam"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EXAMPLE.BEACON.KSDS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM KSDS EXAMPLE.BEACON.KSDS; fixed 32-byte records; primary key 16 bytes at offset 0. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "dataset": "EXAMPLE.BEACON.KSDS",
+            "file": "vsam-idcams/01-minimal-define-cluster.idcams",
+            "organisation": "KSDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 32,
+              "fixed": true,
+              "maximum": 32
+            },
+            "storage": {
+              "space": {
+                "primary": 1,
+                "secondary": 1,
+                "unit": "cylinders"
+              },
+              "volumes": [
+                "VOL001"
+              ]
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 16,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Primary key: 16 bytes at offset 0 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "length": 16,
+                "offset": 0,
+                "role": "primary",
+                "unique": true
+              }
+            },
+            "field_number": 1,
+            "key": "vsam.EXAMPLE_BEACON_KSDS.PRIMARY_KEY",
+            "name": "PRIMARY_KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "vsam.EXAMPLE_BEACON_KSDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_BEACON_KSDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "vsam-idcams/01-minimal-define-cluster.idcams",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.92,
+    "format": "vsam-idcams"
+  },
+  "fingerprint": "sha256:66a681c9b6c53a1d5d406105396fd321565812ae039c0df8c3b6538517257ec1",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

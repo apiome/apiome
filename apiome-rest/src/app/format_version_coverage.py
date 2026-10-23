@@ -511,6 +511,35 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="COBOL data-division record layout",
     ),
+    "vsam-idcams": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="IDCAMS access-method services commands and LISTCAT output",
+                format_key="vsam-idcams",
+                support=VersionSupport.UNGATED,
+                note="IDCAMS input names no release: DEFINE CLUSTER / AIX / PATH / GDG parameters "
+                "and their abbreviations are read the same way for every z/OS DFSMS level, and a "
+                "LISTCAT listing is read by its KEYLEN / RKP / AVGLRECL / MAXLRECL attributes.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "cics-bms": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="CICS BMS macros (DFHMSD / DFHMDI / DFHMDF) and symbolic maps",
+                format_key="cics-bms",
+                support=VersionSupport.UNGATED,
+                note="BMS macro source carries no CICS release marker: the DFHMSD / DFHMDI / "
+                "DFHMDF operands, including the extended attributes (COLOR, HILIGHT, VALIDN), are "
+                "read the same way for every CICS TS level, and a symbolic map is read by its "
+                "generated <map>I / <map>O record shape.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "connectrpc": VersionCoverage(
         reads=[
             FormatVersion(

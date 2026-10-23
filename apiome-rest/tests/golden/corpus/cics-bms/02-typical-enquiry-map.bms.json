@@ -1,0 +1,507 @@
+{
+  "adapter": "cics-bms",
+  "canonical": {
+    "channels": [],
+    "description": "CICS BMS screens: 1 map(s). Field positions, pictures and attributes are declared metadata; the screen says nothing about validation or business meaning.",
+    "extras": {
+      "cics_bms": {
+        "capability_limits": [
+          {
+            "construct": "bms.edited_picture",
+            "count": 1,
+            "detail": "An edited output picture (Z, comma, period, sign, currency or CR / DB insertion) formats a number for display; the field is projected to a string and the picture kept in extras['cics_bms']['picout'].",
+            "locations": [
+              "CUSTSET.CUSTMAP.CUSTBAL"
+            ]
+          },
+          {
+            "construct": "bms.literal_field",
+            "count": 8,
+            "detail": "An unlabelled DFHMDF is screen text (a title, a prompt, function-key help), not data; it is kept in the map's extras['cics_bms']['literals'] and not modelled as a field.",
+            "locations": [
+              "CUSTSET.CUSTMAP"
+            ]
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "cics-bms/02-typical-enquiry-map.bms"
+        ],
+        "input": "file",
+        "mapsets": [
+          {
+            "maps": [
+              "CUSTMAP"
+            ],
+            "name": "CUSTSET",
+            "operands": {
+              "ctrl": [
+                "FREEKB",
+                "FRSET"
+              ],
+              "dsatts": [
+                "COLOR",
+                "HILIGHT"
+              ],
+              "lang": "COBOL",
+              "mapatts": [
+                "COLOR",
+                "HILIGHT"
+              ],
+              "mode": "INOUT",
+              "storage": "AUTO",
+              "tioapfx": "YES",
+              "type": "&SYSPARM"
+            }
+          }
+        ],
+        "symbolicMaps": []
+      }
+    },
+    "format": "cics-bms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTSET",
+      "namespace": "CUSTSET"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTSET",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map CUSTMAP of mapset CUSTSET: a 24×80 screen with 6 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "1",
+            "file": "cics-bms/02-typical-enquiry-map.bms",
+            "justify": "LEFT",
+            "line": "1",
+            "literals": [
+              {
+                "initial": "CUSTOMER ENQUIRY  (CUST01)",
+                "length": 27,
+                "position": {
+                  "column": 26,
+                  "row": 1
+                }
+              },
+              {
+                "initial": "CUSTOMER ID  :",
+                "length": 14,
+                "position": {
+                  "column": 1,
+                  "row": 3
+                }
+              },
+              {
+                "length": 1,
+                "position": {
+                  "column": 28,
+                  "row": 3
+                }
+              },
+              {
+                "initial": "NAME         :",
+                "length": 14,
+                "position": {
+                  "column": 1,
+                  "row": 5
+                }
+              },
+              {
+                "initial": "STATUS       :",
+                "length": 14,
+                "position": {
+                  "column": 1,
+                  "row": 6
+                }
+              },
+              {
+                "initial": "BALANCE      :",
+                "length": 14,
+                "position": {
+                  "column": 1,
+                  "row": 7
+                }
+              },
+              {
+                "initial": "MESSAGE:",
+                "length": 8,
+                "position": {
+                  "column": 1,
+                  "row": 22
+                }
+              },
+              {
+                "initial": "F3=EXIT  F5=REFRESH  ENTER=ENQUIRE",
+                "length": 40,
+                "position": {
+                  "column": 1,
+                  "row": 24
+                }
+              }
+            ],
+            "mapset": "CUSTSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 15,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 7, column 17; 15 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 15,
+                "picout": "ZZZ,ZZZ,ZZ9.99-",
+                "position": {
+                  "column": 17,
+                  "row": 7
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "CUSTSET.CUSTMAP.CUSTBAL",
+            "name": "CUSTBAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 7, column 33; 3 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 3,
+                "picout": "XXX",
+                "position": {
+                  "column": 33,
+                  "row": 7
+                }
+              }
+            },
+            "field_number": 5,
+            "key": "CUSTSET.CUSTMAP.CUSTCCY",
+            "name": "CUSTCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 3, column 17; 10 characters; unprotected, initial cursor.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM",
+                    "IC"
+                  ],
+                  "initialCursor": true,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "color": "GREEN",
+                "length": 10,
+                "picin": "X(10)",
+                "picout": "X(10)",
+                "position": {
+                  "column": 17,
+                  "row": 3
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "CUSTSET.CUSTMAP.CUSTID",
+            "name": "CUSTID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 5, column 17; 40 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 40,
+                "picout": "X(40)",
+                "position": {
+                  "column": 17,
+                  "row": 5
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "CUSTSET.CUSTMAP.CUSTNAME",
+            "name": "CUSTNAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 6, column 17; 1 character; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 1,
+                "picout": "X",
+                "position": {
+                  "column": 17,
+                  "row": 6
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "CUSTSET.CUSTMAP.CUSTSTAT",
+            "name": "CUSTSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 22, column 10; 60 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "RED",
+                "length": 60,
+                "position": {
+                  "column": 10,
+                  "row": 22
+                }
+              }
+            },
+            "field_number": 6,
+            "key": "CUSTSET.CUSTMAP.MSGLINE",
+            "name": "MSGLINE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CUSTSET.CUSTMAP",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTMAP",
+        "namespace": "CUSTSET",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cics-bms/02-typical-enquiry-map.bms",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cics-bms"
+  },
+  "fingerprint": "sha256:cdb895029ff0613055b88ce884582bd77ebfbc7ab116f3311b000e14a7934bce",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

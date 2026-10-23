@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 92
+- **Formats gated:** 94
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -27,6 +27,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `azure-apim` | Azure API Management | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `azure-apim` |
 | `capnproto` | Cap'n Proto | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `capnproto` |
 | `cddl` | CDDL | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `cddl` |
+| `cics-bms` | CICS BMS maps | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `cloudevents` | CloudEvents | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 5 | `cloudevents` |
 | `cobolcopybook` | COBOL Copybook | data_schema | 8 | 5 | 0 | 0 | 13 | 5/6 (+1 waived) | 8 | `cobolcopybook` |
 | `connectrpc` | Connect RPC | rpc | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `connectrpc` |
@@ -97,6 +98,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `tyk` | Tyk API definition | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `typescript-types` | TypeScript types | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `typespec` | TypeSpec | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `typespec` |
+| `vsam-idcams` | VSAM cluster definitions (IDCAMS) | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `wadl` | WADL | rest | 6 | 5 | 1 | 0 | 12 | 5/6 (+1 waived) | 6 | `wadl` |
 | `wit` | WIT (WebAssembly) | rpc | 11 | 5 | 0 | 0 | 16 | 6/6 | 9 | `wit` |
 | `wsdl` | WSDL | rest | 13 | 11 | 2 | 0 | 26 | 6/6 | 12 | `wsdl` |
@@ -126,6 +128,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `azure-apim` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `capnproto` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `cics-bms` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cloudevents` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cobolcopybook` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `connectrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -196,6 +199,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `tyk` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `typescript-types` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `typespec` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `vsam-idcams` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wadl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wit` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `wsdl` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -223,4 +227,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `ims`, `natural-ddm`, `pli`, `schematron`, `vsam-idcams`
+`ims`, `natural-ddm`, `pli`, `schematron`
