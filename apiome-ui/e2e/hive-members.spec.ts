@@ -167,7 +167,6 @@ const PAGE_MARKUP = `
           </div>
         </div>
         <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 pt-0.5">
-          <span class="text-xs text-fg-muted">5 members · 1 pending</span>
           <button type="button" class="${BUTTON_SM}">Roles</button>
           <button type="button" class="${BUTTON_SM}">Invite member</button>
         </div>
@@ -176,24 +175,19 @@ const PAGE_MARKUP = `
   </header>
 
   <div class="page-body">
-    <section id="mbr-seats" class="rounded-lg bg-surface p-4 shadow-[inset_0_0_0_1px_var(--border)]">
-      <div class="mbr-seat-strip">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="size-[var(--icon-dense)] shrink-0 text-fg-muted"><circle cx="12" cy="8" r="4"/></svg>
-            <h2 class="text-sm font-semibold text-fg">Member seats</h2>
-            <span class="${BADGE} bg-surface text-fg-muted">Team plan</span>
-          </div>
-          <div class="mt-2">
-            <div role="meter" aria-label="Member seats used" aria-valuenow="4" aria-valuemin="0" aria-valuemax="5" aria-valuetext="4 of 5 seats used" class="flex items-center gap-2 text-warn">
-              <span class="hive-progress relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-inset"><span class="hive-progress__fill block h-full rounded-full" style="width:80%"></span></span>
-            </div>
-            <p class="mt-1 text-xs text-fg-muted">4 of 5 seats used · a pending invitation holds its seat until it is accepted or cancelled.</p>
-          </div>
-        </div>
-        <p class="mbr-seat-figure text-warn-fg" id="mbr-seat-figure">4 of 5 seats used</p>
+    <div class="mbr-facts" id="mbr-facts">
+      <div class="facts-line">
+        <ul class="facts" aria-label="Members summary">
+          <li class="facts__item"><b>5</b> members</li>
+          <li class="facts__item"><b>3</b> active</li>
+          <li class="facts__item"><b>1</b> pending</li>
+          <li class="facts__item"><b>1</b> suspended</li>
+          <li class="facts__item"><b>4 of 5</b> seats used</li>
+          <li class="facts__item facts__item--muted">Team plan</li>
+        </ul>
       </div>
-    </section>
+      <div role="progressbar" aria-label="Member seats: 4 of 5 seats used" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" class="mbr-facts__seats hive-progress hive-progress--thin"><span class="hive-progress__fill" style="width:80%"></span></div>
+    </div>
 
     <div class="table-density overflow-hidden rounded-lg bg-surface shadow-[var(--shadow-sm)]">
       <div class="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2.5">
@@ -228,40 +222,13 @@ const PAGE_MARKUP = `
       </div>
     </div>
 
-    <section id="mbr-idp">
-      <div class="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 class="text-base font-semibold text-fg">Identity provider</h2>
-        <p class="text-sm text-fg-muted">Enterprise identity features — coming soon</p>
-      </div>
-      <div class="mbr-idp-grid">
-        <article class="mbr-idp-card">
-          <div class="flex items-start gap-3">
-            <span class="tnt-icon-tile" data-tone="honey"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/></svg></span>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-sm font-semibold text-fg">Single Sign-On (OIDC/SAML)</h3>
-                <span class="${BADGE} bg-honey-soft text-honey-fg">Coming soon</span>
-              </div>
-            </div>
-          </div>
-          <p class="mbr-idp-card__desc">Enforce sign-in through your identity provider and map IdP groups to Apiome roles.</p>
-          <div class="flex justify-end"><button type="button" disabled aria-disabled="true" class="${BUTTON_SM}">Configure SSO</button></div>
-        </article>
-        <article class="mbr-idp-card">
-          <div class="flex items-start gap-3">
-            <span class="tnt-icon-tile" data-tone="accent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/></svg></span>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-sm font-semibold text-fg">SCIM 2.0 provisioning</h3>
-                <span class="${BADGE} bg-honey-soft text-honey-fg">Coming soon</span>
-              </div>
-            </div>
-          </div>
-          <p class="mbr-idp-card__desc">Automatically create, update, and deactivate members from your identity provider.</p>
-          <div class="flex justify-end"><button type="button" disabled aria-disabled="true" class="${BUTTON_SM}">Enable SCIM</button></div>
-        </article>
-      </div>
-    </section>
+    <p class="coming-next" id="mbr-coming-next">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="coming-next__icon"><path d="M12 2v20"/></svg>
+      <span>Coming next:</span>
+      <span class="${BADGE} coming-next__tag">SSO (OIDC/SAML)</span>
+      <span class="${BADGE} coming-next__tag">SCIM 2.0 provisioning</span>
+      <button type="button" class="coming-next__follow">Follow in What’s new</button>
+    </p>
   </div>
 </div>`;
 
@@ -524,21 +491,6 @@ test.describe('how a pending invitation is distinguished', () => {
    ------------------------------------------------------------------------- */
 
 test.describe('the reflows', () => {
-  test('stacks the seat strip below 40rem rather than squeezing its figure', async ({ page }) => {
-    await page.setViewportSize({ width: 900, height: 900 });
-    await mount(page, PAGE_MARKUP);
-
-    const columnsAt = () =>
-      page
-        .locator('.mbr-seat-strip')
-        .evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length);
-
-    expect(await columnsAt()).toBe(2);
-    await page.setViewportSize({ width: 480, height: 900 });
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r(null))));
-    expect(await columnsAt()).toBe(1);
-  });
-
   test('stacks the membership list below 30rem', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 900 });
     await mount(page, DRAWER_MARKUP);
@@ -554,16 +506,12 @@ test.describe('the reflows', () => {
     expect(await columnsAt()).toBe(1);
   });
 
-  test('reflows the identity-provider cards on a phone instead of overflowing', async ({
+  test('keeps the facts line and the "Coming next" line on a phone without overflowing (HIVE-11.9)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 420, height: 900 });
     await mount(page, PAGE_MARKUP);
-
-    const columns = await page
-      .locator('.mbr-idp-grid')
-      .evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(' ').length);
-    expect(columns).toBe(1);
+    await expect(page.locator('#mbr-coming-next')).toBeVisible();
     expect(await documentOverflows(page)).toBe(false);
   });
 });

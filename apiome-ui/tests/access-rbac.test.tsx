@@ -197,14 +197,11 @@ describe('MembersClient (#3611)', () => {
     expect(await screen.findByText('Dana Okoro')).toBeInTheDocument();
     expect(screen.getByText('dana@acme.io')).toBeInTheDocument();
 
-    // SSO / SCIM coming-soon cards.
-    expect(screen.getByText('Single Sign-On (OIDC/SAML)')).toBeInTheDocument();
-    expect(screen.getByText('SCIM 2.0 provisioning')).toBeInTheDocument();
-    expect(screen.getAllByText('Coming soon').length).toBeGreaterThanOrEqual(2);
-
-    // Disabled (non-functional) controls.
-    expect(screen.getByRole('button', { name: 'Configure SSO' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Enable SCIM' })).toBeDisabled();
+    // SSO / SCIM are named on the "Coming next" line, with no dead buttons (HIVE-11.9).
+    expect(screen.getByTestId('coming-next')).toHaveTextContent('SSO (OIDC/SAML)');
+    expect(screen.getByTestId('coming-next')).toHaveTextContent('SCIM 2.0 provisioning');
+    expect(screen.queryByRole('button', { name: 'Configure SSO' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enable SCIM' })).not.toBeInTheDocument();
   });
 });
 
@@ -252,27 +249,28 @@ describe('MembersClient — license/seat alignment (OLO-6.3)', () => {
     return fn;
   }
 
-  it('surfaces seat usage proactively with a meter', async () => {
+  it('surfaces seat usage proactively in the facts line (HIVE-11.9)', async () => {
     mockMembersFetch({ used: 2, max: 5 });
     renderWithDialogs(<MembersClient />);
 
-    expect(await screen.findByText('2 of 5 seats used')).toBeInTheDocument();
-    const meter = screen.getByRole('meter', { name: /Member seats used/i });
-    expect(meter).toHaveAttribute('aria-valuenow', '2');
-    expect(meter).toHaveAttribute('aria-valuemax', '5');
-
-    // Below capacity, invite stays enabled.
+    const summary = await screen.findByRole('list', { name: 'Members summary' });
+    await waitFor(() => expect(summary).toHaveTextContent('2 of 5 seats used'));
+    // Below the 80 % line there is no bar; invite stays enabled.
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Invite member/i })).toBeEnabled();
   });
 
-  it('disables invite and shows upgrade guidance at capacity', async () => {
+  it('withholds invite and shows upgrade guidance at capacity', async () => {
     mockMembersFetch({ used: 5, max: 5 });
     renderWithDialogs(<MembersClient />);
 
-    expect(await screen.findByText('5 of 5 seats used')).toBeInTheDocument();
-    // The at-capacity guidance is visible before any failed action.
+    const summary = await screen.findByRole('list', { name: 'Members summary' });
+    await waitFor(() => expect(summary).toHaveTextContent('5 of 5 seats used'));
+    // The at-capacity guidance is visible before any failed action, and the action that
+    // would be refused is not offered (HIVE-11.9: no disabled buttons).
     expect(screen.getByText(FRIENDLY_EXHAUSTED)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Invite member/i })).toBeDisabled();
+    expect(screen.getByRole('progressbar', { name: 'Member seats: 5 of 5 seats used' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Invite member/i })).not.toBeInTheDocument();
   });
 
   it('renders the seats-exhausted 403 as friendly guidance, not a raw error', async () => {

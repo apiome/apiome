@@ -337,14 +337,15 @@ test.describe('OLO journey — login, invariants, onboarding, license, switcher'
     }
 
     // At the Free-tier limit (Wren + 4 invited = 5/5 seats) the screen enforces the cap: once
-    // the seat data reaches capacity the invite trigger is disabled and the structured
-    // `license-seats-exhausted` guidance is shown on the seat card. This is the deterministic
+    // the seat data reaches capacity the invite trigger is withdrawn (HIVE-11.9: no disabled
+    // buttons) and the structured `license-seats-exhausted` guidance is shown under the
+    // summary line. This is the deterministic
     // form of the OLO-5.3 refusal — the seat count reaches at-capacity before a sixth address
-    // can be submitted, so the refusal is the disabled action + guidance rather than a
+    // can be submitted, so the refusal is the withdrawn action + guidance rather than a
     // post-submit error banner. `fillers[3]` stays a seeded-but-uninvited account (the seat
     // that can no longer be filled).
     await expect(page.getByTestId('member-row')).toHaveCount(5);
-    await expect(page.getByTestId('members-invite')).toBeDisabled();
+    await expect(page.getByTestId('members-invite')).toHaveCount(0);
     await expect(page.getByTestId('member-seats-exhausted')).toContainText(
       /member seats.*are in use/i,
     );

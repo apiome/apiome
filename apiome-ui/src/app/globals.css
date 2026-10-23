@@ -7968,32 +7968,18 @@ button.tfa-reset-notice__close > svg {
    it would be six more rules saying the same thing in the same tokens.
    ========================================================================== */
 
-/* ---- The seat strip (licence) -------------------------------------------
-   The meter and its figure, side by side until the card is too narrow for
-   both. `minmax(0, 1fr)` on the meter half so a long plan name elides rather
-   than pushing the figure off the card. */
-.mbr-seat-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-4);
-  align-items: center;
+/* ---- The summary (HIVE-11.9) ---------------------------------------------
+   The facts line, then — only once seats run short — a thin seat bar under it,
+   then the at-capacity warning. The bar is short on purpose: it qualifies the
+   "seats used" fact, it is not a meter in its own right. */
+.mbr-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-@media (max-width: 40rem) {
-  .mbr-seat-strip {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* The figure beside the meter — tabular so the digits do not jitter as seats
-   are taken and returned. Its ink is the metric tone the meter already derives,
-   passed in as a utility class by the component, so the number and the bar
-   cannot disagree. */
-.mbr-seat-figure {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.mbr-facts__seats {
+  max-inline-size: 16rem;
 }
 
 /* ---- The identity cell --------------------------------------------------
@@ -8210,33 +8196,6 @@ button.tfa-reset-notice__close > svg {
 
 .mbr-activity__when {
   white-space: nowrap;
-  color: var(--fg-muted);
-}
-
-/* ---- Identity provider (coming soon) ------------------------------------
-   Two cards that describe features the product does not have yet. They are
-   quieted by their badge and their disabled button, never by opacity — see the
-   banner above. */
-.mbr-idp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  gap: var(--space-4);
-}
-
-.mbr-idp-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  border-radius: var(--r-lg);
-  background: var(--bg-surface);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.mbr-idp-card__desc {
-  flex: 1 1 auto;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-normal);
   color: var(--fg-muted);
 }
 

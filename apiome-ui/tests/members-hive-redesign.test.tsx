@@ -20,7 +20,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
@@ -321,63 +321,93 @@ describe('the members page', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Members' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
-    // The "{n} members · {p} pending" line the mockup keeps from the old header.
-    expect(screen.getByText('5 members · 1 pending')).toBeInTheDocument();
+    // The counts moved from the header into the facts line (HIVE-11.9).
+    expect(screen.getByRole('list', { name: 'Members summary' })).toHaveTextContent(/5 members/);
     expect(screen.getByRole('link', { name: /Roles/ })).toHaveAttribute(
       'href',
       '/ade/dashboard/roles'
     );
   });
 
-  it('keeps the SSO and SCIM cards as honest placeholders', async () => {
+  it('names SSO and SCIM on one "Coming next" line, with no button that does nothing (HIVE-11.9)', async () => {
     await renderMembers();
 
-    expect(screen.getByText('Single Sign-On (OIDC/SAML)')).toBeInTheDocument();
-    expect(screen.getByText('SCIM 2.0 provisioning')).toBeInTheDocument();
-    expect(screen.getAllByText('Coming soon')).toHaveLength(2);
-    expect(screen.getByRole('button', { name: /Configure SSO/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Enable SCIM/ })).toBeDisabled();
+    const line = screen.getByTestId('coming-next');
+    expect(line).toHaveTextContent('Coming next:');
+    expect(within(line).getByTestId('coming-next-sso')).toHaveTextContent('SSO (OIDC/SAML)');
+    expect(within(line).getByTestId('coming-next-scim')).toHaveTextContent('SCIM 2.0 provisioning');
+    expect(screen.queryByRole('button', { name: /Configure SSO|Enable SCIM/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument();
+    // The follow link opens What's new in place.
+    fireEvent.click(within(line).getByRole('button', { name: 'Follow in What’s new' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('offers no disabled button anywhere on the page (HIVE-11.9, §10)', async () => {
+    await renderMembers({ seats: { used: 5, max: 5 } });
+    const page = document.querySelector('.page') as HTMLElement;
+    expect(page.querySelectorAll('button:disabled, button[aria-disabled="true"]')).toHaveLength(0);
   });
 });
 
 /* -------------------------------------------------------------------------
-   2. The seat meter
+   2. The facts line (was the seat meter)
    ------------------------------------------------------------------------- */
 
-describe('the seat meter', () => {
-  it('reads the licence, and says so in both the bar and the figure', async () => {
-    await renderMembers({ seats: { used: 4, max: 5 } });
+describe('the facts line', () => {
+  /** The summary list's facts, as text. */
+  const facts = () =>
+    within(screen.getByRole('list', { name: 'Members summary' }))
+      .getAllByRole('listitem')
+      .map((item) => item.textContent?.replace(/\s+/g, ' ').trim());
 
-    const card = screen.getByTestId('member-seat-usage');
-    const meter = within(card).getByRole('meter', { name: /Member seats used/i });
-    expect(meter).toHaveAttribute('aria-valuenow', '4');
-    expect(meter).toHaveAttribute('aria-valuemax', '5');
-    expect(within(card).getAllByText('4 of 5 seats used').length).toBeGreaterThan(0);
+  it('counts members by state and seats exactly as the meter did, with no meter card', async () => {
+    await renderMembers({ seats: { used: 3, max: 10 } });
+
+    expect(facts()).toEqual([
+      '5 members',
+      expect.stringMatching(/^\d+ active$/),
+      '1 pending',
+      expect.stringMatching(/^\d+ suspended$/),
+      '3 of 10 seats used',
+      'Team plan',
+    ]);
+    expect(screen.queryByTestId('member-seat-usage')).not.toBeInTheDocument();
+    // Below the 80 % line there is no bar at all.
+    expect(screen.queryByTestId('member-seat-progress')).not.toBeInTheDocument();
   });
 
-  it('warns at capacity with the licence’s own upgrade guidance', async () => {
+  it('adds a thin seat bar at 80 %, in the warn tone', async () => {
+    await renderMembers({ seats: { used: 4, max: 5 } });
+
+    expect(facts()).toContain('4 of 5 seats used');
+    const bar = screen.getByRole('progressbar', { name: 'Member seats: 4 of 5 seats used' });
+    expect(bar).toHaveAttribute('aria-valuenow', '80');
+  });
+
+  it('warns at capacity with the licence’s own guidance, and offers no invite', async () => {
     await renderMembers({ seats: { used: 5, max: 5 } });
 
     const banner = await screen.findByTestId('member-seats-exhausted');
     expect(banner).toHaveTextContent(/All member seats included in this tenant's license/i);
-    // And the action that would 403 is refused before it is tried.
-    expect(screen.getByTestId('members-invite')).toBeDisabled();
+    // The action that would 403 is not offered, rather than offered disabled.
+    expect(screen.queryByTestId('members-invite')).not.toBeInTheDocument();
   });
 
-  it('says nothing rather than guessing when the licence could not be read', async () => {
+  it('says nothing about seats rather than guessing when the licence could not be read', async () => {
     await renderMembers({ seats: null });
 
-    expect(screen.queryByTestId('member-seat-usage')).not.toBeInTheDocument();
+    expect(facts().some((fact) => fact?.includes('seat'))).toBe(false);
     // A failed background read must not become a limit: inviting stays available.
     expect(screen.getByTestId('members-invite')).toBeEnabled();
   });
 
-  it('draws no meter and no danger ink on an unlimited plan', async () => {
+  it('draws no bar on an unlimited plan, and says the seats are unlimited', async () => {
     await renderMembers({ seats: { used: 12, max: -1 } });
 
-    const card = screen.getByTestId('member-seat-usage');
-    expect(within(card).queryByRole('meter')).not.toBeInTheDocument();
-    expect(within(card).getByText(/unlimited member seats/i)).toBeInTheDocument();
+    expect(facts()).toContain('12 seats used');
+    expect(facts()).toContain('unlimited seats');
+    expect(screen.queryByTestId('member-seat-progress')).not.toBeInTheDocument();
   });
 });
 
@@ -480,8 +510,8 @@ describe('a viewer with no members grants', () => {
     expect(screen.queryByLabelText(/^Role for/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Offboard/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Resend/ })).not.toBeInTheDocument();
-    // The seat meter is context, not an action, so it stays.
-    expect(screen.getByTestId('member-seat-usage')).toBeInTheDocument();
+    // The summary is context, not an action, so it stays.
+    expect(screen.getByTestId('member-facts')).toBeInTheDocument();
   });
 });
 
@@ -838,7 +868,7 @@ describe('the docs fixtures', () => {
     const user = userEvent.setup();
     render(<MembersClient />);
     await screen.findByText('Priya Raman');
-    expect(screen.getByText('9 members · 2 pending')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Members summary' })).toHaveTextContent(/9 members/);
     writeA11yFixture('members', liveMarkup(page()));
 
     await user.click(screen.getByTestId('members-invite'));

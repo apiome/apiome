@@ -68,8 +68,8 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const MEMBER_PRELUDES = [
-  '.mbr-seat-strip',
-  '.mbr-seat-figure',
+  '.mbr-facts',
+  '.mbr-facts__seats',
   '.mbr-identity',
   '.mbr-identity__text',
   '.mbr-identity__name',
@@ -90,9 +90,6 @@ const MEMBER_PRELUDES = [
   '.mbr-activity + .mbr-activity',
   '.mbr-activity__action',
   '.mbr-activity__when',
-  '.mbr-idp-grid',
-  '.mbr-idp-card',
-  '.mbr-idp-card__desc',
 ] as const;
 
 /**
@@ -253,11 +250,9 @@ describe('density and font-scale independence', () => {
 
   it('spends spacing tokens rather than literal gaps, so Compact is genuinely compact', () => {
     for (const [prelude, property] of [
-      ['.mbr-seat-strip', 'gap'],
+      ['.mbr-facts', 'gap'],
       ['.mbr-identity', 'gap'],
       ['.mbr-kv', 'gap'],
-      ['.mbr-idp-grid', 'gap'],
-      ['.mbr-idp-card', 'padding'],
     ] as const) {
       expect(declaration(prelude, property)).toContain('var(--space-');
     }
@@ -265,7 +260,6 @@ describe('density and font-scale independence', () => {
 
   it('draws every quiet line from the type scale', () => {
     for (const [prelude, expected] of [
-      ['.mbr-seat-figure', 'var(--fs-sm)'],
       ['.mbr-identity__name', 'var(--fs-sm)'],
       ['.mbr-identity__sub', 'var(--fs-2xs)'],
       ['.mbr-identity__self', 'var(--fs-2xs)'],
@@ -275,14 +269,13 @@ describe('density and font-scale independence', () => {
       ['.mbr-caps', 'var(--fs-2xs)'],
       ['.mbr-tag', 'var(--fs-2xs)'],
       ['.mbr-activity', 'var(--fs-xs)'],
-      ['.mbr-idp-card__desc', 'var(--fs-sm)'],
     ] as const) {
       expect(declaration(prelude, 'font-size')).toBe(expected);
     }
   });
 
   it('reuses the shared radii rather than inventing corners', () => {
-    for (const prelude of ['.mbr-invite-mark', '.mbr-role-select', '.mbr-tag', '.mbr-idp-card']) {
+    for (const prelude of ['.mbr-invite-mark', '.mbr-role-select', '.mbr-tag']) {
       expect(declaration(prelude, 'border-radius')).toMatch(/^var\(--r-/);
     }
   });
@@ -301,7 +294,7 @@ describe('no horizontal document scroll at ≥1280px', () => {
   it('gives every content-bearing grid track a zero minimum', () => {
     // A grid track's automatic minimum is its *content*, so a long address or a long action
     // string would hold its column open at intrinsic width without this.
-    for (const prelude of ['.mbr-seat-strip', '.mbr-kv', '.mbr-activity']) {
+    for (const prelude of ['.mbr-kv', '.mbr-activity']) {
       expect(declaration(prelude, 'grid-template-columns')).toContain('minmax(0,');
     }
   });
@@ -342,14 +335,6 @@ describe('no horizontal document scroll at ≥1280px', () => {
     expect(decls.get('word-break')).toBe('break-word');
   });
 
-  it('lets the identity-provider cards reflow instead of overflowing a narrow drawer', () => {
-    // `min(100%, 18rem)` is the whole point: a bare `minmax(18rem, 1fr)` overflows any
-    // container narrower than 18rem, which is exactly where a reflow was wanted.
-    expect(declaration('.mbr-idp-grid', 'grid-template-columns')).toBe(
-      'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))'
-    );
-  });
-
   it('lets the row’s action cluster wrap rather than overflow', () => {
     expect(declaration('.mbr-row-actions', 'flex-wrap')).toBe('wrap');
   });
@@ -364,13 +349,6 @@ describe('the responsive fallbacks', () => {
     // A `@container` query with no `container-type` ancestor never matches at all, which is
     // the quiet way a "responsive" rule turns out to be dead code.
     expect(MEMBER_SECTION_CODE).not.toContain('@container');
-  });
-
-  it('stacks the seat strip before its figure is squeezed off the card', () => {
-    const block = MEMBER_SECTION.match(/@media \(max-width: 40rem\) \{[\s\S]*?\n\}/)?.[0];
-    expect(block).toBeDefined();
-    expect(block).toContain('.mbr-seat-strip');
-    expect(block).toContain('grid-template-columns: minmax(0, 1fr);');
   });
 
   it('stacks the membership list’s terms and values on a narrow sheet', () => {
@@ -436,12 +414,6 @@ describe('what the block borrows rather than reinvents', () => {
     }
   });
 
-  it('draws its hairlines as the shared inset ring rather than a border', () => {
-    for (const prelude of ['.mbr-idp-card']) {
-      expect(declaration(prelude, 'box-shadow')).toBe('inset 0 0 0 1px var(--border)');
-    }
-  });
-
   it('leaves the role select’s hairline and focus ring to `.hive-control`', () => {
     // The components compose `hive-control mbr-role-select`, so this rule must not declare a
     // `box-shadow` of its own — it would be a second, unlayered answer to the same question.
@@ -461,7 +433,7 @@ describe('what the block borrows rather than reinvents', () => {
     expect(declaration('.mbr-tag', 'background')).toBe('var(--bg-inset)');
   });
 
-  it('keeps the seat figure’s digits from jittering as seats are taken and returned', () => {
-    expect(declaration('.mbr-seat-figure', 'font-variant-numeric')).toBe('tabular-nums');
+  it('keeps the seat bar short: it qualifies the seats fact rather than being a meter (HIVE-11.9)', () => {
+    expect(declaration('.mbr-facts__seats', 'max-inline-size')).toBe('16rem');
   });
 });

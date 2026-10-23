@@ -7,8 +7,8 @@
  * and the calls they make are in {@link ./membersApi}.
  */
 
-export { default as MemberSeatsCard } from './MemberSeatsCard';
-export type { MemberSeatsCardProps } from './MemberSeatsCard';
+export { default as MemberFactsLine } from './MemberFactsLine';
+export type { MemberFactsLineProps } from './MemberFactsLine';
 
 export { default as MembersTable } from './MembersTable';
 export type { MembersTableProps } from './MembersTable';
@@ -24,8 +24,6 @@ export type {
 
 export { default as MemberDetailDrawer } from './MemberDetailDrawer';
 export type { MemberDetailDrawerProps } from './MemberDetailDrawer';
-
-export { default as IdentityProviderCards } from './IdentityProviderCards';
 
 export * from './membersModel';
 export * from './membersApi';

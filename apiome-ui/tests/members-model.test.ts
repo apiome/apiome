@@ -20,6 +20,9 @@ import {
   describeAdminsRemaining,
   describeMemberBreakdown,
   describeMemberCount,
+  memberFacts,
+  memberSeatProgress,
+  MEMBERS_COMING_NEXT,
   describeOffboard,
   formatMemberDate,
   formatMemberRelative,
@@ -50,6 +53,7 @@ import {
   type MemberRecord,
   type RoleRecord,
 } from '../src/app/components/ade/members/membersModel';
+import { formatSeatUsage } from '../src/app/ade/dashboard/tenants/licenseSeats';
 
 /** Everything a member row carries, so a fixture only has to state what it is about. */
 const BASE: MemberRecord = {
@@ -623,5 +627,60 @@ describe('printing an instant', () => {
     // Clock skew between the browser and the server is real; "in 3 seconds" would be a
     // distraction about the wrong thing.
     expect(formatMemberRelative('2026-08-17T12:00:30Z', NOW, 'UTC')).toBe('Just now');
+  });
+});
+
+describe('memberFacts (HIVE-11.9)', () => {
+  const SUMMARY = { total: 5, active: 3, pending: 1, suspended: 1, admins: 1 };
+
+  it('reads members · active · pending · suspended · seats, then the plan as an aside', () => {
+    expect(memberFacts(SUMMARY, { used: 4, max: 5 }, { name: 'Team', type: 'paid' } as never)).toEqual([
+      { id: 'members', value: 5, label: 'members' },
+      { id: 'active', value: 3, label: 'active' },
+      { id: 'pending', value: 1, label: 'pending' },
+      { id: 'suspended', value: 1, label: 'suspended' },
+      { id: 'seats', value: '4 of 5', label: 'seats used' },
+      { id: 'plan', label: 'Team plan', muted: true },
+    ]);
+  });
+
+  it('prints the seat numbers exactly as the old meter did (formatSeatUsage)', () => {
+    for (const seats of [{ used: 1, max: 5 }, { used: 0, max: 3 }, { used: 5, max: 5 }]) {
+      const fact = memberFacts(SUMMARY, seats).find((entry) => entry.id === 'seats')!;
+      expect(`${fact.value} ${fact.label}`).toBe(formatSeatUsage(seats));
+    }
+    const unlimited = memberFacts(SUMMARY, { used: 12, max: -1 });
+    const seatFact = unlimited.find((entry) => entry.id === 'seats')!;
+    expect(`${seatFact.value} ${seatFact.label}`).toBe(formatSeatUsage({ used: 12, max: -1 }));
+    expect(unlimited.find((entry) => entry.id === 'seats-unlimited')).toEqual({
+      id: 'seats-unlimited',
+      label: 'unlimited seats',
+      muted: true,
+    });
+  });
+
+  it('leaves seats out when the licence could not be read, and a single member singular', () => {
+    const facts = memberFacts({ ...SUMMARY, total: 1 }, null);
+    expect(facts.map((fact) => fact.id)).toEqual(['members', 'active', 'pending', 'suspended']);
+    expect(facts[0].label).toBe('member');
+  });
+});
+
+describe('memberSeatProgress (HIVE-11.9)', () => {
+  it('draws nothing below the 80 % warn line, on an unlimited plan or without a licence', () => {
+    expect(memberSeatProgress({ used: 3, max: 5 })).toBeNull();
+    expect(memberSeatProgress({ used: 50, max: -1 })).toBeNull();
+    expect(memberSeatProgress(null)).toBeNull();
+  });
+
+  it('draws the bar from 80 %, in the quota band’s tone', () => {
+    expect(memberSeatProgress({ used: 4, max: 5 })).toEqual({ percent: 80, tone: 'warn' });
+    expect(memberSeatProgress({ used: 5, max: 5 })).toEqual({ percent: 100, tone: 'danger' });
+  });
+});
+
+describe('MEMBERS_COMING_NEXT', () => {
+  it('names SSO and SCIM as the issue words them', () => {
+    expect(MEMBERS_COMING_NEXT.map((item) => item.label)).toEqual(['SSO (OIDC/SAML)', 'SCIM 2.0 provisioning']);
   });
 });
