@@ -1570,6 +1570,34 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "lwm2m": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="LwM2M object definitions (LWM2M 1.0 – 1.2 schema)",
+                format_key="lwm2m",
+                support=VersionSupport.UNGATED,
+                note="One reader serves every object-definition schema version: `LWM2MVersion` and "
+                "`ObjectVersion` are recorded per object, never branched on. The `Unsigned Integer` "
+                "and `Corelnk` resource types LwM2M 1.1 added are read wherever they appear.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
+    "matter": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Matter data-model XML (ZAP `configurator` cluster and device-type definitions)",
+                format_key="matter",
+                support=VersionSupport.UNGATED,
+                note="The definition files carry no version marker the reader branches on: clusters, "
+                "enums, bitmaps, structs and device types are read the same way for every Matter "
+                "release. A cluster's feature conformance is kept, not evaluated.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "ros2": VersionCoverage(
         reads=[
             FormatVersion(

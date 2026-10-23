@@ -1,0 +1,65 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns GenericMeasurement.ReadNowResponse.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ReadNow",
+      "operation": "GenericMeasurementService.ReadNow",
+      "output": {
+        "schema": {
+          "properties": {
+            "Reading": {
+              "properties": {
+                "CalibrationOffset": {},
+                "Reading": {
+                  "properties": {
+                    "Timestamp": {},
+                    "Unit": {
+                      "enum": [
+                        0,
+                        1,
+                        2
+                      ],
+                      "type": "integer"
+                    },
+                    "Value": {}
+                  },
+                  "required": [
+                    "Timestamp",
+                    "Unit"
+                  ],
+                  "type": "object"
+                },
+                "ValidRange": {
+                  "properties": {
+                    "Max": {},
+                    "Min": {}
+                  },
+                  "required": [
+                    "Max",
+                    "Min"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "Reading",
+                "ValidRange"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Reading"
+          ],
+          "type": "object"
+        },
+        "shape": "GenericMeasurement.ReadNowResponse"
+      }
+    }
+  ]
+}

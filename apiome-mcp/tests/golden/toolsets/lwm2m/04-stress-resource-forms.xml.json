@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Executable resource: an rpc operation, not a property.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ExecuteResource",
+      "operation": "CoverageService.ExecuteResource"
+    }
+  ]
+}

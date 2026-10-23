@@ -1,0 +1,117 @@
+{
+  "adapter": "lwm2m",
+  "canonical": {
+    "channels": [],
+    "description": "The smallest useful object definition.",
+    "extras": {
+      "lwm2m": {
+        "capability_limits": [],
+        "input": "file",
+        "objects": [
+          {
+            "file": "lwm2m/01-minimal-object.xml",
+            "id": 32700,
+            "lwm2m_version": "1.1",
+            "name": "Beacon",
+            "urn": "urn:oma:lwm2m:x:32700"
+          }
+        ]
+      }
+    },
+    "format": "lwm2m",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Beacon",
+      "namespace": "urn:oma:lwm2m:x:32700"
+    },
+    "paradigm": "data_schema",
+    "protocol": "lwm2m",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Beacon",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The smallest useful object definition.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "lwm2m/01-minimal-object.xml",
+            "id": 32700,
+            "lwm2m_version": "1.1",
+            "mandatory": false,
+            "multiple_instances": false,
+            "name": "Beacon",
+            "object_version": "1.0",
+            "urn": "urn:oma:lwm2m:x:32700"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Beacon identifier.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 0,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Identifier",
+                "operations": "R",
+                "type": "String"
+              }
+            },
+            "field_number": 0,
+            "key": "Beacon.Identifier",
+            "name": "Identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Beacon",
+        "key_type": null,
+        "kind": "record",
+        "name": "Beacon",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.0"
+  },
+  "corpus_path": "lwm2m/01-minimal-object.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "lwm2m"
+  },
+  "fingerprint": "sha256:1621a90d45cbe532159c7b03e4bbe65c179c6c7dac863583a1c09d7e6758689f",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

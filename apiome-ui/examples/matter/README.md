@@ -1,7 +1,7 @@
 # Matter cluster and device-type definitions — `matter`
 
 Fixtures for the Matter half of **FMT-9.5** ([#5472](https://github.com/apiome/apiome/issues/5472)).
-The LwM2M half lives in `lwm2m/`. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+The LwM2M half lives in `lwm2m/`. The `matter` adapter imports them.
 
 **Detection markers.** Root element `configurator` containing `<cluster>` (with `name`, `code`,
 `define`) or `<deviceType>` (with `deviceId`, `clusters/include`).

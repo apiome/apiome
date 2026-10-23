@@ -1,0 +1,75 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "Level": {},
+          "OptionsMask": {
+            "description": "A flag set: a value combines any of these masks.",
+            "enum": [
+              1,
+              2
+            ],
+            "type": "integer"
+          },
+          "OptionsOverride": {
+            "description": "A flag set: a value combines any of these masks.",
+            "enum": [
+              1,
+              2
+            ],
+            "type": "integer"
+          },
+          "TransitionTime": {}
+        },
+        "required": [
+          "Level",
+          "OptionsMask",
+          "OptionsOverride"
+        ],
+        "type": "object"
+      },
+      "name": "MoveToLevel",
+      "operation": "LevelControlService.MoveToLevel"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "Level": {},
+          "TransitionTime": {}
+        },
+        "required": [
+          "Level"
+        ],
+        "type": "object"
+      },
+      "name": "MoveToLevelWithOnOff",
+      "operation": "LevelControlService.MoveToLevelWithOnOff"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Off",
+      "operation": "OnOffService.Off"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "On",
+      "operation": "OnOffService.On"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Toggle",
+      "operation": "OnOffService.Toggle"
+    }
+  ]
+}

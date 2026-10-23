@@ -1,0 +1,853 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Identity and capability of the node, plus lifecycle events.",
+    "extras": {
+      "matter": {
+        "capability_limits": [],
+        "clusters": [
+          {
+            "code": "0x0028",
+            "file": "matter/06-typical-events-and-access.xml",
+            "name": "Basic Information"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Basic Information",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Basic Information cluster.",
+        "extras": {},
+        "key": "BasicInformationService",
+        "name": "BasicInformationService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x02",
+                "optional": true,
+                "priority": "info"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BasicInformationService.Leave",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BasicInformationService.Leave#event.LeaveEvent",
+                "name": "Leave",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BasicInformation.LeaveEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "Leave",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x03",
+                "optional": true,
+                "priority": "info"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BasicInformationService.ReachableChanged",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BasicInformationService.ReachableChanged#event.ReachableChangedEvent",
+                "name": "ReachableChanged",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BasicInformation.ReachableChangedEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "ReachableChanged",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Emitted when the node is about to shut down.",
+            "extras": {
+              "matter_event": {
+                "code": "0x01",
+                "optional": true,
+                "priority": "critical"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BasicInformationService.ShutDown",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BasicInformationService.ShutDown#event.ShutDownEvent",
+                "name": "ShutDown",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BasicInformation.ShutDownEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "ShutDown",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Emitted once after the node completes a boot.",
+            "extras": {
+              "matter_event": {
+                "code": "0x00",
+                "optional": false,
+                "priority": "critical"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "BasicInformationService.StartUp",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "BasicInformationService.StartUp#event.StartUpEvent",
+                "name": "StartUp",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "BasicInformation.StartUpEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "StartUp",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Basic Information",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Identity and capability of the node, plus lifecycle events.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0028",
+            "define": "BASIC_INFORMATION_CLUSTER",
+            "domain": "General",
+            "file": "matter/06-typical-events-and-access.xml",
+            "name": "Basic Information"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0013",
+                "define": "CAPABILITY_MINIMA",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "CapabilityMinimaStruct"
+            },
+            "field_number": 19,
+            "key": "BasicInformation.CapabilityMinima",
+            "name": "CapabilityMinima",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "CapabilityMinimaStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "DATA_MODEL_REVISION",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "int16u"
+            },
+            "field_number": 0,
+            "key": "BasicInformation.DataModelRevision",
+            "name": "DataModelRevision",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "XX",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0006",
+                "define": "LOCATION",
+                "nullable": false,
+                "optional": false,
+                "privileges": {
+                  "read": "view",
+                  "write": "administer"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "char_string"
+            },
+            "field_number": 6,
+            "key": "BasicInformation.Location",
+            "name": "Location",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": "",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0005",
+                "define": "NODE_LABEL",
+                "nullable": false,
+                "optional": false,
+                "privileges": {
+                  "read": "view",
+                  "write": "manage"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "char_string"
+            },
+            "field_number": 5,
+            "key": "BasicInformation.NodeLabel",
+            "name": "NodeLabel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0003",
+                "define": "PRODUCT_NAME",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "char_string"
+            },
+            "field_number": 3,
+            "key": "BasicInformation.ProductName",
+            "name": "ProductName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x000A",
+                "define": "SOFTWARE_VERSION_STRING",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "char_string"
+            },
+            "field_number": 10,
+            "key": "BasicInformation.SoftwareVersionString",
+            "name": "SoftwareVersionString",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0002",
+                "define": "VENDOR_ID",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "vendor_id"
+            },
+            "field_number": 2,
+            "key": "BasicInformation.VendorID",
+            "name": "VendorID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0001",
+                "define": "VENDOR_NAME",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "char_string"
+            },
+            "field_number": 1,
+            "key": "BasicInformation.VendorName",
+            "name": "VendorName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BasicInformation",
+        "key_type": null,
+        "kind": "record",
+        "name": "BasicInformation",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x02",
+            "priority": "info"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "fabric_idx"
+            },
+            "field_number": 0,
+            "key": "BasicInformation.LeaveEvent.FabricIndex",
+            "name": "FabricIndex",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BasicInformation.LeaveEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "LeaveEvent",
+        "namespace": "BasicInformation",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x03",
+            "priority": "info"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "ChangeTypeEnum"
+            },
+            "field_number": 1,
+            "key": "BasicInformation.ReachableChangedEvent.ChangeType",
+            "name": "ChangeType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ChangeTypeEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "boolean"
+            },
+            "field_number": 0,
+            "key": "BasicInformation.ReachableChangedEvent.ReachableNewValue",
+            "name": "ReachableNewValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BasicInformation.ReachableChangedEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReachableChangedEvent",
+        "namespace": "BasicInformation",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Emitted when the node is about to shut down.",
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x01",
+            "priority": "critical"
+          }
+        },
+        "fields": [],
+        "key": "BasicInformation.ShutDownEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ShutDownEvent",
+        "namespace": "BasicInformation",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Emitted once after the node completes a boot.",
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x00",
+            "priority": "critical"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32u"
+            },
+            "field_number": 0,
+            "key": "BasicInformation.StartUpEvent.SoftwareVersion",
+            "name": "SoftwareVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "BasicInformation.StartUpEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "StartUpEvent",
+        "namespace": "BasicInformation",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0x0028"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 3.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 3,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_default": "3",
+              "matter_type": "int16u"
+            },
+            "field_number": 0,
+            "key": "CapabilityMinimaStruct.CaseSessionsPerFabric",
+            "name": "CaseSessionsPerFabric",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 3.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 3,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_default": "3",
+              "matter_type": "int16u"
+            },
+            "field_number": 1,
+            "key": "CapabilityMinimaStruct.SubscriptionsPerFabric",
+            "name": "SubscriptionsPerFabric",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CapabilityMinimaStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "CapabilityMinimaStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ChangeTypeEnum.Changed",
+            "name": "Changed",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ChangeTypeEnum.Added",
+            "name": "Added",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ChangeTypeEnum.Removed",
+            "name": "Removed",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0x0028"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "ChangeTypeEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "ChangeTypeEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/06-typical-events-and-access.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 0,
+    "services": 1,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:1d6c42c16e26213e5a1e4f905878af53db26bd82e6d89f28911b03801a094481",
+  "lint": {
+    "findings": 24,
+    "grade": "F",
+    "report_fingerprint": "83282378e34256b21baa2a51ff0fe44123436c0ac73152794f750fab3ef7a133",
+    "score": 58,
+    "severity_counts": {
+      "error": 0,
+      "info": 18,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

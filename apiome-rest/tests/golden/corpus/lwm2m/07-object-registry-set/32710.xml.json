@@ -1,0 +1,590 @@
+{
+  "adapter": "lwm2m",
+  "canonical": {
+    "channels": [],
+    "description": "A refrigerated transport unit composed of sensors and an actuator.",
+    "extras": {
+      "lwm2m": {
+        "capability_limits": [
+          {
+            "construct": "lwm2m.object_link_target",
+            "count": 2,
+            "detail": "An Objlnk resource links to an instance of another object, but an object definition does not say which object. The field is typed as the generic Objlnk record (object id and instance id); the object it is meant to point at is only in its description.",
+            "locations": [
+              "ColdChainUnit.DoorActuator",
+              "ColdChainUnit.TemperatureSensor"
+            ]
+          }
+        ],
+        "input": "fileset",
+        "objects": [
+          {
+            "file": "32710.xml",
+            "id": 32710,
+            "lwm2m_version": "1.1",
+            "name": "Cold Chain Unit",
+            "urn": "urn:oma:lwm2m:x:32710"
+          },
+          {
+            "file": "32711.xml",
+            "id": 32711,
+            "lwm2m_version": "1.1",
+            "name": "Temperature Probe",
+            "urn": "urn:oma:lwm2m:x:32711"
+          },
+          {
+            "file": "32712.xml",
+            "id": 32712,
+            "lwm2m_version": "1.1",
+            "name": "Door Lock",
+            "urn": "urn:oma:lwm2m:x:32712"
+          }
+        ]
+      }
+    },
+    "format": "lwm2m",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Cold Chain Unit",
+      "namespace": "urn:oma:lwm2m:x:32710"
+    },
+    "paradigm": "data_schema",
+    "protocol": "lwm2m",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The executable resources of the Door Lock object (32712).",
+        "extras": {},
+        "key": "DoorLockService",
+        "name": "DoorLockService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Engage the lock.",
+            "extras": {
+              "lwm2m_object": 32712,
+              "lwm2m_resource": {
+                "id": 1,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Lock",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "DoorLockService.Lock",
+            "kind": "one_way",
+            "messages": [],
+            "name": "Lock",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Release the lock.",
+            "extras": {
+              "lwm2m_object": 32712,
+              "lwm2m_resource": {
+                "id": 2,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Unlock",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "DoorLockService.Unlock",
+            "kind": "one_way",
+            "messages": [],
+            "name": "Unlock",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "The executable resources of the Temperature Probe object (32711).",
+        "extras": {},
+        "key": "TemperatureProbeService",
+        "name": "TemperatureProbeService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Clear the recorded extremes.",
+            "extras": {
+              "lwm2m_object": 32711,
+              "lwm2m_resource": {
+                "id": 5605,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Reset Min and Max Measured Values",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "TemperatureProbeService.ResetMinAndMaxMeasuredValues",
+            "kind": "one_way",
+            "messages": [],
+            "name": "ResetMinAndMaxMeasuredValues",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Cold Chain Unit",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A refrigerated transport unit composed of sensors and an actuator.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "32710.xml",
+            "id": 32710,
+            "lwm2m_version": "1.1",
+            "mandatory": false,
+            "multiple_instances": true,
+            "name": "Cold Chain Unit",
+            "object_version": "1.0",
+            "urn": "urn:oma:lwm2m:x:32710"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Link to a 32712 Door Lock instance.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 2,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Door Actuator",
+                "operations": "R",
+                "type": "Objlnk"
+              }
+            },
+            "field_number": 2,
+            "key": "ColdChainUnit.DoorActuator",
+            "name": "DoorActuator",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Objlnk",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 10.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -30.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Target temperature.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 3,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Set Point",
+                "operations": "RW",
+                "range": "-30..10",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 3,
+            "key": "ColdChainUnit.SetPoint",
+            "name": "SetPoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Link to a 32711 Temperature Probe instance.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 1,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Temperature Sensor",
+                "operations": "R",
+                "type": "Objlnk"
+              }
+            },
+            "field_number": 1,
+            "key": "ColdChainUnit.TemperatureSensor",
+            "name": "TemperatureSensor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Objlnk",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Asset tag of the unit.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 0,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Unit Identifier",
+                "operations": "R",
+                "type": "String"
+              }
+            },
+            "field_number": 0,
+            "key": "ColdChainUnit.UnitIdentifier",
+            "name": "UnitIdentifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ColdChainUnit",
+        "key_type": null,
+        "kind": "record",
+        "name": "ColdChainUnit",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Lock state and the command to change it.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "32712.xml",
+            "id": 32712,
+            "lwm2m_version": "1.1",
+            "mandatory": false,
+            "multiple_instances": true,
+            "name": "Door Lock",
+            "object_version": "1.0",
+            "urn": "urn:oma:lwm2m:x:32712"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "unix-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "When the state last changed.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 3,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Last Change",
+                "operations": "R",
+                "type": "Time"
+              }
+            },
+            "field_number": 3,
+            "key": "DoorLock.LastChange",
+            "name": "LastChange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Current lock state.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 0,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Locked",
+                "operations": "R",
+                "type": "Boolean"
+              }
+            },
+            "field_number": 0,
+            "key": "DoorLock.Locked",
+            "name": "Locked",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "DoorLock",
+        "key_type": null,
+        "kind": "record",
+        "name": "DoorLock",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A link to an LwM2M object instance (ObjectID:ObjectInstanceID).",
+        "enum_values": [],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "LwM2M writes an object link as ObjectID:ObjectInstanceID; the record that holds the two ids is named by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The id of the linked object.",
+            "extras": {},
+            "field_number": 0,
+            "key": "Objlnk.ObjectID",
+            "name": "ObjectID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The id of the linked object instance.",
+            "extras": {},
+            "field_number": 1,
+            "key": "Objlnk.ObjectInstanceID",
+            "name": "ObjectInstanceID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Objlnk",
+        "key_type": null,
+        "kind": "record",
+        "name": "Objlnk",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Probe reporting temperature and its measured range.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "32711.xml",
+            "id": 32711,
+            "lwm2m_version": "1.1",
+            "mandatory": false,
+            "multiple_instances": true,
+            "name": "Temperature Probe",
+            "object_version": "1.0",
+            "urn": "urn:oma:lwm2m:x:32711"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Smallest value since reset.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5601,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Min Measured Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5601,
+            "key": "TemperatureProbe.MinMeasuredValue",
+            "name": "MinMeasuredValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Current temperature.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5700,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Sensor Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5700,
+            "key": "TemperatureProbe.SensorValue",
+            "name": "SensorValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TemperatureProbe",
+        "key_type": null,
+        "kind": "record",
+        "name": "TemperatureProbe",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.0"
+  },
+  "corpus_path": "lwm2m/07-object-registry-set/32710.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 2,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "lwm2m"
+  },
+  "fingerprint": "sha256:19f77fda2c0fdcba50c8e3aa553e9873b0a529457e2ed368e1c147fb5f4aebfd",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

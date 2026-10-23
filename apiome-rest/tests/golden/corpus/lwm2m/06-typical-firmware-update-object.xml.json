@@ -1,0 +1,452 @@
+{
+  "adapter": "lwm2m",
+  "canonical": {
+    "channels": [],
+    "description": "Push or pull firmware to the device and trigger the update.",
+    "extras": {
+      "lwm2m": {
+        "capability_limits": [],
+        "input": "file",
+        "objects": [
+          {
+            "file": "lwm2m/06-typical-firmware-update-object.xml",
+            "id": 5,
+            "lwm2m_version": "1.1",
+            "name": "Firmware Update",
+            "urn": "urn:oma:lwm2m:oma:5:1.1"
+          }
+        ]
+      }
+    },
+    "format": "lwm2m",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Firmware Update",
+      "namespace": "urn:oma:lwm2m:oma:5:1.1"
+    },
+    "paradigm": "data_schema",
+    "protocol": "lwm2m",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The executable resources of the Firmware Update object (5).",
+        "extras": {},
+        "key": "FirmwareUpdateService",
+        "name": "FirmwareUpdateService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Apply the downloaded firmware.",
+            "extras": {
+              "lwm2m_object": 5,
+              "lwm2m_resource": {
+                "id": 2,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Update",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "FirmwareUpdateService.Update",
+            "kind": "one_way",
+            "messages": [],
+            "name": "Update",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Firmware Update",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Push or pull firmware to the device and trigger the update.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "lwm2m/06-typical-firmware-update-object.xml",
+            "id": 5,
+            "lwm2m_version": "1.1",
+            "mandatory": false,
+            "multiple_instances": false,
+            "name": "Firmware Update",
+            "object_version": "1.1",
+            "urn": "urn:oma:lwm2m:oma:5:1.1"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 2.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "0=pull only, 1=push only, 2=both.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 9,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Firmware Update Delivery Method",
+                "operations": "R",
+                "range": "0..2",
+                "type": "Integer"
+              }
+            },
+            "field_number": 9,
+            "key": "FirmwareUpdate.FirmwareUpdateDeliveryMethod",
+            "name": "FirmwareUpdateDeliveryMethod",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_maximum": 5.0,
+                "item_minimum": 0.0
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "0=CoAP, 1=CoAPS, 2=HTTP, 3=HTTPS, 4=CoAP over TCP, 5=CoAP over TLS.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 8,
+                "mandatory": false,
+                "multiple_instances": true,
+                "name": "Firmware Update Protocol Support",
+                "operations": "R",
+                "range": "0..5",
+                "type": "Integer"
+              }
+            },
+            "field_number": 8,
+            "key": "FirmwareUpdate.FirmwareUpdateProtocolSupport",
+            "name": "FirmwareUpdateProtocolSupport",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "int64",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Firmware image pushed to the device.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "write",
+                "id": 0,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Package",
+                "operations": "W",
+                "type": "Opaque"
+              }
+            },
+            "field_number": 0,
+            "key": "FirmwareUpdate.Package",
+            "name": "Package",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 255,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 0,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "URI the device downloads the firmware from.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 1,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Package URI",
+                "operations": "RW",
+                "range": "0..255",
+                "type": "String"
+              }
+            },
+            "field_number": 1,
+            "key": "FirmwareUpdate.PackageURI",
+            "name": "PackageURI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 255,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 0,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Name of the firmware package.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 6,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "PkgName",
+                "operations": "R",
+                "range": "0..255",
+                "type": "String"
+              }
+            },
+            "field_number": 6,
+            "key": "FirmwareUpdate.PkgName",
+            "name": "PkgName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 255,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 0,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Version of the firmware package.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 7,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "PkgVersion",
+                "operations": "R",
+                "range": "0..255",
+                "type": "String"
+              }
+            },
+            "field_number": 7,
+            "key": "FirmwareUpdate.PkgVersion",
+            "name": "PkgVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 3.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "0=idle, 1=downloading, 2=downloaded, 3=updating.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 3,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "State",
+                "operations": "R",
+                "range": "0..3",
+                "type": "Integer"
+              }
+            },
+            "field_number": 3,
+            "key": "FirmwareUpdate.State",
+            "name": "State",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "0=initial, 1=success, 2=not enough storage, 3=out of memory, 4=connection lost, 5=integrity check failure, 6=unsupported package, 7=invalid URI, 8=update failed, 9=unsupported protocol.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Update Result",
+                "operations": "R",
+                "range": "0..9",
+                "type": "Integer"
+              }
+            },
+            "field_number": 5,
+            "key": "FirmwareUpdate.UpdateResult",
+            "name": "UpdateResult",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "FirmwareUpdate",
+        "key_type": null,
+        "kind": "record",
+        "name": "FirmwareUpdate",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.1"
+  },
+  "corpus_path": "lwm2m/06-typical-firmware-update-object.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "lwm2m"
+  },
+  "fingerprint": "sha256:0f9763f47c0c606dd24795e5ef005ead20714cda4714df46d308c68098912df6",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,780 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "The Matter Dimmable Light device type and the clusters it is composed of.",
+    "extras": {
+      "matter": {
+        "capability_limits": [
+          {
+            "construct": "matter.bitmap_flags",
+            "count": 1,
+            "detail": "A bitmap is projected to an enum of its flag masks; a value may combine several flags, which the enum does not express. The bitmap's base type is kept in extras['matter_bitmap'].",
+            "locations": [
+              "OptionsBitmap"
+            ]
+          },
+          {
+            "construct": "matter.external_cluster",
+            "count": 1,
+            "detail": "A device type includes a cluster whose definition is not in the import. The device's field for it keeps the any type and names the cluster in extras['matter_unresolved']; import the cluster definition beside the device type to resolve it.",
+            "locations": [
+              "MatterDimmableLight.Identify"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "code": "0x0008",
+            "file": "levelcontrol-cluster.xml",
+            "name": "Level Control"
+          },
+          {
+            "code": "0x0006",
+            "file": "onoff-cluster.xml",
+            "name": "On/Off"
+          }
+        ],
+        "device_types": [
+          {
+            "device_id": "0x0101",
+            "file": "device-type.xml",
+            "name": "MA-dimmablelight"
+          }
+        ],
+        "input": "fileset"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Matter Dimmable Light",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Level Control cluster.",
+        "extras": {},
+        "key": "LevelControlService",
+        "name": "LevelControlService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": false,
+                "privileges": {
+                  "invoke": "operate"
+                },
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "LevelControlService.MoveToLevel",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "LevelControlService.MoveToLevel#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LevelControl.MoveToLevelRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "MoveToLevel",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x04",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "LevelControlService.MoveToLevelWithOnOff",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "LevelControlService.MoveToLevelWithOnOff#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LevelControl.MoveToLevelWithOnOffRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "MoveToLevelWithOnOff",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "The commands and events of the On/Off cluster.",
+        "extras": {},
+        "key": "OnOffService",
+        "name": "OnOffService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.Off",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Off",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x01",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.On",
+            "kind": "request_response",
+            "messages": [],
+            "name": "On",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x02",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.Toggle",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Toggle",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Matter Dimmable Light",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Controls a device's level, such as brightness.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0008",
+            "define": "LEVEL_CONTROL_CLUSTER",
+            "domain": "General",
+            "file": "levelcontrol-cluster.xml",
+            "name": "Level Control"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": 0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "CURRENT_LEVEL",
+                "nullable": true,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_default": "0",
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "LevelControl.CurrentLevel",
+            "name": "CurrentLevel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 254,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0003",
+                "define": "MAX_LEVEL",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "254",
+              "matter_type": "int8u"
+            },
+            "field_number": 3,
+            "key": "LevelControl.MaxLevel",
+            "name": "MaxLevel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 1,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0002",
+                "define": "MIN_LEVEL",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "1",
+              "matter_type": "int8u"
+            },
+            "field_number": 2,
+            "key": "LevelControl.MinLevel",
+            "name": "MinLevel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0011",
+                "define": "ON_LEVEL",
+                "nullable": true,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "int8u"
+            },
+            "field_number": 17,
+            "key": "LevelControl.OnLevel",
+            "name": "OnLevel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "LevelControl",
+        "key_type": null,
+        "kind": "record",
+        "name": "LevelControl",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x00",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 254.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "LevelControl.MoveToLevelRequest.Level",
+            "name": "Level",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "OptionsBitmap"
+            },
+            "field_number": 2,
+            "key": "LevelControl.MoveToLevelRequest.OptionsMask",
+            "name": "OptionsMask",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OptionsBitmap",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "OptionsBitmap"
+            },
+            "field_number": 3,
+            "key": "LevelControl.MoveToLevelRequest.OptionsOverride",
+            "name": "OptionsOverride",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OptionsBitmap",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 1,
+            "key": "LevelControl.MoveToLevelRequest.TransitionTime",
+            "name": "TransitionTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "LevelControl.MoveToLevelRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "MoveToLevelRequest",
+        "namespace": "LevelControl",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x04",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 254.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "LevelControl.MoveToLevelWithOnOffRequest.Level",
+            "name": "Level",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 1,
+            "key": "LevelControl.MoveToLevelWithOnOffRequest.TransitionTime",
+            "name": "TransitionTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "LevelControl.MoveToLevelWithOnOffRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "MoveToLevelWithOnOffRequest",
+        "namespace": "LevelControl",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The Matter Dimmable Light device type: the clusters it is composed of.",
+        "enum_values": [],
+        "extras": {
+          "matter_device_type": {
+            "device_class": "Simple",
+            "device_id": "0x0101",
+            "domain": "CHIP",
+            "file": "device-type.xml",
+            "name": "MA-dimmablelight",
+            "profile_id": "0x0103",
+            "scope": "Endpoint",
+            "type_name": "Matter Dimmable Light"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_include": {
+                "client": false,
+                "cluster": "Identify",
+                "required_attributes": [
+                  "IDENTIFY_TIME"
+                ],
+                "required_commands": [
+                  "Identify"
+                ],
+                "server": true
+              }
+            },
+            "field_number": null,
+            "key": "MatterDimmableLight.Identify",
+            "name": "Identify",
+            "type": {
+              "extras": {
+                "matter_unresolved": "Identify"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_include": {
+                "client": false,
+                "cluster": "Level Control",
+                "required_attributes": [
+                  "CURRENT_LEVEL"
+                ],
+                "required_commands": [
+                  "MoveToLevel"
+                ],
+                "server": true
+              }
+            },
+            "field_number": 8,
+            "key": "MatterDimmableLight.LevelControl",
+            "name": "LevelControl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LevelControl",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_include": {
+                "client": false,
+                "cluster": "On/Off",
+                "required_attributes": [
+                  "ON_OFF"
+                ],
+                "required_commands": [
+                  "Off",
+                  "On",
+                  "Toggle"
+                ],
+                "server": true
+              }
+            },
+            "field_number": 6,
+            "key": "MatterDimmableLight.OnOff",
+            "name": "OnOff",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OnOff",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MatterDimmableLight",
+        "key_type": null,
+        "kind": "record",
+        "name": "MatterDimmableLight",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Switching between on and off.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0006",
+            "define": "ON_OFF_CLUSTER",
+            "domain": "General",
+            "file": "onoff-cluster.xml",
+            "name": "On/Off"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": false,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "ON_OFF",
+                "nullable": false,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_default": "false",
+              "matter_type": "boolean"
+            },
+            "field_number": 0,
+            "key": "OnOff.OnOff",
+            "name": "OnOff",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OnOff",
+        "key_type": null,
+        "kind": "record",
+        "name": "OnOff",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A flag set: a value combines any of these masks.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OptionsBitmap.ExecuteIfOff",
+            "name": "ExecuteIfOff",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OptionsBitmap.CoupleColorTempToLevel",
+            "name": "CoupleColorTempToLevel",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_bitmap": {
+            "base": "bitmap8",
+            "clusters": [
+              "0x0008"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "OptionsBitmap",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OptionsBitmap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/03-device-type-set/device-type.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 2,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:c7e65070e0df086f2de2e1a2b5d77246f906e458359090c0723455161b5c959d",
+  "lint": {
+    "findings": 23,
+    "grade": "F",
+    "report_fingerprint": "dd7f0d0f6e767f4306db6a976c231f5f89acda4399d7841697370b2b36bcef33",
+    "score": 56,
+    "severity_counts": {
+      "error": 0,
+      "info": 16,
+      "warning": 7
+    }
+  },
+  "snapshot_version": 1
+}

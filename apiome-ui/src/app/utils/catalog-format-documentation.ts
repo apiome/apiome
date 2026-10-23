@@ -75,6 +75,8 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   zod: 'https://v3.zod.dev/',
   trpc: 'https://trpc.io/docs/server/routers',
   'opcua-nodeset': 'https://reference.opcfoundation.org/Core/Part6/v105/docs/F',
+  lwm2m: 'https://www.openmobilealliance.org/specifications/registries/objects',
+  matter: 'https://csa-iot.org/developer-resource/specifications-download-request/',
   pydantic: 'https://docs.pydantic.dev/latest/concepts/models/',
   cue: 'https://cuelang.org/docs/reference/spec/',
   pkl: 'https://pkl-lang.org/main/current/language-reference/index.html',

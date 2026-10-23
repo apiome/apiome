@@ -1,0 +1,640 @@
+{
+  "adapter": "lwm2m",
+  "canonical": {
+    "channels": [],
+    "description": "Resource-form coverage object.",
+    "extras": {
+      "lwm2m": {
+        "capability_limits": [
+          {
+            "construct": "lwm2m.object_link_target",
+            "count": 1,
+            "detail": "An Objlnk resource links to an instance of another object, but an object definition does not say which object. The field is typed as the generic Objlnk record (object id and instance id); the object it is meant to point at is only in its description.",
+            "locations": [
+              "Coverage.ObjlnkResource"
+            ]
+          }
+        ],
+        "input": "file",
+        "objects": [
+          {
+            "file": "lwm2m/04-stress-resource-forms.xml",
+            "id": 32701,
+            "lwm2m_version": "1.2",
+            "name": "Coverage",
+            "urn": "urn:oma:lwm2m:x:32701:1.2"
+          }
+        ]
+      }
+    },
+    "format": "lwm2m",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Coverage",
+      "namespace": "urn:oma:lwm2m:x:32701:1.2"
+    },
+    "paradigm": "data_schema",
+    "protocol": "lwm2m",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The executable resources of the Coverage object (32701).",
+        "extras": {},
+        "key": "CoverageService",
+        "name": "CoverageService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Executable resource: an rpc operation, not a property.",
+            "extras": {
+              "lwm2m_object": 32701,
+              "lwm2m_resource": {
+                "id": 11,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Execute Resource",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "CoverageService.ExecuteResource",
+            "kind": "one_way",
+            "messages": [],
+            "name": "ExecuteResource",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Coverage",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Resource-form coverage object.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "description2": "Every combination the object model allows, in one definition.",
+            "file": "lwm2m/04-stress-resource-forms.xml",
+            "id": 32701,
+            "lwm2m_version": "1.2",
+            "mandatory": false,
+            "multiple_instances": true,
+            "name": "Coverage",
+            "object_version": "1.2",
+            "urn": "urn:oma:lwm2m:x:32701:1.2"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Read-write boolean.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 3,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Boolean Resource",
+                "operations": "RW",
+                "type": "Boolean"
+              }
+            },
+            "field_number": 3,
+            "key": "Coverage.BooleanResource",
+            "name": "BooleanResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "core-link",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CoRE link format value.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 8,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Core Link Resource",
+                "operations": "R",
+                "type": "Corelnk"
+              }
+            },
+            "field_number": 8,
+            "key": "Coverage.CoreLinkResource",
+            "name": "CoreLinkResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Enumerated integer: 0=idle, 1=running, 2=faulted, 3=maintenance.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 10,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Enumerated Resource",
+                "operations": "RW",
+                "range": "0, 1, 2, 3",
+                "type": "Integer"
+              }
+            },
+            "field_number": 10,
+            "key": "Coverage.EnumeratedResource",
+            "name": "EnumeratedResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 150.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -40.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Read-only float with a physical range.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 2,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Float Resource",
+                "operations": "R",
+                "range": "-40..150",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 2,
+            "key": "Coverage.FloatResource",
+            "name": "FloatResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "s"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 65535.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Bounded integer with units.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 1,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Integer Resource",
+                "operations": "RW",
+                "range": "0..65535",
+                "type": "Integer",
+                "units": "s"
+              }
+            },
+            "field_number": 1,
+            "key": "Coverage.IntegerResource",
+            "name": "IntegerResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Multi-instance resource: an array in the canonical model.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 9,
+                "mandatory": false,
+                "multiple_instances": true,
+                "name": "Multiple Instance Resource",
+                "operations": "RW",
+                "type": "String"
+              }
+            },
+            "field_number": 9,
+            "key": "Coverage.MultipleInstanceResource",
+            "name": "MultipleInstanceResource",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Link to another object instance — the LwM2M reference type.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 6,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Objlnk Resource",
+                "operations": "RW",
+                "type": "Objlnk"
+              }
+            },
+            "field_number": 6,
+            "key": "Coverage.ObjlnkResource",
+            "name": "ObjlnkResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Objlnk",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1024,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 0,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Binary payload with a byte-length range.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 4,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Opaque Resource",
+                "operations": "RW",
+                "range": "0..1024",
+                "type": "Opaque"
+              }
+            },
+            "field_number": 4,
+            "key": "Coverage.OpaqueResource",
+            "name": "OpaqueResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 0,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Read-write string with a length range.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read-write",
+                "id": 0,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "String Resource",
+                "operations": "RW",
+                "range": "0..64",
+                "type": "String"
+              }
+            },
+            "field_number": 0,
+            "key": "Coverage.StringResource",
+            "name": "StringResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "unix-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Unix time.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Time Resource",
+                "operations": "R",
+                "type": "Time"
+              }
+            },
+            "field_number": 5,
+            "key": "Coverage.TimeResource",
+            "name": "TimeResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 4294967295.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Unsigned counter.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 7,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Unsigned Integer Resource",
+                "operations": "R",
+                "range": "0..4294967295",
+                "type": "Unsigned Integer"
+              }
+            },
+            "field_number": 7,
+            "key": "Coverage.UnsignedIntegerResource",
+            "name": "UnsignedIntegerResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Write-only: readable never, writable always.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "write",
+                "id": 12,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Write-Only Resource",
+                "operations": "W",
+                "type": "String"
+              }
+            },
+            "field_number": 12,
+            "key": "Coverage.WriteOnlyResource",
+            "name": "WriteOnlyResource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Coverage",
+        "key_type": null,
+        "kind": "record",
+        "name": "Coverage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A link to an LwM2M object instance (ObjectID:ObjectInstanceID).",
+        "enum_values": [],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "LwM2M writes an object link as ObjectID:ObjectInstanceID; the record that holds the two ids is named by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The id of the linked object.",
+            "extras": {},
+            "field_number": 0,
+            "key": "Objlnk.ObjectID",
+            "name": "ObjectID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The id of the linked object instance.",
+            "extras": {},
+            "field_number": 1,
+            "key": "Objlnk.ObjectInstanceID",
+            "name": "ObjectInstanceID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Objlnk",
+        "key_type": null,
+        "kind": "record",
+        "name": "Objlnk",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.2"
+  },
+  "corpus_path": "lwm2m/04-stress-resource-forms.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "lwm2m"
+  },
+  "fingerprint": "sha256:f09515c47bc3f303952075aaac2d9dfff3dfab1a9db111855ab80548ebf58a61",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

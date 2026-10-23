@@ -1,0 +1,912 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Matter clusters Generic Measurement, Soil Temperature Measurement.",
+    "extras": {
+      "matter": {
+        "capability_limits": [],
+        "clusters": [
+          {
+            "code": "0xFFF3",
+            "file": "matter/07-composition-derived-cluster.xml",
+            "name": "Generic Measurement"
+          },
+          {
+            "code": "0xFFF4",
+            "file": "matter/07-composition-derived-cluster.xml",
+            "name": "Soil Temperature Measurement"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Matter clusters",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Generic Measurement cluster.",
+        "extras": {},
+        "key": "GenericMeasurementService",
+        "name": "GenericMeasurementService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": true,
+                "privileges": {
+                  "invoke": "operate"
+                },
+                "response": "ReadNowResponse"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "GenericMeasurementService.ReadNow",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GenericMeasurementService.ReadNow#response",
+                "name": "ReadNowResponse",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GenericMeasurement.ReadNowResponse",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "ReadNow",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x00",
+                "optional": true,
+                "priority": "info"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "GenericMeasurementService.ReadingOutOfRange",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GenericMeasurementService.ReadingOutOfRange#event.ReadingOutOfRangeEvent",
+                "name": "ReadingOutOfRange",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GenericMeasurement.ReadingOutOfRangeEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "ReadingOutOfRange",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": "The commands and events of the Soil Temperature Measurement cluster.",
+        "extras": {},
+        "key": "SoilTemperatureMeasurementService",
+        "name": "SoilTemperatureMeasurementService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x00",
+                "optional": true,
+                "priority": "info"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "SoilTemperatureMeasurementService.ReadingOutOfRange",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "SoilTemperatureMeasurementService.ReadingOutOfRange#event.ReadingOutOfRangeEvent",
+                "name": "ReadingOutOfRange",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "SoilTemperatureMeasurement.ReadingOutOfRangeEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "ReadingOutOfRange",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Matter clusters",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF3",
+              "0xFFF4"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16s"
+            },
+            "field_number": 2,
+            "key": "CalibratedReadingStruct.CalibrationOffset",
+            "name": "CalibrationOffset",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "ReadingStruct"
+            },
+            "field_number": 0,
+            "key": "CalibratedReadingStruct.Reading",
+            "name": "Reading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ReadingStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "RangeStruct"
+            },
+            "field_number": 1,
+            "key": "CalibratedReadingStruct.ValidRange",
+            "name": "ValidRange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RangeStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CalibratedReadingStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "CalibratedReadingStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Base measurement behaviour, reused by derived clusters.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0xFFF3",
+            "define": "GENERIC_MEASUREMENT_CLUSTER",
+            "domain": "Measurement & Sensing",
+            "file": "matter/07-composition-derived-cluster.xml",
+            "name": "Generic Measurement"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "CURRENT_READING",
+                "nullable": false,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "ReadingStruct"
+            },
+            "field_number": 0,
+            "key": "GenericMeasurement.CurrentReading",
+            "name": "CurrentReading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ReadingStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 24,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0002",
+                "define": "HISTORY",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "array<CalibratedReadingStruct>"
+            },
+            "field_number": 2,
+            "key": "GenericMeasurement.History",
+            "name": "History",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "CalibratedReadingStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0001",
+                "define": "VALID_RANGE",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "RangeStruct"
+            },
+            "field_number": 1,
+            "key": "GenericMeasurement.ValidRange",
+            "name": "ValidRange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RangeStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GenericMeasurement",
+        "key_type": null,
+        "kind": "record",
+        "name": "GenericMeasurement",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x01",
+            "source": "server"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "CalibratedReadingStruct"
+            },
+            "field_number": 0,
+            "key": "GenericMeasurement.ReadNowResponse.Reading",
+            "name": "Reading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "CalibratedReadingStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GenericMeasurement.ReadNowResponse",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadNowResponse",
+        "namespace": "GenericMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x00",
+            "priority": "info"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "RangeStruct"
+            },
+            "field_number": 1,
+            "key": "GenericMeasurement.ReadingOutOfRangeEvent.ExpectedRange",
+            "name": "ExpectedRange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RangeStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "ReadingStruct"
+            },
+            "field_number": 0,
+            "key": "GenericMeasurement.ReadingOutOfRangeEvent.Reading",
+            "name": "Reading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ReadingStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GenericMeasurement.ReadingOutOfRangeEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadingOutOfRangeEvent",
+        "namespace": "GenericMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF3",
+              "0xFFF4"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32s"
+            },
+            "field_number": 1,
+            "key": "RangeStruct.Max",
+            "name": "Max",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32s"
+            },
+            "field_number": 0,
+            "key": "RangeStruct.Min",
+            "name": "Min",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "RangeStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "RangeStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF3",
+              "0xFFF4"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "matter-epoch-s",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "epoch_s"
+            },
+            "field_number": 2,
+            "key": "ReadingStruct.Timestamp",
+            "name": "Timestamp",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "UnitEnum"
+            },
+            "field_number": 1,
+            "key": "ReadingStruct.Unit",
+            "name": "Unit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "UnitEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32s"
+            },
+            "field_number": 0,
+            "key": "ReadingStruct.Value",
+            "name": "Value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ReadingStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadingStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Derived from Generic Measurement; adds a probe depth.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0xFFF4",
+            "define": "SOIL_TEMPERATURE_MEASUREMENT_CLUSTER",
+            "domain": "Measurement & Sensing",
+            "file": "matter/07-composition-derived-cluster.xml",
+            "name": "Soil Temperature Measurement"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "CURRENT_READING",
+                "nullable": false,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "ReadingStruct"
+            },
+            "field_number": 0,
+            "key": "SoilTemperatureMeasurement.CurrentReading",
+            "name": "CurrentReading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ReadingStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 500.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0010",
+                "define": "PROBE_DEPTH_CM",
+                "nullable": false,
+                "optional": false,
+                "privileges": {
+                  "read": "view",
+                  "write": "manage"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "int16u"
+            },
+            "field_number": 16,
+            "key": "SoilTemperatureMeasurement.ProbeDepthCm",
+            "name": "ProbeDepthCm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0001",
+                "define": "VALID_RANGE",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "RangeStruct"
+            },
+            "field_number": 1,
+            "key": "SoilTemperatureMeasurement.ValidRange",
+            "name": "ValidRange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RangeStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SoilTemperatureMeasurement",
+        "key_type": null,
+        "kind": "record",
+        "name": "SoilTemperatureMeasurement",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x00",
+            "priority": "info"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "RangeStruct"
+            },
+            "field_number": 1,
+            "key": "SoilTemperatureMeasurement.ReadingOutOfRangeEvent.ExpectedRange",
+            "name": "ExpectedRange",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RangeStruct",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 2,
+            "key": "SoilTemperatureMeasurement.ReadingOutOfRangeEvent.ProbeDepthCm",
+            "name": "ProbeDepthCm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "ReadingStruct"
+            },
+            "field_number": 0,
+            "key": "SoilTemperatureMeasurement.ReadingOutOfRangeEvent.Reading",
+            "name": "Reading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ReadingStruct",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "SoilTemperatureMeasurement.ReadingOutOfRangeEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "ReadingOutOfRangeEvent",
+        "namespace": "SoilTemperatureMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "UnitEnum.Celsius",
+            "name": "Celsius",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "UnitEnum.Fahrenheit",
+            "name": "Fahrenheit",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "UnitEnum.Kelvin",
+            "name": "Kelvin",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0xFFF3",
+              "0xFFF4"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "UnitEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "UnitEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/07-composition-derived-cluster.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 0,
+    "services": 2,
+    "types": 9
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:6b5f9483e75694a65ae3c8929464746477da7f5fe1f16cdb78f6f753a346756e",
+  "lint": {
+    "findings": 33,
+    "grade": "F",
+    "report_fingerprint": "c381e539c5f2e19c31104c99270567f72c39f1f6fcc77c89979e08f49fe54e4e",
+    "score": 45,
+    "severity_counts": {
+      "error": 0,
+      "info": 23,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}

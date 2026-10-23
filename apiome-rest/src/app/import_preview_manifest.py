@@ -156,6 +156,10 @@ from .inference_provenance import (
 from .jsonld_normalizer import JSONLD_EXTRAS_KEY
 from .jsonld_normalizer import PARTIAL_LIMITS as JSONLD_PARTIAL_LIMITS
 from .kafka_connect_normalizer import KAFKA_CONNECT_EXTRAS_KEY
+from .lwm2m_normalizer import LWM2M_EXTRAS_KEY
+from .lwm2m_normalizer import PARTIAL_LIMITS as LWM2M_PARTIAL_LIMITS
+from .matter_normalizer import MATTER_EXTRAS_KEY
+from .matter_normalizer import PARTIAL_LIMITS as MATTER_PARTIAL_LIMITS
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
 from .odcs_normalizer import ODCS_EXTRAS_KEY
 from .opcua_nodeset_normalizer import OPCUA_EXTRAS_KEY
@@ -286,6 +290,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-9.3: the ROS 2 projection record (input kind, interfaces, packages, declared limits).
         # Our own bookkeeping — a field's written type rides under `ros2_type`.
         ROS2_EXTRAS_KEY,
+        # FMT-9.5: the LwM2M and Matter projection records (input kind, objects / clusters and
+        # device types, declared limits). Our own bookkeeping.
+        LWM2M_EXTRAS_KEY,
+        MATTER_EXTRAS_KEY,
         # FMT-9.4: the SHACL / OWL / JSON-LD projection records (files, ontologies, shapes, resolved
         # contexts, declared limits). Our own bookkeeping — a construct's IRI rides on `native_id`.
         SHACL_EXTRAS_KEY,
@@ -1243,6 +1251,7 @@ def _document_scope_rows(
     ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_ros2_capability_rows(api))
+    ledger.extend(_device_model_capability_rows(api))
     ledger.extend(_linked_data_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
@@ -2120,6 +2129,23 @@ def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         if api.format == format_key:
             return _graded_limit_rows(api, format_key=format_key, extras_key=extras_key, partial=partial)
     return []
+
+
+def _device_model_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-9.5 LwM2M and Matter declared limits as document-scoped ledger rows.
+
+    Every limit of both readers keeps its construct (an object link, an unresolved type or cluster,
+    a bitmap, a feature's conformance) with only a detail lost, so every row is ``partially-mapped``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="lwm2m", extras_key=LWM2M_EXTRAS_KEY, partial=LWM2M_PARTIAL_LIMITS
+    ) + _graded_limit_rows(api, format_key="matter", extras_key=MATTER_EXTRAS_KEY, partial=MATTER_PARTIAL_LIMITS)
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

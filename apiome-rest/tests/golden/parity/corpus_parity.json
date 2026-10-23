@@ -2441,6 +2441,92 @@
       "waivers": {}
     },
     {
+      "format_key": "lwm2m",
+      "label": "LwM2M / IPSO objects",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "lwm2m"
+      ],
+      "corpus_directories": [
+        "lwm2m"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "lwm2m"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
+      "format_key": "matter",
+      "label": "Matter clusters and device types",
+      "paradigm": "rpc",
+      "corpus_formats": [
+        "matter"
+      ],
+      "corpus_directories": [
+        "matter"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "matter"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "mcp",
       "label": "MCP Server Manifest",
       "paradigm": "agent",
@@ -4218,8 +4304,6 @@
     "cics-bms",
     "hoppscotch",
     "ims",
-    "lwm2m",
-    "matter",
     "natural-ddm",
     "pli",
     "schematron",

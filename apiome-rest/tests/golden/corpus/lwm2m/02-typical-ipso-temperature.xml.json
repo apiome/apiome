@@ -1,0 +1,370 @@
+{
+  "adapter": "lwm2m",
+  "canonical": {
+    "channels": [],
+    "description": "Reports the current temperature and the range measured so far.",
+    "extras": {
+      "lwm2m": {
+        "capability_limits": [],
+        "input": "file",
+        "objects": [
+          {
+            "file": "lwm2m/02-typical-ipso-temperature.xml",
+            "id": 3303,
+            "lwm2m_version": "1.0",
+            "name": "Temperature",
+            "urn": "urn:oma:lwm2m:ext:3303"
+          }
+        ]
+      }
+    },
+    "format": "lwm2m",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Temperature",
+      "namespace": "urn:oma:lwm2m:ext:3303"
+    },
+    "paradigm": "data_schema",
+    "protocol": "lwm2m",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The executable resources of the Temperature object (3303).",
+        "extras": {},
+        "key": "TemperatureService",
+        "name": "TemperatureService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Executable resource: clears the recorded min and max.",
+            "extras": {
+              "lwm2m_object": 3303,
+              "lwm2m_resource": {
+                "id": 5605,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Reset Min and Max Measured Values",
+                "operations": "E"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "TemperatureService.ResetMinAndMaxMeasuredValues",
+            "kind": "one_way",
+            "messages": [],
+            "name": "ResetMinAndMaxMeasuredValues",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Temperature",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Reports the current temperature and the range measured so far.",
+        "enum_values": [],
+        "extras": {
+          "lwm2m_object": {
+            "file": "lwm2m/02-typical-ipso-temperature.xml",
+            "id": 3303,
+            "lwm2m_version": "1.0",
+            "mandatory": false,
+            "multiple_instances": true,
+            "name": "Temperature",
+            "object_version": "1.1",
+            "urn": "urn:oma:lwm2m:ext:3303"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Largest value measured since power-on or reset.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5602,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Max Measured Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5602,
+            "key": "Temperature.MaxMeasuredValue",
+            "name": "MaxMeasuredValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Upper limit of the sensor's measurement range.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5604,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Max Range Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5604,
+            "key": "Temperature.MaxRangeValue",
+            "name": "MaxRangeValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Smallest value measured since power-on or reset.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5601,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Min Measured Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5601,
+            "key": "Temperature.MinMeasuredValue",
+            "name": "MinMeasuredValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Lower limit of the sensor's measurement range.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5603,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Min Range Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5603,
+            "key": "Temperature.MinRangeValue",
+            "name": "MinRangeValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Measurement units, from the UCUM specification.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5701,
+                "mandatory": false,
+                "multiple_instances": false,
+                "name": "Sensor Units",
+                "operations": "R",
+                "type": "String"
+              }
+            },
+            "field_number": 5701,
+            "key": "Temperature.SensorUnits",
+            "name": "SensorUnits",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "unit": "Cel"
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Last or current measured value.",
+            "extras": {
+              "lwm2m_resource": {
+                "access": "read",
+                "id": 5700,
+                "mandatory": true,
+                "multiple_instances": false,
+                "name": "Sensor Value",
+                "operations": "R",
+                "type": "Float",
+                "units": "Cel"
+              }
+            },
+            "field_number": 5700,
+            "key": "Temperature.SensorValue",
+            "name": "SensorValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Temperature",
+        "key_type": null,
+        "kind": "record",
+        "name": "Temperature",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.1"
+  },
+  "corpus_path": "lwm2m/02-typical-ipso-temperature.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "lwm2m"
+  },
+  "fingerprint": "sha256:7ad7c0af9939579febdcf981222f31d067239c6b7d287bc580de220b3a9bf5e7",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

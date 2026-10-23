@@ -1,0 +1,60 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ResetAccumulators",
+      "operation": "ElectricalPowerMeasurementService.ResetAccumulators"
+    },
+    {
+      "description": "Begin a measurement window.\n\nReturns ElectricalPowerMeasurement.StartMeasurementResponse.",
+      "inputSchema": {
+        "properties": {
+          "DurationSeconds": {},
+          "Types": {
+            "items": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                5
+              ],
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "DurationSeconds"
+        ],
+        "type": "object"
+      },
+      "name": "StartMeasurement",
+      "operation": "ElectricalPowerMeasurementService.StartMeasurement",
+      "output": {
+        "schema": {
+          "properties": {
+            "Accepted": {
+              "type": "boolean"
+            },
+            "Reason": {
+              "maxLength": 64,
+              "type": "string"
+            },
+            "WindowId": {}
+          },
+          "required": [
+            "Accepted",
+            "WindowId"
+          ],
+          "type": "object"
+        },
+        "shape": "ElectricalPowerMeasurement.StartMeasurementResponse"
+      }
+    }
+  ]
+}

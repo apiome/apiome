@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Executable resource: clears the recorded min and max.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ResetMinAndMaxMeasuredValues",
+      "operation": "TemperatureService.ResetMinAndMaxMeasuredValues"
+    }
+  ]
+}

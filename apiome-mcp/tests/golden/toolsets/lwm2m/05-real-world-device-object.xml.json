@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Return the device to its factory configuration.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "FactoryReset",
+      "operation": "DeviceService.FactoryReset"
+    },
+    {
+      "description": "Reboot the device to make configuration changes effective.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Reboot",
+      "operation": "DeviceService.Reboot"
+    },
+    {
+      "description": "Clear the error-code resource instances.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ResetErrorCode",
+      "operation": "DeviceService.ResetErrorCode"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Apply the downloaded firmware.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Update",
+      "operation": "FirmwareUpdateService.Update"
+    }
+  ]
+}

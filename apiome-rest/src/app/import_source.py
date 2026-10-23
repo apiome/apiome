@@ -1230,6 +1230,12 @@ def load_builtin_import_sources() -> None:
     # ``.srv`` / ``.action`` interfaces and interface packages, rpc paradigm.
     from . import ros2_import_source as _ros2  # noqa: F401
 
+    # ``lwm2m_import_source`` and ``matter_import_source`` (FMT-9.5) self-register the ``lwm2m``
+    # adapter (LwM2M / IPSO object definitions, data_schema) and the ``matter`` adapter (Matter
+    # cluster and device-type definitions, rpc).
+    from . import lwm2m_import_source as _lwm2m  # noqa: F401
+    from . import matter_import_source as _matter  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

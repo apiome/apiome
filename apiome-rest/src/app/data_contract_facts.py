@@ -116,6 +116,9 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "jtd",
         "k8s-crd",
         "kafka-connect",
+        # FMT-9.5: an LwM2M object definition states resources, units and ranges, never an owner,
+        # an SLA or a retention promise.
+        "lwm2m",
         "nacha",
         "owl",
         "ncpdp",

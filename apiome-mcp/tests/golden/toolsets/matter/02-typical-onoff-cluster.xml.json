@@ -1,0 +1,62 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Set the OnOff attribute to false.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Off",
+      "operation": "OnOffService.Off"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "EffectIdentifier": {},
+          "EffectVariant": {}
+        },
+        "required": [
+          "EffectIdentifier",
+          "EffectVariant"
+        ],
+        "type": "object"
+      },
+      "name": "OffWithEffect",
+      "operation": "OnOffService.OffWithEffect"
+    },
+    {
+      "description": "Set the OnOff attribute to true.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "On",
+      "operation": "OnOffService.On"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "OffWaitTime": {},
+          "OnOffControl": {},
+          "OnTime": {}
+        },
+        "required": [
+          "OnOffControl"
+        ],
+        "type": "object"
+      },
+      "name": "OnWithTimedOff",
+      "operation": "OnOffService.OnWithTimedOff"
+    },
+    {
+      "description": "Invert the OnOff attribute.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Toggle",
+      "operation": "OnOffService.Toggle"
+    }
+  ]
+}
