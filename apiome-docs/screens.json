@@ -406,6 +406,16 @@
       "data": "fixture:hive-repositories/cards.html"
     },
     {
+      "id": "repositories-refresh-activity",
+      "route": "/ade/dashboard/repositories",
+      "waitFor": "[data-testid=\"refresh-activity-drawer\"]",
+      "data": "fixture:hive-repositories/refresh-activity.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/repositories/RepositoryRefreshActivityChip.tsx",
+        "apiome-ui/src/app/components/ade/repositories/RepositoryRefreshActivityPanel.tsx"
+      ]
+    },
+    {
       "id": "repository-add",
       "route": "/ade/dashboard/repositories/new",
       "waitFor": "[data-testid=\"page-header\"]",

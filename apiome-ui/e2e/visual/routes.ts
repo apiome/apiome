@@ -130,6 +130,9 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     roadmapRef: 'HIVE-7.2',
   },
   {
+    // HIVE-11.7 (#5603) re-dumped the fixtures with the quiet pass: the KPI strip folded into
+    // a facts line (the strip is behind Show stats) and the Refresh activity panel became a
+    // chip in it that opens a drawer. The facts line follows `proposals/catalog-quiet.html`.
     id: 'repositories',
     mockup: 'sources/repositories.html',
     route: '/ade/dashboard/repositories',
@@ -137,6 +140,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     roadmapRef: 'HIVE-7.3',
   },
   {
+    // HIVE-11.7 (#5603): facts line under the title (strip behind Show stats); the filter form
+    // collapsed behind Filters (n) in the table toolbar, with the preset left inline.
     id: 'repository-detail',
     mockup: 'sources/repository-detail.html',
     route: '/ade/dashboard/repositories/[id]',

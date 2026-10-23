@@ -28,6 +28,7 @@ import {
   type DestructiveConfirmOptions,
 } from '@/app/components/dialogs/destructiveConfirm';
 import type { StatusTone } from '@/app/components/ui/statusVocabulary';
+import type { FactsLineFact } from '@/app/components/ui/FactsLine';
 import type { RepositoryHealthLevel } from '@/app/components/ade/dashboard/repositories/repositoryHealth';
 import type { RefreshStatusCode } from '@/app/components/ade/dashboard/repositories/repository-refresh-status-chip-copy';
 import {
@@ -558,6 +559,10 @@ export function repositoryIndexSnapshot(
 // Copy
 // ---------------------------------------------------------------------------------------
 
+/** The page header's sentence: the counts live in the facts line (HIVE-11.7), so it names the page. */
+export const REPOSITORIES_DESCRIPTION =
+  'Browse repositories registered to this workspace and pick one to explore its files.';
+
 /**
  * The one-line summary under the page title.
  *
@@ -566,9 +571,7 @@ export function repositoryIndexSnapshot(
  *   the workspace has none.
  */
 export function repositoriesSummaryLine(repositories: readonly DashboardRepository[]): string {
-  if (repositories.length === 0) {
-    return 'Browse repositories registered to this workspace and pick one to explore its files.';
-  }
+  if (repositories.length === 0) return REPOSITORIES_DESCRIPTION;
   const files = repositories.reduce((sum, repository) => sum + (repository.total_files ?? 0), 0);
   const attention = repositories.filter(
     (repository) => repository.status === 'error' || repository.health?.level === 'error'
@@ -625,4 +628,82 @@ export function removeRepositoryConfirm(
       'The repository is removed from this workspace. You can add it again later from Add repository.',
     confirmLabel: 'Remove from list',
   });
+}
+
+// ---------------------------------------------------------------------------------------
+// The facts line (HIVE-11.7, #5603)
+// ---------------------------------------------------------------------------------------
+
+/**
+ * How many repositories need attention: a failed scan or an error-level health signal — the
+ * same rule the header's summary sentence uses.
+ *
+ * @param repositories Every registered repository.
+ * @returns The count.
+ */
+export function repositoriesNeedingAttention(repositories: readonly DashboardRepository[]): number {
+  return repositories.filter(
+    (repository) => repository.status === 'error' || repository.health?.level === 'error'
+  ).length;
+}
+
+/**
+ * The Repositories page's one-line summary, replacing the KPI strip (which **Show stats** still
+ * reveals in place).
+ *
+ * Every figure comes from {@link repositoryKpis}, so the line and the strip cannot disagree.
+ * Imports (30d) is not measured yet, so it reads as a muted `—`; "needs attention" appears only
+ * when something does.
+ *
+ * @param repositories Every registered repository, unfiltered.
+ * @param now Reference epoch milliseconds, for a deterministic last-scan phrase.
+ * @returns The facts, in reading order.
+ */
+export function repositoryFacts(
+  repositories: readonly DashboardRepository[],
+  now: number = Date.now()
+): FactsLineFact[] {
+  const kpis = repositoryKpis(repositories, now);
+  const attention = repositoriesNeedingAttention(repositories);
+  const facts: FactsLineFact[] = [
+    {
+      id: 'repositories',
+      value: kpis.count.toLocaleString(),
+      label: kpis.count === 1 ? 'repository' : 'repositories',
+    },
+    { id: 'files', value: kpis.files.toLocaleString(), label: 'files indexed' },
+    { id: 'imports', value: IMPORTS_30D_PLACEHOLDER, label: 'imports (30d)', muted: true },
+    { id: 'last-scan', value: kpis.lastScanLabel, label: 'last scan', labelFirst: true },
+  ];
+  if (attention > 0) {
+    facts.push({ id: 'attention', value: attention.toLocaleString(), label: 'needs attention' });
+  }
+  return facts;
+}
+
+/** What the refresh-activity chip in the facts line says. */
+export interface RefreshActivityChip {
+  /** Lineages that need attention on the chip: stale + failed. */
+  count: number;
+  /** `1 stale · 1 failed`, or `Refresh activity` when nothing is stale or failed. */
+  text: string;
+}
+
+/**
+ * The facts-line chip that replaces the always-open Refresh activity panel (HIVE-11.7).
+ *
+ * The count is stale + failed — the two states a reader acts on from this page; the panel the
+ * chip opens still shows every state, diverged included.
+ *
+ * @param counts Tenant-wide counts by refresh state, or `null` while they load or after a failure.
+ * @returns The chip's count and text.
+ */
+export function refreshActivityChip(
+  counts: Readonly<Record<RefreshStatusCode, number>> | null
+): RefreshActivityChip {
+  const stale = counts?.stale ?? 0;
+  const failed = counts?.failed ?? 0;
+  const parts = [stale > 0 ? `${stale.toLocaleString()} stale` : null, failed > 0 ? `${failed.toLocaleString()} failed` : null];
+  const text = parts.filter(Boolean).join(' · ');
+  return { count: stale + failed, text: text || 'Refresh activity' };
 }

@@ -31,6 +31,7 @@ import {
   type DashboardRepository,
   type RepositoryProvider,
 } from './repositoriesModel';
+import type { FactsLineFact } from '@/app/components/ui/FactsLine';
 
 // ============================================================================
 // Tabs and routing
@@ -824,4 +825,119 @@ export function repositorySourceLine(
   if (source === 'linked_account') return `${name} (linked account)`;
   if (source === 'public_url') return `${name} (public URL)`;
   return name;
+}
+
+// ---------------------------------------------------------------------------------------
+// The facts line and the collapsed filters (HIVE-11.7, #5603)
+// ---------------------------------------------------------------------------------------
+
+/** The words each detail figure takes in the facts line. */
+const DETAIL_FACT_LABEL: Readonly<Record<RepositoryDetailKpi['key'], string>> = {
+  files: 'files',
+  importable: 'importable',
+  branches: 'branches',
+  imports: 'imports (30d)',
+  scan: 'last scan',
+};
+
+/**
+ * Repository detail's one-line summary under the title — files · importable · branches ·
+ * imports · last scan — built from {@link repositoryDetailKpis}, so it agrees with the strip
+ * that **Show stats** reveals. An unmeasured figure reads as a muted `—`.
+ *
+ * @param repo The repository.
+ * @param inputs The same inputs the strip takes.
+ * @returns The facts, in reading order.
+ */
+export function repositoryDetailFacts(
+  repo: DashboardRepository,
+  inputs: RepositoryDetailKpiInputs
+): FactsLineFact[] {
+  return repositoryDetailKpis(repo, inputs).map((kpi) => ({
+    id: kpi.key,
+    value: kpi.value,
+    label: DETAIL_FACT_LABEL[kpi.key],
+    labelFirst: kpi.key === 'scan',
+    muted: kpi.unwired || undefined,
+  }));
+}
+
+/**
+ * How many of the collapsed filters (everything but the inline preset) differ from the
+ * defaults — the `n` on the **Filters (n)** button.
+ *
+ * @param filters The current toolbar state.
+ * @returns 0–5.
+ */
+export function activeRepositoryFileFilterCount(filters: RepositoryFileFilterState): number {
+  return [
+    filters.glob.trim() !== '',
+    filters.regex.trim() !== '',
+    filters.hideNonImportable !== EMPTY_REPOSITORY_FILE_FILTERS.hideNonImportable,
+    filters.includeHidden !== EMPTY_REPOSITORY_FILE_FILTERS.includeHidden,
+    filters.skipVendor !== EMPTY_REPOSITORY_FILE_FILTERS.skipVendor,
+  ].filter(Boolean).length;
+}
+
+/** The query parameters the file filters live in, so a filtered view survives a reload. */
+export const FILE_FILTER_PARAMS = {
+  preset: 'preset',
+  glob: 'glob',
+  regex: 'regex',
+  hideNonImportable: 'importableOnly',
+  includeHidden: 'hiddenDirs',
+  skipVendor: 'skipVendor',
+} as const;
+
+/**
+ * Read the file filters from a query string; absent or malformed values fall back to the
+ * defaults, and an unknown preset falls back to `all`.
+ *
+ * @param params The page's search params.
+ * @returns A complete filter state.
+ */
+export function repositoryFileFiltersFromSearch(params: URLSearchParams): RepositoryFileFilterState {
+  const flag = (name: string, fallback: boolean) => {
+    const raw = params.get(name);
+    return raw === '1' ? true : raw === '0' ? false : fallback;
+  };
+  const preset = params.get(FILE_FILTER_PARAMS.preset);
+  return {
+    preset:
+      preset && REPOSITORY_FILE_PRESETS.some((option) => option.value === preset)
+        ? preset
+        : EMPTY_REPOSITORY_FILE_FILTERS.preset,
+    glob: params.get(FILE_FILTER_PARAMS.glob) ?? '',
+    regex: params.get(FILE_FILTER_PARAMS.regex) ?? '',
+    hideNonImportable: flag(FILE_FILTER_PARAMS.hideNonImportable, EMPTY_REPOSITORY_FILE_FILTERS.hideNonImportable),
+    includeHidden: flag(FILE_FILTER_PARAMS.includeHidden, EMPTY_REPOSITORY_FILE_FILTERS.includeHidden),
+    skipVendor: flag(FILE_FILTER_PARAMS.skipVendor, EMPTY_REPOSITORY_FILE_FILTERS.skipVendor),
+  };
+}
+
+/**
+ * Write the file filters into a query string, leaving every other parameter alone and
+ * omitting any filter at its default, so an unfiltered view has a clean URL.
+ *
+ * @param filters The current toolbar state.
+ * @param params The page's current search params (not mutated).
+ * @returns The new search params.
+ */
+export function withRepositoryFileFilters(
+  filters: RepositoryFileFilterState,
+  params: URLSearchParams
+): URLSearchParams {
+  const next = new URLSearchParams(params);
+  const set = (name: string, value: string | null) => {
+    if (value === null) next.delete(name);
+    else next.set(name, value);
+  };
+  const flag = (value: boolean, fallback: boolean) => (value === fallback ? null : value ? '1' : '0');
+  set(FILE_FILTER_PARAMS.preset, filters.preset === EMPTY_REPOSITORY_FILE_FILTERS.preset ? null : filters.preset);
+  set(FILE_FILTER_PARAMS.glob, filters.glob.trim() ? filters.glob : null);
+  set(FILE_FILTER_PARAMS.regex, filters.regex.trim() ? filters.regex : null);
+  set(FILE_FILTER_PARAMS.hideNonImportable, flag(filters.hideNonImportable, EMPTY_REPOSITORY_FILE_FILTERS.hideNonImportable));
+  set(FILE_FILTER_PARAMS.includeHidden, flag(filters.includeHidden, EMPTY_REPOSITORY_FILE_FILTERS.includeHidden));
+  set(FILE_FILTER_PARAMS.skipVendor, flag(filters.skipVendor, EMPTY_REPOSITORY_FILE_FILTERS.skipVendor));
+  return next;
 }

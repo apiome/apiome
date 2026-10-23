@@ -16,6 +16,7 @@ import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
 import { useSettledRepositoriesAnnouncement } from '@/app/hooks/useSettledRepositoriesAnnouncement';
 import { LiveRegion } from '@/app/components/ui/LiveRegion';
+import { FactsLine } from '@/app/components/ui/FactsLine';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 import {
@@ -51,12 +52,14 @@ import {
   RepositoriesSubNav,
   RepositoryCard,
   RepositoryKpiStrip,
-  RepositoryRefreshActivityPanel,
+  RepositoryRefreshActivityChip,
+  REPOSITORIES_DESCRIPTION,
   RepositoryTable,
   isRepositoryListNarrowed,
   isRepositorySortKey,
   matchesRepositoryFilters,
-  repositoriesSummaryLine,
+  repositoryFacts,
+  useRefreshActivity,
   repositoryDetailHref,
   searchRepositories,
   sortRepositories,
@@ -315,6 +318,20 @@ export default function RepositoriesClient() {
   );
   useShortcuts(shortcuts);
 
+  // ---- the facts line (HIVE-11.7) ------------------------------------------------------------
+
+  const refreshActivity = useRefreshActivity();
+  const facts = React.useMemo(
+    () => [
+      ...repositoryFacts(repositories),
+      {
+        id: 'refresh-activity',
+        label: <RepositoryRefreshActivityChip state={refreshActivity} />,
+      },
+    ],
+    [repositories, refreshActivity]
+  );
+
   // ---- the toolbar, shared by both views ----------------------------------------------------
 
   const toolbar = (
@@ -417,7 +434,7 @@ export default function RepositoriesClient() {
           { label: 'Repositories' },
         ]}
         title="Repositories"
-        description={repositoriesSummaryLine(repositories)}
+        description={REPOSITORIES_DESCRIPTION}
         actions={
           <>
             <Button
@@ -451,11 +468,18 @@ export default function RepositoriesClient() {
           <GatedState description="Repositories are registered against one workspace." />
         ) : (
           <>
-            {/* A strip of zeros above an empty state says the same thing twice. */}
-            {repositories.length > 0 ? <RepositoryKpiStrip repositories={repositories} /> : null}
-
-            {/* RAR-5.5: tenant-wide auto-refresh health, with a drill-in per repository. */}
-            <RepositoryRefreshActivityPanel />
+            {/* HIVE-11.7: one facts line in place of the KPI strip (Show stats reveals it) and
+                the always-open Refresh activity panel (RAR-5.5), which is now a chip that opens
+                the same panel in a drawer. An empty workspace reads "0 repositories". */}
+            <FactsLine
+              page="repositories"
+              aria-label="Repositories summary"
+              facts={facts}
+              loading={loading && repositories.length === 0}
+              empty={!loading && repositories.length === 0}
+              emptyLabel="repositories"
+              stats={<RepositoryKpiStrip repositories={repositories} />}
+            />
 
             {view === 'list' ? (
               <RepositoryTable

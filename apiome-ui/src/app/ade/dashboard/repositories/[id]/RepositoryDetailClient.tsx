@@ -8,6 +8,7 @@ import { Eye, Files, GitMerge, History, RefreshCw, Settings2 } from 'lucide-reac
 import { toast } from '../../../../components/ui/toast';
 
 import PageHeader from '@/app/components/shell/PageHeader';
+import { FactsLine } from '@/app/components/ui/FactsLine';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import {
   AlertDialog,
@@ -61,6 +62,7 @@ import {
   RESCAN_IN_PROGRESS_TITLE,
   RESCAN_STUB_TOAST,
   RepositoryDetailKpiStrip,
+  repositoryDetailFacts,
   RepositoryImportsTable,
   RepositoryPreviewTab,
   RepositorySettingsTab,
@@ -514,12 +516,20 @@ export function RepositoryDetailClient() {
       />
 
       <PageBody>
-        <RepositoryDetailKpiStrip
-          repository={repo}
-          stats30d={stats30d}
-          importsLoading={importsLoading}
-          importableMix={importableMix}
-          lastScanLabel={lastScanLabel}
+        {/* HIVE-11.7: one facts line under the title; Show stats reveals the strip it replaced. */}
+        <FactsLine
+          page="repository-detail"
+          aria-label="Repository summary"
+          facts={repositoryDetailFacts(repo, { stats30d, importsLoading, importableMix, lastScanLabel })}
+          stats={
+            <RepositoryDetailKpiStrip
+              repository={repo}
+              stats30d={stats30d}
+              importsLoading={importsLoading}
+              importableMix={importableMix}
+              lastScanLabel={lastScanLabel}
+            />
+          }
         />
 
         <div

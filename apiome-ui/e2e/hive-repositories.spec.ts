@@ -279,6 +279,11 @@ test.describe('the grids collapse rather than overflow', () => {
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await mount(page, 'cards');
+    // HIVE-11.7: the strip sits behind Show stats. The fixture is static markup, so the region's
+    // `hidden` is lifted the way the toggle would.
+    await page.evaluate(() => {
+      document.querySelectorAll('.facts-line__stats[hidden]').forEach((node) => node.removeAttribute('hidden'));
+    });
     const wide = await gridColumns(page, '.hive-stat-grid');
     expect(wide).toBe(4);
 

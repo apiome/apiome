@@ -37,7 +37,7 @@
  * through review, verify and apply — and the apology is gone with the flow that needed it.
  */
 
-import { FileCode2, GitCommitHorizontal, Layers, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { FileCode2, GitCommitHorizontal, Layers, ListFilter, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '../../../ui/toast';
 
@@ -67,13 +67,17 @@ import {
   RESCAN_BRANCH_STUB_TOAST,
   RepositoryBranchPicker,
   RepositoryFileFilters,
+  RepositoryFilePresetSelect,
+  activeRepositoryFileFilterCount,
   branchFileCountLine,
   formatFileBytes,
   repositoryFileConfidence,
   repositoryFilesQuery,
   repositoryFilesShowingLine,
+  repositoryFileFiltersFromSearch,
   repositoryFilesSummaryLine,
   shortSha,
+  withRepositoryFileFilters,
   type RepositoryFileDeepLink,
   type RepositoryFileFilterState,
 } from '@/app/components/ade/repositories';
@@ -185,9 +189,27 @@ export function RepositoryFilesBrowser({
   const [localBranches, setLocalBranches] = useState<string[]>([defaultBranch]);
   const branches = branchesProp?.length ? branchesProp : localBranches;
 
-  const [filters, setFilters] = useState<RepositoryFileFilterState>({
-    ...EMPTY_REPOSITORY_FILE_FILTERS,
-  });
+  // The filters live in the URL (HIVE-11.7), so a filtered view survives a reload and can be
+  // shared. Read once on mount — the browser owns the address bar after that.
+  const [filters, setFilters] = useState<RepositoryFileFilterState>(() =>
+    typeof window === 'undefined'
+      ? { ...EMPTY_REPOSITORY_FILE_FILTERS }
+      : repositoryFileFiltersFromSearch(new URLSearchParams(window.location.search))
+  );
+  const activeFilterCount = activeRepositoryFileFilterCount(filters);
+  // The glob/regex/switches sit behind **Filters (n)**; they start open when the URL set any.
+  const [filtersOpen, setFiltersOpen] = useState(activeFilterCount > 0);
+
+  // Mirror the filters into the query string without a navigation or a history entry, keeping
+  // every other parameter (the tab, a file deep link) as it is.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const current = new URLSearchParams(window.location.search);
+    const next = withRepositoryFileFilters(filters, current);
+    if (next.toString() === current.toString()) return;
+    const query = next.toString();
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+  }, [filters]);
   const [pageOffset, setPageOffset] = useState(0);
   const debouncedGlob = useDebounced(filters.glob, FILE_FILTER_DEBOUNCE_MS);
   const debouncedRegex = useDebounced(filters.regex, FILE_FILTER_DEBOUNCE_MS);
@@ -525,28 +547,31 @@ export function RepositoryFilesBrowser({
         </div>
       </Card>
 
-      <Card>
-        <RepositoryFileFilters
-          value={filters}
-          busy={loading}
-          onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
-          onReset={() => {
-            setFilters({ ...EMPTY_REPOSITORY_FILE_FILTERS });
-            setPageOffset(0);
-          }}
-          onApply={() => void fetchFiles()}
-        />
-      </Card>
-
-      {error ? (
-        <ErrorState
-          title="Could not list this branch’s files"
-          description={error}
-          onRetry={() => void fetchFiles()}
-        />
-      ) : (
-        <div className="repo-det-table-wrap" data-testid="repository-files-table-wrap">
+      {/* The toolbar and its filters stay up when the read fails — a bad regex is fixed there. */}
+      <div className="repo-det-table-wrap" data-testid="repository-files-table-wrap">
+          {/* HIVE-11.7: the table's one toolbar — the preset inline, everything else behind
+              Filters (n), then the result summary and the selection verbs. */}
           <div className="repo-det-table__bar">
+            <div className="repo-files-toolbar__filters">
+              <RepositoryFilePresetSelect
+                aria-label="Importable preset"
+                value={filters.preset}
+                disabled={filters.regex.trim() !== ''}
+                onChange={(preset) => setFilters((prev) => ({ ...prev, preset }))}
+              />
+              <Button
+                type="button"
+                variant={activeFilterCount > 0 ? 'secondary' : 'outline'}
+                size="sm"
+                aria-expanded={filtersOpen}
+                aria-controls="repository-file-filters-panel"
+                onClick={() => setFiltersOpen((open) => !open)}
+                data-testid="repository-file-filters-toggle"
+              >
+                <ListFilter aria-hidden />
+                Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </Button>
+            </div>
             <p className="text-sm font-medium text-fg" data-testid="repository-files-summary">
               {repositoryFilesSummaryLine({
                 matchCount: data?.match_count ?? null,
@@ -585,6 +610,32 @@ export function RepositoryFilesBrowser({
             </div>
           </div>
 
+          <div
+            id="repository-file-filters-panel"
+            className="repo-files-toolbar__panel"
+            hidden={!filtersOpen}
+          >
+            <RepositoryFileFilters
+              value={filters}
+              busy={loading}
+              showPreset={false}
+              onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
+              onReset={() => {
+                setFilters({ ...EMPTY_REPOSITORY_FILE_FILTERS });
+                setPageOffset(0);
+              }}
+              onApply={() => void fetchFiles()}
+            />
+          </div>
+
+          {error ? (
+            <ErrorState
+              title="Could not list this branch’s files"
+              description={error}
+              onRetry={() => void fetchFiles()}
+            />
+          ) : (
+          <>
           <div className="repo-det-table-scroll">
             <table
               className="repo-det-table repo-files-table table-density table-dense"
@@ -722,8 +773,9 @@ export function RepositoryFilesBrowser({
               </Button>
             </span>
           </div>
-        </div>
-      )}
+          </>
+          )}
+      </div>
 
       {importOverlay}
       {bulkOverlay}

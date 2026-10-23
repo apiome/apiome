@@ -35,6 +35,7 @@ export { RepositoryDetailKpiStrip } from './RepositoryDetailKpiStrip';
 export {
   REGEX_OVERRIDES_GLOB_HINT,
   RepositoryFileFilters,
+  RepositoryFilePresetSelect,
 } from './RepositoryFileFilters';
 export {
   RepositoryFileRowMenu,
@@ -53,9 +54,13 @@ export {
   REFRESH_ACTIVITY_ERROR,
   REFRESH_ACTIVITY_LOADING,
   RepositoryRefreshActivityPanel,
+  RepositoryRefreshActivityPanelBody,
   RepositoryRefreshActivityPanelView,
   repositoryRefreshSpecsHref,
+  useRefreshActivity,
+  type RefreshActivityState,
 } from './RepositoryRefreshActivityPanel';
+export { RepositoryRefreshActivityChip } from './RepositoryRefreshActivityChip';
 export { RepositoryRowMenu, type RepositoryRowHandlers } from './RepositoryRowMenu';
 export { RepositoryTable } from './RepositoryTable';
 

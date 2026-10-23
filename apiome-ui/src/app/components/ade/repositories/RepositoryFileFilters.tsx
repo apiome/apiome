@@ -58,6 +58,54 @@ export interface RepositoryFileFiltersProps {
   onApply: () => void;
   /** True while a read is in flight — Apply goes inert so it cannot queue a second. */
   busy?: boolean;
+  /**
+   * Draw the preset field. Off when the preset sits inline in the table toolbar and these
+   * fields are the collapsed **Filters (n)** panel (HIVE-11.7).
+   */
+  showPreset?: boolean;
+}
+
+/** Props for {@link RepositoryFilePresetSelect}. */
+export interface RepositoryFilePresetSelectProps {
+  /** The trigger's id, for a label. */
+  id?: string;
+  /** The chosen preset. */
+  value: string;
+  /** Inert while a regex overrides the preset. */
+  disabled?: boolean;
+  /** Called with the new preset. */
+  onChange: (preset: string) => void;
+  /** Accessible name when no visible label points at the trigger. */
+  'aria-label'?: string;
+}
+
+/**
+ * The importable-preset select, on its own so the table toolbar can keep it inline.
+ *
+ * @param props See {@link RepositoryFilePresetSelectProps}.
+ * @returns The select.
+ */
+export function RepositoryFilePresetSelect({
+  id,
+  value,
+  disabled = false,
+  onChange,
+  'aria-label': ariaLabel,
+}: RepositoryFilePresetSelectProps) {
+  return (
+    <Select value={value} disabled={disabled} onValueChange={onChange}>
+      <SelectTrigger id={id} aria-label={ariaLabel} data-testid="repository-file-preset">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {REPOSITORY_FILE_PRESETS.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 /**
@@ -71,31 +119,24 @@ export function RepositoryFileFilters({
   onReset,
   onApply,
   busy = false,
+  showPreset = true,
 }: RepositoryFileFiltersProps) {
   const regexActive = value.regex.trim() !== '';
 
   return (
     <div className="repo-files-filters" data-testid="repository-file-filters">
       <div className="repo-files-filters__fields">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="repository-file-preset">Importable preset</Label>
-          <Select
-            value={value.preset}
-            disabled={regexActive}
-            onValueChange={(preset) => onChange({ preset })}
-          >
-            <SelectTrigger id="repository-file-preset" data-testid="repository-file-preset">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {REPOSITORY_FILE_PRESETS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {showPreset ? (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="repository-file-preset">Importable preset</Label>
+            <RepositoryFilePresetSelect
+              id="repository-file-preset"
+              value={value.preset}
+              disabled={regexActive}
+              onChange={(preset) => onChange({ preset })}
+            />
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="repository-file-glob">Glob filter (comma-separated)</Label>
