@@ -423,7 +423,7 @@
       "marker": "`module \u2026` + `class`/`typealias` with member constraints and `Listing<\u2026>` types"
     },
     "pli": {
-      "label": "PL/I structures (pending #5480)",
+      "label": "PL/I structures",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE`"
@@ -21736,7 +21736,7 @@
     {
       "path": "pli/01-minimal-structure.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21745,8 +21745,7 @@
       "features": [
         "declare",
         "char",
-        "fixed-bin",
-        "pending-adapter"
+        "fixed-bin"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21757,7 +21756,7 @@
     {
       "path": "pli/02-typical-customer-record.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21768,8 +21767,7 @@
         "fixed-dec",
         "bit-flags",
         "array-of-structures",
-        "filler",
-        "pending-adapter"
+        "filler"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21780,7 +21778,7 @@
     {
       "path": "pli/03-includes-set/ADDRBLK.inc",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21788,8 +21786,7 @@
       },
       "features": [
         "multi-file",
-        "include-member",
-        "pending-adapter"
+        "include-member"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21801,7 +21798,7 @@
     {
       "path": "pli/03-includes-set/MONYBLK.inc",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21809,8 +21806,7 @@
       },
       "features": [
         "multi-file",
-        "include-member",
-        "pending-adapter"
+        "include-member"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21822,7 +21818,7 @@
     {
       "path": "pli/03-includes-set/main.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21832,8 +21828,7 @@
         "multi-file",
         "include",
         "like-clone",
-        "occurs-table",
-        "pending-adapter"
+        "occurs-table"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21845,7 +21840,7 @@
     {
       "path": "pli/04-stress-attribute-coverage.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21867,8 +21862,7 @@
         "based",
         "aligned",
         "unaligned",
-        "refer",
-        "pending-adapter"
+        "refer"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21880,7 +21874,7 @@
     {
       "path": "pli/05-real-world-payment-record.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21892,8 +21886,7 @@
         "address-arrays",
         "charges-table",
         "status-flags",
-        "packed-decimal",
-        "pending-adapter"
+        "packed-decimal"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21904,7 +21897,7 @@
     {
       "path": "pli/06-typical-union-record.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21913,8 +21906,7 @@
       "features": [
         "union",
         "shared-storage",
-        "record-type-discriminator",
-        "pending-adapter"
+        "record-type-discriminator"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21925,7 +21917,7 @@
     {
       "path": "pli/07-composition-like-and-nesting.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "valid",
       "expected_detection": {
         "format": "pli",
@@ -21935,8 +21927,7 @@
         "like-clone",
         "shared-blocks",
         "record-of-records",
-        "array-of-structures",
-        "pending-adapter"
+        "array-of-structures"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21947,7 +21938,7 @@
     {
       "path": "pli/negative/01-syntactic-missing-semicolon.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -21956,8 +21947,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-semicolon",
-        "pending-adapter"
+        "missing-semicolon"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21969,7 +21959,7 @@
     {
       "path": "pli/negative/02-semantic-level-number-gap.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -21979,8 +21969,7 @@
         "negative",
         "semantic",
         "level-number-gap",
-        "orphan-level",
-        "pending-adapter"
+        "orphan-level"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21992,7 +21981,7 @@
     {
       "path": "pli/negative/03-truncated-mid-declare.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -22001,8 +21990,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -22014,7 +22002,7 @@
     {
       "path": "pli/negative/04-wrong-format-cobol-copybook.cpy",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -22023,8 +22011,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "cobol-copybook",
-        "pending-adapter"
+        "cobol-copybook"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -22037,7 +22024,7 @@
     {
       "path": "pli/negative/05-encoding-utf16.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -22046,8 +22033,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -22059,7 +22045,7 @@
     {
       "path": "pli/negative/06-unresolvable-include.pli",
       "format": "pli",
-      "adapter_key": null,
+      "adapter_key": "pli",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "pli",
@@ -22068,8 +22054,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-include",
-        "pending-adapter"
+        "missing-include"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

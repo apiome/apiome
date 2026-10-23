@@ -68,6 +68,7 @@ NATIVE_ANALYSIS_FORMATS = (
     "cobolcopybook",
     "opcua-nodeset",
     "sparkplug",
+    "pli",
 )
 
 #: Generic-extractor control formats, limited to the low rungs: the controls exist to prove the

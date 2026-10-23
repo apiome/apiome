@@ -1,0 +1,22 @@
+---
+slug: pli-structure-import
+title: Import PL/I structures
+description: Catalog PL/I DECLARE structures with their byte-accurate storage map.
+authors: [apiome]
+---
+
+Apiome now imports PL/I `DCL` structures and their `%INCLUDE` members as data schemas, with the
+byte offset and length of every item. [What gets imported](/bring-in/pli-structure-import).
+
+{/* truncate */}
+
+- **Structures become records with a storage map.** Each structure is a record. Every field keeps
+  its offset, length and alignment padding, and each record carries the full map with `LIKE` copies
+  expanded.
+- **The assumptions are stated.** PL/I does not say how wide a character is, how long a `VARYING`
+  prefix is or where padding goes. Each import lists what the byte counts assume.
+- **`%INCLUDE` resolves across an archive.** Upload the main file with its members and the
+  structures close across the set. A member missing from inside a structure marks that record
+  partial and names the member, never a silently short layout.
+- **`UNION` is shown like COBOL `REDEFINES`.** The members are fields at one offset, and each later
+  member names the storage it redefines.

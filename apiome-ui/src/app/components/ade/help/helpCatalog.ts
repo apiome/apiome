@@ -783,6 +783,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['robotics', 'robot', 'msg', 'srv', 'action', 'rosidl', 'package.xml', 'interface package', 'dds'],
   },
   {
+    id: 'pli-structure-import',
+    title: 'Import PL/I structures',
+    summary: 'Catalog PL/I DECLARE structures with their byte-accurate storage map.',
+    page: 'apiome-docs/docs/bring-in/pli-structure-import.md',
+    section: 'reference',
+    keywords: ['mainframe', 'declare', 'dcl', '%include', 'include member', 'like', 'union', 'storage map', 'offsets'],
+  },
+  {
     id: 'vsam-cics-bms-import',
     title: 'Import VSAM cluster definitions and CICS BMS maps',
     summary: 'Catalog VSAM record envelopes from IDCAMS and 3270 screens from BMS maps.',

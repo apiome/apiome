@@ -126,6 +126,9 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "owl",
         "ncpdp",
         "pkl",
+        # FMT-11.1: a PL/I structure declares a storage layout; it has no place for an owner, an
+        # SLA or a retention promise.
+        "pli",
         "pydantic",
         "relaxng",
         "sample",

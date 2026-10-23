@@ -18,6 +18,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Avro IDL (`.avdl`) import and export
     - Swagger 1.2 import
     - Postman Collection v2.0 import
+    - PL/I structure import — `DCL` structures and their `%INCLUDE` members become records with a byte-accurate storage map (offsets, lengths, alignment padding, `UNION` overlays) and the assumptions those byte counts rest on; a member missing from the upload marks the record it sits in partial instead of leaving it silently short
     - VSAM and CICS BMS import — IDCAMS cluster definitions and LISTCAT listings become records with their primary and alternate keys at their offsets, and BMS mapsets become screen records whose fields keep their row, column, picture and attributes; the record layout a cluster cannot describe is listed in the coverage ledger
     - Hoppscotch and Thunder Client export — export any HTTP API as a Hoppscotch or Thunder Client collection plus its environment: one saved request per operation, foldered by tag, against a baseUrl variable; credentials are written as empty placeholder variables, never values, and a collection exported from either client imports back to the same operations
     - SoapUI / ReadyAPI project import — a SoapUI or ReadyAPI project becomes one API: WSDL interfaces are read by the WSDL importer (from the project's cached copy or a WSDL uploaded beside it), REST interfaces become operations with inferred schemas, and test suites are kept as declared tests shown on the item's Overview; saved credentials are never kept

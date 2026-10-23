@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 94
+- **Formats gated:** 95
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -79,6 +79,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
 | `owl` | OWL / RDFS ontologies | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `pkl` | Pkl | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `pli` | PL/I structures | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `postman` | Postman | rest | 13 | 11 | 0 | 0 | 24 | 6/6 | 12 | `postman` |
 | `pydantic` | Pydantic models | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `raml` | RAML | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `raml` |
@@ -180,6 +181,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `openrpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `owl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pkl` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `pli` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `postman` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `pydantic` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `raml` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -227,4 +229,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`ims`, `natural-ddm`, `pli`, `schematron`
+`ims`, `natural-ddm`, `schematron`

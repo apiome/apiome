@@ -1,0 +1,199 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 1 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [],
+        "files": [
+          "pli/01-minimal-structure.pli"
+        ],
+        "includes": [],
+        "input": "file",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [],
+        "statements": [],
+        "structures": [
+          {
+            "length": 24,
+            "name": "BEACON_REC",
+            "type": "pli.BEACON_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "BEACON_REC",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "BEACON_REC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure BEACON_REC (level 1), 24 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/01-minimal-structure.pli",
+            "length": 24,
+            "level": 1,
+            "line": 2,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 24,
+                "level": 1,
+                "offset": 1,
+                "path": "BEACON_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(16)",
+                "length": 16,
+                "level": 2,
+                "offset": 1,
+                "path": "BEACON_REC.BEACON_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(63)",
+                "length": 8,
+                "level": 2,
+                "offset": 17,
+                "path": "BEACON_REC.SEEN_AT",
+                "storageBasis": "binary"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(16) at offset 1, 16 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(16)",
+                "dataKind": "character",
+                "length": 16,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.BEACON_REC.BEACON_ID",
+            "name": "BEACON_ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(63) at offset 17, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(63)",
+                "dataKind": "fixed-binary",
+                "length": 8,
+                "level": 2,
+                "offset": 17,
+                "precision": 63,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.BEACON_REC.SEEN_AT",
+            "name": "SEEN_AT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.BEACON_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "BEACON_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/01-minimal-structure.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:26dccb62ecc0e4f70243a2226df127b8c7a946ac2dfde75d027103e7f1190e15",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

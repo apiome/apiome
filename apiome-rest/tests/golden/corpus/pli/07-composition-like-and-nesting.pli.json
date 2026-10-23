@@ -1,0 +1,2421 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 6 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [],
+        "files": [
+          "pli/07-composition-like-and-nesting.pli"
+        ],
+        "includes": [],
+        "input": "file",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [],
+        "statements": [],
+        "structures": [
+          {
+            "length": 30,
+            "name": "AUDIT_BLOCK",
+            "type": "pli.AUDIT_BLOCK"
+          },
+          {
+            "length": 11,
+            "name": "MONEY_BLOCK",
+            "type": "pli.MONEY_BLOCK"
+          },
+          {
+            "length": 108,
+            "name": "ADDRESS_BLOCK",
+            "type": "pli.ADDRESS_BLOCK"
+          },
+          {
+            "length": 318,
+            "name": "CUSTOMER_REC",
+            "type": "pli.CUSTOMER_REC"
+          },
+          {
+            "length": 1546,
+            "name": "INVOICE_REC",
+            "type": "pli.INVOICE_REC"
+          },
+          {
+            "length": 361,
+            "name": "STATEMENT_REC",
+            "type": "pli.STATEMENT_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "AUDIT_BLOCK",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "AUDIT_BLOCK",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure ADDRESS_BLOCK (level 1), 108 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 108,
+            "level": 1,
+            "line": 19,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 1,
+                "offset": 1,
+                "path": "ADDRESS_BLOCK"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 2,
+                "offset": 1,
+                "path": "ADDRESS_BLOCK.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 2,
+                "offset": 36,
+                "path": "ADDRESS_BLOCK.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 2,
+                "offset": 71,
+                "path": "ADDRESS_BLOCK.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 96,
+                "path": "ADDRESS_BLOCK.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 106,
+                "path": "ADDRESS_BLOCK.COUNTRY",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(25) at offset 71, 25 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "dataKind": "character",
+                "length": 25,
+                "level": 2,
+                "offset": 71,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.ADDRESS_BLOCK.CITY",
+            "name": "CITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 106, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 106,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.ADDRESS_BLOCK.COUNTRY",
+            "name": "COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 1, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.ADDRESS_BLOCK.LINE1",
+            "name": "LINE1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 36, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 2,
+                "offset": 36,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.ADDRESS_BLOCK.LINE2",
+            "name": "LINE2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 96, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 96,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.ADDRESS_BLOCK.POSTCODE",
+            "name": "POSTCODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.ADDRESS_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "ADDRESS_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure AUDIT_BLOCK (level 1), 30 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 30,
+            "level": 1,
+            "line": 8,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 30,
+                "level": 1,
+                "offset": 1,
+                "path": "AUDIT_BLOCK"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 2,
+                "offset": 1,
+                "path": "AUDIT_BLOCK.CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 2,
+                "offset": 6,
+                "path": "AUDIT_BLOCK.CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 2,
+                "offset": 10,
+                "path": "AUDIT_BLOCK.CREATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 2,
+                "offset": 18,
+                "path": "AUDIT_BLOCK.UPDATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 2,
+                "offset": 23,
+                "path": "AUDIT_BLOCK.UPDATED_USER",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 1, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 2,
+                "offset": 1,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.AUDIT_BLOCK.CREATED_DATE",
+            "name": "CREATED_DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(6,0) at offset 6, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "dataKind": "fixed-decimal",
+                "length": 4,
+                "level": 2,
+                "offset": 6,
+                "precision": 6,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.AUDIT_BLOCK.CREATED_TIME",
+            "name": "CREATED_TIME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(8) at offset 10, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "dataKind": "character",
+                "length": 8,
+                "level": 2,
+                "offset": 10,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.AUDIT_BLOCK.CREATED_USER",
+            "name": "CREATED_USER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 18, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 2,
+                "offset": 18,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.AUDIT_BLOCK.UPDATED_DATE",
+            "name": "UPDATED_DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(8) at offset 23, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "dataKind": "character",
+                "length": 8,
+                "level": 2,
+                "offset": 23,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.AUDIT_BLOCK.UPDATED_USER",
+            "name": "UPDATED_USER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.AUDIT_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "AUDIT_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure CUSTOMER_REC (level 1), 318 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 318,
+            "level": 1,
+            "line": 27,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 318,
+                "level": 1,
+                "offset": 1,
+                "path": "CUSTOMER_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "path": "CUSTOMER_REC.CUST_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 2,
+                "offset": 11,
+                "path": "CUSTOMER_REC.CUST_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "offset": 51,
+                "path": "CUSTOMER_REC.CUST_BILL_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 51,
+                "path": "CUSTOMER_REC.CUST_BILL_TO.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 86,
+                "path": "CUSTOMER_REC.CUST_BILL_TO.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 121,
+                "path": "CUSTOMER_REC.CUST_BILL_TO.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 146,
+                "path": "CUSTOMER_REC.CUST_BILL_TO.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 156,
+                "path": "CUSTOMER_REC.CUST_BILL_TO.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "offset": 159,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 159,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 194,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 229,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 254,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 264,
+                "path": "CUSTOMER_REC.CUST_SHIP_TO.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 267,
+                "path": "CUSTOMER_REC.CUST_BALANCE"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 267,
+                "path": "CUSTOMER_REC.CUST_BALANCE.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 275,
+                "path": "CUSTOMER_REC.CUST_BALANCE.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 278,
+                "path": "CUSTOMER_REC.CUST_LIMIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 278,
+                "path": "CUSTOMER_REC.CUST_LIMIT.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 286,
+                "path": "CUSTOMER_REC.CUST_LIMIT.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "offset": 289,
+                "path": "CUSTOMER_REC.CUST_AUDIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 289,
+                "path": "CUSTOMER_REC.CUST_AUDIT.CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 3,
+                "offset": 294,
+                "path": "CUSTOMER_REC.CUST_AUDIT.CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 298,
+                "path": "CUSTOMER_REC.CUST_AUDIT.CREATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 306,
+                "path": "CUSTOMER_REC.CUST_AUDIT.UPDATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 311,
+                "path": "CUSTOMER_REC.CUST_AUDIT.UPDATED_USER",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE AUDIT_BLOCK at offset 289, 30 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "like": "AUDIT_BLOCK",
+                "offset": 289
+              }
+            },
+            "field_number": 7,
+            "key": "pli.CUSTOMER_REC.CUST_AUDIT",
+            "name": "CUST_AUDIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.AUDIT_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 267, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 267
+              }
+            },
+            "field_number": 5,
+            "key": "pli.CUSTOMER_REC.CUST_BALANCE",
+            "name": "CUST_BALANCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_BLOCK at offset 51, 108 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "like": "ADDRESS_BLOCK",
+                "offset": 51
+              }
+            },
+            "field_number": 3,
+            "key": "pli.CUSTOMER_REC.CUST_BILL_TO",
+            "name": "CUST_BILL_TO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 1, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.CUSTOMER_REC.CUST_ID",
+            "name": "CUST_ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 278, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 278
+              }
+            },
+            "field_number": 6,
+            "key": "pli.CUSTOMER_REC.CUST_LIMIT",
+            "name": "CUST_LIMIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(40) at offset 11, 40 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "dataKind": "character",
+                "length": 40,
+                "level": 2,
+                "offset": 11,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.CUSTOMER_REC.CUST_NAME",
+            "name": "CUST_NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_BLOCK at offset 159, 108 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "like": "ADDRESS_BLOCK",
+                "offset": 159
+              }
+            },
+            "field_number": 4,
+            "key": "pli.CUSTOMER_REC.CUST_SHIP_TO",
+            "name": "CUST_SHIP_TO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_BLOCK",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.CUSTOMER_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure INVOICE_REC (level 1), 1546 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 1546,
+            "level": 1,
+            "line": 36,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 1546,
+                "level": 1,
+                "offset": 1,
+                "path": "INVOICE_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(12)",
+                "length": 12,
+                "level": 2,
+                "offset": 1,
+                "path": "INVOICE_REC.INV_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 13,
+                "path": "INVOICE_REC.INV_CUSTOMER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "offset": 23,
+                "path": "INVOICE_REC.INV_BILL_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 23,
+                "path": "INVOICE_REC.INV_BILL_TO.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 58,
+                "path": "INVOICE_REC.INV_BILL_TO.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 93,
+                "path": "INVOICE_REC.INV_BILL_TO.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 118,
+                "path": "INVOICE_REC.INV_BILL_TO.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 128,
+                "path": "INVOICE_REC.INV_BILL_TO.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 131,
+                "path": "INVOICE_REC.INV_NET"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 131,
+                "path": "INVOICE_REC.INV_NET.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 139,
+                "path": "INVOICE_REC.INV_NET.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 142,
+                "path": "INVOICE_REC.INV_TAX"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 142,
+                "path": "INVOICE_REC.INV_TAX.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 150,
+                "path": "INVOICE_REC.INV_TAX.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 153,
+                "path": "INVOICE_REC.INV_GROSS"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 153,
+                "path": "INVOICE_REC.INV_GROSS.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 161,
+                "path": "INVOICE_REC.INV_GROSS.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 165,
+                "paddingBits": 8,
+                "path": "INVOICE_REC.INV_LINE_CT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "length": 45,
+                "level": 2,
+                "occurrences": 30,
+                "offset": 167,
+                "path": "INVOICE_REC.INV_LINES",
+                "totalLength": 1350
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(18)",
+                "length": 18,
+                "level": 3,
+                "offset": 167,
+                "path": "INVOICE_REC.INV_LINES.LINE_SKU",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(9,3)",
+                "length": 5,
+                "level": 3,
+                "offset": 185,
+                "path": "INVOICE_REC.INV_LINES.LINE_QTY",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "offset": 190,
+                "path": "INVOICE_REC.INV_LINES.LINE_PRICE"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 4,
+                "offset": 190,
+                "path": "INVOICE_REC.INV_LINES.LINE_PRICE.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 198,
+                "path": "INVOICE_REC.INV_LINES.LINE_PRICE.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "offset": 201,
+                "path": "INVOICE_REC.INV_LINES.LINE_TOTAL"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 4,
+                "offset": 201,
+                "path": "INVOICE_REC.INV_LINES.LINE_TOTAL.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 209,
+                "path": "INVOICE_REC.INV_LINES.LINE_TOTAL.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "offset": 1517,
+                "path": "INVOICE_REC.INV_AUDIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 1517,
+                "path": "INVOICE_REC.INV_AUDIT.CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 3,
+                "offset": 1522,
+                "path": "INVOICE_REC.INV_AUDIT.CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 1526,
+                "path": "INVOICE_REC.INV_AUDIT.CREATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 1534,
+                "path": "INVOICE_REC.INV_AUDIT.UPDATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 1539,
+                "path": "INVOICE_REC.INV_AUDIT.UPDATED_USER",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE AUDIT_BLOCK at offset 1517, 30 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "like": "AUDIT_BLOCK",
+                "offset": 1517
+              }
+            },
+            "field_number": 9,
+            "key": "pli.INVOICE_REC.INV_AUDIT",
+            "name": "INV_AUDIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.AUDIT_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_BLOCK at offset 23, 108 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "like": "ADDRESS_BLOCK",
+                "offset": 23
+              }
+            },
+            "field_number": 3,
+            "key": "pli.INVOICE_REC.INV_BILL_TO",
+            "name": "INV_BILL_TO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 13, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 13,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.INVOICE_REC.INV_CUSTOMER",
+            "name": "INV_CUSTOMER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 153, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 153
+              }
+            },
+            "field_number": 6,
+            "key": "pli.INVOICE_REC.INV_GROSS",
+            "name": "INV_GROSS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(12) at offset 1, 12 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(12)",
+                "dataKind": "character",
+                "length": 12,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.INVOICE_REC.INV_ID",
+            "name": "INV_ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 30,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 30,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "structure, dimension (30) at offset 167, 1350 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "dimensions": [
+                  {
+                    "bounds": "30",
+                    "lower": 1,
+                    "upper": 30
+                  }
+                ],
+                "length": 45,
+                "level": 2,
+                "occurrences": 30,
+                "offset": 167,
+                "totalLength": 1350
+              }
+            },
+            "field_number": 8,
+            "key": "pli.INVOICE_REC.INV_LINES",
+            "name": "INV_LINES",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pli.INVOICE_REC.INV_LINES",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 165, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 165,
+                "paddingBits": 8,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.INVOICE_REC.INV_LINE_CT",
+            "name": "INV_LINE_CT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 131, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 131
+              }
+            },
+            "field_number": 4,
+            "key": "pli.INVOICE_REC.INV_NET",
+            "name": "INV_NET",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 142, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 142
+              }
+            },
+            "field_number": 5,
+            "key": "pli.INVOICE_REC.INV_TAX",
+            "name": "INV_TAX",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.INVOICE_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "INVOICE_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure INV_LINES (level 2), 1350 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "dimensions": [
+              {
+                "bounds": "30",
+                "lower": 1,
+                "upper": 30
+              }
+            ],
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 45,
+            "level": 2,
+            "line": 44,
+            "occurrences": 30,
+            "offset": 1,
+            "totalLength": 1350
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 24, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "like": "MONEY_BLOCK",
+                "offset": 24
+              }
+            },
+            "field_number": 3,
+            "key": "pli.INVOICE_REC.INV_LINES.LINE_PRICE",
+            "name": "LINE_PRICE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(9,3) at offset 19, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(9,3)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 3,
+                "offset": 19,
+                "precision": 9,
+                "scale": 3,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.INVOICE_REC.INV_LINES.LINE_QTY",
+            "name": "LINE_QTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 18,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(18) at offset 1, 18 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(18)",
+                "dataKind": "character",
+                "length": 18,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.INVOICE_REC.INV_LINES.LINE_SKU",
+            "name": "LINE_SKU",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 35, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "like": "MONEY_BLOCK",
+                "offset": 35
+              }
+            },
+            "field_number": 4,
+            "key": "pli.INVOICE_REC.INV_LINES.LINE_TOTAL",
+            "name": "LINE_TOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.INVOICE_REC.INV_LINES",
+        "key_type": null,
+        "kind": "record",
+        "name": "INVOICE_REC.INV_LINES",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure MONEY_BLOCK (level 1), 11 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 11,
+            "level": 1,
+            "line": 15,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 1,
+                "offset": 1,
+                "path": "MONEY_BLOCK"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 2,
+                "offset": 1,
+                "path": "MONEY_BLOCK.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 9,
+                "path": "MONEY_BLOCK.CURRENCY",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(15,2) at offset 1, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "dataKind": "fixed-decimal",
+                "length": 8,
+                "level": 2,
+                "offset": 1,
+                "precision": 15,
+                "scale": 2,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.MONEY_BLOCK.AMOUNT",
+            "name": "AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 9, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 9,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.MONEY_BLOCK.CURRENCY",
+            "name": "CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.MONEY_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "MONEY_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure STATEMENT_REC (level 1), 361 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/07-composition-like-and-nesting.pli",
+            "length": 361,
+            "level": 1,
+            "line": 52,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 361,
+                "level": 1,
+                "offset": 1,
+                "path": "STATEMENT_REC"
+              },
+              {
+                "aligned": false,
+                "length": 318,
+                "level": 2,
+                "offset": 1,
+                "path": "STATEMENT_REC.STMT_CUSTOMER"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 1,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 3,
+                "offset": 11,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 3,
+                "offset": 51,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 4,
+                "offset": 51,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 4,
+                "offset": 86,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 4,
+                "offset": 121,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 4,
+                "offset": 146,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 156,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BILL_TO.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 3,
+                "offset": 159,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 4,
+                "offset": 159,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 4,
+                "offset": 194,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO.LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 4,
+                "offset": 229,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 4,
+                "offset": 254,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 264,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_SHIP_TO.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "offset": 267,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BALANCE"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 4,
+                "offset": 267,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BALANCE.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 275,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_BALANCE.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 3,
+                "offset": 278,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_LIMIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 4,
+                "offset": 278,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_LIMIT.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 286,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_LIMIT.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 30,
+                "level": 3,
+                "offset": 289,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 4,
+                "offset": 289,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT.CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 4,
+                "offset": 294,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT.CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 4,
+                "offset": 298,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT.CREATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 4,
+                "offset": 306,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT.UPDATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 4,
+                "offset": 311,
+                "path": "STATEMENT_REC.STMT_CUSTOMER.CUST_AUDIT.UPDATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 319,
+                "path": "STATEMENT_REC.STMT_COUNT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "offset": 321,
+                "path": "STATEMENT_REC.STMT_TOTAL"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 321,
+                "path": "STATEMENT_REC.STMT_TOTAL.AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 329,
+                "path": "STATEMENT_REC.STMT_TOTAL.CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "offset": 332,
+                "path": "STATEMENT_REC.STMT_AUDIT"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 332,
+                "path": "STATEMENT_REC.STMT_AUDIT.CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 3,
+                "offset": 337,
+                "path": "STATEMENT_REC.STMT_AUDIT.CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 341,
+                "path": "STATEMENT_REC.STMT_AUDIT.CREATED_USER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 349,
+                "path": "STATEMENT_REC.STMT_AUDIT.UPDATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 354,
+                "path": "STATEMENT_REC.STMT_AUDIT.UPDATED_USER",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE AUDIT_BLOCK at offset 332, 30 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 30,
+                "level": 2,
+                "like": "AUDIT_BLOCK",
+                "offset": 332
+              }
+            },
+            "field_number": 4,
+            "key": "pli.STATEMENT_REC.STMT_AUDIT",
+            "name": "STMT_AUDIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.AUDIT_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 319, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 319,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.STATEMENT_REC.STMT_COUNT",
+            "name": "STMT_COUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE CUSTOMER_REC at offset 1, 318 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 318,
+                "level": 2,
+                "like": "CUSTOMER_REC",
+                "offset": 1
+              }
+            },
+            "field_number": 1,
+            "key": "pli.STATEMENT_REC.STMT_CUSTOMER",
+            "name": "STMT_CUSTOMER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.CUSTOMER_REC",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 321, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 11,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 321
+              }
+            },
+            "field_number": 3,
+            "key": "pli.STATEMENT_REC.STMT_TOTAL",
+            "name": "STMT_TOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.STATEMENT_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "STATEMENT_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/07-composition-like-and-nesting.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:04c4c0a1d20468ab39056bb573598933e41a94f0d52d878fc076c59d1618ad93",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

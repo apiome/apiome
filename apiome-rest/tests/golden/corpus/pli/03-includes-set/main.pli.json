@@ -1,0 +1,1357 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 3 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [],
+        "files": [
+          "ADDRBLK.inc",
+          "MONYBLK.inc",
+          "main.pli"
+        ],
+        "includes": [
+          {
+            "file": "main.pli",
+            "line": 7,
+            "member": "ADDRBLK",
+            "resolved": "ADDRBLK.inc"
+          },
+          {
+            "file": "main.pli",
+            "line": 8,
+            "member": "MONYBLK",
+            "resolved": "MONYBLK.inc"
+          }
+        ],
+        "input": "fileset",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [],
+        "statements": [],
+        "structures": [
+          {
+            "length": 163,
+            "name": "ADDRESS_BLOCK",
+            "type": "pli.ADDRESS_BLOCK"
+          },
+          {
+            "length": 12,
+            "name": "MONEY_BLOCK",
+            "type": "pli.MONEY_BLOCK"
+          },
+          {
+            "length": 1066,
+            "name": "ORDER_REC",
+            "type": "pli.ORDER_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ADDRESS_BLOCK",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ADDRESS_BLOCK",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure ADDRESS_BLOCK (level 1), 163 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "ADDRBLK.inc",
+            "length": 163,
+            "level": 1,
+            "line": 2,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 163,
+                "level": 1,
+                "offset": 1,
+                "path": "ADDRESS_BLOCK"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 2,
+                "offset": 1,
+                "path": "ADDRESS_BLOCK.ADDR_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 2,
+                "offset": 41,
+                "path": "ADDRESS_BLOCK.ADDR_LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 2,
+                "offset": 76,
+                "path": "ADDRESS_BLOCK.ADDR_LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 2,
+                "offset": 111,
+                "path": "ADDRESS_BLOCK.ADDR_CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(15)",
+                "length": 15,
+                "level": 2,
+                "offset": 136,
+                "path": "ADDRESS_BLOCK.ADDR_REGION",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 151,
+                "path": "ADDRESS_BLOCK.ADDR_POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 161,
+                "path": "ADDRESS_BLOCK.ADDR_COUNTRY",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(25) at offset 111, 25 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "dataKind": "character",
+                "length": 25,
+                "level": 2,
+                "offset": 111,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.ADDRESS_BLOCK.ADDR_CITY",
+            "name": "ADDR_CITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 161, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 161,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.ADDRESS_BLOCK.ADDR_COUNTRY",
+            "name": "ADDR_COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 41, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 2,
+                "offset": 41,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.ADDRESS_BLOCK.ADDR_LINE1",
+            "name": "ADDR_LINE1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 76, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 2,
+                "offset": 76,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.ADDRESS_BLOCK.ADDR_LINE2",
+            "name": "ADDR_LINE2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(40) at offset 1, 40 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "dataKind": "character",
+                "length": 40,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.ADDRESS_BLOCK.ADDR_NAME",
+            "name": "ADDR_NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 151, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 151,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 6,
+            "key": "pli.ADDRESS_BLOCK.ADDR_POSTCODE",
+            "name": "ADDR_POSTCODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 15,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(15) at offset 136, 15 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(15)",
+                "dataKind": "character",
+                "length": 15,
+                "level": 2,
+                "offset": 136,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.ADDRESS_BLOCK.ADDR_REGION",
+            "name": "ADDR_REGION",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.ADDRESS_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "ADDRESS_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure MONEY_BLOCK (level 1), 12 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "MONYBLK.inc",
+            "length": 12,
+            "level": 1,
+            "line": 2,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 12,
+                "level": 1,
+                "offset": 1,
+                "path": "MONEY_BLOCK"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 2,
+                "offset": 1,
+                "path": "MONEY_BLOCK.MONEY_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 9,
+                "path": "MONEY_BLOCK.MONEY_CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 2,
+                "offset": 12,
+                "path": "MONEY_BLOCK.MONEY_SIGN",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(15,2) at offset 1, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "dataKind": "fixed-decimal",
+                "length": 8,
+                "level": 2,
+                "offset": 1,
+                "precision": 15,
+                "scale": 2,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.MONEY_BLOCK.MONEY_AMOUNT",
+            "name": "MONEY_AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 9, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 9,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.MONEY_BLOCK.MONEY_CURRENCY",
+            "name": "MONEY_CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(1) at offset 12, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "dataKind": "character",
+                "length": 1,
+                "level": 2,
+                "offset": 12,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.MONEY_BLOCK.MONEY_SIGN",
+            "name": "MONEY_SIGN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.MONEY_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "MONEY_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure ORDER_REC (level 1), 1066 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "main.pli",
+            "length": 1066,
+            "level": 1,
+            "line": 10,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 1066,
+                "level": 1,
+                "offset": 1,
+                "path": "ORDER_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "path": "ORDER_REC.ORDER_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 2,
+                "offset": 11,
+                "path": "ORDER_REC.ORDER_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 16,
+                "path": "ORDER_REC.ORDER_CUSTOMER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 163,
+                "level": 2,
+                "offset": 26,
+                "path": "ORDER_REC.SHIP_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 3,
+                "offset": 26,
+                "path": "ORDER_REC.SHIP_TO.ADDR_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 66,
+                "path": "ORDER_REC.SHIP_TO.ADDR_LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 101,
+                "path": "ORDER_REC.SHIP_TO.ADDR_LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 136,
+                "path": "ORDER_REC.SHIP_TO.ADDR_CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(15)",
+                "length": 15,
+                "level": 3,
+                "offset": 161,
+                "path": "ORDER_REC.SHIP_TO.ADDR_REGION",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 176,
+                "path": "ORDER_REC.SHIP_TO.ADDR_POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 186,
+                "path": "ORDER_REC.SHIP_TO.ADDR_COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 163,
+                "level": 2,
+                "offset": 189,
+                "path": "ORDER_REC.BILL_TO"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 3,
+                "offset": 189,
+                "path": "ORDER_REC.BILL_TO.ADDR_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 229,
+                "path": "ORDER_REC.BILL_TO.ADDR_LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 264,
+                "path": "ORDER_REC.BILL_TO.ADDR_LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 299,
+                "path": "ORDER_REC.BILL_TO.ADDR_CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(15)",
+                "length": 15,
+                "level": 3,
+                "offset": 324,
+                "path": "ORDER_REC.BILL_TO.ADDR_REGION",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 339,
+                "path": "ORDER_REC.BILL_TO.ADDR_POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 349,
+                "path": "ORDER_REC.BILL_TO.ADDR_COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 12,
+                "level": 2,
+                "offset": 352,
+                "path": "ORDER_REC.ORDER_TOTAL"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 3,
+                "offset": 352,
+                "path": "ORDER_REC.ORDER_TOTAL.MONEY_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 360,
+                "path": "ORDER_REC.ORDER_TOTAL.MONEY_CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 3,
+                "offset": 363,
+                "path": "ORDER_REC.ORDER_TOTAL.MONEY_SIGN",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 365,
+                "paddingBits": 8,
+                "path": "ORDER_REC.LINE_COUNT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "length": 35,
+                "level": 2,
+                "occurrences": 20,
+                "offset": 367,
+                "path": "ORDER_REC.ORDER_LINES",
+                "totalLength": 700
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(18)",
+                "length": 18,
+                "level": 3,
+                "offset": 367,
+                "path": "ORDER_REC.ORDER_LINES.LINE_SKU",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(9,3)",
+                "length": 5,
+                "level": 3,
+                "offset": 385,
+                "path": "ORDER_REC.ORDER_LINES.LINE_QTY",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "length": 12,
+                "level": 3,
+                "offset": 390,
+                "path": "ORDER_REC.ORDER_LINES.LINE_PRICE"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 4,
+                "offset": 390,
+                "path": "ORDER_REC.ORDER_LINES.LINE_PRICE.MONEY_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 398,
+                "path": "ORDER_REC.ORDER_LINES.LINE_PRICE.MONEY_CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 4,
+                "offset": 401,
+                "path": "ORDER_REC.ORDER_LINES.LINE_PRICE.MONEY_SIGN",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_BLOCK at offset 189, 163 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 163,
+                "level": 2,
+                "like": "ADDRESS_BLOCK",
+                "offset": 189
+              }
+            },
+            "field_number": 5,
+            "key": "pli.ORDER_REC.BILL_TO",
+            "name": "BILL_TO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 365, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 365,
+                "paddingBits": 8,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.ORDER_REC.LINE_COUNT",
+            "name": "LINE_COUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 16, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 16,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.ORDER_REC.ORDER_CUSTOMER",
+            "name": "ORDER_CUSTOMER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 11, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 2,
+                "offset": 11,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.ORDER_REC.ORDER_DATE",
+            "name": "ORDER_DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 1, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.ORDER_REC.ORDER_ID",
+            "name": "ORDER_ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 20,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 20,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "structure, dimension (20) at offset 367, 700 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "dimensions": [
+                  {
+                    "bounds": "20",
+                    "lower": 1,
+                    "upper": 20
+                  }
+                ],
+                "length": 35,
+                "level": 2,
+                "occurrences": 20,
+                "offset": 367,
+                "totalLength": 700
+              }
+            },
+            "field_number": 8,
+            "key": "pli.ORDER_REC.ORDER_LINES",
+            "name": "ORDER_LINES",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pli.ORDER_REC.ORDER_LINES",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 352, 12 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 12,
+                "level": 2,
+                "like": "MONEY_BLOCK",
+                "offset": 352
+              }
+            },
+            "field_number": 6,
+            "key": "pli.ORDER_REC.ORDER_TOTAL",
+            "name": "ORDER_TOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_BLOCK at offset 26, 163 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 163,
+                "level": 2,
+                "like": "ADDRESS_BLOCK",
+                "offset": 26
+              }
+            },
+            "field_number": 4,
+            "key": "pli.ORDER_REC.SHIP_TO",
+            "name": "SHIP_TO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_BLOCK",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.ORDER_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDER_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure ORDER_LINES (level 2), 700 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "dimensions": [
+              {
+                "bounds": "20",
+                "lower": 1,
+                "upper": 20
+              }
+            ],
+            "file": "main.pli",
+            "length": 35,
+            "level": 2,
+            "line": 18,
+            "occurrences": 20,
+            "offset": 1,
+            "totalLength": 700
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE MONEY_BLOCK at offset 24, 12 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 12,
+                "level": 3,
+                "like": "MONEY_BLOCK",
+                "offset": 24
+              }
+            },
+            "field_number": 3,
+            "key": "pli.ORDER_REC.ORDER_LINES.LINE_PRICE",
+            "name": "LINE_PRICE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.MONEY_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(9,3) at offset 19, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(9,3)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 3,
+                "offset": 19,
+                "precision": 9,
+                "scale": 3,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.ORDER_REC.ORDER_LINES.LINE_QTY",
+            "name": "LINE_QTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 18,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(18) at offset 1, 18 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(18)",
+                "dataKind": "character",
+                "length": 18,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.ORDER_REC.ORDER_LINES.LINE_SKU",
+            "name": "LINE_SKU",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.ORDER_REC.ORDER_LINES",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDER_REC.ORDER_LINES",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/03-includes-set/main.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:94106aa6bb1f5d429ce2a2c395c39c9361d7bb69b1584c9ccb23f8ec2b8e24b9",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

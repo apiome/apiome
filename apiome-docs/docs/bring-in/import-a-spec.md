@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 94<!--format-count:importable--> formats**, spanning all
+**Apiome imports 95<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 53<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -244,6 +244,7 @@ check is server-side, so a client cannot grant itself one.
 - [Import an OPC UA NodeSet2 model](./opcua-nodeset-import.md) — an industrial information model's types, methods and reference graph, with its namespaces and model versions
 - [Import SHACL, OWL and JSON-LD](./linked-data-import.md) — SHACL shapes graphs, OWL / RDFS ontologies and JSON-LD contexts as data schemas, with IRIs kept as provenance and open-world semantics declared
 - [Import ROS 2 interfaces](./ros2-import.md) — `.msg`, `.srv` and `.action` files or a whole interface package, as records, request/response operations and action feedback channels
+- [Import PL/I structures](./pli-structure-import.md) — `DCL` structures and their `%INCLUDE` members as records with a byte-accurate storage map, `UNION` shown as shared storage, and the layout assumptions stated
 - [Import VSAM cluster definitions and CICS BMS maps](./vsam-cics-bms-import.md) — IDCAMS and LISTCAT cluster definitions as record envelopes with their keys, and BMS mapsets as screen records with fields positioned by row and column
 - [Import LwM2M and Matter device models](./device-model-import.md) — LwM2M / IPSO object definitions as data schemas and Matter clusters and device types as RPC APIs, with units, ranges, access modes and defaults
 - [Import MQTT Sparkplug B payloads](./sparkplug-import.md) — Sparkplug B topics as MQTT channels and metrics as the message schema, from payloads or a topic-namespace description

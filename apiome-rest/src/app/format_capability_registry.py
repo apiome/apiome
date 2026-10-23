@@ -99,6 +99,7 @@ from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
 from .consul_parser import CONSUL_DECLARED_CONSTRUCTS
 from .haproxy_parser import HAPROXY_DECLARED_CONSTRUCTS
 from .nginx_parser import NGINX_CARRIED_DIRECTIVES, NGINX_DECLARED_DIRECTIVES, NGINX_READ_DIRECTIVES
+from .pli_normalizer import PLI_LIMIT_DETAILS
 from .traefik_parser import TRAEFIK_DECLARED_CONSTRUCTS
 from .tyk_parser import TYK_DECLARED_CONSTRUCTS
 
@@ -158,7 +159,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "35"
+REGISTRY_VERSION = "36"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -3770,6 +3771,65 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "transaction does with a field, and the import does not infer either.",
             "BMS *output* is not implemented; an import is exported through another target's "
             "emitter.",
+        ],
+    ),
+    "pli": _Seed(
+        # FMT-11.1: PL/I DECLARE structures have a native analyzer (app.pli_analysis), the PL/I
+        # counterpart of the copybook one — levels, attributes and the computed storage map.
+        native_hierarchy=NativeHierarchy.NATIVE,
+        native_hierarchy_note=(
+            "Record → group / union → field, each carrying its level number, its attributes as "
+            "written (CHAR, FIXED DEC, PIC, BIT …), dimensions, alignment and storage class, and "
+            "the byte offset, length, padding and bit offset it occupies within the major "
+            "structure; an %INCLUDE that was not supplied is an `include` node at the point it "
+            "stood."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.LINE_NUMBERS,
+            note=(
+                "Every item carries the file and 1-based line it was declared on — the included "
+                "member's own line for an item spliced in by %INCLUDE — and LIKE copies carry the "
+                "line of the item they were cloned into."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A declaration is a record layout, not data: no runtime value is observed at any "
+                "policy level, and INITIAL values are not read."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(PLI_LIMIT_DETAILS),
+            note=(
+                "Each major structure → a `RECORD` in the `pli` namespace and each minor structure "
+                "→ a `RECORD` named by its path; a `LIKE` member references the cloned block's "
+                "record. CHAR / GRAPHIC / WIDECHAR and character pictures are `string` with "
+                "`max_length`; FIXED with a scale is `decimal`, without one `integer`; FLOAT is "
+                "`float` / `double`; BIT(1) is `boolean`, longer bit strings `bytes`; numeric "
+                "pictures are `integer` / `decimal`, edited ones `string`. Dimensions nest lists of "
+                "exactly the declared count. A UNION's members are fields that share one offset, "
+                "each later member naming the first in `redefines` — the copybook REDEFINES "
+                "presentation. Offsets, lengths, alignment and padding are in `extras['pli']`, with "
+                "the absolute storage map on each major structure and the layout assumptions on "
+                "the document. Declared limits are in `extras['pli']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Byte offsets and lengths are computed under assumptions the declaration does not state "
+            "— a single-byte character set, the VARYING prefix width, the packed / binary / float "
+            "width tables, 4-byte locators, default ALIGNED for arithmetic and UNALIGNED for "
+            "strings, natural-boundary padding counted from a doubleword-aligned structure start, "
+            "and the RULES(IBM) defaults. Every import names them in "
+            "`extras['pli']['layoutAssumptions']` and every analysis record states them.",
+            "An %INCLUDE resolves against the fileset by member name. One a LIKE or DEFINED needs "
+            "is refused with `INPUT_REFERENCE_UNRESOLVED`; one inside a structure makes that record "
+            "`partial` with the member named, and nothing after it has an offset — never a "
+            "silently short layout.",
+            "PL/I *output* is MFX-23.3 (#4141); until it ships an import is exported through "
+            "another target's emitter.",
         ],
     ),
     "nginx": _proxy_route_seed(

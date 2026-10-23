@@ -3200,6 +3200,49 @@
       "waivers": {}
     },
     {
+      "format_key": "pli",
+      "label": "PL/I structures",
+      "paradigm": "data_schema",
+      "corpus_formats": [
+        "pli"
+      ],
+      "corpus_directories": [
+        "pli"
+      ],
+      "fixtures": {
+        "valid": 9,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 15
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "pli"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "postman",
       "label": "Postman",
       "paradigm": "rest",
@@ -4532,7 +4575,6 @@
   "pending_corpus_directories": [
     "ims",
     "natural-ddm",
-    "pli",
     "schematron"
   ]
 }
