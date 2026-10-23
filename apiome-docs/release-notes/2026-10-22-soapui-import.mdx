@@ -1,0 +1,25 @@
+---
+slug: soapui-import
+title: Import a SoapUI or ReadyAPI project
+description: Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.
+authors: [apiome]
+---
+
+SoapUI and ReadyAPI projects are where SOAP estates keep their interfaces, saved requests and test
+suites. Apiome now imports a project into the catalog as one API.
+[What gets imported](/bring-in/soapui-import).
+
+{/* truncate */}
+
+- **WSDL interfaces go through the WSDL importer.** Apiome uses the WSDL the project cached, or the
+  one you upload beside it, so operations and XSD types match a plain WSDL import exactly. A WSDL
+  the project only links to is never fetched; its operations are declared by name and SOAP action.
+- **REST interfaces become inferred operations.** Resources, methods, `QUERY` / `TEMPLATE` /
+  `HEADER` parameters, saved request bodies and mock responses feed the same engine as the
+  Postman, Hoppscotch and Thunder Client imports.
+- **Test suites become declared tests.** Each test case, its steps, the operation each request step
+  calls and its assertions are kept, and the item's **Overview** shows them in a **Declared tests**
+  group.
+- **Credentials are never kept.** Saved usernames and passwords are never read, every other value
+  is scrubbed, and the secret scrubber now also redacts `<con:password>`, a `<wsse:Password>` in a
+  saved envelope, `key="…" value="…"` entries and property name/value pairs.

@@ -1,0 +1,355 @@
+{
+  "adapter": "soapui",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "declared_tests": {
+        "counts": {
+          "assertions": 4,
+          "cases": 2,
+          "steps": 7,
+          "suites": 1
+        },
+        "source_format": "soapui",
+        "suites": [
+          {
+            "cases": [
+              {
+                "name": "Place and cancel",
+                "properties": [
+                  "customerId",
+                  "orderId"
+                ],
+                "steps": [
+                  {
+                    "assertions": [
+                      {
+                        "expects": {
+                          "codes": "201"
+                        },
+                        "name": "Created",
+                        "type": "Valid HTTP Status Codes"
+                      },
+                      {
+                        "expects": {
+                          "expected": "new",
+                          "path": "$.status"
+                        },
+                        "name": "Status is new",
+                        "type": "JsonPath Match"
+                      },
+                      {
+                        "expects": {
+                          "sla_ms": "2000"
+                        },
+                        "name": "Under 2s",
+                        "type": "Response SLA"
+                      }
+                    ],
+                    "name": "POST orders",
+                    "operation": "POST /v2/orders",
+                    "target": "Orders placeOrder",
+                    "type": "restrequest"
+                  },
+                  {
+                    "name": "Capture orderId",
+                    "type": "transfer"
+                  },
+                  {
+                    "name": "Settle",
+                    "type": "delay"
+                  },
+                  {
+                    "name": "Assert identifier shape",
+                    "type": "groovy"
+                  }
+                ]
+              },
+              {
+                "name": "Data-driven search",
+                "steps": [
+                  {
+                    "name": "Statuses",
+                    "type": "datasource"
+                  },
+                  {
+                    "assertions": [
+                      {
+                        "expects": {
+                          "codes": "200"
+                        },
+                        "name": "OK",
+                        "type": "Valid HTTP Status Codes"
+                      }
+                    ],
+                    "name": "GET orders",
+                    "operation": null,
+                    "target": "Orders listOrders",
+                    "type": "restrequest"
+                  },
+                  {
+                    "name": "Loop",
+                    "type": "datasourceloop"
+                  }
+                ]
+              }
+            ],
+            "name": "Order lifecycle",
+            "run_type": "SEQUENTIAL"
+          }
+        ]
+      },
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "POST /v2/orders": 1
+      },
+      "soapui": {
+        "capability_limits": [
+          {
+            "construct": "soapui.groovy_script",
+            "count": 1,
+            "locations": [
+              "Order lifecycle / Place and cancel / Assert identifier shape"
+            ],
+            "note": "Groovy scripts (script steps and script assertions) are never read; the step or assertion is kept by name."
+          },
+          {
+            "construct": "soapui.test_case",
+            "count": 2,
+            "locations": [
+              "Order lifecycle / Data-driven search",
+              "Order lifecycle / Place and cancel"
+            ],
+            "note": "Test cases are kept as declared test intent (`extras.declared_tests`): steps, the operations they call and their assertion kinds. They are not run."
+          }
+        ],
+        "environments": [],
+        "interfaces": [
+          {
+            "kind": "rest",
+            "name": "Orders"
+          }
+        ],
+        "mock_services": [],
+        "properties": [
+          {
+            "name": "baseUrl",
+            "secret": false
+          }
+        ],
+        "requests": 1
+      }
+    },
+    "format": "soapui",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Regression suite",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "soapui/04-stress-test-suites.xml"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Regression suite",
+        "name": "Regression suite",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://api.example.com/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/04-stress-test-suites.xml"
+              ],
+              "source_label": "Request 1",
+              "source_location": "Orders/orders#placeOrder"
+            },
+            "http_method": "POST",
+            "http_path": "/v2/orders",
+            "key": "POST /v2/orders",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v2/orders#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostOrderRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v2/orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v2/orders#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Regression suite",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostOrderRequest.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostOrderRequest.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostOrderRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostOrderRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "soapui/04-stress-test-suites.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "soapui"
+  },
+  "fingerprint": "sha256:44bfd3d0baf02c5fd11b4eeeb5e4ee85a145815e28a69441e672f0fa946ceacc",
+  "lint": {
+    "findings": 7,
+    "grade": "B",
+    "report_fingerprint": "0d3aec266463f390625cc7871ce84de172b1aff440693ac84cfab8ffabee6884",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 5,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

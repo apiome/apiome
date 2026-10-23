@@ -1,0 +1,291 @@
+{
+  "adapter": "soapui",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "declared_tests": {
+        "counts": {
+          "assertions": 4,
+          "cases": 1,
+          "steps": 1,
+          "suites": 1
+        },
+        "source_format": "soapui",
+        "suites": [
+          {
+            "cases": [
+              {
+                "name": "Fetch an invoice",
+                "steps": [
+                  {
+                    "assertions": [
+                      {
+                        "name": "SOAP Response",
+                        "type": "SOAP Response"
+                      },
+                      {
+                        "name": "Schema Compliance",
+                        "type": "Schema Compliance"
+                      },
+                      {
+                        "name": "Not SOAP Fault",
+                        "type": "Not SOAP Fault"
+                      },
+                      {
+                        "expects": {
+                          "expected": "INV-00010042",
+                          "path": "declare namespace bil='http://example.com/billing'; //bil:invoiceId/text()"
+                        },
+                        "name": "Invoice id echoed",
+                        "type": "XPath Match"
+                      }
+                    ],
+                    "name": "GetInvoice",
+                    "operation": "http://example.com/billing.BillingServiceSoapBinding.GetInvoice",
+                    "target": "BillingServiceSoapBinding GetInvoice",
+                    "type": "request"
+                  }
+                ]
+              }
+            ],
+            "name": "Smoke",
+            "run_type": "SEQUENTIAL"
+          }
+        ]
+      },
+      "soapui": {
+        "capability_limits": [
+          {
+            "construct": "soapui.auth_credential",
+            "count": 1,
+            "locations": [
+              "BillingServiceSoapBinding GetInvoice / Happy path"
+            ],
+            "note": "The auth type (and WS-Security password type) is kept; usernames, passwords and domains are never read."
+          },
+          {
+            "construct": "soapui.saved_envelope",
+            "count": 4,
+            "locations": [
+              "BillingServiceSoapBinding GetInvoice / Happy path",
+              "BillingServiceSoapBinding GetInvoice / Unknown invoice",
+              "BillingServiceSoapBinding ListInvoices / Request 1",
+              "BillingServiceSoapBinding NotifyPayment / Request 1"
+            ],
+            "note": "A saved SOAP request is kept by name and auth type; its envelope is not modelled — the message schema comes from the WSDL."
+          },
+          {
+            "construct": "soapui.secret_property",
+            "count": 1,
+            "locations": [
+              "servicePassword"
+            ],
+            "note": "A property whose name says it holds a credential is listed by name; its value is withheld."
+          },
+          {
+            "construct": "soapui.test_case",
+            "count": 1,
+            "locations": [
+              "Smoke / Fetch an invoice"
+            ],
+            "note": "Test cases are kept as declared test intent (`extras.declared_tests`): steps, the operations they call and their assertion kinds. They are not run."
+          },
+          {
+            "construct": "soapui.wsdl_not_fetched",
+            "count": 3,
+            "locations": [
+              "BillingServiceSoapBinding GetInvoice",
+              "BillingServiceSoapBinding ListInvoices",
+              "BillingServiceSoapBinding NotifyPayment"
+            ],
+            "note": "The interface links to a WSDL that is neither cached in the project nor uploaded, and it is never fetched: the operation is declared by name and SOAP action, without message schemas."
+          }
+        ],
+        "environments": [
+          "Acceptance",
+          "Production"
+        ],
+        "interfaces": [
+          {
+            "binding": "{http://example.com/billing}BillingServiceSoapBinding",
+            "definition": "https://billing.internal.example.com/BillingService?wsdl",
+            "kind": "wsdl",
+            "name": "BillingServiceSoapBinding",
+            "operations": [
+              {
+                "name": "GetInvoice",
+                "one_way": false,
+                "saved_requests": [
+                  {
+                    "auth": {
+                      "scheme": "basic",
+                      "type": "Preemptive",
+                      "ws_security": "PasswordText"
+                    },
+                    "name": "Happy path"
+                  },
+                  {
+                    "name": "Unknown invoice"
+                  }
+                ],
+                "soap_action": "http://example.com/billing/GetInvoice"
+              },
+              {
+                "name": "ListInvoices",
+                "one_way": false,
+                "saved_requests": [
+                  {
+                    "name": "Request 1"
+                  }
+                ],
+                "soap_action": "http://example.com/billing/ListInvoices"
+              },
+              {
+                "name": "NotifyPayment",
+                "one_way": true,
+                "saved_requests": [
+                  {
+                    "name": "Request 1"
+                  }
+                ],
+                "soap_action": "http://example.com/billing/NotifyPayment"
+              }
+            ],
+            "soap_version": "1_1",
+            "wsdl_source": "not-fetched"
+          }
+        ],
+        "mock_services": [],
+        "properties": [
+          {
+            "name": "serviceUser",
+            "secret": false
+          },
+          {
+            "name": "servicePassword",
+            "secret": true
+          }
+        ],
+        "requests": 0
+      }
+    },
+    "format": "soapui",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Legacy Billing",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "soap",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "SoapUI endpoint of BillingServiceSoapBinding",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://billing-acc.internal.example.com/BillingService",
+        "variables": []
+      },
+      {
+        "description": "SoapUI endpoint of BillingServiceSoapBinding",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://billing.internal.example.com/BillingService",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "http://example.com/billing.BillingServiceSoapBinding",
+        "name": "BillingServiceSoapBinding",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "soap_action": "http://example.com/billing/GetInvoice"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "http://example.com/billing.BillingServiceSoapBinding.GetInvoice",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GetInvoice",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "soap_action": "http://example.com/billing/ListInvoices"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "http://example.com/billing.BillingServiceSoapBinding.ListInvoices",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ListInvoices",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "soap_action": "http://example.com/billing/NotifyPayment"
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "http://example.com/billing.BillingServiceSoapBinding.NotifyPayment",
+            "kind": "one_way",
+            "messages": [],
+            "name": "NotifyPayment",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": null,
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "soapui/05-real-world-soap-project.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 2,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "soapui"
+  },
+  "fingerprint": "sha256:5b35277780f0ce0c43c2b4968e93b1b217d8571aa266f15d32717510a7311bd3",
+  "lint": {
+    "findings": 4,
+    "grade": "B",
+    "report_fingerprint": "5b4fbf87e98f133e7a409da7b74ff66dfa4df33c69013bfbdfb12e276c9bf522",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -751,6 +751,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['vs code', 'vscode', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
   },
   {
+    id: 'soapui-import',
+    title: 'Import a SoapUI or ReadyAPI project',
+    summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',
+    page: 'apiome-docs/docs/bring-in/soapui-import.md',
+    section: 'reference',
+    keywords: ['smartbear', 'web services', 'wsdl', 'test suites', 'declared tests', 'migrate', 'api client'],
+  },
+  {
     id: 'linked-data-import',
     title: 'Import SHACL, OWL and JSON-LD',
     summary: 'Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.',

@@ -105,6 +105,8 @@ INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "postman": "Request and response schemas are inferred from example bodies.",
     "hoppscotch": "Every construct is inferred from the saved requests in the collection.",
     "thunder-client": "Every construct is inferred from the saved requests in the collection.",
+    "soapui": "REST interfaces are inferred from their saved requests and mock responses; WSDL "
+    "interfaces are declared by their WSDL.",
     "kong": "Paths recovered from regex patterns are inferred.",
     "gateway-api": "Paths recovered from regex patterns are inferred.",
     "envoy-xds": "Every route is inferred from the route table.",

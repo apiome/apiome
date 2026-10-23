@@ -5,6 +5,45 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.436.0] - 2026-10-22
+
+### Added
+- **SoapUI / ReadyAPI project import (#5477, FMT-10.3)**: a `soapui` import source (aliases `readyapi`,
+  `soapui-project`; file, URL, paste and fileset) on the **rest** paradigm, read by `app.soapui_parser` and normalized by
+  `app.soapui_normalizer` into one model per project.
+  - **WSDL-backed interfaces delegate to the WSDL adapter.** The WSDL is taken from the project's `definitionCache`, else
+    from a fileset member named by the `definition` path or its file name, and parsed and normalized by
+    `app.wsdl_parser` / `WsdlNormalizer` — its services, operations and types are identical to a plain WSDL import (every
+    WSDL corpus golden is reproduced). Two interfaces over one WSDL delegate once. A WSDL the project only links to
+    (`https://…?wsdl`, empty cache) is never fetched: its binding operations are declared (name, `soap_action`,
+    `one_way` → `OperationKind.ONE_WAY`) without messages. A local `definition` that is neither cached nor uploaded is
+    `INPUT_REFERENCE_UNRESOLVED`.
+  - **REST interfaces go through the shared inferred-spec engine** (`app.inferred_spec`): nested resources (paths and
+    parameters inherited), `QUERY` / `TEMPLATE` / `HEADER` parameters (a saved request's value wins), saved bodies,
+    `RESPONSE` representation statuses and `restMockService` canned responses become observations;
+    `app.client_collection.annotate_operations` tags operations with their interface and records auth as
+    `extras["security"]` / `extras["soapui_auth"]`. A `${#Project#name}` endpoint becomes a `{name}` server whose default
+    is the property's value (never a secret-named one's); interface and environment endpoints become servers.
+  - **Test suites are recorded as declared test intent**: a new format-neutral root extra `declared_tests`
+    (`app.declared_test_intent`) holds suites → cases → steps (type, the canonical operation key a request step calls,
+    assertions with their scrubbed expectations). `app.catalog_parsed_model.derive_parsed_model` shows it on the catalog
+    item as a **Declared tests** group (one `TEST` entity per case). Groovy scripts are never read.
+  - Credentials are never read (`credentials` blocks yield `authType` / `wssType` only); every other value passes the
+    scrub gate. Declared limits (`soapui.test_case`, `soapui.groovy_script`, `soapui.auth_credential`,
+    `soapui.secret_property`, `soapui.wsdl_not_fetched`, `soapui.saved_envelope`, `soapui.matrix_parameter`,
+    `soapui.mock_dispatch`, `soapui.soap_mock_service`, `soapui.unsupported_interface`) ride in
+    `extras.soapui.capability_limits` and become coverage-ledger rows; version coverage, inference-provenance entry, MCP
+    toolset goldens and the round-trip matrix row (import-only) are added, and the staged corpus is activated.
+  - Refusals: `INPUT_MALFORMED`, `INPUT_TRUNCATED`, `INPUT_SEMANTIC_INVALID` (no interfaces or mock services, or no
+    operations), `INPUT_REFERENCE_UNRESOLVED`, `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH` (a bare WSDL, a WADL, other XML).
+
+### Changed
+- **Secret scrubbing (`app.intake_secret_scrub`)** also redacts the XML shapes SoapUI keeps credentials in: the text of a
+  secret-named element (`<con:password>`, `<con:clientSecret>`), the same inside an escaped saved envelope
+  (`&lt;wsse:Password&gt;…`), `key="<secret name>" value="…"` attribute pairs and `<name>`/`<value>` element pairs.
+
+The OpenAPI version moves to 1.300.0.
+
 ## [1.435.0] - 2026-10-22
 
 ### Added

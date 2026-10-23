@@ -42,7 +42,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `postman/` | Postman v2.1 | rest | collection `info.schema` URL | 11 |
 | `postman-v2/` | Postman Collection v2.0 | rest | `info.schema` ending `/collection/v2.0.0/collection.json` | 13 |
 | `raml/` | RAML 1.0 | rest | `#%RAML 1.0` header | 11 |
-| `soapui/` | SoapUI / ReadyAPI projects (pending #5477) | rest | `<con:soapui-project>` root in the eviware config namespace | 14 |
+| `soapui/` | SoapUI / ReadyAPI projects | rest | `<con:soapui-project>` root in the eviware config namespace | 14 |
 | `swagger/` | Swagger 2.0 | rest | `swagger: "2.0"` | 1 |
 | `swagger-1.2/` | Swagger 1.2 | rest | `"swaggerVersion": "1.2"` | 14 |
 | `thunder-client/` | Thunder Client collections | rest | `"clientName": "Thunder Client"` + `requests[]` or environment `data[]` | 14 |
@@ -2142,24 +2142,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`05-dynamodb-style.smithy`** — Currently outranked: detection ranks `flatbuffers` (0.96, `union` definition) above `smithy` (0.95); expected_detection records the intended winner for the detection-hardening work.
 
-### `soapui/` — SoapUI / ReadyAPI projects (pending #5477)
+### `soapui/` — SoapUI / ReadyAPI projects
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-project.xml` | minimal | `soapui` ≥ 0.9 | valid | `rest-interface`, `resource`, `method`, `pending-adapter` |
-| `02-typical-rest-project.xml` | typical | `soapui` ≥ 0.9 | valid | `rest-interface`, `query-parameter`, `template-parameter`, `representations`, `multiple-endpoints`, `project-properties`, `pending-adapter` |
-| `03-wsdl-set/catalogue.wsdl` ⚠ | multi-file (member) | `wsdl` (no guarantee) | valid | `multi-file`, `wsdl`, `pending-adapter` |
-| `03-wsdl-set/project.xml` | multi-file (root) | `soapui` ≥ 0.9 | valid | `multi-file`, `wsdl-interface`, `local-definition`, `pending-adapter` |
-| `04-stress-test-suites.xml` | stress | `soapui` ≥ 0.9 | valid | `test-suite`, `test-case`, `restrequest-step`, `transfer-step`, `groovy-step`, `datasource-step`, `assertions`, `test-properties`, `pending-adapter` |
-| `05-real-world-soap-project.xml` | real-world | `soapui` ≥ 0.9 | valid | `wsdl-interface`, `one-way-operation`, `saved-envelopes`, `ws-security`, `environments`, `smoke-suite`, `pending-adapter` |
-| `06-typical-mock-service.xml` | typical | `soapui` ≥ 0.9 | valid | `mock-service`, `canned-responses`, `dispatch-style`, `pending-adapter` |
-| `07-composition-shared-endpoints.xml` | composition | `soapui` ≥ 0.9 | valid | `shared-endpoints`, `project-properties`, `property-expansion`, `cross-interface-testcase`, `environments`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-interface.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-interfaces.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `semantic`, `no-interfaces`, `pending-adapter` |
-| `negative/03-truncated-mid-operation.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-wsdl.wsdl` | — | `soapui` (no guarantee) | invalid | `negative`, `wrong-format`, `wsdl`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-wsdl-definition.xml` ⚠ | — | `soapui` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-wsdl`, `pending-adapter` |
+| `01-minimal-project.xml` | minimal | `soapui` ≥ 0.9 | valid | `rest-interface`, `resource`, `method` |
+| `02-typical-rest-project.xml` | typical | `soapui` ≥ 0.9 | valid | `rest-interface`, `query-parameter`, `template-parameter`, `representations`, `multiple-endpoints`, `project-properties` |
+| `03-wsdl-set/catalogue.wsdl` ⚠ | multi-file (member) | `wsdl` (no guarantee) | valid | `multi-file`, `wsdl` |
+| `03-wsdl-set/project.xml` | multi-file (root) | `soapui` ≥ 0.9 | valid | `multi-file`, `wsdl-interface`, `local-definition` |
+| `04-stress-test-suites.xml` | stress | `soapui` ≥ 0.9 | valid | `test-suite`, `test-case`, `restrequest-step`, `transfer-step`, `groovy-step`, `datasource-step`, `assertions`, `test-properties` |
+| `05-real-world-soap-project.xml` | real-world | `soapui` ≥ 0.9 | valid | `wsdl-interface`, `one-way-operation`, `saved-envelopes`, `ws-security`, `environments`, `smoke-suite` |
+| `06-typical-mock-service.xml` | typical | `soapui` ≥ 0.9 | valid | `mock-service`, `canned-responses`, `dispatch-style` |
+| `07-composition-shared-endpoints.xml` | composition | `soapui` ≥ 0.9 | valid | `shared-endpoints`, `project-properties`, `property-expansion`, `cross-interface-testcase`, `environments` |
+| `negative/01-syntactic-unclosed-interface.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-interfaces.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `semantic`, `no-interfaces` |
+| `negative/03-truncated-mid-operation.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-wsdl.wsdl` | — | `soapui` (no guarantee) | invalid | `negative`, `wrong-format`, `wsdl` |
+| `negative/05-encoding-utf16.xml` | — | `soapui` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-wsdl-definition.xml` ⚠ | — | `soapui` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-wsdl` |
 
 > ⚠ **`03-wsdl-set/catalogue.wsdl`** — Fileset member: the WSDL the interface delegates to; on its own the shipped wsdl adapter claims it.
 

@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_orders",
+      "operation": "GET /v2/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_products",
+      "operation": "GET /v2/products"
+    }
+  ]
+}

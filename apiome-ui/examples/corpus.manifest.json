@@ -501,7 +501,7 @@
       "marker": "`$version` + Smithy shapes"
     },
     "soapui": {
-      "label": "SoapUI / ReadyAPI projects (pending #5477)",
+      "label": "SoapUI / ReadyAPI projects",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`<con:soapui-project>` root in the eviware config namespace"
@@ -25687,7 +25687,7 @@
     {
       "path": "soapui/01-minimal-project.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25696,8 +25696,7 @@
       "features": [
         "rest-interface",
         "resource",
-        "method",
-        "pending-adapter"
+        "method"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25708,7 +25707,7 @@
     {
       "path": "soapui/02-typical-rest-project.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25720,8 +25719,7 @@
         "template-parameter",
         "representations",
         "multiple-endpoints",
-        "project-properties",
-        "pending-adapter"
+        "project-properties"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25732,7 +25730,7 @@
     {
       "path": "soapui/03-wsdl-set/catalogue.wsdl",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "wsdl",
@@ -25740,8 +25738,7 @@
       },
       "features": [
         "multi-file",
-        "wsdl",
-        "pending-adapter"
+        "wsdl"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25754,7 +25751,7 @@
     {
       "path": "soapui/03-wsdl-set/project.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25763,8 +25760,7 @@
       "features": [
         "multi-file",
         "wsdl-interface",
-        "local-definition",
-        "pending-adapter"
+        "local-definition"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25776,7 +25772,7 @@
     {
       "path": "soapui/04-stress-test-suites.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25790,8 +25786,7 @@
         "groovy-step",
         "datasource-step",
         "assertions",
-        "test-properties",
-        "pending-adapter"
+        "test-properties"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25802,7 +25797,7 @@
     {
       "path": "soapui/05-real-world-soap-project.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25814,8 +25809,7 @@
         "saved-envelopes",
         "ws-security",
         "environments",
-        "smoke-suite",
-        "pending-adapter"
+        "smoke-suite"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25826,7 +25820,7 @@
     {
       "path": "soapui/06-typical-mock-service.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25835,8 +25829,7 @@
       "features": [
         "mock-service",
         "canned-responses",
-        "dispatch-style",
-        "pending-adapter"
+        "dispatch-style"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25847,7 +25840,7 @@
     {
       "path": "soapui/07-composition-shared-endpoints.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "valid",
       "expected_detection": {
         "format": "soapui",
@@ -25858,8 +25851,7 @@
         "project-properties",
         "property-expansion",
         "cross-interface-testcase",
-        "environments",
-        "pending-adapter"
+        "environments"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25870,7 +25862,7 @@
     {
       "path": "soapui/negative/01-syntactic-unclosed-interface.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25879,8 +25871,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25892,7 +25883,7 @@
     {
       "path": "soapui/negative/02-semantic-no-interfaces.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25901,8 +25892,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-interfaces",
-        "pending-adapter"
+        "no-interfaces"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25914,7 +25904,7 @@
     {
       "path": "soapui/negative/03-truncated-mid-operation.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25923,8 +25913,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25936,7 +25925,7 @@
     {
       "path": "soapui/negative/04-wrong-format-wsdl.wsdl",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25945,8 +25934,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "wsdl",
-        "pending-adapter"
+        "wsdl"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25958,7 +25946,7 @@
     {
       "path": "soapui/negative/05-encoding-utf16.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25967,8 +25955,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25980,7 +25967,7 @@
     {
       "path": "soapui/negative/06-unresolvable-wsdl-definition.xml",
       "format": "soapui",
-      "adapter_key": null,
+      "adapter_key": "soapui",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "soapui",
@@ -25989,8 +25976,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-wsdl",
-        "pending-adapter"
+        "missing-wsdl"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

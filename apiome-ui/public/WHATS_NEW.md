@@ -18,6 +18,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Avro IDL (`.avdl`) import and export
     - Swagger 1.2 import
     - Postman Collection v2.0 import
+    - SoapUI / ReadyAPI project import — a SoapUI or ReadyAPI project becomes one API: WSDL interfaces are read by the WSDL importer (from the project's cached copy or a WSDL uploaded beside it), REST interfaces become operations with inferred schemas, and test suites are kept as declared tests shown on the item's Overview; saved credentials are never kept
     - Thunder Client collection import — a VS Code Thunder Client collection and its environment files become one REST API: folders as operation groups, requests as operations with inferred body schemas, `{{baseUrl}}` as a server variable; saved credentials are never kept, and tests and pre-request steps are listed in the coverage ledger
     - Hoppscotch collection import — a collection and its environment files become one REST API: folders as operation groups, requests as operations with inferred body schemas, `<<baseUrl>>` as a server variable; saved credentials are never kept, and scripts are listed in the coverage ledger
     - AWS API Gateway (REST and HTTP API exports) import

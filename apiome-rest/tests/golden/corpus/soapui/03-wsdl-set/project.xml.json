@@ -1,0 +1,286 @@
+{
+  "adapter": "soapui",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "soapui": {
+        "capability_limits": [
+          {
+            "construct": "soapui.saved_envelope",
+            "count": 1,
+            "locations": [
+              "CatalogueServiceSoapBinding GetProduct / Request 1"
+            ],
+            "note": "A saved SOAP request is kept by name and auth type; its envelope is not modelled — the message schema comes from the WSDL."
+          }
+        ],
+        "environments": [],
+        "interfaces": [
+          {
+            "binding": "{http://example.com/catalogue}CatalogueServiceSoapBinding",
+            "definition": "catalogue.wsdl",
+            "kind": "wsdl",
+            "name": "CatalogueServiceSoapBinding",
+            "operations": [
+              {
+                "name": "GetProduct",
+                "one_way": false,
+                "saved_requests": [
+                  {
+                    "name": "Request 1"
+                  }
+                ],
+                "soap_action": "http://example.com/catalogue/GetProduct"
+              }
+            ],
+            "soap_version": "1_1",
+            "wsdl_source": "fileset"
+          }
+        ],
+        "mock_services": [],
+        "properties": [],
+        "requests": 0
+      }
+    },
+    "format": "soapui",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Catalogue SOAP",
+      "namespace": "http://example.com/catalogue"
+    },
+    "paradigm": "rest",
+    "protocol": "soap",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "CatalogueService/CatalogueServicePort",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com/catalogue",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "http://example.com/catalogue.CatalogueServicePortType",
+        "name": "CatalogueServicePortType",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "http_method": null,
+            "http_path": null,
+            "key": "http://example.com/catalogue.CatalogueServicePortType.GetProduct",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/catalogue.CatalogueServicePortType.GetProduct#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/catalogue.GetProductRequest",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/catalogue.CatalogueServicePortType.GetProduct#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/catalogue.GetProductResponse",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "GetProduct",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": null,
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "wsdl_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_type": "string"
+            },
+            "field_number": 1,
+            "key": "http://example.com/catalogue.GetProductRequest.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "http://example.com/catalogue.GetProductRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetProductRequest",
+        "namespace": "http://example.com/catalogue",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "wsdl_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_type": "string"
+            },
+            "field_number": 4,
+            "key": "http://example.com/catalogue.GetProductResponse.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_type": "string"
+            },
+            "field_number": 2,
+            "key": "http://example.com/catalogue.GetProductResponse.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_type": "decimal"
+            },
+            "field_number": 3,
+            "key": "http://example.com/catalogue.GetProductResponse.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_type": "string"
+            },
+            "field_number": 1,
+            "key": "http://example.com/catalogue.GetProductResponse.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "http://example.com/catalogue.GetProductResponse",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetProductResponse",
+        "namespace": "http://example.com/catalogue",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "soapui/03-wsdl-set/project.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "soapui"
+  },
+  "fingerprint": "sha256:1869038ee7419bd524a037c1e1124cb8fa208cd02fa8cdc1905f67ca5714abf1",
+  "lint": {
+    "findings": 11,
+    "grade": "B",
+    "report_fingerprint": "a028e8404a0c4dafa3490d372e6eaec8469084baff25b446f2b922e586a7ec3d",
+    "score": 80,
+    "severity_counts": {
+      "error": 0,
+      "info": 8,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

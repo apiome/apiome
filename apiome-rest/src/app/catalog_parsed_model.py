@@ -46,6 +46,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .declared_test_intent import declared_tests_of
 from .inference_provenance import (
     DECLARED,
     INFERENCE_BASED_ADAPTERS,
@@ -593,6 +594,66 @@ def _agent_groups(api: CanonicalApi) -> List[Dict[str, Any]]:
     return [group] if group is not None else []
 
 
+def _plural(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+def _declared_tests_group(api: CanonicalApi) -> Optional[Dict[str, Any]]:
+    """The *Declared tests* group: one entity per test case recorded as declared test intent.
+
+    FMT-10.3: a source that carries tests (a SoapUI project's suites) records them on the model
+    root (:mod:`app.declared_test_intent`) rather than discarding them. Each test case is an entity
+    tagged ``TEST`` — its suite, step and assertion counts in ``meta`` — and each step a row: its
+    type, and the operation it calls and the assertions it makes in the description.
+
+    Args:
+        api: The canonical model.
+
+    Returns:
+        The group, or ``None`` when the model declares no tests.
+    """
+    names = {operation.key: operation.name for operation in api.operations()}
+    entities: List[Dict[str, Any]] = []
+    for suite in declared_tests_of(api.extras):
+        for case in suite.get("cases") or []:
+            steps = [step for step in case.get("steps") or [] if isinstance(step, dict)]
+            assertions = sum(len(step.get("assertions") or []) for step in steps)
+            rows: List[Dict[str, Any]] = []
+            for step in steps:
+                notes: List[str] = []
+                operation = step.get("operation")
+                if operation:
+                    notes.append(f"Calls {names.get(operation, operation)}")
+                elif step.get("target"):
+                    notes.append(f"Calls {step['target']} (not in this model)")
+                kinds = [str(item.get("type")) for item in step.get("assertions") or [] if isinstance(item, dict)]
+                if kinds:
+                    notes.append("asserts " + ", ".join(kinds))
+                rows.append(
+                    {
+                        "name": str(step.get("name") or ""),
+                        "type": str(step.get("type") or "step"),
+                        "description": "; ".join(notes) or None,
+                        "required": False,
+                    }
+                )
+            entities.append(
+                _entity(
+                    name=str(case.get("name") or "Test case"),
+                    tag="TEST",
+                    meta=" · ".join(
+                        [
+                            str(suite.get("name") or "Test suite"),
+                            _plural(len(steps), "step"),
+                            _plural(assertions, "assertion"),
+                        ]
+                    ),
+                    fields=rows,
+                )
+            )
+    return _group("Declared tests", "test suites the source declares (not run)", entities)
+
+
 _PARADIGM_BUILDERS = {
     ApiParadigm.GRAPH: _graph_groups,
     ApiParadigm.RPC: _rpc_groups,
@@ -608,7 +669,8 @@ def derive_parsed_model(api: Optional[CanonicalApi]) -> List[Dict[str, Any]]:
     ``{title, subtitle, entities}``; each entity ``{name, tag, meta, fields}``; each field
     ``{name, type, description, required}`` — grouped in the way each paradigm reads most naturally
     (GraphQL by operations/types, gRPC by services/messages, AsyncAPI by channels/operations/
-    messages), with a generic operations/types/channels fallback for every other paradigm.
+    messages), with a generic operations/types/channels fallback for every other paradigm. A model
+    that records declared test intent (FMT-10.3) gets a trailing *Declared tests* group.
 
     Args:
         api: The reconstructed canonical model, or ``None``.
@@ -621,6 +683,9 @@ def derive_parsed_model(api: Optional[CanonicalApi]) -> List[Dict[str, Any]]:
         return []
     builder = _PARADIGM_BUILDERS.get(api.paradigm, _generic_groups)
     groups = builder(api)
+    tests = _declared_tests_group(api)
+    if tests is not None:
+        groups.append(tests)
     # FMT-8.6: a non-declared entity whose construct recorded no evidence of its own falls back
     # to the adapter's description of what it infers ("Every route is inferred from …").
     fallback = INFERENCE_BASED_ADAPTERS.get(api.format)

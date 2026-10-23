@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GetInvoice",
+      "operation": "http://example.com/billing.BillingServiceSoapBinding.GetInvoice"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ListInvoices",
+      "operation": "http://example.com/billing.BillingServiceSoapBinding.ListInvoices"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "NotifyPayment",
+      "operation": "http://example.com/billing.BillingServiceSoapBinding.NotifyPayment"
+    }
+  ]
+}
