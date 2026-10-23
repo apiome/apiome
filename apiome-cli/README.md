@@ -9,14 +9,19 @@ Follows [clig.dev](https://clig.dev/) guidelines: structured help (`help`, `-h` 
 On Linux or macOS (Windows: WSL), install the `apiome` command with one line:
 
 ```bash
-curl -fsSL https://get.apio.me | bash
+curl -fsSL https://get.apiome.dev -o get-apiome.sh
+sh ./get-apiome.sh
 ```
 
-The script is [`install.sh`](install.sh) in this folder. It installs [uv](https://docs.astral.sh/uv/)
-if needed, then installs `apiome` as an isolated uv tool (its own Python 3.12+) with the exact
-dependency versions in `uv.lock`, and checks that the command starts. Re-run it to upgrade. Options —
-`--version <tag|branch|commit>`, `--repo <url>`, `--no-modify-path`, `--uninstall` — go after
-`bash -s --` (for example `curl -fsSL https://get.apio.me | bash -s -- --uninstall`); see `--help`.
+The script is [`install.sh`](install.sh) in this folder, served at `get.apiome.dev`; it is POSIX `sh`
+(dash on Debian/Ubuntu). It installs [uv](https://docs.astral.sh/uv/) if needed, then installs `apiome`
+as an isolated uv tool (its own Python 3.12+) with the exact dependency versions in `uv.lock`, and checks
+that the command starts. By default the install is system-wide — the tool in `/opt/apiome`, the command
+in `/usr/bin` (`/usr/local/bin` on macOS) — using `sudo` unless run as root; `--user` installs into
+`~/.local/bin` instead. Re-run it to upgrade. Options — `--version <tag|branch|commit>`, `--repo <url>`,
+`--user`, `--bin-dir <dir>`, `--no-modify-path`, `--uninstall` — go after the script name, or after
+`sh -s --` when piped (for example `curl -fsSL https://get.apiome.dev | sh -s -- --uninstall`); see
+`--help`.
 
 ### From the monorepo (development)
 

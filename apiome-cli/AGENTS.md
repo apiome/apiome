@@ -75,7 +75,7 @@ Follow [Command Line Interface Guidelines](https://clig.dev/):
 | `src/apiome_cli/run_interactive.py` | Interactive prompt and stdin batch runner used by `run.sh` |
 | `src/apiome_cli/cli_context.py` | Resolve settings, timeout, `--json`, `--no-progress`, `--insecure` from context |
 | `src/apiome_cli/config.py` | `CliSettings`, TOML user config, env/flag overrides |
-| `install.sh` | The `curl -fsSL https://get.apio.me \| bash` installer: installs uv if needed, then `apiome` as an isolated uv tool from a sparse git fetch, constrained to `uv.lock`; `--version`, `--repo`, `--no-modify-path`, `--uninstall`. Pinned by `tests/test_install_script.py` |
+| `install.sh` | The `get.apiome.dev` installer (`curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh`). **POSIX sh** — `sh` is dash on Debian/Ubuntu, so no `$'…'`, arrays, `[[ ]]` or `pipefail`. Installs uv if needed, then `apiome` as an isolated uv tool from a sparse git fetch, constrained to `uv.lock`: system-wide by default (tool, Python and cache in `/opt/apiome`, command linked into `/usr/bin`, or `/usr/local/bin` on macOS, via sudo unless root) or `--user` into `~/.local/bin`; `--version`, `--repo`, `--bin-dir`, `--no-modify-path`, `--uninstall`. Pinned by `tests/test_install_script.py` (runs under dash) |
 | `src/apiome_cli/exit_codes.py` | Process exit codes (0–8; codes above 5 are per-command) |
 | `src/apiome_cli/taxonomy_exit.py` | Map intake/delivery taxonomy categories → exit codes + stderr format (IXH-6.4) |
 | `src/apiome_cli/client/http.py` | `RestClient` (httpx sync), auth headers |
