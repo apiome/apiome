@@ -819,6 +819,14 @@ class Settings(BaseSettings):
         description="Public base URL for hosted mock runtime (no trailing slash).",
     )
 
+    # `apiome login` (#5501): the CLI is told to open `<ui_public_url>/cli/login` to approve a
+    # sign-in. This is the address people reach apiome-ui at, never an internal service name.
+    ui_public_url: str = Field(
+        default="http://localhost:3000",
+        validation_alias=AliasChoices("APIOME_UI_PUBLIC_URL", "ui_public_url"),
+        description="Public base URL of apiome-ui, for the `apiome login` approve page.",
+    )
+
     # Dry-run mock preview (#5528, MSC-1.2). The mock *engine* lives in apiome-mock, which depends
     # on this package — so REST cannot import it, and a preview that rendered here would be a
     # second implementation of the serving sequence, free to disagree with what the mock actually

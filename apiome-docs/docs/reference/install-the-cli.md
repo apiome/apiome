@@ -19,8 +19,8 @@ Or pipe it straight to `sh`:
 curl -fsSL https://get.apiome.dev | sh
 ```
 
-When it finishes, run `apiome --version` to check it, then follow the [CLI quick-start](./cli-quickstart.md)
-to point it at your Apiome server.
+When it finishes, run `apiome --version` to check it, then [sign it in](./sign-in-the-cli.mdx) with
+`apiome login` and follow the [CLI quick-start](./cli-quickstart.md).
 
 ## What the installer does
 

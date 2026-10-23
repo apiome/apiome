@@ -892,3 +892,18 @@ def confluent_compatibility(tenant_slug: str, subject: str, version: str | None 
     """
     path = f"/registry/schema/{quote(tenant_slug, safe='')}/compatibility/subjects/{quote(subject, safe='')}/versions"
     return f"{path}/{quote(version, safe='')}" if version else path
+
+
+def cli_login() -> str:
+    """Start a browser-approved ``apiome login`` (#5501); anonymous."""
+    return f"{V1}/cli/login"
+
+
+def cli_login_token() -> str:
+    """Poll a started login with its device code; anonymous."""
+    return f"{V1}/cli/login/token"
+
+
+def cli_login_key() -> str:
+    """``DELETE`` revokes the presenting CLI login key (``apiome logout``)."""
+    return f"{V1}/cli/login/key"

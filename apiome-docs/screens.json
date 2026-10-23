@@ -48,6 +48,18 @@
       ]
     },
     {
+      "id": "cli-login",
+      "route": "/cli/login",
+      "waitFor": "[data-testid=\"cli-login-review\"]",
+      "data": "fixture:hive-a11y/cli-login.html"
+    },
+    {
+      "id": "cli-login-approved",
+      "route": "/cli/login",
+      "waitFor": "[data-testid=\"cli-login-approved\"]",
+      "data": "fixture:hive-a11y/cli-login-approved.html"
+    },
+    {
       "id": "signup-verified",
       "route": "/signup/verify",
       "waitFor": "[data-testid=\"signup-verified\"]",

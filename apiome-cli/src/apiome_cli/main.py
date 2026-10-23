@@ -24,6 +24,7 @@ from apiome_cli.commands import (
     graph,
     health,
     lint,
+    login,
     mcp,
     mock,
     operations,
@@ -74,6 +75,8 @@ app = typer.Typer(
 )
 
 app.add_typer(auth.app, name="auth")
+app.command("login")(login.login)
+app.command("logout")(login.logout)
 app.add_typer(config.app, name="config")
 app.add_typer(doctor.app, name="doctor")
 app.add_typer(health.app, name="health")
