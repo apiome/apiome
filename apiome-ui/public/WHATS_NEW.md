@@ -104,6 +104,7 @@ We continue to improve the platform based on your feedback with improvements and
   - A sign-up page at **/signup**: every sign-in provider plus the email form, following the sign-up policy (closed and invite-only installations show a notice and the sign-in link); **Create one** on the sign-in page opens it
   - Create an account with your email address and a password: Apiome emails a confirmation link that works once and expires in 24 hours, then signs you in and starts setting up your first organization
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
+  - The old sign-up request queue and the admin console's **Pending Signups** tab are retired: people still waiting are emailed a link to create their account themselves
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Design system:

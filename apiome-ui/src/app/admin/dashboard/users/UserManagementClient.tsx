@@ -6,7 +6,6 @@ import {
   UserPlus,
   UserCheck,
   Mail,
-  Calendar,
   Trash2,
   CheckCircle,
   XCircle,
@@ -21,21 +20,16 @@ import {
   X,
 } from 'lucide-react';
 import {
-  getAllSignups,
   createUser,
-  createUserFromSignup,
-  deleteSignup,
   updateUser,
   deleteUser,
   getUserStats,
-  getSignupStats,
   getAllUsersWithLicenses,
   getAllLicenses,
   assignLicenseToUser,
   removeUserLicense,
 } from '../../../../../lib/db/admin-helper';
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
-import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';
@@ -56,27 +50,12 @@ interface User {
   two_factor_enabled?: boolean | null;
 }
 
-interface Signup {
-  name: string;
-  email_address: string;
-  signup_source: string;
-  signup_date: string;
-  password: string;
-}
-
 interface UserStats {
   total_users: number;
   enabled_users: number;
   verified_users: number;
   new_users_30_days: number;
   new_users_7_days: number;
-}
-
-interface SignupStats {
-  total_signups: number;
-  signups_30_days: number;
-  signups_7_days: number;
-  signups_today: number;
 }
 
 interface License {
@@ -104,16 +83,11 @@ const adminTwoFactorResetEndpoint = (userId: string) =>
 export default function UserManagementClient() {
   const { confirm } = useDialog();
   const [users, setUsers] = useState<User[]>([]);
-  const [signups, setSignups] = useState<Signup[]>([]);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [signupStats, setSignupStats] = useState<SignupStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'signups'>('signups');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [openSignupDropdown, setOpenSignupDropdown] = useState<string | null>(null);
   const [openUserDropdown, setOpenUserDropdown] = useState<string | null>(null);
-  const [signupDropdownPos, setSignupDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const [userDropdownPos, setUserDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const [licenseSubMenu, setLicenseSubMenu] = useState<string | null>(null);
   const [flagsUser, setFlagsUser] = useState<User | null>(null);
@@ -136,24 +110,18 @@ export default function UserManagementClient() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, signupsRes, userStatsRes, signupStatsRes, licensesRes] = await Promise.all([
+      const [usersRes, userStatsRes, licensesRes] = await Promise.all([
         getAllUsersWithLicenses(),
-        getAllSignups(),
         getUserStats(),
-        getSignupStats(),
         getAllLicenses(),
       ]);
 
       const usersData = JSON.parse(usersRes);
-      const signupsData = JSON.parse(signupsRes);
       const userStatsData = JSON.parse(userStatsRes);
-      const signupStatsData = JSON.parse(signupStatsRes);
       const licensesData = JSON.parse(licensesRes);
 
       if (usersData.success) setUsers(usersData.users);
-      if (signupsData.success) setSignups(signupsData.signups);
       if (userStatsData.success) setUserStats(userStatsData.stats);
-      if (signupStatsData.success) setSignupStats(signupStatsData.stats);
       if (licensesData.success) setLicenses(licensesData.licenses.filter((l: License) => l.enabled));
     } catch (error) {
       console.error('Error loading data:', error);
@@ -244,7 +212,6 @@ export default function UserManagementClient() {
         showMessage('success', `User created successfully for ${name}`);
         setShowCreateUserDialog(false);
         resetNewUserForm();
-        setActiveTab('users');
         await loadData();
       } else {
         showMessage('error', data.error || 'Failed to create user');
@@ -254,60 +221,6 @@ export default function UserManagementClient() {
       showMessage('error', 'Failed to create user');
     } finally {
       setCreatingUser(false);
-    }
-  };
-
-  const handleCreateUserFromSignup = async (signup: Signup) => {
-    const confirmed = await confirm({
-      title: `Create an account for ${signup.name}?`,
-      message: `${signup.email_address} gets a verified, enabled account and can sign in straight away.`,
-      variant: 'info',
-      confirmLabel: 'Create account',
-    });
-    if (!confirmed) return;
-
-    try {
-      const result = await createUserFromSignup(signup.email_address, true, true);
-      const data = JSON.parse(result);
-
-      if (data.success) {
-        showMessage('success', `User created successfully for ${signup.name}`);
-        await loadData();
-      } else {
-        showMessage('error', data.error || 'Failed to create user');
-      }
-    } catch (error) {
-      console.error('Error creating user from signup:', error);
-      showMessage('error', 'Failed to create user');
-    }
-  };
-
-  const handleDeleteSignup = async (email: string) => {
-    const confirmed = await confirm(
-      destructiveConfirm({
-        action: 'Delete',
-        noun: 'signup request from',
-        name: email,
-        consequence:
-          'The request leaves the queue. Nobody is emailed, and the address can sign up again.',
-        confirmLabel: 'Delete request',
-      })
-    );
-    if (!confirmed) return;
-
-    try {
-      const result = await deleteSignup(email);
-      const data = JSON.parse(result);
-
-      if (data.success) {
-        showMessage('success', 'Signup deleted successfully');
-        await loadData();
-      } else {
-        showMessage('error', data.error || 'Failed to delete signup');
-      }
-    } catch (error) {
-      console.error('Error deleting signup:', error);
-      showMessage('error', 'Failed to delete signup');
     }
   };
 
@@ -395,7 +308,7 @@ export default function UserManagementClient() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts and approve signups</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts, licenses and access</p>
             </div>
             <button
               type="button"
@@ -431,7 +344,7 @@ export default function UserManagementClient() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-600/20 rounded-lg">
@@ -468,54 +381,12 @@ export default function UserManagementClient() {
               <UserPlus className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">Pending Signups</p>
-              <p className="text-gray-900 dark:text-white text-xl font-bold">{signupStats?.total_signups || 0}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-xs">New Users</p>
+              <p className="text-gray-900 dark:text-white text-xl font-bold">{userStats?.new_users_30_days || 0}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
-            {signupStats?.signups_today || 0} today
-          </p>
+          <p className="text-xs text-gray-500 dark:text-slate-400">Last 30 days</p>
         </div>
-
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-orange-600/20 rounded-lg">
-              <Calendar className="w-5 h-5 text-orange-400" />
-            </div>
-            <div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">Recent Signups</p>
-              <p className="text-gray-900 dark:text-white text-xl font-bold">{signupStats?.signups_7_days || 0}</p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-slate-400">Last 7 days</p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className={TAB_LIST_CLASS} role="tablist" aria-label="User management views">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'signups'}
-          onClick={() => setActiveTab('signups')}
-          className={tabTriggerClass({ active: activeTab === 'signups' })}
-        >
-          Pending Signups
-          {signups.length > 0 && (
-            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
-              {signups.length}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'users'}
-          onClick={() => setActiveTab('users')}
-          className={tabTriggerClass({ active: activeTab === 'users' })}
-        >
-          Active Users
-        </button>
       </div>
 
       {/* Refresh Button */}
@@ -535,123 +406,6 @@ export default function UserManagementClient() {
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
         </div>
-      ) : activeTab === 'signups' ? (
-        // Signups Table
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-          {signups.length === 0 ? (
-            <EmptyState
-              surface={false}
-              icon={<UserPlus />}
-              title="No pending signups"
-              description="New signups that need approval appear here."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Source
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {signups.map((signup) => (
-                    <tr key={signup.email_address} className="hover:bg-slate-50 dark:hover:bg-slate-800">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{signup.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-300">{signup.email_address}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {signup.signup_source || 'Direct'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(signup.signup_date)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="relative inline-block">
-                          <button
-                            onClick={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setSignupDropdownPos({
-                                top: rect.bottom + 4,
-                                right: window.innerWidth - rect.right
-                              });
-                              setOpenSignupDropdown(openSignupDropdown === signup.email_address ? null : signup.email_address);
-                            }}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
-
-                          {openSignupDropdown === signup.email_address && signupDropdownPos && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-[100]"
-                                onClick={() => setOpenSignupDropdown(null)}
-                              />
-                              <div
-                                className="fixed w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg z-[101]"
-                                style={{
-                                  top: `${signupDropdownPos.top}px`,
-                                  right: `${signupDropdownPos.right}px`
-                                }}
-                              >
-                                <div className="py-1">
-                                  <button
-                                    onClick={() => {
-                                      setOpenSignupDropdown(null);
-                                      handleCreateUserFromSignup(signup);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-green-400 hover:text-green-300 transition-colors"
-                                  >
-                                    <UserCheck className="w-4 h-4" />
-                                    Create User
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setOpenSignupDropdown(null);
-                                      handleDeleteSignup(signup.email_address);
-                                    }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Signup
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       ) : (
         // Users Table
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
@@ -660,7 +414,7 @@ export default function UserManagementClient() {
               surface={false}
               icon={<Users />}
               title="No users yet"
-              description="People appear here once they sign up or are approved."
+              description="People appear here once they sign up or an administrator creates their account."
             />
           ) : (
             <div className="overflow-x-auto">

@@ -38,14 +38,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('../lib/db/admin-helper', () => ({
-  getAllSignups: jest.fn(),
   createUser: jest.fn(),
-  createUserFromSignup: jest.fn(),
-  deleteSignup: jest.fn(),
   updateUser: jest.fn(),
   deleteUser: jest.fn(),
   getUserStats: jest.fn(),
-  getSignupStats: jest.fn(),
   getAllUsersWithLicenses: jest.fn(),
   getAllLicenses: jest.fn(),
   assignLicenseToUser: jest.fn(),
@@ -83,19 +79,6 @@ const DOCS_USERS = [
   license_type: licenseType,
 }));
 
-/** Three people waiting for an account. */
-const DOCS_SIGNUPS = [
-  ['Tomas Berg', 'tomas.berg@northwind.io', 'website', '2026-06-15T07:48:00Z'],
-  ['Aiko Tanaka', 'aiko.tanaka@harbor-labs.com', 'github', '2026-06-14T18:03:00Z'],
-  ['Lena Fischer', 'lena.fischer@quayside.dev', '', '2026-06-10T11:30:00Z'],
-].map(([name, email, source, date]) => ({
-  name,
-  email_address: email,
-  signup_source: source,
-  signup_date: date,
-  password: '',
-}));
-
 /** The licenses an administrator can assign. */
 const DOCS_LICENSES = [
   { id: 'lic-community', name: 'Community', license_type: 'free', enabled: true },
@@ -107,13 +90,9 @@ const DOCS_LICENSES = [
 function stubUsersScreen(): void {
   const ok = (body: object) => async () => JSON.stringify({ success: true, ...body });
   helper.getAllUsersWithLicenses.mockImplementation(ok({ users: DOCS_USERS }));
-  helper.getAllSignups.mockImplementation(ok({ signups: DOCS_SIGNUPS }));
   helper.getAllLicenses.mockImplementation(ok({ licenses: DOCS_LICENSES }));
   helper.getUserStats.mockImplementation(
     ok({ stats: { total_users: 5, enabled_users: 4, verified_users: 4, new_users_30_days: 1, new_users_7_days: 0 } }),
-  );
-  helper.getSignupStats.mockImplementation(
-    ok({ stats: { total_signups: 3, signups_30_days: 3, signups_7_days: 2, signups_today: 1 } }),
   );
 }
 
@@ -207,23 +186,20 @@ describe('the Overview', () => {
 });
 
 describe('Users', () => {
-  it('opens on Pending Signups, with the queue and its counts', async () => {
+  // SGN-1.3 (#5652): the Pending Signups tab is gone; the page is the user list.
+  it('opens on the user list, with no sign-up queue', async () => {
     renderConsole('/admin/dashboard/users', <UserManagementClient />);
 
-    expect(await screen.findByText('aiko.tanaka@harbor-labs.com')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Pending Signups/ })).toHaveAttribute('aria-selected', 'true');
-    // A blank source reads "Direct".
-    expect(screen.getByText('Direct')).toBeInTheDocument();
-    expect(screen.getByText('1 today')).toBeInTheDocument();
-    writeA11yFixture('admin-users-signups', bodyMarkup());
+    expect(await screen.findByText('priya.raman@northwind.io')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pending Signups/)).not.toBeInTheDocument();
+    expect(screen.getByText('New Users')).toBeInTheDocument();
   });
 
   it('lists active users with their license and status', async () => {
-    const user = userEvent.setup();
     renderConsole('/admin/dashboard/users', <UserManagementClient />);
-    await screen.findByText('aiko.tanaka@harbor-labs.com');
+    await screen.findByText('priya.raman@northwind.io');
 
-    await user.click(screen.getByRole('tab', { name: 'Active Users' }));
     const table = screen.getByRole('table');
     expect(within(table).getByText('priya.raman@northwind.io')).toBeInTheDocument();
     expect(within(table).getAllByText('Team')).toHaveLength(2);
@@ -236,8 +212,7 @@ describe('Users', () => {
   it('opens a user’s actions, with the license list expanded', async () => {
     const user = userEvent.setup();
     renderConsole('/admin/dashboard/users', <UserManagementClient />);
-    await screen.findByText('aiko.tanaka@harbor-labs.com');
-    await user.click(screen.getByRole('tab', { name: 'Active Users' }));
+    await screen.findByText('priya.raman@northwind.io');
 
     const row = screen.getByText('sam.okafor@northwind.io').closest('tr') as HTMLElement;
     const more = within(row).getAllByRole('button').at(-1) as HTMLElement;
@@ -254,11 +229,11 @@ describe('Users', () => {
     writeA11yFixture('admin-users-menu', bodyMarkup());
   });
 
-  it('creates a user from New User, then shows the Active Users tab', async () => {
+  it('creates a user from New User', async () => {
     const user = userEvent.setup();
     helper.createUser.mockResolvedValue(JSON.stringify({ success: true }));
     renderConsole('/admin/dashboard/users', <UserManagementClient />);
-    await screen.findByText('aiko.tanaka@harbor-labs.com');
+    await screen.findByText('priya.raman@northwind.io');
 
     await user.click(screen.getByRole('button', { name: /New User/ }));
     expect(screen.getByRole('heading', { name: 'Create New User' })).toBeInTheDocument();
@@ -273,29 +248,12 @@ describe('Users', () => {
     // The email is trimmed and lower-cased before it is stored.
     expect(helper.createUser).toHaveBeenCalledWith('Noor Haddad', 'noor.haddad@northwind.io', 'Welcome-2026!', true, true);
     expect(await screen.findByText('User created successfully for Noor Haddad')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Active Users' })).toHaveAttribute('aria-selected', 'true');
-  });
-
-  it('approves a signup after confirming', async () => {
-    const user = userEvent.setup();
-    helper.createUserFromSignup.mockResolvedValue(JSON.stringify({ success: true }));
-    renderConsole('/admin/dashboard/users', <UserManagementClient />);
-    await screen.findByText('aiko.tanaka@harbor-labs.com');
-
-    const row = screen.getByText('tomas.berg@northwind.io').closest('tr') as HTMLElement;
-    await user.click(within(row).getByRole('button'));
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
-    const dialog = await screen.findByRole('alertdialog');
-    expect(dialog).toHaveTextContent('Create an account for Tomas Berg?');
-    await user.click(within(dialog).getByRole('button', { name: 'Create account' }));
-    await waitFor(() => expect(helper.createUserFromSignup).toHaveBeenCalledWith('tomas.berg@northwind.io', true, true));
   });
 
   it('asks for the email to be typed before deleting a user', async () => {
     const user = userEvent.setup();
     renderConsole('/admin/dashboard/users', <UserManagementClient />);
-    await screen.findByText('aiko.tanaka@harbor-labs.com');
-    await user.click(screen.getByRole('tab', { name: 'Active Users' }));
+    await screen.findByText('priya.raman@northwind.io');
 
     const row = screen.getByText('contractor.jb@partner.dev').closest('tr') as HTMLElement;
     await user.click(within(row).getAllByRole('button').at(-1) as HTMLElement);
@@ -321,12 +279,11 @@ describe('Users', () => {
         }),
       );
 
-    /** Open the Active Users tab and one user's actions menu. */
+    /** Open one user's actions menu. */
     async function openMenuFor(email: string) {
       const user = userEvent.setup();
       renderConsole('/admin/dashboard/users', <UserManagementClient />);
-      await screen.findByText('aiko.tanaka@harbor-labs.com');
-      await user.click(screen.getByRole('tab', { name: 'Active Users' }));
+      await screen.findByText('priya.raman@northwind.io');
       const row = screen.getByText(email).closest('tr') as HTMLElement;
       await user.click(within(row).getAllByRole('button').at(-1) as HTMLElement);
       return user;

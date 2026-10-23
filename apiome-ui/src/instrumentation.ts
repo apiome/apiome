@@ -16,6 +16,10 @@
  * resolver never throws — it degrades to env and reports that as the `unavailable` origin, which
  * `validateProviderEnv` treats as inconclusive rather than as grounds to refuse startup.
  *
+ * It also starts the one-time invitation sweep for the retired sign-up request queue (SGN-1.3,
+ * #5652; `lib/auth/legacy-signup-invitations.ts`). The sweep runs in the background — it never
+ * delays or fails startup — and does nothing unless email sign-up is configured.
+ *
  * See `lib/auth/provider-registry.ts` (`validateProviderEnv`, `validateOidcDiscoveryEnv`),
  * `lib/auth/provider-config-resolver.ts` (`resolveProviderEnvWithSource`), and
  * `docs/AUTH_PROVIDER_SETUP.md`.
@@ -24,10 +28,12 @@ export async function register(): Promise<void> {
   // Only the Node.js server reads provider secrets; skip the edge runtime so each issue is
   // reported once and the auth modules stay out of the edge bundle.
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
-  const [registry, resolver] = await Promise.all([
+  const [registry, resolver, legacySignup] = await Promise.all([
     import('../lib/auth/provider-registry'),
     import('../lib/auth/provider-config-resolver'),
+    import('../lib/auth/legacy-signup-invitations'),
   ]);
+  void legacySignup.runLegacySignupInvitations();
   const { PROVIDER_REGISTRY, validateProviderEnv, validateOidcDiscoveryEnv } = registry;
   const { resolveProviderEnvWithSource } = resolver;
   const { env, source } = await resolveProviderEnvWithSource();

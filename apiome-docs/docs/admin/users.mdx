@@ -1,6 +1,6 @@
 ---
 title: Users
-description: Approve signups, create accounts, assign licenses and disable or delete users.
+description: Create accounts, assign licenses and disable or delete users.
 sidebar_position: 4
 tags: [admin, legacy, users]
 ---
@@ -9,49 +9,33 @@ tags: [admin, legacy, users]
 
 <Legacy />
 
-**Users** holds every account on the installation, across all workspaces, and the queue of people
-who have signed up and are waiting for an account. **Sign in to the [admin console](./admin-console.mdx)
-and choose Users** in the sidebar.
+**Users** holds every account on the installation, across all workspaces. **Sign in to the
+[admin console](./admin-console.mdx) and choose Users** in the sidebar.
 
 This is the installation-wide account list. To manage who belongs to *one* workspace and with which
 role, use [Members & seats](../workspace/members.mdx) in the app, or [Tenants](./admin-tenants.mdx) here.
 
-<Screenshot id="admin-users-signups" alt="Users on the Pending Signups tab: three people waiting, with source and date" />
+<Screenshot id="admin-users" alt="Users: three cards, then five accounts with license, verified and enabled badges, and creation date" />
 
-The four cards at the top are live:
+The three cards at the top are live:
 
 | Card | Shows | Underneath |
 | --- | --- | --- |
 | **Total Users** | Every account | How many were created in the last 7 days |
 | **Verified Users** | Accounts with a verified email | How many are enabled |
-| **Pending Signups** | Requests in the queue | How many arrived today |
-| **Recent Signups** | Requests from the last 7 days | *Last 7 days* |
+| **New Users** | Accounts created in the last 30 days | *Last 30 days* |
 
-**Refresh** reloads the cards and both tabs. The result of every action shows in a banner above
-the cards for five seconds.
+**Refresh** reloads the cards and the list. The result of every action shows in a banner above the
+cards for five seconds.
 
-## Approve a signup
-
-The page opens on **Pending Signups**, whose tab carries the queue's count. Each row shows the
-person's **Name**, **Email**, **Source** (*Direct* when the signup did not record one) and **Date**.
-
-1. **Click the ⋮ button** at the end of the row.
-2. **Click “Create User”.**
-3. **Click “Create account”** in *Create an account for &lt;name&gt;?*
-
-The person gets a verified, enabled account with the password they chose when they signed up, can
-sign in straight away, and leaves the queue. If an account with that email already exists, the
-banner reads *User with this email already exists* and nothing changes.
-
-To turn a request down instead, **click “Delete Signup”** and confirm with **“Delete request”**. The
-request leaves the queue; nobody is emailed, and the address can sign up again.
+People create their own accounts on the [sign-up page](../getting-started/create-an-account.mdx),
+under the installation's [sign-up policy](./auth-providers.mdx#sign-up-policy). There is no queue of requests to
+approve.
 
 ## Find and manage an account
 
-**Click “Active Users”** for every account, with its **License**, **Status** and **Created** date.
-**Status** shows two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
-
-<Screenshot id="admin-users" alt="The Active Users tab: five accounts with license, verified and enabled badges, and creation date" />
+The list shows every account with its **License**, **Status** and **Created** date. **Status** shows
+two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
 
 **Click the ⋮ button** on a row for its actions:
 
@@ -79,8 +63,7 @@ To add someone who has not signed up:
 
 <Screenshot id="admin-users-create-dialog" alt="Create New User with a name, email and temporary password, both boxes ticked" />
 
-The email is stored in lower case. The page switches to **Active Users**, where the new account
-appears.
+The email is stored in lower case, and the new account appears in the list.
 
 ## Reset a user's two-factor
 
@@ -90,7 +73,7 @@ step. Resetting their two-factor lets them sign in again with their password or 
 Confirm who you are dealing with before you do this — a reset is exactly what an impostor would ask
 for.
 
-1. On **Active Users**, **click the ⋮ button** on the user's row, then **“Reset two-factor…”**. The
+1. **Click the ⋮ button** on the user's row, then **“Reset two-factor…”**. The
    action appears only for users who have two-factor on.
 2. Enter a **Reason** of at least 10 characters. It is kept in the audit trail; the user does not
    see it.
@@ -127,10 +110,30 @@ A workspace owner can do the same for a member who belongs only to their workspa
 The account, every tenant membership it carried and any license assigned to it are gone; this cannot
 be undone. To stop someone signing in but keep their account, **disable** it instead.
 
+## Sign-up requests from earlier versions
+
+Earlier versions had a **Pending Signups** tab: people asked for an account and a super-admin
+approved them. That queue is retired — the tab, the request form and its actions are gone.
+
+Anyone still waiting in it gets one email, *Finish creating your account*, the first time the
+upgraded app starts. It links to the sign-up page, where they enter the same email address and
+choose a new password; the password from their old request is never used. The email is sent only
+when:
+
+- [email sign-up](./auth-providers.mdx#email-sign-up) is configured — if it is not, configure it
+  and restart apiome-ui to send the emails then;
+- the address has no account yet — an address that already has one is skipped;
+- the [sign-up policy](./auth-providers.mdx#sign-up-policy) allows the address — while sign-up is
+  closed, by invitation, or limited to other domains, the request waits, and a later restart sends
+  it once the policy allows it.
+
+Each address is emailed once, even with several app servers. The old requests stay in the database,
+read-only, for one more release.
+
 ## With the API
 
 There is no REST endpoint or CLI command for these screens: apiome-ui reads and writes the
-`apiome.users` and `apiome.signup` tables through its own server. Inside one workspace, membership and
+`apiome.users` table through its own server. Inside one workspace, membership and
 roles are managed from [Members & seats](../workspace/members.mdx) instead.
 
 ## Where next

@@ -22,6 +22,7 @@
 
 import crypto from 'crypto';
 
+import { canonicalizeEmail } from './account-resolution';
 import { EMAIL_FROM_ENV, SENDGRID_API_KEY_ENV } from './send-two-factor-email-otp';
 
 /** Env var naming the public base URL of this installation (shared with Better Auth). */
@@ -36,8 +37,14 @@ export const VERIFY_EMAIL_PATH = '/signup/verify';
 /** Where the account-exists email sends the reader. */
 export const SIGN_IN_PATH = '/login';
 
+/** The sign-up page; the legacy-queue invitation (SGN-1.3) sends the reader here. */
+export const SIGNUP_PATH = '/signup';
+
 /** Longest display name accepted (the `users.name` column). */
 export const SIGNUP_NAME_MAX_LENGTH = 255;
+
+/** Longest email address accepted (RFC 5321 path limit). */
+export const SIGNUP_EMAIL_MAX_LENGTH = 254;
 
 /** Emails (verification or account-exists) one address may receive per window. */
 export const SIGNUP_EMAILS_PER_ADDRESS = 3;
@@ -84,6 +91,18 @@ export function isEmailSignupAvailable(env: NodeJS.Dict<string> = process.env): 
   const key = env[SENDGRID_API_KEY_ENV]?.trim();
   const from = env[EMAIL_FROM_ENV]?.trim();
   return Boolean(key && from && publicBaseUrl(env));
+}
+
+/**
+ * Canonicalize and shape-check an address.
+ *
+ * @param email Raw form input (or a stored address).
+ * @returns The canonical address, or `null` when it cannot be an email address.
+ */
+export function canonicalSignupEmail(email: unknown): string | null {
+  const canonical = canonicalizeEmail(email);
+  if (!canonical || canonical.length > SIGNUP_EMAIL_MAX_LENGTH) return null;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(canonical) ? canonical : null;
 }
 
 /**
@@ -242,5 +261,36 @@ export function buildAccountExistsEmail(params: {
     subject: 'You already have an Apiome account',
     text: [...lines, `Sign in: ${params.signInUrl}`].join('\n\n'),
     html: frameHtml(lines, { label: 'Sign in', href: params.signInUrl }),
+  };
+}
+
+/**
+ * The invitation sent once to each person left in the retired sign-up request queue (SGN-1.3,
+ * #5652).
+ *
+ * They asked for an account under the old approval flow; the queue is gone, so this tells them to
+ * create the account themselves. The password they typed into the old form is never used: it was
+ * never confirmed, so they choose a new one on the sign-up page.
+ *
+ * @param params.name The name they gave on the old request form (may be blank).
+ * @param params.signupUrl Absolute URL of the sign-up page ({@link SIGNUP_PATH}).
+ * @returns Subject, plain text and HTML.
+ */
+export function buildLegacySignupInvitationEmail(params: {
+  name?: string | null;
+  signupUrl: string;
+}): SignupEmailMessage {
+  const name = params.name?.trim();
+  const greeting = name ? `Hello ${name},` : 'Hello,';
+  const lines = [
+    greeting,
+    'You asked for an Apiome account. Accounts no longer wait for approval, so you can finish creating yours now.',
+    'Open the sign-up page, enter this email address and choose a password. We then send you a link to confirm the address.',
+    'If you no longer want an account, you can ignore this email; nothing is created until you sign up.',
+  ];
+  return {
+    subject: 'Finish creating your Apiome account',
+    text: [...lines, `Create your account: ${params.signupUrl}`].join('\n\n'),
+    html: frameHtml(lines, { label: 'Create your account', href: params.signupUrl }),
   };
 }

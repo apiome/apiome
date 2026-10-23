@@ -1065,10 +1065,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'users',
     title: 'Users',
-    summary: 'Approve signups, create accounts, assign licenses and disable or delete users.',
+    summary: 'Create accounts, assign licenses and disable or delete users.',
     page: 'apiome-docs/docs/admin/users.mdx',
     section: 'reference',
-    keywords: ['pending signups', 'verified', 'enable', 'new user', 'super admin'],
+    keywords: ['accounts', 'verified', 'enable', 'new user', 'super admin'],
   },
   {
     id: 'admin-tenants',

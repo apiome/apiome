@@ -18,9 +18,7 @@ import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
-import { AUTH_ERROR_CODES, resolveEmailSignupDecision } from '../auth/account-resolution';
-import { resolveSignupPolicy } from '../auth/signup-policy-resolver';
-import { getAuthErrorCopy } from '@/app/login/auth-error-copy';
+import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 import { upsertCredentialAccountPassword } from './credential-account';
 import {
   KEYS_SETTING as TOKEN_KEYS_SETTING,
@@ -2847,66 +2845,6 @@ export async function updateClassPropertyRef(classPropertyId: string, targetClas
     return JSON.stringify({ success: true, classId });
   } catch (error: any) {
     console.error('Error updating class property $ref:', error);
-    return JSON.stringify({ success: false, error: error.message });
-  }
-}
-
-/**
- * File an email sign-up request for a super-admin to approve.
- *
- * Gated by the installation sign-up policy (SGN-1.4, #5653) — the same gate every OAuth provider
- * goes through (`resolveEmailSignupDecision`), so `closed`, `invite_only` and an allowed-domain
- * list refuse an email sign-up exactly as they refuse an OAuth one.
- *
- * @param name The requester's display name.
- * @param email The address to create the account with.
- * @param password The chosen password (stored hashed).
- * @param signupSource Free-text "how did you hear about us".
- * @returns A JSON string: `{ success: true, message }`, `{ success: false, duplicate: true,
- *   message }` for a repeat request, or `{ success: false, code, error }` when the policy refuses
- *   the sign-up (`code` is the stable auth error code).
- */
-export async function createSignupRequest(name: string, email: string, password: string, signupSource: string) {
-  try {
-    const decision = resolveEmailSignupDecision(email, await resolveSignupPolicy());
-    if (decision.action === 'reject') {
-      return JSON.stringify({
-        success: false,
-        code: decision.code,
-        error: getAuthErrorCopy(decision.code)?.text,
-      });
-    }
-
-    // Check if email already exists in signup table
-    const existingSignup = await connectionPool.query(
-      'SELECT email_address FROM apiome.signup WHERE email_address = $1',
-      [email]
-    );
-
-    if (existingSignup.rowCount > 0) {
-      return JSON.stringify({
-        success: false,
-        duplicate: true,
-        message: 'You have already requested account access, thank you for your continued interest!'
-      });
-    }
-
-    // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Insert the signup request
-    await connectionPool.query(
-      'INSERT INTO apiome.signup (name, email_address, password, signup_source) VALUES ($1, $2, $3, $4)',
-      [name, email, hashedPassword, signupSource]
-    );
-
-    return JSON.stringify({
-      success: true,
-      message: 'Your signup was accepted, and you will be contacted by a member of the Apiome staff shortly.'
-    });
-  } catch (error: any) {
-    console.error('Error creating signup request:', error);
     return JSON.stringify({ success: false, error: error.message });
   }
 }
