@@ -1,0 +1,500 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context (JSON-LD 1.1): 10 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "TypicalContext"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/02-typical-context.jsonld"
+        ],
+        "input": "file",
+        "root_type": "TypicalContext"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TypicalContext",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TypicalContext",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "address",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:addressLocality",
+              "native_id": "https://schema.org/addressLocality"
+            },
+            "field_number": null,
+            "key": "Address.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:addressCountry",
+              "native_id": "https://schema.org/addressCountry"
+            },
+            "field_number": null,
+            "key": "Address.country",
+            "name": "country",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:postalCode",
+              "native_id": "https://schema.org/postalCode"
+            },
+            "field_number": null,
+            "key": "Address.postalCode",
+            "name": "postalCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:streetAddress",
+              "native_id": "https://schema.org/streetAddress"
+            },
+            "field_number": null,
+            "key": "Address.street",
+            "name": "street",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Address",
+        "key_type": null,
+        "kind": "record",
+        "name": "Address",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A JSON-LD language map: language tag → string.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@language",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "LanguageMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "LanguageMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_keyword_aliases": {
+            "id": "@id",
+            "type": "@type"
+          },
+          "jsonld_prefixes": {
+            "schema": "https://schema.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "jsonld_version": 1.1,
+          "jsonld_vocab": "https://example.com/ns#"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "city": "schema:addressLocality",
+                  "country": "schema:addressCountry",
+                  "postalCode": "schema:postalCode",
+                  "street": "schema:streetAddress"
+                },
+                "@id": "schema:address"
+              },
+              "native_id": "https://schema.org/address"
+            },
+            "field_number": null,
+            "key": "TypicalContext.address",
+            "name": "address",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Address",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:birthDate",
+                "@type": "xsd:date"
+              },
+              "native_id": "https://schema.org/birthDate"
+            },
+            "field_number": null,
+            "key": "TypicalContext.birthDate",
+            "name": "birthDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:email"
+              },
+              "native_id": "https://schema.org/email"
+            },
+            "field_number": null,
+            "key": "TypicalContext.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:url",
+                "@type": "@id"
+              },
+              "native_id": "https://schema.org/url"
+            },
+            "field_number": null,
+            "key": "TypicalContext.homepage",
+            "name": "homepage",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "schema:knows",
+                "@type": "@id"
+              },
+              "native_id": "https://schema.org/knows"
+            },
+            "field_number": null,
+            "key": "TypicalContext.knows",
+            "name": "knows",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@language",
+                "@id": "https://www.w3.org/2000/01/rdf-schema#label"
+              },
+              "native_id": "https://www.w3.org/2000/01/rdf-schema#label"
+            },
+            "field_number": null,
+            "key": "TypicalContext.labels",
+            "name": "labels",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LanguageMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:numberOfEmployees",
+                "@type": "xsd:integer"
+              },
+              "native_id": "https://schema.org/numberOfEmployees"
+            },
+            "field_number": null,
+            "key": "TypicalContext.memberCount",
+            "name": "memberCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:name",
+              "native_id": "https://schema.org/name"
+            },
+            "field_number": null,
+            "key": "TypicalContext.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@list",
+                "@id": "schema:keywords"
+              },
+              "jsonld_ordered": true,
+              "native_id": "https://schema.org/keywords"
+            },
+            "field_number": null,
+            "key": "TypicalContext.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:worksFor",
+                "@type": "@id"
+              },
+              "native_id": "https://schema.org/worksFor"
+            },
+            "field_number": null,
+            "key": "TypicalContext.worksFor",
+            "name": "worksFor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "TypicalContext",
+        "key_type": null,
+        "kind": "record",
+        "name": "TypicalContext",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/02-typical-context.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:1697f329636fed73bf9c58942be7eaccb3ab5691777d4a15f36ec0fcc933cbb0",
+  "lint": {
+    "findings": 15,
+    "grade": "B",
+    "report_fingerprint": "65bde7e3ccd4594782d9f46c4ab15ed6da458bbd774e83ca7db48358e7b15b6d",
+    "score": 82,
+    "severity_counts": {
+      "error": 0,
+      "info": 14,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

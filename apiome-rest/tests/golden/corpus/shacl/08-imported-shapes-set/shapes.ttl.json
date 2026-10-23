@@ -1,0 +1,597 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [],
+        "files": [
+          {
+            "path": "shapes.ttl",
+            "syntax": "turtle"
+          },
+          {
+            "path": "core-shapes.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "fileset",
+        "ontologies": [
+          "https://example.com/logistics/shapes",
+          "https://example.com/core/shapes"
+        ],
+        "shapes": [
+          "AddressShape",
+          "MoneyShape",
+          "ParcelShape",
+          "ShipmentShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "shapes",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "shapes",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/core/shapes#AddressShape",
+          "rdf_file": "core-shapes.ttl"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#city",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "core:city"
+            },
+            "field_number": null,
+            "key": "AddressShape.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Z]{2}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#countryCode",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "core:countryCode"
+            },
+            "field_number": null,
+            "key": "AddressShape.countryCode",
+            "name": "countryCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#line1",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "core:line1"
+            },
+            "field_number": null,
+            "key": "AddressShape.line1",
+            "name": "line1",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#postalCode",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "core:postalCode"
+            },
+            "field_number": null,
+            "key": "AddressShape.postalCode",
+            "name": "postalCode",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "AddressShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "AddressShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/core/shapes#MoneyShape",
+          "rdf_file": "core-shapes.ttl"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#amount",
+              "shacl_datatype": "xsd:decimal",
+              "shacl_min_count": 1,
+              "shacl_path": "core:amount"
+            },
+            "field_number": null,
+            "key": "MoneyShape.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "EUR",
+                "GBP",
+                "USD"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core/shapes#currency",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "core:currency"
+            },
+            "field_number": null,
+            "key": "MoneyShape.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MoneyShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "MoneyShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/logistics/shapes#ParcelShape",
+          "rdf_file": "shapes.ttl"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#parcelId",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:parcelId"
+            },
+            "field_number": null,
+            "key": "ParcelShape.parcelId",
+            "name": "parcelId",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": 0.0,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#weightKg",
+              "shacl_datatype": "xsd:decimal",
+              "shacl_path": "ex:weightKg"
+            },
+            "field_number": null,
+            "key": "ParcelShape.weightKg",
+            "name": "weightKg",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ParcelShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "ParcelShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/logistics/shapes#ShipmentShape",
+          "rdf_file": "shapes.ttl",
+          "shacl_target_class": [
+            "ex:Shipment"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#destination",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:destination"
+            },
+            "field_number": null,
+            "key": "ShipmentShape.destination",
+            "name": "destination",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "AddressShape",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#parcel",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:parcel"
+            },
+            "field_number": null,
+            "key": "ShipmentShape.parcel",
+            "name": "parcel",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ParcelShape",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#price",
+              "shacl_max_count": 1,
+              "shacl_path": "ex:price"
+            },
+            "field_number": null,
+            "key": "ShipmentShape.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "MoneyShape",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^SHP-[0-9]{6}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/logistics/shapes#shipmentId",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:shipmentId"
+            },
+            "field_number": null,
+            "key": "ShipmentShape.shipmentId",
+            "name": "shipmentId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ShipmentShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "ShipmentShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/08-imported-shapes-set/shapes.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:c0dec78fd7ed4adba00024ab7ad7afde1d15b5c925819cbb4fb30deb9f34da38",
+  "lint": {
+    "findings": 17,
+    "grade": "C",
+    "report_fingerprint": "ff5c3cf1056bd812ea72faf82e3ff7b08790ae220e8c471be537e1c08cd0dac1",
+    "score": 71,
+    "severity_counts": {
+      "error": 0,
+      "info": 13,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,38 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix lib:  <https://example.com/library#> .
+
+# A plain RDF Schema vocabulary — no OWL at all: rdfs:Class, rdf:Property, a subclass and
+# domain/range declarations. RDFS has no cardinality, so every property is multi-valued.
+
+lib:Work a rdfs:Class ;
+    rdfs:label "Work" ;
+    rdfs:comment "A creative work held by the library." .
+
+lib:Book a rdfs:Class ;
+    rdfs:subClassOf lib:Work ;
+    rdfs:label "Book" .
+
+lib:Person a rdfs:Class ;
+    rdfs:label "Person" .
+
+lib:title a rdf:Property ;
+    rdfs:domain lib:Work ;
+    rdfs:range xsd:string .
+
+lib:isbn a rdf:Property ;
+    rdfs:domain lib:Book ;
+    rdfs:range xsd:string .
+
+lib:pageCount a rdf:Property ;
+    rdfs:domain lib:Book ;
+    rdfs:range xsd:nonNegativeInteger .
+
+lib:author a rdf:Property ;
+    rdfs:domain lib:Work ;
+    rdfs:range lib:Person .
+
+lib:name a rdf:Property ;
+    rdfs:domain lib:Person ;
+    rdfs:range rdfs:Literal .

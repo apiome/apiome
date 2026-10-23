@@ -90,6 +90,13 @@ describe('catalog-import-formats', () => {
     // FMT-9.2: MQTT Sparkplug B, under its key and alias, on the event paradigm.
     expect(catalogAdapterForFormat('sparkplug')?.sourceKind).toBe('sparkplug');
     expect(catalogAdapterForFormat('sparkplug-b')?.sourceKind).toBe('sparkplug');
+    // FMT-9.4: SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts, under their keys and aliases.
+    expect(catalogAdapterForFormat('shacl')?.sourceKind).toBe('shacl');
+    expect(catalogAdapterForFormat('shacl-shapes')?.sourceKind).toBe('shacl');
+    expect(catalogAdapterForFormat('owl')?.sourceKind).toBe('owl');
+    expect(catalogAdapterForFormat('rdfs')?.sourceKind).toBe('owl');
+    expect(catalogAdapterForFormat('jsonld')?.sourceKind).toBe('jsonld');
+    expect(catalogAdapterForFormat('json-ld')?.sourceKind).toBe('jsonld');
     // FMT-9.3: ROS 2 interfaces, under their key and aliases, on the rpc paradigm.
     expect(catalogAdapterForFormat('ros2')?.sourceKind).toBe('ros2');
     expect(catalogAdapterForFormat('ros2-interface')?.sourceKind).toBe('ros2');
@@ -149,7 +156,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -386,6 +393,9 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
     expect(paradigmForFormat('sparkplug')).toBe('event');
     expect(paradigmForFormat('ros2')).toBe('rpc');
+    expect(paradigmForFormat('shacl')).toBe('dataschema');
+    expect(paradigmForFormat('owl')).toBe('dataschema');
+    expect(paradigmForFormat('jsonld')).toBe('dataschema');
     expect(paradigmForFormat('thrift')).toBe('rpc');
     expect(paradigmForFormat('connectrpc')).toBe('rpc');
     expect(paradigmForFormat('flatbuffers')).toBe('dataschema');

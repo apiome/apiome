@@ -1,0 +1,862 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.class_equivalence",
+            "count": 1,
+            "detail": "owl:equivalentClass states that two classes have the same members, an inference axiom; it is kept in extras['owl_equivalent_class'].",
+            "locations": [
+              "Widget"
+            ]
+          },
+          {
+            "construct": "owl.class_expression",
+            "count": 3,
+            "detail": "A class defined by owl:unionOf / owl:intersectionOf / owl:complementOf is kept as a named type (a union of the named members, or a record of the intersected members' fields); the class expression's logical meaning is kept in extras['owl_class_expression'].",
+            "locations": [
+              "NotAWidget",
+              "PremiumWidget",
+              "Sellable"
+            ]
+          },
+          {
+            "construct": "owl.disjointness",
+            "count": 2,
+            "detail": "owl:disjointWith states that no individual is in both classes; the canonical model has no such constraint, so it is kept in extras['owl_disjoint_with'].",
+            "locations": [
+              "Gadget",
+              "Widget"
+            ]
+          },
+          {
+            "construct": "owl.individual_identity",
+            "count": 2,
+            "detail": "owl:sameAs / owl:differentFrom assert identity between individuals in an open world; they are kept in extras['owl']['individual_identity'] and not modelled.",
+            "locations": [
+              "ex:Green",
+              "ex:Red"
+            ]
+          },
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "stress"
+            ]
+          },
+          {
+            "construct": "owl.property_chain",
+            "count": 3,
+            "detail": "owl:propertyChainAxiom defines a property by composition for a reasoner; it is kept in extras['owl_property_chain'] and not modelled.",
+            "locations": [
+              "Assembly.hasPart",
+              "Kit.hasPart",
+              "Thing.hasPart"
+            ]
+          },
+          {
+            "construct": "owl.property_characteristic",
+            "count": 3,
+            "detail": "Transitive, symmetric, asymmetric, reflexive, irreflexive and inverse-functional properties license inferences, not structure; the characteristic is kept in extras['owl_characteristics'].",
+            "locations": [
+              "Assembly.hasPart",
+              "Kit.hasPart",
+              "Thing.hasPart"
+            ]
+          },
+          {
+            "construct": "owl.property_without_domain",
+            "count": 4,
+            "detail": "A property has no rdfs:domain and no class restricts it, so it is attached to no type; it is listed in extras['owl']['unattached_properties'].",
+            "locations": [
+              "ex:adjacentTo",
+              "ex:hasIdentifier",
+              "ex:parentOf",
+              "ex:sameSiteAs"
+            ]
+          },
+          {
+            "construct": "owl.quantified_restriction",
+            "count": 2,
+            "detail": "owl:someValuesFrom / owl:allValuesFrom / owl:hasValue restrictions quantify over an open world; the restricted property is a field and the restriction is kept in extras['owl_restrictions'].",
+            "locations": [
+              "Kit.hasPart",
+              "PremiumWidget.tier"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/04-stress-owl-constructs.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "individual_identity": [
+          "ex:Green differentFrom ex:Blue",
+          "ex:Red sameAs <https://other.example.com/colours#Crimson>"
+        ],
+        "input": "file",
+        "ontologies": [
+          "https://example.com/stress",
+          "https://example.com/stress/2.0.0"
+        ],
+        "ontology": {
+          "iri": "https://example.com/stress",
+          "version_iri": "https://example.com/stress/2.0.0"
+        },
+        "unattached_properties": [
+          "ex:adjacentTo",
+          "ex:hasIdentifier",
+          "ex:parentOf",
+          "ex:sameSiteAs"
+        ]
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "stress",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "stress",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Assembly",
+          "owl_superclasses": [
+            "Thing"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing",
+              "owl_restriction": {
+                "minCount": 1,
+                "on": "ex:Thing"
+              }
+            },
+            "field_number": null,
+            "key": "Assembly.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#label",
+              "owl_inherited_from": "Thing",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Assembly.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#serialNumber",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {
+                "maxCount": 1,
+                "minCount": 1,
+                "on": "xsd:string"
+              }
+            },
+            "field_number": null,
+            "key": "Assembly.serialNumber",
+            "name": "serialNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Assembly",
+        "key_type": null,
+        "kind": "record",
+        "name": "Assembly",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Colour.Red",
+            "name": "Red",
+            "value": "https://example.com/stress#Red"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Colour.Green",
+            "name": "Green",
+            "value": "https://example.com/stress#Green"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Colour.Blue",
+            "name": "Blue",
+            "value": "https://example.com/stress#Blue"
+          }
+        ],
+        "extras": {
+          "native_id": "https://example.com/stress#Colour"
+        },
+        "fields": [],
+        "key": "Colour",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Colour",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Gadget",
+          "owl_disjoint_with": [
+            "ex:Widget"
+          ],
+          "owl_superclasses": [
+            "Thing"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_inherited_from": "Thing",
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing"
+            },
+            "field_number": null,
+            "key": "Gadget.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#label",
+              "owl_inherited_from": "Thing",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Gadget.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Gadget",
+        "key_type": null,
+        "kind": "record",
+        "name": "Gadget",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Kit",
+          "owl_restrictions": [
+            {
+              "allValuesFrom": "ex:Thing",
+              "onProperty": "ex:hasPart",
+              "someValuesFrom": "ex:Widget"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing",
+              "owl_restriction": {},
+              "owl_restrictions": {
+                "allValuesFrom": "ex:Thing",
+                "someValuesFrom": "ex:Widget"
+              }
+            },
+            "field_number": null,
+            "key": "Kit.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Kit",
+        "key_type": null,
+        "kind": "record",
+        "name": "Kit",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#NotAWidget",
+          "owl_class_expression": {
+            "complementOf": "ex:Widget"
+          }
+        },
+        "fields": [],
+        "key": "NotAWidget",
+        "key_type": null,
+        "kind": "record",
+        "name": "NotAWidget",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "decimal",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": null,
+          "maximum": 100.0,
+          "min_items": null,
+          "min_length": null,
+          "minimum": 0.0,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Percentage",
+          "owl_on_datatype": "xsd:decimal"
+        },
+        "fields": [],
+        "key": "Percentage",
+        "key_type": null,
+        "kind": "alias",
+        "name": "Percentage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#PremiumWidget",
+          "owl_class_expression": {
+            "intersectionOf": [
+              "ex:Widget",
+              "restriction"
+            ]
+          },
+          "owl_restrictions": [
+            {
+              "hasValue": "premium",
+              "onProperty": "ex:tier"
+            }
+          ],
+          "owl_superclasses": [
+            "Widget"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_inherited_from": "Thing",
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing"
+            },
+            "field_number": null,
+            "key": "PremiumWidget.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#label",
+              "owl_inherited_from": "Thing",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "PremiumWidget.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#tier",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {},
+              "owl_restrictions": {
+                "hasValue": "premium"
+              }
+            },
+            "field_number": null,
+            "key": "PremiumWidget.tier",
+            "name": "tier",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PremiumWidget",
+        "key_type": null,
+        "kind": "record",
+        "name": "PremiumWidget",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Sellable",
+          "owl_class_expression": {
+            "unionOf": [
+              "ex:Widget",
+              "ex:Gadget"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "Sellable",
+        "key_type": null,
+        "kind": "union",
+        "name": "Sellable",
+        "namespace": null,
+        "union_members": [
+          "Widget",
+          "Gadget"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Thing"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing"
+            },
+            "field_number": null,
+            "key": "Thing.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#label",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Thing.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Thing",
+        "key_type": null,
+        "kind": "record",
+        "name": "Thing",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/stress#Widget",
+          "owl_disjoint_with": [
+            "ex:Gadget"
+          ],
+          "owl_equivalent_class": [
+            "<https://other.example.com/parts#Component>"
+          ],
+          "owl_superclasses": [
+            "Thing"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#hasPart",
+              "owl_characteristics": [
+                "TransitiveProperty"
+              ],
+              "owl_inherited_from": "Thing",
+              "owl_property_chain": [
+                [
+                  "ex:hasPart",
+                  "ex:hasPart"
+                ]
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "ex:Thing"
+            },
+            "field_number": null,
+            "key": "Widget.hasPart",
+            "name": "hasPart",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Thing",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/stress#label",
+              "owl_inherited_from": "Thing",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Widget.label",
+            "name": "label",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Widget",
+        "key_type": null,
+        "kind": "record",
+        "name": "Widget",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "2.0.0"
+  },
+  "corpus_path": "owl/04-stress-owl-constructs.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 10
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:60040757daea0fbffdebf6df8083fbe1169ef2e0b034dbd6d4886440dbb96bd5",
+  "lint": {
+    "findings": 24,
+    "grade": "D",
+    "report_fingerprint": "61f9343c3e4307d6b6f6a3d4e8d923f79fb3bbfc53348a88b41e41457443ece5",
+    "score": 66,
+    "severity_counts": {
+      "error": 0,
+      "info": 14,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}

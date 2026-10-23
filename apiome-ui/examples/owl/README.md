@@ -2,8 +2,7 @@
 
 Fixtures for the OWL/RDFS third of **FMT-9.4** ([#5471](https://github.com/apiome/apiome/issues/5471)).
 Class and property hierarchies import as canonical types with inheritance where expressible. The
-sibling directories are `shacl/` (shapes) and `jsonld/` (contexts). Entries carry `adapter_key: null`
-and the `pending-adapter` tag.
+sibling directories are `shacl/` (shapes) and `jsonld/` (contexts). The `owl` adapter imports them.
 
 **Detection markers.** `owl:Ontology` / `owl:Class` / `owl:ObjectProperty` / `owl:DatatypeProperty`
 in the `http://www.w3.org/2002/07/owl#` namespace — Turtle (`.ttl`) or RDF/XML (`.owl`).
@@ -31,6 +30,7 @@ in the `http://www.w3.org/2002/07/owl#` namespace — Turtle (`.ttl`) or RDF/XML
 | `05-real-world-domain-ontology.ttl` | real-world | A regulated-industry domain ontology: versioned and licensed, disjoint subclasses, cardinality-restricted case class, SKOS-backed code lists, language-tagged labels. |
 | `06-typical-rdfxml.owl` | typical | The **RDF/XML** serialization — same model, the syntax OWL tools export. |
 | `07-composition-class-hierarchy.ttl` | composition | A three-level class hierarchy where each level adds restrictions, plus `rdfs:subPropertyOf`. |
+| `08-typical-rdfs-vocabulary.ttl` | typical | A plain **RDF Schema** vocabulary — `rdfs:Class`, `rdf:Property`, a subclass and domain/range, no OWL at all. Detected as `rdfs`. |
 | `negative/` | — | Unterminated IRI, an ontology header with no vocabulary, truncation, a **SHACL shapes graph** (same syntax, different namespace), UTF-16, and an `owl:imports` that cannot be resolved. |
 
 **Open-world boundary.** OWL is open-world and inference-driven; Apiome's model is closed-world.

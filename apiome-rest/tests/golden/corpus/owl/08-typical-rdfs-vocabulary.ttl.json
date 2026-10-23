@@ -1,0 +1,310 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "08-typical-rdfs-vocabulary"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/08-typical-rdfs-vocabulary.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": []
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "08-typical-rdfs-vocabulary",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "08-typical-rdfs-vocabulary",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/library#Book",
+          "owl_superclasses": [
+            "Work"
+          ],
+          "rdfs_label": "Book"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#author",
+              "owl_inherited_from": "Work",
+              "owl_property_kind": "object",
+              "owl_range": "lib:Person"
+            },
+            "field_number": null,
+            "key": "Book.author",
+            "name": "author",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Person",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#isbn",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Book.isbn",
+            "name": "isbn",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#pageCount",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:nonNegativeInteger"
+            },
+            "field_number": null,
+            "key": "Book.pageCount",
+            "name": "pageCount",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#title",
+              "owl_inherited_from": "Work",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Book.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Book",
+        "key_type": null,
+        "kind": "record",
+        "name": "Book",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/library#Person",
+          "rdfs_label": "Person"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#name",
+              "owl_property_kind": "datatype",
+              "owl_range": "rdfs:Literal"
+            },
+            "field_number": null,
+            "key": "Person.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Person",
+        "key_type": null,
+        "kind": "record",
+        "name": "Person",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A creative work held by the library.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/library#Work",
+          "rdfs_label": "Work"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#author",
+              "owl_property_kind": "object",
+              "owl_range": "lib:Person"
+            },
+            "field_number": null,
+            "key": "Work.author",
+            "name": "author",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Person",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/library#title",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Work.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Work",
+        "key_type": null,
+        "kind": "record",
+        "name": "Work",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "owl/08-typical-rdfs-vocabulary.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.88,
+    "format": "rdfs"
+  },
+  "fingerprint": "sha256:b49dc61896ce5230421f0f65d72ed9edfa1662121bc1b1f0cf46db757984cc3b",
+  "lint": {
+    "findings": 10,
+    "grade": "B",
+    "report_fingerprint": "00c2f22b6a9d70a5d7a0d245b7f90eba202bd6e5276636d7d38c6d5f70020a1c",
+    "score": 84,
+    "severity_counts": {
+      "error": 0,
+      "info": 8,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

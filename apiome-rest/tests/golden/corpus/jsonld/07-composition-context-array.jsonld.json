@@ -1,0 +1,435 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context (JSON-LD 1.1): 5 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "CompositionContextArray"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/07-composition-context-array.jsonld"
+        ],
+        "input": "file",
+        "root_type": "CompositionContextArray"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CompositionContextArray",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CompositionContextArray",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "billing",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:addressLocality",
+              "native_id": "https://schema.org/addressLocality"
+            },
+            "field_number": null,
+            "key": "Billing.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:streetAddress",
+              "native_id": "https://schema.org/streetAddress"
+            },
+            "field_number": null,
+            "key": "Billing.street",
+            "name": "street",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Billing",
+        "key_type": null,
+        "kind": "record",
+        "name": "Billing",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_class_terms": {
+            "Order": "https://example.com/orders/ns#Order"
+          },
+          "jsonld_keyword_aliases": {
+            "id": "@id",
+            "type": "@type"
+          },
+          "jsonld_prefixes": {
+            "schema": "https://schema.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "jsonld_version": 1.1,
+          "jsonld_vocab": "https://example.com/orders/ns#"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:dateCreated",
+                "@type": "xsd:dateTime"
+              },
+              "native_id": "https://schema.org/dateCreated"
+            },
+            "field_number": null,
+            "key": "CompositionContextArray.created",
+            "name": "created",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "datetime",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "billing": {
+                    "@context": {
+                      "city": "schema:addressLocality",
+                      "street": "schema:streetAddress"
+                    },
+                    "@id": "https://example.com/orders/ns#billingAddress"
+                  }
+                },
+                "@id": "https://example.com/orders/ns#customer",
+                "@type": "@id"
+              },
+              "native_id": "https://example.com/orders/ns#customer"
+            },
+            "field_number": null,
+            "key": "CompositionContextArray.customer",
+            "name": "customer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Customer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@list",
+                "@context": {
+                  "quantity": {
+                    "@id": "https://example.com/orders/ns#quantity",
+                    "@type": "xsd:integer"
+                  },
+                  "sku": "https://example.com/orders/ns#sku"
+                },
+                "@id": "https://example.com/orders/ns#line"
+              },
+              "jsonld_ordered": true,
+              "native_id": "https://example.com/orders/ns#line"
+            },
+            "field_number": null,
+            "key": "CompositionContextArray.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Lines",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:name",
+              "native_id": "https://schema.org/name"
+            },
+            "field_number": null,
+            "key": "CompositionContextArray.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "new": "https://example.com/orders/ns#StatusNew",
+                  "paid": "https://example.com/orders/ns#StatusPaid"
+                },
+                "@id": "https://example.com/orders/ns#status",
+                "@type": "@vocab"
+              },
+              "native_id": "https://example.com/orders/ns#status"
+            },
+            "field_number": null,
+            "key": "CompositionContextArray.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Status",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "CompositionContextArray",
+        "key_type": null,
+        "kind": "record",
+        "name": "CompositionContextArray",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "customer",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "city": "schema:addressLocality",
+                  "street": "schema:streetAddress"
+                },
+                "@id": "https://example.com/orders/ns#billingAddress"
+              },
+              "native_id": "https://example.com/orders/ns#billingAddress"
+            },
+            "field_number": null,
+            "key": "Customer.billing",
+            "name": "billing",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Billing",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Customer",
+        "key_type": null,
+        "kind": "record",
+        "name": "Customer",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "lines",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "https://example.com/orders/ns#quantity",
+                "@type": "xsd:integer"
+              },
+              "native_id": "https://example.com/orders/ns#quantity"
+            },
+            "field_number": null,
+            "key": "Lines.quantity",
+            "name": "quantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "https://example.com/orders/ns#sku",
+              "native_id": "https://example.com/orders/ns#sku"
+            },
+            "field_number": null,
+            "key": "Lines.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Lines",
+        "key_type": null,
+        "kind": "record",
+        "name": "Lines",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The values the status term maps to IRIs (@type: @vocab).",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Status.new",
+            "name": "new",
+            "value": "https://example.com/orders/ns#StatusNew"
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Status.paid",
+            "name": "paid",
+            "value": "https://example.com/orders/ns#StatusPaid"
+          }
+        ],
+        "extras": {
+          "jsonld_term": "status",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [],
+        "key": "Status",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Status",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/07-composition-context-array.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:f22600769ccc8245244ebf6002b65ad982d679c7622549e04884f5cdf9dbc72c",
+  "lint": {
+    "findings": 13,
+    "grade": "C",
+    "report_fingerprint": "4c076c2e2df70140073522095ab65782e5dae6d9fe1b7271e34f2978ffe864ad",
+    "score": 78,
+    "severity_counts": {
+      "error": 0,
+      "info": 10,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

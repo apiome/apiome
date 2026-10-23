@@ -1,0 +1,858 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context (JSON-LD 1.1): 21 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "RealWorldCatalogContext"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/05-real-world-catalog-context.jsonld"
+        ],
+        "input": "file",
+        "root_type": "RealWorldCatalogContext"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "RealWorldCatalogContext",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "RealWorldCatalogContext",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "contactPoint",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "vcard:hasEmail",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/2006/vcard/ns#hasEmail"
+            },
+            "field_number": null,
+            "key": "ContactPoint.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "vcard:fn",
+              "native_id": "http://www.w3.org/2006/vcard/ns#fn"
+            },
+            "field_number": null,
+            "key": "ContactPoint.fn",
+            "name": "fn",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ContactPoint",
+        "key_type": null,
+        "kind": "record",
+        "name": "ContactPoint",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A JSON-LD language map: language tag → string.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@language",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "LanguageMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "LanguageMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_class_terms": {
+            "Catalog": "http://www.w3.org/ns/dcat#Catalog",
+            "Dataset": "http://www.w3.org/ns/dcat#Dataset",
+            "Distribution": "http://www.w3.org/ns/dcat#Distribution",
+            "Organisation": "http://xmlns.com/foaf/0.1/Organization"
+          },
+          "jsonld_keyword_aliases": {
+            "id": "@id",
+            "type": "@type"
+          },
+          "jsonld_prefixes": {
+            "dcat": "http://www.w3.org/ns/dcat#",
+            "dct": "http://purl.org/dc/terms/",
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "vcard": "http://www.w3.org/2006/vcard/ns#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "jsonld_version": 1.1,
+          "jsonld_vocab": "https://example.com/catalogue/ns#"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dcat:accessURL",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#accessURL"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.accessUrl",
+            "name": "accessUrl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dct:accrualPeriodicity",
+                "@type": "@id"
+              },
+              "native_id": "http://purl.org/dc/terms/accrualPeriodicity"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.accrualPeriodicity",
+            "name": "accrualPeriodicity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "skos:broader",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/2004/02/skos/core#broader"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.broader",
+            "name": "broader",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dcat:byteSize",
+                "@type": "xsd:nonNegativeInteger"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#byteSize"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.byteSize",
+            "name": "byteSize",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "email": {
+                    "@id": "vcard:hasEmail",
+                    "@type": "@id"
+                  },
+                  "fn": "vcard:fn"
+                },
+                "@id": "dcat:contactPoint"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#contactPoint"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.contactPoint",
+            "name": "contactPoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ContactPoint",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "dcat:dataset",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#dataset"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.datasets",
+            "name": "datasets",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@language",
+                "@id": "dct:description"
+              },
+              "native_id": "http://purl.org/dc/terms/description"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.description",
+            "name": "description",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LanguageMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "dcat:distribution"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#distribution"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.distributions",
+            "name": "distributions",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dcat:downloadURL",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#downloadURL"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.downloadUrl",
+            "name": "downloadUrl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "dct:identifier",
+              "native_id": "http://purl.org/dc/terms/identifier"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dct:issued",
+                "@type": "xsd:date"
+              },
+              "native_id": "http://purl.org/dc/terms/issued"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.issued",
+            "name": "issued",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "dcat:keyword"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#keyword"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.keywords",
+            "name": "keywords",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "dct:language",
+                "@type": "@id"
+              },
+              "native_id": "http://purl.org/dc/terms/language"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.language",
+            "name": "language",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dct:license",
+                "@type": "@id"
+              },
+              "native_id": "http://purl.org/dc/terms/license"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.licence",
+            "name": "licence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "dcat:mediaType",
+              "native_id": "http://www.w3.org/ns/dcat#mediaType"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.mediaType",
+            "name": "mediaType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dct:modified",
+                "@type": "xsd:date"
+              },
+              "native_id": "http://purl.org/dc/terms/modified"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.modified",
+            "name": "modified",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "skos:narrower",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/2004/02/skos/core#narrower"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.narrower",
+            "name": "narrower",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@language",
+                "@id": "skos:prefLabel"
+              },
+              "native_id": "http://www.w3.org/2004/02/skos/core#prefLabel"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.prefLabel",
+            "name": "prefLabel",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LanguageMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "dct:publisher",
+                "@type": "@id"
+              },
+              "native_id": "http://purl.org/dc/terms/publisher"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.publisher",
+            "name": "publisher",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "dcat:theme",
+                "@type": "@id"
+              },
+              "native_id": "http://www.w3.org/ns/dcat#theme"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.themes",
+            "name": "themes",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@language",
+                "@id": "dct:title"
+              },
+              "native_id": "http://purl.org/dc/terms/title"
+            },
+            "field_number": null,
+            "key": "RealWorldCatalogContext.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LanguageMap",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "RealWorldCatalogContext",
+        "key_type": null,
+        "kind": "record",
+        "name": "RealWorldCatalogContext",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/05-real-world-catalog-context.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:b5590c5861fb8e192f98af5ad25e79c75df44a64ea0531be64bc3afcbea0bbb8",
+  "lint": {
+    "findings": 24,
+    "grade": "C",
+    "report_fingerprint": "ff69013cc05d02708191f798587b894d3cf3d24ef68dbec52204a552fc929688",
+    "score": 76,
+    "severity_counts": {
+      "error": 0,
+      "info": 23,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

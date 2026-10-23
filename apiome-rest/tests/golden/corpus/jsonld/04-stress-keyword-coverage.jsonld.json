@@ -1,0 +1,907 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context (JSON-LD 1.1): 19 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.graph_container",
+            "count": 1,
+            "detail": "A @graph container holds named graphs, which the canonical model has no shape for; the field keeps the any type.",
+            "locations": [
+              "StressKeywordCoverage.graphContainer"
+            ]
+          },
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "StressKeywordCoverage"
+            ]
+          },
+          {
+            "construct": "jsonld.reverse_property",
+            "count": 1,
+            "detail": "A reverse property (@reverse) states the relationship from the other node's side; it is a field here, with the reversed IRI kept in extras['jsonld_reverse'].",
+            "locations": [
+              "StressKeywordCoverage.reverseProperty"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/04-stress-keyword-coverage.jsonld"
+        ],
+        "input": "file",
+        "root_type": "StressKeywordCoverage"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "StressKeywordCoverage",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "StressKeywordCoverage",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "deep",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "ex:deepestTerm",
+              "native_id": "https://example.com/ns#deepestTerm"
+            },
+            "field_number": null,
+            "key": "Deep.deepest",
+            "name": "deepest",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Deep",
+        "key_type": null,
+        "kind": "record",
+        "name": "Deep",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A JSON-LD language map: language tag → string.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@language",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "LanguageMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "LanguageMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "scoped",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "deepest": "ex:deepestTerm"
+                },
+                "@id": "ex:deepTerm"
+              },
+              "native_id": "https://example.com/ns#deepTerm"
+            },
+            "field_number": null,
+            "key": "Scoped.deep",
+            "name": "deep",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Deep",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "ex:innerTerm",
+              "native_id": "https://example.com/ns#innerTerm"
+            },
+            "field_number": null,
+            "key": "Scoped.inner",
+            "name": "inner",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Scoped",
+        "key_type": null,
+        "kind": "record",
+        "name": "Scoped",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_base": "https://example.com/records/",
+          "jsonld_keyword_aliases": {
+            "aliasedNone": "@none",
+            "graph": "@graph",
+            "id": "@id",
+            "nestedTerm": "@nest",
+            "type": "@type"
+          },
+          "jsonld_language": "en",
+          "jsonld_prefixes": {
+            "ex": "https://example.com/ns#",
+            "schema": "https://schema.org/",
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "jsonld_protected": true,
+          "jsonld_version": 1.1,
+          "jsonld_vocab": "https://example.com/ns#"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@direction": "rtl",
+                "@id": "ex:rtl",
+                "@language": "ar"
+              },
+              "native_id": "https://example.com/ns#rtl"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.directionAware",
+            "name": "directionAware",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@graph",
+                "@id": "ex:namedGraphs"
+              },
+              "native_id": "https://example.com/ns#namedGraphs"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.graphContainer",
+            "name": "graphContainer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@id",
+                "@id": "ex:byIdentifier"
+              },
+              "native_id": "https://example.com/ns#byIdentifier"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.idContainer",
+            "name": "idContainer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StressKeywordCoverage_IdContainerMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@index",
+                "@id": "ex:byRegion"
+              },
+              "native_id": "https://example.com/ns#byRegion"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.indexContainer",
+            "name": "indexContainer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StressKeywordCoverage_IndexContainerMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "ex:indexed",
+                "@index": "ex:indexKey"
+              },
+              "native_id": "https://example.com/ns#indexed"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.indexedTerm",
+            "name": "indexedTerm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@language",
+                "@id": "skos:prefLabel"
+              },
+              "native_id": "http://www.w3.org/2004/02/skos/core#prefLabel"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.languageContainer",
+            "name": "languageContainer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "LanguageMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@list",
+                "@id": "ex:orderedSteps"
+              },
+              "jsonld_ordered": true,
+              "native_id": "https://example.com/ns#orderedSteps"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.listContainer",
+            "name": "listContainer",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "ex:prefixed",
+                "@prefix": true
+              },
+              "native_id": "https://example.com/ns#prefixed"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.prefixed",
+            "name": "prefixed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "ex:immutable",
+                "@protected": true
+              },
+              "native_id": "https://example.com/ns#immutable"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.protectedTerm",
+            "name": "protectedTerm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@reverse": "schema:memberOf",
+                "@type": "@id"
+              },
+              "jsonld_reverse": true,
+              "native_id": "https://schema.org/memberOf"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.reverseProperty",
+            "name": "reverseProperty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "deep": {
+                    "@context": {
+                      "deepest": "ex:deepestTerm"
+                    },
+                    "@id": "ex:deepTerm"
+                  },
+                  "inner": "ex:innerTerm"
+                },
+                "@id": "ex:scoped"
+              },
+              "native_id": "https://example.com/ns#scoped"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.scoped",
+            "name": "scoped",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Scoped",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": [
+                  "@index",
+                  "@set"
+                ],
+                "@id": "ex:multi"
+              },
+              "native_id": "https://example.com/ns#multi"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.setAndIndex",
+            "name": "setAndIndex",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StressKeywordCoverage_SetAndIndexMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "schema:keywords"
+              },
+              "native_id": "https://schema.org/keywords"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.setContainer",
+            "name": "setContainer",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@type",
+                "@id": "ex:byType"
+              },
+              "native_id": "https://example.com/ns#byType"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typeContainer",
+            "name": "typeContainer",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StressKeywordCoverage_TypeContainerMap",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@context": {
+                  "onlyHere": "ex:onlyWhenTypeIsTyped"
+                },
+                "@id": "ex:Typed"
+              },
+              "native_id": "https://example.com/ns#Typed"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typeScoped",
+            "name": "typeScoped",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "TypeScoped",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:dateCreated",
+                "@type": "xsd:dateTime"
+              },
+              "native_id": "https://schema.org/dateCreated"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typedDate",
+            "name": "typedDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "datetime",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:url",
+                "@type": "@id"
+              },
+              "native_id": "https://schema.org/url"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typedIri",
+            "name": "typedIri",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "ex:payload",
+                "@type": "@json"
+              },
+              "native_id": "https://example.com/ns#payload"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typedJson",
+            "name": "typedJson",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:additionalType",
+                "@type": "@vocab"
+              },
+              "native_id": "https://schema.org/additionalType"
+            },
+            "field_number": null,
+            "key": "StressKeywordCoverage.typedVocab",
+            "name": "typedVocab",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "StressKeywordCoverage",
+        "key_type": null,
+        "kind": "record",
+        "name": "StressKeywordCoverage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The @id map of idContainer: id → value.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@id",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "StressKeywordCoverage_IdContainerMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "StressKeywordCoverage_IdContainerMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "any",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The @index map of indexContainer: index → value.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@index",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "StressKeywordCoverage_IndexContainerMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "StressKeywordCoverage_IndexContainerMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "any",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The @index map of setAndIndex: index → value.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@index",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "StressKeywordCoverage_SetAndIndexMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "StressKeywordCoverage_SetAndIndexMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": {
+            "extras": {},
+            "item": null,
+            "name": "any",
+            "nullable": false
+          },
+          "name": null,
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The @type map of typeContainer: type → value.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_container": "@type",
+          "provenance": "synthesized",
+          "provenance_evidence": "A JSON-LD container map has no name of its own; the map type is named by Apiome."
+        },
+        "fields": [],
+        "key": "StressKeywordCoverage_TypeContainerMap",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "kind": "map",
+        "name": "StressKeywordCoverage_TypeContainerMap",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "any",
+          "nullable": false
+        }
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "jsonld_scoped_from": "typeScoped",
+          "provenance": "synthesized",
+          "provenance_evidence": "A scoped context has no name of its own; the type is named after its term by Apiome."
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "ex:onlyWhenTypeIsTyped",
+              "native_id": "https://example.com/ns#onlyWhenTypeIsTyped"
+            },
+            "field_number": null,
+            "key": "TypeScoped.onlyHere",
+            "name": "onlyHere",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "TypeScoped",
+        "key_type": null,
+        "kind": "record",
+        "name": "TypeScoped",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/04-stress-keyword-coverage.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 9
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:763dedaa190f48938fb4a9b15f7d6b0c0dd666858236108298fd28bd1f49a109",
+  "lint": {
+    "findings": 26,
+    "grade": "D",
+    "report_fingerprint": "38dc762070c4543490ae29d41d5d4bfcfb915fde0d079c470fbd3a9798cbaee5",
+    "score": 68,
+    "severity_counts": {
+      "error": 0,
+      "info": 23,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,292 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "Shipping ontology"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "domain.ttl",
+            "syntax": "turtle"
+          },
+          {
+            "path": "core.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "fileset",
+        "ontologies": [
+          "https://example.com/shipping",
+          "https://example.com/core"
+        ],
+        "ontology": {
+          "imports": [
+            "https://example.com/core"
+          ],
+          "iri": "https://example.com/shipping"
+        }
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Shipping ontology",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Shipping ontology",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/core#Address",
+          "rdf_file": "core.ttl",
+          "rdfs_label": "Address"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core#countryCode",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Address.countryCode",
+            "name": "countryCode",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core#line1",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Address.line1",
+            "name": "line1",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Address",
+        "key_type": null,
+        "kind": "record",
+        "name": "Address",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/core#Document",
+          "rdf_file": "core.ttl",
+          "rdfs_label": "Document"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core#identifier",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Document.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Document",
+        "key_type": null,
+        "kind": "record",
+        "name": "Document",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/shipping#Shipment",
+          "owl_superclasses": [
+            "Document"
+          ],
+          "rdf_file": "domain.ttl",
+          "rdfs_label": "Shipment"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/core#identifier",
+              "owl_functional": true,
+              "owl_inherited_from": "Document",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string"
+            },
+            "field_number": null,
+            "key": "Shipment.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/shipping#shipTo",
+              "owl_property_kind": "object",
+              "owl_range": "core:Address"
+            },
+            "field_number": null,
+            "key": "Shipment.shipTo",
+            "name": "shipTo",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Address",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/shipping#weightKg",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:decimal"
+            },
+            "field_number": null,
+            "key": "Shipment.weightKg",
+            "name": "weightKg",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Shipment",
+        "key_type": null,
+        "kind": "record",
+        "name": "Shipment",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.1.0"
+  },
+  "corpus_path": "owl/03-imports-set/domain.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:8f5bc5371dd2774ec7f081a6fd512b70d2d6bee24fc2c5ea99f8c7541b497826",
+  "lint": {
+    "findings": 10,
+    "grade": "B",
+    "report_fingerprint": "648b53bd982685f7e0196cc2024e0c5657b807ffd6029a10927b702eaafa20c4",
+    "score": 81,
+    "severity_counts": {
+      "error": 0,
+      "info": 7,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

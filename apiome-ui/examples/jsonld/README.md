@@ -3,7 +3,7 @@
 Fixtures for the JSON-LD third of **FMT-9.4** ([#5471](https://github.com/apiome/apiome/issues/5471)).
 A context is the mapping layer between JSON property names and IRIs: it names terms, gives them types
 and containers, and is what makes a JSON document linked data. The sibling directories are `shacl/`
-and `owl/`. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+and `owl/`. The `jsonld` adapter imports them.
 
 **Detection marker.** A top-level `@context` object (or array), whose values are IRIs or term
 definitions with `@id` / `@type` / `@container`.
@@ -24,6 +24,6 @@ JSON); `@container` → cardinality and shape (`@set`/`@list` → arrays, `@lang
 | `07-composition-context-array.jsonld` | composition | A three-element context array with nested scoped contexts and `@type: @vocab` value mapping. |
 | `negative/` | — | Trailing comma, a document with no `@context`, truncation, a **JSON Schema**, UTF-16, and a context array whose remote and relative entries cannot be fetched. |
 
-**Network boundary.** `negative/06` is the important one: remote contexts must be resolved under the
-same SSRF guard as every other remote reference, and an unreachable context is a **named unresolved
-reference**, never a silently empty term map.
+**Network boundary.** `negative/06` is the important one: the importer never fetches a remote context
+(so there is no request to guard), and a context the upload does not contain is a **named unresolved
+reference** (`INPUT_REFERENCE_UNRESOLVED`), never a silently empty term map.

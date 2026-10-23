@@ -1,0 +1,273 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context: 7 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.instance_data",
+            "count": 1,
+            "detail": "The document carries instance data (@graph or node properties) beside its context. A context import catalogs the vocabulary; the nodes are counted in extras['jsonld']['instance_data'], not imported.",
+            "locations": [
+              "TypicalDocumentWithContext"
+            ]
+          },
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "TypicalDocumentWithContext"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/06-typical-document-with-context.jsonld"
+        ],
+        "input": "file",
+        "instance_data": {
+          "nodes": 2,
+          "types": [
+            "schema:Product"
+          ]
+        },
+        "root_type": "TypicalDocumentWithContext"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TypicalDocumentWithContext",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TypicalDocumentWithContext",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_keyword_aliases": {
+            "id": "@id",
+            "type": "@type"
+          },
+          "jsonld_prefixes": {
+            "schema": "https://schema.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+          },
+          "jsonld_vocab": "https://example.com/ns#"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:category",
+                "@type": "@id"
+              },
+              "native_id": "https://schema.org/category"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.category",
+            "name": "category",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:priceCurrency",
+              "native_id": "https://schema.org/priceCurrency"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:name",
+              "native_id": "https://schema.org/name"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:price",
+                "@type": "xsd:decimal"
+              },
+              "native_id": "https://schema.org/price"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.price",
+            "name": "price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@id": "schema:releaseDate",
+                "@type": "xsd:date"
+              },
+              "native_id": "https://schema.org/releaseDate"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.released",
+            "name": "released",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "schema:sku",
+              "native_id": "https://schema.org/sku"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.sku",
+            "name": "sku",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": {
+                "@container": "@set",
+                "@id": "schema:keywords"
+              },
+              "native_id": "https://schema.org/keywords"
+            },
+            "field_number": null,
+            "key": "TypicalDocumentWithContext.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "TypicalDocumentWithContext",
+        "key_type": null,
+        "kind": "record",
+        "name": "TypicalDocumentWithContext",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/06-typical-document-with-context.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:11c94a3e192e399c8d352964da9fc33f74182a89a9ab0a0ef63d9c72e0f9b3a0",
+  "lint": {
+    "findings": 7,
+    "grade": "A",
+    "report_fingerprint": "1cac3ee50eac9e1072c92ddabfa33f8c5686f6901761f82b899496dfe1b23eaf",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 7,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

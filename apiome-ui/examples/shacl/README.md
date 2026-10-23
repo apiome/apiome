@@ -3,7 +3,7 @@
 Fixtures for the SHACL third of **FMT-9.4** ([#5471](https://github.com/apiome/apiome/issues/5471)).
 SHACL is a constraint language directly comparable to JSON Schema, and it is how linked-data estates in
 publishing, pharmaceuticals and government describe their data. The sibling directories are `jsonld/`
-(contexts) and `owl/` (ontologies). Entries carry `adapter_key: null` and the `pending-adapter` tag.
+(contexts) and `owl/` (ontologies). The `shacl` adapter imports them.
 
 **Detection markers.** `sh:NodeShape` / `sh:PropertyShape` with the `http://www.w3.org/ns/shacl#`
 namespace, in Turtle (`.ttl`) or JSON-LD (`.jsonld`).

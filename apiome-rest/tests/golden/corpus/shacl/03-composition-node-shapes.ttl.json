@@ -1,0 +1,659 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [
+          {
+            "construct": "shacl.complex_path",
+            "count": 2,
+            "detail": "A sequence, inverse, alternative or zero-or-one property path is projected to one field named after its steps; the path itself is kept in extras['shacl_path'].",
+            "locations": [
+              "OrderShape.orderedBy_inverse",
+              "OrderShape.shipTo_countryCode"
+            ]
+          },
+          {
+            "construct": "shacl.logical_alternatives",
+            "count": 4,
+            "detail": "sh:or / sh:xone alternatives are projected as optional fields (or a union of the alternative types); the exclusive-choice semantics are kept in extras['shacl_alternative'].",
+            "locations": [
+              "OrderShape"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "shacl/03-composition-node-shapes.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "shapes": [
+          "AddressShape",
+          "IdentifiedShape",
+          "OrderShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "03-composition-node-shapes",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "03-composition-node-shapes",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#AddressShape"
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#city",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:city"
+            },
+            "field_number": null,
+            "key": "AddressShape.city",
+            "name": "city",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Z]{2}$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#countryCode",
+              "shacl_datatype": "xsd:string",
+              "shacl_path": "ex:countryCode"
+            },
+            "field_number": null,
+            "key": "AddressShape.countryCode",
+            "name": "countryCode",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#line1",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:line1"
+            },
+            "field_number": null,
+            "key": "AddressShape.line1",
+            "name": "line1",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#postalCode",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:postalCode"
+            },
+            "field_number": null,
+            "key": "AddressShape.postalCode",
+            "name": "postalCode",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "AddressShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "AddressShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#IdentifiedShape"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#identifier",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:identifier"
+            },
+            "field_number": null,
+            "key": "IdentifiedShape.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "IdentifiedShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "IdentifiedShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#OrderShape",
+          "shacl_and": [
+            {
+              "properties": [
+                "ex:placedAt"
+              ]
+            }
+          ],
+          "shacl_node": [
+            "IdentifiedShape"
+          ],
+          "shacl_or": [
+            {
+              "properties": [
+                "ex:total"
+              ]
+            },
+            {
+              "properties": [
+                "ex:total"
+              ]
+            }
+          ],
+          "shacl_target_class": [
+            "ex:Order"
+          ],
+          "shacl_xone": [
+            {
+              "properties": [
+                "ex:cardToken"
+              ]
+            },
+            {
+              "properties": [
+                "ex:bankTransferIban"
+              ]
+            }
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#bankTransferIban",
+              "shacl_alternative": "xone",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:bankTransferIban"
+            },
+            "field_number": null,
+            "key": "OrderShape.bankTransferIban",
+            "name": "bankTransferIban",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#billTo",
+              "shacl_max_count": 1,
+              "shacl_path": "ex:billTo"
+            },
+            "field_number": null,
+            "key": "OrderShape.billTo",
+            "name": "billTo",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "AddressShape",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#cardToken",
+              "shacl_alternative": "xone",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:cardToken"
+            },
+            "field_number": null,
+            "key": "OrderShape.cardToken",
+            "name": "cardToken",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#identifier",
+              "shacl_datatype": "xsd:string",
+              "shacl_inherited_from": "IdentifiedShape",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:identifier"
+            },
+            "field_number": null,
+            "key": "OrderShape.identifier",
+            "name": "identifier",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "iri",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "shacl_class": "ex:Customer",
+              "shacl_max_count": 1,
+              "shacl_path": "^ex:orderedBy"
+            },
+            "field_number": null,
+            "key": "OrderShape.orderedBy_inverse",
+            "name": "orderedBy_inverse",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#placedAt",
+              "shacl_datatype": "xsd:dateTime",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:placedAt"
+            },
+            "field_number": null,
+            "key": "OrderShape.placedAt",
+            "name": "placedAt",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "datetime",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#shipTo",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_path": "ex:shipTo"
+            },
+            "field_number": null,
+            "key": "OrderShape.shipTo",
+            "name": "shipTo",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "AddressShape",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "NL",
+                "BE",
+                "DE",
+                "FR",
+                "GB"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "shacl_message": "Orders may only ship to supported countries.",
+              "shacl_path": "ex:shipTo / ex:countryCode"
+            },
+            "field_number": null,
+            "key": "OrderShape.shipTo_countryCode",
+            "name": "shipTo_countryCode",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#total",
+              "shacl_alternative": "or",
+              "shacl_alternative_types": [
+                "integer"
+              ],
+              "shacl_datatype": "xsd:decimal",
+              "shacl_path": "ex:total"
+            },
+            "field_number": null,
+            "key": "OrderShape.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "OrderShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrderShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/03-composition-node-shapes.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:0398f5697be48959972122aadbfd5cb8fddabc4217e033e17a85ea0033aa4147",
+  "lint": {
+    "findings": 18,
+    "grade": "C",
+    "report_fingerprint": "1b5104e30c60c1b4e0aac2359ab4cc1662a0373e7248e2d04897350218df3603",
+    "score": 73,
+    "severity_counts": {
+      "error": 0,
+      "info": 15,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

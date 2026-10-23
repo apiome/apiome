@@ -1,0 +1,402 @@
+{
+  "adapter": "owl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "owl": {
+        "capability_limits": [
+          {
+            "construct": "owl.disjointness",
+            "count": 2,
+            "detail": "owl:disjointWith states that no individual is in both classes; the canonical model has no such constraint, so it is kept in extras['owl_disjoint_with'].",
+            "locations": [
+              "Truck",
+              "Van"
+            ]
+          },
+          {
+            "construct": "owl.inverse_property",
+            "count": 2,
+            "detail": "owl:inverseOf pairs two properties for inference; both are fields and the pairing is kept in extras['owl_inverse_of'].",
+            "locations": [
+              "Depot.homeTo",
+              "Vehicle.basedAt"
+            ]
+          },
+          {
+            "construct": "owl.open_world",
+            "count": 1,
+            "detail": "OWL is open-world and inference-driven; Apiome's model is closed-world. The ontology's asserted classes and properties are imported as types and fields; its inferred consequences (entailed subclasses, types and property values) are not.",
+            "locations": [
+              "Fleet ontology"
+            ]
+          }
+        ],
+        "files": [
+          {
+            "path": "owl/06-typical-rdfxml.owl",
+            "syntax": "xml"
+          }
+        ],
+        "input": "file",
+        "ontologies": [
+          "https://example.com/fleet"
+        ],
+        "ontology": {
+          "iri": "https://example.com/fleet"
+        }
+      }
+    },
+    "format": "owl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Fleet ontology",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "Fleet ontology",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/fleet#Depot",
+          "rdfs_label": "Depot"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#homeTo",
+              "owl_inverse_of": [
+                "<https://example.com/fleet#basedAt>"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "<https://example.com/fleet#Vehicle>"
+            },
+            "field_number": null,
+            "key": "Depot.homeTo",
+            "name": "homeTo",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Vehicle",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Depot",
+        "key_type": null,
+        "kind": "record",
+        "name": "Depot",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/fleet#Truck",
+          "owl_disjoint_with": [
+            "<https://example.com/fleet#Van>"
+          ],
+          "owl_superclasses": [
+            "Vehicle"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#basedAt",
+              "owl_inherited_from": "Vehicle",
+              "owl_inverse_of": [
+                "<https://example.com/fleet#homeTo>"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "<https://example.com/fleet#Depot>"
+            },
+            "field_number": null,
+            "key": "Truck.basedAt",
+            "name": "basedAt",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Depot",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#payloadKg",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:decimal"
+            },
+            "field_number": null,
+            "key": "Truck.payloadKg",
+            "name": "payloadKg",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#vin",
+              "owl_functional": true,
+              "owl_inherited_from": "Vehicle",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {
+                "maxCount": 1,
+                "minCount": 1,
+                "on": "xsd:string"
+              }
+            },
+            "field_number": null,
+            "key": "Truck.vin",
+            "name": "vin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Truck",
+        "key_type": null,
+        "kind": "record",
+        "name": "Truck",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/fleet#Van",
+          "owl_disjoint_with": [
+            "<https://example.com/fleet#Truck>"
+          ],
+          "owl_superclasses": [
+            "Vehicle"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#basedAt",
+              "owl_inherited_from": "Vehicle",
+              "owl_inverse_of": [
+                "<https://example.com/fleet#homeTo>"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "<https://example.com/fleet#Depot>"
+            },
+            "field_number": null,
+            "key": "Van.basedAt",
+            "name": "basedAt",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Depot",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#vin",
+              "owl_functional": true,
+              "owl_inherited_from": "Vehicle",
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {
+                "maxCount": 1,
+                "minCount": 1,
+                "on": "xsd:string"
+              }
+            },
+            "field_number": null,
+            "key": "Van.vin",
+            "name": "vin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Van",
+        "key_type": null,
+        "kind": "record",
+        "name": "Van",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/fleet#Vehicle",
+          "rdfs_label": "Vehicle"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#basedAt",
+              "owl_inverse_of": [
+                "<https://example.com/fleet#homeTo>"
+              ],
+              "owl_property_kind": "object",
+              "owl_range": "<https://example.com/fleet#Depot>"
+            },
+            "field_number": null,
+            "key": "Vehicle.basedAt",
+            "name": "basedAt",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "Depot",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/fleet#vin",
+              "owl_functional": true,
+              "owl_property_kind": "datatype",
+              "owl_range": "xsd:string",
+              "owl_restriction": {
+                "maxCount": 1,
+                "minCount": 1,
+                "on": "xsd:string"
+              }
+            },
+            "field_number": null,
+            "key": "Vehicle.vin",
+            "name": "vin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Vehicle",
+        "key_type": null,
+        "kind": "record",
+        "name": "Vehicle",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.4.0"
+  },
+  "corpus_path": "owl/06-typical-rdfxml.owl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "owl"
+  },
+  "fingerprint": "sha256:01d97ef17c8b4345d9959dd7816862306676661d1b1422a73a980b3061b37963",
+  "lint": {
+    "findings": 13,
+    "grade": "C",
+    "report_fingerprint": "dea180c50c29eaeeb36b6193216726b2d38c415ff22cafcec13fe51d2780d648",
+    "score": 75,
+    "severity_counts": {
+      "error": 0,
+      "info": 9,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}

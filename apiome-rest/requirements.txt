@@ -34,3 +34,5 @@ boto3>=1.34.0
 google-auth>=2.30.0
 # DICOM import (FMT-6.7): the PS3.6 data dictionary and UID registry only.
 pydicom>=3.0.0
+# SHACL / OWL / RDFS import (FMT-9.4): Turtle, RDF/XML and JSON-LD readers.
+rdflib>=7.0.0

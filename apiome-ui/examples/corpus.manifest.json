@@ -291,7 +291,7 @@
       "marker": "`$schema` / `type` + `properties`"
     },
     "jsonld": {
-      "label": "JSON-LD contexts (pending #5471)",
+      "label": "JSON-LD contexts",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "top-level `@context` with term definitions (`@id`/`@type`/`@container`)"
@@ -411,7 +411,7 @@
       "marker": "top-level `openrpc:` version"
     },
     "owl": {
-      "label": "OWL / RDFS ontologies (pending #5471)",
+      "label": "OWL / RDFS ontologies",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML)"
@@ -489,7 +489,7 @@
       "marker": "`urn:iso:std:iso:20022:tech:xsd:pain.*`/`pacs.*`/`camt.*` namespace"
     },
     "shacl": {
-      "label": "SHACL shapes (pending #5471)",
+      "label": "SHACL shapes",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`sh:NodeShape`/`sh:property` in the SHACL namespace (Turtle or JSON-LD)"
@@ -14708,7 +14708,7 @@
     {
       "path": "jsonld/01-minimal-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14717,8 +14717,7 @@
       "features": [
         "context",
         "vocab",
-        "keyword-alias",
-        "pending-adapter"
+        "keyword-alias"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14729,7 +14728,7 @@
     {
       "path": "jsonld/02-typical-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14740,8 +14739,7 @@
         "set-container",
         "list-container",
         "language-container",
-        "scoped-context",
-        "pending-adapter"
+        "scoped-context"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14752,7 +14750,7 @@
     {
       "path": "jsonld/03-contexts-set/context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14761,8 +14759,7 @@
       "features": [
         "multi-file",
         "context-array",
-        "relative-context",
-        "pending-adapter"
+        "relative-context"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14774,7 +14771,7 @@
     {
       "path": "jsonld/03-contexts-set/shared-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14783,8 +14780,7 @@
       "features": [
         "multi-file",
         "shared-terms",
-        "scoped-context",
-        "pending-adapter"
+        "scoped-context"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14796,7 +14792,7 @@
     {
       "path": "jsonld/04-stress-keyword-coverage.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14814,8 +14810,7 @@
         "nest",
         "direction",
         "base",
-        "json-type",
-        "pending-adapter"
+        "json-type"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14826,7 +14821,7 @@
     {
       "path": "jsonld/05-real-world-catalog-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14839,8 +14834,7 @@
         "vcard",
         "language-map",
         "typed-dates",
-        "scoped-context",
-        "pending-adapter"
+        "scoped-context"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14851,7 +14845,7 @@
     {
       "path": "jsonld/06-typical-document-with-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14860,8 +14854,7 @@
       "features": [
         "context-plus-graph",
         "instance-data",
-        "typed-values",
-        "pending-adapter"
+        "typed-values"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14872,7 +14865,7 @@
     {
       "path": "jsonld/07-composition-context-array.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "valid",
       "expected_detection": {
         "format": "jsonld",
@@ -14882,8 +14875,7 @@
         "context-array",
         "scoped-context",
         "nested-scoped-context",
-        "type-scoped-values",
-        "pending-adapter"
+        "type-scoped-values"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -14894,7 +14886,7 @@
     {
       "path": "jsonld/negative/01-syntactic-trailing-comma.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -14903,8 +14895,7 @@
       "features": [
         "negative",
         "syntactic",
-        "trailing-comma",
-        "pending-adapter"
+        "trailing-comma"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14916,7 +14907,7 @@
     {
       "path": "jsonld/negative/02-semantic-no-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -14925,8 +14916,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-context",
-        "pending-adapter"
+        "no-context"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14938,7 +14928,7 @@
     {
       "path": "jsonld/negative/03-truncated-mid-term.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -14947,8 +14937,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-term-definition",
-        "pending-adapter"
+        "mid-term-definition"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14960,7 +14949,7 @@
     {
       "path": "jsonld/negative/04-wrong-format-json-schema.json",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -14969,8 +14958,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "json-schema",
-        "pending-adapter"
+        "json-schema"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -14982,7 +14970,7 @@
     {
       "path": "jsonld/negative/05-encoding-utf16.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -14991,8 +14979,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -15004,7 +14991,7 @@
     {
       "path": "jsonld/negative/06-unresolvable-remote-context.jsonld",
       "format": "jsonld",
-      "adapter_key": null,
+      "adapter_key": "jsonld",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "jsonld",
@@ -15014,8 +15001,7 @@
         "negative",
         "unresolvable-ref",
         "remote-context",
-        "missing-relative-context",
-        "pending-adapter"
+        "missing-relative-context"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21174,7 +21160,7 @@
     {
       "path": "owl/01-minimal-ontology.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21183,8 +21169,7 @@
       "features": [
         "ontology-header",
         "class",
-        "datatype-property",
-        "pending-adapter"
+        "datatype-property"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21195,7 +21180,7 @@
     {
       "path": "owl/02-typical-classes-and-properties.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21208,8 +21193,7 @@
         "inverseOf",
         "FunctionalProperty",
         "disjointWith",
-        "named-individuals",
-        "pending-adapter"
+        "named-individuals"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21220,7 +21204,7 @@
     {
       "path": "owl/03-imports-set/core.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21228,8 +21212,7 @@
       },
       "features": [
         "multi-file",
-        "shared-classes",
-        "pending-adapter"
+        "shared-classes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21241,7 +21224,7 @@
     {
       "path": "owl/03-imports-set/domain.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21250,8 +21233,7 @@
       "features": [
         "multi-file",
         "owl-imports",
-        "cross-ontology-subclass",
-        "pending-adapter"
+        "cross-ontology-subclass"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21263,7 +21245,7 @@
     {
       "path": "owl/04-stress-owl-constructs.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21282,8 +21264,7 @@
         "SymmetricProperty",
         "propertyChainAxiom",
         "sameAs",
-        "equivalentClass",
-        "pending-adapter"
+        "equivalentClass"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21295,7 +21276,7 @@
     {
       "path": "owl/05-real-world-domain-ontology.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21307,8 +21288,7 @@
         "cardinality-restriction",
         "skos-code-list",
         "language-tagged-labels",
-        "licence",
-        "pending-adapter"
+        "licence"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21319,7 +21299,7 @@
     {
       "path": "owl/06-typical-rdfxml.owl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21329,8 +21309,7 @@
         "rdf-xml",
         "restriction",
         "inverseOf",
-        "disjointWith",
-        "pending-adapter"
+        "disjointWith"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21341,7 +21320,7 @@
     {
       "path": "owl/07-composition-class-hierarchy.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "owl",
@@ -21351,8 +21330,7 @@
         "subClassOf",
         "subPropertyOf",
         "restriction-inheritance",
-        "disjointWith",
-        "pending-adapter"
+        "disjointWith"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -21361,9 +21339,30 @@
       "rung": "composition"
     },
     {
+      "path": "owl/08-typical-rdfs-vocabulary.ttl",
+      "format": "owl",
+      "adapter_key": "owl",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "rdfs",
+        "min_confidence": 0.85
+      },
+      "features": [
+        "rdfs",
+        "rdf-property",
+        "subClassOf",
+        "domain-range"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
       "path": "owl/negative/01-syntactic-unterminated-iri.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21372,8 +21371,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unterminated-iri",
-        "pending-adapter"
+        "unterminated-iri"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21385,7 +21383,7 @@
     {
       "path": "owl/negative/02-semantic-no-classes.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21394,8 +21392,7 @@
       "features": [
         "negative",
         "semantic",
-        "header-only",
-        "pending-adapter"
+        "header-only"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21407,7 +21404,7 @@
     {
       "path": "owl/negative/03-truncated-mid-restriction.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21416,8 +21413,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-typed-literal",
-        "pending-adapter"
+        "mid-typed-literal"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21429,7 +21425,7 @@
     {
       "path": "owl/negative/04-wrong-format-shacl.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21438,8 +21434,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "shacl",
-        "pending-adapter"
+        "shacl"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21451,7 +21446,7 @@
     {
       "path": "owl/negative/05-encoding-utf16.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21460,8 +21455,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -21473,7 +21467,7 @@
     {
       "path": "owl/negative/06-unresolvable-import.ttl",
       "format": "owl",
-      "adapter_key": null,
+      "adapter_key": "owl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "owl",
@@ -21482,8 +21476,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-owl-imports",
-        "pending-adapter"
+        "missing-owl-imports"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25169,7 +25162,7 @@
     {
       "path": "shacl/01-minimal-shape.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25179,8 +25172,7 @@
         "NodeShape",
         "property-shape",
         "datatype",
-        "cardinality",
-        "pending-adapter"
+        "cardinality"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25191,7 +25183,7 @@
     {
       "path": "shacl/02-typical-person-shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25204,8 +25196,7 @@
         "severity",
         "message",
         "class-reference",
-        "order",
-        "pending-adapter"
+        "order"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25216,7 +25207,7 @@
     {
       "path": "shacl/03-composition-node-shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25228,8 +25219,7 @@
         "or",
         "xone",
         "sequence-path",
-        "inverse-path",
-        "pending-adapter"
+        "inverse-path"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25240,7 +25230,7 @@
     {
       "path": "shacl/04-stress-constraint-components.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25257,8 +25247,7 @@
         "property-group",
         "sparql-constraint",
         "zeroOrMorePath",
-        "alternativePath",
-        "pending-adapter"
+        "alternativePath"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25270,7 +25259,7 @@
     {
       "path": "shacl/05-real-world-dataset-shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25281,8 +25270,7 @@
         "publication-profile",
         "ordered-properties",
         "severity",
-        "lessThanOrEquals",
-        "pending-adapter"
+        "lessThanOrEquals"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25293,7 +25281,7 @@
     {
       "path": "shacl/06-typical-shapes.jsonld",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25303,8 +25291,7 @@
         "json-ld-serialization",
         "NodeShape",
         "pattern",
-        "in",
-        "pending-adapter"
+        "in"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25315,7 +25302,7 @@
     {
       "path": "shacl/07-stress-cyclic-shape-graph.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25325,8 +25312,7 @@
         "cyclic-shapes",
         "mutual-reference",
         "self-reference",
-        "recursion",
-        "pending-adapter"
+        "recursion"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -25338,7 +25324,7 @@
     {
       "path": "shacl/08-imported-shapes-set/core-shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25346,8 +25332,7 @@
       },
       "features": [
         "shared-shapes",
-        "reusable-node-shapes",
-        "pending-adapter"
+        "reusable-node-shapes"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25360,7 +25345,7 @@
     {
       "path": "shacl/08-imported-shapes-set/shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "valid",
       "expected_detection": {
         "format": "shacl",
@@ -25368,8 +25353,7 @@
       },
       "features": [
         "owl-imports",
-        "sh-node-across-files",
-        "pending-adapter"
+        "sh-node-across-files"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -25381,7 +25365,7 @@
     {
       "path": "shacl/negative/01-syntactic-missing-dot.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25390,8 +25374,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-statement-terminator",
-        "pending-adapter"
+        "missing-statement-terminator"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25403,7 +25386,7 @@
     {
       "path": "shacl/negative/02-semantic-no-node-shapes.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25412,8 +25395,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-shapes",
-        "pending-adapter"
+        "no-shapes"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25425,7 +25407,7 @@
     {
       "path": "shacl/negative/03-truncated-mid-property.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25434,8 +25416,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-literal",
-        "pending-adapter"
+        "mid-literal"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25447,7 +25428,7 @@
     {
       "path": "shacl/negative/04-wrong-format-owl.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25456,8 +25437,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "owl",
-        "pending-adapter"
+        "owl"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25470,7 +25450,7 @@
     {
       "path": "shacl/negative/05-encoding-utf16.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25479,8 +25459,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -25492,7 +25471,7 @@
     {
       "path": "shacl/negative/06-unresolvable-shape-reference.ttl",
       "format": "shacl",
-      "adapter_key": null,
+      "adapter_key": "shacl",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "shacl",
@@ -25501,8 +25480,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-shape",
-        "pending-adapter"
+        "missing-shape"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

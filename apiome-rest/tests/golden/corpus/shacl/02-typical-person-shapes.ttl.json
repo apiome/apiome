@@ -1,0 +1,375 @@
+{
+  "adapter": "shacl",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "shacl": {
+        "capability_limits": [],
+        "files": [
+          {
+            "path": "shacl/02-typical-person-shapes.ttl",
+            "syntax": "turtle"
+          }
+        ],
+        "input": "file",
+        "ontologies": [],
+        "shapes": [
+          "OrganisationShape",
+          "PersonShape"
+        ]
+      }
+    },
+    "format": "shacl",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "02-typical-person-shapes",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "02-typical-person-shapes",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#OrganisationShape",
+          "shacl_target_class": [
+            "ex:Organisation"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#employeeCount",
+              "shacl_datatype": "xsd:integer",
+              "shacl_path": "ex:employeeCount"
+            },
+            "field_number": null,
+            "key": "OrganisationShape.employeeCount",
+            "name": "employeeCount",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#legalName",
+              "shacl_datatype": "xsd:string",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:legalName"
+            },
+            "field_number": null,
+            "key": "OrganisationShape.legalName",
+            "name": "legalName",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OrganisationShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "OrganisationShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Constraints every person record must satisfy.",
+        "enum_values": [],
+        "extras": {
+          "native_id": "https://example.com/ns#PersonShape",
+          "rdfs_label": "Person shape",
+          "shacl_target_class": [
+            "ex:Person"
+          ]
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#birthDate",
+              "shacl_datatype": "xsd:date",
+              "shacl_max_count": 1,
+              "shacl_path": "ex:birthDate"
+            },
+            "field_number": null,
+            "key": "PersonShape.birthDate",
+            "name": "birthDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "date",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#email",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_message": "A person must have exactly one well-formed email address.",
+              "shacl_min_count": 1,
+              "shacl_path": "ex:email",
+              "shacl_severity": "Violation"
+            },
+            "field_number": null,
+            "key": "PersonShape.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#familyName",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_name": "family name",
+              "shacl_order": 2,
+              "shacl_path": "ex:familyName"
+            },
+            "field_number": null,
+            "key": "PersonShape.familyName",
+            "name": "familyName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 1,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#givenName",
+              "shacl_datatype": "xsd:string",
+              "shacl_max_count": 1,
+              "shacl_min_count": 1,
+              "shacl_name": "given name",
+              "shacl_order": 1,
+              "shacl_path": "ex:givenName"
+            },
+            "field_number": null,
+            "key": "PersonShape.givenName",
+            "name": "givenName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": [
+                "reader",
+                "writer",
+                "admin"
+              ],
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#role",
+              "shacl_max_count": 1,
+              "shacl_path": "ex:role"
+            },
+            "field_number": null,
+            "key": "PersonShape.role",
+            "name": "role",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "native_id": "https://example.com/ns#worksFor",
+              "shacl_class": "ex:Organisation",
+              "shacl_max_count": 1,
+              "shacl_node_kind": "IRI",
+              "shacl_path": "ex:worksFor"
+            },
+            "field_number": null,
+            "key": "PersonShape.worksFor",
+            "name": "worksFor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrganisationShape",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "PersonShape",
+        "key_type": null,
+        "kind": "record",
+        "name": "PersonShape",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "shacl/02-typical-person-shapes.ttl",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "shacl"
+  },
+  "fingerprint": "sha256:598581b813f33ebd82204d58614d46d09f63420e25d335865f0407d1313e4ff1",
+  "lint": {
+    "findings": 10,
+    "grade": "B",
+    "report_fingerprint": "e585f16cd59db9aa43ce518b1c7d4e4127fa7c68b3a73f3074dc40e157eaf3d9",
+    "score": 87,
+    "severity_counts": {
+      "error": 0,
+      "info": 9,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

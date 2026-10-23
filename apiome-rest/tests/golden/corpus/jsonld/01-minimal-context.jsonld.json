@@ -1,0 +1,109 @@
+{
+  "adapter": "jsonld",
+  "canonical": {
+    "channels": [],
+    "description": "JSON-LD context: 1 terms.",
+    "extras": {
+      "jsonld": {
+        "capability_limits": [
+          {
+            "construct": "jsonld.open_vocabulary",
+            "count": 1,
+            "detail": "The context sets @vocab, so any JSON key it does not define still expands to an IRI under the vocabulary. Only the defined terms are fields; the open vocabulary is kept in extras['jsonld_vocab'].",
+            "locations": [
+              "MinimalContext"
+            ]
+          }
+        ],
+        "files": [
+          "jsonld/01-minimal-context.jsonld"
+        ],
+        "input": "file",
+        "root_type": "MinimalContext"
+      }
+    },
+    "format": "jsonld",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "MinimalContext",
+      "namespace": null
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "MinimalContext",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The terms of the JSON-LD context.",
+        "enum_values": [],
+        "extras": {
+          "jsonld_keyword_aliases": {
+            "id": "@id",
+            "type": "@type"
+          },
+          "jsonld_vocab": "https://example.com/ns#"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "jsonld_definition": "https://schema.org/name",
+              "native_id": "https://schema.org/name"
+            },
+            "field_number": null,
+            "key": "MinimalContext.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "any",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "MinimalContext",
+        "key_type": null,
+        "kind": "record",
+        "name": "MinimalContext",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "jsonld/01-minimal-context.jsonld",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.93,
+    "format": "jsonld"
+  },
+  "fingerprint": "sha256:9cd7e523b3e7c10b472879ce1738d22c6961564c9a0114b93e7203a10dea2f3d",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "94a38786de2760b26715671a7d8c0c4699d81bf4d2e6f0f0d24ee264a4dadd8f",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

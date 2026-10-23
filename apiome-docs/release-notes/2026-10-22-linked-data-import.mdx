@@ -1,0 +1,23 @@
+---
+slug: linked-data-import
+title: Import SHACL, OWL and JSON-LD
+description: Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.
+authors: [apiome]
+---
+
+Linked-data estates describe their data with SHACL shapes, OWL and RDFS ontologies and JSON-LD
+contexts. Apiome now imports all three into the catalog as data schemas.
+[What gets imported](/bring-in/linked-data-import).
+
+{/* truncate */}
+
+- **SHACL shapes become records.** Property shapes become fields; `sh:minCount` / `sh:maxCount`,
+  `sh:datatype`, `sh:pattern`, `sh:in` and the value-range constraints become canonical constraints,
+  and `sh:node` links shapes together. A shape cycle is kept and declared.
+- **Ontologies become types with inheritance.** Classes are records that carry their superclasses'
+  fields; properties attach by domain and restriction, with cardinality. OWL's open-world inference
+  is declared in the coverage ledger, never imported.
+- **JSON-LD terms keep their IRIs.** A context's terms become fields with the IRI each expands to kept
+  as provenance; type coercion, containers and scoped contexts become field types.
+- **Nothing is fetched.** An `owl:imports` or a remote context that is not in the upload is refused
+  and named. Upload the set as an archive to resolve it.
