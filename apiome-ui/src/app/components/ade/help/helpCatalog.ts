@@ -743,6 +743,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['postman alternative', 'client', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
   },
   {
+    id: 'thunder-client-import',
+    title: 'Import a Thunder Client collection',
+    summary: 'Catalog a Thunder Client collection and its environments as one inferred REST API.',
+    page: 'apiome-docs/docs/bring-in/thunder-client-import.md',
+    section: 'reference',
+    keywords: ['vs code', 'vscode', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
+  },
+  {
     id: 'linked-data-import',
     title: 'Import SHACL, OWL and JSON-LD',
     summary: 'Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.',

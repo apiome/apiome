@@ -1240,6 +1240,10 @@ def load_builtin_import_sources() -> None:
     # collection exports and their environments, through the shared inferred-spec engine.
     from . import hoppscotch_import_source as _hoppscotch  # noqa: F401
 
+    # ``thunder_client_import_source`` (FMT-10.2) self-registers the ``thunder-client`` adapter —
+    # Thunder Client collection exports and their environments, through the same engine.
+    from . import thunder_client_import_source as _thunder_client  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

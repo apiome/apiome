@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 90
+- **Formats gated:** 91
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -89,6 +89,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `sql-ddl` | SQL DDL | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `swift-mt` | SWIFT MT | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `thrift` | Thrift | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `thrift` |
+| `thunder-client` | Thunder Client collection | rest | 7 | 7 | 0 | 0 | 14 | 6/6 | 6 | — |
 | `tradacoms` | TRADACOMS | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `traefik` |
 | `trpc` | tRPC router | rpc | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
@@ -186,6 +187,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `sql-ddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `swift-mt` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `thrift` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `thunder-client` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `tradacoms` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `traefik` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `trpc` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -219,4 +221,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `ims`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `ims`, `natural-ddm`, `pli`, `schematron`, `soapui`, `vsam-idcams`

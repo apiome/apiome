@@ -5,6 +5,43 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.435.0] - 2026-10-22
+
+### Added
+- **Thunder Client collection import (#5475, FMT-10.2)**: a `thunder-client` import source (alias
+  `thunder-collection`; file, URL, paste and fileset) on the **rest** paradigm, read by `app.thunder_client_parser` and
+  normalized through the same shared inferred-spec engine (`app.inferred_spec`) and scrub gate as Hoppscotch.
+  - A `thunder-collection_*.json` export (or several, in one fileset) becomes one API. The flat `folders[]` list is
+    rebuilt into a tree from its `containerId` links and becomes operation `tags` (`Tenant A / Read`); every saved
+    request is an observation; `:name` and `{{variable}}` path segments become path parameters; enabled params and
+    headers (collection and folder `settings.headers` inherited) become parameters; JSON, GraphQL, form-encoded and
+    multipart bodies get inferred request schemas and keep their media types. A relative URL takes the collection's
+    `settings.options.baseUrl`.
+  - A URL written `{{baseUrl}}/…` becomes a `{baseUrl}` server whose `ServerVariable.default` comes from the
+    `thunder-environment_*.json` exports uploaded beside the collection (the `default` environment first); a variable
+    whose name says it holds a credential never gets a default.
+  - Auth is resolved through `inherit` per request (request > folder chain > collection settings) and recorded as
+    `operation.extras["security"]` and `extras["thunder_client_auth"]` (scheme; OAuth 2 grant type, token URL and
+    scopes). Credential fields are never read; every other value passes the secret-scrub gate.
+  - Declared limits (`thunder-client.test`, `thunder-client.pre_request`, `thunder-client.auth_credential`,
+    `thunder-client.secret_variable`) ride in `extras.thunder_client.capability_limits` and become coverage-ledger
+    rows; version coverage, inference-provenance entry, MCP toolset goldens and the round-trip matrix row
+    (import-only) are added, and the staged corpus is activated. The standalone environment fixture moved to
+    `negative/07-semantic-environment-alone.json`, since an environment alone is refused.
+  - Refusals: `INPUT_MALFORMED`, `INPUT_TRUNCATED`, `INPUT_SEMANTIC_INVALID` (no requests, a `containerId` naming an
+    undeclared folder or a folder cycle, an empty URL or one written only as an undefined variable, an environment
+    without a collection), `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH` (Hoppscotch, Postman, OpenAPI, Insomnia, HAR).
+
+### Changed
+- **Secret scrubbing (`app.intake_secret_scrub`)** also redacts a key named exactly `bearer` (a Thunder Client bearer
+  auth block) and the value members of `{"name": <secret name>, "value": …}` pairs (Thunder Client headers, form
+  fields and environment variables); a pair named `Authorization` or `Cookie` is now redacted too, in either the
+  `key` or the `name` spelling.
+- The Hoppscotch reader now shares its JSON loading, scrubbing and model post-processing with Thunder Client through
+  `app.client_collection`; its output is unchanged.
+
+The OpenAPI version moves to 1.299.0.
+
 ## [1.434.0] - 2026-10-22
 
 ### Added

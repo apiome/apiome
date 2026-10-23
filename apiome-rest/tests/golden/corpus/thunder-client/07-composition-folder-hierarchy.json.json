@@ -1,0 +1,537 @@
+{
+  "adapter": "thunder-client",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "inferred_auth_schemes": [
+        "basic",
+        "bearer"
+      ],
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /root": 1,
+        "GET /tenant-a/read": 1,
+        "GET /tenant-b/read": 1,
+        "POST /tenant-a/write": 1
+      },
+      "thunder_client": {
+        "capability_limits": [
+          {
+            "construct": "thunder-client.test",
+            "count": 1,
+            "locations": [
+              "Two levels of folder headers plus collection auth"
+            ],
+            "note": "Declarative tests (status, timing and JSON-query assertions, `set-env-var` captures) are run by the client; they are not modelled."
+          },
+          {
+            "construct": "thunder-client.auth_credential",
+            "count": 4,
+            "locations": [
+              "Folder basic auth wins over collection bearer",
+              "Folder with no settings inherits the collection only",
+              "Root request: collection settings only",
+              "Two levels of folder headers plus collection auth"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's token URL and scopes) is kept; saved credentials are never read."
+          }
+        ],
+        "collection_versions": [
+          "1.2"
+        ],
+        "environments": [],
+        "folders": [
+          "Tenant A",
+          "Tenant A / Read",
+          "Tenant A / Write",
+          "Tenant B"
+        ],
+        "requests": 4,
+        "variables": []
+      }
+    },
+    "format": "thunder-client",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Folder composition",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": null,
+            "description": "Thunder Client variable `{{baseUrl}}`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Folder composition",
+        "name": "Folder composition",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "root"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/root"
+                ],
+                "template": "/root"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "thunder-client/07-composition-folder-hierarchy.json"
+              ],
+              "source_label": "Root request: collection settings only",
+              "source_location": "requests/3",
+              "thunder_client_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/root",
+            "key": "GET /root",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /root",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /root#header.x-collection",
+                "location": "header",
+                "name": "x-collection",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "tenant-a"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "read"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/tenant-a/read"
+                ],
+                "template": "/tenant-a/read"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "thunder-client/07-composition-folder-hierarchy.json"
+              ],
+              "source_label": "Two levels of folder headers plus collection auth",
+              "source_location": "requests/0",
+              "thunder_client_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/tenant-a/read",
+            "key": "GET /tenant-a/read",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /tenant-a/read",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /tenant-a/read#header.x-collection",
+                "location": "header",
+                "name": "x-collection",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /tenant-a/read#header.x-scope",
+                "location": "header",
+                "name": "x-scope",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Tenant A / Read"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "tenant-b"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "read"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/tenant-b/read"
+                ],
+                "template": "/tenant-b/read"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "thunder-client/07-composition-folder-hierarchy.json"
+              ],
+              "source_label": "Folder with no settings inherits the collection only",
+              "source_location": "requests/2",
+              "thunder_client_auth": [
+                {
+                  "declared_at": "collection root",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/tenant-b/read",
+            "key": "GET /tenant-b/read",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /tenant-b/read",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /tenant-b/read#header.x-collection",
+                "location": "header",
+                "name": "x-collection",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Tenant B"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "tenant-a"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "write"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/tenant-a/write"
+                ],
+                "template": "/tenant-a/write"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "basic"
+              ],
+              "source_files": [
+                "thunder-client/07-composition-folder-hierarchy.json"
+              ],
+              "source_label": "Folder basic auth wins over collection bearer",
+              "source_location": "requests/1",
+              "thunder_client_auth": [
+                {
+                  "declared_at": "Tenant A/Write",
+                  "scheme": "basic",
+                  "type": "basic"
+                }
+              ]
+            },
+            "http_method": "POST",
+            "http_path": "/tenant-a/write",
+            "key": "POST /tenant-a/write",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /tenant-a/write#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostWriteRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /tenant-a/write",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /tenant-a/write#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /tenant-a/write#header.x-collection",
+                "location": "header",
+                "name": "x-collection",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /tenant-a/write#header.x-scope",
+                "location": "header",
+                "name": "x-scope",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Tenant A / Write"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Folder composition",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostWriteRequest.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostWriteRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostWriteRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "thunder-client/07-composition-folder-hierarchy.json",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 1,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "thunder-client"
+  },
+  "fingerprint": "sha256:42056798f963700f09e9231e9b5a8d45287caea43c3a21af8c1c9753f423049e",
+  "lint": {
+    "findings": 9,
+    "grade": "C",
+    "report_fingerprint": "f71c9af6b7c6691fbbbf92c6db5eb380bbecbb8a89e3ab30cc2307025dc06262",
+    "score": 76,
+    "severity_counts": {
+      "error": 0,
+      "info": 4,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

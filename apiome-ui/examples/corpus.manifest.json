@@ -543,7 +543,7 @@
       "marker": "`service` / `struct` shapes"
     },
     "thunder-client": {
-      "label": "Thunder Client collections (pending #5475)",
+      "label": "Thunder Client collections",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`\"clientName\": \"Thunder Client\"` + `requests[]` or environment `data[]`"
@@ -27536,7 +27536,7 @@
     {
       "path": "thunder-client/01-minimal-collection.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27544,8 +27544,7 @@
       },
       "features": [
         "collection",
-        "single-request",
-        "pending-adapter"
+        "single-request"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27556,7 +27555,7 @@
     {
       "path": "thunder-client/02-typical-orders-collection.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27567,8 +27566,7 @@
         "containerId",
         "collection-auth",
         "path-params",
-        "declarative-tests",
-        "pending-adapter"
+        "declarative-tests"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27579,7 +27577,7 @@
     {
       "path": "thunder-client/03-environment-set/thunder-collection_inventory.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27588,8 +27586,7 @@
       "features": [
         "multi-file",
         "collection",
-        "environment-variables",
-        "pending-adapter"
+        "environment-variables"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27601,7 +27598,7 @@
     {
       "path": "thunder-client/03-environment-set/thunder-environment_staging.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27609,8 +27606,7 @@
       },
       "features": [
         "multi-file",
-        "environment-file",
-        "pending-adapter"
+        "environment-file"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27622,7 +27618,7 @@
     {
       "path": "thunder-client/04-stress-bodies-auth-and-tests.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27638,8 +27634,7 @@
         "nested-folder",
         "disabled-entries",
         "preReq",
-        "test-kinds",
-        "pending-adapter"
+        "test-kinds"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27650,7 +27645,7 @@
     {
       "path": "thunder-client/05-real-world-payments-collection.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27661,8 +27656,7 @@
         "idempotency-key",
         "auth-override",
         "folders",
-        "json-query-test",
-        "pending-adapter"
+        "json-query-test"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27671,30 +27665,9 @@
       "rung": "real-world"
     },
     {
-      "path": "thunder-client/06-typical-environment.json",
-      "format": "thunder-client",
-      "adapter_key": null,
-      "validity_class": "valid",
-      "expected_detection": {
-        "format": "thunder-client",
-        "min_confidence": 0.9
-      },
-      "features": [
-        "environment",
-        "empty-credentials",
-        "default-flag",
-        "pending-adapter"
-      ],
-      "expected_outcome": "imports_with_warnings",
-      "source": "hand-authored",
-      "license": "Apache-2.0",
-      "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "rung": "typical"
-    },
-    {
       "path": "thunder-client/07-composition-folder-hierarchy.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "valid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27704,8 +27677,7 @@
         "folder-hierarchy",
         "containerId-chain",
         "settings-inheritance",
-        "auth-override",
-        "pending-adapter"
+        "auth-override"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -27716,7 +27688,7 @@
     {
       "path": "thunder-client/negative/01-syntactic-missing-comma.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27725,8 +27697,7 @@
       "features": [
         "negative",
         "syntactic",
-        "missing-comma",
-        "pending-adapter"
+        "missing-comma"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27738,7 +27709,7 @@
     {
       "path": "thunder-client/negative/02-semantic-no-requests.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27747,8 +27718,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-requests",
-        "pending-adapter"
+        "no-requests"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27760,7 +27730,7 @@
     {
       "path": "thunder-client/negative/03-truncated-mid-request.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27769,8 +27739,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-url",
-        "pending-adapter"
+        "mid-url"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27782,7 +27751,7 @@
     {
       "path": "thunder-client/negative/04-wrong-format-hoppscotch.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27791,8 +27760,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "hoppscotch",
-        "pending-adapter"
+        "hoppscotch"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27804,7 +27772,7 @@
     {
       "path": "thunder-client/negative/05-encoding-utf16.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27813,8 +27781,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -27826,7 +27793,7 @@
     {
       "path": "thunder-client/negative/06-semantic-orphan-container-id.json",
       "format": "thunder-client",
-      "adapter_key": null,
+      "adapter_key": "thunder-client",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "thunder-client",
@@ -27835,14 +27802,37 @@
       "features": [
         "negative",
         "semantic",
-        "orphan-containerId",
-        "pending-adapter"
+        "orphan-containerId"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "notes": "Folders and requests reference container ids that no folder declares, so the hierarchy cannot be reconstructed.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "thunder-client/negative/07-semantic-environment-alone.json",
+      "format": "thunder-client",
+      "adapter_key": "thunder-client",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "thunder-client",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "environment-alone",
+        "empty-credentials",
+        "default-flag"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "A standalone environment export defines variables but no requests; it is refused and imports only beside the collection that uses it (see 03-environment-set/).",
       "failure_class": "semantic",
       "expected_error_code": "INPUT_SEMANTIC_INVALID"
     },

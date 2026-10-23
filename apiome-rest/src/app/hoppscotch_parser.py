@@ -40,9 +40,8 @@ from pathlib import PurePosixPath
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl, urlsplit
 
+from .client_collection import load_client_json, scrub_named, scrub_value
 from .inferred_spec import HttpObservation
-from .intake_resource_guard import IntakeLimitError, guard_document_text, guard_parsed_document
-from .intake_secret_scrub import REDACTION_MARKER, scrub_document_text
 
 __all__ = [
     "FORMAT_KEY",
@@ -96,14 +95,6 @@ _WHOLE_VARIABLE_RE = re.compile(r"^\s*<<\s*[A-Za-z0-9_.\-]+\s*>>\s*$")
 #: A ``<<var>>`` written as a bare JSON value (``"qty": <<qty>>``), which makes a body unparseable.
 _BARE_JSON_VARIABLE_RE = re.compile(r'(?<!")(<<\s*[A-Za-z0-9_.\-]+\s*>>)(?!")')
 
-#: A header, parameter or form-field name that says its value is a credential.
-_SECRET_NAME_RE = re.compile(
-    r"(authorization|cookie|password|passwd|secret|api[-_]?key|apikey|token|credential"
-    r"|passphrase|session|signature|private[-_]?key)",
-    re.IGNORECASE,
-)
-
-_ENCODING_FAULT_MARKERS = ("\x00", "�")
 _MAX_VARIABLE_DEPTH = 5
 
 
@@ -236,47 +227,13 @@ def _where(label: Optional[str]) -> str:
     return f" in {label}" if label else ""
 
 
+def _error(message: str, code: str) -> HoppscotchParseError:
+    return HoppscotchParseError(message, code=code)
+
+
 def _load_json(text: str, label: Optional[str]) -> Any:
-    """Load one JSON document, applying the encoding check and the shared intake guards.
-
-    Args:
-        text: The decoded upload.
-        label: The member path or filename, for messages.
-
-    Returns:
-        The loaded value.
-
-    Raises:
-        HoppscotchParseError: With the taxonomy code for the fault.
-    """
-    if text.startswith("﻿") or any(marker in text for marker in _ENCODING_FAULT_MARKERS):
-        raise HoppscotchParseError(
-            f"The upload{_where(label)} is not UTF-8 text (NULs, replacement characters or a "
-            "byte-order mark); Hoppscotch exports are UTF-8 JSON",
-            code="INPUT_ENCODING_INVALID",
-        )
-    if not text.strip():
-        raise HoppscotchParseError(f"The upload{_where(label)} is empty", code="INPUT_MALFORMED")
-    try:
-        guard_document_text(text, source_label=label)
-    except IntakeLimitError as exc:
-        raise HoppscotchParseError(str(exc), code=exc.code) from exc
-    try:
-        document = json.loads(text)
-    except json.JSONDecodeError as exc:
-        # The decoder reports the offset where it gave up; at (or past) the end of the meaningful
-        # text, a value was still open when the bytes ran out.
-        if exc.pos >= len(text.rstrip()):
-            raise HoppscotchParseError(
-                f"The collection{_where(label)} ends while a value is still open — the upload is truncated: {exc}",
-                code="INPUT_TRUNCATED",
-            ) from exc
-        raise HoppscotchParseError(f"Invalid JSON{_where(label)}: {exc}", code="INPUT_MALFORMED") from exc
-    try:
-        guard_parsed_document(document, source_label=label)
-    except IntakeLimitError as exc:
-        raise HoppscotchParseError(str(exc), code=exc.code) from exc
-    return document
+    """Load one JSON document with the shared encoding check, intake guards and taxonomy codes."""
+    return load_client_json(text, label, product="Hoppscotch", error=_error)
 
 
 def _is_collection_node(value: Any) -> bool:
@@ -357,28 +314,12 @@ def _looks_like_other_format(document: Any) -> Optional[str]:
 
 def _scrub(value: str) -> str:
     """Pass one value through the shared secret-scrub gate (named patterns and entropy)."""
-    if not value:
-        return value
-    return scrub_document_text(value).text
+    return scrub_value(value)
 
 
 def _scrub_named(name: str, value: str) -> str:
-    """Scrub a header, parameter or form-field value, redacting it outright if its name is secret.
-
-    A value written entirely as a ``<<variable>>`` is a reference, not a credential, and is kept.
-
-    Args:
-        name: The header / parameter / field name.
-        value: Its saved value.
-
-    Returns:
-        The value safe to keep in the model.
-    """
-    if not value or _WHOLE_VARIABLE_RE.match(value):
-        return value
-    if _SECRET_NAME_RE.search(name or ""):
-        return REDACTION_MARKER
-    return _scrub(value)
+    """Scrub a header, parameter or form-field value; a whole ``<<variable>>`` is kept."""
+    return scrub_named(name, value, reference=_WHOLE_VARIABLE_RE)
 
 
 # ---------------------------------------------------------------------------

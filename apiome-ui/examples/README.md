@@ -45,7 +45,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `soapui/` | SoapUI / ReadyAPI projects (pending #5477) | rest | `<con:soapui-project>` root in the eviware config namespace | 14 |
 | `swagger/` | Swagger 2.0 | rest | `swagger: "2.0"` | 1 |
 | `swagger-1.2/` | Swagger 1.2 | rest | `"swaggerVersion": "1.2"` | 14 |
-| `thunder-client/` | Thunder Client collections (pending #5475) | rest | `"clientName": "Thunder Client"` + `requests[]` or environment `data[]` | 14 |
+| `thunder-client/` | Thunder Client collections | rest | `"clientName": "Thunder Client"` + `requests[]` or environment `data[]` | 14 |
 | `traefik/` | Traefik dynamic config | rest | `http.routers` + `http.services` (YAML/TOML), or `kind: IngressRoute` | 15 |
 | `tyk/` | Tyk API definition | rest | `api_id` + `proxy.listen_path`, or an OpenAPI document with `x-tyk-api-gateway` | 14 |
 | `typespec/` | TypeSpec | rest | `import "@typespec/..."` | 11 |
@@ -2311,26 +2311,28 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`06-payment-service.thrift`** — Currently outranked: detection ranks `oncrpc` (0.95) and `smithy` (0.95) above `thrift` (0.95); expected_detection records the intended winner for the detection-hardening work.
 
-### `thunder-client/` — Thunder Client collections (pending #5475)
+### `thunder-client/` — Thunder Client collections
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-collection.json` | minimal | `thunder-client` ≥ 0.9 | valid | `collection`, `single-request`, `pending-adapter` |
-| `02-typical-orders-collection.json` | typical | `thunder-client` ≥ 0.9 | valid | `folders`, `containerId`, `collection-auth`, `path-params`, `declarative-tests`, `pending-adapter` |
-| `03-environment-set/thunder-collection_inventory.json` | multi-file (root) | `thunder-client` ≥ 0.9 | valid | `multi-file`, `collection`, `environment-variables`, `pending-adapter` |
-| `03-environment-set/thunder-environment_staging.json` | multi-file (member) | `thunder-client` (no guarantee) | valid | `multi-file`, `environment-file`, `pending-adapter` |
-| `04-stress-bodies-auth-and-tests.json` | stress | `thunder-client` ≥ 0.9 | valid | `json-body`, `formencoded-body`, `formdata-body`, `graphql-body`, `basic-auth`, `oauth2-auth`, `nested-folder`, `disabled-entries`, `preReq`, `test-kinds`, `pending-adapter` |
-| `05-real-world-payments-collection.json` | real-world | `thunder-client` ≥ 0.9 | valid | `token-capture`, `idempotency-key`, `auth-override`, `folders`, `json-query-test`, `pending-adapter` |
-| `06-typical-environment.json` | typical | `thunder-client` ≥ 0.9 | valid | `environment`, `empty-credentials`, `default-flag`, `pending-adapter` |
-| `07-composition-folder-hierarchy.json` | composition | `thunder-client` ≥ 0.9 | valid | `folder-hierarchy`, `containerId-chain`, `settings-inheritance`, `auth-override`, `pending-adapter` |
-| `negative/01-syntactic-missing-comma.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma`, `pending-adapter` |
-| `negative/02-semantic-no-requests.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `semantic`, `no-requests`, `pending-adapter` |
-| `negative/03-truncated-mid-request.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `truncated`, `mid-url`, `pending-adapter` |
-| `negative/04-wrong-format-hoppscotch.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `wrong-format`, `hoppscotch`, `pending-adapter` |
-| `negative/05-encoding-utf16.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-orphan-container-id.json` ⚠ | — | `thunder-client` (no guarantee) | invalid | `negative`, `semantic`, `orphan-containerId`, `pending-adapter` |
+| `01-minimal-collection.json` | minimal | `thunder-client` ≥ 0.9 | valid | `collection`, `single-request` |
+| `02-typical-orders-collection.json` | typical | `thunder-client` ≥ 0.9 | valid | `folders`, `containerId`, `collection-auth`, `path-params`, `declarative-tests` |
+| `03-environment-set/thunder-collection_inventory.json` | multi-file (root) | `thunder-client` ≥ 0.9 | valid | `multi-file`, `collection`, `environment-variables` |
+| `03-environment-set/thunder-environment_staging.json` | multi-file (member) | `thunder-client` (no guarantee) | valid | `multi-file`, `environment-file` |
+| `04-stress-bodies-auth-and-tests.json` | stress | `thunder-client` ≥ 0.9 | valid | `json-body`, `formencoded-body`, `formdata-body`, `graphql-body`, `basic-auth`, `oauth2-auth`, `nested-folder`, `disabled-entries`, `preReq`, `test-kinds` |
+| `05-real-world-payments-collection.json` | real-world | `thunder-client` ≥ 0.9 | valid | `token-capture`, `idempotency-key`, `auth-override`, `folders`, `json-query-test` |
+| `07-composition-folder-hierarchy.json` | composition | `thunder-client` ≥ 0.9 | valid | `folder-hierarchy`, `containerId-chain`, `settings-inheritance`, `auth-override` |
+| `negative/01-syntactic-missing-comma.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma` |
+| `negative/02-semantic-no-requests.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `semantic`, `no-requests` |
+| `negative/03-truncated-mid-request.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `truncated`, `mid-url` |
+| `negative/04-wrong-format-hoppscotch.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `wrong-format`, `hoppscotch` |
+| `negative/05-encoding-utf16.json` | — | `thunder-client` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-orphan-container-id.json` ⚠ | — | `thunder-client` (no guarantee) | invalid | `negative`, `semantic`, `orphan-containerId` |
+| `negative/07-semantic-environment-alone.json` ⚠ | — | `thunder-client` (no guarantee) | invalid | `negative`, `semantic`, `environment-alone`, `empty-credentials`, `default-flag` |
 
 > ⚠ **`negative/06-semantic-orphan-container-id.json`** — Folders and requests reference container ids that no folder declares, so the hierarchy cannot be reconstructed.
+
+> ⚠ **`negative/07-semantic-environment-alone.json`** — A standalone environment export defines variables but no requests; it is refused and imports only beside the collection that uses it (see 03-environment-set/).
 
 ### `tradacoms/` — TRADACOMS
 
