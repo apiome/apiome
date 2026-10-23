@@ -1,0 +1,27 @@
+---
+slug: email-sign-up
+title: Sign up with an email address
+description: Create an Apiome account with an email and password, confirmed by email.
+authors: [apiome]
+---
+
+You no longer need a GitHub, GitLab, Microsoft or Google account to use Apiome. On the sign-in
+page, **Create one** now creates an account with your name, email address and a password; see
+[Create an account](/getting-started/create-an-account).
+
+{/* truncate */}
+
+- **Confirmed by email.** Apiome sends a link that works once and expires after 24 hours. The
+  account cannot sign in until you open it; opening it signs you in and starts
+  [setting up your first organization](/getting-started/onboarding).
+- **Expired or used links say so.** The page offers **Resend email**, and each new email replaces
+  the previous link.
+- **Nothing is revealed about existing accounts.** Signing up with an address that already has an
+  account shows the same *Check your email* page; the email that arrives says the account exists
+  and links to sign-in.
+- **The sign-up policy applies.** Open, Invite only, Closed and allowed email domains govern email
+  sign-up exactly as they govern providers.
+- **For administrators.** Email sign-up needs `SENDGRID_API_KEY`, `EMAIL_FROM` and `BETTER_AUTH_URL`
+  in `apiome-ui/.env`; without them **Create one** says it is not available. The old sign-up
+  request form is gone from the sign-in page. See
+  [Authentication providers](/admin/auth-providers#email-sign-up).

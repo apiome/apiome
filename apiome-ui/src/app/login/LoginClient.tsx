@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight, RotateCcw } from 'lucide-react';
+import { Mail, Lock, ShieldCheck, Zap, CreditCard, ArrowRight, RotateCcw } from 'lucide-react';
 import { signIn } from '@lib/auth/session-client';
-import { createSignupRequest } from '../../../lib/db/helper';
 import { BrandMark } from '../components/brand';
 import type { ProviderSummary } from '../../../lib/auth/provider-registry';
 import { getProviderBrand } from '../components/auth/provider-brand';
@@ -12,6 +11,8 @@ import { AuthField } from '../components/auth/AuthField';
 import { BetaBadge } from '../components/auth/BetaBadge';
 import LoginBrandPanel from './LoginBrandPanel';
 import EnterpriseSsoSignIn from './EnterpriseSsoSignIn';
+import EmailSignupForm from './EmailSignupForm';
+import SignupCheckEmail from './SignupCheckEmail';
 import { getAuthErrorCopy } from './auth-error-copy';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
@@ -100,6 +101,11 @@ interface LoginClientProps {
    * them makes the credentials form start collapsed.
    */
   enterpriseSso?: boolean;
+  /**
+   * Whether email + password sign-up can run here (a mail sender and a public base URL are
+   * configured; SGN-1.1). Without it, **Create one** offers the providers and says so.
+   */
+  emailSignupAvailable?: boolean;
 }
 
 const LoginClient: React.FC<LoginClientProps> = ({
@@ -107,10 +113,13 @@ const LoginClient: React.FC<LoginClientProps> = ({
   callbackUrl = '/ade',
   ssoProviders = [],
   enterpriseSso = false,
+  emailSignupAvailable = false,
 }) => {
   // Any non-credentials path — provider buttons or enterprise SSO — is the primary path (OLO-3.1).
   const hasPrimaryPath = ssoProviders.length > 0 || enterpriseSso;
   const [isSignUp, setIsSignUp] = useState(false);
+  // The address an accepted email sign-up went to; set, the card shows "Check your email" (SGN-1.1).
+  const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
   const [payload, setPayload] = useState<Record<string, string>>({
     email: '',
     password: '',
@@ -133,45 +142,12 @@ const LoginClient: React.FC<LoginClientProps> = ({
     e.preventDefault();
     setSignInEnabled(false);
     setSignupMessage(null);
-
-    if (isSignUp) {
-      try {
-        const result = await createSignupRequest(
-          payload.name || '',
-          payload.email || '',
-          payload.password || '',
-          payload.signupSource || ''
-        );
-
-        const response = JSON.parse(result);
-
-        if (response.success) {
-          setSignupMessage({type: 'success', text: response.message});
-          // Clear the form
-          setPayload({
-            email: '',
-            password: '',
-            name: '',
-            signupSource: '',
-          });
-        } else if (response.duplicate) {
-          setSignupMessage({type: 'info', text: response.message});
-        } else {
-          setSignupMessage({type: 'error', text: response.error || 'An error occurred during signup.'});
-        }
-      } catch (error) {
-        console.error('Signup error:', error);
-        setSignupMessage({type: 'error', text: 'An unexpected error occurred. Please try again.'});
-      } finally {
-        setSignInEnabled(true);
-      }
-    } else {
-      signIn('credentials', {
-        payload: JSON.stringify(payload),
-        callbackUrl,
-        redirect: true,
-      }).finally(() => setSignInEnabled(true));
-    }
+    // Sign-up has its own form (EmailSignupForm, SGN-1.1); this one only signs in.
+    signIn('credentials', {
+      payload: JSON.stringify(payload),
+      callbackUrl,
+      redirect: true,
+    }).finally(() => setSignInEnabled(true));
   };
 
   const handleSSOLogin = async (provider: string) => {
@@ -233,12 +209,17 @@ const LoginClient: React.FC<LoginClientProps> = ({
           <BetaBadge />
         </div>
 
-        <h1 className="auth-title">{isSignUp ? 'Create your account' : 'Welcome back'}</h1>
-        <p className="auth-sub mt-1">
-          {isSignUp
-            ? 'Join thousands of developers building with Apiome'
-            : 'Sign in to continue to your workspace'}
-        </p>
+        {/* "Check your email" carries its own heading (SGN-1.1); one h1 per page. */}
+        {!(isSignUp && checkEmailFor) && (
+          <>
+            <h1 className="auth-title">{isSignUp ? 'Create your account' : 'Welcome back'}</h1>
+            <p className="auth-sub mt-1">
+              {isSignUp
+                ? 'Join thousands of developers building with Apiome'
+                : 'Sign in to continue to your workspace'}
+            </p>
+          </>
+        )}
         {!isSignUp && (
           <p className="mt-2 text-xs text-fg-muted">
             New to Apiome?{' '}
@@ -278,148 +259,139 @@ const LoginClient: React.FC<LoginClientProps> = ({
           </Alert>
         )}
 
-        {/* SSO first — the primary path. One button per enabled provider (registry, OLO-2.3). */}
-        {ssoProviders.length > 0 && (
-          isSSOLoading ? (
-            <Card variant="soft" className="auth-wait mt-5" role="status" aria-live="polite">
-              {/* The tile is the live region; the spinner inside it is ornament, so it is
-                  hidden rather than announcing a second time. */}
-              <Spinner size="md" aria-hidden="true" />
-              <div className="text-sm font-semibold text-fg">Connecting…</div>
-              <div className="text-xs text-fg-muted">Redirecting to authentication provider</div>
-            </Card>
-          ) : (
-            <div className="mt-5 flex flex-col gap-2">
-              {ssoProviders.map((provider) => {
-                const { Icon, iconClassName } = getProviderBrand(provider.id);
-                return (
-                  <SSOButton
-                    key={provider.id}
-                    provider={provider.label}
-                    icon={<Icon size={ICON_SIZE.rail} className={iconClassName} />}
-                    onClick={() => handleSSOLogin(provider.id)}
-                    isSignUp={isSignUp}
-                  />
-                );
-              })}
-            </div>
-          )
-        )}
+        {/* After an accepted email sign-up the card becomes "Check your email" (SGN-1.1). */}
+        {isSignUp && checkEmailFor ? (
+          <SignupCheckEmail email={checkEmailFor} onStartOver={() => setCheckEmailFor(null)} />
+        ) : (
+          <>
+            {/* SSO first — the primary path. One button per enabled provider (registry, OLO-2.3). */}
+            {ssoProviders.length > 0 && (
+              isSSOLoading ? (
+                <Card variant="soft" className="auth-wait mt-5" role="status" aria-live="polite">
+                  {/* The tile is the live region; the spinner inside it is ornament, so it is
+                      hidden rather than announcing a second time. */}
+                  <Spinner size="md" aria-hidden="true" />
+                  <div className="text-sm font-semibold text-fg">Connecting…</div>
+                  <div className="text-xs text-fg-muted">Redirecting to authentication provider</div>
+                </Card>
+              ) : (
+                <div className="mt-5 flex flex-col gap-2">
+                  {ssoProviders.map((provider) => {
+                    const { Icon, iconClassName } = getProviderBrand(provider.id);
+                    return (
+                      <SSOButton
+                        key={provider.id}
+                        provider={provider.label}
+                        icon={<Icon size={ICON_SIZE.rail} className={iconClassName} />}
+                        onClick={() => handleSSOLogin(provider.id)}
+                        isSignUp={isSignUp}
+                      />
+                    );
+                  })}
+                </div>
+              )
+            )}
 
-        {/* Enterprise SSO (EID-1.1): the workspace's own IdP, found from the work email. */}
-        {enterpriseSso && !isSSOLoading && (
-          <div className={ssoProviders.length > 0 ? 'mt-2' : 'mt-5'}>
-            <EnterpriseSsoSignIn callbackUrl={callbackUrl} disabled={!signInEnabled} />
-          </div>
-        )}
+            {/* Enterprise SSO (EID-1.1): the workspace's own IdP, found from the work email. */}
+            {enterpriseSso && !isSSOLoading && (
+              <div className={ssoProviders.length > 0 ? 'mt-2' : 'mt-5'}>
+                <EnterpriseSsoSignIn callbackUrl={callbackUrl} disabled={!signInEnabled} />
+              </div>
+            )}
 
-        {/* Divider (only when SSO renders above the email form). While the credentials
-            form is collapsed it doubles as the expand control. */}
-        {hasPrimaryPath && (
-          showCredentials ? (
-            <div className="auth-divider mt-5">or use your email</div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowCredentials(true)}
-              disabled={isSSOLoading}
-              aria-expanded={false}
-              aria-controls="credentials-form"
-              className="auth-divider mt-5"
+            {/* Divider (only when SSO renders above the email form). While the credentials
+                form is collapsed it doubles as the expand control. */}
+            {hasPrimaryPath && (
+              showCredentials ? (
+                <div className="auth-divider mt-5">or use your email</div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCredentials(true)}
+                  disabled={isSSOLoading}
+                  aria-expanded={false}
+                  aria-controls="credentials-form"
+                  className="auth-divider mt-5"
+                >
+                  or use your email
+                </button>
+              )
+            )}
+
+            {/* Credentials form — collapsed (hidden) until requested when SSO is available
+                (OLO-3.1). Tailwind preflight gives [hidden] display:none, and hidden fields
+                are neither focusable nor submittable, so the collapsed form is fully inert. */}
+            {isSignUp ? (
+              emailSignupAvailable ? (
+                <EmailSignupForm
+                  id="credentials-form"
+                  hidden={!showCredentials}
+                  disabled={isSSOLoading}
+                  onSubmitted={setCheckEmailFor}
+                />
+              ) : (
+                <div id="credentials-form" hidden={!showCredentials} className="mt-4">
+                  <Alert variant="info" role="status" data-testid="email-signup-unavailable">
+                    {getAuthErrorCopy('email-signup-unavailable')?.text}
+                  </Alert>
+                </div>
+              )
+            ) : (
+            <form
+              id="credentials-form"
+              hidden={!showCredentials}
+              onSubmit={handleSubmit}
+              className="mt-4 space-y-4"
             >
-              or use your email
-            </button>
-          )
+
+              <AuthField
+                id="email"
+                label="Email Address"
+                icon={<Mail size={ICON_SIZE.dense} aria-hidden="true" />}
+                type="email"
+                name="email"
+                value={payload['email']}
+                onChange={handleChange}
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                invalid={Boolean(fieldError)}
+              />
+
+              <AuthField
+                id="password"
+                label="Password"
+                icon={<Lock size={ICON_SIZE.dense} aria-hidden="true" />}
+                aside={
+                  <a href="#" className="auth-link text-xs font-medium">
+                    Forgot your password?
+                  </a>
+                }
+                type="password"
+                name="password"
+                value={payload['password']}
+                onChange={handleChange}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+                error={fieldError}
+              />
+
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                disabled={!signInEnabled || isSSOLoading}
+              >
+                Sign In
+                <ArrowRight aria-hidden="true" />
+              </Button>
+            </form>
+            )}
+          </>
         )}
-
-        {/* Credentials form — collapsed (hidden) until requested when SSO is available
-            (OLO-3.1). Tailwind preflight gives [hidden] display:none, and hidden fields
-            are neither focusable nor submittable, so the collapsed form is fully inert. */}
-        <form
-          id="credentials-form"
-          hidden={!showCredentials}
-          onSubmit={handleSubmit}
-          className="mt-4 space-y-4"
-        >
-          {isSignUp && (
-            <AuthField
-              id="name"
-              label="Full Name"
-              icon={<User size={ICON_SIZE.dense} aria-hidden="true" />}
-              type="text"
-              name="name"
-              value={payload['name'] || ''}
-              onChange={handleChange}
-              required
-              autoComplete="name"
-              placeholder="John Doe"
-            />
-          )}
-
-          <AuthField
-            id="email"
-            label="Email Address"
-            icon={<Mail size={ICON_SIZE.dense} aria-hidden="true" />}
-            type="email"
-            name="email"
-            value={payload['email']}
-            onChange={handleChange}
-            required
-            autoComplete="email"
-            placeholder="you@example.com"
-            invalid={Boolean(fieldError)}
-          />
-
-          <AuthField
-            id="password"
-            label="Password"
-            icon={<Lock size={ICON_SIZE.dense} aria-hidden="true" />}
-            aside={
-              !isSignUp ? (
-                <a href="#" className="auth-link text-xs font-medium">
-                  Forgot your password?
-                </a>
-              ) : undefined
-            }
-            type="password"
-            name="password"
-            value={payload['password']}
-            onChange={handleChange}
-            required
-            autoComplete={isSignUp ? 'new-password' : 'current-password'}
-            placeholder="••••••••"
-            error={fieldError}
-          />
-
-          {isSignUp && (
-            <AuthField
-              id="signupSource"
-              label={
-                <>
-                  How did you hear about us?{' '}
-                  <span className="font-normal text-fg-muted">(optional)</span>
-                </>
-              }
-              icon={<Info size={ICON_SIZE.dense} aria-hidden="true" />}
-              type="text"
-              name="signupSource"
-              value={payload['signupSource'] || ''}
-              onChange={handleChange}
-              placeholder="e.g., Google, Twitter, a friend"
-            />
-          )}
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full"
-            disabled={!signInEnabled || isSSOLoading}
-          >
-            {isSignUp ? 'Create Account' : 'Sign In'}
-            <ArrowRight aria-hidden="true" />
-          </Button>
-        </form>
 
         {/* Toggle Sign Up/Sign In */}
         <p className="auth-sub mt-5 text-center">
@@ -432,6 +404,7 @@ const LoginClient: React.FC<LoginClientProps> = ({
             onClick={() => {
               setIsSignUp(!isSignUp);
               setSignupMessage(null);
+              setCheckEmailFor(null);
             }}
           >
             {isSignUp ? 'Sign In' : 'Create one'}

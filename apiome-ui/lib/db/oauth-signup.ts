@@ -104,7 +104,7 @@ export async function deleteOauthSignupPendingById(id: string): Promise<void> {
   await connectionPool.query(`DELETE FROM apiome.oauth_signup_pending WHERE id = $1`, [id]);
 }
 
-export async function insertAuthOneTimeCode(userId: string, tenantId: string): Promise<string> {
+export async function insertAuthOneTimeCode(userId: string, tenantId: string | null): Promise<string> {
   const id = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + ONE_TIME_TTL_MS);
   await connectionPool.query(

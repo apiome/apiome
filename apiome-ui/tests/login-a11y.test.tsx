@@ -66,16 +66,14 @@ describe('LoginClient — form field labelling (OLO-3.5)', () => {
   });
 
   it('labels every field in sign-up mode and switches the password token to new-password', () => {
-    render(<LoginClient ssoProviders={[]} />);
+    render(<LoginClient ssoProviders={[]} emailSignupAvailable />);
 
-    // Switch to sign-up so the extra fields render.
+    // Switch to sign-up so the email sign-up form (SGN-1.1) renders.
     fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
 
-    expect(screen.getByLabelText('Full Name')).toHaveAttribute('autocomplete', 'name');
-    expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
+    expect(screen.getByLabelText('Full name')).toHaveAttribute('autocomplete', 'name');
+    expect(screen.getByLabelText('Email address')).toHaveAttribute('autocomplete', 'email');
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
-    // The optional acquisition field carries a wrapped label; match on its leading text.
-    expect(screen.getByLabelText(/How did you hear about us\?/)).toBeInTheDocument();
   });
 });
 

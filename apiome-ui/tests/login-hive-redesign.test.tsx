@@ -33,8 +33,10 @@ jest.mock('@lib/auth/session-client', () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
-jest.mock('../lib/db/helper', () => ({
-  createSignupRequest: jest.fn(),
+jest.mock('@lib/auth/email-signup-actions', () => ({
+  startEmailSignup: jest.fn(),
+  resendSignupVerification: jest.fn(),
+  verifyEmailSignup: jest.fn(),
 }));
 
 import LoginClient from '../src/app/login/LoginClient';
@@ -214,25 +216,25 @@ describe('login page — the message banner is the Hive Alert', () => {
   });
 
   it('uses the ok tone and a polite announcement for in-page sign-up feedback', async () => {
-    const { createSignupRequest } = jest.requireMock('../lib/db/helper') as {
-      createSignupRequest: jest.Mock;
+    const actions = jest.requireMock('@lib/auth/email-signup-actions') as {
+      startEmailSignup: jest.Mock;
+      resendSignupVerification: jest.Mock;
     };
-    createSignupRequest.mockResolvedValue(
-      JSON.stringify({ success: true, message: 'Check your inbox to verify your email.' })
-    );
+    actions.startEmailSignup.mockResolvedValue({ ok: true });
+    actions.resendSignupVerification.mockResolvedValue({ ok: true });
 
-    render(<LoginClient ssoProviders={[]} />);
+    render(<LoginClient ssoProviders={[]} emailSignupAvailable />);
     fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-    fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'Ada' } });
-    fireEvent.change(screen.getByLabelText('Email Address'), {
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText('Email address'), {
       target: { value: 'ada@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter22' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Create Account' }).closest('form')!);
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Hunter22' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Create account' }).closest('form')!);
 
-    const banner = await screen.findByTestId('login-banner');
+    fireEvent.click(await screen.findByTestId('signup-resend'));
+    const banner = await screen.findByTestId('signup-resend-sent');
     expect(banner).toHaveAttribute('role', 'status');
-    expect(banner).toHaveAttribute('aria-live', 'polite');
     expect(banner.className).toContain('bg-ok-soft');
   });
 });
