@@ -89,6 +89,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   'kafka-connect': 'https://kafka.apache.org/documentation/#connect_schemas',
   cobolcopybook: 'https://www.ibm.com/docs/en/cobol-zos/latest?topic=programs-copybook',
   pli: 'https://www.ibm.com/docs/en/epfz/latest',
+  ims: 'https://www.ibm.com/docs/en/ims/latest?topic=reference-database-description-dbd-generation',
   'vsam-idcams': 'https://www.ibm.com/docs/en/zos/latest?topic=commands-define-cluster',
   'cics-bms': 'https://www.ibm.com/docs/en/cics-ts/latest?topic=programs-basic-mapping-support',
 

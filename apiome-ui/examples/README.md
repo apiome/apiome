@@ -104,7 +104,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `dhall/` | Dhall | data_schema | `let … in …` with type annotations, union types and `::` completion | 14 |
 | `dtd/` | DTD | data_schema | `<!ELEMENT>`/`<!ATTLIST>` declarations, or a `<!DOCTYPE …[…]>` internal subset | 15 |
 | `flatbuffers/` | FlatBuffers | data_schema | `table`/`struct` + `root_type` | 11 |
-| `ims/` | IMS DBD and PSB (pending #5482) | data_schema | `DBD NAME=…,ACCESS=(…)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG` | 14 |
+| `ims/` | IMS DBD and PSB | data_schema | `DBD NAME=…,ACCESS=(…)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG` | 14 |
 | `json-schema/` | JSON Schema | data_schema | `$schema` / `type` + `properties` | 17 |
 | `jsonld/` | JSON-LD contexts | data_schema | top-level `@context` with term definitions (`@id`/`@type`/`@container`) | 14 |
 | `jtd/` | JSON Type Definition | data_schema | `properties`/`optionalProperties` | 11 |
@@ -1169,24 +1169,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-semantic-short-control-record.txt`** — The FMT-6.2 acceptance case: a flat control record shorter than 524 bytes, so the fixed-width cut cannot find IDOCTYP/MESTYP at their declared offsets.
 
-### `ims/` — IMS DBD and PSB (pending #5482)
+### `ims/` — IMS DBD and PSB
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-dbd.dbd` | minimal | `ims` ≥ 0.85 | valid | `dbd`, `segm`, `field`, `sequence-field`, `pending-adapter` |
-| `02-typical-hdam-dbd.dbd` | typical | `ims` ≥ 0.85 | valid | `hdam`, `parent-hierarchy`, `packed-field`, `randomizer`, `continuation`, `pending-adapter` |
-| `03-dbd-psb-set/CUSTDB.dbd` | multi-file (root) | `ims` ≥ 0.85 | valid | `multi-file`, `dbd`, `hierarchy`, `pending-adapter` |
-| `03-dbd-psb-set/CUSTINQ.psb` ⚠ | multi-file (member) | `ims` (no guarantee) | valid | `multi-file`, `psb`, `senseg`, `senfld`, `procopt`, `pending-adapter` |
-| `04-stress-secondary-indexes.dbd` | stress | `ims` ≥ 0.85 | valid | `hidam`, `lchild`, `xdfld`, `subseq`, `ddata`, `nullval`, `non-unique-key`, `variable-length-segment`, `logical-child`, `pointer-options`, `pending-adapter` |
-| `05-real-world-policy-dbd.dbd` | real-world | `ims` ≥ 0.85 | valid | `four-level-hierarchy`, `packed-money`, `secondary-index`, `variable-length-segment`, `free-space`, `pending-adapter` |
-| `06-typical-psb.psb` | typical | `ims` ≥ 0.85 | valid | `psb`, `multiple-pcbs`, `procopt`, `senfld`, `tp-pcb`, `procseq`, `pending-adapter` |
-| `07-composition-logical-database.dbd` | composition | `ims` ≥ 0.85 | valid | `logical-database`, `source-operand`, `concatenated-segment`, `cross-database-hierarchy`, `pending-adapter` |
-| `negative/01-syntactic-unterminated-continuation.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `syntactic`, `dangling-continuation`, `pending-adapter` |
-| `negative/02-semantic-no-segments.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `semantic`, `no-segments`, `pending-adapter` |
-| `negative/03-truncated-mid-field.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `truncated`, `mid-operand`, `pending-adapter` |
-| `negative/04-wrong-format-cobol-copybook.cpy` | — | `ims` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook`, `pending-adapter` |
-| `negative/05-encoding-utf16.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-parent-reference.dbd` ⚠ | — | `ims` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `dangling-parent`, `missing-index-dbd`, `pending-adapter` |
+| `01-minimal-dbd.dbd` | minimal | `ims` ≥ 0.85 | valid | `dbd`, `segm`, `field`, `sequence-field` |
+| `02-typical-hdam-dbd.dbd` | typical | `ims` ≥ 0.85 | valid | `hdam`, `parent-hierarchy`, `packed-field`, `randomizer`, `continuation` |
+| `03-dbd-psb-set/CUSTDB.dbd` | multi-file (root) | `ims` ≥ 0.85 | valid | `multi-file`, `dbd`, `hierarchy` |
+| `03-dbd-psb-set/CUSTINQ.psb` ⚠ | multi-file (member) | `ims` (no guarantee) | valid | `multi-file`, `psb`, `senseg`, `senfld`, `procopt` |
+| `04-stress-secondary-indexes.dbd` | stress | `ims` ≥ 0.85 | valid | `hidam`, `lchild`, `xdfld`, `subseq`, `ddata`, `nullval`, `non-unique-key`, `variable-length-segment`, `logical-child`, `pointer-options` |
+| `05-real-world-policy-dbd.dbd` | real-world | `ims` ≥ 0.85 | valid | `four-level-hierarchy`, `packed-money`, `secondary-index`, `variable-length-segment`, `free-space` |
+| `06-typical-psb.psb` | typical | `ims` ≥ 0.85 | valid | `psb`, `multiple-pcbs`, `procopt`, `senfld`, `tp-pcb`, `procseq` |
+| `07-composition-logical-database.dbd` | composition | `ims` ≥ 0.85 | valid | `logical-database`, `source-operand`, `concatenated-segment`, `cross-database-hierarchy` |
+| `negative/01-syntactic-unterminated-continuation.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `syntactic`, `dangling-continuation` |
+| `negative/02-semantic-no-segments.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `semantic`, `no-segments` |
+| `negative/03-truncated-mid-field.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `truncated`, `mid-operand` |
+| `negative/04-wrong-format-cobol-copybook.cpy` | — | `ims` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook` |
+| `negative/05-encoding-utf16.dbd` | — | `ims` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-parent-reference.dbd` ⚠ | — | `ims` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `dangling-parent`, `missing-index-dbd` |
 
 > ⚠ **`03-dbd-psb-set/CUSTINQ.psb`** — Fileset member: the program view. PROCOPT is the access contract FMT-11.2 carries in extras, and it only makes sense against the DBD in the same set.
 

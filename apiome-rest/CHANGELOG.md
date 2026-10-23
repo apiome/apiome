@@ -5,6 +5,44 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.440.0] - 2026-10-23
+
+### Added
+- **IMS DBD and PSB import (#5482, FMT-11.2)**: an `ims` import source (aliases `ims-dbd`, `ims-psb`, `dbd`, `psb`;
+  `.dbd`, `.psb`; file, URL, paste, fileset) on the **data_schema** paradigm.
+  - **Reader** (`app.ims_parser`): assembler macro statements — label, operation, `KEYWORD=value` operands ending at
+    the first blank, `*` comments, column-72 continuations resuming in column 16 (a lone mark in column 73 after a blank
+    is accepted; an operand that runs past column 71 is an over-long line). DBD: `DBD`, `DATASET` / `AREA`, `SEGM`
+    (`PARENT` in every form — `0`, `P`, `(P,SNGL)`, `((P,SNGL),(LP,PHYSICAL,DBD))` — `BYTES=n` / `(max,min)`,
+    `SOURCE=` for `ACCESS=LOGICAL`), `FIELD` (`(name,SEQ,U|M)`, `BYTES`, `START`, `TYPE=C|X|P|Z|H|F`, `/SX` / `/CK`),
+    `LCHILD`, `XDFLD` (`SEGMENT`, `SRCH`, `SUBSEQ`, `DDATA`, `NULLVAL`), `DBDGEN`. PSB: `PCB` (`TYPE=DB|TP|GSAM`,
+    `DBDNAME`, `PROCOPT`, `KEYLEN`, `PROCSEQ`, label or `PCBNAME`), `SENSEG`, `SENFLD` (`START`, `REPL`), `PSBGEN`
+    (`PSBNAME`, `LANG`). The hierarchy is rebuilt from `PARENT`, not file order. In a fileset each `PCB DBDNAME` is
+    resolved against the DBDs uploaded with it.
+  - **Projection** (`app.ims_normalizer`): each segment → a `RECORD` `ims.<DBD>.<segment>`, a parent holding one list
+    field per child segment type. `TYPE=C` → `string` with `max_length`, `X` → `bytes` of exactly `BYTES`, `P` / `Z` →
+    `decimal` (digits recorded), `H` / `F` → `integer`; offset, `START`, length, storage and the sequence flag in
+    `extras['ims']`, with undescribed byte ranges and overlaps listed. Each `SENSEG` of a database PCB → a program-view
+    `RECORD` `ims.<PSB>.<PCB>.<segment>` holding its `SENFLD`s (every field when none), typed from the DBD when it is in
+    the upload. `PROCOPT` → a decoded access profile (get / insert / replace / delete / path + every intent letter) on
+    each view record, in `extras['ims']['psbs']`, and on the DBD segment record as `extras['ims']['access']`.
+    `LAYOUT_ASSUMPTIONS` (1-based `START`, single-byte characters, packed 2n − 1 digits, 2- / 4-byte binaries,
+    variable-length positions as written, `SENFLD` positions in the I/O area) is published as
+    `extras['ims']['layoutAssumptions']`.
+  - **Declared limits** (graded ledger rows via `_ims_capability_rows`): `ims.segment_layout`,
+    `ims.overlapping_fields`, `ims.variable_length_segment`, `ims.logical_database`, `ims.unresolved_dbd` (partially
+    mapped); `ims.index_database`, `ims.secondary_index_field`, `ims.logical_relationship`, `ims.system_related_field`,
+    `ims.non_database_pcb` (not modelled).
+  - **Refusals**: `INPUT_EMPTY`, `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH` (no `DBD NAME=` / `PCB TYPE=` — a COBOL
+    copybook), `INPUT_TRUNCATED` (ends on a continuation mark, inside operands, or before `DBDGEN` / `PSBGEN`),
+    `INPUT_MALFORMED` (an unknown macro, a continuation not in column 16, an operand without `=`, unbalanced
+    parentheses, a statement outside its block), `INPUT_SEMANTIC_INVALID` (no segment, no root or two roots, a
+    `PARENT` cycle, duplicate names, a field past its segment, an unknown `TYPE`, a `SENSEG` parent contradicting the
+    DBD), `INPUT_REFERENCE_UNRESOLVED` (a dangling `PARENT`, an `XDFLD` naming a missing segment or field, a `SENSEG`
+    / `SENFLD` the resolved DBD lacks).
+  - Staged `ims` corpus activated (14 entries); corpus goldens, round-trip matrix rows (53 xfails), parity, capability
+    registry v37, version coverage, `SCHEMA_ONLY_FORMATS`, provenance extras key, MCP toolset goldens.
+
 ## [1.439.0] - 2026-10-23
 
 ### Added

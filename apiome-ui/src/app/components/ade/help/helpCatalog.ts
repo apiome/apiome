@@ -791,6 +791,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'declare', 'dcl', '%include', 'include member', 'like', 'union', 'storage map', 'offsets'],
   },
   {
+    id: 'ims-dbd-psb-import',
+    title: 'Import IMS DBD and PSB',
+    summary: 'Catalog IMS segment hierarchies and the access profile each program declares.',
+    page: 'apiome-docs/docs/bring-in/ims-dbd-psb-import.md',
+    section: 'reference',
+    keywords: ['mainframe', 'hierarchical database', 'segment', 'segm', 'procopt', 'senseg', 'pcb', 'secondary index', 'dl/i'],
+  },
+  {
     id: 'vsam-cics-bms-import',
     title: 'Import VSAM cluster definitions and CICS BMS maps',
     summary: 'Catalog VSAM record envelopes from IDCAMS and 3270 screens from BMS maps.',

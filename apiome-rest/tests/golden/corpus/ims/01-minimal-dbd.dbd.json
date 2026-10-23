@@ -1,0 +1,207 @@
+{
+  "adapter": "ims",
+  "canonical": {
+    "channels": [],
+    "description": "IMS database descriptions and program views: 1 DBD(s), 0 PSB(s). Byte offsets and lengths are computed under the assumptions in extras['ims']['layoutAssumptions']; PROCOPT access profiles are in extras['ims']['psbs'].",
+    "extras": {
+      "ims": {
+        "capability_limits": [
+          {
+            "construct": "ims.segment_layout",
+            "count": 1,
+            "detail": "A DBD declares only the fields IMS sequences and searches on; the segment's other bytes are described by the application's copybook. The record keeps the declared fields at their offsets, and the undescribed byte ranges are listed in extras['ims']['undescribed'].",
+            "locations": [
+              "BEACONDB.BEACON"
+            ]
+          }
+        ],
+        "dbds": [
+          {
+            "access": [
+              "HDAM",
+              "OSAM"
+            ],
+            "datasets": [
+              {
+                "dd1": "BEACON",
+                "device": "3390",
+                "size": "4096",
+                "statement": "DATASET"
+              }
+            ],
+            "file": "ims/01-minimal-dbd.dbd",
+            "hierarchy": [
+              {
+                "level": 1,
+                "parent": null,
+                "segment": "BEACON",
+                "type": "ims.BEACONDB.BEACON"
+              }
+            ],
+            "logical": false,
+            "name": "BEACONDB",
+            "root": "BEACON"
+          }
+        ],
+        "files": [
+          "ims/01-minimal-dbd.dbd"
+        ],
+        "input": "file",
+        "layoutAssumptions": [
+          "START and BYTES are 1-based byte positions and byte lengths within the segment's data as IMS presents it to the program; the offset reported is START − 1.",
+          "One byte per character (TYPE=C) in a single-byte EBCDIC or ASCII code page.",
+          "TYPE=P is packed decimal — two digits per byte with the sign in the last nibble, so BYTES=n holds 2n − 1 digits; TYPE=Z is zoned decimal, one digit per byte. The DBD declares no scale, so neither carries a decimal point.",
+          "TYPE=H is a 2-byte and TYPE=F a 4-byte signed binary integer; TYPE=X is uninterpreted bytes.",
+          "In a variable-length segment (BYTES=(max,min)) the first two bytes of each occurrence hold its length; START positions are taken as written, not shifted past that prefix.",
+          "Byte ranges no FIELD covers are segment data the DBD does not describe — IMS needs FIELD statements only for the sequence field and the fields programs search on.",
+          "A SENFLD's START is the field's position in the program's I/O area, not in the stored segment."
+        ],
+        "psbs": []
+      }
+    },
+    "format": "ims",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "BEACONDB",
+      "namespace": "ims"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "BEACONDB",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment BEACON of DBD BEACONDB (HDAM/OSAM): root segment, 32 bytes, 2 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "BEACONDB",
+            "file": "ims/01-minimal-dbd.dbd",
+            "length": 32,
+            "level": 1,
+            "line": 3,
+            "root": true,
+            "segment": "BEACON",
+            "sequenceField": "BCNID",
+            "undescribed": [
+              {
+                "end": 32,
+                "start": 25
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 16 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 16,
+                "line": 4,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.BEACONDB.BEACON.BCNID",
+            "name": "BCNID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=17 (offset 16).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 5,
+                "offset": 16,
+                "start": 17,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.BEACONDB.BEACON.BCNTIME",
+            "name": "BCNTIME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.BEACONDB.BEACON",
+        "key_type": null,
+        "kind": "record",
+        "name": "BEACONDB.BEACON",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ims/01-minimal-dbd.dbd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ims"
+  },
+  "fingerprint": "sha256:df87d99c863b5e52357bcdfcea4db0c38d89f287446e5cc895ae98e0672595d1",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

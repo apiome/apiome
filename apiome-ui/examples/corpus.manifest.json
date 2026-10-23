@@ -261,7 +261,7 @@
       "marker": "`EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML)"
     },
     "ims": {
-      "label": "IMS DBD and PSB (pending #5482)",
+      "label": "IMS DBD and PSB",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`DBD NAME=\u2026,ACCESS=(\u2026)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG`"
@@ -13181,7 +13181,7 @@
     {
       "path": "ims/01-minimal-dbd.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13191,8 +13191,7 @@
         "dbd",
         "segm",
         "field",
-        "sequence-field",
-        "pending-adapter"
+        "sequence-field"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13203,7 +13202,7 @@
     {
       "path": "ims/02-typical-hdam-dbd.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13214,8 +13213,7 @@
         "parent-hierarchy",
         "packed-field",
         "randomizer",
-        "continuation",
-        "pending-adapter"
+        "continuation"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13226,7 +13224,7 @@
     {
       "path": "ims/03-dbd-psb-set/CUSTDB.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13235,8 +13233,7 @@
       "features": [
         "multi-file",
         "dbd",
-        "hierarchy",
-        "pending-adapter"
+        "hierarchy"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13248,7 +13245,7 @@
     {
       "path": "ims/03-dbd-psb-set/CUSTINQ.psb",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13259,8 +13256,7 @@
         "psb",
         "senseg",
         "senfld",
-        "procopt",
-        "pending-adapter"
+        "procopt"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13273,7 +13269,7 @@
     {
       "path": "ims/04-stress-secondary-indexes.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13289,8 +13285,7 @@
         "non-unique-key",
         "variable-length-segment",
         "logical-child",
-        "pointer-options",
-        "pending-adapter"
+        "pointer-options"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13301,7 +13296,7 @@
     {
       "path": "ims/05-real-world-policy-dbd.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13312,8 +13307,7 @@
         "packed-money",
         "secondary-index",
         "variable-length-segment",
-        "free-space",
-        "pending-adapter"
+        "free-space"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13324,7 +13318,7 @@
     {
       "path": "ims/06-typical-psb.psb",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13336,8 +13330,7 @@
         "procopt",
         "senfld",
         "tp-pcb",
-        "procseq",
-        "pending-adapter"
+        "procseq"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13348,7 +13341,7 @@
     {
       "path": "ims/07-composition-logical-database.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ims",
@@ -13358,8 +13351,7 @@
         "logical-database",
         "source-operand",
         "concatenated-segment",
-        "cross-database-hierarchy",
-        "pending-adapter"
+        "cross-database-hierarchy"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -13370,7 +13362,7 @@
     {
       "path": "ims/negative/01-syntactic-unterminated-continuation.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13379,8 +13371,7 @@
       "features": [
         "negative",
         "syntactic",
-        "dangling-continuation",
-        "pending-adapter"
+        "dangling-continuation"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13392,7 +13383,7 @@
     {
       "path": "ims/negative/02-semantic-no-segments.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13401,8 +13392,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-segments",
-        "pending-adapter"
+        "no-segments"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13414,7 +13404,7 @@
     {
       "path": "ims/negative/03-truncated-mid-field.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13423,8 +13413,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-operand",
-        "pending-adapter"
+        "mid-operand"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13436,7 +13425,7 @@
     {
       "path": "ims/negative/04-wrong-format-cobol-copybook.cpy",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13445,8 +13434,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "cobol-copybook",
-        "pending-adapter"
+        "cobol-copybook"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13458,7 +13446,7 @@
     {
       "path": "ims/negative/05-encoding-utf16.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13467,8 +13455,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -13480,7 +13467,7 @@
     {
       "path": "ims/negative/06-unresolvable-parent-reference.dbd",
       "format": "ims",
-      "adapter_key": null,
+      "adapter_key": "ims",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ims",
@@ -13490,8 +13477,7 @@
         "negative",
         "unresolvable-ref",
         "dangling-parent",
-        "missing-index-dbd",
-        "pending-adapter"
+        "missing-index-dbd"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
