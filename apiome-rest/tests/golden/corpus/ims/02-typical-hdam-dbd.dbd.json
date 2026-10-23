@@ -1,0 +1,942 @@
+{
+  "adapter": "ims",
+  "canonical": {
+    "channels": [],
+    "description": "IMS database descriptions and program views: 1 DBD(s), 0 PSB(s). Byte offsets and lengths are computed under the assumptions in extras['ims']['layoutAssumptions']; PROCOPT access profiles are in extras['ims']['psbs'].",
+    "extras": {
+      "ims": {
+        "capability_limits": [
+          {
+            "construct": "ims.segment_layout",
+            "count": 3,
+            "detail": "A DBD declares only the fields IMS sequences and searches on; the segment's other bytes are described by the application's copybook. The record keeps the declared fields at their offsets, and the undescribed byte ranges are listed in extras['ims']['undescribed'].",
+            "locations": [
+              "CUSTDB.ADDRESS",
+              "CUSTDB.CUSTOMER",
+              "CUSTDB.ORDER"
+            ]
+          }
+        ],
+        "dbds": [
+          {
+            "access": [
+              "HDAM",
+              "OSAM"
+            ],
+            "datasets": [
+              {
+                "dd1": "CUSTPRIM",
+                "device": "3390",
+                "scan": "3",
+                "size": "8192",
+                "statement": "DATASET"
+              }
+            ],
+            "file": "ims/02-typical-hdam-dbd.dbd",
+            "hierarchy": [
+              {
+                "level": 1,
+                "parent": null,
+                "segment": "CUSTOMER",
+                "type": "ims.CUSTDB.CUSTOMER"
+              },
+              {
+                "level": 2,
+                "parent": "CUSTOMER",
+                "segment": "ADDRESS",
+                "type": "ims.CUSTDB.ADDRESS"
+              },
+              {
+                "level": 2,
+                "parent": "CUSTOMER",
+                "segment": "ORDER",
+                "type": "ims.CUSTDB.ORDER"
+              }
+            ],
+            "logical": false,
+            "name": "CUSTDB",
+            "operands": {
+              "rmname": [
+                "DFSHDC40",
+                "10",
+                "500",
+                "824"
+              ]
+            },
+            "root": "CUSTOMER"
+          }
+        ],
+        "files": [
+          "ims/02-typical-hdam-dbd.dbd"
+        ],
+        "input": "file",
+        "layoutAssumptions": [
+          "START and BYTES are 1-based byte positions and byte lengths within the segment's data as IMS presents it to the program; the offset reported is START − 1.",
+          "One byte per character (TYPE=C) in a single-byte EBCDIC or ASCII code page.",
+          "TYPE=P is packed decimal — two digits per byte with the sign in the last nibble, so BYTES=n holds 2n − 1 digits; TYPE=Z is zoned decimal, one digit per byte. The DBD declares no scale, so neither carries a decimal point.",
+          "TYPE=H is a 2-byte and TYPE=F a 4-byte signed binary integer; TYPE=X is uninterpreted bytes.",
+          "In a variable-length segment (BYTES=(max,min)) the first two bytes of each occurrence hold its length; START positions are taken as written, not shifted past that prefix.",
+          "Byte ranges no FIELD covers are segment data the DBD does not describe — IMS needs FIELD statements only for the sequence field and the fields programs search on.",
+          "A SENFLD's START is the field's position in the program's I/O area, not in the stored segment."
+        ],
+        "psbs": []
+      }
+    },
+    "format": "ims",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTDB",
+      "namespace": "ims"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTDB",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment ADDRESS of DBD CUSTDB (HDAM/OSAM): child of CUSTOMER, 120 bytes, 6 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTDB",
+            "file": "ims/02-typical-hdam-dbd.dbd",
+            "length": 120,
+            "level": 2,
+            "line": 16,
+            "parent": "CUSTOMER",
+            "segment": "ADDRESS",
+            "sequenceField": "ADDRTYPE",
+            "undescribed": [
+              {
+                "end": 120,
+                "start": 111
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 25 bytes at START=73 (offset 72).",
+            "extras": {
+              "ims": {
+                "length": 25,
+                "line": 20,
+                "offset": 72,
+                "start": 73,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.CUSTDB.ADDRESS.ADDRCITY",
+            "name": "ADDRCITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=108 (offset 107).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 22,
+                "offset": 107,
+                "start": 108,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.CUSTDB.ADDRESS.ADDRCTRY",
+            "name": "ADDRCTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 35 bytes at START=3 (offset 2).",
+            "extras": {
+              "ims": {
+                "length": 35,
+                "line": 18,
+                "offset": 2,
+                "start": 3,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.CUSTDB.ADDRESS.ADDRLIN1",
+            "name": "ADDRLIN1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 35 bytes at START=38 (offset 37).",
+            "extras": {
+              "ims": {
+                "length": 35,
+                "line": 19,
+                "offset": 37,
+                "start": 38,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.CUSTDB.ADDRESS.ADDRLIN2",
+            "name": "ADDRLIN2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 10 bytes at START=98 (offset 97).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 21,
+                "offset": 97,
+                "start": 98,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.CUSTDB.ADDRESS.ADDRPOST",
+            "name": "ADDRPOST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 2 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 2,
+                "line": 17,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.CUSTDB.ADDRESS.ADDRTYPE",
+            "name": "ADDRTYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.CUSTDB.ADDRESS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTDB.ADDRESS",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment CUSTOMER of DBD CUSTDB (HDAM/OSAM): root segment, 200 bytes, 6 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTDB",
+            "file": "ims/02-typical-hdam-dbd.dbd",
+            "length": 200,
+            "level": 1,
+            "line": 8,
+            "root": true,
+            "segment": "CUSTOMER",
+            "sequenceField": "CUSTID",
+            "undescribed": [
+              {
+                "end": 200,
+                "start": 71
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment ADDRESS under this CUSTOMER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTDB.ADDRESS"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.CUSTDB.CUSTOMER.ADDRESS",
+            "name": "ADDRESS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTDB.ADDRESS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=60 (offset 59).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 13,
+                "offset": 59,
+                "start": 60,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTBAL",
+            "name": "CUSTBAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=68 (offset 67).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 14,
+                "offset": 67,
+                "start": 68,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTCCY",
+            "name": "CUSTCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 10 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 9,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTID",
+            "name": "CUSTID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 40 bytes at START=11 (offset 10).",
+            "extras": {
+              "ims": {
+                "length": 40,
+                "line": 10,
+                "offset": 10,
+                "start": 11,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTNAME",
+            "name": "CUSTNAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=52 (offset 51).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 12,
+                "offset": 51,
+                "start": 52,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTOPEN",
+            "name": "CUSTOPEN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=51 (offset 50).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 11,
+                "offset": 50,
+                "start": 51,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.CUSTDB.CUSTOMER.CUSTSTAT",
+            "name": "CUSTSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment ORDER under this CUSTOMER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTDB.ORDER"
+              }
+            },
+            "field_number": 8,
+            "key": "ims.CUSTDB.CUSTOMER.ORDER",
+            "name": "ORDER",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTDB.ORDER",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.CUSTDB.CUSTOMER",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTDB.CUSTOMER",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment ORDER of DBD CUSTDB (HDAM/OSAM): child of CUSTOMER, 160 bytes, 5 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTDB",
+            "file": "ims/02-typical-hdam-dbd.dbd",
+            "length": 160,
+            "level": 2,
+            "line": 24,
+            "parent": "CUSTOMER",
+            "segment": "ORDER",
+            "sequenceField": "ORDERID",
+            "undescribed": [
+              {
+                "end": 160,
+                "start": 31
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=28 (offset 27).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 29,
+                "offset": 27,
+                "start": 28,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.CUSTDB.ORDER.ORDCCY",
+            "name": "ORDCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=11 (offset 10).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 26,
+                "offset": 10,
+                "start": 11,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.CUSTDB.ORDER.ORDDATE",
+            "name": "ORDDATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 10 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 25,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.CUSTDB.ORDER.ORDERID",
+            "name": "ORDERID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=19 (offset 18).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 27,
+                "offset": 18,
+                "start": 19,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.CUSTDB.ORDER.ORDSTAT",
+            "name": "ORDSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=20 (offset 19).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 28,
+                "offset": 19,
+                "start": 20,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.CUSTDB.ORDER.ORDTOTAL",
+            "name": "ORDTOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.CUSTDB.ORDER",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTDB.ORDER",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ims/02-typical-hdam-dbd.dbd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ims"
+  },
+  "fingerprint": "sha256:d75c47896bff3a721f6ab0123ee81eea82ae4aa0d9b6afcaf13b6a94f31f76bc",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

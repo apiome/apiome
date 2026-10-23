@@ -1,0 +1,24 @@
+---
+slug: ims-dbd-psb-import
+title: Import IMS DBD and PSB
+description: Catalog IMS segment hierarchies and the access profile each program declares.
+authors: [apiome]
+---
+
+Apiome now imports IMS database descriptions (DBD) and program specification blocks (PSB) as data
+schemas: the segment hierarchy with every field at its byte offset, and each program's access
+profile. [What gets imported](/bring-in/ims-dbd-psb-import).
+
+{/* truncate */}
+
+- **The hierarchy is rebuilt from `PARENT`.** Each segment is a record, and a parent holds a list of
+  each child segment type — whatever order the statements are written in. A `PARENT` that names no
+  segment is refused, never silently re-rooted.
+- **Fields keep their byte positions.** Every field has its offset, length and type (character,
+  packed or zoned decimal, binary, hex), and the bytes no `FIELD` describes are listed. Each import
+  states what the byte counts assume.
+- **`PROCOPT` becomes an access profile.** A PSB's program views show which segments and fields the
+  program sees and whether it may get, insert, replace, delete or use path calls. Upload the DBD with
+  the PSB and the profile also appears on the DBD's segments.
+- **Secondary indexes and logical databases are named.** `LCHILD` / `XDFLD` search fields, logical
+  children and `ACCESS=LOGICAL` sources are kept on the item and listed in the coverage ledger.

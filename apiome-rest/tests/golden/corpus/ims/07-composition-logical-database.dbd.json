@@ -1,0 +1,394 @@
+{
+  "adapter": "ims",
+  "canonical": {
+    "channels": [],
+    "description": "IMS database descriptions and program views: 1 DBD(s), 0 PSB(s). Byte offsets and lengths are computed under the assumptions in extras['ims']['layoutAssumptions']; PROCOPT access profiles are in extras['ims']['psbs'].",
+    "extras": {
+      "ims": {
+        "capability_limits": [
+          {
+            "construct": "ims.logical_database",
+            "count": 5,
+            "detail": "A segment of a LOGICAL database is a projection of the physical segments named by SOURCE=; its data is theirs. The record keeps the logical hierarchy, and each source names the physical segment's record when that DBD is in the same upload.",
+            "locations": [
+              "CUSTORDL.LADDRESS",
+              "CUSTORDL.LCUSTOMR",
+              "CUSTORDL.LORDER",
+              "CUSTORDL.LORDLINE",
+              "CUSTORDL.LORDNOTE"
+            ]
+          }
+        ],
+        "dbds": [
+          {
+            "access": [
+              "LOGICAL"
+            ],
+            "file": "ims/07-composition-logical-database.dbd",
+            "hierarchy": [
+              {
+                "level": 1,
+                "parent": null,
+                "segment": "LCUSTOMR",
+                "type": "ims.CUSTORDL.LCUSTOMR"
+              },
+              {
+                "level": 2,
+                "parent": "LCUSTOMR",
+                "segment": "LADDRESS",
+                "type": "ims.CUSTORDL.LADDRESS"
+              },
+              {
+                "level": 2,
+                "parent": "LCUSTOMR",
+                "segment": "LORDER",
+                "type": "ims.CUSTORDL.LORDER"
+              },
+              {
+                "level": 3,
+                "parent": "LORDER",
+                "segment": "LORDLINE",
+                "type": "ims.CUSTORDL.LORDLINE"
+              },
+              {
+                "level": 3,
+                "parent": "LORDER",
+                "segment": "LORDNOTE",
+                "type": "ims.CUSTORDL.LORDNOTE"
+              }
+            ],
+            "logical": true,
+            "name": "CUSTORDL",
+            "root": "LCUSTOMR"
+          }
+        ],
+        "files": [
+          "ims/07-composition-logical-database.dbd"
+        ],
+        "input": "file",
+        "layoutAssumptions": [
+          "START and BYTES are 1-based byte positions and byte lengths within the segment's data as IMS presents it to the program; the offset reported is START − 1.",
+          "One byte per character (TYPE=C) in a single-byte EBCDIC or ASCII code page.",
+          "TYPE=P is packed decimal — two digits per byte with the sign in the last nibble, so BYTES=n holds 2n − 1 digits; TYPE=Z is zoned decimal, one digit per byte. The DBD declares no scale, so neither carries a decimal point.",
+          "TYPE=H is a 2-byte and TYPE=F a 4-byte signed binary integer; TYPE=X is uninterpreted bytes.",
+          "In a variable-length segment (BYTES=(max,min)) the first two bytes of each occurrence hold its length; START positions are taken as written, not shifted past that prefix.",
+          "Byte ranges no FIELD covers are segment data the DBD does not describe — IMS needs FIELD statements only for the sequence field and the fields programs search on.",
+          "A SENFLD's START is the field's position in the program's I/O area, not in the stored segment."
+        ],
+        "psbs": []
+      }
+    },
+    "format": "ims",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTORDL",
+      "namespace": "ims"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTORDL",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS logical segment LADDRESS of DBD CUSTORDL (child of LCUSTOMR), built from CUSTDB.ADDRESS.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTORDL",
+            "file": "ims/07-composition-logical-database.dbd",
+            "level": 2,
+            "line": 15,
+            "parent": "LCUSTOMR",
+            "segment": "LADDRESS",
+            "sources": [
+              {
+                "dbd": "CUSTDB",
+                "mode": "DATA",
+                "segment": "ADDRESS"
+              }
+            ]
+          }
+        },
+        "fields": [],
+        "key": "ims.CUSTORDL.LADDRESS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTORDL.LADDRESS",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS logical segment LCUSTOMR of DBD CUSTORDL (root segment), built from CUSTDB.CUSTOMER.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTORDL",
+            "file": "ims/07-composition-logical-database.dbd",
+            "level": 1,
+            "line": 11,
+            "root": true,
+            "segment": "LCUSTOMR",
+            "sources": [
+              {
+                "dbd": "CUSTDB",
+                "mode": "DATA",
+                "segment": "CUSTOMER"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment LADDRESS under this LCUSTOMR.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTORDL.LADDRESS"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.CUSTORDL.LCUSTOMR.LADDRESS",
+            "name": "LADDRESS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTORDL.LADDRESS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment LORDER under this LCUSTOMR.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTORDL.LORDER"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.CUSTORDL.LCUSTOMR.LORDER",
+            "name": "LORDER",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTORDL.LORDER",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.CUSTORDL.LCUSTOMR",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTORDL.LCUSTOMR",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS logical segment LORDER of DBD CUSTORDL (child of LCUSTOMR), built from CUSTDB.ORDER, ORDERDB.ORDER.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTORDL",
+            "file": "ims/07-composition-logical-database.dbd",
+            "level": 2,
+            "line": 20,
+            "parent": "LCUSTOMR",
+            "segment": "LORDER",
+            "sources": [
+              {
+                "dbd": "CUSTDB",
+                "mode": "DATA",
+                "segment": "ORDER"
+              },
+              {
+                "dbd": "ORDERDB",
+                "mode": "DATA",
+                "segment": "ORDER"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment LORDLINE under this LORDER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTORDL.LORDLINE"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.CUSTORDL.LORDER.LORDLINE",
+            "name": "LORDLINE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTORDL.LORDLINE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment LORDNOTE under this LORDER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.CUSTORDL.LORDNOTE"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.CUSTORDL.LORDER.LORDNOTE",
+            "name": "LORDNOTE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.CUSTORDL.LORDNOTE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.CUSTORDL.LORDER",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTORDL.LORDER",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS logical segment LORDLINE of DBD CUSTORDL (child of LORDER), built from ORDERDB.ORDLINE.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTORDL",
+            "file": "ims/07-composition-logical-database.dbd",
+            "level": 3,
+            "line": 24,
+            "parent": "LORDER",
+            "segment": "LORDLINE",
+            "sources": [
+              {
+                "dbd": "ORDERDB",
+                "mode": "DATA",
+                "segment": "ORDLINE"
+              }
+            ]
+          }
+        },
+        "fields": [],
+        "key": "ims.CUSTORDL.LORDLINE",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTORDL.LORDLINE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS logical segment LORDNOTE of DBD CUSTORDL (child of LORDER), built from ORDERDB.ORDNOTE.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "CUSTORDL",
+            "file": "ims/07-composition-logical-database.dbd",
+            "level": 3,
+            "line": 28,
+            "parent": "LORDER",
+            "segment": "LORDNOTE",
+            "sources": [
+              {
+                "dbd": "ORDERDB",
+                "mode": "DATA",
+                "segment": "ORDNOTE"
+              }
+            ]
+          }
+        },
+        "fields": [],
+        "key": "ims.CUSTORDL.LORDNOTE",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTORDL.LORDNOTE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ims/07-composition-logical-database.dbd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ims"
+  },
+  "fingerprint": "sha256:74066e74994fc9c5ae450873df9cf85baa03203e2b2e1b8ba5214faf0e6872ea",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

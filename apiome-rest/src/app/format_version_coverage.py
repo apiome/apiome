@@ -511,6 +511,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="COBOL data-division record layout",
     ),
+    "ims": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="IMS DBDGEN / PSBGEN macro source",
+                format_key="ims",
+                support=VersionSupport.UNGATED,
+                note="A DBD or PSB names no IMS release: DBD, DATASET, SEGM, FIELD, LCHILD, XDFLD, PCB, "
+                "SENSEG and SENFLD are read the same way for every IMS version, and DBDGEN / PSBGEN "
+                "operands a later release added are kept as written.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pli": VersionCoverage(
         reads=[
             FormatVersion(

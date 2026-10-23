@@ -1,0 +1,1041 @@
+{
+  "adapter": "ims",
+  "canonical": {
+    "channels": [],
+    "description": "IMS database descriptions and program views: 1 DBD(s), 0 PSB(s). Byte offsets and lengths are computed under the assumptions in extras['ims']['layoutAssumptions']; PROCOPT access profiles are in extras['ims']['psbs'].",
+    "extras": {
+      "ims": {
+        "capability_limits": [
+          {
+            "construct": "ims.index_database",
+            "count": 2,
+            "detail": "An LCHILD with POINTER=INDX pairs the segment with an index database (the HIDAM primary index or a secondary index). The index database is a separate DBD; it is named in extras['ims']['lchildren'] and not modelled.",
+            "locations": [
+              "ORDERDB.ORDER → ORDIXDB.ORDERIDX",
+              "ORDERDB.ORDER → ORDXDB2.CUSTDATE"
+            ]
+          },
+          {
+            "construct": "ims.logical_relationship",
+            "count": 1,
+            "detail": "A logical child's logical parent, and an LCHILD pairing with a segment of another database, cross the physical hierarchy; they are named in extras['ims'] and not modelled as fields.",
+            "locations": [
+              "ORDERDB.CUSTLINK → CUSTOMER"
+            ]
+          },
+          {
+            "construct": "ims.secondary_index_field",
+            "count": 1,
+            "detail": "An XDFLD is a search field built from source fields for a secondary index, not segment data; it is listed with its SRCH / SUBSEQ / DDATA / NULLVAL in extras['ims']['secondaryIndexes'] and not modelled as a field.",
+            "locations": [
+              "ORDERDB.ORDER.XCUSTDT"
+            ]
+          },
+          {
+            "construct": "ims.segment_layout",
+            "count": 4,
+            "detail": "A DBD declares only the fields IMS sequences and searches on; the segment's other bytes are described by the application's copybook. The record keeps the declared fields at their offsets, and the undescribed byte ranges are listed in extras['ims']['undescribed'].",
+            "locations": [
+              "ORDERDB.CUSTLINK",
+              "ORDERDB.ORDER",
+              "ORDERDB.ORDLINE",
+              "ORDERDB.ORDNOTE"
+            ]
+          },
+          {
+            "construct": "ims.variable_length_segment",
+            "count": 2,
+            "detail": "A variable-length segment (BYTES=(max,min)) has a different length in each occurrence; the record is laid out at its maximum and the bounds are in extras['ims']['variableLength'].",
+            "locations": [
+              "ORDERDB.ORDER",
+              "ORDERDB.ORDNOTE"
+            ]
+          }
+        ],
+        "dbds": [
+          {
+            "access": [
+              "HIDAM",
+              "VSAM"
+            ],
+            "datasets": [
+              {
+                "dd1": "ORDERPRI",
+                "device": "3390",
+                "size": "8192",
+                "statement": "DATASET"
+              }
+            ],
+            "file": "ims/04-stress-secondary-indexes.dbd",
+            "hierarchy": [
+              {
+                "level": 1,
+                "parent": null,
+                "segment": "ORDER",
+                "type": "ims.ORDERDB.ORDER"
+              },
+              {
+                "level": 2,
+                "parent": "ORDER",
+                "segment": "ORDLINE",
+                "type": "ims.ORDERDB.ORDLINE"
+              },
+              {
+                "level": 2,
+                "parent": "ORDER",
+                "segment": "ORDNOTE",
+                "type": "ims.ORDERDB.ORDNOTE"
+              },
+              {
+                "level": 2,
+                "parent": "ORDER",
+                "segment": "CUSTLINK",
+                "type": "ims.ORDERDB.CUSTLINK"
+              }
+            ],
+            "logical": false,
+            "name": "ORDERDB",
+            "root": "ORDER"
+          }
+        ],
+        "files": [
+          "ims/04-stress-secondary-indexes.dbd"
+        ],
+        "input": "file",
+        "layoutAssumptions": [
+          "START and BYTES are 1-based byte positions and byte lengths within the segment's data as IMS presents it to the program; the offset reported is START − 1.",
+          "One byte per character (TYPE=C) in a single-byte EBCDIC or ASCII code page.",
+          "TYPE=P is packed decimal — two digits per byte with the sign in the last nibble, so BYTES=n holds 2n − 1 digits; TYPE=Z is zoned decimal, one digit per byte. The DBD declares no scale, so neither carries a decimal point.",
+          "TYPE=H is a 2-byte and TYPE=F a 4-byte signed binary integer; TYPE=X is uninterpreted bytes.",
+          "In a variable-length segment (BYTES=(max,min)) the first two bytes of each occurrence hold its length; START positions are taken as written, not shifted past that prefix.",
+          "Byte ranges no FIELD covers are segment data the DBD does not describe — IMS needs FIELD statements only for the sequence field and the fields programs search on.",
+          "A SENFLD's START is the field's position in the program's I/O area, not in the stored segment."
+        ],
+        "psbs": []
+      }
+    },
+    "format": "ims",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ORDERDB",
+      "namespace": "ims"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ORDERDB",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment CUSTLINK of DBD ORDERDB (HIDAM/VSAM): child of ORDER, 20 bytes, 2 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "ORDERDB",
+            "file": "ims/04-stress-secondary-indexes.dbd",
+            "length": 20,
+            "level": 2,
+            "line": 41,
+            "logicalParent": {
+              "dbd": "CUSTDB",
+              "segment": "CUSTOMER",
+              "storage": "PHYSICAL"
+            },
+            "parent": "ORDER",
+            "parentPointer": "SNGL",
+            "segment": "CUSTLINK",
+            "sequenceField": "LNKCUST",
+            "undescribed": [
+              {
+                "end": 20,
+                "start": 13
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 10 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 43,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.ORDERDB.CUSTLINK.LNKCUST",
+            "name": "LNKCUST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 2 bytes at START=11 (offset 10).",
+            "extras": {
+              "ims": {
+                "length": 2,
+                "line": 44,
+                "offset": 10,
+                "start": 11,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.ORDERDB.CUSTLINK.LNKROLE",
+            "name": "LNKROLE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.ORDERDB.CUSTLINK",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERDB.CUSTLINK",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment ORDER of DBD ORDERDB (HIDAM/VSAM): root segment, 80–240 bytes, 7 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "ORDERDB",
+            "file": "ims/04-stress-secondary-indexes.dbd",
+            "lchildren": [
+              {
+                "dbd": "ORDIXDB",
+                "kind": "index",
+                "pointer": "INDX",
+                "segment": "ORDERIDX"
+              },
+              {
+                "dbd": "ORDXDB2",
+                "kind": "index",
+                "pointer": "INDX",
+                "segment": "CUSTDATE"
+              }
+            ],
+            "length": 240,
+            "level": 1,
+            "line": 9,
+            "operands": {
+              "pointer": [
+                "TWINBWD",
+                "LTWIN"
+              ]
+            },
+            "root": true,
+            "secondaryIndexes": [
+              {
+                "duplicateData": [
+                  "ORDSTAT"
+                ],
+                "indexDbd": "ORDXDB2",
+                "indexSegment": "CUSTDATE",
+                "name": "XCUSTDT",
+                "nullValue": "BLANK",
+                "search": [
+                  "ORDCUST",
+                  "ORDDATE"
+                ],
+                "sourceSegment": "ORDER",
+                "subsequence": [
+                  "ORDERID"
+                ]
+              }
+            ],
+            "segment": "ORDER",
+            "sequenceField": "ORDERID",
+            "undescribed": [
+              {
+                "end": 240,
+                "start": 44
+              }
+            ],
+            "variableLength": {
+              "maximum": 240,
+              "minimum": 80
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment CUSTLINK under this ORDER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.ORDERDB.CUSTLINK"
+              }
+            },
+            "field_number": 10,
+            "key": "ims.ORDERDB.ORDER.CUSTLINK",
+            "name": "CUSTLINK",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.ORDERDB.CUSTLINK",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 4 bytes at START=30 (offset 29).",
+            "extras": {
+              "ims": {
+                "length": 4,
+                "line": 15,
+                "offset": 29,
+                "start": 30,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.ORDERDB.ORDER.ORDCHAN",
+            "name": "ORDCHAN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 10 bytes at START=11 (offset 10).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 12,
+                "offset": 10,
+                "start": 11,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.ORDERDB.ORDER.ORDCUST",
+            "name": "ORDCUST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=21 (offset 20).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 13,
+                "offset": 20,
+                "start": 21,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.ORDERDB.ORDER.ORDDATE",
+            "name": "ORDDATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 10 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 11,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.ORDERDB.ORDER.ORDERID",
+            "name": "ORDERID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 2,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=X (hexadecimal), 2 bytes at START=42 (offset 41).",
+            "extras": {
+              "ims": {
+                "length": 2,
+                "line": 17,
+                "offset": 41,
+                "start": 42,
+                "storage": "hexadecimal",
+                "type": "X"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.ORDERDB.ORDER.ORDFLAGS",
+            "name": "ORDFLAGS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment ORDLINE under this ORDER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.ORDERDB.ORDLINE"
+              }
+            },
+            "field_number": 8,
+            "key": "ims.ORDERDB.ORDER.ORDLINE",
+            "name": "ORDLINE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.ORDERDB.ORDLINE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment ORDNOTE under this ORDER.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.ORDERDB.ORDNOTE"
+              }
+            },
+            "field_number": 9,
+            "key": "ims.ORDERDB.ORDER.ORDNOTE",
+            "name": "ORDNOTE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.ORDERDB.ORDNOTE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=29 (offset 28).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 14,
+                "offset": 28,
+                "start": 29,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.ORDERDB.ORDER.ORDSTAT",
+            "name": "ORDSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=34 (offset 33).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 16,
+                "offset": 33,
+                "start": 34,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.ORDERDB.ORDER.ORDTOTAL",
+            "name": "ORDTOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.ORDERDB.ORDER",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERDB.ORDER",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment ORDLINE of DBD ORDERDB (HIDAM/VSAM): child of ORDER, 96 bytes, 5 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "ORDERDB",
+            "file": "ims/04-stress-secondary-indexes.dbd",
+            "length": 96,
+            "level": 2,
+            "line": 28,
+            "operands": {
+              "pointer": [
+                "TWIN"
+              ]
+            },
+            "parent": "ORDER",
+            "segment": "ORDLINE",
+            "sequenceField": "LINENO",
+            "undescribed": [
+              {
+                "end": 96,
+                "start": 40
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=37 (offset 36).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 33,
+                "offset": 36,
+                "start": 37,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.ORDERDB.ORDLINE.LINECCY",
+            "name": "LINECCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (non-unique). TYPE=C (character), 4 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 4,
+                "line": 29,
+                "offset": 0,
+                "sequence": {
+                  "unique": false
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.ORDERDB.ORDLINE.LINENO",
+            "name": "LINENO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=29 (offset 28).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 32,
+                "offset": 28,
+                "start": 29,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.ORDERDB.ORDLINE.LINEPRIC",
+            "name": "LINEPRIC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 6 bytes at START=23 (offset 22).",
+            "extras": {
+              "ims": {
+                "digits": 11,
+                "length": 6,
+                "line": 31,
+                "offset": 22,
+                "start": 23,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.ORDERDB.ORDLINE.LINEQTY",
+            "name": "LINEQTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 18,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 18 bytes at START=5 (offset 4).",
+            "extras": {
+              "ims": {
+                "length": 18,
+                "line": 30,
+                "offset": 4,
+                "start": 5,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.ORDERDB.ORDLINE.LINESKU",
+            "name": "LINESKU",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.ORDERDB.ORDLINE",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERDB.ORDLINE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment ORDNOTE of DBD ORDERDB (HIDAM/VSAM): child of ORDER, 20–500 bytes, 2 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "ORDERDB",
+            "file": "ims/04-stress-secondary-indexes.dbd",
+            "length": 500,
+            "level": 2,
+            "line": 36,
+            "parent": "ORDER",
+            "segment": "ORDNOTE",
+            "sequenceField": "NOTESEQ",
+            "undescribed": [
+              {
+                "end": 500,
+                "start": 485
+              }
+            ],
+            "variableLength": {
+              "maximum": 500,
+              "minimum": 20
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 4 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 4,
+                "line": 37,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.ORDERDB.ORDNOTE.NOTESEQ",
+            "name": "NOTESEQ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 480,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 480 bytes at START=5 (offset 4).",
+            "extras": {
+              "ims": {
+                "length": 480,
+                "line": 38,
+                "offset": 4,
+                "start": 5,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.ORDERDB.ORDNOTE.NOTETEXT",
+            "name": "NOTETEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.ORDERDB.ORDNOTE",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDERDB.ORDNOTE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ims/04-stress-secondary-indexes.dbd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ims"
+  },
+  "fingerprint": "sha256:22bfb2ec44b3367bd80b03f6a6b14048bb6e359111e1a0eb40191c4761f89177",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

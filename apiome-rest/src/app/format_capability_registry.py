@@ -99,6 +99,7 @@ from .tradacoms_analysis import TRADACOMS_IMPLEMENTATION_GUIDE_STATEMENT
 from .consul_parser import CONSUL_DECLARED_CONSTRUCTS
 from .haproxy_parser import HAPROXY_DECLARED_CONSTRUCTS
 from .nginx_parser import NGINX_CARRIED_DIRECTIVES, NGINX_DECLARED_DIRECTIVES, NGINX_READ_DIRECTIVES
+from .ims_normalizer import IMS_LIMIT_DETAILS
 from .pli_normalizer import PLI_LIMIT_DETAILS
 from .traefik_parser import TRAEFIK_DECLARED_CONSTRUCTS
 from .tyk_parser import TYK_DECLARED_CONSTRUCTS
@@ -159,7 +160,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "36"
+REGISTRY_VERSION = "37"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -3771,6 +3772,65 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "transaction does with a field, and the import does not infer either.",
             "BMS *output* is not implemented; an import is exported through another target's "
             "emitter.",
+        ],
+    ),
+    "ims": _Seed(
+        # FMT-11.2: IMS DBD / PSB macro source is read by the format-blind walk; the reviewed
+        # judgement is the projection statement — the PARENT hierarchy to nested records with
+        # byte-accurate fields, and PROCOPT to a declared access profile.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.LINE_NUMBERS,
+            note=(
+                "Every segment, field and sensitive segment carries the 1-based line its statement "
+                "starts on in `extras['ims']['line']`, and every record names its file; refusal "
+                "messages name the line too."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A DBD or PSB describes a database and a program's view of it without containing "
+                "any segment occurrence; no runtime value is observed at any policy level."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(IMS_LIMIT_DETAILS),
+            note=(
+                "Each `SEGM` → a `RECORD` `ims.<DBD>.<segment>`; the hierarchy comes from `PARENT=`, "
+                "not the file order, and a parent holds one list field per child segment type. "
+                "`FIELD` `TYPE=C` → `string` with `max_length`, `X` → `bytes` of exactly `BYTES`, "
+                "`P` / `Z` → `decimal`, `H` / `F` → `integer`; offset, `START`, length, storage and "
+                "the sequence flag (unique or not) are in `extras['ims']`. Each `SENSEG` of a "
+                "database `PCB` → a `RECORD` `ims.<PSB>.<PCB>.<segment>` holding its `SENFLD`s "
+                "(every field when none), typed from the DBD when it is in the upload. `PROCOPT` → "
+                "a declared access profile (get / insert / replace / delete / path) on the view "
+                "records, in `extras['ims']['psbs']`, and on the DBD segment's record as "
+                "`extras['ims']['access']`. `LCHILD` / `XDFLD`, logical relationships, LOGICAL "
+                "databases and undescribed byte ranges are declared limits in "
+                "`extras['ims']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "Byte offsets and lengths are computed under assumptions the DBD does not state — "
+            "1-based `START`, one byte per character, packed decimal holding 2n − 1 digits, 2- and "
+            "4-byte binaries, `START` taken as written in a variable-length segment, and a "
+            "`SENFLD`'s `START` counted in the I/O area. Every import names them in "
+            "`extras['ims']['layoutAssumptions']`.",
+            "A `PARENT` naming no segment of the DBD is refused with `INPUT_REFERENCE_UNRESOLVED` — "
+            "never a silently re-rooted hierarchy; so is a `SENSEG` or `SENFLD` the PSB's DBD does "
+            "not define when that DBD is in the upload.",
+            "A PSB read without its DBD keeps its program views by name (`ims.unresolved_dbd`); "
+            "upload the DBD and PSB together as a fileset to type the sensitive fields.",
+            "IMS DBD / PSB *output* is not implemented; an import is exported through another "
+            "target's emitter.",
         ],
     ),
     "pli": _Seed(

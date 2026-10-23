@@ -149,6 +149,7 @@ from .import_source import (
     load_builtin_import_sources,
 )
 from .import_source_pipeline import ImportRunArtifacts, _normalize_import_project_slug
+from .ims_normalizer import IMS_EXTRAS_KEY, IMS_PARTIAL_LIMITS
 from .inference_provenance import (
     INFERRED,
     PROVENANCE_EVIDENCE_KEY,
@@ -305,6 +306,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-11.1: the PL/I projection record (structures, storage map, includes, layout
         # assumptions, declared limits). Our own bookkeeping.
         PLI_EXTRAS_KEY,
+        # FMT-11.2: the IMS projection record (DBD hierarchies, PSB access profiles, layout
+        # assumptions, declared limits). Our own bookkeeping.
+        IMS_EXTRAS_KEY,
         # FMT-10.1: the Hoppscotch projection record (collection versions, environments, folders,
         # variable names, declared limits). Our own bookkeeping — never a credential.
         HOPPSCOTCH_EXTRAS_KEY,
@@ -1278,6 +1282,7 @@ def _document_scope_rows(
     ledger.extend(_ros2_capability_rows(api))
     ledger.extend(_mainframe_misc_capability_rows(api))
     ledger.extend(_pli_capability_rows(api))
+    ledger.extend(_ims_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
@@ -2261,6 +2266,23 @@ def _pli_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         One ledger row per declared limit (see :func:`_graded_limit_rows`).
     """
     return _graded_limit_rows(api, format_key="pli", extras_key=PLI_EXTRAS_KEY, partial=PLI_PARTIAL_LIMITS)
+
+
+def _ims_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-11.2 IMS declared limits as document-scoped ledger rows.
+
+    Undescribed segment bytes, overlapping fields, a variable-length segment, a LOGICAL database's
+    segments and a program view whose DBD is not in the upload keep their record
+    (``partially-mapped``); index databases, XDFLD search fields, logical relationships,
+    system-related fields and non-database PCBs are not modelled.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="ims", extras_key=IMS_EXTRAS_KEY, partial=IMS_PARTIAL_LIMITS)
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

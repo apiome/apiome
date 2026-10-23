@@ -1238,6 +1238,10 @@ def load_builtin_import_sources() -> None:
     # and their %INCLUDE members with a computed storage map, data_schema paradigm.
     from . import pli_import_source as _pli  # noqa: F401
 
+    # ``ims_import_source`` (FMT-11.2) self-registers the ``ims`` adapter — IMS DBD segment
+    # hierarchies and PSB program views with their PROCOPT access profiles, data_schema paradigm.
+    from . import ims_import_source as _ims  # noqa: F401
+
     # ``lwm2m_import_source`` and ``matter_import_source`` (FMT-9.5) self-register the ``lwm2m``
     # adapter (LwM2M / IPSO object definitions, data_schema) and the ``matter`` adapter (Matter
     # cluster and device-type definitions, rpc).

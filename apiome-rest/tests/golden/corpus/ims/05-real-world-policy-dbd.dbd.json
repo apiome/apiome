@@ -1,0 +1,1644 @@
+{
+  "adapter": "ims",
+  "canonical": {
+    "channels": [],
+    "description": "IMS database descriptions and program views: 1 DBD(s), 0 PSB(s). Byte offsets and lengths are computed under the assumptions in extras['ims']['layoutAssumptions']; PROCOPT access profiles are in extras['ims']['psbs'].",
+    "extras": {
+      "ims": {
+        "capability_limits": [
+          {
+            "construct": "ims.index_database",
+            "count": 2,
+            "detail": "An LCHILD with POINTER=INDX pairs the segment with an index database (the HIDAM primary index or a secondary index). The index database is a separate DBD; it is named in extras['ims']['lchildren'] and not modelled.",
+            "locations": [
+              "POLICYDB.POLICY → POLIXDB.POLICYX",
+              "POLICYDB.POLICY → POLIXDB2.BROKERX"
+            ]
+          },
+          {
+            "construct": "ims.secondary_index_field",
+            "count": 1,
+            "detail": "An XDFLD is a search field built from source fields for a secondary index, not segment data; it is listed with its SRCH / SUBSEQ / DDATA / NULLVAL in extras['ims']['secondaryIndexes'] and not modelled as a field.",
+            "locations": [
+              "POLICYDB.POLICY.XBROKER"
+            ]
+          },
+          {
+            "construct": "ims.segment_layout",
+            "count": 5,
+            "detail": "A DBD declares only the fields IMS sequences and searches on; the segment's other bytes are described by the application's copybook. The record keeps the declared fields at their offsets, and the undescribed byte ranges are listed in extras['ims']['undescribed'].",
+            "locations": [
+              "POLICYDB.CLAIM",
+              "POLICYDB.CLMNOTE",
+              "POLICYDB.COVERAGE",
+              "POLICYDB.INSURED",
+              "POLICYDB.POLICY"
+            ]
+          },
+          {
+            "construct": "ims.variable_length_segment",
+            "count": 1,
+            "detail": "A variable-length segment (BYTES=(max,min)) has a different length in each occurrence; the record is laid out at its maximum and the bounds are in extras['ims']['variableLength'].",
+            "locations": [
+              "POLICYDB.CLMNOTE"
+            ]
+          }
+        ],
+        "dbds": [
+          {
+            "access": [
+              "HIDAM",
+              "VSAM"
+            ],
+            "datasets": [
+              {
+                "dd1": "POLPRIME",
+                "device": "3390",
+                "frspc": [
+                  "5",
+                  "10"
+                ],
+                "size": "8192",
+                "statement": "DATASET"
+              }
+            ],
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "hierarchy": [
+              {
+                "level": 1,
+                "parent": null,
+                "segment": "POLICY",
+                "type": "ims.POLICYDB.POLICY"
+              },
+              {
+                "level": 2,
+                "parent": "POLICY",
+                "segment": "INSURED",
+                "type": "ims.POLICYDB.INSURED"
+              },
+              {
+                "level": 2,
+                "parent": "POLICY",
+                "segment": "COVERAGE",
+                "type": "ims.POLICYDB.COVERAGE"
+              },
+              {
+                "level": 3,
+                "parent": "COVERAGE",
+                "segment": "CLAIM",
+                "type": "ims.POLICYDB.CLAIM"
+              },
+              {
+                "level": 4,
+                "parent": "CLAIM",
+                "segment": "CLMNOTE",
+                "type": "ims.POLICYDB.CLMNOTE"
+              }
+            ],
+            "logical": false,
+            "name": "POLICYDB",
+            "root": "POLICY"
+          }
+        ],
+        "files": [
+          "ims/05-real-world-policy-dbd.dbd"
+        ],
+        "input": "file",
+        "layoutAssumptions": [
+          "START and BYTES are 1-based byte positions and byte lengths within the segment's data as IMS presents it to the program; the offset reported is START − 1.",
+          "One byte per character (TYPE=C) in a single-byte EBCDIC or ASCII code page.",
+          "TYPE=P is packed decimal — two digits per byte with the sign in the last nibble, so BYTES=n holds 2n − 1 digits; TYPE=Z is zoned decimal, one digit per byte. The DBD declares no scale, so neither carries a decimal point.",
+          "TYPE=H is a 2-byte and TYPE=F a 4-byte signed binary integer; TYPE=X is uninterpreted bytes.",
+          "In a variable-length segment (BYTES=(max,min)) the first two bytes of each occurrence hold its length; START positions are taken as written, not shifted past that prefix.",
+          "Byte ranges no FIELD covers are segment data the DBD does not describe — IMS needs FIELD statements only for the sequence field and the fields programs search on.",
+          "A SENFLD's START is the field's position in the program's I/O area, not in the stored segment."
+        ],
+        "psbs": []
+      }
+    },
+    "format": "ims",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "POLICYDB",
+      "namespace": "ims"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "POLICYDB",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment CLAIM of DBD POLICYDB (HIDAM/VSAM): child of COVERAGE, 200 bytes, 6 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "POLICYDB",
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "length": 200,
+            "level": 3,
+            "line": 43,
+            "parent": "COVERAGE",
+            "segment": "CLAIM",
+            "sequenceField": "CLAIMNO",
+            "undescribed": [
+              {
+                "end": 200,
+                "start": 41
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 12 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 12,
+                "line": 44,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.POLICYDB.CLAIM.CLAIMNO",
+            "name": "CLAIMNO",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=38 (offset 37).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 49,
+                "offset": 37,
+                "start": 38,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.POLICYDB.CLAIM.CLMCCY",
+            "name": "CLMCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=13 (offset 12).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 45,
+                "offset": 12,
+                "start": 13,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.POLICYDB.CLAIM.CLMDATE",
+            "name": "CLMDATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment CLMNOTE under this CLAIM.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.POLICYDB.CLMNOTE"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.POLICYDB.CLAIM.CLMNOTE",
+            "name": "CLMNOTE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.POLICYDB.CLMNOTE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=30 (offset 29).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 48,
+                "offset": 29,
+                "start": 30,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.POLICYDB.CLAIM.CLMPAID",
+            "name": "CLMPAID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=22 (offset 21).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 47,
+                "offset": 21,
+                "start": 22,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.POLICYDB.CLAIM.CLMRESRV",
+            "name": "CLMRESRV",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=21 (offset 20).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 46,
+                "offset": 20,
+                "start": 21,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.POLICYDB.CLAIM.CLMSTAT",
+            "name": "CLMSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.POLICYDB.CLAIM",
+        "key_type": null,
+        "kind": "record",
+        "name": "POLICYDB.CLAIM",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment CLMNOTE of DBD POLICYDB (HIDAM/VSAM): child of CLAIM, 24–600 bytes, 3 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "POLICYDB",
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "length": 600,
+            "level": 4,
+            "line": 51,
+            "parent": "CLAIM",
+            "segment": "CLMNOTE",
+            "sequenceField": "NOTEDT",
+            "undescribed": [
+              {
+                "end": 600,
+                "start": 577
+              }
+            ],
+            "variableLength": {
+              "maximum": 600,
+              "minimum": 24
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (non-unique). TYPE=C (character), 8 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 52,
+                "offset": 0,
+                "sequence": {
+                  "unique": false
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.POLICYDB.CLMNOTE.NOTEDT",
+            "name": "NOTEDT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 560,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 560 bytes at START=17 (offset 16).",
+            "extras": {
+              "ims": {
+                "length": 560,
+                "line": 54,
+                "offset": 16,
+                "start": 17,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.POLICYDB.CLMNOTE.NOTETEXT",
+            "name": "NOTETEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=9 (offset 8).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 53,
+                "offset": 8,
+                "start": 9,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.POLICYDB.CLMNOTE.NOTEUSER",
+            "name": "NOTEUSER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.POLICYDB.CLMNOTE",
+        "key_type": null,
+        "kind": "record",
+        "name": "POLICYDB.CLMNOTE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment COVERAGE of DBD POLICYDB (HIDAM/VSAM): child of POLICY, 140 bytes, 6 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "POLICYDB",
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "length": 140,
+            "level": 2,
+            "line": 35,
+            "parent": "POLICY",
+            "segment": "COVERAGE",
+            "sequenceField": "COVCODE",
+            "undescribed": [
+              {
+                "end": 140,
+                "start": 35
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment CLAIM under this COVERAGE.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.POLICYDB.CLAIM"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.POLICYDB.COVERAGE.CLAIM",
+            "name": "CLAIM",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.POLICYDB.CLAIM",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=31 (offset 30).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 40,
+                "offset": 30,
+                "start": 31,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.POLICYDB.COVERAGE.COVCCY",
+            "name": "COVCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 6 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 6,
+                "line": 36,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.POLICYDB.COVERAGE.COVCODE",
+            "name": "COVCODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=15 (offset 14).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 38,
+                "offset": 14,
+                "start": 15,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.POLICYDB.COVERAGE.COVDEDUC",
+            "name": "COVDEDUC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=7 (offset 6).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 37,
+                "offset": 6,
+                "start": 7,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.POLICYDB.COVERAGE.COVLIMIT",
+            "name": "COVLIMIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=23 (offset 22).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 39,
+                "offset": 22,
+                "start": 23,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.POLICYDB.COVERAGE.COVPREM",
+            "name": "COVPREM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=34 (offset 33).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 41,
+                "offset": 33,
+                "start": 34,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.POLICYDB.COVERAGE.COVSTAT",
+            "name": "COVSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.POLICYDB.COVERAGE",
+        "key_type": null,
+        "kind": "record",
+        "name": "POLICYDB.COVERAGE",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment INSURED of DBD POLICYDB (HIDAM/VSAM): child of POLICY, 180 bytes, 8 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "POLICYDB",
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "length": 180,
+            "level": 2,
+            "line": 25,
+            "parent": "POLICY",
+            "segment": "INSURED",
+            "sequenceField": "INSSEQ",
+            "undescribed": [
+              {
+                "end": 180,
+                "start": 147
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 35 bytes at START=74 (offset 73).",
+            "extras": {
+              "ims": {
+                "length": 35,
+                "line": 30,
+                "offset": 73,
+                "start": 74,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.POLICYDB.INSURED.INSADDR1",
+            "name": "INSADDR1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 25 bytes at START=109 (offset 108).",
+            "extras": {
+              "ims": {
+                "length": 25,
+                "line": 31,
+                "offset": 108,
+                "start": 109,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.POLICYDB.INSURED.INSCITY",
+            "name": "INSCITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=144 (offset 143).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 33,
+                "offset": 143,
+                "start": 144,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 8,
+            "key": "ims.POLICYDB.INSURED.INSCTRY",
+            "name": "INSCTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=64 (offset 63).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 28,
+                "offset": 63,
+                "start": 64,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.POLICYDB.INSURED.INSDOB",
+            "name": "INSDOB",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 60 bytes at START=4 (offset 3).",
+            "extras": {
+              "ims": {
+                "length": 60,
+                "line": 27,
+                "offset": 3,
+                "start": 4,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.POLICYDB.INSURED.INSNAME",
+            "name": "INSNAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 10 bytes at START=134 (offset 133).",
+            "extras": {
+              "ims": {
+                "length": 10,
+                "line": 32,
+                "offset": 133,
+                "start": 134,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.POLICYDB.INSURED.INSPOST",
+            "name": "INSPOST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 2 bytes at START=72 (offset 71).",
+            "extras": {
+              "ims": {
+                "length": 2,
+                "line": 29,
+                "offset": 71,
+                "start": 72,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.POLICYDB.INSURED.INSROLE",
+            "name": "INSROLE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 3 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 26,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.POLICYDB.INSURED.INSSEQ",
+            "name": "INSSEQ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.POLICYDB.INSURED",
+        "key_type": null,
+        "kind": "record",
+        "name": "POLICYDB.INSURED",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "IMS segment POLICY of DBD POLICYDB (HIDAM/VSAM): root segment, 320 bytes, 8 declared fields.",
+        "enum_values": [],
+        "extras": {
+          "ims": {
+            "dbd": "POLICYDB",
+            "file": "ims/05-real-world-policy-dbd.dbd",
+            "lchildren": [
+              {
+                "dbd": "POLIXDB",
+                "kind": "index",
+                "pointer": "INDX",
+                "segment": "POLICYX"
+              },
+              {
+                "dbd": "POLIXDB2",
+                "kind": "index",
+                "pointer": "INDX",
+                "segment": "BROKERX"
+              }
+            ],
+            "length": 320,
+            "level": 1,
+            "line": 10,
+            "operands": {
+              "pointer": [
+                "TWINBWD"
+              ]
+            },
+            "root": true,
+            "secondaryIndexes": [
+              {
+                "indexDbd": "POLIXDB2",
+                "indexSegment": "BROKERX",
+                "name": "XBROKER",
+                "nullValue": "BLANK",
+                "search": [
+                  "POLBROKR"
+                ],
+                "sourceSegment": "POLICY",
+                "subsequence": [
+                  "POLNUM"
+                ]
+              }
+            ],
+            "segment": "POLICY",
+            "sequenceField": "POLNUM",
+            "undescribed": [
+              {
+                "end": 320,
+                "start": 55
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment COVERAGE under this POLICY.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.POLICYDB.COVERAGE"
+              }
+            },
+            "field_number": 10,
+            "key": "ims.POLICYDB.POLICY.COVERAGE",
+            "name": "COVERAGE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.POLICYDB.COVERAGE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Occurrences of child segment INSURED under this POLICY.",
+            "extras": {
+              "ims": {
+                "role": "child-segment",
+                "segment": "ims.POLICYDB.INSURED"
+              }
+            },
+            "field_number": 9,
+            "key": "ims.POLICYDB.POLICY.INSURED",
+            "name": "INSURED",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "ims.POLICYDB.INSURED",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=47 (offset 46).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 19,
+                "offset": 46,
+                "start": 47,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 8,
+            "key": "ims.POLICYDB.POLICY.POLBROKR",
+            "name": "POLBROKR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 3 bytes at START=44 (offset 43).",
+            "extras": {
+              "ims": {
+                "length": 3,
+                "line": 18,
+                "offset": 43,
+                "start": 44,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 7,
+            "key": "ims.POLICYDB.POLICY.POLCCY",
+            "name": "POLCCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=20 (offset 19).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 15,
+                "offset": 19,
+                "start": 20,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 4,
+            "key": "ims.POLICYDB.POLICY.POLEFFDT",
+            "name": "POLEFFDT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 8 bytes at START=28 (offset 27).",
+            "extras": {
+              "ims": {
+                "length": 8,
+                "line": 16,
+                "offset": 27,
+                "start": 28,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 5,
+            "key": "ims.POLICYDB.POLICY.POLEXPDT",
+            "name": "POLEXPDT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Sequence field (unique). TYPE=C (character), 12 bytes at START=1 (offset 0).",
+            "extras": {
+              "ims": {
+                "length": 12,
+                "line": 12,
+                "offset": 0,
+                "sequence": {
+                  "unique": true
+                },
+                "start": 1,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 1,
+            "key": "ims.POLICYDB.POLICY.POLNUM",
+            "name": "POLNUM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=P (packed-decimal), 8 bytes at START=36 (offset 35).",
+            "extras": {
+              "ims": {
+                "digits": 15,
+                "length": 8,
+                "line": 17,
+                "offset": 35,
+                "start": 36,
+                "storage": "packed-decimal",
+                "type": "P"
+              }
+            },
+            "field_number": 6,
+            "key": "ims.POLICYDB.POLICY.POLPREM",
+            "name": "POLPREM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 6 bytes at START=13 (offset 12).",
+            "extras": {
+              "ims": {
+                "length": 6,
+                "line": 13,
+                "offset": 12,
+                "start": 13,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 2,
+            "key": "ims.POLICYDB.POLICY.POLPROD",
+            "name": "POLPROD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "TYPE=C (character), 1 byte at START=19 (offset 18).",
+            "extras": {
+              "ims": {
+                "length": 1,
+                "line": 14,
+                "offset": 18,
+                "start": 19,
+                "storage": "character",
+                "type": "C"
+              }
+            },
+            "field_number": 3,
+            "key": "ims.POLICYDB.POLICY.POLSTAT",
+            "name": "POLSTAT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ims.POLICYDB.POLICY",
+        "key_type": null,
+        "kind": "record",
+        "name": "POLICYDB.POLICY",
+        "namespace": "ims",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ims/05-real-world-policy-dbd.dbd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ims"
+  },
+  "fingerprint": "sha256:680f848db92fd6004a3e2a9c64e21c3b42cb0eaa0021a203786df05d06875f7f",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
