@@ -525,6 +525,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "natural-ddm": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Natural DDM listing (SYSDDM / LIST DDM)",
+                format_key="natural-ddm",
+                support=VersionSupport.UNGATED,
+                note="A DDM listing names no Natural or ADABAS release: the header, the column banner "
+                "and the field-line columns are read the same way for every version, and formats a "
+                "later release added are read by their letter.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pli": VersionCoverage(
         reads=[
             FormatVersion(

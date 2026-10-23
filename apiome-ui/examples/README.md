@@ -111,7 +111,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `k8s-crd/` | Kubernetes CRD | data_schema | `apiVersion: apiextensions.k8s.io/*` + `kind: CustomResourceDefinition` | 12 |
 | `kafka-connect/` | Kafka Connect schema | data_schema | `"type": "struct"` + `fields[].field` | 15 |
 | `lwm2m/` | LwM2M / IPSO objects | data_schema | `<LWM2M>` root with `<Object ObjectType="MODefinition">` and `Resources/Item` | 15 |
-| `natural-ddm/` | Natural / ADABAS DDM (pending #5486) | data_schema | `DDM Name ......` header + the `T L DB Name … F Leng S D Remark` banner | 14 |
+| `natural-ddm/` | Natural / ADABAS DDM | data_schema | `DDM Name ......` header + the `T L DB Name … F Leng S D Remark` banner | 14 |
 | `odcs/` | Open Data Contract Standard v3.1 | data_schema | `apiVersion: v3.x` + `kind: DataContract` + `schema:` | 15 |
 | `opcua-nodeset/` | OPC UA NodeSet2 (pending #5468) | rpc | `<UANodeSet>` root in the OPC Foundation NodeSet2 namespace | 14 |
 | `owl/` | OWL / RDFS ontologies | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 15 |
@@ -1510,24 +1510,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/06-semantic-orphan-addenda.ach`** — A `7` addenda record before any `6` entry detail: the addenda has no entry to attach to.
 
-### `natural-ddm/` — Natural / ADABAS DDM (pending #5486)
+### `natural-ddm/` — Natural / ADABAS DDM
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-ddm.ddm` | minimal | `natural-ddm` ≥ 0.9 | valid | `ddm-header`, `fields`, `descriptor`, `pending-adapter` |
-| `02-typical-customer-ddm.ddm` | typical | `natural-ddm` ≥ 0.9 | valid | `alpha`, `numeric`, `packed`, `unique-descriptor`, `multiple-value`, `superdescriptor`, `pending-adapter` |
-| `03-view-set/CUSTINQ.nsp` ⚠ | multi-file (member) | `natural-ddm` (no guarantee) | valid | `multi-file`, `define-data-view`, `occurrence-bounds`, `field-subset`, `pending-adapter` |
-| `03-view-set/CUSTOMER.ddm` | multi-file (root) | `natural-ddm` ≥ 0.9 | valid | `multi-file`, `ddm`, `periodic-group`, `superdescriptor`, `pending-adapter` |
-| `04-stress-formats-and-descriptors.ddm` | stress | `natural-ddm` ≥ 0.9 | valid | `all-formats`, `binary`, `float`, `logical`, `unicode`, `date`, `time`, `lob`, `mu-in-pe`, `two-periodic-groups`, `null-suppression`, `fixed-storage`, `hyperdescriptor`, `subdescriptor`, `pending-adapter` |
-| `05-real-world-policy-ddm.ddm` | real-world | `natural-ddm` ≥ 0.9 | valid | `periodic-groups`, `packed-money`, `multiple-value`, `superdescriptors`, `status-codes`, `pending-adapter` |
-| `06-typical-periodic-groups.ddm` | typical | `natural-ddm` ≥ 0.9 | valid | `periodic-group`, `mu-in-pe`, `superdescriptor`, `packed`, `pending-adapter` |
-| `07-composition-redefines-and-groups.ddm` | composition | `natural-ddm` ≥ 0.9 | valid | `redefinition`, `group-field`, `group-in-periodic-group`, `superdescriptor-across-levels`, `pending-adapter` |
-| `negative/01-syntactic-malformed-column-layout.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `syntactic`, `malformed-columns`, `pending-adapter` |
-| `negative/02-semantic-no-fields.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `semantic`, `no-field-lines`, `pending-adapter` |
-| `negative/03-truncated-mid-field-list.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `truncated`, `mid-field-line`, `pending-adapter` |
-| `negative/04-wrong-format-cobol-copybook.cpy` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook`, `pending-adapter` |
-| `negative/05-encoding-utf16.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-superdescriptor-source.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-source-field`, `pending-adapter` |
+| `01-minimal-ddm.ddm` | minimal | `natural-ddm` ≥ 0.9 | valid | `ddm-header`, `fields`, `descriptor` |
+| `02-typical-customer-ddm.ddm` | typical | `natural-ddm` ≥ 0.9 | valid | `alpha`, `numeric`, `packed`, `unique-descriptor`, `multiple-value`, `superdescriptor` |
+| `03-view-set/CUSTINQ.nsp` ⚠ | multi-file (member) | `natural-ddm` (no guarantee) | valid | `multi-file`, `define-data-view`, `occurrence-bounds`, `field-subset` |
+| `03-view-set/CUSTOMER.ddm` | multi-file (root) | `natural-ddm` ≥ 0.9 | valid | `multi-file`, `ddm`, `periodic-group`, `superdescriptor` |
+| `04-stress-formats-and-descriptors.ddm` | stress | `natural-ddm` ≥ 0.9 | valid | `all-formats`, `binary`, `float`, `logical`, `unicode`, `date`, `time`, `lob`, `mu-in-pe`, `two-periodic-groups`, `null-suppression`, `fixed-storage`, `hyperdescriptor`, `subdescriptor` |
+| `05-real-world-policy-ddm.ddm` | real-world | `natural-ddm` ≥ 0.9 | valid | `periodic-groups`, `packed-money`, `multiple-value`, `superdescriptors`, `status-codes` |
+| `06-typical-periodic-groups.ddm` | typical | `natural-ddm` ≥ 0.9 | valid | `periodic-group`, `mu-in-pe`, `superdescriptor`, `packed` |
+| `07-composition-redefines-and-groups.ddm` | composition | `natural-ddm` ≥ 0.9 | valid | `redefinition`, `group-field`, `group-in-periodic-group`, `superdescriptor-across-levels` |
+| `negative/01-syntactic-malformed-column-layout.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `syntactic`, `malformed-columns` |
+| `negative/02-semantic-no-fields.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `semantic`, `no-field-lines` |
+| `negative/03-truncated-mid-field-list.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `truncated`, `mid-field-line` |
+| `negative/04-wrong-format-cobol-copybook.cpy` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook` |
+| `negative/05-encoding-utf16.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-superdescriptor-source.ddm` | — | `natural-ddm` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-source-field` |
 
 > ⚠ **`03-view-set/CUSTINQ.nsp`** — Fileset member: the program's VIEW over the DDM, carrying occurrence bounds the DDM itself does not state.
 

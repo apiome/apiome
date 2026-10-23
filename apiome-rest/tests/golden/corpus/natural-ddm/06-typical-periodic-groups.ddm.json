@@ -1,0 +1,932 @@
+{
+  "adapter": "natural-ddm",
+  "canonical": {
+    "channels": [],
+    "description": "Natural / ADABAS data definition modules: 1 file(s). Byte lengths are computed under the assumptions in extras['natural_ddm']['lengthAssumptions']; descriptors are declared key metadata in each file's record.",
+    "extras": {
+      "natural_ddm": {
+        "capability_limits": [
+          {
+            "construct": "ddm.derived_descriptor",
+            "count": 1,
+            "detail": "A super-, sub-, hyper-, phonetic or collation descriptor is a key derived from other fields, not stored data; it is listed with its source byte ranges in extras['natural_ddm']['descriptors'] and not modelled as a field.",
+            "locations": [
+              "ORDER-FILE.S1"
+            ]
+          },
+          {
+            "construct": "ddm.record_offsets",
+            "count": 1,
+            "detail": "ADABAS compresses each record, so fields have a standard length but no fixed position; the record keeps every field's length and no offsets.",
+            "locations": [
+              "ORDER-FILE"
+            ]
+          },
+          {
+            "construct": "ddm.unbounded_occurrences",
+            "count": 1,
+            "detail": "A DDM does not state how many occurrences a multiple-value field or periodic group may have. The list has no max_items unless a Natural view in the upload, or an 'Up to N occurrences' remark, states a bound; ADABAS's own limit (191, or 65,534 with extended MU/PE limits) applies.",
+            "locations": [
+              "ORDER-FILE.LINE-NOTE"
+            ]
+          }
+        ],
+        "ddms": [
+          {
+            "database": "001",
+            "descriptors": 8,
+            "fields": 17,
+            "file": "natural-ddm/06-typical-periodic-groups.ddm",
+            "fileNumber": "020",
+            "name": "ORDER-FILE",
+            "type": "natural.ORDER-FILE"
+          }
+        ],
+        "files": [
+          "natural-ddm/06-typical-periodic-groups.ddm"
+        ],
+        "input": "file",
+        "lengthAssumptions": [
+          "A length is the field's standard length: characters for A, digits before the decimal point for N and P (the n of n.d; the d digits follow it), and bytes for every other format.",
+          "One byte per A character in a single-byte EBCDIC code page; U is UTF-16 (two bytes per character), so its character limit is half its length.",
+          "N is zoned decimal, one byte per digit; P is packed decimal, (digits ÷ 2) + 1 bytes with the sign in the last nibble.",
+          "D is a Natural date and T a Natural time, stored packed (4 and 7 bytes); B, I, F and L take their stated length in bytes.",
+          "A length of 0 is a variable-length (LOB) field with no standard length.",
+          "ADABAS stores records compressed, so a field has a standard length but no fixed offset in the record; no offsets are computed."
+        ],
+        "views": []
+      }
+    },
+    "format": "natural-ddm",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ORDER-FILE",
+      "namespace": "natural"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "ORDER-FILE",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "ADABAS file ORDER-FILE (DB 001, file 020): 17 fields and groups, descriptors ORDER-NUMBER, CUSTOMER-NUMBER, ORDER-DATE, ORDER-STATUS, LINE-SKU, SHIPMENT-ID, TRACKING-NUMBER. Lengths are standard lengths; ADABAS records are compressed and have no fixed offsets.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "database": "001",
+            "ddm": "ORDER-FILE",
+            "defaultSequence": {
+              "field": "ORDER-NUMBER",
+              "shortName": "AA"
+            },
+            "descriptors": [
+              {
+                "field": "ORDER-NUMBER",
+                "kind": "unique-descriptor",
+                "shortName": "AA",
+                "unique": true
+              },
+              {
+                "field": "CUSTOMER-NUMBER",
+                "kind": "descriptor",
+                "shortName": "AB",
+                "unique": false
+              },
+              {
+                "field": "ORDER-DATE",
+                "kind": "descriptor",
+                "shortName": "AC",
+                "unique": false
+              },
+              {
+                "field": "ORDER-STATUS",
+                "kind": "descriptor",
+                "shortName": "AD",
+                "unique": false
+              },
+              {
+                "field": "LINE-SKU",
+                "kind": "descriptor",
+                "shortName": "AH",
+                "unique": false
+              },
+              {
+                "field": "SHIPMENT-ID",
+                "kind": "descriptor",
+                "shortName": "AN",
+                "unique": false
+              },
+              {
+                "field": "TRACKING-NUMBER",
+                "kind": "descriptor",
+                "shortName": "AQ",
+                "unique": false
+              },
+              {
+                "format": "A",
+                "kind": "superdescriptor",
+                "length": 18,
+                "line": 28,
+                "name": "SUPER-CUST-DATE",
+                "shortName": "S1",
+                "sources": [
+                  {
+                    "field": "CUSTOMER-NUMBER",
+                    "from": 1,
+                    "shortName": "AB",
+                    "to": 10
+                  },
+                  {
+                    "field": "ORDER-DATE",
+                    "from": 1,
+                    "shortName": "AC",
+                    "to": 8
+                  }
+                ],
+                "unique": false
+              }
+            ],
+            "file": "natural-ddm/06-typical-periodic-groups.ddm",
+            "fileNumber": "020"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AB: format A10, 10 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 10,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 10,
+                "level": 1,
+                "line": 12,
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.ORDER-FILE.CUSTOMER-NUMBER",
+            "name": "CUSTOMER-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AF: format A3, 3 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 3,
+                "format": "A",
+                "kind": "field",
+                "length": 3,
+                "level": 1,
+                "line": 16,
+                "shortName": "AF",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 6,
+            "key": "natural.ORDER-FILE.ORDER-CURRENCY",
+            "name": "ORDER-CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AC: format N8.0, 8 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "descriptor": {
+                  "unique": false
+                },
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 1,
+                "line": 13,
+                "remark": "YYYYMMDD",
+                "shortName": "AC",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.ORDER-FILE.ORDER-DATE",
+            "name": "ORDER-DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 99,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Periodic group AG.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "periodic-group",
+                "level": 1,
+                "line": 17,
+                "occurrences": {
+                  "maximum": 99,
+                  "source": "remark"
+                },
+                "remark": "Up to 99 occurrences",
+                "shortName": "AG"
+              }
+            },
+            "field_number": 7,
+            "key": "natural.ORDER-FILE.ORDER-LINE",
+            "name": "ORDER-LINE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "natural.ORDER-FILE.ORDER-LINE",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AA: format A10, 10 bytes, unique descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 10,
+                "descriptor": {
+                  "unique": true
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 10,
+                "level": 1,
+                "line": 11,
+                "shortName": "AA",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.ORDER-FILE.ORDER-NUMBER",
+            "name": "ORDER-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AD: format A1, 1 byte, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 1,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 1,
+                "level": 1,
+                "line": 14,
+                "shortName": "AD",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.ORDER-FILE.ORDER-STATUS",
+            "name": "ORDER-STATUS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AE: format P11.2, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 2,
+                "digits": 13,
+                "format": "P",
+                "kind": "field",
+                "length": 11,
+                "level": 1,
+                "line": 15,
+                "shortName": "AE",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 5,
+            "key": "natural.ORDER-FILE.ORDER-TOTAL",
+            "name": "ORDER-TOTAL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 20,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Periodic group AM.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "periodic-group",
+                "level": 1,
+                "line": 23,
+                "occurrences": {
+                  "maximum": 20,
+                  "source": "remark"
+                },
+                "remark": "Up to 20 occurrences",
+                "shortName": "AM"
+              }
+            },
+            "field_number": 8,
+            "key": "natural.ORDER-FILE.SHIPMENT",
+            "name": "SHIPMENT",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "natural.ORDER-FILE.SHIPMENT",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.ORDER-FILE",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDER-FILE",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Periodic group ORDER-LINE (AG) of ADABAS file ORDER-FILE, level 1.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "periodic-group",
+            "level": 1,
+            "line": 17,
+            "occurrences": {
+              "maximum": 99,
+              "source": "remark"
+            },
+            "remark": "Up to 99 occurrences",
+            "shortName": "AG"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AK: format P5.2, 4 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 4,
+                "decimals": 2,
+                "digits": 7,
+                "format": "P",
+                "kind": "field",
+                "length": 5,
+                "level": 2,
+                "line": 21,
+                "shortName": "AK",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.ORDER-FILE.ORDER-LINE.LINE-DISCOUNT",
+            "name": "LINE-DISCOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 40
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AL: format A40, 40 bytes, multiple-value.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 40,
+                "format": "A",
+                "kind": "multiple-value",
+                "length": 40,
+                "level": 2,
+                "line": 22,
+                "shortName": "AL",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 5,
+            "key": "natural.ORDER-FILE.ORDER-LINE.LINE-NOTE",
+            "name": "LINE-NOTE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AI: format P9.3, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 3,
+                "digits": 12,
+                "format": "P",
+                "kind": "field",
+                "length": 9,
+                "level": 2,
+                "line": 19,
+                "shortName": "AI",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.ORDER-FILE.ORDER-LINE.LINE-QUANTITY",
+            "name": "LINE-QUANTITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 18,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AH: format A18, 18 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 18,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 18,
+                "level": 2,
+                "line": 18,
+                "shortName": "AH",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.ORDER-FILE.ORDER-LINE.LINE-SKU",
+            "name": "LINE-SKU",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AJ: format P11.2, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 2,
+                "digits": 13,
+                "format": "P",
+                "kind": "field",
+                "length": 11,
+                "level": 2,
+                "line": 20,
+                "shortName": "AJ",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.ORDER-FILE.ORDER-LINE.LINE-UNIT-PRICE",
+            "name": "LINE-UNIT-PRICE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.ORDER-FILE.ORDER-LINE",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDER-FILE.ORDER-LINE",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Periodic group SHIPMENT (AM) of ADABAS file ORDER-FILE, level 1.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "periodic-group",
+            "level": 1,
+            "line": 23,
+            "occurrences": {
+              "maximum": 20,
+              "source": "remark"
+            },
+            "remark": "Up to 20 occurrences",
+            "shortName": "AM"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AP: format A6, 6 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 6,
+                "format": "A",
+                "kind": "field",
+                "length": 6,
+                "level": 2,
+                "line": 26,
+                "shortName": "AP",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.ORDER-FILE.SHIPMENT.CARRIER-CODE",
+            "name": "CARRIER-CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AN: format A12, 12 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 12,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 12,
+                "level": 2,
+                "line": 24,
+                "shortName": "AN",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.ORDER-FILE.SHIPMENT.SHIPMENT-ID",
+            "name": "SHIPMENT-ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AO: format N8.0, 8 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 2,
+                "line": 25,
+                "shortName": "AO",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.ORDER-FILE.SHIPMENT.SHIPPED-DATE",
+            "name": "SHIPPED-DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 22,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AQ: format A22, 22 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 22,
+                "descriptor": {
+                  "unique": false
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 22,
+                "level": 2,
+                "line": 27,
+                "shortName": "AQ",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.ORDER-FILE.SHIPMENT.TRACKING-NUMBER",
+            "name": "TRACKING-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.ORDER-FILE.SHIPMENT",
+        "key_type": null,
+        "kind": "record",
+        "name": "ORDER-FILE.SHIPMENT",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "natural-ddm/06-typical-periodic-groups.ddm",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "natural-ddm"
+  },
+  "fingerprint": "sha256:c5e191b104989b9c47681706cc0b6afb1c77279b3d51fde8a831e87ab5da92a7",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

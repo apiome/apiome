@@ -799,6 +799,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'hierarchical database', 'segment', 'segm', 'procopt', 'senseg', 'pcb', 'secondary index', 'dl/i'],
   },
   {
+    id: 'natural-ddm-import',
+    title: 'Import Natural / ADABAS DDM',
+    summary: 'Catalog an ADABAS file from its DDM listing, with arrays and keys.',
+    page: 'apiome-docs/docs/bring-in/natural-ddm-import.md',
+    section: 'reference',
+    keywords: ['mainframe', 'software ag', 'data definition module', 'periodic group', 'multiple-value', 'superdescriptor', 'descriptor', 'view'],
+  },
+  {
     id: 'vsam-cics-bms-import',
     title: 'Import VSAM cluster definitions and CICS BMS maps',
     summary: 'Catalog VSAM record envelopes from IDCAMS and 3270 screens from BMS maps.',

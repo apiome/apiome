@@ -165,6 +165,7 @@ from .mainframe_misc_normalizer import BMS_EXTRAS_KEY, BMS_PARTIAL_LIMITS, VSAM_
 from .matter_normalizer import MATTER_EXTRAS_KEY
 from .matter_normalizer import PARTIAL_LIMITS as MATTER_PARTIAL_LIMITS
 from .models import ImportPreflightCounts, ImportPreflightReport, ImportPreflightRequest
+from .natural_ddm_normalizer import NATURAL_DDM_EXTRAS_KEY, NATURAL_DDM_PARTIAL_LIMITS
 from .odcs_normalizer import ODCS_EXTRAS_KEY
 from .opcua_nodeset_normalizer import OPCUA_EXTRAS_KEY
 from .opcua_nodeset_normalizer import PARTIAL_LIMITS as OPCUA_PARTIAL_LIMITS
@@ -309,6 +310,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-11.2: the IMS projection record (DBD hierarchies, PSB access profiles, layout
         # assumptions, declared limits). Our own bookkeeping.
         IMS_EXTRAS_KEY,
+        # FMT-11.4: the Natural DDM projection record (files, views, length assumptions, declared
+        # limits). Our own bookkeeping.
+        NATURAL_DDM_EXTRAS_KEY,
         # FMT-10.1: the Hoppscotch projection record (collection versions, environments, folders,
         # variable names, declared limits). Our own bookkeeping — never a credential.
         HOPPSCOTCH_EXTRAS_KEY,
@@ -1283,6 +1287,7 @@ def _document_scope_rows(
     ledger.extend(_mainframe_misc_capability_rows(api))
     ledger.extend(_pli_capability_rows(api))
     ledger.extend(_ims_capability_rows(api))
+    ledger.extend(_natural_ddm_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
@@ -2283,6 +2288,24 @@ def _ims_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         One ledger row per declared limit (see :func:`_graded_limit_rows`).
     """
     return _graded_limit_rows(api, format_key="ims", extras_key=IMS_EXTRAS_KEY, partial=IMS_PARTIAL_LIMITS)
+
+
+def _natural_ddm_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-11.4 Natural DDM declared limits as document-scoped ledger rows.
+
+    Compressed-record offsets, unbounded occurrences, redefinitions and LOB fields keep their field
+    (``partially-mapped``); derived descriptors and views over a DDM not in the upload are not
+    modelled.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="natural-ddm", extras_key=NATURAL_DDM_EXTRAS_KEY, partial=NATURAL_DDM_PARTIAL_LIMITS
+    )
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

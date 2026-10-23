@@ -1238,6 +1238,10 @@ def load_builtin_import_sources() -> None:
     # and their %INCLUDE members with a computed storage map, data_schema paradigm.
     from . import pli_import_source as _pli  # noqa: F401
 
+    # ``natural_ddm_import_source`` (FMT-11.4) self-registers the ``natural-ddm`` adapter — Natural /
+    # ADABAS DDM listings with groups, MU / PE arrays and descriptors, data_schema paradigm.
+    from . import natural_ddm_import_source as _natural_ddm  # noqa: F401
+
     # ``ims_import_source`` (FMT-11.2) self-registers the ``ims`` adapter — IMS DBD segment
     # hierarchies and PSB program views with their PROCOPT access profiles, data_schema paradigm.
     from . import ims_import_source as _ims  # noqa: F401

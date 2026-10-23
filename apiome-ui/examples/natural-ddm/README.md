@@ -3,8 +3,8 @@
 Fixtures for **FMT-11.4** ([#5486](https://github.com/apiome/apiome/issues/5486)). Software AG's
 Natural/ADABAS estates run core systems in insurance and government with no modernization tooling at
 all. A **DDM** (Data Definition Module) describes a file's fields, levels, formats, lengths,
-descriptors and periodic groups — a complete record schema. Entries carry `adapter_key: null` and the
-`pending-adapter` tag.
+descriptors and periodic groups — a complete record schema. Read by the `natural-ddm` adapter, which
+models multiple-value fields and periodic groups as arrays and descriptors as declared key metadata.
 
 **Detection marker.** A `DDM Name ......` header with `DB`/`File` numbers, followed by the
 `T L DB Name … F Leng S D Remark` column banner and fixed-column field lines.
@@ -41,4 +41,10 @@ M 1 AH PHONE-NUMBER                     A    20     N Multiple-value field
 
 **Byte counts come with assumptions.** `Leng` is a character or digit count, not a byte count: packed
 fields carry a sign nibble, `N` fields are zoned, and the record is EBCDIC. FMT-11.4 requires lengths
-modelled **under stated assumptions**, the same contract the copybook analyzer publishes.
+modelled **under stated assumptions**, the same contract the copybook analyzer publishes. The importer
+publishes them in `extras['natural_ddm']['lengthAssumptions']`.
+
+**Occurrence bounds.** A DDM does not state how many occurrences an MU field or PE group may have.
+The importer takes the bound from a Natural view in the same upload (`03-view-set/`: `(1:5)`,
+`(1:3)`) or from an "Up to N occurrences" remark (`06`); otherwise the list is unbounded and the
+limit is declared.

@@ -351,7 +351,7 @@
       "marker": "94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types"
     },
     "natural-ddm": {
-      "label": "Natural / ADABAS DDM (pending #5486)",
+      "label": "Natural / ADABAS DDM",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`DDM Name ......` header + the `T L DB Name \u2026 F Leng S D Remark` banner"
@@ -17523,7 +17523,7 @@
     {
       "path": "natural-ddm/01-minimal-ddm.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17532,8 +17532,7 @@
       "features": [
         "ddm-header",
         "fields",
-        "descriptor",
-        "pending-adapter"
+        "descriptor"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17544,7 +17543,7 @@
     {
       "path": "natural-ddm/02-typical-customer-ddm.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17556,8 +17555,7 @@
         "packed",
         "unique-descriptor",
         "multiple-value",
-        "superdescriptor",
-        "pending-adapter"
+        "superdescriptor"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17568,7 +17566,7 @@
     {
       "path": "natural-ddm/03-view-set/CUSTINQ.nsp",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17578,8 +17576,7 @@
         "multi-file",
         "define-data-view",
         "occurrence-bounds",
-        "field-subset",
-        "pending-adapter"
+        "field-subset"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17592,7 +17589,7 @@
     {
       "path": "natural-ddm/03-view-set/CUSTOMER.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17602,8 +17599,7 @@
         "multi-file",
         "ddm",
         "periodic-group",
-        "superdescriptor",
-        "pending-adapter"
+        "superdescriptor"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17615,7 +17611,7 @@
     {
       "path": "natural-ddm/04-stress-formats-and-descriptors.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17635,8 +17631,7 @@
         "null-suppression",
         "fixed-storage",
         "hyperdescriptor",
-        "subdescriptor",
-        "pending-adapter"
+        "subdescriptor"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17647,7 +17642,7 @@
     {
       "path": "natural-ddm/05-real-world-policy-ddm.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17658,8 +17653,7 @@
         "packed-money",
         "multiple-value",
         "superdescriptors",
-        "status-codes",
-        "pending-adapter"
+        "status-codes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17670,7 +17664,7 @@
     {
       "path": "natural-ddm/06-typical-periodic-groups.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17680,8 +17674,7 @@
         "periodic-group",
         "mu-in-pe",
         "superdescriptor",
-        "packed",
-        "pending-adapter"
+        "packed"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17692,7 +17685,7 @@
     {
       "path": "natural-ddm/07-composition-redefines-and-groups.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "valid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17702,8 +17695,7 @@
         "redefinition",
         "group-field",
         "group-in-periodic-group",
-        "superdescriptor-across-levels",
-        "pending-adapter"
+        "superdescriptor-across-levels"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -17714,7 +17706,7 @@
     {
       "path": "natural-ddm/negative/01-syntactic-malformed-column-layout.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17723,8 +17715,7 @@
       "features": [
         "negative",
         "syntactic",
-        "malformed-columns",
-        "pending-adapter"
+        "malformed-columns"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17736,7 +17727,7 @@
     {
       "path": "natural-ddm/negative/02-semantic-no-fields.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17745,8 +17736,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-field-lines",
-        "pending-adapter"
+        "no-field-lines"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17758,7 +17748,7 @@
     {
       "path": "natural-ddm/negative/03-truncated-mid-field-list.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17767,8 +17757,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-field-line",
-        "pending-adapter"
+        "mid-field-line"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17780,7 +17769,7 @@
     {
       "path": "natural-ddm/negative/04-wrong-format-cobol-copybook.cpy",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17789,8 +17778,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "cobol-copybook",
-        "pending-adapter"
+        "cobol-copybook"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17802,7 +17790,7 @@
     {
       "path": "natural-ddm/negative/05-encoding-utf16.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17811,8 +17799,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17824,7 +17811,7 @@
     {
       "path": "natural-ddm/negative/06-unresolvable-superdescriptor-source.ddm",
       "format": "natural-ddm",
-      "adapter_key": null,
+      "adapter_key": "natural-ddm",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "natural-ddm",
@@ -17833,8 +17820,7 @@
       "features": [
         "negative",
         "unresolvable-ref",
-        "missing-source-field",
-        "pending-adapter"
+        "missing-source-field"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

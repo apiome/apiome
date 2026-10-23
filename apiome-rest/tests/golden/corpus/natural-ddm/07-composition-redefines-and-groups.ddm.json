@@ -1,0 +1,1047 @@
+{
+  "adapter": "natural-ddm",
+  "canonical": {
+    "channels": [],
+    "description": "Natural / ADABAS data definition modules: 1 file(s). Byte lengths are computed under the assumptions in extras['natural_ddm']['lengthAssumptions']; descriptors are declared key metadata in each file's record.",
+    "extras": {
+      "natural_ddm": {
+        "capability_limits": [
+          {
+            "construct": "ddm.derived_descriptor",
+            "count": 2,
+            "detail": "A super-, sub-, hyper-, phonetic or collation descriptor is a key derived from other fields, not stored data; it is listed with its source byte ranges in extras['natural_ddm']['descriptors'] and not modelled as a field.",
+            "locations": [
+              "CONTRACT-FILE.S1",
+              "CONTRACT-FILE.S2"
+            ]
+          },
+          {
+            "construct": "ddm.record_offsets",
+            "count": 1,
+            "detail": "ADABAS compresses each record, so fields have a standard length but no fixed position; the record keeps every field's length and no offsets.",
+            "locations": [
+              "CONTRACT-FILE"
+            ]
+          },
+          {
+            "construct": "ddm.redefinition",
+            "count": 3,
+            "detail": "A redefinition reads part of a field as a field of its own. The canonical model has no overlay, so each redefinition is a field that names the field it redefines and its position within it in extras['natural_ddm']['redefines'].",
+            "locations": [
+              "CONTRACT-FILE.PARTY-COUNTRY",
+              "CONTRACT-FILE.PARTY-NAME",
+              "CONTRACT-FILE.PARTY-REFERENCE"
+            ]
+          },
+          {
+            "construct": "ddm.unbounded_occurrences",
+            "count": 2,
+            "detail": "A DDM does not state how many occurrences a multiple-value field or periodic group may have. The list has no max_items unless a Natural view in the upload, or an 'Up to N occurrences' remark, states a bound; ADABAS's own limit (191, or 65,534 with extended MU/PE limits) applies.",
+            "locations": [
+              "CONTRACT-FILE.INSTALMENT",
+              "CONTRACT-FILE.INSTALMENT-NOTE"
+            ]
+          }
+        ],
+        "ddms": [
+          {
+            "database": "001",
+            "descriptors": 4,
+            "fields": 21,
+            "file": "natural-ddm/07-composition-redefines-and-groups.ddm",
+            "fileNumber": "030",
+            "name": "CONTRACT-FILE",
+            "type": "natural.CONTRACT-FILE"
+          }
+        ],
+        "files": [
+          "natural-ddm/07-composition-redefines-and-groups.ddm"
+        ],
+        "input": "file",
+        "lengthAssumptions": [
+          "A length is the field's standard length: characters for A, digits before the decimal point for N and P (the n of n.d; the d digits follow it), and bytes for every other format.",
+          "One byte per A character in a single-byte EBCDIC code page; U is UTF-16 (two bytes per character), so its character limit is half its length.",
+          "N is zoned decimal, one byte per digit; P is packed decimal, (digits ÷ 2) + 1 bytes with the sign in the last nibble.",
+          "D is a Natural date and T a Natural time, stored packed (4 and 7 bytes); B, I, F and L take their stated length in bytes.",
+          "A length of 0 is a variable-length (LOB) field with no standard length.",
+          "ADABAS stores records compressed, so a field has a standard length but no fixed offset in the record; no offsets are computed."
+        ],
+        "views": []
+      }
+    },
+    "format": "natural-ddm",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CONTRACT-FILE",
+      "namespace": "natural"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CONTRACT-FILE",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "ADABAS file CONTRACT-FILE (DB 001, file 030): 21 fields and groups, descriptors CONTRACT-NUMBER, EFFECTIVE-DATE. Lengths are standard lengths; ADABAS records are compressed and have no fixed offsets.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "database": "001",
+            "ddm": "CONTRACT-FILE",
+            "defaultSequence": {
+              "field": "CONTRACT-NUMBER",
+              "shortName": "AA"
+            },
+            "descriptors": [
+              {
+                "field": "CONTRACT-NUMBER",
+                "kind": "unique-descriptor",
+                "shortName": "AA",
+                "unique": true
+              },
+              {
+                "field": "EFFECTIVE-DATE",
+                "kind": "descriptor",
+                "shortName": "AC",
+                "unique": false
+              },
+              {
+                "format": "A",
+                "kind": "superdescriptor",
+                "length": 51,
+                "line": 34,
+                "name": "SUPER-PARTY-EFFDATE",
+                "shortName": "S1",
+                "sources": [
+                  {
+                    "field": "PARTY-BLOCK",
+                    "from": 1,
+                    "shortName": "AB",
+                    "to": 40
+                  },
+                  {
+                    "field": "EFFECTIVE-DATE",
+                    "from": 1,
+                    "shortName": "AC",
+                    "to": 8
+                  },
+                  {
+                    "field": "PREMIUM-CURRENCY",
+                    "from": 1,
+                    "shortName": "AF",
+                    "to": 3
+                  }
+                ],
+                "unique": false
+              },
+              {
+                "format": "A",
+                "kind": "superdescriptor",
+                "length": 9,
+                "line": 35,
+                "name": "SUPER-STATUS-DUE",
+                "shortName": "S2",
+                "sources": [
+                  {
+                    "field": "STATUS-CODE",
+                    "from": 1,
+                    "shortName": "AP",
+                    "to": 1
+                  },
+                  {
+                    "field": "INSTALMENT-DUE",
+                    "from": 1,
+                    "shortName": "AM",
+                    "to": 8
+                  }
+                ],
+                "unique": false
+              }
+            ],
+            "file": "natural-ddm/07-composition-redefines-and-groups.ddm",
+            "fileNumber": "030"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Group AG.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "group",
+                "level": 1,
+                "line": 22,
+                "remark": "Group of related fields",
+                "shortName": "AG"
+              }
+            },
+            "field_number": 10,
+            "key": "natural.CONTRACT-FILE.BILLING-GROUP",
+            "name": "BILLING-GROUP",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "natural.CONTRACT-FILE.BILLING-GROUP",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AA: format A12, 12 bytes, unique descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 12,
+                "descriptor": {
+                  "unique": true
+                },
+                "format": "A",
+                "kind": "field",
+                "length": 12,
+                "level": 1,
+                "line": 13,
+                "shortName": "AA",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CONTRACT-FILE.CONTRACT-NUMBER",
+            "name": "CONTRACT-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AC: format N8.0, 8 bytes, descriptor.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "descriptor": {
+                  "unique": false
+                },
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 1,
+                "line": 18,
+                "remark": "YYYYMMDD",
+                "shortName": "AC",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 6,
+            "key": "natural.CONTRACT-FILE.EFFECTIVE-DATE",
+            "name": "EFFECTIVE-DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AD: format N8.0, 8 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 1,
+                "line": 19,
+                "remark": "YYYYMMDD",
+                "shortName": "AD",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 7,
+            "key": "natural.CONTRACT-FILE.EXPIRY-DATE",
+            "name": "EXPIRY-DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Periodic group AK.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "periodic-group",
+                "level": 1,
+                "line": 26,
+                "remark": "Periodic group",
+                "shortName": "AK"
+              }
+            },
+            "field_number": 11,
+            "key": "natural.CONTRACT-FILE.INSTALMENT",
+            "name": "INSTALMENT",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "natural.CONTRACT-FILE.INSTALMENT",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 75,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AB: format A75, 75 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 75,
+                "format": "A",
+                "kind": "field",
+                "length": 75,
+                "level": 1,
+                "line": 14,
+                "remark": "Group read as one field",
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CONTRACT-FILE.PARTY-BLOCK",
+            "name": "PARTY-BLOCK",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Redefines positions 41–43 of PARTY-BLOCK (AB).",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 3,
+                "format": "A",
+                "kind": "redefinition",
+                "length": 3,
+                "level": 2,
+                "line": 16,
+                "redefines": {
+                  "field": "PARTY-BLOCK",
+                  "position": 41,
+                  "shortName": "AB"
+                },
+                "remark": "Redefinition of AB, bytes 41-43",
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.CONTRACT-FILE.PARTY-COUNTRY",
+            "name": "PARTY-COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Redefines positions 1–40 of PARTY-BLOCK (AB).",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 40,
+                "format": "A",
+                "kind": "redefinition",
+                "length": 40,
+                "level": 2,
+                "line": 15,
+                "redefines": {
+                  "field": "PARTY-BLOCK",
+                  "position": 1,
+                  "shortName": "AB"
+                },
+                "remark": "Redefinition of AB, bytes 1-40",
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.CONTRACT-FILE.PARTY-NAME",
+            "name": "PARTY-NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Redefines positions 44–75 of PARTY-BLOCK (AB).",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 32,
+                "format": "A",
+                "kind": "redefinition",
+                "length": 32,
+                "level": 2,
+                "line": 17,
+                "redefines": {
+                  "field": "PARTY-BLOCK",
+                  "position": 44,
+                  "shortName": "AB"
+                },
+                "remark": "Redefinition of AB, bytes 44-75",
+                "shortName": "AB",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 5,
+            "key": "natural.CONTRACT-FILE.PARTY-REFERENCE",
+            "name": "PARTY-REFERENCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AE: format P11.2, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 2,
+                "digits": 13,
+                "format": "P",
+                "kind": "field",
+                "length": 11,
+                "level": 1,
+                "line": 20,
+                "shortName": "AE",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 8,
+            "key": "natural.CONTRACT-FILE.PREMIUM-AMOUNT",
+            "name": "PREMIUM-AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AF: format A3, 3 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 3,
+                "format": "A",
+                "kind": "field",
+                "length": 3,
+                "level": 1,
+                "line": 21,
+                "shortName": "AF",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 9,
+            "key": "natural.CONTRACT-FILE.PREMIUM-CURRENCY",
+            "name": "PREMIUM-CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CONTRACT-FILE",
+        "key_type": null,
+        "kind": "record",
+        "name": "CONTRACT-FILE",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Group BILLING-GROUP (AG) of ADABAS file CONTRACT-FILE, level 1.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "group",
+            "level": 1,
+            "line": 22,
+            "remark": "Group of related fields",
+            "shortName": "AG"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AI: format N2.0, 2 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 2,
+                "decimals": 0,
+                "digits": 2,
+                "format": "N",
+                "kind": "field",
+                "length": 2,
+                "level": 2,
+                "line": 24,
+                "shortName": "AI",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CONTRACT-FILE.BILLING-GROUP.BILLING-DAY",
+            "name": "BILLING-DAY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AH: format A1, 1 byte.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 1,
+                "format": "A",
+                "kind": "field",
+                "length": 1,
+                "level": 2,
+                "line": 23,
+                "shortName": "AH",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CONTRACT-FILE.BILLING-GROUP.BILLING-FREQUENCY",
+            "name": "BILLING-FREQUENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AJ: format A2, 2 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 2,
+                "format": "A",
+                "kind": "field",
+                "length": 2,
+                "level": 2,
+                "line": 25,
+                "shortName": "AJ",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.CONTRACT-FILE.BILLING-GROUP.BILLING-METHOD",
+            "name": "BILLING-METHOD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CONTRACT-FILE.BILLING-GROUP",
+        "key_type": null,
+        "kind": "record",
+        "name": "CONTRACT-FILE.BILLING-GROUP",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Periodic group INSTALMENT (AK) of ADABAS file CONTRACT-FILE, level 1.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "periodic-group",
+            "level": 1,
+            "line": 26,
+            "remark": "Periodic group",
+            "shortName": "AK"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AN: format P11.2, 7 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 7,
+                "decimals": 2,
+                "digits": 13,
+                "format": "P",
+                "kind": "field",
+                "length": 11,
+                "level": 2,
+                "line": 29,
+                "shortName": "AN",
+                "storage": "packed-numeric"
+              }
+            },
+            "field_number": 3,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-AMOUNT",
+            "name": "INSTALMENT-AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AM: format N8.0, 8 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 2,
+                "line": 28,
+                "shortName": "AM",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-DUE",
+            "name": "INSTALMENT-DUE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 40
+              },
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AR: format A40, 40 bytes, multiple-value.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 40,
+                "format": "A",
+                "kind": "multiple-value",
+                "length": 40,
+                "level": 2,
+                "line": 33,
+                "remark": "MU inside the periodic group",
+                "shortName": "AR",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 5,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-NOTE",
+            "name": "INSTALMENT-NOTE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AL: format N3.0, 3 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 3,
+                "decimals": 0,
+                "digits": 3,
+                "format": "N",
+                "kind": "field",
+                "length": 3,
+                "level": 2,
+                "line": 27,
+                "shortName": "AL",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-NUMBER",
+            "name": "INSTALMENT-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Group AO.",
+            "extras": {
+              "natural_ddm": {
+                "kind": "group",
+                "level": 2,
+                "line": 30,
+                "remark": "Group inside the periodic group",
+                "shortName": "AO"
+              }
+            },
+            "field_number": 4,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS",
+            "name": "INSTALMENT-STATUS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CONTRACT-FILE.INSTALMENT",
+        "key_type": null,
+        "kind": "record",
+        "name": "CONTRACT-FILE.INSTALMENT",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Group INSTALMENT-STATUS (AO) of ADABAS file CONTRACT-FILE, level 2.",
+        "enum_values": [],
+        "extras": {
+          "natural_ddm": {
+            "kind": "group",
+            "level": 2,
+            "line": 30,
+            "remark": "Group inside the periodic group",
+            "shortName": "AO"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "AP: format A1, 1 byte.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 1,
+                "format": "A",
+                "kind": "field",
+                "length": 1,
+                "level": 3,
+                "line": 31,
+                "shortName": "AP",
+                "storage": "alphanumeric"
+              }
+            },
+            "field_number": 1,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS.STATUS-CODE",
+            "name": "STATUS-CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AQ: format N8.0, 8 bytes.",
+            "extras": {
+              "natural_ddm": {
+                "bytes": 8,
+                "decimals": 0,
+                "digits": 8,
+                "format": "N",
+                "kind": "field",
+                "length": 8,
+                "level": 3,
+                "line": 32,
+                "shortName": "AQ",
+                "storage": "unpacked-numeric"
+              }
+            },
+            "field_number": 2,
+            "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS.STATUS-DATE",
+            "name": "STATUS-DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "natural.CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CONTRACT-FILE.INSTALMENT.INSTALMENT-STATUS",
+        "namespace": "natural",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "natural-ddm/07-composition-redefines-and-groups.ddm",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "natural-ddm"
+  },
+  "fingerprint": "sha256:363873160fb2a2b8d204987b194aadac2929343a62d95cee8365ce87ccdf106d",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

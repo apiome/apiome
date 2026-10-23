@@ -129,6 +129,9 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         # FMT-11.2: an IMS DBD / PSB declares a hierarchy and a program's access intent; it has no
         # place for an owner, an SLA or a retention promise.
         "ims",
+        # FMT-11.4: a Natural DDM describes an ADABAS file's fields and keys; it has no place for
+        # an owner, an SLA or a retention promise.
+        "natural-ddm",
         # FMT-11.1: a PL/I structure declares a storage layout; it has no place for an owner, an
         # SLA or a retention promise.
         "pli",
