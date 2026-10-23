@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "content-type",
+          "customerId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v2_orders",
+      "operation": "POST /v2/orders"
+    }
+  ]
+}

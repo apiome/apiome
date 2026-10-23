@@ -1,0 +1,595 @@
+{
+  "adapter": "soapui",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v2"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "DELETE",
+          "sample_urls": [
+            "https://api.example.com/v2/orders/{orderId}"
+          ],
+          "template": "/v2/orders/{orderId}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v2"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v2/orders/{orderId}"
+          ],
+          "template": "/v2/orders/{orderId}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "DELETE /v2/orders/{orderId}": 1,
+        "GET /v2/orders": 1,
+        "GET /v2/orders/{orderId}": 1,
+        "POST /v2/orders": 1
+      },
+      "soapui": {
+        "capability_limits": [],
+        "environments": [],
+        "interfaces": [
+          {
+            "kind": "rest",
+            "name": "Orders"
+          }
+        ],
+        "mock_services": [],
+        "properties": [
+          {
+            "name": "baseUrl",
+            "secret": false
+          }
+        ],
+        "requests": 4
+      }
+    },
+    "format": "soapui",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "soapui/02-typical-rest-project.xml"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      },
+      {
+        "description": "SoapUI endpoint of Orders",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://staging.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Orders API",
+        "name": "Orders API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "DELETE",
+                "sample_urls": [
+                  "https://api.example.com/v2/orders/{orderId}"
+                ],
+                "template": "/v2/orders/{orderId}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/02-typical-rest-project.xml"
+              ],
+              "source_label": "Request 1",
+              "source_location": "Orders/orders/{orderId}#cancelOrder"
+            },
+            "http_method": "DELETE",
+            "http_path": "/v2/orders/{orderId}",
+            "key": "DELETE /v2/orders/{orderId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "DELETE /v2/orders/{orderId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v2/orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/02-typical-rest-project.xml"
+              ],
+              "source_label": "Request 1",
+              "source_location": "Orders/orders#listOrders"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders",
+            "key": "GET /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "25"
+                  ]
+                },
+                "key": "GET /v2/orders#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "new"
+                  ]
+                },
+                "key": "GET /v2/orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v2/orders/{orderId}"
+                ],
+                "template": "/v2/orders/{orderId}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/02-typical-rest-project.xml"
+              ],
+              "source_label": "Request 1",
+              "source_location": "Orders/orders/{orderId}#getOrder"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders/{orderId}",
+            "key": "GET /v2/orders/{orderId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders/{orderId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v2/orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://api.example.com/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/02-typical-rest-project.xml"
+              ],
+              "source_label": "Request 1",
+              "source_location": "Orders/orders#placeOrder"
+            },
+            "http_method": "POST",
+            "http_path": "/v2/orders",
+            "key": "POST /v2/orders",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v2/orders#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostOrderRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "201",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v2/orders#response.201",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              }
+            ],
+            "name": "POST /v2/orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v2/orders#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "25"
+                  ]
+                },
+                "key": "POST /v2/orders#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "new"
+                  ]
+                },
+                "key": "POST /v2/orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Orders API",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostOrderRequest.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostOrderRequest.lines",
+            "name": "lines",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostOrderRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostOrderRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "soapui/02-typical-rest-project.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 2,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "soapui"
+  },
+  "fingerprint": "sha256:83a8df225b6d6a44ad984712d5ae09a60b37643af8e54759d4af181a706a4a86",
+  "lint": {
+    "findings": 11,
+    "grade": "C",
+    "report_fingerprint": "a1e85d24b780d4767bc030ec8758a9422876c47b2e0da95d1fd4b26d7bebafab",
+    "score": 74,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

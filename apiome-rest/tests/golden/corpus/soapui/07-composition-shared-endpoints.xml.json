@@ -1,0 +1,274 @@
+{
+  "adapter": "soapui",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "declared_tests": {
+        "counts": {
+          "assertions": 1,
+          "cases": 1,
+          "steps": 3,
+          "suites": 1
+        },
+        "source_format": "soapui",
+        "suites": [
+          {
+            "cases": [
+              {
+                "name": "Order then product",
+                "properties": [
+                  "sku"
+                ],
+                "steps": [
+                  {
+                    "assertions": [
+                      {
+                        "expects": {
+                          "codes": "200"
+                        },
+                        "name": "OK",
+                        "type": "Valid HTTP Status Codes"
+                      }
+                    ],
+                    "name": "List orders",
+                    "operation": "GET /v2/orders",
+                    "target": "Orders listOrders",
+                    "type": "restrequest"
+                  },
+                  {
+                    "name": "Take first sku",
+                    "type": "transfer"
+                  },
+                  {
+                    "name": "List products",
+                    "operation": "GET /v2/products",
+                    "target": "Catalogue listProducts",
+                    "type": "restrequest"
+                  }
+                ]
+              }
+            ],
+            "name": "Cross-interface",
+            "properties": [
+              "sku"
+            ],
+            "run_type": "SEQUENTIAL"
+          }
+        ]
+      },
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v2/orders": 1,
+        "GET /v2/products": 1
+      },
+      "soapui": {
+        "capability_limits": [
+          {
+            "construct": "soapui.test_case",
+            "count": 1,
+            "locations": [
+              "Cross-interface / Order then product"
+            ],
+            "note": "Test cases are kept as declared test intent (`extras.declared_tests`): steps, the operations they call and their assertion kinds. They are not run."
+          }
+        ],
+        "environments": [
+          "Acceptance",
+          "Production"
+        ],
+        "interfaces": [
+          {
+            "kind": "rest",
+            "name": "Orders"
+          },
+          {
+            "kind": "rest",
+            "name": "Catalogue"
+          }
+        ],
+        "mock_services": [],
+        "properties": [
+          {
+            "name": "apiBaseUrl",
+            "secret": false
+          }
+        ],
+        "requests": 2
+      }
+    },
+    "format": "soapui",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Composed project",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Acceptance environment (Orders)",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://acc.example.com",
+        "variables": []
+      },
+      {
+        "description": "Production environment (Orders)",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": "apiBaseUrl",
+        "protocol": null,
+        "url": "{apiBaseUrl}",
+        "variables": [
+          {
+            "default": "https://acc.example.com",
+            "description": "SoapUI property expansion `${apiBaseUrl}`.",
+            "enum": null,
+            "extras": {},
+            "name": "apiBaseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Composed project",
+        "name": "Composed project",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/07-composition-shared-endpoints.xml"
+              ],
+              "source_label": "Shared request",
+              "source_location": "Orders/orders#listOrders"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders",
+            "key": "GET /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "products"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/products"
+                ],
+                "template": "/v2/products"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "soapui/07-composition-shared-endpoints.xml"
+              ],
+              "source_label": "Shared request",
+              "source_location": "Catalogue/products#listProducts"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/products",
+            "key": "GET /v2/products",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/products",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Catalogue"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Composed project",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "soapui/07-composition-shared-endpoints.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 3,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "soapui"
+  },
+  "fingerprint": "sha256:d1161ca337bc42200fa591f7abb31e8550ce429f35834b2e8d79b12702a19532",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "6d4f845d53eed49616b38374958375e0a2319dbfd7f583157e1d2f08bbdb3906",
+    "score": 90,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

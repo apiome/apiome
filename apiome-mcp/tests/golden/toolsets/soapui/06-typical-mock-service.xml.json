@@ -1,0 +1,35 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (GetOrderResponse200).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v2_orders",
+      "operation": "GET /v2/orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor"
+          ],
+          "type": "object"
+        },
+        "shape": "GetOrderResponse200",
+        "status": "200"
+      }
+    }
+  ]
+}

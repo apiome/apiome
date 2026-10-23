@@ -113,6 +113,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   postman: 'Postman',
   hoppscotch: 'Hoppscotch',
   'thunder-client': 'Thunder Client',
+  soapui: 'SoapUI / ReadyAPI',
   'http-file': 'HTTP Request File',
   kong: 'Kong Declarative Config',
   'gateway-api': 'Gateway API HTTPRoute',

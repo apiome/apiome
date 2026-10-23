@@ -17,8 +17,11 @@ Detection is two-layered (MFI-29.6):
 
 * **named patterns** — provider key shapes, authorization headers, cookie jars,
   URL userinfo, secret-*named* assignments, and the ``{"key" | "name": <secret name>,
-  "value": …}`` pair lists client exports use (FMT-10.1, FMT-10.2). Always on: each one is a shape
-  that is a credential and nothing else.
+  "value": …}`` pair lists client exports use (FMT-10.1, FMT-10.2), and the XML shapes a SoapUI
+  project keeps credentials in — a secret-named element's text (``<con:password>``, an escaped
+  ``&lt;wsse:Password&gt;`` inside a saved envelope), ``key="<secret name>" value="…"``
+  attribute pairs and ``<name>`` / ``<value>`` element pairs (FMT-10.3). Always on: each one is a
+  shape that is a credential and nothing else.
 * **entropy** — a value the patterns cannot name (a bespoke opaque token under a
   neutral key such as ``value`` or ``X-Custom-Auth``) is caught by its randomness.
   Because a heuristic can be wrong in a way a named pattern cannot, this layer is
@@ -65,6 +68,15 @@ REDACTION_MARKER = "«redacted»"
 def _p(pattern: str, flags: int = 0) -> Pattern[str]:
     return re.compile(pattern, flags)
 
+
+#: An XML element name that names a secret (``password``, ``wsse:Password``, ``clientSecret``,
+#: ``accessToken``) — the assignment vocabulary, without a bare ``token``.
+_XML_SECRET_NAME = (
+    r"[A-Za-z0-9_.\-]*"
+    r"(?:password|passwd|secret|api[-_]?key|apikey|access[-_]?token|refresh[-_]?token"
+    r"|auth[-_]?token|client[-_]?secret|private[-_]?key|credential|passphrase)"
+    r"[A-Za-z0-9_.\-]*"
+)
 
 #: Credential patterns, each named by the secret *type* it recognizes. Group 1, when
 #: present, is the span actually replaced — that keeps surrounding structure (the
@@ -147,6 +159,41 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
         ))
         for member in ("value", "initialValue", "currentValue")
     ),
+    # --- XML-shaped credentials (SoapUI / ReadyAPI projects) ---------------------
+    # A SoapUI project keeps a saved request's password as element text
+    # (``<con:password>…</con:password>``) and a saved SOAP envelope — escaped into the project
+    # XML — carries WS-Security as ``&lt;wsse:Password …&gt;…&lt;/wsse:Password&gt;`` (FMT-10.3).
+    # The element's *name* must name a secret (same vocabulary as the assignment pattern above,
+    # so a bare ``<token>`` — SoapUI's *Contains* assertion text — is left alone).
+    ("secret-xml-element", _p(
+        r"<(?:[A-Za-z_][\w.\-]*:)?" + _XML_SECRET_NAME + r"(?:\s[^<>]*)?>"
+        r"\s*([^<\s][^<]{2,}[^<\s])\s*</",
+        re.IGNORECASE,
+    )),
+    ("secret-xml-element", _p(
+        r"&lt;(?:[A-Za-z_][\w.\-]*:)?" + _XML_SECRET_NAME + r"(?:\s(?:(?!&gt;)[^<>])*)?&gt;"
+        r"\s*((?:(?!&lt;)[^<\s])(?:(?!&lt;)[^<]){2,}?(?:(?!&lt;)[^<\s]))\s*&lt;/",
+        re.IGNORECASE,
+    )),
+    # A ``<con:name><secret name></con:name><con:value>…</con:value>`` element pair — how SoapUI
+    # keeps a property's value and a REST parameter's default.
+    ("secret-key-value-pair", _p(
+        r"<(?:[A-Za-z_][\w.\-]*:)?name>\s*[^<\n]*"
+        r"(?:password|passwd|secret|api[-_]?key|apikey|token|credential|passphrase"
+        r"|session|private[-_]?key|authorization|cookie)"
+        r"[^<\n]*</(?:[A-Za-z_][\w.\-]*:)?name>\s*"
+        r"<(?:[A-Za-z_][\w.\-]*:)?value>\s*([^<\s][^<]{2,}[^<\s])\s*</",
+        re.IGNORECASE,
+    )),
+    # A ``<con:entry key="<secret name>" value="…"/>`` attribute pair — how SoapUI stores a saved
+    # request's parameter values and headers (also escaped inside a ``@request-headers`` setting).
+    ("secret-key-value-pair", _p(
+        r"\bkey\s*=\s*\"[^\"\n]*"
+        r"(?:password|passwd|secret|api[-_]?key|apikey|token|credential|passphrase"
+        r"|session|private[-_]?key|authorization|cookie)"
+        r"[^\"\n]*\"\s+value\s*=\s*\"([^\"\n]{4,})\"",
+        re.IGNORECASE,
+    )),
 )
 
 

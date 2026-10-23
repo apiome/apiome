@@ -49,6 +49,9 @@ describe('catalog-import-formats', () => {
     // FMT-10.2: Thunder Client, under its key and alias, on the rest paradigm.
     expect(catalogAdapterForFormat('thunder-client')?.sourceKind).toBe('thunder-client');
     expect(catalogAdapterForFormat('thunder-collection')?.sourceKind).toBe('thunder-client');
+    // FMT-10.3: SoapUI / ReadyAPI, under its key and aliases, on the rest paradigm.
+    expect(catalogAdapterForFormat('soapui')?.sourceKind).toBe('soapui');
+    expect(catalogAdapterForFormat('readyapi')?.sourceKind).toBe('soapui');
     expect(catalogAdapterForFormat('curl')?.sourceKind).toBe('http-file');
     expect(catalogAdapterForFormat('kong')?.sourceKind).toBe('kong');
     expect(catalogAdapterForFormat('kong-declarative')?.sourceKind).toBe('kong');
@@ -167,7 +170,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'hoppscotch', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'lwm2m', 'matter', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'thunder-client', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'hoppscotch', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'lwm2m', 'matter', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'soapui', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'thunder-client', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -406,6 +409,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('ros2')).toBe('rpc');
     expect(paradigmForFormat('hoppscotch')).toBe('rest');
     expect(paradigmForFormat('thunder-client')).toBe('rest');
+    expect(paradigmForFormat('soapui')).toBe('rest');
     expect(paradigmForFormat('lwm2m')).toBe('dataschema');
     expect(paradigmForFormat('matter')).toBe('rpc');
     expect(paradigmForFormat('shacl')).toBe('dataschema');

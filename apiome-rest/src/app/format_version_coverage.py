@@ -457,6 +457,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "soapui": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="SoapUI 5.x / ReadyAPI 3.x single-file project XML (`soapui-project`)",
+                format_key="soapui",
+                support=VersionSupport.UNGATED,
+                note="SoapUI and ReadyAPI save the same `con:soapui-project` grammar in the "
+                "`http://eviware.com/soapui/config` namespace; one reader reads WSDL and REST interfaces, "
+                "test suites, mock services, properties and environments and records `soapui-version` "
+                "without branching on it. ReadyAPI composite projects (one file per item) are not read.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "xregistry": VersionCoverage(
         reads=[
             FormatVersion(

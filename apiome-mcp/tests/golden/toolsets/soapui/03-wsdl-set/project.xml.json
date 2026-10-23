@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/catalogue.GetProductResponse.",
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetProduct",
+      "operation": "http://example.com/catalogue.CatalogueServicePortType.GetProduct",
+      "output": {
+        "schema": {
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price": {},
+            "sku": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalogue.GetProductResponse"
+      }
+    }
+  ]
+}

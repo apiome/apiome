@@ -181,6 +181,8 @@ from .ros2_normalizer import PARTIAL_LIMITS as ROS2_PARTIAL_LIMITS
 from .ros2_normalizer import ROS2_EXTRAS_KEY
 from .shacl_normalizer import PARTIAL_LIMITS as SHACL_PARTIAL_LIMITS
 from .shacl_normalizer import SHACL_EXTRAS_KEY
+from .soapui_normalizer import PARTIAL_LIMITS as SOAPUI_PARTIAL_LIMITS
+from .soapui_normalizer import SOAPUI_EXTRAS_KEY
 from .sparkplug_normalizer import PARTIAL_LIMITS as SPARKPLUG_PARTIAL_LIMITS
 from .sparkplug_normalizer import SPARKPLUG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
@@ -300,6 +302,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-10.2: the Thunder Client projection record (same shape as Hoppscotch's). Our own
         # bookkeeping — never a credential.
         THUNDER_CLIENT_EXTRAS_KEY,
+        # FMT-10.3: the SoapUI projection record (interfaces and where each WSDL came from, saved
+        # request names, environments, property names, mock services, declared limits). Our own
+        # bookkeeping — never a credential.
+        SOAPUI_EXTRAS_KEY,
         # FMT-9.5: the LwM2M and Matter projection records (input kind, objects / clusters and
         # device types, declared limits). Our own bookkeeping.
         LWM2M_EXTRAS_KEY,
@@ -1263,6 +1269,7 @@ def _document_scope_rows(
     ledger.extend(_ros2_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
+    ledger.extend(_soapui_capability_rows(api))
     ledger.extend(_device_model_capability_rows(api))
     ledger.extend(_linked_data_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
@@ -2152,6 +2159,23 @@ def _thunder_client_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="thunder-client", extras_key=THUNDER_CLIENT_EXTRAS_KEY, partial=THUNDER_CLIENT_PARTIAL_LIMITS
     )
+
+
+def _soapui_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-10.3 SoapUI declared limits as document-scoped ledger rows.
+
+    Test cases (kept as declared test intent), withheld credentials, secret properties, saved
+    envelopes and operations behind an unfetched WSDL are modelled with a detail withheld, so they
+    are ``partially-mapped``; scripts, matrix parameters, mock dispatch, SOAP mock services and
+    unsupported interface kinds are not modelled at all.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="soapui", extras_key=SOAPUI_EXTRAS_KEY, partial=SOAPUI_PARTIAL_LIMITS)
 
 
 def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
