@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.443.0] - 2026-10-23
+
+### Added
+- **Project activity timeline (#2594)**: `GET /v1/versions/{tenant_slug}/{project_id}/timeline` reads the project's
+  `workflow_audit` and `version_protection_audit` rows as one newest-first stream (keyset pagination, `limit` 50,
+  max 200; filters `kind`, `revisionId`, `actorId`, `since`, `until`, `cursor`).
+  - Every event has a `kind` (`publish`, `merge`, `tag`, `protection`, `other`) and, when it concerns a revision,
+    `revisionId`, `versionLabel`, `mergeFromRevisionId` and `links` (`revision`, `ancestors` in the revision DAG
+    (#2593), `timeline?revisionId=`) for cross-navigation.
+  - Tenant **and** project scoped; requires `versions:view`. Callers who are not tenant administrators see only
+    `success` / `allowed` / `policy_change` outcomes (`restricted: true`); failures and denied attempts are
+    admin-only. Errors: `INVALID_KIND` (400), invalid UUID / time / cursor (400), unknown project (404).
+  - `app.project_timeline`: pure classification, kind filter, visibility and event mapping.
+- New audit events: `version.publish` on every successful publish (detail: `visibility`, `versionLine`,
+  `parentRevisionId`, `mergeParentRevisionId`), and `tag.create` / `tag.update` / `tag.delete` on every successful
+  tag change (linked to the tagged revision; detail: `tagId`, `tagName`, `revisionId`, `fromRevisionId` on a move,
+  `changes`).
+
+### Changed
+- `tag.protection_policy` and tag admin-override protection rows now carry `tagName` and `revisionId`;
+  `branch.protection_policy` rows carry `branchName` and `isDefaultBranch`.
+- Retention hooks for both ledgers are documented on the new *Project activity timeline* docs page.
+
 ## [1.442.0] - 2026-10-23
 
 ### Added

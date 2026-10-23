@@ -587,7 +587,8 @@ async def patch_version_branch_policy(
             )
         raise HTTPException(status_code=404, detail="Branch not found")
 
-    detail: Dict[str, Any] = {}
+    # #2594: name the branch on the timeline, and say whether it is the default branch.
+    detail: Dict[str, Any] = {"branchName": row.get("name"), "isDefaultBranch": bool(row.get("is_default"))}
     if body.protected is not None:
         detail["protected"] = body.protected
     if body.is_default is not None:

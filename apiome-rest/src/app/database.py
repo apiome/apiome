@@ -11694,6 +11694,111 @@ class Database:
             params.append(offset)
         return self.execute_query(q, tuple(params))
 
+    def list_project_timeline(
+        self,
+        tenant_id: str,
+        project_id: str,
+        *,
+        revision_id: Optional[str] = None,
+        kinds: Optional[Dict[str, Any]] = None,
+        outcomes: Optional[Sequence[str]] = None,
+        actor_id: Optional[str] = None,
+        since=None,
+        until=None,
+        limit: int = 50,
+        cursor_created_at=None,
+        cursor_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """One page of a project's activity timeline, newest first (#2594).
+
+        Reads ``workflow_audit`` and ``version_protection_audit`` as one stream (``UNION ALL``),
+        both scoped to ``tenant_id`` *and* ``project_id``, and joins the revision each row
+        concerns for its version label. A protection row concerns a revision when its resource
+        is one (``resource_type = 'version'``) or its detail names one (``revisionId``).
+        Keyset-paginated on ``(created_at, id)`` so a page costs the same however deep it is.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            revision_id: Only events that concern this revision.
+            kinds: From :func:`app.project_timeline.kind_filter`; ``None`` for every kind.
+            outcomes: Only these outcomes (role-based visibility); ``None`` for all.
+            actor_id: Only events by this user.
+            since: Inclusive lower ``created_at`` bound.
+            until: Inclusive upper ``created_at`` bound.
+            limit: Most rows returned (pass page size + 1 to detect a further page).
+            cursor_created_at: ``created_at`` of the last row of the previous page.
+            cursor_id: ``id`` of the last row of the previous page.
+
+        Returns:
+            Rows with ``id``, ``source``, ``action``, ``outcome``, ``actor_id``, ``revision_id``,
+            ``version_label``, ``resource_type``, ``resource_id``, ``detail``, ``created_at``.
+        """
+        clauses: List[str] = []
+        params: List[Any] = []
+        if revision_id is not None:
+            clauses.append("e.revision_id = %s::uuid")
+            params.append(revision_id)
+        if kinds is not None:
+            ors: List[str] = []
+            if kinds.get("workflow_actions"):
+                ph = ",".join(["%s"] * len(kinds["workflow_actions"]))
+                ors.append(f"(e.source = 'workflow' AND e.action IN ({ph}))")
+                params.extend(kinds["workflow_actions"])
+            if kinds.get("workflow_other"):
+                ph = ",".join(["%s"] * len(kinds["excluded_actions"]))
+                ors.append(f"(e.source = 'workflow' AND e.action NOT IN ({ph}))")
+                params.extend(kinds["excluded_actions"])
+            if kinds.get("protection_ledger"):
+                ors.append("e.source = 'protection'")
+            clauses.append("(" + " OR ".join(ors) + ")" if ors else "FALSE")
+        if outcomes is not None:
+            ph = ",".join(["%s"] * len(outcomes)) or "NULL"
+            clauses.append(f"e.outcome IN ({ph})")
+            params.extend(outcomes)
+        if actor_id is not None:
+            clauses.append("e.actor_id = %s::uuid")
+            params.append(actor_id)
+        if since is not None:
+            clauses.append("e.created_at >= %s")
+            params.append(since)
+        if until is not None:
+            clauses.append("e.created_at <= %s")
+            params.append(until)
+        if cursor_created_at is not None and cursor_id is not None:
+            clauses.append("(e.created_at, e.id) < (%s, %s::uuid)")
+            params.extend([cursor_created_at, cursor_id])
+        where_sql = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+        q = f"""
+            SELECT e.id, e.source, e.action, e.outcome, e.actor_id, e.revision_id,
+                   v.version_id AS version_label, e.resource_type, e.resource_id,
+                   e.detail, e.created_at
+            FROM (
+                SELECT wa.id, 'workflow'::text AS source, wa.action, wa.outcome, wa.actor_id,
+                       wa.version_id AS revision_id, NULL::varchar AS resource_type,
+                       NULL::uuid AS resource_id, wa.detail, wa.created_at
+                FROM apiome.workflow_audit wa
+                WHERE wa.tenant_id = %s AND wa.project_id = %s
+                UNION ALL
+                SELECT pa.id, 'protection'::text AS source, pa.action, pa.outcome, pa.actor_id,
+                       CASE
+                           WHEN pa.resource_type = 'version' THEN pa.resource_id
+                           WHEN pa.detail->>'revisionId'
+                                ~* '^[0-9a-f]{{8}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{4}}-[0-9a-f]{{12}}$'
+                               THEN (pa.detail->>'revisionId')::uuid
+                       END AS revision_id,
+                       pa.resource_type, pa.resource_id, pa.detail, pa.created_at
+                FROM apiome.version_protection_audit pa
+                WHERE pa.tenant_id = %s AND pa.project_id = %s
+            ) e
+            LEFT JOIN apiome.versions v ON v.id = e.revision_id AND v.project_id = %s
+            {where_sql}
+            ORDER BY e.created_at DESC, e.id DESC
+            LIMIT %s
+        """
+        scope = [tenant_id, project_id, tenant_id, project_id, project_id]
+        return self.execute_query(q, tuple(scope + params + [limit]))
+
     def list_workflow_audit_for_export(
         self,
         tenant_id: str,
@@ -13685,7 +13790,11 @@ class Database:
                         "version_tag",
                         tag_id,
                         "allowed",
-                        {"reason": "admin_override_tag_protection"},
+                        {
+                            "reason": "admin_override_tag_protection",
+                            "tagName": existing.get("name"),
+                            "revisionId": str((row or existing).get("version_id")),
+                        },
                     )
                 if set_protected is not None:
                     self.insert_version_protection_audit(
@@ -13696,7 +13805,12 @@ class Database:
                         "version_tag",
                         tag_id,
                         "policy_change",
-                        {"protected": set_protected},
+                        {
+                            "protected": set_protected,
+                            # #2594: link the policy change to the tagged revision on the timeline.
+                            "tagName": existing.get("name"),
+                            "revisionId": str((row or existing).get("version_id")),
+                        },
                     )
                 return row
         except Exception as e:
@@ -13743,7 +13857,11 @@ class Database:
                         "version_tag",
                         tag_id,
                         "allowed",
-                        {"reason": "admin_override_tag_protection"},
+                        {
+                            "reason": "admin_override_tag_protection",
+                            "tagName": existing.get("name"),
+                            "revisionId": str(existing.get("version_id")),
+                        },
                     )
                 return ok
         except Exception as e:
