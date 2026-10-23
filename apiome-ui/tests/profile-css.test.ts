@@ -490,11 +490,8 @@ describe('quiet text clears WCAG AA', () => {
    ------------------------------------------------------------------------- */
 
 describe('the identity hero', () => {
-  it('draws its band from the three brand and surface tokens, not from a hue', () => {
-    const band = declaration('.acct-identity__band', 'background');
-    expect(band).toContain('var(--honey-soft)');
-    expect(band).toContain('var(--accent-soft)');
-    expect(band).toContain('var(--bg-surface)');
+  it('draws its band flat in --bg-subtle, with no gradient (HIVE-11.11)', () => {
+    expect(declaration('.acct-identity__band', 'background')).toBe('var(--bg-subtle)');
   });
 
   it('rings the avatar in the card it overlaps rather than in a grey that matches one theme', () => {

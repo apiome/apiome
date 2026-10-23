@@ -19,13 +19,14 @@ The sample files below are in the Apiome repository under `apiome-ui/examples/`.
 
 Steps: **Source → Analyze → Preview → Import → Done**.
 
-<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with every source card" caption="The Source step. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
+<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step: the source cards, then the three most recent imports with their state" caption="The Source step. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
 
 1. **Source** — choose a card and fill in its intake (below). The forward button is **“Analyze →”**
-   (**“Next →”** for a URL).
+   (**“Continue”** for a URL). When you have imported before, the three most recent imports are
+   listed under the cards with their state; **“All import jobs”** opens the full list.
 2. **Analyze** — Apiome detects the format and checks the document. A banner says **Ready to
    import**, or what blocks the import (a D/F quality grade, errors, or a format this importer does
-   not take).
+   not take). **Click “Continue”.**
 3. **Preview** — review the schemas in a **List View**, **Relationship Diagram** or **Tree View**,
    pick them with **Select All** / **Select None** and the filters, and set the **Project Name**,
    **Slug** and **Version** under **Import Options**. **Click “Import →”.**
@@ -55,7 +56,7 @@ If the import fails, nothing is saved; the failures are listed with **“Retry i
    `https://raw.githubusercontent.com/apiome/apiome/main/apiome-ui/examples/openapi/30-openapi-3.0-petstore.yaml`.
 2. For a protected URL, choose **Authentication**: **Bearer Token**, **API Key** (with its **Header
    Name**, such as `X-API-Key`) or **Basic Auth**.
-3. **Click “Test URL”**; when it says **URL tested ✓**, **click “Next →”**.
+3. **Click “Test URL”**; when it says **URL tested ✓**, **click “Continue”**.
 
 Only `http` and `https` URLs work. The fetch runs in your browser, so the server must allow it
 (CORS) — if it does not, download the file and use **File Upload**.

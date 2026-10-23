@@ -16,3 +16,4 @@ export * from './FileIntakePanel';
 export * from './importDetectionAdvisory';
 export * from './McpImportDonePanel';
 export * from './RecentImportJobsDrawer';
+export { RecentImportsList, RECENT_IMPORTS_SHOWN } from './RecentImportsList';

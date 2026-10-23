@@ -175,7 +175,7 @@ export interface ImportFooter {
  * The intake step's forward verb.
  *
  * URL is the one source with two forward actions — *Test URL* proves the address before
- * *Next →* fetches from it — so its primary reads *Next →* while every other intake reads
+ * *Continue* fetches from it — so its primary reads *Continue* while every other intake reads
  * *Analyze →*. MCP has no analyze or preview step at all: its forward verb starts a scan.
  */
 function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
@@ -187,7 +187,7 @@ function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
     };
   }
   if (source === 'url') {
-    return { label: analyzing ? 'Analyzing...' : 'Next →', disabled: !intakeReady || analyzing };
+    return { label: analyzing ? 'Analyzing...' : 'Continue', disabled: !intakeReady || analyzing };
   }
   if (source === null) return null;
   return { label: analyzing ? 'Analyzing...' : 'Analyze →', disabled: !intakeReady || analyzing };
@@ -217,7 +217,7 @@ export function importFooterFor(state: ImportFooterState): ImportFooter {
       cancel: { label: 'Cancel', disabled: false },
       // The cards navigate on click, so the grid's forward button never acts. It stays,
       // disabled, because a footer that loses a button between steps reads as a layout jump.
-      primary: { label: 'Next →', disabled: true },
+      primary: { label: 'Continue', disabled: true },
       keepAnyway: null,
     };
   }
@@ -236,7 +236,7 @@ export function importFooterFor(state: ImportFooterState): ImportFooter {
       back: { label: '← Back', disabled: !importComplete },
       cancel: { label: failed ? 'Cancel' : importComplete ? 'Close' : 'Cancel', disabled: false },
       primary:
-        importComplete && importSucceeded ? { label: 'Next →', disabled: false } : null,
+        importComplete && importSucceeded ? { label: 'Continue', disabled: false } : null,
       keepAnyway: null,
     };
   }
@@ -254,7 +254,7 @@ export function importFooterFor(state: ImportFooterState): ImportFooter {
     return {
       back: { label: '← Back', disabled: false },
       cancel: { label: 'Cancel', disabled: false },
-      primary: { label: 'Next →', disabled: !state.analysisImportable },
+      primary: { label: 'Continue', disabled: !state.analysisImportable },
       keepAnyway: null,
     };
   }

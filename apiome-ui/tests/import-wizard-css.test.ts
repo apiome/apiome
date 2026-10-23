@@ -71,6 +71,16 @@ const BASE_TYPE_RULE_LINE = (() => {
  */
 const IMPORT_PRELUDES = [
   '.imp-wizard',
+  // HIVE-11.11: the fitted Projects wizard and the recent-imports list under the tiles.
+  '.imp-wizard--fit',
+  '.imp-recent',
+  '.imp-recent__head',
+  '.imp-recent__title',
+  '.imp-recent__list',
+  '.imp-recent__row',
+  '.imp-recent__row + .imp-recent__row',
+  '.imp-recent__id',
+  '.imp-recent__pct',
   '.imp-wizard__head',
   '.imp-wizard__heading',
   '.imp-wizard__head-actions',

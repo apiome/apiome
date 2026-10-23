@@ -277,7 +277,7 @@ describe('the Source step', () => {
     renderWizard();
     await screen.findByRole('button', { name: /File Upload/ });
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Next →' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: '← Back' })).not.toBeInTheDocument();
   });
 
@@ -367,7 +367,7 @@ describe('the intake tab bar', () => {
 
     const tabs = screen.getByRole('tablist', { name: 'Import source' });
     fireEvent.click(within(tabs).getByRole('tab', { name: /URL Import/ }));
-    expect(await screen.findByRole('button', { name: 'Next →' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Test URL/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /MCP Server/ }));
@@ -637,6 +637,59 @@ describe('back and cancel', () => {
    8. The recent-jobs drawer
    ------------------------------------------------------------------------- */
 
+describe('the recent imports under the tiles (HIVE-11.11)', () => {
+  /** Answer the registry and the import-job list. */
+  function stubJobs(jobs: unknown[]) {
+    fetchMock.mockImplementation(((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/import/sources')) {
+        return Promise.resolve({ ok: true, json: async () => REGISTRY_SOURCES });
+      }
+      if (url.startsWith('/api/catalog/import?')) {
+        return Promise.resolve({ ok: true, json: async () => ({ success: true, jobs, total: jobs.length }) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    }) as never);
+  }
+
+  it('lists the last three imports and opens the full drawer from them', async () => {
+    stubJobs([
+      { job_id: 'job-a', state: 'succeeded', percent: 100 },
+      { job_id: 'job-b', state: 'running', percent: 40 },
+      { job_id: 'job-c', state: 'failed' },
+    ]);
+    renderWizard();
+    const list = await screen.findByTestId('import-recent-list');
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3);
+    expect(list).toHaveTextContent('job-a');
+    expect(list).toHaveTextContent('40%');
+    const call = fetchMock.mock.calls.map(([url]) => String(url)).find((url) => url.startsWith('/api/catalog/import?'));
+    expect(call).toContain('limit=3');
+
+    fireEvent.click(within(list).getByRole('button', { name: 'All import jobs' }));
+    expect(await screen.findByRole('dialog', { name: IMPORT_WIZARD_COPY.jobsDrawerTitle })).toBeInTheDocument();
+  });
+
+  it('draws nothing when there are no imports yet', async () => {
+    stubJobs([]);
+    renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/catalog/import?'))).toBe(true)
+    );
+    expect(screen.queryByTestId('import-recent-list')).not.toBeInTheDocument();
+  });
+
+  it('is an lg dialog sized to its step, not a full-height sheet', async () => {
+    renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    const dialog = document.querySelector('.imp-wizard') as HTMLElement;
+    expect(dialog).toHaveClass('imp-wizard--fit');
+    expect(dialog.className).toContain('max-w-[47.5rem]');
+    expect(dialog.className.split(/\s+/)).not.toContain('h-[calc(100vh-3rem)]');
+  });
+});
+
 describe('the recent-jobs drawer', () => {
   it('opens from the wizard’s head', async () => {
     renderWizard();
@@ -658,7 +711,7 @@ describe('the quality snapshot', () => {
     renderWizard({ initialLLMSpec: '{"openapi":"3.1.0"}' });
     await screen.findByTestId('analysis-panel');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Next →' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByTestId('preview-panel');
 
     // With nothing selected the footer refuses — the rule `importFooterFor` states.
@@ -700,7 +753,7 @@ describe('the quality snapshot', () => {
 
     renderWizard({ initialLLMSpec: '{"openapi":"3.1.0"}' });
     await screen.findByTestId('analysis-panel');
-    fireEvent.click(screen.getByRole('button', { name: 'Next →' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByTestId('preview-panel');
     fireEvent.click(screen.getByRole('button', { name: 'Select Refund (dry run)' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Import →' })).toBeEnabled());
@@ -776,8 +829,31 @@ describe('the browser fixtures', () => {
   const wizard = () => document.querySelector('.imp-wizard') as HTMLElement;
 
   it('renders every surface the browser spec mounts (and writes the fixtures on request)', async () => {
+    // HIVE-11.11: a returning reader's Source step, with the last three imports under the tiles.
+    fetchMock.mockImplementation(((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/import/sources')) {
+        return Promise.resolve({ ok: true, json: async () => REGISTRY_SOURCES });
+      }
+      if (url.startsWith('/api/catalog/import?')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            total: 3,
+            jobs: [
+              { job_id: 'imp-7f3a91c2', state: 'succeeded', percent: 100 },
+              { job_id: 'imp-52be04d8', state: 'succeeded', percent: 100 },
+              { job_id: 'imp-1c9e6a35', state: 'failed', percent: 41 },
+            ],
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    }) as never);
     renderWizard();
     await screen.findByRole('button', { name: /gRPC/ });
+    await screen.findByTestId('import-recent-list');
     write('source', wizard().outerHTML);
 
     fireEvent.click(screen.getByRole('button', { name: /File Upload/ }));

@@ -13,7 +13,7 @@
 
 ## 1. Recommendation
 
-RC6 is **20 open tickets in five lanes**: four product lanes and a hardening lane (§2.3, lane H).
+RC6 is **19 open tickets in five lanes**: four product lanes and a hardening lane (§2.3, lane H).
 
 - **Only Catalog, Projects and sign-in/sign-up are in.** A stranger can sign up, secure the
   account, sign in from the browser or the CLI, and then bring specs into the Catalog, convert
@@ -38,7 +38,7 @@ RC6 is **20 open tickets in five lanes**: four product lanes and a hardening lan
 | **A — Sign-up** | Anyone can create an account and a workspace, under an installation sign-up policy, with abuse protection | 5 | 5 |
 | **B — Two-factor** | Authy offered at sign-up, usable by OAuth-only accounts, recoverable, enforceable per tenant | 3 | 3 |
 | **D — CLI sign-in** | One-line install and `apiome login` | 1 | 1 |
-| **E — Catalog & Projects polish** | The HIVE quiet pass and gates on the pages RC6 ships | 3 | 11 |
+| **E — Catalog & Projects polish** | The HIVE quiet pass and gates on the pages RC6 ships | 2 | 12 |
 | **H — Hardening** | Catalog and Projects meet the MVP hardening checklist | 8 | 0 |
 
 Lanes C (formats), F (Enterprise SSO) and G (agent authorization) from the 2026-10-10 plan are out
@@ -96,7 +96,7 @@ Start these on day one; none depends on another.
 1. [#5650](https://github.com/apiome/apiome/issues/5650) SGN-1.1 email and password sign-up ✅
 2. [#5605](https://github.com/apiome/apiome/issues/5605) HIVE-11.9 Members — seat facts line ✅
 3. [#5603](https://github.com/apiome/apiome/issues/5603) HIVE-11.7 Repositories — facts line ✅
-4. [#5607](https://github.com/apiome/apiome/issues/5607) HIVE-11.11 small chrome fixes
+4. [#5607](https://github.com/apiome/apiome/issues/5607) HIVE-11.11 small chrome fixes ✅
 5. [#6208](https://github.com/apiome/apiome/issues/6208) H1 end-to-end journey · [#6209](https://github.com/apiome/apiome/issues/6209) H2 accessibility · [#6210](https://github.com/apiome/apiome/issues/6210) H3 loading/error states
 
 ### 2.3 Lane H — hardening
@@ -143,7 +143,7 @@ reads whole.
 | 18 | 1 | A | [#5650](https://github.com/apiome/apiome/issues/5650) | SGN-1.1 | Email and password sign-up with email verification **MVP** | SGN-1.4 | ✅ |
 | 19 | 1 | E | [#5605](https://github.com/apiome/apiome/issues/5605) | HIVE-11.9 | Members — seat facts line; Identity provider cards → “Coming next” line | HIVE-11.5, HIVE-12.5 | ✅ |
 | 20 | 1 | E | [#5603](https://github.com/apiome/apiome/issues/5603) | HIVE-11.7 | Repositories and repository detail — facts line, activity chip | HIVE-11.5 | ✅ |
-| 21 | 1 | E | [#5607](https://github.com/apiome/apiome/issues/5607) | HIVE-11.11 | Small chrome fixes — Import wizard height, profile hero (the Export studio header part waits for the studio) | — | |
+| 21 | 1 | E | [#5607](https://github.com/apiome/apiome/issues/5607) | HIVE-11.11 | Small chrome fixes — Import wizard height, profile hero (the Export studio header part waits for the studio) | — | ✅ |
 | 22 | 2 | A | [#5651](https://github.com/apiome/apiome/issues/5651) | SGN-1.2 | Sign-up page — every enabled provider plus the email form **MVP** | SGN-1.1 | |
 | 23 | 2 | A | [#5652](https://github.com/apiome/apiome/issues/5652) | SGN-1.3 | Retire the legacy sign-up request queue **MVP** | SGN-1.1 | |
 | 24 | 2 | A | [#4962](https://github.com/apiome/apiome/issues/4962) | OLO-7.3 follow-up | Close account enumeration on legacy self-sign-up | closed by SGN-1.3 | |

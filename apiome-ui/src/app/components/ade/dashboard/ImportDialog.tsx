@@ -62,6 +62,7 @@ import {
   ImportWizardSteps,
   McpImportDonePanel,
   RecentImportJobsDrawer,
+  RecentImportsList,
   importFooterFor,
   importQualityGate,
   isAcceptedImportFile,
@@ -430,7 +431,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setUrlContent(content);
     setUrlFilename(filename);
     setUrlMetadata(metadata || null);
-    // Don't auto-analyze - user needs to click "Next →" button
+    // Don't auto-analyze - user needs to click "Continue"
   };
 
   const handleClipboardSpecificationReady = (content: string, filename: string) => {
@@ -754,11 +755,15 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const renderStep = () => {
     if (currentStep === 'source') {
       return (
-        <ImportSourceCards
-          cards={sourceCards}
-          selected={selectedSource}
-          onSelect={handleSourceClick}
-        />
+        <div className="flex flex-col gap-5">
+          <ImportSourceCards
+            cards={sourceCards}
+            selected={selectedSource}
+            onSelect={handleSourceClick}
+          />
+          {/* HIVE-11.11: the space under the tiles shows the last three imports, when any. */}
+          <RecentImportsList onShowAll={() => setJobsDrawerOpen(true)} />
+        </div>
       );
     }
 
@@ -891,9 +896,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           if (!nextOpen) void handleClose();
         }}
       >
+        {/* HIVE-11.11: `lg` and as tall as the step needs (up to the viewport), not a fixed
+            full-height sheet that leaves the source step half empty. */}
         <DialogContent
-          size="full"
-          className="imp-wizard"
+          size="lg"
+          className="imp-wizard imp-wizard--fit"
           closeLabel={IMPORT_WIZARD_COPY.closeWarning}
         >
           <ImportWizardHead

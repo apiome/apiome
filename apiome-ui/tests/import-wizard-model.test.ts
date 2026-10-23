@@ -148,7 +148,7 @@ describe('the footer', () => {
     expect(footer.back).toBeNull();
     expect(footer.cancel.label).toBe('Cancel');
     // The cards navigate on click; the button stays so the footer does not change shape.
-    expect(footer.primary).toEqual({ label: 'Next →', disabled: true });
+    expect(footer.primary).toEqual({ label: 'Continue', disabled: true });
   });
 
   it('says Analyze → on every intake but URL and MCP', () => {
@@ -158,9 +158,9 @@ describe('the footer', () => {
     }
   });
 
-  it('says Next → on URL, which already spent its Analyze verb on Test URL', () => {
+  it('says Continue on URL, which already spent its Analyze verb on Test URL', () => {
     const footer = importFooterFor(footerState({ source: 'url', intakeReady: true }));
-    expect(footer.primary).toEqual({ label: 'Next →', disabled: false });
+    expect(footer.primary).toEqual({ label: 'Continue', disabled: false });
   });
 
   it('says Discover → on MCP, which has no analyze or preview step', () => {
@@ -191,10 +191,10 @@ describe('the footer', () => {
   it('gates Analyze’s forward verb on the document being importable', () => {
     expect(
       importFooterFor(footerState({ step: 'analysis', analysisImportable: false })).primary
-    ).toEqual({ label: 'Next →', disabled: true });
+    ).toEqual({ label: 'Continue', disabled: true });
     expect(
       importFooterFor(footerState({ step: 'analysis', analysisImportable: true })).primary
-    ).toEqual({ label: 'Next →', disabled: false });
+    ).toEqual({ label: 'Continue', disabled: false });
   });
 
   it('gates Preview’s Import → on at least one selected schema', () => {
@@ -225,11 +225,11 @@ describe('the footer', () => {
     expect(importFooterFor(footerState({ step: 'import' })).primary).toBeNull();
   });
 
-  it('offers Next → only once the job has landed successfully', () => {
+  it('offers Continue only once the job has landed successfully', () => {
     expect(
       importFooterFor(footerState({ step: 'import', importComplete: true, importSucceeded: true }))
         .primary
-    ).toEqual({ label: 'Next →', disabled: false });
+    ).toEqual({ label: 'Continue', disabled: false });
     expect(
       importFooterFor(footerState({ step: 'import', importComplete: true, importSucceeded: false }))
         .primary

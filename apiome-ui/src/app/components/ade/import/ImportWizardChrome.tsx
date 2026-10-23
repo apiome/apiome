@@ -132,7 +132,7 @@ export interface ImportWizardFooterProps {
   onKeepAnyway?: () => void;
   /**
    * A step-specific extra button, placed before the primary — today only the URL intake's
-   * *Test URL*, which has to sit beside *Next →* rather than replace it.
+   * *Test URL*, which has to sit beside *Continue* rather than replace it.
    */
   extra?: React.ReactNode;
 }
