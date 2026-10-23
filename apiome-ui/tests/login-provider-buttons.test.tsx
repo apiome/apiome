@@ -19,9 +19,7 @@ jest.mock('@lib/auth/session-client', () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
-jest.mock('../lib/db/helper', () => ({
-  createSignupRequest: jest.fn(),
-}));
+jest.mock('../lib/db/helper', () => ({}));
 
 jest.mock('@/app/hooks/useDarkMode', () => ({
   useDarkMode: () => false,

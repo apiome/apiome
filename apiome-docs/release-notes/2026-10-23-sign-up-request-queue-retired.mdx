@@ -1,0 +1,23 @@
+---
+slug: sign-up-request-queue-retired
+title: The sign-up request queue is retired
+description: No more approving sign-up requests; people still waiting are invited to sign up.
+authors: [apiome]
+---
+
+Now that people create their own accounts on the sign-up page, the old **request an account**
+queue is gone, along with the **Pending Signups** tab in the admin console.
+[Users](/admin/users#sign-up-requests-from-earlier-versions).
+
+{/* truncate */}
+
+- **Nobody is left waiting.** Each person still in the queue gets one *Finish creating your account*
+  email, with a link to the sign-up page, when the upgraded app starts. Addresses that already have
+  an account are skipped, and the sign-up policy still applies.
+- **No password nobody confirmed.** Approving a request used to create a verified account from the
+  password typed into the request form. Invited people now choose a password and confirm their
+  address like everyone else.
+- **One less way to probe for accounts.** The request form said whether an address was already
+  queued; with the form gone, that leak is closed.
+- **Users opens on the account list.** Its cards are now **Total Users**, **Verified Users** and
+  **New Users** (last 30 days).

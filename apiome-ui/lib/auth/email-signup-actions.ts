@@ -32,7 +32,7 @@ import {
   type SignupAccount,
 } from '../db/email-verification';
 import { insertAuthOneTimeCode } from '../db/oauth-signup';
-import { canonicalizeEmail, resolveEmailSignupDecision } from './account-resolution';
+import { resolveEmailSignupDecision } from './account-resolution';
 import { resolveClientIp } from './client-ip';
 import {
   EMAIL_SIGNUP_CODES,
@@ -44,6 +44,7 @@ import {
   VERIFICATION_TOKEN_TTL_MS,
   buildAccountExistsEmail,
   buildVerificationEmail,
+  canonicalSignupEmail,
   generateVerificationToken,
   hashVerificationToken,
   isEmailSignupAvailable,
@@ -56,9 +57,6 @@ import { checkRequestBudget } from './login-rate-limit';
 import { validatePassword } from './password-policy';
 import { sendSignupEmail } from './send-signup-email';
 import { resolveSignupPolicy } from './signup-policy-resolver';
-
-/** Longest address accepted (RFC 5321 path limit). */
-const EMAIL_MAX_LENGTH = 254;
 
 /** What the sign-up form and the resend button are told. */
 export type EmailSignupResult =
@@ -98,18 +96,6 @@ function withinAddressBudget(canonicalEmail: string): boolean {
     SIGNUP_EMAILS_PER_ADDRESS,
     SIGNUP_BUDGET_WINDOW_MS
   ).allowed;
-}
-
-/**
- * Canonicalize and shape-check an address.
- *
- * @param email Raw form input.
- * @returns The canonical address, or `null` when it cannot be an email address.
- */
-function canonicalSignupEmail(email: unknown): string | null {
-  const canonical = canonicalizeEmail(email);
-  if (!canonical || canonical.length > EMAIL_MAX_LENGTH) return null;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(canonical) ? canonical : null;
 }
 
 /**

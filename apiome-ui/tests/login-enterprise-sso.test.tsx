@@ -22,7 +22,7 @@ jest.mock('@lib/auth/session-client', () => ({
 jest.mock('@lib/auth/better-auth-client-compat', () => ({
   signInWithSso: (...args: unknown[]) => mockSignInWithSso(...args),
 }));
-jest.mock('../lib/db/helper', () => ({ createSignupRequest: jest.fn() }));
+jest.mock('../lib/db/helper', () => ({}));
 jest.mock('@/app/hooks/useDarkMode', () => ({ useDarkMode: () => false }));
 
 import LoginClient from '../src/app/login/LoginClient';

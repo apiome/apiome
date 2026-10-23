@@ -1040,15 +1040,6 @@
       ]
     },
     {
-      "id": "admin-users-signups",
-      "route": "/admin/dashboard/users",
-      "waitFor": "[data-testid=\"admin-console\"]",
-      "data": "fixture:hive-a11y/admin-users-signups.html",
-      "tags": [
-        "legacy"
-      ]
-    },
-    {
       "id": "admin-users",
       "route": "/admin/dashboard/users",
       "waitFor": "[data-testid=\"admin-console\"]",
