@@ -420,12 +420,21 @@ describe('the page chrome', () => {
     expect(screen.getByTestId('repositories-tab-list')).toHaveTextContent('Repositories4');
   });
 
-  it('summarises the workspace under the title', async () => {
+  it('summarises the workspace in one facts line, with the strip behind Show stats (HIVE-11.7)', async () => {
     await renderRepositories();
     await screen.findByText('payments-specs');
-    expect(
-      screen.getByText('4 repositories · 1,616 files indexed · 1 needs attention')
-    ).toBeInTheDocument();
+
+    const line = screen.getByRole('list', { name: 'Repositories summary' });
+    const facts = within(line)
+      .getAllByRole('listitem')
+      .map((item) => item.textContent?.replace(/\s+/g, ' ').trim());
+    expect(facts.slice(0, 3)).toEqual(['4 repositories', '1,616 files indexed', '— imports (30d)']);
+    expect(facts[3]).toMatch(/^last scan /);
+    expect(facts[4]).toBe('1 needs attention');
+    // The header no longer repeats the counts.
+    expect(screen.queryByText('4 repositories · 1,616 files indexed · 1 needs attention')).not.toBeInTheDocument();
+    // The KPI strip is one click away, not gone.
+    expect(screen.getByRole('button', { name: /Show stats/ })).toBeInTheDocument();
   });
 });
 
@@ -460,15 +469,21 @@ describe('the KPI strip', () => {
 });
 
 describe('the refresh activity panel', () => {
-  it('tallies the states and drills in to the affected repositories', async () => {
+  it('folds into a facts-line chip counting stale + failed, which opens the panel in a drawer (HIVE-11.7)', async () => {
     await renderRepositories();
-    await screen.findByTestId('refresh-activity-card');
+    const chip = await screen.findByTestId('refresh-activity-chip');
+    await waitFor(() => expect(chip).toHaveTextContent('1 stale · 1 failed'));
+    expect(chip).toHaveAttribute('data-count', '2');
+    // Not drawn on the page until asked for.
+    expect(screen.queryByTestId('refresh-activity-card')).not.toBeInTheDocument();
 
-    expect(screen.getByTestId('refresh-activity-count-stale')).toHaveTextContent('Stale1');
-    expect(screen.getByTestId('refresh-activity-count-failed')).toHaveTextContent('Failed1');
-    expect(screen.getByTestId('refresh-activity-count-diverged')).toHaveTextContent('Diverged0');
+    fireEvent.click(chip);
+    const drawer = await screen.findByTestId('refresh-activity-drawer');
+    expect(within(drawer).getByTestId('refresh-activity-count-stale')).toHaveTextContent('Stale1');
+    expect(within(drawer).getByTestId('refresh-activity-count-failed')).toHaveTextContent('Failed1');
+    expect(within(drawer).getByTestId('refresh-activity-count-diverged')).toHaveTextContent('Diverged0');
 
-    const links = screen.getAllByTestId('refresh-activity-repo-link');
+    const links = within(drawer).getAllByTestId('refresh-activity-repo-link');
     expect(links).toHaveLength(2);
     expect(links[0]).toHaveAttribute(
       'href',
@@ -877,6 +892,16 @@ describe('the browser fixtures', () => {
 
     await showTable();
     write('table', page().outerHTML);
+
+    // HIVE-11.7: the refresh-activity drawer, opened from the facts-line chip.
+    const chip = screen.getByTestId('refresh-activity-chip');
+    await waitFor(() => expect(chip).toHaveAttribute('data-count', '2'));
+    fireEvent.click(chip);
+    const drawer = await screen.findByTestId('refresh-activity-drawer');
+    await within(drawer).findByTestId('refresh-activity-card');
+    // The drawer portals into <body> beside the page: write the page, the scrim and the sheet.
+    const scrim = document.querySelector('.hive-overlay') as HTMLElement;
+    write('refresh-activity', page().outerHTML + scrim.outerHTML + drawer.outerHTML);
   });
 
   it('renders the empty state (and writes its fixture on request)', async () => {

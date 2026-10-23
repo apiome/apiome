@@ -25,7 +25,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
@@ -378,6 +378,11 @@ function routeFor(url: string): { status?: number; body: unknown } {
   return { status: 404, body: { error: `No stub for ${url}` } };
 }
 
+// The file filters mirror themselves into the address bar (HIVE-11.7); start every test clean.
+afterEach(() => {
+  window.history.replaceState(null, '', '/');
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
   searchParams = new URLSearchParams();
@@ -568,6 +573,22 @@ describe('the header', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('the KPI row', () => {
+  test('folds into one facts line under the title, with the strip behind Show stats (HIVE-11.7)', async () => {
+    await renderScreen();
+    const line = screen.getByRole('list', { name: 'Repository summary' });
+    const facts = within(line)
+      .getAllByRole('listitem')
+      .map((item) => item.textContent?.replace(/\s+/g, ' ').trim());
+    expect(facts[0]).toMatch(/files$/);
+    expect(facts.slice(1, 4).map((fact) => fact?.replace(/^[\d,—]+ /, ''))).toEqual([
+      'importable',
+      'branches',
+      'imports (30d)',
+    ]);
+    expect(facts[4]).toMatch(/^last scan /);
+    expect(screen.getByRole('button', { name: /Show stats/ })).toBeInTheDocument();
+  });
+
   test('draws the mockup five figures', async () => {
     await renderScreen();
     const strip = within(screen.getByTestId('repository-detail-kpis'));
@@ -817,6 +838,7 @@ describe('the Files tab', () => {
   test('Reset returns every field to its default', async () => {
     await renderScreen();
     await openFiles();
+    fireEvent.click(screen.getByTestId('repository-file-filters-toggle'));
 
     const glob = screen.getByLabelText(/glob filter/i) as HTMLInputElement;
     fireEvent.change(glob, { target: { value: '**/*.yaml' } });
@@ -905,6 +927,57 @@ describe('the Files tab', () => {
     expect(await screen.findByTestId('repository-files-empty')).toHaveTextContent(
       FILES_EMPTY_COPY
     );
+  });
+
+  test('the preset stays inline and the rest sits behind Filters (n) (HIVE-11.7)', async () => {
+    await renderScreen();
+    await openFiles();
+
+    const toggle = screen.getByTestId('repository-file-filters-toggle');
+    expect(toggle).toHaveTextContent(/^Filters$/);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('repository-file-preset')).toBeVisible();
+    const panel = document.getElementById('repository-file-filters-panel')!;
+    expect(panel).not.toBeVisible();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(panel).toBeVisible();
+    expect(within(panel).getByLabelText(/glob filter/i)).toBeVisible();
+    // The preset is not repeated inside the panel.
+    expect(within(panel).queryByText('Importable preset')).not.toBeInTheDocument();
+
+    fireEvent.change(within(panel).getByLabelText(/glob filter/i), { target: { value: '**/*.yaml' } });
+    fireEvent.click(within(panel).getByLabelText(/recurse hidden dirs/i));
+    expect(toggle).toHaveTextContent('Filters (2)');
+  });
+
+  test('the filters live in the URL, and a filtered URL opens with them applied (HIVE-11.7)', async () => {
+    await renderScreen();
+    await openFiles();
+    fireEvent.click(screen.getByTestId('repository-file-filters-toggle'));
+    fireEvent.change(screen.getByLabelText(/glob filter/i), { target: { value: '**/openapi*.yaml' } });
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('glob')).toBe('**/openapi*.yaml'));
+    cleanup();
+
+    window.history.replaceState(null, '', '/?tab=files&regex=v1&skipVendor=0');
+    await renderScreen();
+    await openFiles();
+    expect(screen.getByTestId('repository-file-filters-toggle')).toHaveTextContent('Filters (2)');
+    expect(screen.getByTestId('repository-file-filters-toggle')).toHaveAttribute('aria-expanded', 'true');
+    expect((screen.getByLabelText(/regex/i) as HTMLInputElement).value).toBe('v1');
+    await waitFor(() => {
+      const last = [...calls].reverse().find((c) => c.url.includes('/files?'));
+      expect(last?.url).toContain('regex=v1');
+    });
+  });
+
+  test('a failed listing keeps the toolbar, so a bad filter can be fixed (HIVE-11.7)', async () => {
+    routes['/api/repositories/repo-1/files'] = { status: 400, body: { error: 'Invalid regex' } };
+    await renderScreen();
+    await openTab('files');
+    expect(await screen.findByText('Invalid regex')).toBeInTheDocument();
+    expect(screen.getByTestId('repository-file-filters-toggle')).toBeInTheDocument();
   });
 
   test('a failed listing offers a retry rather than an empty table', async () => {

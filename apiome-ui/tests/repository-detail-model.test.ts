@@ -64,6 +64,10 @@ import {
   shortBlobRef,
   shortSha,
   type RepositoryDetailKpiInputs,
+  activeRepositoryFileFilterCount,
+  repositoryDetailFacts,
+  repositoryFileFiltersFromSearch,
+  withRepositoryFileFilters,
 } from '@/app/components/ade/repositories/repositoryDetailModel';
 import type { DashboardRepository } from '@/app/components/ade/repositories/repositoriesModel';
 
@@ -558,5 +562,65 @@ describe('the stub vocabulary', () => {
     for (const sentence of STUBS) {
       expect(sentence).not.toMatch(/\b(next release|this quarter|by \w+ 20\d\d)\b/i);
     }
+  });
+});
+
+describe('repositoryDetailFacts (HIVE-11.7)', () => {
+  test('reads files · importable · branches · imports · last scan from the strip’s figures', () => {
+    expect(repositoryDetailFacts(repo(), kpiInputs())).toEqual([
+      { id: 'files', value: '1,204', label: 'files', labelFirst: false, muted: undefined },
+      { id: 'importable', value: '41', label: 'importable', labelFirst: false, muted: undefined },
+      { id: 'branches', value: '3', label: 'branches', labelFirst: false, muted: undefined },
+      { id: 'imports', value: '9', label: 'imports (30d)', labelFirst: false, muted: undefined },
+      { id: 'scan', value: '2h ago', label: 'last scan', labelFirst: true, muted: undefined },
+    ]);
+  });
+
+  test('mutes an unmeasured figure', () => {
+    const facts = repositoryDetailFacts(repo({ importable_count: null, branch_count: null }), kpiInputs());
+    expect(facts.find((fact) => fact.id === 'importable')).toMatchObject({ value: '—', muted: true });
+    expect(facts.find((fact) => fact.id === 'branches')).toMatchObject({ value: '—', muted: true });
+  });
+});
+
+describe('the collapsed file filters (HIVE-11.7)', () => {
+  test('Filters (n) counts the collapsed fields that differ from the defaults, never the preset', () => {
+    expect(activeRepositoryFileFilterCount(EMPTY_REPOSITORY_FILE_FILTERS)).toBe(0);
+    expect(activeRepositoryFileFilterCount({ ...EMPTY_REPOSITORY_FILE_FILTERS, preset: 'openapi' })).toBe(0);
+    expect(
+      activeRepositoryFileFilterCount({
+        ...EMPTY_REPOSITORY_FILE_FILTERS,
+        glob: '**/*.yaml',
+        regex: 'v1',
+        hideNonImportable: false,
+        includeHidden: true,
+        skipVendor: false,
+      })
+    ).toBe(5);
+    expect(activeRepositoryFileFilterCount({ ...EMPTY_REPOSITORY_FILE_FILTERS, glob: '   ' })).toBe(0);
+  });
+
+  test('round-trip through the URL, keeping other parameters and omitting defaults', () => {
+    const filters = {
+      ...EMPTY_REPOSITORY_FILE_FILTERS,
+      preset: REPOSITORY_FILE_PRESETS[1].value,
+      glob: '**/openapi*.yaml',
+      includeHidden: true,
+      skipVendor: false,
+    };
+    const params = withRepositoryFileFilters(filters, new URLSearchParams('tab=files'));
+    expect(params.get('tab')).toBe('files');
+    expect(params.has('regex')).toBe(false);
+    expect(params.has('importableOnly')).toBe(false);
+    expect(repositoryFileFiltersFromSearch(params)).toEqual(filters);
+    expect(withRepositoryFileFilters(EMPTY_REPOSITORY_FILE_FILTERS, new URLSearchParams('tab=files')).toString()).toBe(
+      'tab=files'
+    );
+  });
+
+  test('falls back to the defaults for junk in the URL', () => {
+    expect(
+      repositoryFileFiltersFromSearch(new URLSearchParams('preset=nope&importableOnly=maybe&hiddenDirs=1'))
+    ).toEqual({ ...EMPTY_REPOSITORY_FILE_FILTERS, includeHidden: true });
   });
 });

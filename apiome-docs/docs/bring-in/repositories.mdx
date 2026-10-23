@@ -12,7 +12,19 @@ or many at once — and keeps them refreshed. **Go to Bring in → Repositories.
 top are **Repositories**, **Discovered specs**, **Quota & rate limits** and **Webhook IP
 allowlist**.
 
-<Screenshot id="repositories" alt="Repositories: indexed files, imports and last scan, and the repository table" />
+<Screenshot id="repositories" alt="Repositories: one summary line — 4 repositories, files indexed, imports, last scan, 1 needs attention and a 1 stale · 1 failed chip — above the repository table" />
+
+One line under the header sums up the workspace: how many **repositories**, **files indexed**,
+**imports (30d)**, the **last scan** and — when there are any — how many **need attention**.
+**Click “Show stats”** to open the same figures as a row of cards, with the split by provider;
+the page remembers your choice.
+
+The line ends with a **Refresh activity** chip. While any spec imported from a repository is
+stale or failed to refresh, the chip says so — for example *1 stale · 1 failed*. **Click the
+chip** to open **Refresh activity**: a count of specs in each refresh state and the repositories
+that need attention, each linking to its **Specs** tab.
+
+<Screenshot id="repositories-refresh-activity" alt="Refresh activity in a drawer: specs by refresh state and two repositories that need attention" />
 
 The list shows each repository's **Provider**, **Branch**, **Files**, **Health**, **Status**, **Last
 scan** and how many files are **Importable**. Filter by provider and visibility, sort by most recently
@@ -46,12 +58,17 @@ it describes planned steps (browse, scan settings, confirm) that are not part of
 
 <Route path="/ade/dashboard/repositories/[id]" />
 
-**Click a repository.** Five tabs:
+**Click a repository.** One line under its name gives its **files**, the **importable** estimate,
+**branches**, **imports (30d)** and the **last scan**; **click “Show stats”** for the same figures
+as cards. Five tabs follow:
 
 - **Preview** — files indexed, the importable estimate, branches, recent scans and recent imports.
-- **Files** — every file Apiome indexed on the branch. **Hide non-importable** narrows the list to
-  specifications; a file's menu has **View details**, **Import…**, **Open on provider** and **Copy
-  path**.
+- **Files** — every file Apiome indexed on the branch. The table's toolbar has the **importable
+  preset**; **click “Filters”** for the glob, the regex, **Hide non-importable**, **Recurse hidden
+  dirs** and **Skip vendored / node_modules** — the button counts how many are set, for example
+  **Filters (2)**. The filters are kept in the page address, so a filtered list survives a reload
+  and can be shared. A file's menu has **View details**, **Import…**, **Open on provider** and
+  **Copy path**.
 - **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
 - **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
   and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).

@@ -1,0 +1,23 @@
+---
+slug: repositories-summary-line
+title: Repositories open on the list
+description: Repositories and a repository's page swap stat cards for one summary line.
+authors: [apiome]
+---
+
+**Repositories** and a repository's page now open with their table near the top. The rows of
+stat cards become one summary line each, and the always-open panels fold away until you ask for
+them. [Repositories](/bring-in/repositories).
+
+{/* truncate */}
+
+- **One summary line.** Repositories reads *repositories · files indexed · imports (30d) · last
+  scan · needs attention*; a repository reads *files · importable · branches · imports (30d) · last
+  scan*. **Show stats** opens the cards they replaced.
+- **Refresh activity is a chip.** While a spec imported from a repository is stale or failed to
+  refresh, the line ends with a chip such as *1 stale · 1 failed*. Click it to open the full
+  Refresh activity panel in a drawer.
+- **Filters behind one button.** On a repository's **Files** tab the importable preset stays in
+  the table's toolbar; the glob, the regex and the switches open from **Filters**, which counts
+  how many are set. The filters are kept in the page address, so a filtered list survives a
+  reload and can be shared.

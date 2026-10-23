@@ -180,15 +180,30 @@ export function RepositoryRefreshActivityPanelView({
   );
 }
 
+/** What {@link useRefreshActivity} returns. */
+export interface RefreshActivityState {
+  /** The aggregated tallies, once read. */
+  summary: RefreshActivitySummary | null;
+  /** True until the first read settles. */
+  loading: boolean;
+  /** Why the read failed, if it did. */
+  error: string | null;
+}
+
 /**
- * The fetching wrapper: read the tenant's refresh signals, aggregate them, draw the view.
+ * Read the tenant's refresh signals once and aggregate them.
  *
- * @returns The panel, or its loading / error state.
+ * Shared by the panel and by the facts-line chip that opens it (HIVE-11.7), so the page reads
+ * `/api/repositories/refresh-activity` once and the chip's count is the panel's count.
+ *
+ * @returns The summary, the loading flag and any error.
  */
-export function RepositoryRefreshActivityPanel() {
-  const [summary, setSummary] = React.useState<RefreshActivitySummary | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+export function useRefreshActivity(): RefreshActivityState {
+  const [state, setState] = React.useState<RefreshActivityState>({
+    summary: null,
+    loading: true,
+    error: null,
+  });
 
   React.useEffect(() => {
     let cancelled = false;
@@ -206,16 +221,20 @@ export function RepositoryRefreshActivityPanel() {
           throw new Error(typeof data.error === 'string' ? data.error : response.statusText);
         }
         if (!cancelled) {
-          setSummary(
-            summarizeRefreshActivity(Array.isArray(data.signals) ? data.signals : [], Date.now())
-          );
+          setState({
+            summary: summarizeRefreshActivity(Array.isArray(data.signals) ? data.signals : [], Date.now()),
+            loading: false,
+            error: null,
+          });
         }
       } catch (caught) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : REFRESH_ACTIVITY_ERROR);
+          setState({
+            summary: null,
+            loading: false,
+            error: caught instanceof Error ? caught.message : REFRESH_ACTIVITY_ERROR,
+          });
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -223,7 +242,17 @@ export function RepositoryRefreshActivityPanel() {
     };
   }, []);
 
-  if (loading) {
+  return state;
+}
+
+/**
+ * The panel body for a given read: loading, failed, or the view.
+ *
+ * @param props.state From {@link useRefreshActivity}.
+ * @returns The panel.
+ */
+export function RepositoryRefreshActivityPanelBody({ state }: { state: RefreshActivityState }) {
+  if (state.loading) {
     return (
       <Card className="repo-refresh repo-refresh--waiting" data-testid="refresh-activity-loading" aria-busy>
         <Spinner size="sm" label={REFRESH_ACTIVITY_LOADING} />
@@ -232,15 +261,24 @@ export function RepositoryRefreshActivityPanel() {
     );
   }
 
-  if (error || !summary) {
+  if (state.error || !state.summary) {
     return (
       <Card className="repo-refresh repo-refresh--failed" data-testid="refresh-activity-error">
-        {error ?? REFRESH_ACTIVITY_ERROR}
+        {state.error ?? REFRESH_ACTIVITY_ERROR}
       </Card>
     );
   }
 
-  return <RepositoryRefreshActivityPanelView summary={summary} />;
+  return <RepositoryRefreshActivityPanelView summary={state.summary} />;
+}
+
+/**
+ * The fetching wrapper: read the tenant's refresh signals, aggregate them, draw the view.
+ *
+ * @returns The panel, or its loading / error state.
+ */
+export function RepositoryRefreshActivityPanel() {
+  return <RepositoryRefreshActivityPanelBody state={useRefreshActivity()} />;
 }
 
 export default RepositoryRefreshActivityPanel;

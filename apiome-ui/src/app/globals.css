@@ -23869,6 +23869,13 @@ button.cid-entity__head {
   font-weight: 600;
 }
 
+/* ---- The refresh-activity chip (HIVE-11.7) --------------------------------
+   The panel below, folded into the facts line: a badge-shaped button that opens
+   the panel in a drawer. The global `*:focus-visible` ring applies as-is. */
+.repo-refresh-chip {
+  cursor: pointer;
+}
+
 /* ---- The refresh-activity panel ------------------------------------------ */
 .repo-refresh {
   display: flex;
@@ -24981,6 +24988,28 @@ button.cid-entity__head {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-block-end: 1px solid var(--border);
+}
+
+/* HIVE-11.7: the inline preset and the Filters (n) disclosure lead the table's toolbar. */
+.repo-files-toolbar__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.repo-files-toolbar__filters [data-testid='repository-file-preset'] {
+  inline-size: 13rem;
+}
+
+/* The collapsed glob / regex / switches, opened under the toolbar. */
+.repo-files-toolbar__panel {
+  border-block-end: 1px solid var(--border);
+  background: var(--bg-inset);
+}
+
+.repo-files-toolbar__panel[hidden] {
+  display: none;
 }
 
 .repo-det-table__bar-end {

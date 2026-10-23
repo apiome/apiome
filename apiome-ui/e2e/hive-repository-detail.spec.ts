@@ -131,6 +131,18 @@ async function mount(page: Page, name: Fixture): Promise<void> {
 }
 
 /**
+ * Open the file filters the fixture holds behind **Filters (n)** (HIVE-11.7). The fixture is
+ * static markup, so the panel's `hidden` is lifted the way the toggle would.
+ *
+ * @param page The Playwright page.
+ */
+async function openFileFilters(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.getElementById('repository-file-filters-panel')?.removeAttribute('hidden');
+  });
+}
+
+/**
  * Set the appearance preferences the tokens key off.
  *
  * @param page The Playwright page.
@@ -326,6 +338,7 @@ test.describe('every grid folds rather than pushing the page', () => {
   test('the filter toolbar drops a field rather than squeezing one', async ({ page }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
     await mount(page, 'files');
+    await openFileFilters(page);
     const wide = await gridColumns(page, '.repo-files-filters__fields');
 
     await page.setViewportSize({ width: 640, height: 900 });
@@ -340,6 +353,7 @@ test.describe('every grid folds rather than pushing the page', () => {
   }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
     await mount(page, 'files');
+    await openFileFilters(page);
     await applyPreferences(page, { fontScale: '2xl' });
     expect(await documentOverflows(page)).toBe(false);
     expect(await gridColumns(page, '.repo-files-filters__fields')).toBeGreaterThanOrEqual(1);

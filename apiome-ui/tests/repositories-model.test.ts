@@ -54,6 +54,9 @@ import {
   repositoryKpis,
   searchRepositories,
   sortRepositories,
+  refreshActivityChip,
+  repositoryFacts,
+  repositoriesNeedingAttention,
 } from '../src/app/components/ade/repositories/repositoriesModel';
 
 /** A fixed clock, so every relative phrase below is deterministic. */
@@ -516,5 +519,47 @@ describe('removeRepositoryConfirm', () => {
     // gate nobody reads.
     expect(options.typeToConfirm).toBeFalsy();
     expect(options.consequence).toBeUndefined();
+  });
+});
+
+describe('repositoryFacts (HIVE-11.7)', () => {
+  const NOW = Date.parse('2026-08-18T12:00:00Z');
+
+  it('reads repositories · files indexed · imports (30d) · last scan, from the KPI figures', () => {
+    const facts = repositoryFacts([repo({ total_files: 1200 }), repo({ id: 'b', total_files: 416 })], NOW);
+    expect(facts.map((fact) => fact.id)).toEqual(['repositories', 'files', 'imports', 'last-scan']);
+    expect(facts[0]).toMatchObject({ value: '2', label: 'repositories' });
+    expect(facts[1]).toMatchObject({ value: '1,616', label: 'files indexed' });
+    expect(facts[2]).toMatchObject({ value: '—', label: 'imports (30d)', muted: true });
+    expect(facts[3]).toMatchObject({ label: 'last scan', labelFirst: true, value: '2h ago' });
+  });
+
+  it('adds "needs attention" only when a scan failed or health is at error level', () => {
+    const failing = [repo(), repo({ id: 'b', status: 'error' }), repo({ id: 'c', health: { level: 'error' } as never })];
+    expect(repositoriesNeedingAttention(failing)).toBe(2);
+    expect(repositoryFacts(failing, NOW).at(-1)).toEqual({ id: 'attention', value: '2', label: 'needs attention' });
+    expect(repositoryFacts([repo()], NOW).some((fact) => fact.id === 'attention')).toBe(false);
+  });
+
+  it('names a single repository in the singular', () => {
+    expect(repositoryFacts([repo()], NOW)[0].label).toBe('repository');
+  });
+});
+
+describe('refreshActivityChip (HIVE-11.7)', () => {
+  const counts = (over: Record<string, number>) =>
+    ({ 'up-to-date': 0, stale: 0, refreshing: 0, failed: 0, diverged: 0, ...over }) as never;
+
+  it('counts stale + failed and names each that is present', () => {
+    expect(refreshActivityChip(counts({ stale: 1, failed: 1, diverged: 3 }))).toEqual({
+      count: 2,
+      text: '1 stale · 1 failed',
+    });
+    expect(refreshActivityChip(counts({ failed: 4 }))).toEqual({ count: 4, text: '4 failed' });
+  });
+
+  it('is a quiet "Refresh activity" when nothing is stale or failed, or before the read settles', () => {
+    expect(refreshActivityChip(counts({ 'up-to-date': 9, diverged: 1 }))).toEqual({ count: 0, text: 'Refresh activity' });
+    expect(refreshActivityChip(null)).toEqual({ count: 0, text: 'Refresh activity' });
   });
 });
