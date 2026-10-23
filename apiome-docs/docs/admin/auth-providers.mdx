@@ -63,6 +63,10 @@ footer reads *Not stored — .env gives Open* (or *Closed*): `AUTH_SIGNUP_DISABL
 database, where it wins over the variable. **Click “Use .env”** to remove the stored policy and go
 back to the variable.
 
+The sign-up page, `/signup`, follows the policy: **Open** lists the providers and the email form
+(and names the allowed domains), while **Invite only** and **Closed** show only a notice and the
+sign-in link.
+
 A saved policy applies to the next sign-up — no restart. Other server instances pick it up when
 their policy cache expires, within 30 seconds by default (`SIGNUP_POLICY_CACHE_TTL_SECONDS`, 1–300
 seconds, read by both apiome-ui and apiome-rest). Tightening the policy also stops a sign-up that
@@ -98,6 +102,13 @@ The sign-up policy above applies to email sign-up exactly as it does to provider
   most 20 sign-up requests an hour.
 
 Confirmation links are stored only as a hash, in the `apiome.email_verification_token` table.
+
+### Terms and privacy links
+
+The sign-in and sign-up pages end with *By signing in (creating an account), you agree to our
+Terms of Service and Privacy Policy* — but only for the pages your installation has. Set
+`APIOME_TERMS_URL` and `APIOME_PRIVACY_URL` in `apiome-ui/.env` to their `https://` addresses;
+with neither set the line is left out, rather than linking to nothing.
 
 ## The providers
 

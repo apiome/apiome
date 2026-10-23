@@ -90,10 +90,10 @@ describe('LoginClient — SSO buttons from the provider registry (OLO-2.3)', () 
     expect(mockSignIn).toHaveBeenCalledWith('azure', { callbackUrl: '/ade' });
   });
 
-  it('labels buttons for sign-up mode', () => {
+  it('sends sign-up to its own page rather than relabelling these buttons (SGN-1.2)', () => {
     render(<LoginClient ssoProviders={[summary('github', 'GitHub')]} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-    expect(screen.getByRole('button', { name: 'Sign up with GitHub' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Create one' })).toHaveAttribute('href', '/signup');
+    expect(screen.queryByRole('button', { name: /^Sign up with/ })).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 /**
- * Email sign-up screens (SGN-1.1, #5650): the login page's **Create one** mode (form, no-sender
- * notice, check-your-email), and `/signup/verify` (confirmed, expired, used, invalid). Also dumps
+ * Email sign-up screens (SGN-1.1, #5650): the `/signup` page's email form (SGN-1.2), the no-sender
+ * notice and check-your-email, and `/signup/verify` (confirmed, expired, used, invalid). Also dumps
  * the docs fixtures `signup-form`, `signup-check-email` and `signup-verified`.
  */
 import React, { StrictMode } from 'react';
@@ -27,7 +27,8 @@ jest.mock('@lib/auth/session-client', () => ({
 jest.mock('@lib/auth/better-auth-client-compat', () => ({ signInWithSso: jest.fn() }));
 jest.mock('@/app/hooks/useDarkMode', () => ({ useDarkMode: () => false }));
 
-import LoginClient from '../src/app/login/LoginClient';
+import SignupClient from '../src/app/signup/SignupClient';
+import { signupPageState } from '../lib/auth/signup-page';
 import VerifyEmailClient from '../src/app/signup/verify/VerifyEmailClient';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
@@ -38,9 +39,14 @@ beforeEach(() => {
   mockSignIn.mockResolvedValue({ ok: true });
 });
 
-/** Open **Create one** on the login page. */
-function openSignUp() {
-  fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
+const OPEN = { mode: 'open' as const, allowedEmailDomains: [], source: 'db' as const };
+const NO_LEGAL = { termsUrl: null, privacyUrl: null };
+
+/** The `/signup` page with no providers, and email sign-up on or off. */
+function renderSignup(emailSignupAvailable = true) {
+  return render(
+    <SignupClient providers={[]} state={signupPageState(OPEN, emailSignupAvailable)} legalLinks={NO_LEGAL} />
+  );
 }
 
 /** Fill and submit the email sign-up form. */
@@ -53,10 +59,9 @@ async function submitSignup(email = 'ada@example.com') {
   });
 }
 
-describe('Create one — email sign-up on the login page', () => {
+describe('the email form on /signup', () => {
   it('offers name, email and password with the password rules as a hint', () => {
-    render(<LoginClient emailSignupAvailable />);
-    openSignUp();
+    renderSignup();
     expect(screen.getByTestId('email-signup-form')).toBeVisible();
     expect(screen.getByText(/At least 8 characters · One uppercase and one lowercase letter/)).toBeInTheDocument();
     // The legacy request form's extra field is gone.
@@ -64,8 +69,7 @@ describe('Create one — email sign-up on the login page', () => {
   });
 
   it('says so, with no form, when no email sender is configured', () => {
-    render(<LoginClient />);
-    openSignUp();
+    renderSignup(false);
     expect(screen.queryByTestId('email-signup-form')).not.toBeInTheDocument();
     expect(screen.getByTestId('email-signup-unavailable')).toHaveTextContent(
       'Sign-up with an email address is not available on this server.'
@@ -75,8 +79,7 @@ describe('Create one — email sign-up on the login page', () => {
   it('shows "Check your email" after an accepted sign-up, then resends on request', async () => {
     mockStartEmailSignup.mockResolvedValue({ ok: true });
     mockResend.mockResolvedValue({ ok: true });
-    render(<LoginClient emailSignupAvailable />);
-    openSignUp();
+    renderSignup();
     await submitSignup('ada@example.com');
 
     expect(mockStartEmailSignup).toHaveBeenCalledWith({
@@ -104,8 +107,7 @@ describe('Create one — email sign-up on the login page', () => {
       code: 'email-signup-invalid',
       message: 'Password must contain at least one uppercase letter.',
     });
-    render(<LoginClient emailSignupAvailable />);
-    openSignUp();
+    renderSignup();
     await submitSignup();
     expect(screen.getByTestId('email-signup-error')).toHaveTextContent(
       'Password must contain at least one uppercase letter.'
@@ -119,8 +121,7 @@ describe('Create one — email sign-up on the login page', () => {
 
   it('renders the docs fixtures `signup-form` and `signup-check-email`, axe-clean', async () => {
     mockStartEmailSignup.mockResolvedValue({ ok: true });
-    const { container } = render(<LoginClient emailSignupAvailable />);
-    openSignUp();
+    const { container } = renderSignup();
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Ada Lovelace' } });
     screen.getByLabelText('Full name').setAttribute('value', 'Ada Lovelace');
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'ada@example.com' } });

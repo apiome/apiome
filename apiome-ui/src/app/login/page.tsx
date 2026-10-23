@@ -5,7 +5,7 @@ import { resolvePostLoginRouteForUser } from '@lib/auth/post-login-routing';
 import { providerSummaries } from '@lib/auth/provider-registry';
 import { resolveProviderEnv } from '@lib/auth/provider-config-resolver';
 import { resolveSsoProviders } from '@lib/auth/sso-provider-resolver';
-import { isEmailSignupAvailable } from '@lib/auth/email-signup';
+import { legalLinksFromEnv } from '@lib/auth/signup-page';
 import LoginClient from '@/app/login/LoginClient';
 
 export default async function LoginPage({
@@ -51,8 +51,7 @@ export default async function LoginPage({
       callbackUrl={callbackUrl}
       ssoProviders={ssoProviders}
       enterpriseSso={enterpriseSso}
-      // Email sign-up (SGN-1.1) needs a mail sender and the public base URL; env is server-side.
-      emailSignupAvailable={isEmailSignupAvailable()}
+      legalLinks={legalLinksFromEnv()}
     />
   );
 }

@@ -89,17 +89,6 @@ describe('LoginClient — collapsed credentials form (OLO-3.1)', () => {
     expect(expandButton()).toBeInTheDocument();
     expect(submitButton()).not.toBeInTheDocument();
   });
-
-  it('stays collapsed when switching to sign-up mode', () => {
-    render(<LoginClient ssoProviders={PROVIDERS} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-
-    expect(screen.getByRole('button', { name: 'Sign up with GitHub' })).toBeInTheDocument();
-    expect(expandButton()).toBeInTheDocument();
-    // The sign-up submit ("Create Account") stays collapsed too.
-    expect(screen.queryByRole('button', { name: /Create Account/ })).not.toBeInTheDocument();
-  });
 });
 
 describe('LoginClient — redirect-in-progress state (OLO-3.1)', () => {
@@ -114,13 +103,12 @@ describe('LoginClient — redirect-in-progress state (OLO-3.1)', () => {
     expect(expandButton()).toBeDisabled();
   });
 
-  it('disables the credentials submit and mode toggle during an SSO redirect', async () => {
+  it('disables the credentials submit during an SSO redirect', async () => {
     render(<LoginClient ssoProviders={PROVIDERS} error="CredentialsSignin" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue with GitLab' }));
 
     expect(await screen.findByText('Connecting…')).toBeVisible();
     expect(submitButton()).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Create one' })).toBeDisabled();
   });
 });

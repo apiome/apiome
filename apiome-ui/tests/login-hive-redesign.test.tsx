@@ -175,24 +175,32 @@ describe('login page — the auth card', () => {
     expect(video).toHaveAttribute('rel', expect.stringContaining('noopener'));
   });
 
-  it('drops the intro link and the trust badges in sign-up mode', () => {
+  it('links Create one to the sign-up page (SGN-1.2)', () => {
     render(<LoginClient ssoProviders={PROVIDERS} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-
-    expect(screen.queryByRole('link', { name: /Watch our intro video/ })).not.toBeInTheDocument();
-    expect(screen.queryByText('No credit card')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Create your account');
+    expect(screen.getByRole('link', { name: 'Create one' })).toHaveAttribute('href', '/signup');
   });
 
-  it('closes with the trust badges and the terms line', () => {
-    const { container } = render(<LoginClient ssoProviders={PROVIDERS} />);
+  it('closes with the trust badges and the terms line, linking only the pages that exist', () => {
+    const { container, rerender } = render(
+      <LoginClient
+        ssoProviders={PROVIDERS}
+        legalLinks={{ termsUrl: 'https://apiome.dev/terms', privacyUrl: 'https://apiome.dev/privacy' }}
+      />
+    );
 
     for (const promise of ['Secure', 'Free to start', 'No credit card']) {
       expect(screen.getByText(promise)).toBeInTheDocument();
     }
     const terms = container.querySelector('.auth-terms')!;
-    expect(within(terms as HTMLElement).getByText('Terms of Service')).toBeInTheDocument();
+    expect(within(terms as HTMLElement).getByRole('link', { name: 'Terms of Service' })).toHaveAttribute(
+      'href',
+      'https://apiome.dev/terms'
+    );
     expect(within(terms as HTMLElement).getByText('Privacy Policy')).toBeInTheDocument();
+
+    // With no legal pages configured the line is left out, never drawn with dead links.
+    rerender(<LoginClient ssoProviders={PROVIDERS} />);
+    expect(container.querySelector('.auth-terms')).not.toBeInTheDocument();
   });
 });
 
@@ -215,28 +223,6 @@ describe('login page — the message banner is the Hive Alert', () => {
     expect(retry).toHaveClass('rounded-full');
   });
 
-  it('uses the ok tone and a polite announcement for in-page sign-up feedback', async () => {
-    const actions = jest.requireMock('@lib/auth/email-signup-actions') as {
-      startEmailSignup: jest.Mock;
-      resendSignupVerification: jest.Mock;
-    };
-    actions.startEmailSignup.mockResolvedValue({ ok: true });
-    actions.resendSignupVerification.mockResolvedValue({ ok: true });
-
-    render(<LoginClient ssoProviders={[]} emailSignupAvailable />);
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Ada' } });
-    fireEvent.change(screen.getByLabelText('Email address'), {
-      target: { value: 'ada@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Hunter22' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Create account' }).closest('form')!);
-
-    fireEvent.click(await screen.findByTestId('signup-resend'));
-    const banner = await screen.findByTestId('signup-resend-sent');
-    expect(banner).toHaveAttribute('role', 'status');
-    expect(banner.className).toContain('bg-ok-soft');
-  });
 });
 
 describe('login page — the SSO block', () => {
@@ -289,12 +275,9 @@ describe('login page — the credentials fields', () => {
     for (const wrap of wraps) expect(wrap.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('puts "Forgot your password?" on the password label row, in sign-in mode only', () => {
+  it('puts "Forgot your password?" on the password label row', () => {
     render(<LoginClient ssoProviders={[]} />);
     expect(screen.getByRole('link', { name: 'Forgot your password?' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
   });
 
   it('marks the rejected pair after a failed credentials attempt', () => {
@@ -327,12 +310,6 @@ describe('login page — the credentials fields', () => {
     expect(screen.getByTestId('login-banner')).toBeInTheDocument();
   });
 
-  it('never marks the sign-up form, which has no rejected pair to mark', () => {
-    render(<LoginClient ssoProviders={PROVIDERS} error="CredentialsSignin" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Create one' }));
-
-    expect(screen.queryByText('Incorrect email or password.')).not.toBeInTheDocument();
-  });
 });
 
 describe('BetaBadge — the watermark became a chip', () => {

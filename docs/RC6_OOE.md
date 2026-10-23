@@ -13,7 +13,7 @@
 
 ## 1. Recommendation
 
-RC6 is **19 open tickets in five lanes**: four product lanes and a hardening lane (§2.3, lane H).
+RC6 is **18 open tickets in five lanes**: four product lanes and a hardening lane (§2.3, lane H).
 
 - **Only Catalog, Projects and sign-in/sign-up are in.** A stranger can sign up, secure the
   account, sign in from the browser or the CLI, and then bring specs into the Catalog, convert
@@ -35,7 +35,7 @@ RC6 is **19 open tickets in five lanes**: four product lanes and a hardening lan
 
 | Lane | Outcome | Open | Done |
 | --- | --- | --- | --- |
-| **A — Sign-up** | Anyone can create an account and a workspace, under an installation sign-up policy, with abuse protection | 5 | 5 |
+| **A — Sign-up** | Anyone can create an account and a workspace, under an installation sign-up policy, with abuse protection | 4 | 6 |
 | **B — Two-factor** | Authy offered at sign-up, usable by OAuth-only accounts, recoverable, enforceable per tenant | 3 | 3 |
 | **D — CLI sign-in** | One-line install and `apiome login` | 1 | 1 |
 | **E — Catalog & Projects polish** | The HIVE quiet pass and gates on the pages RC6 ships | 2 | 12 |
@@ -144,7 +144,7 @@ reads whole.
 | 19 | 1 | E | [#5605](https://github.com/apiome/apiome/issues/5605) | HIVE-11.9 | Members — seat facts line; Identity provider cards → “Coming next” line | HIVE-11.5, HIVE-12.5 | ✅ |
 | 20 | 1 | E | [#5603](https://github.com/apiome/apiome/issues/5603) | HIVE-11.7 | Repositories and repository detail — facts line, activity chip | HIVE-11.5 | ✅ |
 | 21 | 1 | E | [#5607](https://github.com/apiome/apiome/issues/5607) | HIVE-11.11 | Small chrome fixes — Import wizard height, profile hero (the Export studio header part waits for the studio) | — | ✅ |
-| 22 | 2 | A | [#5651](https://github.com/apiome/apiome/issues/5651) | SGN-1.2 | Sign-up page — every enabled provider plus the email form **MVP** | SGN-1.1 | |
+| 22 | 2 | A | [#5651](https://github.com/apiome/apiome/issues/5651) | SGN-1.2 | Sign-up page — every enabled provider plus the email form **MVP** | SGN-1.1 | ✅ |
 | 23 | 2 | A | [#5652](https://github.com/apiome/apiome/issues/5652) | SGN-1.3 | Retire the legacy sign-up request queue **MVP** | SGN-1.1 | |
 | 24 | 2 | A | [#4962](https://github.com/apiome/apiome/issues/4962) | OLO-7.3 follow-up | Close account enumeration on legacy self-sign-up | closed by SGN-1.3 | |
 | 25 | 2 | D | [#5501](https://github.com/apiome/apiome/issues/5501) | CLI | `apiome login` **MVP** | #5500, SGN-1.1 | |
