@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.429.1] - 2026-10-22
+
+### Fixed
+- **Zod / tRPC import on the image's Node (#5463, #5464)**: `zod-extract` re-ran itself with `node --permission`,
+  which only Node 22.13+ accepts. The image runs Node 20, so every Zod and tRPC import failed with `bad option:
+  --permission`, and the build's toolchain smoke test (run on Debian's Node 18) failed the image build. The extractor
+  now uses `--experimental-permission` on Node 20 and `--permission` on 22.13+, and refuses to evaluate user code on
+  a Node with no permission model. The sandbox is unchanged: file reads outside the toolchain, child processes and
+  workers are still denied. The build smoke-tests the extractors with the runtime's Node.
+- **Pydantic import on Python 3.11 (#5465)**: the reader looked up `ast.TypeAlias` (the 3.12 `type X = …` statement)
+  for every module-level statement it did not otherwise recognise, so on Python 3.11 — the supported minimum — any
+  such module failed with `AttributeError`. The check now runs only where the node exists.
+- **Version pull sections cover the newest fields (#5921, #771)**: `includeSections` / `excludeSections` on a version
+  pull did not know `securityScore` / `securityGrade` or the create-time copy outcome (`copied_classes`,
+  `copied_paths`, `copied_operations`, `copy_warning`), so an include-only pull dropped them and an exclusion never
+  removed them. The security headline now rides with `governance` (beside `qualityScore`), the copy outcome with
+  `lineage`.
+
+The OpenAPI version moves to 1.293.1.
+
 ## [1.429.0] - 2026-10-22
 
 ### Added

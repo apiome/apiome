@@ -224,6 +224,14 @@ async function renderScreen() {
   global.fetch = mockFetch() as unknown as typeof fetch;
   const view = render(<PrimitivesManagementClient />);
   await waitFor(() => expect(screen.getByRole('table', { name: 'Primitives' })).toBeInTheDocument());
+  // The table mounts before the list read lands; under a loaded CI runner the rows can trail it.
+  // Scope to this table: the screen's other tables stamp `data-row-id` too, and load first.
+  // `hidden`: a deep-linked editor opens as the rows land and aria-hides the page behind it.
+  await waitFor(() =>
+    expect(
+      screen.getByRole('table', { name: 'Primitives', hidden: true }).querySelector('tr[data-row-id]')
+    ).not.toBeNull()
+  );
   return view;
 }
 

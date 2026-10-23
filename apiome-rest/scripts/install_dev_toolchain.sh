@@ -352,6 +352,24 @@ native_ok() {
   "$bin" $probe 2>/dev/null | head -1 | grep -qF "$(pinned_version "$1")"
 }
 
+# Decompress bzip2 from stdin to stdout. dhall ships only .tar.bz2 and the CI runners have no
+# bzip2, so fall back to Python's bz2 module (CI sets Python up through uv before this step).
+bunzip2_stream() {
+  local decompress='import bz2, shutil, sys; shutil.copyfileobj(bz2.BZ2File(sys.stdin.buffer), sys.stdout.buffer)'
+  if command -v bzip2 >/dev/null 2>&1; then
+    bzip2 -dc
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c "$decompress"
+  elif command -v python >/dev/null 2>&1; then
+    python -c "$decompress"
+  elif command -v uv >/dev/null 2>&1; then
+    uv run --no-project python -c "$decompress"
+  else
+    echo "install_dev_toolchain: bzip2 or python is required to unpack dhall" >&2
+    return 1
+  fi
+}
+
 install_native() {
   local tool="$1" probe="$2" version os arch url
   version="$(pinned_version "$tool")"
@@ -388,7 +406,7 @@ install_native() {
     dhall)
       case "${os}" in Linux) os=linux ;; Darwin) os=darwin ;; *) echo "install_dev_toolchain: unsupported OS ${os}" >&2; exit 1 ;; esac
       url="https://github.com/dhall-lang/dhall-haskell/releases/download/${version}/dhall-${version}-x86_64-${os}.tar.bz2"
-      curl -fsSL "${url}" | tar -xj -C "${tmp}" bin/dhall
+      curl -fsSL "${url}" | bunzip2_stream | tar -x -C "${tmp}" bin/dhall
       mv "${tmp}/bin/dhall" "${TOOLS_BIN}/dhall"
       ;;
   esac

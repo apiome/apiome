@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.429.0"
+version = "1.429.1"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -100,7 +100,9 @@ ignore = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+# "." so shared helpers import as `tests.<module>` under the bare `pytest` entry point CI runs
+# (`python -m pytest` adds the working directory itself; `pytest` does not).
+pythonpath = ["src", "."]
 asyncio_mode = "auto"
 markers = [
     "requires_db: integration test that needs a live Postgres (set DATABASE_URL). Skipped otherwise.",

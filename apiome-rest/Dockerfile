@@ -229,6 +229,9 @@ RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS
 # or `zod-extract` costs the image a shipped format. Prove *at build time*
 # that the wrapper loads `@asyncapi/parser` and parses a document, instead of discovering it on
 # the first import in production. A failure here fails the build — which is the point.
+# Smoke-test with the runtime stage's node, not Debian's (Node 18 has no permission model, so
+# `zod-extract` cannot sandbox itself there); /usr/local/bin precedes /usr/bin on PATH.
+COPY --from=uideps /usr/local/bin/node /usr/local/bin/node
 RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"asyncapi":"2.6.0","info":{"title":"toolchain smoke test","version":"1.0.0"},"channels":{}}' \
        | ${TOOLS_PREFIX}/bin/asyncapi-parser > /tmp/asyncapi-smoke.json \
