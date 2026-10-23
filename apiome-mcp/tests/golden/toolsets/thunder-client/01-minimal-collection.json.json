@@ -1,0 +1,13 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_ping",
+      "operation": "GET /ping"
+    }
+  ]
+}

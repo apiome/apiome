@@ -1,0 +1,25 @@
+---
+slug: thunder-client-import
+title: Import a Thunder Client collection
+description: Catalog a Thunder Client collection and its environments as one inferred REST API.
+authors: [apiome]
+---
+
+Thunder Client is the API client built into VS Code. Apiome now imports a Thunder Client
+collection, with the environments its variables come from, into the catalog as one REST API.
+[What gets imported](/bring-in/thunder-client-import).
+
+{/* truncate */}
+
+- **Folders become operation groups.** Thunder Client saves folders as a flat list; Apiome rebuilds
+  the tree from it and tags each operation with its folder path.
+- **Requests become operations.** `:name` and `{{variables}}` in a path become path parameters,
+  enabled query parameters and headers become parameters, and auth inherited from a folder or the
+  collection is resolved per request.
+- **Bodies become schemas.** JSON, GraphQL, form-encoded and multipart bodies get inferred schemas
+  from the same engine as the Hoppscotch, Postman, cURL and `.http` imports.
+- **Environments become server variables.** Upload the collection and its environment together
+  and `{{baseUrl}}` gets its value.
+- **Credentials are never kept.** Auth is read as a scheme only, every other value is scrubbed,
+  and the secret scrubber now also redacts a Thunder Client `bearer` field and the
+  `{"name": …, "value": …}` pairs Thunder Client saves headers and variables as.

@@ -3663,6 +3663,49 @@
       "waivers": {}
     },
     {
+      "format_key": "thunder-client",
+      "label": "Thunder Client collection",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "thunder-client"
+      ],
+      "corpus_directories": [
+        "thunder-client"
+      ],
+      "fixtures": {
+        "valid": 7,
+        "negative": 7,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 6,
+      "golden_directories": [
+        "thunder-client"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "tradacoms",
       "label": "TRADACOMS",
       "paradigm": "data_schema",
@@ -4350,7 +4393,6 @@
     "pli",
     "schematron",
     "soapui",
-    "thunder-client",
     "vsam-idcams"
   ]
 }

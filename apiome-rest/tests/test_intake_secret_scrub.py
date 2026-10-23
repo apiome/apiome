@@ -431,3 +431,32 @@ def test_a_non_secret_key_value_pair_is_kept():
     text = json.dumps({"variables": [{"key": "baseUrl", "value": "https://api.example.com"}]})
     outcome = scrub_document_text(text)
     assert outcome.text == text and not outcome.scrubbed
+
+
+# --- FMT-10.2: Thunder Client shapes -------------------------------------------
+
+
+def test_a_key_named_exactly_bearer_is_redacted():
+    """A Thunder Client bearer auth block keeps its credential under ``bearer``."""
+    text = json.dumps({"type": "bearer", "bearer": "tc-bearer-value-123"})
+    outcome = scrub_document_text(text)
+    assert json.loads(outcome.text) == {"type": "bearer", "bearer": REDACTION_MARKER}
+
+
+def test_an_auth_type_named_bearer_is_kept():
+    text = json.dumps({"auth": {"type": "bearer"}})
+    assert scrub_document_text(text, entropy_detection=False).text == text
+
+
+@pytest.mark.parametrize("name", ["apiKey", "client_secret", "Authorization", "Cookie", "X-Api-Key"])
+def test_a_secret_named_name_value_pair_has_its_value_redacted(name):
+    """``{"name": "apiKey", "value": …}`` — Thunder Client spells the pair's name member ``name``."""
+    text = json.dumps({"data": [{"name": name, "value": "pair-value-0042"}]})
+    outcome = scrub_document_text(text)
+    assert json.loads(outcome.text)["data"][0]["value"] == REDACTION_MARKER
+
+
+def test_a_non_secret_name_value_pair_is_kept():
+    text = json.dumps({"data": [{"name": "baseUrl", "value": "https://api.example.com"}]})
+    outcome = scrub_document_text(text)
+    assert outcome.text == text and not outcome.scrubbed

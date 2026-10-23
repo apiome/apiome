@@ -1,0 +1,111 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "merchantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "merchantId",
+          "accept"
+        ],
+        "type": "object"
+      },
+      "name": "GET_reports_settlement",
+      "operation": "GET /reports/settlement"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "captureMode": {
+            "type": "string"
+          },
+          "card": {},
+          "content-type": {
+            "type": "string"
+          },
+          "idempotency-key": {
+            "type": "string"
+          },
+          "merchantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "idempotency-key",
+          "amount",
+          "captureMode",
+          "card",
+          "merchantId"
+        ],
+        "type": "object"
+      },
+      "name": "POST_authorizations",
+      "operation": "POST /authorizations"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "authorizationId": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "finalCapture": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authorizationId",
+          "content-type",
+          "amount",
+          "finalCapture"
+        ],
+        "type": "object"
+      },
+      "name": "POST_authorizations_authorizationId_captures",
+      "operation": "POST /authorizations/{authorizationId}/captures"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "grant_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "client_id",
+          "client_secret",
+          "grant_type"
+        ],
+        "type": "object"
+      },
+      "name": "POST_oauth_token",
+      "operation": "POST /oauth/token"
+    }
+  ]
+}

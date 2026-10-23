@@ -442,6 +442,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="1.0",
     ),
+    "thunder-client": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Thunder Client collection export (`version` 1.x) and environment export",
+                format_key="thunder-client",
+                support=VersionSupport.UNGATED,
+                note="Collection exports keep the same flat shape across 1.x — `folders[]` and `requests[]` "
+                "linked by `containerId`, collection and folder `settings` inherited — and are read by one "
+                "reader that never branches on `version`. Environment exports (`data[]` of name/value pairs) "
+                "are read beside them.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "xregistry": VersionCoverage(
         reads=[
             FormatVersion(

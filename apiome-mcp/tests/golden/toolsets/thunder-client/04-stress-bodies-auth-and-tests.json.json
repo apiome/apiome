@@ -1,0 +1,119 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_legacy",
+      "operation": "GET /legacy"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_protected",
+      "operation": "GET /protected"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "notify": {
+            "type": "string"
+          },
+          "sampleId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "x-request-id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sampleId",
+          "notify",
+          "content-type",
+          "x-request-id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "PATCH_samples_sampleId_status",
+      "operation": "PATCH /samples/{sampleId}/status"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "variables": {}
+        },
+        "required": [
+          "content-type",
+          "query",
+          "variables"
+        ],
+        "type": "object"
+      },
+      "name": "POST_graphql",
+      "operation": "POST /graphql"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "assay": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "assay",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "POST_samples",
+      "operation": "POST /samples"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "attachment": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "attachment",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "POST_samples_upload",
+      "operation": "POST /samples/upload"
+    }
+  ]
+}
