@@ -116,7 +116,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `opcua-nodeset/` | OPC UA NodeSet2 (pending #5468) | rpc | `<UANodeSet>` root in the OPC Foundation NodeSet2 namespace | 14 |
 | `owl/` | OWL / RDFS ontologies | data_schema | `owl:Ontology`/`owl:Class`/`owl:*Property` in the OWL namespace (Turtle or RDF/XML) | 15 |
 | `pkl/` | Pkl | data_schema | `module …` + `class`/`typealias` with member constraints and `Listing<…>` types | 14 |
-| `pli/` | PL/I structures (pending #5480) | data_schema | `DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE` | 15 |
+| `pli/` | PL/I structures | data_schema | `DCL`/`DECLARE` level-numbered structures with PL/I attributes and `%INCLUDE` | 15 |
 | `pydantic/` | Pydantic models | data_schema | `from pydantic import BaseModel` + `class X(BaseModel):` definitions | 15 |
 | `relaxng/` | RELAX NG (pending #5434) | data_schema | `grammar`/`element` root in the RELAX NG namespace, or a `.rnc` compact grammar | 15 |
 | `schematron/` | Schematron rules | data_schema | `schema`/`pattern` root in `http://purl.oclc.org/dsdl/schematron` | 13 |
@@ -1837,25 +1837,25 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`04-stress-type-system.pkl`** — Second half exceeds JSON Schema and the sandbox: `read("env:…")` must be refused by the evaluation sandbox, and amending/late binding declared as limits.
 
-### `pli/` — PL/I structures (pending #5480)
+### `pli/` — PL/I structures
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-structure.pli` | minimal | `pli` ≥ 0.85 | valid | `declare`, `char`, `fixed-bin`, `pending-adapter` |
-| `02-typical-customer-record.pli` | typical | `pli` ≥ 0.85 | valid | `nested-group`, `fixed-dec`, `bit-flags`, `array-of-structures`, `filler`, `pending-adapter` |
-| `03-includes-set/ADDRBLK.inc` | multi-file (member) | `pli` (no guarantee) | valid | `multi-file`, `include-member`, `pending-adapter` |
-| `03-includes-set/MONYBLK.inc` | multi-file (member) | `pli` (no guarantee) | valid | `multi-file`, `include-member`, `pending-adapter` |
-| `03-includes-set/main.pli` | multi-file (root) | `pli` ≥ 0.85 | valid | `multi-file`, `include`, `like-clone`, `occurs-table`, `pending-adapter` |
-| `04-stress-attribute-coverage.pli` ⚠ | stress | `pli` ≥ 0.85 | valid | `char-varying`, `graphic`, `picture`, `fixed-bin-widths`, `float`, `bit`, `pointer`, `area`, `arrays`, `two-dimensional`, `union`, `like`, `based`, `aligned`, `unaligned`, `refer`, `pending-adapter` |
-| `05-real-world-payment-record.pli` | real-world | `pli` ≥ 0.85 | valid | `header-trailer`, `party-blocks`, `address-arrays`, `charges-table`, `status-flags`, `packed-decimal`, `pending-adapter` |
-| `06-typical-union-record.pli` | typical | `pli` ≥ 0.85 | valid | `union`, `shared-storage`, `record-type-discriminator`, `pending-adapter` |
-| `07-composition-like-and-nesting.pli` | composition | `pli` ≥ 0.85 | valid | `like-clone`, `shared-blocks`, `record-of-records`, `array-of-structures`, `pending-adapter` |
-| `negative/01-syntactic-missing-semicolon.pli` | — | `pli` (no guarantee) | invalid | `negative`, `syntactic`, `missing-semicolon`, `pending-adapter` |
-| `negative/02-semantic-level-number-gap.pli` | — | `pli` (no guarantee) | invalid | `negative`, `semantic`, `level-number-gap`, `orphan-level`, `pending-adapter` |
-| `negative/03-truncated-mid-declare.pli` | — | `pli` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-cobol-copybook.cpy` ⚠ | — | `pli` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook`, `pending-adapter` |
-| `negative/05-encoding-utf16.pli` | — | `pli` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-include.pli` ⚠ | — | `pli` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-include`, `pending-adapter` |
+| `01-minimal-structure.pli` | minimal | `pli` ≥ 0.85 | valid | `declare`, `char`, `fixed-bin` |
+| `02-typical-customer-record.pli` | typical | `pli` ≥ 0.85 | valid | `nested-group`, `fixed-dec`, `bit-flags`, `array-of-structures`, `filler` |
+| `03-includes-set/ADDRBLK.inc` | multi-file (member) | `pli` (no guarantee) | valid | `multi-file`, `include-member` |
+| `03-includes-set/MONYBLK.inc` | multi-file (member) | `pli` (no guarantee) | valid | `multi-file`, `include-member` |
+| `03-includes-set/main.pli` | multi-file (root) | `pli` ≥ 0.85 | valid | `multi-file`, `include`, `like-clone`, `occurs-table` |
+| `04-stress-attribute-coverage.pli` ⚠ | stress | `pli` ≥ 0.85 | valid | `char-varying`, `graphic`, `picture`, `fixed-bin-widths`, `float`, `bit`, `pointer`, `area`, `arrays`, `two-dimensional`, `union`, `like`, `based`, `aligned`, `unaligned`, `refer` |
+| `05-real-world-payment-record.pli` | real-world | `pli` ≥ 0.85 | valid | `header-trailer`, `party-blocks`, `address-arrays`, `charges-table`, `status-flags`, `packed-decimal` |
+| `06-typical-union-record.pli` | typical | `pli` ≥ 0.85 | valid | `union`, `shared-storage`, `record-type-discriminator` |
+| `07-composition-like-and-nesting.pli` | composition | `pli` ≥ 0.85 | valid | `like-clone`, `shared-blocks`, `record-of-records`, `array-of-structures` |
+| `negative/01-syntactic-missing-semicolon.pli` | — | `pli` (no guarantee) | invalid | `negative`, `syntactic`, `missing-semicolon` |
+| `negative/02-semantic-level-number-gap.pli` | — | `pli` (no guarantee) | invalid | `negative`, `semantic`, `level-number-gap`, `orphan-level` |
+| `negative/03-truncated-mid-declare.pli` | — | `pli` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-cobol-copybook.cpy` ⚠ | — | `pli` (no guarantee) | invalid | `negative`, `wrong-format`, `cobol-copybook` |
+| `negative/05-encoding-utf16.pli` | — | `pli` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-include.pli` ⚠ | — | `pli` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-include` |
 
 > ⚠ **`04-stress-attribute-coverage.pli`** — REFER extents are runtime values: FMT-11.1 must declare that limit rather than guessing a length.
 

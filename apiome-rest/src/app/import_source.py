@@ -1234,6 +1234,10 @@ def load_builtin_import_sources() -> None:
     # ``cics-bms`` adapters — VSAM cluster definitions and CICS BMS maps, data_schema paradigm.
     from . import mainframe_misc_import_source as _mainframe_misc  # noqa: F401
 
+    # ``pli_import_source`` (FMT-11.1) self-registers the ``pli`` adapter — PL/I DECLARE structures
+    # and their %INCLUDE members with a computed storage map, data_schema paradigm.
+    from . import pli_import_source as _pli  # noqa: F401
+
     # ``lwm2m_import_source`` and ``matter_import_source`` (FMT-9.5) self-register the ``lwm2m``
     # adapter (LwM2M / IPSO object definitions, data_schema) and the ``matter`` adapter (Matter
     # cluster and device-type definitions, rpc).

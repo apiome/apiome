@@ -5,6 +5,57 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.439.0] - 2026-10-23
+
+### Added
+- **PL/I `%INCLUDE` structure import (#5480, FMT-11.1)**: a `pli` import source (aliases `pl1`, `pl/i`, `pli-include`;
+  `.pli`, `.pl1`, `.inc`; file, URL, paste, fileset) on the **data_schema** paradigm, with a native analyzer — the
+  PL/I counterpart of the COBOL copybook importer.
+  - **Reader** (`app.pli_parser`): `DCL` / `DECLARE` structures with level numbers (non-consecutive levels are a child,
+    as in PL/I), labels, factored names, `CHAR` / `GRAPHIC` / `WIDECHAR` / `BIT` `[VARYING | VARYINGZ]`, `FIXED` /
+    `FLOAT` `DEC` / `BIN` with precision, `SIGNED` / `UNSIGNED`, `COMPLEX`, `PIC'…'` (PL/I `(n)9` and COBOL-style `9(n)`
+    factors), `POINTER` / `OFFSET` / `HANDLE` / `AREA`, program-control items, dimensions `(n)` / `(l:u)` / `(n,m)` /
+    `(*)` / `(e REFER(x))` and `DIM`, `LIKE` (expanded after every declaration is read, forward and nested, with cycle
+    detection), `UNION` / `CELL`, `ALIGNED` / `UNALIGNED` (inherited by members), storage class, `DEFINED` /
+    `POSITION`, scope. Elements without data attributes take the RULES(IBM) language defaults (I–N → `FIXED BIN(15)`,
+    else `FLOAT DEC(6)`; `FIXED` → `FIXED DEC(5,0)` …), recorded as `defaulted`. Sequence numbers in columns 73–80 and
+    `*PROCESS` / `%PAGE` / `%SKIP` lines are dropped.
+  - **`%INCLUDE`** (`name`, `ddname(member)`, `'path'`, lists) is spliced textually from the fileset, matched by
+    member name without suffix. An unresolved member is handled by what it leaves missing: a `LIKE` / `DEFINED` target
+    nothing declares → `INPUT_REFERENCE_UNRESOLVED` naming the members that were not supplied; a directive inside a
+    structure → the record is marked `partial` with the member named (`extras['pli']['partial']`, an analysis
+    `warning`), and nothing after it has an offset — never a silently short layout; a directive between declarations
+    that nothing references → the import goes ahead and the include is listed as unresolved.
+  - **Storage layout** (`app.pli_layout`): every item's 1-based offset, bit offset, length, total length, element
+    count, alignment boundary and padding, tracked in bits so `UNALIGNED` bit strings pack. Arithmetic and locator items
+    are `ALIGNED` by default and padded to their natural boundary; arrays of aligned structures pad each element;
+    `UNION` members all start at the union and the union is as long as its longest member, each later member recording
+    the first as `redefines` (the copybook REDEFINES presentation). `REFER` / `*` extents make the item variable and
+    every later offset `offsetVariable`; an unsized item (an `ENTRY`, an unreadable picture) leaves later offsets
+    unknown. `LAYOUT_ASSUMPTIONS` states what the byte counts rest on (single-byte characters, `VARYING` prefix width,
+    packed / binary / float width tables, 4-byte locators, default alignment and doubleword-anchored padding, RULES(IBM)
+    defaults) and is published as `extras['pli']['layoutAssumptions']` and as an `info` warning on every analysis.
+  - **Projection** (`app.pli_normalizer`): each major structure → a `RECORD` in the `pli` namespace, each minor
+    structure → a `RECORD` named by its path; a `LIKE` member references its target's record. `CHAR` / pictures →
+    `string` with `max_length`; `FIXED` → `integer` / `decimal`; `FLOAT` → `float` / `double`; `BIT(1)` → `boolean`,
+    longer → `bytes`; locators → `bytes`; program control → `any`; dimensions nest lists of exactly the declared count.
+    Fields carry their declaration and storage (offset relative to their record) in `extras['pli']`; each major
+    structure carries the absolute `storageMap` of every item, LIKE copies expanded.
+  - **Native analysis** (`app.pli_analysis`, analyzer `pli` 1.0.0): record / group / union / field / include nodes with
+    level, attributes as written and the storage facts, file and line per item.
+  - **Declared limits** (graded ledger rows via `_pli_capability_rows`): `pli.unresolved_include`,
+    `pli.union_storage`, `pli.refer_extent`, `pli.default_attributes`, `pli.edited_picture`, `pli.locator_item`,
+    `pli.program_control_item`, `pli.unread_attribute` (partially mapped); `pli.scalar_declaration`,
+    `pli.non_declare_statement`, `pli.unreferenced_member` (not modelled).
+  - **Refusals**: `INPUT_EMPTY`, `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH` (no `DCL` / `DECLARE` / `%INCLUDE` — a COBOL
+    copybook), `INPUT_TRUNCATED` (ends inside a comment, string, parentheses or statement), `INPUT_MALFORMED` (a
+    missing `;` before `DCL`, a stray token or `)`), `INPUT_SEMANTIC_INVALID` (levels that do not form a tree, a member
+    under an item with data attributes, `LIKE` of an element or in a cycle, an include cycle, a duplicate structure, no
+    structure at all), `INPUT_REFERENCE_UNRESOLVED`.
+  - Staged `pli` corpus activated (15 entries); corpus and analysis goldens, round-trip matrix rows (53 xfails), parity,
+    capability registry v36, version coverage, `SCHEMA_ONLY_FORMATS`, provenance extras key, MCP toolset goldens.
+    Round-trip against PL/I output (MFX-23.3, #4141) is asserted once that emitter exists.
+
 ## [1.438.0] - 2026-10-23
 
 ### Added

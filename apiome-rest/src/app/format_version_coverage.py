@@ -511,6 +511,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="COBOL data-division record layout",
     ),
+    "pli": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="PL/I DECLARE structures (Enterprise PL/I)",
+                format_key="pli",
+                support=VersionSupport.UNGATED,
+                note="A declaration names no compiler release: level numbers, data attributes, "
+                "dimensions, LIKE, UNION and %INCLUDE are read the same way for every Enterprise "
+                "PL/I level, and the language defaults are the RULES(IBM) ones.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "vsam-idcams": VersionCoverage(
         reads=[
             FormatVersion(

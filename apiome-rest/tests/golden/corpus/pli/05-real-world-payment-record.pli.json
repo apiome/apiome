@@ -1,0 +1,2514 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 1 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [],
+        "files": [
+          "pli/05-real-world-payment-record.pli"
+        ],
+        "includes": [],
+        "input": "file",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [],
+        "statements": [],
+        "structures": [
+          {
+            "length": 1132,
+            "name": "PAYMENT_REC",
+            "type": "pli.PAYMENT_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "PAYMENT_REC",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "PAYMENT_REC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure PAYMENT_REC (level 1), 1132 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 1132,
+            "level": 1,
+            "line": 7,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 1132,
+                "level": 1,
+                "offset": 1,
+                "path": "PAYMENT_REC"
+              },
+              {
+                "aligned": false,
+                "length": 35,
+                "level": 2,
+                "offset": 1,
+                "path": "PAYMENT_REC.PAY_HEADER"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 1,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_RECORD_TYPE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "length": 2,
+                "level": 3,
+                "offset": 4,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_VERSION",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(16)",
+                "length": 16,
+                "level": 3,
+                "offset": 6,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_REFERENCE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 22,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_CREATED_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "length": 4,
+                "level": 3,
+                "offset": 27,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_CREATED_TIME",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "length": 4,
+                "level": 3,
+                "offset": 31,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_CHANNEL",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 3,
+                "offset": 35,
+                "path": "PAYMENT_REC.PAY_HEADER.PAY_PRIORITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 327,
+                "level": 2,
+                "offset": 36,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(34)",
+                "length": 34,
+                "level": 3,
+                "offset": 36,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY.ORD_ACCOUNT",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(11)",
+                "length": 11,
+                "level": 3,
+                "offset": 70,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY.ORD_BIC",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "length": 70,
+                "level": 3,
+                "offset": 81,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY.ORD_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "length": 70,
+                "level": 3,
+                "occurrences": 3,
+                "offset": 151,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY.ORD_ADDRESS",
+                "storageBasis": "character",
+                "totalLength": 210
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "length": 2,
+                "level": 3,
+                "offset": 361,
+                "path": "PAYMENT_REC.PAY_ORDERING_PARTY.ORD_COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 327,
+                "level": 2,
+                "offset": 363,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(34)",
+                "length": 34,
+                "level": 3,
+                "offset": 363,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY.BEN_ACCOUNT",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(11)",
+                "length": 11,
+                "level": 3,
+                "offset": 397,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY.BEN_BIC",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "length": 70,
+                "level": 3,
+                "offset": 408,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY.BEN_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "length": 70,
+                "level": 3,
+                "occurrences": 3,
+                "offset": 478,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY.BEN_ADDRESS",
+                "storageBasis": "character",
+                "totalLength": 210
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "length": 2,
+                "level": 3,
+                "offset": 688,
+                "path": "PAYMENT_REC.PAY_BENEFICIARY.BEN_COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 35,
+                "level": 2,
+                "offset": 690,
+                "path": "PAYMENT_REC.PAY_AMOUNTS"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(17,3)",
+                "length": 9,
+                "level": 3,
+                "offset": 690,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.SETTLE_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 699,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.SETTLE_CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(17,3)",
+                "length": 9,
+                "level": 3,
+                "offset": 702,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.INSTRUCTED_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 711,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.INSTRUCTED_CCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(11,6)",
+                "length": 6,
+                "level": 3,
+                "offset": 714,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.EXCHANGE_RATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 3,
+                "offset": 720,
+                "path": "PAYMENT_REC.PAY_AMOUNTS.VALUE_DATE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "length": 96,
+                "level": 2,
+                "offset": 725,
+                "path": "PAYMENT_REC.PAY_CHARGES"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 725,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_BEARER",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 3,
+                "offset": 729,
+                "paddingBits": 8,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_COUNT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "length": 15,
+                "level": 3,
+                "occurrences": 6,
+                "offset": 731,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY",
+                "totalLength": 90
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "length": 4,
+                "level": 4,
+                "offset": 731,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_TYPE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,3)",
+                "length": 8,
+                "level": 4,
+                "offset": 735,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_AMOUNT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 4,
+                "offset": 743,
+                "path": "PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_CCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 141,
+                "level": 2,
+                "offset": 821,
+                "path": "PAYMENT_REC.PAY_REMITTANCE"
+              },
+              {
+                "aligned": true,
+                "attributes": "BIT(1)",
+                "length": 1,
+                "level": 3,
+                "offset": 821,
+                "path": "PAYMENT_REC.PAY_REMITTANCE.REMIT_STRUCTURED",
+                "storageBasis": "bit"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "occurrences": 4,
+                "offset": 822,
+                "path": "PAYMENT_REC.PAY_REMITTANCE.REMIT_LINES",
+                "storageBasis": "character",
+                "totalLength": 140
+              },
+              {
+                "aligned": false,
+                "length": 113,
+                "level": 2,
+                "offset": 962,
+                "path": "PAYMENT_REC.PAY_REGULATORY"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 962,
+                "path": "PAYMENT_REC.PAY_REGULATORY.REG_CODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(105)",
+                "length": 105,
+                "level": 3,
+                "offset": 970,
+                "path": "PAYMENT_REC.PAY_REGULATORY.REG_TEXT",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 49,
+                "level": 2,
+                "offset": 1075,
+                "path": "PAYMENT_REC.PAY_STATUS_BLOCK"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "length": 4,
+                "level": 3,
+                "offset": 1075,
+                "path": "PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_CODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "BIT(16)",
+                "length": 2,
+                "level": 3,
+                "offset": 1079,
+                "path": "PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_FLAGS",
+                "storageBasis": "bit"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(14,0)",
+                "length": 8,
+                "level": 3,
+                "offset": 1081,
+                "path": "PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_UPDATED",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 1089,
+                "path": "PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_REASON",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "length": 8,
+                "level": 2,
+                "offset": 1125,
+                "paddingBits": 8,
+                "path": "PAYMENT_REC.PAY_TRAILER"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 1125,
+                "path": "PAYMENT_REC.PAY_TRAILER.TRAILER_MARK",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 3,
+                "offset": 1129,
+                "paddingBits": 8,
+                "path": "PAYMENT_REC.PAY_TRAILER.RECORD_LENGTH",
+                "storageBasis": "binary"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 690, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 35,
+                "level": 2,
+                "offset": 690
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS",
+            "name": "PAY_AMOUNTS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_AMOUNTS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 363, 327 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 327,
+                "level": 2,
+                "offset": 363
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY",
+            "name": "PAY_BENEFICIARY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_BENEFICIARY",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 725, 96 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "length": 96,
+                "level": 2,
+                "offset": 725
+              }
+            },
+            "field_number": 5,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES",
+            "name": "PAY_CHARGES",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_CHARGES",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 1, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 35,
+                "level": 2,
+                "offset": 1
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_HEADER",
+            "name": "PAY_HEADER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_HEADER",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 36, 327 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 327,
+                "level": 2,
+                "offset": 36
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY",
+            "name": "PAY_ORDERING_PARTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_ORDERING_PARTY",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 962, 113 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 113,
+                "level": 2,
+                "offset": 962
+              }
+            },
+            "field_number": 7,
+            "key": "pli.PAYMENT_REC.PAY_REGULATORY",
+            "name": "PAY_REGULATORY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_REGULATORY",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 821, 141 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 141,
+                "level": 2,
+                "offset": 821
+              }
+            },
+            "field_number": 6,
+            "key": "pli.PAYMENT_REC.PAY_REMITTANCE",
+            "name": "PAY_REMITTANCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_REMITTANCE",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 1075, 49 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 49,
+                "level": 2,
+                "offset": 1075
+              }
+            },
+            "field_number": 8,
+            "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK",
+            "name": "PAY_STATUS_BLOCK",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_STATUS_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 1125, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "length": 8,
+                "level": 2,
+                "offset": 1125,
+                "paddingBits": 8
+              }
+            },
+            "field_number": 9,
+            "key": "pli.PAYMENT_REC.PAY_TRAILER",
+            "name": "PAY_TRAILER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.PAYMENT_REC.PAY_TRAILER",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_AMOUNTS (level 2), 35 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 35,
+            "level": 2,
+            "line": 32,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(11,6) at offset 25, 6 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(11,6)",
+                "dataKind": "fixed-decimal",
+                "length": 6,
+                "level": 3,
+                "offset": 25,
+                "precision": 11,
+                "scale": 6,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.EXCHANGE_RATE",
+            "name": "EXCHANGE_RATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(17,3) at offset 13, 9 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(17,3)",
+                "dataKind": "fixed-decimal",
+                "length": 9,
+                "level": 3,
+                "offset": 13,
+                "precision": 17,
+                "scale": 3,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.INSTRUCTED_AMOUNT",
+            "name": "INSTRUCTED_AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 22, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 22,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.INSTRUCTED_CCY",
+            "name": "INSTRUCTED_CCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(17,3) at offset 1, 9 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(17,3)",
+                "dataKind": "fixed-decimal",
+                "length": 9,
+                "level": 3,
+                "offset": 1,
+                "precision": 17,
+                "scale": 3,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.SETTLE_AMOUNT",
+            "name": "SETTLE_AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 10, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 10,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.SETTLE_CURRENCY",
+            "name": "SETTLE_CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 31, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 3,
+                "offset": 31,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 6,
+            "key": "pli.PAYMENT_REC.PAY_AMOUNTS.VALUE_DATE",
+            "name": "VALUE_DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_AMOUNTS",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_AMOUNTS",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_BENEFICIARY (level 2), 327 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 327,
+            "level": 2,
+            "line": 25,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 34,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(34) at offset 1, 34 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(34)",
+                "dataKind": "character",
+                "length": 34,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY.BEN_ACCOUNT",
+            "name": "BEN_ACCOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 70
+              },
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 3,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(70), dimension (3) at offset 116, 210 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "dataKind": "character",
+                "dimensions": [
+                  {
+                    "bounds": "3",
+                    "lower": 1,
+                    "upper": 3
+                  }
+                ],
+                "length": 70,
+                "level": 3,
+                "occurrences": 3,
+                "offset": 116,
+                "storageBasis": "character",
+                "totalLength": 210
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY.BEN_ADDRESS",
+            "name": "BEN_ADDRESS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 11,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(11) at offset 35, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(11)",
+                "dataKind": "character",
+                "length": 11,
+                "level": 3,
+                "offset": 35,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY.BEN_BIC",
+            "name": "BEN_BIC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(2) at offset 326, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "dataKind": "character",
+                "length": 2,
+                "level": 3,
+                "offset": 326,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY.BEN_COUNTRY",
+            "name": "BEN_COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(70) at offset 46, 70 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "dataKind": "character",
+                "length": 70,
+                "level": 3,
+                "offset": 46,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_BENEFICIARY.BEN_NAME",
+            "name": "BEN_NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_BENEFICIARY",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_BENEFICIARY",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_CHARGES (level 2), 96 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 96,
+            "level": 2,
+            "line": 40,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 1, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_BEARER",
+            "name": "CHARGE_BEARER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 5, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 3,
+                "offset": 5,
+                "paddingBits": 8,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_COUNT",
+            "name": "CHARGE_COUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 6,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 6,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "structure, dimension (6) at offset 7, 90 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "dimensions": [
+                  {
+                    "bounds": "6",
+                    "lower": 1,
+                    "upper": 6
+                  }
+                ],
+                "length": 15,
+                "level": 3,
+                "occurrences": 6,
+                "offset": 7,
+                "totalLength": 90
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY",
+            "name": "CHARGE_ENTRY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_CHARGES",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_CHARGES",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure CHARGE_ENTRY (level 3), 90 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "dimensions": [
+              {
+                "bounds": "6",
+                "lower": 1,
+                "upper": 6
+              }
+            ],
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 15,
+            "level": 3,
+            "line": 43,
+            "occurrences": 6,
+            "offset": 1,
+            "totalLength": 90
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(15,3) at offset 5, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,3)",
+                "dataKind": "fixed-decimal",
+                "length": 8,
+                "level": 4,
+                "offset": 5,
+                "precision": 15,
+                "scale": 3,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_AMOUNT",
+            "name": "CHARGE_AMOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 13, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 4,
+                "offset": 13,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_CCY",
+            "name": "CHARGE_CCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(4) at offset 1, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "dataKind": "character",
+                "length": 4,
+                "level": 4,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY.CHARGE_TYPE",
+            "name": "CHARGE_TYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_CHARGES.CHARGE_ENTRY",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_HEADER (level 2), 35 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 35,
+            "level": 2,
+            "line": 9,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(4) at offset 31, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "dataKind": "character",
+                "length": 4,
+                "level": 3,
+                "offset": 31,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 6,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_CHANNEL",
+            "name": "PAY_CHANNEL",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 22, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 3,
+                "offset": 22,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_CREATED_DATE",
+            "name": "PAY_CREATED_DATE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(6,0) at offset 27, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(6,0)",
+                "dataKind": "fixed-decimal",
+                "length": 4,
+                "level": 3,
+                "offset": 27,
+                "precision": 6,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_CREATED_TIME",
+            "name": "PAY_CREATED_TIME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(1) at offset 35, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "dataKind": "character",
+                "length": 1,
+                "level": 3,
+                "offset": 35,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_PRIORITY",
+            "name": "PAY_PRIORITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 1, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_RECORD_TYPE",
+            "name": "PAY_RECORD_TYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(16) at offset 6, 16 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(16)",
+                "dataKind": "character",
+                "length": 16,
+                "level": 3,
+                "offset": 6,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_REFERENCE",
+            "name": "PAY_REFERENCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(2) at offset 4, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "dataKind": "character",
+                "length": 2,
+                "level": 3,
+                "offset": 4,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_HEADER.PAY_VERSION",
+            "name": "PAY_VERSION",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_HEADER",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_HEADER",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_ORDERING_PARTY (level 2), 327 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 327,
+            "level": 2,
+            "line": 18,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 34,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(34) at offset 1, 34 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(34)",
+                "dataKind": "character",
+                "length": 34,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY.ORD_ACCOUNT",
+            "name": "ORD_ACCOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 70
+              },
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 3,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(70), dimension (3) at offset 116, 210 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "dataKind": "character",
+                "dimensions": [
+                  {
+                    "bounds": "3",
+                    "lower": 1,
+                    "upper": 3
+                  }
+                ],
+                "length": 70,
+                "level": 3,
+                "occurrences": 3,
+                "offset": 116,
+                "storageBasis": "character",
+                "totalLength": 210
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY.ORD_ADDRESS",
+            "name": "ORD_ADDRESS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 11,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(11) at offset 35, 11 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(11)",
+                "dataKind": "character",
+                "length": 11,
+                "level": 3,
+                "offset": 35,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY.ORD_BIC",
+            "name": "ORD_BIC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(2) at offset 326, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "dataKind": "character",
+                "length": 2,
+                "level": 3,
+                "offset": 326,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY.ORD_COUNTRY",
+            "name": "ORD_COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(70) at offset 46, 70 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(70)",
+                "dataKind": "character",
+                "length": 70,
+                "level": 3,
+                "offset": 46,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY.ORD_NAME",
+            "name": "ORD_NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_ORDERING_PARTY",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_ORDERING_PARTY",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_REGULATORY (level 2), 113 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 113,
+            "level": 2,
+            "line": 52,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(8) at offset 1, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "dataKind": "character",
+                "length": 8,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_REGULATORY.REG_CODE",
+            "name": "REG_CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 105,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(105) at offset 9, 105 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(105)",
+                "dataKind": "character",
+                "length": 105,
+                "level": 3,
+                "offset": 9,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_REGULATORY.REG_TEXT",
+            "name": "REG_TEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_REGULATORY",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_REGULATORY",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_REMITTANCE (level 2), 141 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 141,
+            "level": 2,
+            "line": 48,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 35
+              },
+              "format": null,
+              "max_items": 4,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 4,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35), dimension (4) at offset 2, 140 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "dimensions": [
+                  {
+                    "bounds": "4",
+                    "lower": 1,
+                    "upper": 4
+                  }
+                ],
+                "length": 35,
+                "level": 3,
+                "occurrences": 4,
+                "offset": 2,
+                "storageBasis": "character",
+                "totalLength": 140
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_REMITTANCE.REMIT_LINES",
+            "name": "REMIT_LINES",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(1) at offset 1, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "alignment": "ALIGNED",
+                "attributes": "BIT(1)",
+                "dataKind": "bit",
+                "length": 1,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "bit"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_REMITTANCE.REMIT_STRUCTURED",
+            "name": "REMIT_STRUCTURED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_REMITTANCE",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_REMITTANCE",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_STATUS_BLOCK (level 2), 49 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 49,
+            "level": 2,
+            "line": 56,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(4) at offset 1, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(4)",
+                "dataKind": "character",
+                "length": 4,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_CODE",
+            "name": "STATUS_CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(16) at offset 5, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "alignment": "ALIGNED",
+                "attributes": "BIT(16)",
+                "dataKind": "bit",
+                "length": 2,
+                "level": 3,
+                "offset": 5,
+                "storageBasis": "bit"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_FLAGS",
+            "name": "STATUS_FLAGS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 15, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 3,
+                "offset": 15,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_REASON",
+            "name": "STATUS_REASON",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(14,0) at offset 7, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(14,0)",
+                "dataKind": "fixed-decimal",
+                "length": 8,
+                "level": 3,
+                "offset": 7,
+                "precision": 14,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK.STATUS_UPDATED",
+            "name": "STATUS_UPDATED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_STATUS_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_STATUS_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure PAY_TRAILER (level 2), 8 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/05-real-world-payment-record.pli",
+            "length": 8,
+            "level": 2,
+            "line": 62,
+            "offset": 1,
+            "paddingBits": 8
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at offset 5, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 3,
+                "offset": 5,
+                "paddingBits": 8,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.PAYMENT_REC.PAY_TRAILER.RECORD_LENGTH",
+            "name": "RECORD_LENGTH",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 1, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.PAYMENT_REC.PAY_TRAILER.TRAILER_MARK",
+            "name": "TRAILER_MARK",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.PAYMENT_REC.PAY_TRAILER",
+        "key_type": null,
+        "kind": "record",
+        "name": "PAYMENT_REC.PAY_TRAILER",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/05-real-world-payment-record.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 11
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:a7651f000a45b8039da91e55f1825875048400dc4b1219709e227643b28acb20",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

@@ -1,0 +1,1048 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 1 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [],
+        "files": [
+          "pli/02-typical-customer-record.pli"
+        ],
+        "includes": [],
+        "input": "file",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [],
+        "statements": [],
+        "structures": [
+          {
+            "length": 514,
+            "name": "CUSTOMER_REC",
+            "type": "pli.CUSTOMER_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CUSTOMER_REC",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CUSTOMER_REC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure CUSTOMER_REC (level 1), 514 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/02-typical-customer-record.pli",
+            "length": 514,
+            "level": 1,
+            "line": 4,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": true,
+                "length": 514,
+                "level": 1,
+                "offset": 1,
+                "path": "CUSTOMER_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "path": "CUSTOMER_REC.CUST_ID",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "length": 40,
+                "level": 2,
+                "offset": 11,
+                "path": "CUSTOMER_REC.CUST_NAME",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "offset": 51,
+                "path": "CUSTOMER_REC.CUST_ADDRESS"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 51,
+                "path": "CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offset": 86,
+                "path": "CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE2",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offset": 121,
+                "path": "CUSTOMER_REC.CUST_ADDRESS.ADDR_CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offset": 146,
+                "path": "CUSTOMER_REC.CUST_ADDRESS.ADDR_POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offset": 156,
+                "path": "CUSTOMER_REC.CUST_ADDRESS.ADDR_COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 2,
+                "offset": 159,
+                "path": "CUSTOMER_REC.CUST_STATUS",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "length": 5,
+                "level": 2,
+                "offset": 160,
+                "path": "CUSTOMER_REC.CUST_OPENED",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(13,2)",
+                "length": 7,
+                "level": 2,
+                "offset": 165,
+                "path": "CUSTOMER_REC.CUST_BALANCE",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 172,
+                "path": "CUSTOMER_REC.CUST_CURRENCY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(13,2)",
+                "length": 7,
+                "level": 2,
+                "offset": 175,
+                "path": "CUSTOMER_REC.CUST_LIMIT",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": true,
+                "attributes": "BIT(8)",
+                "length": 1,
+                "level": 2,
+                "offset": 182,
+                "path": "CUSTOMER_REC.CUST_FLAGS",
+                "storageBasis": "bit"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 183,
+                "path": "CUSTOMER_REC.CUST_CONTACT_CT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "length": 62,
+                "level": 2,
+                "occurrences": 5,
+                "offset": 185,
+                "path": "CUSTOMER_REC.CUST_CONTACTS",
+                "totalLength": 310
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "length": 2,
+                "level": 3,
+                "offset": 185,
+                "path": "CUSTOMER_REC.CUST_CONTACTS.CONTACT_TYPE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(60)",
+                "length": 60,
+                "level": 3,
+                "offset": 187,
+                "path": "CUSTOMER_REC.CUST_CONTACTS.CONTACT_VALUE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(20)",
+                "length": 20,
+                "level": 2,
+                "offset": 495,
+                "path": "CUSTOMER_REC.FILLER_1",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at offset 51, 108 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 108,
+                "level": 2,
+                "offset": 51
+              }
+            },
+            "field_number": 3,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS",
+            "name": "CUST_ADDRESS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.CUSTOMER_REC.CUST_ADDRESS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(13,2) at offset 165, 7 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(13,2)",
+                "dataKind": "fixed-decimal",
+                "length": 7,
+                "level": 2,
+                "offset": 165,
+                "precision": 13,
+                "scale": 2,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 6,
+            "key": "pli.CUSTOMER_REC.CUST_BALANCE",
+            "name": "CUST_BALANCE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 5,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 5,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "structure, dimension (5) at offset 185, 310 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "dimensions": [
+                  {
+                    "bounds": "5",
+                    "lower": 1,
+                    "upper": 5
+                  }
+                ],
+                "length": 62,
+                "level": 2,
+                "occurrences": 5,
+                "offset": 185,
+                "totalLength": 310
+              }
+            },
+            "field_number": 11,
+            "key": "pli.CUSTOMER_REC.CUST_CONTACTS",
+            "name": "CUST_CONTACTS",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pli.CUSTOMER_REC.CUST_CONTACTS",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 183, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 183,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 10,
+            "key": "pli.CUSTOMER_REC.CUST_CONTACT_CT",
+            "name": "CUST_CONTACT_CT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 172, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 172,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.CUSTOMER_REC.CUST_CURRENCY",
+            "name": "CUST_CURRENCY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(8) at offset 182, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "alignment": "ALIGNED",
+                "attributes": "BIT(8)",
+                "dataKind": "bit",
+                "length": 1,
+                "level": 2,
+                "offset": 182,
+                "storageBasis": "bit"
+              }
+            },
+            "field_number": 9,
+            "key": "pli.CUSTOMER_REC.CUST_FLAGS",
+            "name": "CUST_FLAGS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 1, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.CUSTOMER_REC.CUST_ID",
+            "name": "CUST_ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(13,2) at offset 175, 7 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(13,2)",
+                "dataKind": "fixed-decimal",
+                "length": 7,
+                "level": 2,
+                "offset": 175,
+                "precision": 13,
+                "scale": 2,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 8,
+            "key": "pli.CUSTOMER_REC.CUST_LIMIT",
+            "name": "CUST_LIMIT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 40,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(40) at offset 11, 40 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(40)",
+                "dataKind": "character",
+                "length": 40,
+                "level": 2,
+                "offset": 11,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.CUSTOMER_REC.CUST_NAME",
+            "name": "CUST_NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(8,0) at offset 160, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(8,0)",
+                "dataKind": "fixed-decimal",
+                "length": 5,
+                "level": 2,
+                "offset": 160,
+                "precision": 8,
+                "scale": 0,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.CUSTOMER_REC.CUST_OPENED",
+            "name": "CUST_OPENED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(1) at offset 159, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "dataKind": "character",
+                "length": 1,
+                "level": 2,
+                "offset": 159,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.CUSTOMER_REC.CUST_STATUS",
+            "name": "CUST_STATUS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(20) at offset 495, 20 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(20)",
+                "dataKind": "character",
+                "length": 20,
+                "level": 2,
+                "offset": 495,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 12,
+            "key": "pli.CUSTOMER_REC.FILLER_1",
+            "name": "FILLER_1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.CUSTOMER_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure CUST_ADDRESS (level 2), 108 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/02-typical-customer-record.pli",
+            "length": 108,
+            "level": 2,
+            "line": 7,
+            "offset": 1
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(25) at offset 71, 25 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "dataKind": "character",
+                "length": 25,
+                "level": 3,
+                "offset": 71,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_CITY",
+            "name": "ADDR_CITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 106, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 3,
+                "offset": 106,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_COUNTRY",
+            "name": "ADDR_COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 1, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE1",
+            "name": "ADDR_LINE1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 36, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 3,
+                "offset": 36,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE2",
+            "name": "ADDR_LINE2",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 96, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 3,
+                "offset": 96,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_POSTCODE",
+            "name": "ADDR_POSTCODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.CUSTOMER_REC.CUST_ADDRESS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER_REC.CUST_ADDRESS",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure CUST_CONTACTS (level 2), 310 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "dimensions": [
+              {
+                "bounds": "5",
+                "lower": 1,
+                "upper": 5
+              }
+            ],
+            "file": "pli/02-typical-customer-record.pli",
+            "length": 62,
+            "level": 2,
+            "line": 20,
+            "occurrences": 5,
+            "offset": 1,
+            "totalLength": 310
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(2) at offset 1, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(2)",
+                "dataKind": "character",
+                "length": 2,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_TYPE",
+            "name": "CONTACT_TYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 60,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(60) at offset 3, 60 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(60)",
+                "dataKind": "character",
+                "length": 60,
+                "level": 3,
+                "offset": 3,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_VALUE",
+            "name": "CONTACT_VALUE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.CUSTOMER_REC.CUST_CONTACTS",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUSTOMER_REC.CUST_CONTACTS",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/02-typical-customer-record.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:db17f9f26ff1c089096f0bdc7c67b80ff4a163af7867f23bc2f27a01fe26cc00",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

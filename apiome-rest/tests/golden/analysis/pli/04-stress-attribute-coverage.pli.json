@@ -1,0 +1,1817 @@
+{
+  "adapter": "pli",
+  "corpus_path": "pli/04-stress-attribute-coverage.pli",
+  "document": {
+    "analyzer": {
+      "key": "pli",
+      "toolVersions": {
+        "pli_parser": "[volatile]"
+      },
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "pli.alignment",
+        "pli.computed_storage_length",
+        "pli.data_attributes",
+        "pli.dimensions",
+        "pli.include_resolution",
+        "pli.language_defaults",
+        "pli.level_numbers",
+        "pli.like",
+        "pli.source_lines",
+        "pli.storage_class",
+        "pli.storage_offsets",
+        "pli.structures",
+        "pli.union"
+      ],
+      "unsupported": [
+        "pli.character_encoding_detection",
+        "pli.initial_values",
+        "pli.preprocessor_statements",
+        "pli.structure_mapping_offset"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 47,
+        "group": 5,
+        "record": 2,
+        "union": 1
+      },
+      "maxDepth": 4,
+      "nodeCount": 55,
+      "truncated": false,
+      "warningCount": 2
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "pli",
+    "sourceHash": "sha256:af7aded4dc4b40808da14c75b2c396fadcc497bc3a9ea40a2a2ce75016b1e709",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "aligned": true,
+          "based": "REC_PTR",
+          "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+          "level": 1,
+          "offset": 1,
+          "storageClass": "BASED",
+          "variableLength": true
+        },
+        "children": [
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(20)",
+              "dataKind": "character",
+              "length": 20,
+              "level": 2,
+              "offset": 1,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 9,
+              "offset": null,
+              "ordinal": 0,
+              "path": "COVERAGE_REC/CHAR_FIXED"
+            },
+            "name": "CHAR_FIXED",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(50) VARYING",
+              "dataKind": "character",
+              "length": 52,
+              "level": 2,
+              "offset": 21,
+              "storageBasis": "character",
+              "varying": "VARYING"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 10,
+              "offset": null,
+              "ordinal": 1,
+              "path": "COVERAGE_REC/CHAR_VARYING"
+            },
+            "name": "CHAR_VARYING",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(30) VARYINGZ",
+              "dataKind": "character",
+              "length": 31,
+              "level": 2,
+              "offset": 73,
+              "storageBasis": "character",
+              "varying": "VARYINGZ"
+            },
+            "children": [],
+            "id": "0.2",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 11,
+              "offset": null,
+              "ordinal": 2,
+              "path": "COVERAGE_REC/CHAR_VARYINGZ"
+            },
+            "name": "CHAR_VARYINGZ",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "GRAPHIC(10)",
+              "dataKind": "graphic",
+              "length": 20,
+              "level": 2,
+              "offset": 104,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "0.3",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 12,
+              "offset": null,
+              "ordinal": 3,
+              "path": "COVERAGE_REC/GRAPHIC_FIXED"
+            },
+            "name": "GRAPHIC_FIXED",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "WIDECHAR(10)",
+              "dataKind": "widechar",
+              "length": 20,
+              "level": 2,
+              "offset": 124,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "0.4",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 13,
+              "offset": null,
+              "ordinal": 4,
+              "path": "COVERAGE_REC/WIDECHAR_FIXED"
+            },
+            "name": "WIDECHAR_FIXED",
+            "ordinal": 4,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED DEC(15,2)",
+              "dataKind": "fixed-decimal",
+              "length": 8,
+              "level": 2,
+              "offset": 144,
+              "precision": 15,
+              "scale": 2,
+              "storageBasis": "packed"
+            },
+            "children": [],
+            "id": "0.5",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 16,
+              "offset": null,
+              "ordinal": 5,
+              "path": "COVERAGE_REC/FIXED_DEC_PACKED"
+            },
+            "name": "FIXED_DEC_PACKED",
+            "ordinal": 5,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "PIC'S9(7)V99'",
+              "dataKind": "picture",
+              "length": 10,
+              "level": 2,
+              "offset": 152,
+              "picture": "S9(7)V99",
+              "storageBasis": "picture"
+            },
+            "children": [],
+            "id": "0.6",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 17,
+              "offset": null,
+              "ordinal": 6,
+              "path": "COVERAGE_REC/FIXED_DEC_ZONED"
+            },
+            "name": "FIXED_DEC_ZONED",
+            "ordinal": 6,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(15)",
+              "dataKind": "fixed-binary",
+              "length": 2,
+              "level": 2,
+              "offset": 163,
+              "paddingBits": 8,
+              "precision": 15,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.7",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 18,
+              "offset": null,
+              "ordinal": 7,
+              "path": "COVERAGE_REC/FIXED_BIN_15"
+            },
+            "name": "FIXED_BIN_15",
+            "ordinal": 7,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(31)",
+              "dataKind": "fixed-binary",
+              "length": 4,
+              "level": 2,
+              "offset": 165,
+              "precision": 31,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.8",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 19,
+              "offset": null,
+              "ordinal": 8,
+              "path": "COVERAGE_REC/FIXED_BIN_31"
+            },
+            "name": "FIXED_BIN_31",
+            "ordinal": 8,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(63)",
+              "dataKind": "fixed-binary",
+              "length": 8,
+              "level": 2,
+              "offset": 169,
+              "precision": 63,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.9",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 20,
+              "offset": null,
+              "ordinal": 9,
+              "path": "COVERAGE_REC/FIXED_BIN_63"
+            },
+            "name": "FIXED_BIN_63",
+            "ordinal": 9,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(31) UNSIGNED",
+              "dataKind": "fixed-binary",
+              "length": 4,
+              "level": 2,
+              "offset": 177,
+              "precision": 31,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.10",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 21,
+              "offset": null,
+              "ordinal": 10,
+              "path": "COVERAGE_REC/UNSIGNED_BIN"
+            },
+            "name": "UNSIGNED_BIN",
+            "ordinal": 10,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FLOAT BIN(21)",
+              "dataKind": "float-binary",
+              "length": 4,
+              "level": 2,
+              "offset": 181,
+              "precision": 21,
+              "storageBasis": "float"
+            },
+            "children": [],
+            "id": "0.11",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 22,
+              "offset": null,
+              "ordinal": 11,
+              "path": "COVERAGE_REC/FLOAT_SHORT"
+            },
+            "name": "FLOAT_SHORT",
+            "ordinal": 11,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FLOAT DEC(16)",
+              "dataKind": "float-decimal",
+              "length": 8,
+              "level": 2,
+              "offset": 185,
+              "precision": 16,
+              "storageBasis": "float"
+            },
+            "children": [],
+            "id": "0.12",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 23,
+              "offset": null,
+              "ordinal": 12,
+              "path": "COVERAGE_REC/FLOAT_LONG"
+            },
+            "name": "FLOAT_LONG",
+            "ordinal": 12,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "PIC'999V99'",
+              "dataKind": "picture",
+              "length": 5,
+              "level": 2,
+              "offset": 193,
+              "picture": "999V99",
+              "storageBasis": "picture"
+            },
+            "children": [],
+            "id": "0.13",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 26,
+              "offset": null,
+              "ordinal": 13,
+              "path": "COVERAGE_REC/PIC_NUMERIC"
+            },
+            "name": "PIC_NUMERIC",
+            "ordinal": 13,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "PIC'S999'",
+              "dataKind": "picture",
+              "length": 4,
+              "level": 2,
+              "offset": 198,
+              "picture": "S999",
+              "storageBasis": "picture"
+            },
+            "children": [],
+            "id": "0.14",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 27,
+              "offset": null,
+              "ordinal": 14,
+              "path": "COVERAGE_REC/PIC_SIGNED"
+            },
+            "name": "PIC_SIGNED",
+            "ordinal": 14,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "PIC'ZZZ,ZZ9.99'",
+              "dataKind": "picture",
+              "length": 10,
+              "level": 2,
+              "offset": 202,
+              "picture": "ZZZ,ZZ9.99",
+              "storageBasis": "picture"
+            },
+            "children": [],
+            "id": "0.15",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 28,
+              "offset": null,
+              "ordinal": 15,
+              "path": "COVERAGE_REC/PIC_EDITED"
+            },
+            "name": "PIC_EDITED",
+            "ordinal": 15,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "PIC'AAAXXX'",
+              "dataKind": "picture",
+              "length": 6,
+              "level": 2,
+              "offset": 212,
+              "picture": "AAAXXX",
+              "storageBasis": "picture"
+            },
+            "children": [],
+            "id": "0.16",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 29,
+              "offset": null,
+              "ordinal": 16,
+              "path": "COVERAGE_REC/PIC_CHARACTER"
+            },
+            "name": "PIC_CHARACTER",
+            "ordinal": 16,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "alignment": "ALIGNED",
+              "attributes": "BIT(16)",
+              "dataKind": "bit",
+              "length": 2,
+              "level": 2,
+              "offset": 218,
+              "storageBasis": "bit"
+            },
+            "children": [],
+            "id": "0.17",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 32,
+              "offset": null,
+              "ordinal": 17,
+              "path": "COVERAGE_REC/BIT_FLAGS"
+            },
+            "name": "BIT_FLAGS",
+            "ordinal": 17,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "alignment": "UNALIGNED",
+              "attributes": "BIT(3)",
+              "bits": 3,
+              "dataKind": "bit",
+              "length": 1,
+              "level": 2,
+              "offset": 220,
+              "storageBasis": "bit"
+            },
+            "children": [],
+            "id": "0.18",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 33,
+              "offset": null,
+              "ordinal": 18,
+              "path": "COVERAGE_REC/BIT_UNALIGNED"
+            },
+            "name": "BIT_UNALIGNED",
+            "ordinal": 18,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "POINTER",
+              "dataKind": "pointer",
+              "length": 4,
+              "level": 2,
+              "offset": 221,
+              "paddingBits": 5,
+              "storageBasis": "locator"
+            },
+            "children": [],
+            "id": "0.19",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 34,
+              "offset": null,
+              "ordinal": 19,
+              "path": "COVERAGE_REC/REC_POINTER"
+            },
+            "name": "REC_POINTER",
+            "ordinal": 19,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "AREA(256)",
+              "dataKind": "area",
+              "length": 272,
+              "level": 2,
+              "offset": 225,
+              "storageBasis": "area"
+            },
+            "children": [],
+            "id": "0.20",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 35,
+              "offset": null,
+              "ordinal": 20,
+              "path": "COVERAGE_REC/AREA_FIELD"
+            },
+            "name": "AREA_FIELD",
+            "ordinal": 20,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "OFFSET(AREA_FIELD)",
+              "dataKind": "offset",
+              "length": 4,
+              "level": 2,
+              "offset": 497,
+              "storageBasis": "locator"
+            },
+            "children": [],
+            "id": "0.21",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 36,
+              "offset": null,
+              "ordinal": 21,
+              "path": "COVERAGE_REC/OFFSET_FIELD"
+            },
+            "name": "OFFSET_FIELD",
+            "ordinal": 21,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(31)",
+              "dataKind": "fixed-binary",
+              "dimensions": [
+                {
+                  "bounds": "10",
+                  "lower": 1,
+                  "upper": 10
+                }
+              ],
+              "length": 4,
+              "level": 2,
+              "occurrences": 10,
+              "offset": 501,
+              "precision": 31,
+              "storageBasis": "binary",
+              "totalLength": 40
+            },
+            "children": [],
+            "id": "0.22",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 39,
+              "offset": null,
+              "ordinal": 22,
+              "path": "COVERAGE_REC/SIMPLE_ARRAY"
+            },
+            "name": "SIMPLE_ARRAY",
+            "ordinal": 22,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED DEC(7,2)",
+              "dataKind": "fixed-decimal",
+              "dimensions": [
+                {
+                  "bounds": "1:12",
+                  "lower": 1,
+                  "upper": 12
+                }
+              ],
+              "length": 4,
+              "level": 2,
+              "occurrences": 12,
+              "offset": 541,
+              "precision": 7,
+              "scale": 2,
+              "storageBasis": "packed",
+              "totalLength": 48
+            },
+            "children": [],
+            "id": "0.23",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 40,
+              "offset": null,
+              "ordinal": 23,
+              "path": "COVERAGE_REC/BOUNDED_ARRAY"
+            },
+            "name": "BOUNDED_ARRAY",
+            "ordinal": 23,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(15)",
+              "dataKind": "fixed-binary",
+              "dimensions": [
+                {
+                  "bounds": "4",
+                  "lower": 1,
+                  "upper": 4
+                },
+                {
+                  "bounds": "3",
+                  "lower": 1,
+                  "upper": 3
+                }
+              ],
+              "length": 2,
+              "level": 2,
+              "occurrences": 12,
+              "offset": 589,
+              "precision": 15,
+              "storageBasis": "binary",
+              "totalLength": 24
+            },
+            "children": [],
+            "id": "0.24",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 41,
+              "offset": null,
+              "ordinal": 24,
+              "path": "COVERAGE_REC/MATRIX"
+            },
+            "name": "MATRIX",
+            "ordinal": 24,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "dimensions": [
+                {
+                  "bounds": "3",
+                  "lower": 1,
+                  "upper": 3
+                }
+              ],
+              "length": 12,
+              "level": 2,
+              "occurrences": 3,
+              "offset": 613,
+              "totalLength": 36
+            },
+            "children": [
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(8)",
+                  "dataKind": "character",
+                  "length": 8,
+                  "level": 3,
+                  "offset": 613,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.25.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 43,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "COVERAGE_REC/ARRAY_OF_STRUCT/ITEM_CODE"
+                },
+                "name": "ITEM_CODE",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": true,
+                  "attributes": "FIXED BIN(31)",
+                  "dataKind": "fixed-binary",
+                  "length": 4,
+                  "level": 3,
+                  "offset": 621,
+                  "precision": 31,
+                  "storageBasis": "binary"
+                },
+                "children": [],
+                "id": "0.25.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 44,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "COVERAGE_REC/ARRAY_OF_STRUCT/ITEM_QTY"
+                },
+                "name": "ITEM_QTY",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.25",
+            "kind": "group",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 42,
+              "offset": null,
+              "ordinal": 25,
+              "path": "COVERAGE_REC/ARRAY_OF_STRUCT"
+            },
+            "name": "ARRAY_OF_STRUCT",
+            "ordinal": 25,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(15)",
+              "dataKind": "fixed-binary",
+              "length": 2,
+              "level": 2,
+              "offset": 649,
+              "precision": 15,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.26",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 48,
+              "offset": null,
+              "ordinal": 26,
+              "path": "COVERAGE_REC/TABLE_COUNT"
+            },
+            "name": "TABLE_COUNT",
+            "ordinal": 26,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(12)",
+              "dataKind": "character",
+              "dimensions": [
+                {
+                  "bounds": "TABLE_COUNT REFER(TABLE_COUNT)",
+                  "lower": 1,
+                  "refer": "TABLE_COUNT"
+                }
+              ],
+              "length": 12,
+              "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+              "level": 2,
+              "offset": 651,
+              "storageBasis": "character",
+              "variableLength": true
+            },
+            "children": [],
+            "id": "0.27",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 49,
+              "offset": null,
+              "ordinal": 27,
+              "path": "COVERAGE_REC/TABLE_ENTRIES"
+            },
+            "name": "TABLE_ENTRIES",
+            "ordinal": 27,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "length": 64,
+              "level": 2,
+              "offsetVariable": true,
+              "union": true
+            },
+            "children": [
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(64)",
+                  "dataKind": "character",
+                  "length": 64,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character",
+                  "union": "PAYLOAD"
+                },
+                "children": [],
+                "id": "0.28.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 53,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "COVERAGE_REC/PAYLOAD/AS_TEXT"
+                },
+                "name": "AS_TEXT",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": true,
+                  "length": 12,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "redefines": "AS_TEXT",
+                  "union": "PAYLOAD"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "aligned": true,
+                      "attributes": "FIXED BIN(31)",
+                      "dataKind": "fixed-binary",
+                      "length": 4,
+                      "level": 4,
+                      "offsetVariable": true,
+                      "precision": 31,
+                      "storageBasis": "binary"
+                    },
+                    "children": [],
+                    "id": "0.28.1.0",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": "pli/04-stress-attribute-coverage.pli",
+                      "length": null,
+                      "line": 55,
+                      "offset": null,
+                      "ordinal": 0,
+                      "path": "COVERAGE_REC/PAYLOAD/AS_NUMBERS/NUM_A"
+                    },
+                    "name": "NUM_A",
+                    "ordinal": 0,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "aligned": true,
+                      "attributes": "FIXED BIN(31)",
+                      "dataKind": "fixed-binary",
+                      "length": 4,
+                      "level": 4,
+                      "offsetVariable": true,
+                      "precision": 31,
+                      "storageBasis": "binary"
+                    },
+                    "children": [],
+                    "id": "0.28.1.1",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": "pli/04-stress-attribute-coverage.pli",
+                      "length": null,
+                      "line": 56,
+                      "offset": null,
+                      "ordinal": 1,
+                      "path": "COVERAGE_REC/PAYLOAD/AS_NUMBERS/NUM_B"
+                    },
+                    "name": "NUM_B",
+                    "ordinal": 1,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  },
+                  {
+                    "attributes": {
+                      "aligned": true,
+                      "attributes": "FIXED BIN(31)",
+                      "dataKind": "fixed-binary",
+                      "length": 4,
+                      "level": 4,
+                      "offsetVariable": true,
+                      "precision": 31,
+                      "storageBasis": "binary"
+                    },
+                    "children": [],
+                    "id": "0.28.1.2",
+                    "kind": "field",
+                    "label": null,
+                    "location": {
+                      "column": null,
+                      "file": "pli/04-stress-attribute-coverage.pli",
+                      "length": null,
+                      "line": 57,
+                      "offset": null,
+                      "ordinal": 2,
+                      "path": "COVERAGE_REC/PAYLOAD/AS_NUMBERS/NUM_C"
+                    },
+                    "name": "NUM_C",
+                    "ordinal": 2,
+                    "redacted": false,
+                    "value": null,
+                    "valueLength": null,
+                    "valuePresent": null
+                  }
+                ],
+                "id": "0.28.1",
+                "kind": "group",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 54,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "COVERAGE_REC/PAYLOAD/AS_NUMBERS"
+                },
+                "name": "AS_NUMBERS",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "BIT(512)",
+                  "bits": 512,
+                  "dataKind": "bit",
+                  "length": 64,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "redefines": "AS_TEXT",
+                  "storageBasis": "bit",
+                  "union": "PAYLOAD"
+                },
+                "children": [],
+                "id": "0.28.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 58,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "COVERAGE_REC/PAYLOAD/AS_BITS"
+                },
+                "name": "AS_BITS",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.28",
+            "kind": "union",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 52,
+              "offset": null,
+              "ordinal": 28,
+              "path": "COVERAGE_REC/PAYLOAD"
+            },
+            "name": "PAYLOAD",
+            "ordinal": 28,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "length": 73,
+              "level": 2,
+              "like": "ADDRESS_REC",
+              "offsetVariable": true
+            },
+            "children": [
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(35)",
+                  "clonedFrom": "ADDRESS_REC",
+                  "dataKind": "character",
+                  "length": 35,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.29.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 74,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "COVERAGE_REC/SHIPPING_ADDR/LINE1"
+                },
+                "name": "LINE1",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(25)",
+                  "clonedFrom": "ADDRESS_REC",
+                  "dataKind": "character",
+                  "length": 25,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.29.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 75,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "COVERAGE_REC/SHIPPING_ADDR/CITY"
+                },
+                "name": "CITY",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(10)",
+                  "clonedFrom": "ADDRESS_REC",
+                  "dataKind": "character",
+                  "length": 10,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.29.2",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 76,
+                  "offset": null,
+                  "ordinal": 2,
+                  "path": "COVERAGE_REC/SHIPPING_ADDR/POSTCODE"
+                },
+                "name": "POSTCODE",
+                "ordinal": 2,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(3)",
+                  "clonedFrom": "ADDRESS_REC",
+                  "dataKind": "character",
+                  "length": 3,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.29.3",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 77,
+                  "offset": null,
+                  "ordinal": 3,
+                  "path": "COVERAGE_REC/SHIPPING_ADDR/COUNTRY"
+                },
+                "name": "COUNTRY",
+                "ordinal": 3,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.29",
+            "kind": "group",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 61,
+              "offset": null,
+              "ordinal": 29,
+              "path": "COVERAGE_REC/SHIPPING_ADDR"
+            },
+            "name": "SHIPPING_ADDR",
+            "ordinal": 29,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "alignment": "ALIGNED",
+              "length": 5,
+              "level": 2,
+              "offsetVariable": true
+            },
+            "children": [
+              {
+                "attributes": {
+                  "aligned": true,
+                  "attributes": "FIXED BIN(31)",
+                  "dataKind": "fixed-binary",
+                  "length": 4,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "precision": 31,
+                  "storageBasis": "binary"
+                },
+                "children": [],
+                "id": "0.30.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 65,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "COVERAGE_REC/ALIGNED_BLOCK/A_WORD"
+                },
+                "name": "A_WORD",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": true,
+                  "attributes": "CHAR(1)",
+                  "dataKind": "character",
+                  "length": 1,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.30.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 66,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "COVERAGE_REC/ALIGNED_BLOCK/A_BYTE"
+                },
+                "name": "A_BYTE",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.30",
+            "kind": "group",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 64,
+              "offset": null,
+              "ordinal": 30,
+              "path": "COVERAGE_REC/ALIGNED_BLOCK"
+            },
+            "name": "ALIGNED_BLOCK",
+            "ordinal": 30,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "alignment": "UNALIGNED",
+              "length": 5,
+              "level": 2,
+              "offsetVariable": true
+            },
+            "children": [
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "FIXED BIN(31)",
+                  "dataKind": "fixed-binary",
+                  "length": 4,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "precision": 31,
+                  "storageBasis": "binary"
+                },
+                "children": [],
+                "id": "0.31.0",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 68,
+                  "offset": null,
+                  "ordinal": 0,
+                  "path": "COVERAGE_REC/UNALIGNED_BLOCK/U_WORD"
+                },
+                "name": "U_WORD",
+                "ordinal": 0,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              },
+              {
+                "attributes": {
+                  "aligned": false,
+                  "attributes": "CHAR(1)",
+                  "dataKind": "character",
+                  "length": 1,
+                  "level": 3,
+                  "offsetVariable": true,
+                  "storageBasis": "character"
+                },
+                "children": [],
+                "id": "0.31.1",
+                "kind": "field",
+                "label": null,
+                "location": {
+                  "column": null,
+                  "file": "pli/04-stress-attribute-coverage.pli",
+                  "length": null,
+                  "line": 69,
+                  "offset": null,
+                  "ordinal": 1,
+                  "path": "COVERAGE_REC/UNALIGNED_BLOCK/U_BYTE"
+                },
+                "name": "U_BYTE",
+                "ordinal": 1,
+                "redacted": false,
+                "value": null,
+                "valueLength": null,
+                "valuePresent": null
+              }
+            ],
+            "id": "0.31",
+            "kind": "group",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 67,
+              "offset": null,
+              "ordinal": 31,
+              "path": "COVERAGE_REC/UNALIGNED_BLOCK"
+            },
+            "name": "UNALIGNED_BLOCK",
+            "ordinal": 31,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(8)",
+              "dataKind": "character",
+              "length": 8,
+              "level": 2,
+              "offsetVariable": true,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "0.32",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 71,
+              "offset": null,
+              "ordinal": 32,
+              "path": "COVERAGE_REC/FILLER_END"
+            },
+            "name": "FILLER_END",
+            "ordinal": 32,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "record",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "pli/04-stress-attribute-coverage.pli",
+          "length": null,
+          "line": 6,
+          "offset": null,
+          "ordinal": 0,
+          "path": "COVERAGE_REC"
+        },
+        "name": "COVERAGE_REC",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      },
+      {
+        "attributes": {
+          "aligned": false,
+          "length": 73,
+          "level": 1,
+          "offset": 1
+        },
+        "children": [
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(35)",
+              "dataKind": "character",
+              "length": 35,
+              "level": 2,
+              "offset": 1,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "1.0",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 74,
+              "offset": null,
+              "ordinal": 0,
+              "path": "ADDRESS_REC/LINE1"
+            },
+            "name": "LINE1",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(25)",
+              "dataKind": "character",
+              "length": 25,
+              "level": 2,
+              "offset": 36,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "1.1",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 75,
+              "offset": null,
+              "ordinal": 1,
+              "path": "ADDRESS_REC/CITY"
+            },
+            "name": "CITY",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(10)",
+              "dataKind": "character",
+              "length": 10,
+              "level": 2,
+              "offset": 61,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "1.2",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 76,
+              "offset": null,
+              "ordinal": 2,
+              "path": "ADDRESS_REC/POSTCODE"
+            },
+            "name": "POSTCODE",
+            "ordinal": 2,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(3)",
+              "dataKind": "character",
+              "length": 3,
+              "level": 2,
+              "offset": 71,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "1.3",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/04-stress-attribute-coverage.pli",
+              "length": null,
+              "line": 77,
+              "offset": null,
+              "ordinal": 3,
+              "path": "ADDRESS_REC/COUNTRY"
+            },
+            "name": "COUNTRY",
+            "ordinal": 3,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "1",
+        "kind": "record",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "pli/04-stress-attribute-coverage.pli",
+          "length": null,
+          "line": 73,
+          "offset": null,
+          "ordinal": 1,
+          "path": "ADDRESS_REC"
+        },
+        "name": "ADDRESS_REC",
+        "ordinal": 1,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "pli.runtime_extent",
+        "location": null,
+        "message": "A REFER or * extent is a runtime value (TABLE_ENTRIES); those items have no fixed length and nothing after them has a single offset.",
+        "nodeId": null,
+        "severity": "info"
+      },
+      {
+        "code": "pli.layout_assumptions",
+        "location": null,
+        "message": "Storage offsets and lengths are computed under assumptions the declaration does not state: One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position. A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR). FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each. POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default). Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only. An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary. An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary. An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM).",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

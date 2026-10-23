@@ -182,7 +182,7 @@ up the `∥` rows in parallel.**
 | # | Ticket | Depends on |
 | --- | --- | --- |
 | 1 ∥ | [FMT-11.3 VSAM / CICS BMS #5484](https://github.com/apiome/apiome/issues/5484) ✅ · [FMT-11.4 Natural / ADABAS DDM #5486](https://github.com/apiome/apiome/issues/5486) | — (copybook adapter reuse) |
-| 2 ∥ | [FMT-11.1 PL/I `%INCLUDE` #5480](https://github.com/apiome/apiome/issues/5480) · [FMT-11.2 IMS DBD / PSB #5482](https://github.com/apiome/apiome/issues/5482) | — |
+| 2 ∥ | [FMT-11.1 PL/I `%INCLUDE` #5480](https://github.com/apiome/apiome/issues/5480) ✅ · [FMT-11.2 IMS DBD / PSB #5482](https://github.com/apiome/apiome/issues/5482) | — |
 
 ### C7 — Close the format epics
 

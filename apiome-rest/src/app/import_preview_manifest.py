@@ -171,6 +171,7 @@ from .owl_normalizer import OWL_EXTRAS_KEY
 from .owl_normalizer import PARTIAL_LIMITS as OWL_PARTIAL_LIMITS
 from .pkl_parser import PARTIAL_LIMITS as PKL_PARTIAL_LIMITS
 from .pkl_parser import PKL_FORMAT
+from .pli_normalizer import PLI_EXTRAS_KEY, PLI_PARTIAL_LIMITS
 from .projection_taxonomy import ProjectionReason, ProjectionStatus
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY as PROTO_EDITIONS_EXTRA_KEY,
@@ -301,6 +302,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # and attributes, declared limits) sit under each sub-format's own key. Our own bookkeeping.
         VSAM_EXTRAS_KEY,
         BMS_EXTRAS_KEY,
+        # FMT-11.1: the PL/I projection record (structures, storage map, includes, layout
+        # assumptions, declared limits). Our own bookkeeping.
+        PLI_EXTRAS_KEY,
         # FMT-10.1: the Hoppscotch projection record (collection versions, environments, folders,
         # variable names, declared limits). Our own bookkeeping — never a credential.
         HOPPSCOTCH_EXTRAS_KEY,
@@ -1273,6 +1277,7 @@ def _document_scope_rows(
     ledger.extend(_sparkplug_capability_rows(api))
     ledger.extend(_ros2_capability_rows(api))
     ledger.extend(_mainframe_misc_capability_rows(api))
+    ledger.extend(_pli_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
@@ -2240,6 +2245,22 @@ def _mainframe_misc_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="vsam-idcams", extras_key=VSAM_EXTRAS_KEY, partial=VSAM_PARTIAL_LIMITS
     ) + _graded_limit_rows(api, format_key="cics-bms", extras_key=BMS_EXTRAS_KEY, partial=BMS_PARTIAL_LIMITS)
+
+
+def _pli_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-11.1 PL/I declared limits as document-scoped ledger rows.
+
+    An unresolved include, a UNION, a runtime extent, defaulted attributes, an edited picture, a
+    locator or program-control item and an unread attribute keep their item (``partially-mapped``);
+    a scalar declaration, a non-declaration statement and an unreferenced member are not modelled.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="pli", extras_key=PLI_EXTRAS_KEY, partial=PLI_PARTIAL_LIMITS)
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

@@ -1,0 +1,165 @@
+{
+  "adapter": "pli",
+  "corpus_path": "pli/01-minimal-structure.pli",
+  "document": {
+    "analyzer": {
+      "key": "pli",
+      "toolVersions": {
+        "pli_parser": "[volatile]"
+      },
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "limits": {
+        "maxDepth": 32,
+        "maxNodes": 5000,
+        "maxVisitedNodes": 50000,
+        "valuePreviewChars": 120
+      },
+      "supported": [
+        "pli.alignment",
+        "pli.computed_storage_length",
+        "pli.data_attributes",
+        "pli.dimensions",
+        "pli.include_resolution",
+        "pli.language_defaults",
+        "pli.level_numbers",
+        "pli.like",
+        "pli.source_lines",
+        "pli.storage_class",
+        "pli.storage_offsets",
+        "pli.structures",
+        "pli.union"
+      ],
+      "unsupported": [
+        "pli.character_encoding_detection",
+        "pli.initial_values",
+        "pli.preprocessor_statements",
+        "pli.structure_mapping_offset"
+      ]
+    },
+    "metrics": {
+      "droppedNodeCount": 0,
+      "kindCounts": {
+        "field": 2,
+        "record": 1
+      },
+      "maxDepth": 2,
+      "nodeCount": 3,
+      "truncated": false,
+      "warningCount": 1
+    },
+    "redaction": {
+      "policySource": "default",
+      "redactedNodeCount": 0,
+      "valuePreviewLimit": 120,
+      "valueVisibility": "structural"
+    },
+    "schemaVersion": "1.1.0",
+    "sourceFormat": "pli",
+    "sourceHash": "sha256:37199ba3a6913d8e2c5688648a8553ad86cc07152928cb432de275360939b6d7",
+    "status": "available",
+    "statusReason": null,
+    "tree": [
+      {
+        "attributes": {
+          "aligned": true,
+          "length": 24,
+          "level": 1,
+          "offset": 1
+        },
+        "children": [
+          {
+            "attributes": {
+              "aligned": false,
+              "attributes": "CHAR(16)",
+              "dataKind": "character",
+              "length": 16,
+              "level": 2,
+              "offset": 1,
+              "storageBasis": "character"
+            },
+            "children": [],
+            "id": "0.0",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/01-minimal-structure.pli",
+              "length": null,
+              "line": 3,
+              "offset": null,
+              "ordinal": 0,
+              "path": "BEACON_REC/BEACON_ID"
+            },
+            "name": "BEACON_ID",
+            "ordinal": 0,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          },
+          {
+            "attributes": {
+              "aligned": true,
+              "attributes": "FIXED BIN(63)",
+              "dataKind": "fixed-binary",
+              "length": 8,
+              "level": 2,
+              "offset": 17,
+              "precision": 63,
+              "storageBasis": "binary"
+            },
+            "children": [],
+            "id": "0.1",
+            "kind": "field",
+            "label": null,
+            "location": {
+              "column": null,
+              "file": "pli/01-minimal-structure.pli",
+              "length": null,
+              "line": 4,
+              "offset": null,
+              "ordinal": 1,
+              "path": "BEACON_REC/SEEN_AT"
+            },
+            "name": "SEEN_AT",
+            "ordinal": 1,
+            "redacted": false,
+            "value": null,
+            "valueLength": null,
+            "valuePresent": null
+          }
+        ],
+        "id": "0",
+        "kind": "record",
+        "label": null,
+        "location": {
+          "column": null,
+          "file": "pli/01-minimal-structure.pli",
+          "length": null,
+          "line": 2,
+          "offset": null,
+          "ordinal": 0,
+          "path": "BEACON_REC"
+        },
+        "name": "BEACON_REC",
+        "ordinal": 0,
+        "redacted": false,
+        "value": null,
+        "valueLength": null,
+        "valuePresent": null
+      }
+    ],
+    "warnings": [
+      {
+        "code": "pli.layout_assumptions",
+        "location": null,
+        "message": "Storage offsets and lengths are computed under assumptions the declaration does not state: One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position. A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR). FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each. POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default). Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only. An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary. An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary. An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM).",
+        "nodeId": null,
+        "severity": "info"
+      }
+    ]
+  },
+  "snapshot_version": 1
+}

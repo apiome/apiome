@@ -110,6 +110,10 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('ros2')?.sourceKind).toBe('ros2');
     expect(catalogAdapterForFormat('ros2-interface')?.sourceKind).toBe('ros2');
     expect(catalogAdapterForFormat('rosidl')?.sourceKind).toBe('ros2');
+    // FMT-11.1: PL/I structures, under their key and aliases.
+    expect(catalogAdapterForFormat('pli')?.sourceKind).toBe('pli');
+    expect(catalogAdapterForFormat('pl1')?.sourceKind).toBe('pli');
+    expect(catalogAdapterForFormat('pli-include')?.sourceKind).toBe('pli');
     // FMT-11.3: VSAM cluster definitions and CICS BMS maps, under their keys and aliases.
     expect(catalogAdapterForFormat('vsam-idcams')?.sourceKind).toBe('vsam-idcams');
     expect(catalogAdapterForFormat('idcams')?.sourceKind).toBe('vsam-idcams');
@@ -175,7 +179,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cics-bms', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'hoppscotch', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'lwm2m', 'matter', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'soapui', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'thunder-client', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'vsam-idcams', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cics-bms', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'hoppscotch', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'lwm2m', 'matter', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'pli', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'soapui', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'thunder-client', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'vsam-idcams', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -412,6 +416,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
     expect(paradigmForFormat('sparkplug')).toBe('event');
     expect(paradigmForFormat('ros2')).toBe('rpc');
+    expect(paradigmForFormat('pli')).toBe('dataschema');
     expect(paradigmForFormat('vsam-idcams')).toBe('dataschema');
     expect(paradigmForFormat('cics-bms')).toBe('dataschema');
     expect(paradigmForFormat('hoppscotch')).toBe('rest');

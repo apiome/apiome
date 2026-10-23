@@ -88,6 +88,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   odcs: 'https://bitol-io.github.io/open-data-contract-standard/latest/',
   'kafka-connect': 'https://kafka.apache.org/documentation/#connect_schemas',
   cobolcopybook: 'https://www.ibm.com/docs/en/cobol-zos/latest?topic=programs-copybook',
+  pli: 'https://www.ibm.com/docs/en/epfz/latest',
   'vsam-idcams': 'https://www.ibm.com/docs/en/zos/latest?topic=commands-define-cluster',
   'cics-bms': 'https://www.ibm.com/docs/en/cics-ts/latest?topic=programs-basic-mapping-support',
 

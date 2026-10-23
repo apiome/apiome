@@ -1,0 +1,2511 @@
+{
+  "adapter": "pli",
+  "canonical": {
+    "channels": [],
+    "description": "PL/I declarations: 2 structure(s). Byte offsets and lengths are computed under the assumptions in extras['pli']['layoutAssumptions'].",
+    "extras": {
+      "pli": {
+        "capability_limits": [
+          {
+            "construct": "pli.edited_picture",
+            "count": 1,
+            "detail": "An edited numeric picture (Z, *, $, comma, point, slash, B, sign or CR / DB insertion) formats a number for display; the field is a string and the picture is kept in extras['pli']['picture'].",
+            "locations": [
+              "COVERAGE_REC.PIC_EDITED"
+            ]
+          },
+          {
+            "construct": "pli.locator_item",
+            "count": 3,
+            "detail": "A POINTER, OFFSET, HANDLE or AREA holds an address or a storage pool, which has no meaning outside the running program; it is projected to bytes of its size.",
+            "locations": [
+              "COVERAGE_REC.AREA_FIELD",
+              "COVERAGE_REC.OFFSET_FIELD",
+              "COVERAGE_REC.REC_POINTER"
+            ]
+          },
+          {
+            "construct": "pli.refer_extent",
+            "count": 1,
+            "detail": "A REFER or * extent is a runtime value: the item has no fixed length, lists carry no item count, and nothing after it has a single offset.",
+            "locations": [
+              "COVERAGE_REC.TABLE_ENTRIES"
+            ]
+          },
+          {
+            "construct": "pli.scalar_declaration",
+            "count": 1,
+            "detail": "A declaration without a level number (a pointer, a counter, a standalone string) is not a record; it is listed in extras['pli']['scalars'] and not modelled.",
+            "locations": [
+              "REC_PTR"
+            ]
+          },
+          {
+            "construct": "pli.union_storage",
+            "count": 1,
+            "detail": "UNION members share one storage area. The canonical model has no overlay record, so the members are fields that all start at the union's offset; each later member names the first in extras['pli']['redefines'], as a COBOL REDEFINES does.",
+            "locations": [
+              "COVERAGE_REC.PAYLOAD"
+            ]
+          }
+        ],
+        "files": [
+          "pli/04-stress-attribute-coverage.pli"
+        ],
+        "includes": [],
+        "input": "file",
+        "layoutAssumptions": [
+          "One byte per CHARACTER position (a single-byte EBCDIC or ASCII code page); GRAPHIC and WIDECHAR take two bytes per position.",
+          "A VARYING string carries a 2-byte length prefix before its data and a VARYINGZ string a 1-byte terminator after it (2 bytes for GRAPHIC / WIDECHAR).",
+          "FIXED DECIMAL(p,q) is packed, (p div 2) + 1 bytes; FIXED BINARY takes 1, 2, 4 or 8 bytes by precision (7 / 15 / 31 / 63 bits signed, 8 / 16 / 32 / 64 unsigned); FLOAT takes 4, 8 or 16 bytes by precision (hexadecimal or IEEE alike); COMPLEX doubles each.",
+          "POINTER, OFFSET and HANDLE take 4 bytes (31-bit addressing); AREA(n) takes n bytes plus a 16-byte control block, and an AREA without a size is 1000 bytes (the language default).",
+          "Arithmetic and locator items default to ALIGNED, strings and pictures to UNALIGNED, and an ALIGNED item starts on its natural boundary (halfword, fullword or doubleword) counted from the start of its major structure, which is assumed to begin on a doubleword. The compiler's structure-mapping algorithm can shift a structure's start to save padding; this calculation pads forward only.",
+          "An UNALIGNED bit string starts at the next free bit; any other item starts on a byte boundary.",
+          "An array element of an ALIGNED structure is padded to a multiple of the structure's alignment so every element keeps its boundary.",
+          "An element with no data attributes takes the language defaults (FIXED BIN(15) for a name starting I–N, else FLOAT DEC(6)), as under RULES(IBM)."
+        ],
+        "scalars": [
+          {
+            "attributes": "POINTER",
+            "name": "REC_PTR"
+          }
+        ],
+        "statements": [],
+        "structures": [
+          {
+            "name": "COVERAGE_REC",
+            "type": "pli.COVERAGE_REC",
+            "variableLength": true
+          },
+          {
+            "length": 73,
+            "name": "ADDRESS_REC",
+            "type": "pli.ADDRESS_REC"
+          }
+        ],
+        "unreferenced": []
+      }
+    },
+    "format": "pli",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "COVERAGE_REC",
+      "namespace": "pli"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "COVERAGE_REC",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure ADDRESS_REC (level 1), 73 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 73,
+            "level": 1,
+            "line": 73,
+            "offset": 1,
+            "storageMap": [
+              {
+                "aligned": false,
+                "length": 73,
+                "level": 1,
+                "offset": 1,
+                "path": "ADDRESS_REC"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 2,
+                "offset": 1,
+                "path": "ADDRESS_REC.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 2,
+                "offset": 36,
+                "path": "ADDRESS_REC.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 2,
+                "offset": 61,
+                "path": "ADDRESS_REC.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 2,
+                "offset": 71,
+                "path": "ADDRESS_REC.COUNTRY",
+                "storageBasis": "character"
+              }
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 25,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(25) at offset 36, 25 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "dataKind": "character",
+                "length": 25,
+                "level": 2,
+                "offset": 36,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.ADDRESS_REC.CITY",
+            "name": "CITY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 3,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(3) at offset 71, 3 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "dataKind": "character",
+                "length": 3,
+                "level": 2,
+                "offset": 71,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.ADDRESS_REC.COUNTRY",
+            "name": "COUNTRY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 35,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(35) at offset 1, 35 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "dataKind": "character",
+                "length": 35,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.ADDRESS_REC.LINE1",
+            "name": "LINE1",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(10) at offset 61, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "dataKind": "character",
+                "length": 10,
+                "level": 2,
+                "offset": 61,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.ADDRESS_REC.POSTCODE",
+            "name": "POSTCODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.ADDRESS_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "ADDRESS_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I structure COVERAGE_REC (level 1), length not fixed.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "based": "REC_PTR",
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+            "level": 1,
+            "line": 6,
+            "offset": 1,
+            "storageClass": "BASED",
+            "storageMap": [
+              {
+                "aligned": true,
+                "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+                "level": 1,
+                "offset": 1,
+                "path": "COVERAGE_REC",
+                "variableLength": true
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(20)",
+                "length": 20,
+                "level": 2,
+                "offset": 1,
+                "path": "COVERAGE_REC.CHAR_FIXED",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(50) VARYING",
+                "length": 52,
+                "level": 2,
+                "offset": 21,
+                "path": "COVERAGE_REC.CHAR_VARYING",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(30) VARYINGZ",
+                "length": 31,
+                "level": 2,
+                "offset": 73,
+                "path": "COVERAGE_REC.CHAR_VARYINGZ",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "GRAPHIC(10)",
+                "length": 20,
+                "level": 2,
+                "offset": 104,
+                "path": "COVERAGE_REC.GRAPHIC_FIXED",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "WIDECHAR(10)",
+                "length": 20,
+                "level": 2,
+                "offset": 124,
+                "path": "COVERAGE_REC.WIDECHAR_FIXED",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "length": 8,
+                "level": 2,
+                "offset": 144,
+                "path": "COVERAGE_REC.FIXED_DEC_PACKED",
+                "storageBasis": "packed"
+              },
+              {
+                "aligned": false,
+                "attributes": "PIC'S9(7)V99'",
+                "length": 10,
+                "level": 2,
+                "offset": 152,
+                "path": "COVERAGE_REC.FIXED_DEC_ZONED",
+                "storageBasis": "picture"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 163,
+                "paddingBits": 8,
+                "path": "COVERAGE_REC.FIXED_BIN_15",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 2,
+                "offset": 165,
+                "path": "COVERAGE_REC.FIXED_BIN_31",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(63)",
+                "length": 8,
+                "level": 2,
+                "offset": 169,
+                "path": "COVERAGE_REC.FIXED_BIN_63",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31) UNSIGNED",
+                "length": 4,
+                "level": 2,
+                "offset": 177,
+                "path": "COVERAGE_REC.UNSIGNED_BIN",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FLOAT BIN(21)",
+                "length": 4,
+                "level": 2,
+                "offset": 181,
+                "path": "COVERAGE_REC.FLOAT_SHORT",
+                "storageBasis": "float"
+              },
+              {
+                "aligned": true,
+                "attributes": "FLOAT DEC(16)",
+                "length": 8,
+                "level": 2,
+                "offset": 185,
+                "path": "COVERAGE_REC.FLOAT_LONG",
+                "storageBasis": "float"
+              },
+              {
+                "aligned": false,
+                "attributes": "PIC'999V99'",
+                "length": 5,
+                "level": 2,
+                "offset": 193,
+                "path": "COVERAGE_REC.PIC_NUMERIC",
+                "storageBasis": "picture"
+              },
+              {
+                "aligned": false,
+                "attributes": "PIC'S999'",
+                "length": 4,
+                "level": 2,
+                "offset": 198,
+                "path": "COVERAGE_REC.PIC_SIGNED",
+                "storageBasis": "picture"
+              },
+              {
+                "aligned": false,
+                "attributes": "PIC'ZZZ,ZZ9.99'",
+                "length": 10,
+                "level": 2,
+                "offset": 202,
+                "path": "COVERAGE_REC.PIC_EDITED",
+                "storageBasis": "picture"
+              },
+              {
+                "aligned": false,
+                "attributes": "PIC'AAAXXX'",
+                "length": 6,
+                "level": 2,
+                "offset": 212,
+                "path": "COVERAGE_REC.PIC_CHARACTER",
+                "storageBasis": "picture"
+              },
+              {
+                "aligned": true,
+                "attributes": "BIT(16)",
+                "length": 2,
+                "level": 2,
+                "offset": 218,
+                "path": "COVERAGE_REC.BIT_FLAGS",
+                "storageBasis": "bit"
+              },
+              {
+                "aligned": false,
+                "attributes": "BIT(3)",
+                "bits": 3,
+                "length": 1,
+                "level": 2,
+                "offset": 220,
+                "path": "COVERAGE_REC.BIT_UNALIGNED",
+                "storageBasis": "bit"
+              },
+              {
+                "aligned": true,
+                "attributes": "POINTER",
+                "length": 4,
+                "level": 2,
+                "offset": 221,
+                "paddingBits": 5,
+                "path": "COVERAGE_REC.REC_POINTER",
+                "storageBasis": "locator"
+              },
+              {
+                "aligned": true,
+                "attributes": "AREA(256)",
+                "length": 272,
+                "level": 2,
+                "offset": 225,
+                "path": "COVERAGE_REC.AREA_FIELD",
+                "storageBasis": "area"
+              },
+              {
+                "aligned": true,
+                "attributes": "OFFSET(AREA_FIELD)",
+                "length": 4,
+                "level": 2,
+                "offset": 497,
+                "path": "COVERAGE_REC.OFFSET_FIELD",
+                "storageBasis": "locator"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 2,
+                "occurrences": 10,
+                "offset": 501,
+                "path": "COVERAGE_REC.SIMPLE_ARRAY",
+                "storageBasis": "binary",
+                "totalLength": 40
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED DEC(7,2)",
+                "length": 4,
+                "level": 2,
+                "occurrences": 12,
+                "offset": 541,
+                "path": "COVERAGE_REC.BOUNDED_ARRAY",
+                "storageBasis": "packed",
+                "totalLength": 48
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "occurrences": 12,
+                "offset": 589,
+                "path": "COVERAGE_REC.MATRIX",
+                "storageBasis": "binary",
+                "totalLength": 24
+              },
+              {
+                "aligned": true,
+                "length": 12,
+                "level": 2,
+                "occurrences": 3,
+                "offset": 613,
+                "path": "COVERAGE_REC.ARRAY_OF_STRUCT",
+                "totalLength": 36
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 3,
+                "offset": 613,
+                "path": "COVERAGE_REC.ARRAY_OF_STRUCT.ITEM_CODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 3,
+                "offset": 621,
+                "path": "COVERAGE_REC.ARRAY_OF_STRUCT.ITEM_QTY",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "length": 2,
+                "level": 2,
+                "offset": 649,
+                "path": "COVERAGE_REC.TABLE_COUNT",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(12)",
+                "length": 12,
+                "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+                "level": 2,
+                "offset": 651,
+                "path": "COVERAGE_REC.TABLE_ENTRIES",
+                "storageBasis": "character",
+                "variableLength": true
+              },
+              {
+                "aligned": true,
+                "attributes": "UNION",
+                "length": 64,
+                "level": 2,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(64)",
+                "length": 64,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_TEXT",
+                "storageBasis": "character",
+                "union": "PAYLOAD"
+              },
+              {
+                "aligned": true,
+                "length": 12,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_NUMBERS",
+                "redefines": "AS_TEXT",
+                "union": "PAYLOAD"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_A",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_B",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_C",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "attributes": "BIT(512)",
+                "bits": 512,
+                "length": 64,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.PAYLOAD.AS_BITS",
+                "redefines": "AS_TEXT",
+                "storageBasis": "bit",
+                "union": "PAYLOAD"
+              },
+              {
+                "aligned": false,
+                "length": 73,
+                "level": 2,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.SHIPPING_ADDR"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(35)",
+                "length": 35,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.SHIPPING_ADDR.LINE1",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(25)",
+                "length": 25,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.SHIPPING_ADDR.CITY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(10)",
+                "length": 10,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.SHIPPING_ADDR.POSTCODE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(3)",
+                "length": 3,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.SHIPPING_ADDR.COUNTRY",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": true,
+                "length": 5,
+                "level": 2,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.ALIGNED_BLOCK"
+              },
+              {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.ALIGNED_BLOCK.A_WORD",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": true,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.ALIGNED_BLOCK.A_BYTE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "length": 5,
+                "level": 2,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.UNALIGNED_BLOCK"
+              },
+              {
+                "aligned": false,
+                "attributes": "FIXED BIN(31)",
+                "length": 4,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.UNALIGNED_BLOCK.U_WORD",
+                "storageBasis": "binary"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "length": 1,
+                "level": 3,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.UNALIGNED_BLOCK.U_BYTE",
+                "storageBasis": "character"
+              },
+              {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "length": 8,
+                "level": 2,
+                "offsetVariable": true,
+                "path": "COVERAGE_REC.FILLER_END",
+                "storageBasis": "character"
+              }
+            ],
+            "variableLength": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at a runtime offset, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "alignment": "ALIGNED",
+                "length": 5,
+                "level": 2,
+                "offsetVariable": true
+              }
+            },
+            "field_number": 31,
+            "key": "pli.COVERAGE_REC.ALIGNED_BLOCK",
+            "name": "ALIGNED_BLOCK",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.COVERAGE_REC.ALIGNED_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "AREA(256) at offset 225, 272 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "AREA(256)",
+                "dataKind": "area",
+                "length": 272,
+                "level": 2,
+                "offset": 225,
+                "storageBasis": "area"
+              }
+            },
+            "field_number": 21,
+            "key": "pli.COVERAGE_REC.AREA_FIELD",
+            "name": "AREA_FIELD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 3,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "structure, dimension (3) at offset 613, 36 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "dimensions": [
+                  {
+                    "bounds": "3",
+                    "lower": 1,
+                    "upper": 3
+                  }
+                ],
+                "length": 12,
+                "level": 2,
+                "occurrences": 3,
+                "offset": 613,
+                "totalLength": 36
+              }
+            },
+            "field_number": 26,
+            "key": "pli.COVERAGE_REC.ARRAY_OF_STRUCT",
+            "name": "ARRAY_OF_STRUCT",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "pli.COVERAGE_REC.ARRAY_OF_STRUCT",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(16) at offset 218, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "alignment": "ALIGNED",
+                "attributes": "BIT(16)",
+                "dataKind": "bit",
+                "length": 2,
+                "level": 2,
+                "offset": 218,
+                "storageBasis": "bit"
+              }
+            },
+            "field_number": 18,
+            "key": "pli.COVERAGE_REC.BIT_FLAGS",
+            "name": "BIT_FLAGS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(3) at offset 220, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "alignment": "UNALIGNED",
+                "attributes": "BIT(3)",
+                "bits": 3,
+                "dataKind": "bit",
+                "length": 1,
+                "level": 2,
+                "offset": 220,
+                "storageBasis": "bit"
+              }
+            },
+            "field_number": 19,
+            "key": "pli.COVERAGE_REC.BIT_UNALIGNED",
+            "name": "BIT_UNALIGNED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 12,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 12,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(7,2), dimension (1:12) at offset 541, 48 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(7,2)",
+                "dataKind": "fixed-decimal",
+                "dimensions": [
+                  {
+                    "bounds": "1:12",
+                    "lower": 1,
+                    "upper": 12
+                  }
+                ],
+                "length": 4,
+                "level": 2,
+                "occurrences": 12,
+                "offset": 541,
+                "precision": 7,
+                "scale": 2,
+                "storageBasis": "packed",
+                "totalLength": 48
+              }
+            },
+            "field_number": 24,
+            "key": "pli.COVERAGE_REC.BOUNDED_ARRAY",
+            "name": "BOUNDED_ARRAY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "decimal",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(20) at offset 1, 20 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(20)",
+                "dataKind": "character",
+                "length": 20,
+                "level": 2,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.CHAR_FIXED",
+            "name": "CHAR_FIXED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 50,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(50) VARYING at offset 21, 52 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(50) VARYING",
+                "dataKind": "character",
+                "length": 52,
+                "level": 2,
+                "offset": 21,
+                "storageBasis": "character",
+                "varying": "VARYING"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.CHAR_VARYING",
+            "name": "CHAR_VARYING",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 30,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(30) VARYINGZ at offset 73, 31 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(30) VARYINGZ",
+                "dataKind": "character",
+                "length": 31,
+                "level": 2,
+                "offset": 73,
+                "storageBasis": "character",
+                "varying": "VARYINGZ"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.COVERAGE_REC.CHAR_VARYINGZ",
+            "name": "CHAR_VARYINGZ",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(8) at a runtime offset, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "dataKind": "character",
+                "length": 8,
+                "level": 2,
+                "offsetVariable": true,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 33,
+            "key": "pli.COVERAGE_REC.FILLER_END",
+            "name": "FILLER_END",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 163, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 163,
+                "paddingBits": 8,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 8,
+            "key": "pli.COVERAGE_REC.FIXED_BIN_15",
+            "name": "FIXED_BIN_15",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at offset 165, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 2,
+                "offset": 165,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 9,
+            "key": "pli.COVERAGE_REC.FIXED_BIN_31",
+            "name": "FIXED_BIN_31",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(63) at offset 169, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(63)",
+                "dataKind": "fixed-binary",
+                "length": 8,
+                "level": 2,
+                "offset": 169,
+                "precision": 63,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 10,
+            "key": "pli.COVERAGE_REC.FIXED_BIN_63",
+            "name": "FIXED_BIN_63",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED DEC(15,2) at offset 144, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED DEC(15,2)",
+                "dataKind": "fixed-decimal",
+                "length": 8,
+                "level": 2,
+                "offset": 144,
+                "precision": 15,
+                "scale": 2,
+                "storageBasis": "packed"
+              }
+            },
+            "field_number": 6,
+            "key": "pli.COVERAGE_REC.FIXED_DEC_PACKED",
+            "name": "FIXED_DEC_PACKED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "PIC'S9(7)V99' at offset 152, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "PIC'S9(7)V99'",
+                "dataKind": "picture",
+                "length": 10,
+                "level": 2,
+                "offset": 152,
+                "picture": "S9(7)V99",
+                "storageBasis": "picture"
+              }
+            },
+            "field_number": 7,
+            "key": "pli.COVERAGE_REC.FIXED_DEC_ZONED",
+            "name": "FIXED_DEC_ZONED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FLOAT DEC(16) at offset 185, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FLOAT DEC(16)",
+                "dataKind": "float-decimal",
+                "length": 8,
+                "level": 2,
+                "offset": 185,
+                "precision": 16,
+                "storageBasis": "float"
+              }
+            },
+            "field_number": 13,
+            "key": "pli.COVERAGE_REC.FLOAT_LONG",
+            "name": "FLOAT_LONG",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FLOAT BIN(21) at offset 181, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FLOAT BIN(21)",
+                "dataKind": "float-binary",
+                "length": 4,
+                "level": 2,
+                "offset": 181,
+                "precision": 21,
+                "storageBasis": "float"
+              }
+            },
+            "field_number": 12,
+            "key": "pli.COVERAGE_REC.FLOAT_SHORT",
+            "name": "FLOAT_SHORT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "GRAPHIC(10) at offset 104, 20 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "GRAPHIC(10)",
+                "dataKind": "graphic",
+                "length": 20,
+                "level": 2,
+                "offset": 104,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 4,
+            "key": "pli.COVERAGE_REC.GRAPHIC_FIXED",
+            "name": "GRAPHIC_FIXED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 4,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 4,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15), dimension (4, 3) at offset 589, 24 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "dimensions": [
+                  {
+                    "bounds": "4",
+                    "lower": 1,
+                    "upper": 4
+                  },
+                  {
+                    "bounds": "3",
+                    "lower": 1,
+                    "upper": 3
+                  }
+                ],
+                "length": 2,
+                "level": 2,
+                "occurrences": 12,
+                "offset": 589,
+                "precision": 15,
+                "storageBasis": "binary",
+                "totalLength": 24
+              }
+            },
+            "field_number": 25,
+            "key": "pli.COVERAGE_REC.MATRIX",
+            "name": "MATRIX",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": {
+                  "extras": {},
+                  "item": null,
+                  "name": "integer",
+                  "nullable": false
+                },
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "OFFSET(AREA_FIELD) at offset 497, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "OFFSET(AREA_FIELD)",
+                "dataKind": "offset",
+                "length": 4,
+                "level": 2,
+                "offset": 497,
+                "storageBasis": "locator"
+              }
+            },
+            "field_number": 22,
+            "key": "pli.COVERAGE_REC.OFFSET_FIELD",
+            "name": "OFFSET_FIELD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "UNION at a runtime offset, 64 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "length": 64,
+                "level": 2,
+                "offsetVariable": true,
+                "union": true
+              }
+            },
+            "field_number": 29,
+            "key": "pli.COVERAGE_REC.PAYLOAD",
+            "name": "PAYLOAD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.COVERAGE_REC.PAYLOAD",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "PIC'AAAXXX' at offset 212, 6 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "PIC'AAAXXX'",
+                "dataKind": "picture",
+                "length": 6,
+                "level": 2,
+                "offset": 212,
+                "picture": "AAAXXX",
+                "storageBasis": "picture"
+              }
+            },
+            "field_number": 17,
+            "key": "pli.COVERAGE_REC.PIC_CHARACTER",
+            "name": "PIC_CHARACTER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "PIC'ZZZ,ZZ9.99' at offset 202, 10 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "PIC'ZZZ,ZZ9.99'",
+                "dataKind": "picture",
+                "length": 10,
+                "level": 2,
+                "offset": 202,
+                "picture": "ZZZ,ZZ9.99",
+                "storageBasis": "picture"
+              }
+            },
+            "field_number": 16,
+            "key": "pli.COVERAGE_REC.PIC_EDITED",
+            "name": "PIC_EDITED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "PIC'999V99' at offset 193, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "PIC'999V99'",
+                "dataKind": "picture",
+                "length": 5,
+                "level": 2,
+                "offset": 193,
+                "picture": "999V99",
+                "storageBasis": "picture"
+              }
+            },
+            "field_number": 14,
+            "key": "pli.COVERAGE_REC.PIC_NUMERIC",
+            "name": "PIC_NUMERIC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "PIC'S999' at offset 198, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "PIC'S999'",
+                "dataKind": "picture",
+                "length": 4,
+                "level": 2,
+                "offset": 198,
+                "picture": "S999",
+                "storageBasis": "picture"
+              }
+            },
+            "field_number": 15,
+            "key": "pli.COVERAGE_REC.PIC_SIGNED",
+            "name": "PIC_SIGNED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "POINTER at offset 221, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "POINTER",
+                "dataKind": "pointer",
+                "length": 4,
+                "level": 2,
+                "offset": 221,
+                "paddingBits": 5,
+                "storageBasis": "locator"
+              }
+            },
+            "field_number": 20,
+            "key": "pli.COVERAGE_REC.REC_POINTER",
+            "name": "REC_POINTER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "LIKE ADDRESS_REC at a runtime offset, 73 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "length": 73,
+                "level": 2,
+                "like": "ADDRESS_REC",
+                "offsetVariable": true
+              }
+            },
+            "field_number": 30,
+            "key": "pli.COVERAGE_REC.SHIPPING_ADDR",
+            "name": "SHIPPING_ADDR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.ADDRESS_REC",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 10,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 10,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31), dimension (10) at offset 501, 40 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "dimensions": [
+                  {
+                    "bounds": "10",
+                    "lower": 1,
+                    "upper": 10
+                  }
+                ],
+                "length": 4,
+                "level": 2,
+                "occurrences": 10,
+                "offset": 501,
+                "precision": 31,
+                "storageBasis": "binary",
+                "totalLength": 40
+              }
+            },
+            "field_number": 23,
+            "key": "pli.COVERAGE_REC.SIMPLE_ARRAY",
+            "name": "SIMPLE_ARRAY",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "integer",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(15) at offset 649, 2 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(15)",
+                "dataKind": "fixed-binary",
+                "length": 2,
+                "level": 2,
+                "offset": 649,
+                "precision": 15,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 27,
+            "key": "pli.COVERAGE_REC.TABLE_COUNT",
+            "name": "TABLE_COUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(12), dimension (TABLE_COUNT REFER(TABLE_COUNT)) at offset 651, length not fixed.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(12)",
+                "dataKind": "character",
+                "dimensions": [
+                  {
+                    "bounds": "TABLE_COUNT REFER(TABLE_COUNT)",
+                    "lower": 1,
+                    "refer": "TABLE_COUNT"
+                  }
+                ],
+                "length": 12,
+                "lengthUnknownReason": "The extent (TABLE_COUNT REFER(TABLE_COUNT)) is a runtime value, so the item has no fixed size.",
+                "level": 2,
+                "offset": 651,
+                "storageBasis": "character",
+                "variableLength": true
+              }
+            },
+            "field_number": 28,
+            "key": "pli.COVERAGE_REC.TABLE_ENTRIES",
+            "name": "TABLE_ENTRIES",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at a runtime offset, 5 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "alignment": "UNALIGNED",
+                "length": 5,
+                "level": 2,
+                "offsetVariable": true
+              }
+            },
+            "field_number": 32,
+            "key": "pli.COVERAGE_REC.UNALIGNED_BLOCK",
+            "name": "UNALIGNED_BLOCK",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.COVERAGE_REC.UNALIGNED_BLOCK",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) UNSIGNED at offset 177, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31) UNSIGNED",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 2,
+                "offset": 177,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 11,
+            "key": "pli.COVERAGE_REC.UNSIGNED_BIN",
+            "name": "UNSIGNED_BIN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "WIDECHAR(10) at offset 124, 20 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "WIDECHAR(10)",
+                "dataKind": "widechar",
+                "length": 20,
+                "level": 2,
+                "offset": 124,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 5,
+            "key": "pli.COVERAGE_REC.WIDECHAR_FIXED",
+            "name": "WIDECHAR_FIXED",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure ALIGNED_BLOCK (level 2), 5 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "alignment": "ALIGNED",
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 5,
+            "level": 2,
+            "line": 64,
+            "offsetVariable": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(1) at a runtime offset, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "CHAR(1)",
+                "dataKind": "character",
+                "length": 1,
+                "level": 3,
+                "offsetVariable": true,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.ALIGNED_BLOCK.A_BYTE",
+            "name": "A_BYTE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at a runtime offset, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 3,
+                "offsetVariable": true,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.ALIGNED_BLOCK.A_WORD",
+            "name": "A_WORD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC.ALIGNED_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC.ALIGNED_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure ARRAY_OF_STRUCT (level 2), 36 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "dimensions": [
+              {
+                "bounds": "3",
+                "lower": 1,
+                "upper": 3
+              }
+            ],
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 12,
+            "level": 2,
+            "line": 42,
+            "occurrences": 3,
+            "offset": 1,
+            "totalLength": 36
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(8) at offset 1, 8 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(8)",
+                "dataKind": "character",
+                "length": 8,
+                "level": 3,
+                "offset": 1,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.ARRAY_OF_STRUCT.ITEM_CODE",
+            "name": "ITEM_CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at offset 9, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 3,
+                "offset": 9,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.ARRAY_OF_STRUCT.ITEM_QTY",
+            "name": "ITEM_QTY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC.ARRAY_OF_STRUCT",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC.ARRAY_OF_STRUCT",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I UNION PAYLOAD (level 2), 64 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 64,
+            "level": 2,
+            "line": 52,
+            "offsetVariable": true,
+            "union": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "BIT(512) at a runtime offset, 64 bytes; shares storage with AS_TEXT.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "BIT(512)",
+                "bits": 512,
+                "dataKind": "bit",
+                "length": 64,
+                "level": 3,
+                "offsetVariable": true,
+                "redefines": "AS_TEXT",
+                "storageBasis": "bit",
+                "union": "PAYLOAD"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_BITS",
+            "name": "AS_BITS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "structure at a runtime offset, 12 bytes; shares storage with AS_TEXT.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "length": 12,
+                "level": 3,
+                "offsetVariable": true,
+                "redefines": "AS_TEXT",
+                "union": "PAYLOAD"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS",
+            "name": "AS_NUMBERS",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(64) at a runtime offset, 64 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(64)",
+                "dataKind": "character",
+                "length": 64,
+                "level": 3,
+                "offsetVariable": true,
+                "storageBasis": "character",
+                "union": "PAYLOAD"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_TEXT",
+            "name": "AS_TEXT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC.PAYLOAD",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC.PAYLOAD",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure AS_NUMBERS (level 3), 12 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": true,
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 12,
+            "level": 3,
+            "line": 54,
+            "offsetVariable": true,
+            "redefines": "AS_TEXT",
+            "union": "PAYLOAD"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at a runtime offset, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_A",
+            "name": "NUM_A",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at a runtime offset, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_B",
+            "name": "NUM_B",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at a runtime offset, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": true,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 4,
+                "offsetVariable": true,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 3,
+            "key": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS.NUM_C",
+            "name": "NUM_C",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC.PAYLOAD.AS_NUMBERS",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC.PAYLOAD.AS_NUMBERS",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "PL/I minor structure UNALIGNED_BLOCK (level 2), 5 bytes.",
+        "enum_values": [],
+        "extras": {
+          "pli": {
+            "aligned": false,
+            "alignment": "UNALIGNED",
+            "file": "pli/04-stress-attribute-coverage.pli",
+            "length": 5,
+            "level": 2,
+            "line": 67,
+            "offsetVariable": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "CHAR(1) at a runtime offset, 1 byte.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "CHAR(1)",
+                "dataKind": "character",
+                "length": 1,
+                "level": 3,
+                "offsetVariable": true,
+                "storageBasis": "character"
+              }
+            },
+            "field_number": 2,
+            "key": "pli.COVERAGE_REC.UNALIGNED_BLOCK.U_BYTE",
+            "name": "U_BYTE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "FIXED BIN(31) at a runtime offset, 4 bytes.",
+            "extras": {
+              "pli": {
+                "aligned": false,
+                "attributes": "FIXED BIN(31)",
+                "dataKind": "fixed-binary",
+                "length": 4,
+                "level": 3,
+                "offsetVariable": true,
+                "precision": 31,
+                "storageBasis": "binary"
+              }
+            },
+            "field_number": 1,
+            "key": "pli.COVERAGE_REC.UNALIGNED_BLOCK.U_WORD",
+            "name": "U_WORD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "pli.COVERAGE_REC.UNALIGNED_BLOCK",
+        "key_type": null,
+        "kind": "record",
+        "name": "COVERAGE_REC.UNALIGNED_BLOCK",
+        "namespace": "pli",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "pli/04-stress-attribute-coverage.pli",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 7
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "pli"
+  },
+  "fingerprint": "sha256:de941bd5056b0ac5141044e3ef8e9beaa942a3f32c02508a4ce73d00a208a811",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
