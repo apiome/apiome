@@ -9,6 +9,9 @@ import type { ShortcutBinding } from '@lib/shortcuts';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
 
 import { Alert } from '@/app/components/ui/Alert';
+import { ComingNext } from '@/app/components/ui/ComingNext';
+import WhatsNewDialog from '@/app/components/ade/WhatsNewDialog';
+import { markWhatsNewSeen } from '@/app/components/shell/whatsNewSeen';
 import { Button } from '@/app/components/ui/Button';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -22,19 +25,17 @@ import {
   offboardMember,
   resendMemberInvite,
   setMemberStatus,
-  IdentityProviderCards,
   InviteMemberDialog,
   MemberDetailDrawer,
-  MemberSeatsCard,
+  MemberFactsLine,
+  MEMBERS_COMING_NEXT,
   MembersTable,
   OffboardMemberDialog,
   SuspendMemberDialog,
-  describeMemberCount,
   inviteBlockedBySeats,
   memberCapabilities,
   nextMemberStatus,
   summariseMembers,
-  SEATS_EXHAUSTED_TITLE,
   type AccessAuditRecord,
   type MemberRecord,
   type MyPermissions,
@@ -53,8 +54,8 @@ import type { TenantLicensePlan, TenantLicenseSeats } from '../tenants/licenseAp
  *
  * ### What this page owns
  *
- * The data and the writes, and nothing about how either is drawn. The seat meter is
- * {@link MemberSeatsCard}, the roster is {@link MembersTable}, one person is
+ * The data and the writes, and nothing about how either is drawn. The summary is
+ * {@link MemberFactsLine} (HIVE-11.9), the roster is {@link MembersTable}, one person is
  * {@link MemberDetailDrawer}, and the three decisions are their own dialogs. What is left here
  * is what genuinely belongs to a page: one load, five mutations, and which overlay is open.
  *
@@ -370,6 +371,13 @@ export default function MembersClient() {
 
   const closeOverlay = React.useCallback(() => setOverlay('none'), []);
 
+  // What's new opens in place from the "Coming next" line, as on the Help page.
+  const [whatsNewOpen, setWhatsNewOpen] = React.useState(false);
+  const openWhatsNew = React.useCallback(() => {
+    markWhatsNewSeen();
+    setWhatsNewOpen(true);
+  }, []);
+
   return (
     <Page>
       <PageHeader
@@ -382,22 +390,16 @@ export default function MembersClient() {
         description="Who can sign in to this workspace, and what they may do."
         actions={
           <>
-            <span className="text-xs text-fg-muted">{describeMemberCount(summary)}</span>
             <Button variant="outline" asChild>
               <a href={ROLES_ROUTE}>
                 <Shield aria-hidden />
                 Roles
               </a>
             </Button>
-            {capabilities.canInvite && (
-              <Button
-                kbd={canInviteNow ? 'N' : undefined}
-                data-testid="members-invite"
-                disabled={atCapacity}
-                aria-disabled={atCapacity}
-                title={atCapacity ? SEATS_EXHAUSTED_TITLE : undefined}
-                onClick={() => setOverlay('invite')}
-              >
+            {/* Offered only when it can work (HIVE-11.9): with every seat taken the facts
+                line's warning says why there is no invite, rather than a disabled button. */}
+            {canInviteNow && (
+              <Button kbd="N" data-testid="members-invite" onClick={() => setOverlay('invite')}>
                 <UserPlus aria-hidden />
                 Invite member
               </Button>
@@ -422,7 +424,7 @@ export default function MembersClient() {
           </Alert>
         )}
 
-        <MemberSeatsCard seats={seats} plan={plan} />
+        <MemberFactsLine summary={summary} seats={seats} plan={plan} loading={loading && members.length === 0} />
 
         <MembersTable
           members={members}
@@ -442,7 +444,8 @@ export default function MembersClient() {
           canInviteNow={canInviteNow}
         />
 
-        <IdentityProviderCards />
+        {/* What is not shipped yet is one line of text, never a card with a dead button (§10). */}
+        <ComingNext items={MEMBERS_COMING_NEXT} onFollow={openWhatsNew} />
       </PageBody>
 
       <MemberDetailDrawer
@@ -506,6 +509,7 @@ export default function MembersClient() {
         endpoint={memberTwoFactorResetEndpoint}
         onReset={() => void loadData()}
       />
+      <WhatsNewDialog isOpen={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
     </Page>
   );
 }

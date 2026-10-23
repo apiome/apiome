@@ -17,8 +17,15 @@
  */
 
 import type { MyPermissions, RoleRecord } from '../access/accessApi';
-import type { TenantLicenseSeats } from '@/app/ade/dashboard/tenants/licenseApi';
-import { seatsExhausted } from '@/app/ade/dashboard/tenants/licenseSeats';
+import type { TenantLicensePlan, TenantLicenseSeats } from '@/app/ade/dashboard/tenants/licenseApi';
+import {
+  seatMeterAppearance,
+  seatsExhausted,
+  seatsUnlimited,
+} from '@/app/ade/dashboard/tenants/licenseSeats';
+import type { ComingNextItem } from '@/app/components/ui/ComingNext';
+import type { FactsLineFact } from '@/app/components/ui/FactsLine';
+import { METER_WARN_PERCENT, type MetricTone } from '@/app/components/ui/metrics/metricTiers';
 
 // ---------------------------------------------------------------------------------------
 // Records
@@ -755,3 +762,60 @@ export function formatMemberRelative(
   if (days < 7) return `${days} days ago`;
   return formatMemberDate(iso, timeZone);
 }
+
+// ---------------------------------------------------------------------------------------
+// The facts line and the "Coming next" line (HIVE-11.9, #5605)
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The page's one-line summary: members, then each lifecycle state, then seats.
+ *
+ * Replaces the seat-meter card. The seat fact is `formatSeatUsage` split into value and label
+ * (`4 of 5` · `seats used`), so its numbers are the ones the meter printed. The plan name, which
+ * the card carried as a badge, follows as a muted aside.
+ *
+ * @param summary Counts from {@link summariseMembers}.
+ * @param seats Seat usage, or `null` when the licence could not be read (the seat fact is left out).
+ * @param plan The tenant's plan, for the aside; omitted when unknown.
+ * @returns The facts, in reading order.
+ */
+export function memberFacts(
+  summary: MemberSummary,
+  seats: TenantLicenseSeats | null | undefined,
+  plan?: TenantLicensePlan | null
+): FactsLineFact[] {
+  const facts: FactsLineFact[] = [
+    { id: 'members', value: summary.total, label: summary.total === 1 ? 'member' : 'members' },
+    { id: 'active', value: summary.active, label: 'active' },
+    { id: 'pending', value: summary.pending, label: 'pending' },
+    { id: 'suspended', value: summary.suspended, label: 'suspended' },
+  ];
+  if (seats) {
+    const noun = seats.used === 1 ? 'seat used' : 'seats used';
+    const unlimited = seatsUnlimited(seats);
+    facts.push({ id: 'seats', value: unlimited ? seats.used : `${seats.used} of ${seats.max}`, label: noun });
+    if (unlimited) facts.push({ id: 'seats-unlimited', label: 'unlimited seats', muted: true });
+  }
+  if (plan?.name) facts.push({ id: 'plan', label: `${plan.name} plan`, muted: true });
+  return facts;
+}
+
+/**
+ * The thin seat bar under the facts line — drawn only once seats run short.
+ *
+ * @param seats Seat usage, or `null` when the licence could not be read.
+ * @returns The bar's share and tone at or above the 80 % warn line on a limited plan, else `null`.
+ */
+export function memberSeatProgress(
+  seats: TenantLicenseSeats | null | undefined
+): { percent: number; tone: MetricTone } | null {
+  if (!seats || seatsUnlimited(seats)) return null;
+  const { percent, tone } = seatMeterAppearance(seats.used, seats.max);
+  return percent >= METER_WARN_PERCENT ? { percent, tone } : null;
+}
+
+/** What the Members page announces as not shipped yet, in place of the old SSO/SCIM cards. */
+export const MEMBERS_COMING_NEXT: readonly ComingNextItem[] = [
+  { id: 'sso', label: 'SSO (OIDC/SAML)' },
+  { id: 'scim', label: 'SCIM 2.0 provisioning' },
+];
