@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.306.0
+  version: 1.307.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23464,7 +23464,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-23T17:13:03Z'
+                        example: '2026-10-23T17:25:40Z'
                       method:
                         type: string
                         example: GET
@@ -34111,6 +34111,161 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get revision merge baseresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/timeline:
+    get:
+      tags:
+      - versions
+      summary: Get Project Timeline
+      description: 'The project''s activity timeline, newest first (#2594).
+
+
+        Each event that concerns a revision carries ``revisionId`` and ``links`` to
+        that revision, its
+
+        ancestors in the revision DAG and this timeline filtered to it.'
+      operationId: get_project_timeline_v1_versions__tenant_slug___project_id__timeline_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: revisionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelinerevision ID schema.
+          - type: 'null'
+            description: Get Project Timelinerevision ID schema.
+          description: Only events that concern this revision.
+          title: Revisionid
+        description: Only events that concern this revision.
+      - name: kind
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Get Project Timelinekind schema.
+          - type: 'null'
+            description: Get Project Timelinekind schema.
+          description: publish, merge, tag, protection or other (repeatable or comma-separated).
+          title: Kind
+        description: publish, merge, tag, protection or other (repeatable or comma-separated).
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelineactor ID schema.
+          - type: 'null'
+            description: Get Project Timelineactor ID schema.
+          description: Only events by this user.
+          title: Actorid
+        description: Only events by this user.
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelinesince schema.
+          - type: 'null'
+            description: Get Project Timelinesince schema.
+          description: Inclusive lower bound on occurredAt (ISO 8601).
+          title: Since
+        description: Inclusive lower bound on occurredAt (ISO 8601).
+      - name: until
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelineuntil schema.
+          - type: 'null'
+            description: Get Project Timelineuntil schema.
+          description: Inclusive upper bound on occurredAt (ISO 8601).
+          title: Until
+        description: Inclusive upper bound on occurredAt (ISO 8601).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Page size.
+          default: 50
+          title: Limit
+        description: Page size.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelinecursor schema.
+          - type: 'null'
+            description: Get Project Timelinecursor schema.
+          description: nextCursor from the previous page.
+          title: Cursor
+        description: nextCursor from the previous page.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timelineauthorization schema.
+          - type: 'null'
+            description: Get Project Timelineauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Timeline Xapikey schema.
+          - type: 'null'
+            description: Get Project Timeline Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get project timeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTimelineResponse'
+                description: Response payload for get project timelineresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get project timelineresponse422.
   /v1/versions/{tenant_slug}/workflow-audit:
     get:
       tags:
@@ -84100,7 +84255,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         completed_at:
           anyOf:
           - type: string
@@ -85587,7 +85742,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -85760,7 +85915,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -86365,13 +86520,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -88890,7 +89045,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: ef4b3f8a-a369-4d8b-9813-eb3048508587
+          example: 0260eb4d-9d64-4be8-9247-a08a71e94aad
         method:
           type: string
           title: Method
@@ -91033,7 +91188,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         envelope:
           additionalProperties: true
           type: object
@@ -92524,7 +92679,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         browse_url:
           anyOf:
           - type: string
@@ -121528,6 +121683,213 @@ components:
       - days
       title: ProjectTimeSpentResponse
       description: Envelope for ``GET /v1/projects/{tenant_slug}/time-spent`` (#544).
+    ProjectTimelineEventOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The ledger row id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        source:
+          type: string
+          title: Source
+          description: workflow (workflow_audit) or protection (version_protection_audit).
+          example: human
+        kind:
+          type: string
+          title: Kind
+          description: publish, merge, tag, protection or other.
+          example: example
+        action:
+          type: string
+          title: Action
+          description: The ledger action, e.g. version.publish or branch.protection_policy.
+          example: example
+        outcome:
+          type: string
+          title: Outcome
+          description: success / failure, or allowed / denied / policy_change.
+          example: example
+        actorId:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Actorid
+          description: Actor ID.
+        occurredAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for project timeline event.
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Occurredat
+          description: Occurred At.
+        revisionId:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Revisionid
+          description: The revision the event concerns; the same id the revision-graph
+            routes use.
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Versionlabel
+          description: Version Label.
+        mergeFromRevisionId:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Mergefromrevisionid
+          description: 'For a merge, or the publish of a merge revision: the revision
+            merged in.'
+        mergeFromBranch:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Mergefrombranch
+          description: Merge From Branch.
+        branchName:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Branchname
+          description: Branch Name.
+        tagName:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Tagname
+          description: Tag Name.
+        resourceType:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Resourcetype
+          description: 'Protection events: version, version_branch or version_tag.'
+        resourceId:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Resourceid
+          description: Resource ID.
+        detail:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for project timeline event.
+          - type: 'null'
+            description: Response payload for project timeline event.
+          title: Detail
+          description: The ledger's structured detail.
+        links:
+          anyOf:
+          - $ref: '#/components/schemas/ProjectTimelineLinksOut'
+          - type: 'null'
+            description: Response payload for project timeline event.
+          description: Set when the event concerns a revision.
+      type: object
+      required:
+      - id
+      - source
+      - kind
+      - action
+      - outcome
+      title: ProjectTimelineEventOut
+      description: One event on a project's activity timeline (#2594).
+    ProjectTimelineLinksOut:
+      properties:
+        revision:
+          type: string
+          title: Revision
+          description: The revision itself.
+          example: example
+        ancestors:
+          type: string
+          title: Ancestors
+          description: The revision's place in the revision DAG (#2593).
+          example: example
+        timeline:
+          type: string
+          title: Timeline
+          description: This timeline narrowed to the revision.
+          example: example
+      type: object
+      required:
+      - revision
+      - ancestors
+      - timeline
+      title: ProjectTimelineLinksOut
+      description: Routes that open an event's revision — and come back to the timeline
+        (#2594).
+    ProjectTimelineResponse:
+      properties:
+        projectId:
+          type: string
+          title: Projectid
+          description: Project ID.
+          example: example
+        items:
+          items:
+            $ref: '#/components/schemas/ProjectTimelineEventOut'
+          type: array
+          title: Items
+          description: Items.
+          maxItems: 100
+        limit:
+          type: integer
+          title: Limit
+          description: The page size (after clamping).
+          example: 50
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Has More.
+          example: false
+        nextCursor:
+          anyOf:
+          - type: string
+            description: Response payload for project timeline.
+          - type: 'null'
+            description: Response payload for project timeline.
+          title: Nextcursor
+          description: Pass as cursor for the next page when hasMore is true.
+        restricted:
+          type: boolean
+          title: Restricted
+          description: True when failures and denied attempts were left out (callers
+            who are not tenant admins).
+          example: false
+      type: object
+      required:
+      - projectId
+      - limit
+      - hasMore
+      - restricted
+      title: ProjectTimelineResponse
+      description: A page of a project's activity timeline, newest first (#2594).
     ProjectUpdateRequest:
       properties:
         name:
@@ -128551,7 +128913,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
       additionalProperties: false
       type: object
       required:
@@ -137588,12 +137950,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
       additionalProperties: false
       type: object
       required:
@@ -138722,7 +139084,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         detected_by:
           anyOf:
           - type: string
@@ -145020,13 +145382,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T17:13:03Z'
+          example: '2026-10-23T17:25:40Z'
         outcome:
           anyOf:
           - type: string

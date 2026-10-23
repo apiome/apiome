@@ -82,3 +82,5 @@ single database query, however many revisions it covers.
 
 - [Version dialogs](./version-dialogs.mdx#git-like-features): branch, merge and history-graph tools.
 - [Versions](./versions.mdx): a project's timeline of versions.
+- [Project activity timeline](./project-timeline.md): who published, merged, tagged or changed
+  protection, linked to these revisions.

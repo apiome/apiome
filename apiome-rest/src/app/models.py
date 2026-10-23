@@ -4062,6 +4062,73 @@ class RevisionMergeBaseResponse(BaseModel):
     disjoint: bool = Field(description="True when the two revisions have no common ancestor.")
 
 
+class ProjectTimelineLinksOut(BaseModel):
+    """Routes that open an event's revision — and come back to the timeline (#2594)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    revision: str = Field(description="The revision itself.")
+    ancestors: str = Field(description="The revision's place in the revision DAG (#2593).")
+    timeline: str = Field(description="This timeline narrowed to the revision.")
+
+
+class ProjectTimelineEventOut(BaseModel):
+    """One event on a project's activity timeline (#2594)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str = Field(description="The ledger row id.")
+    source: str = Field(description="workflow (workflow_audit) or protection (version_protection_audit).")
+    kind: str = Field(description="publish, merge, tag, protection or other.")
+    action: str = Field(description="The ledger action, e.g. version.publish or branch.protection_policy.")
+    outcome: str = Field(description="success / failure, or allowed / denied / policy_change.")
+    actor_id: Optional[str] = Field(default=None, serialization_alias="actorId")
+    occurred_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="occurredAt")
+    revision_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="revisionId",
+        description="The revision the event concerns; the same id the revision-graph routes use.",
+    )
+    version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
+    merge_from_revision_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="mergeFromRevisionId",
+        description="For a merge, or the publish of a merge revision: the revision merged in.",
+    )
+    merge_from_branch: Optional[str] = Field(default=None, serialization_alias="mergeFromBranch")
+    branch_name: Optional[str] = Field(default=None, serialization_alias="branchName")
+    tag_name: Optional[str] = Field(default=None, serialization_alias="tagName")
+    resource_type: Optional[str] = Field(
+        default=None,
+        serialization_alias="resourceType",
+        description="Protection events: version, version_branch or version_tag.",
+    )
+    resource_id: Optional[str] = Field(default=None, serialization_alias="resourceId")
+    detail: Optional[Dict[str, Any]] = Field(default=None, description="The ledger's structured detail.")
+    links: Optional[ProjectTimelineLinksOut] = Field(
+        default=None, description="Set when the event concerns a revision."
+    )
+
+
+class ProjectTimelineResponse(BaseModel):
+    """A page of a project's activity timeline, newest first (#2594)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(serialization_alias="projectId")
+    items: List[ProjectTimelineEventOut] = Field(default_factory=list)
+    limit: int = Field(description="The page size (after clamping).")
+    has_more: bool = Field(serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(
+        default=None,
+        serialization_alias="nextCursor",
+        description="Pass as cursor for the next page when hasMore is true.",
+    )
+    restricted: bool = Field(
+        description="True when failures and denied attempts were left out (callers who are not tenant admins)."
+    )
+
+
 class VersionBranchDivergenceResponse(BaseModel):
     """Branch-vs-branch divergence metrics and commit samples (#2721)."""
 

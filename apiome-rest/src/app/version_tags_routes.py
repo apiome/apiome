@@ -8,10 +8,11 @@ from typing import Any, Dict, List
 import psycopg2
 from fastapi import APIRouter, Depends, HTTPException
 
-from .auth import validate_authentication, get_authenticated_user_id
+from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
-from .permissions import enforce_permission, Resource, Action
-from .models import VersionTagSchema, VersionTagCreateRequest, VersionTagUpdateRequest
+from .models import VersionTagCreateRequest, VersionTagSchema, VersionTagUpdateRequest
+from .permissions import Action, Resource, enforce_permission
+from .project_timeline import tag_audit_detail
 
 router = APIRouter(prefix="/v1/version-tags", tags=["version-tags"])
 
@@ -20,6 +21,34 @@ _TAG_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._\-/]{0,254}$")
 
 def _valid_tag_name(name: str) -> bool:
     return bool(name and _TAG_NAME_RE.match(name.strip()))
+
+
+def _audit_tag(
+    tenant_id: str,
+    project_id: str,
+    action: str,
+    actor_id: Any,
+    tag: Dict[str, Any],
+    **detail_kwargs: Any,
+) -> None:
+    """Record a tag change on the project timeline (#2594).
+
+    The row's revision is the one the tag points at (before the change for a delete), so the
+    event shows up when the timeline is narrowed to that revision. Best-effort: a failed audit
+    write never fails the tag change.
+
+    Args:
+        tenant_id: Owning tenant.
+        project_id: The tag's project.
+        action: ``tag.create``, ``tag.update`` or ``tag.delete``.
+        actor_id: The acting user, if any.
+        tag: The ``version_tags`` row.
+        **detail_kwargs: Passed to :func:`app.project_timeline.tag_audit_detail`.
+    """
+    detail = tag_audit_detail(tag, **detail_kwargs)
+    db.insert_workflow_audit(
+        tenant_id, project_id, detail.get("revisionId"), action, "success", actor_id, detail
+    )
 
 
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
@@ -91,7 +120,6 @@ async def create_version_tag(
             want_protected,
             uid,
         )
-        return VersionTagSchema(**dict(row))
     except psycopg2.IntegrityError:
         raise HTTPException(
             status_code=409,
@@ -99,6 +127,8 @@ async def create_version_tag(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    _audit_tag(tenant_id, project_id, "tag.create", uid, dict(row))
+    return VersionTagSchema(**dict(row))
 
 
 @router.patch("/{tenant_slug}/{project_id}/{tag_id}", response_model=VersionTagSchema)
@@ -133,6 +163,7 @@ async def patch_version_tag(
         message_kwargs["set_message"] = body.message
 
     is_admin = bool(uid and db.is_user_tenant_admin(tenant_id, uid))
+    before = db.get_version_tag_by_id(tag_id, project_id, tenant_id)
     try:
         row = db.update_version_tag(
             tag_id,
@@ -169,6 +200,25 @@ async def patch_version_tag(
         raise HTTPException(status_code=400, detail=str(e))
     if not row:
         raise HTTPException(status_code=404, detail="Tag not found")
+    changes = [
+        name
+        for name, changed in (
+            ("revision", bool(new_vid)),
+            ("immutable", set_immutable),
+            ("protected", set_protected is not None),
+            ("message", bool(message_kwargs)),
+        )
+        if changed
+    ]
+    _audit_tag(
+        tenant_id,
+        project_id,
+        "tag.update",
+        uid,
+        dict(row),
+        from_revision_id=(before or {}).get("version_id"),
+        changes=changes,
+    )
     return VersionTagSchema(**dict(row))
 
 
@@ -193,6 +243,7 @@ async def delete_version_tag(
         )
 
     is_admin = bool(uid and db.is_user_tenant_admin(tenant_id, uid))
+    before = db.get_version_tag_by_id(tag_id, project_id, tenant_id)
     try:
         ok = db.delete_version_tag(tag_id, project_id, tenant_id, uid, is_admin)
     except PermissionError as e:
@@ -212,4 +263,6 @@ async def delete_version_tag(
         raise
     if not ok:
         raise HTTPException(status_code=404, detail="Tag not found")
+    if before:
+        _audit_tag(tenant_id, project_id, "tag.delete", uid, dict(before))
     return {"status": "deleted", "id": tag_id}

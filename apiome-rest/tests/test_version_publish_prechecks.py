@@ -394,8 +394,9 @@ def test_publish_force_audits_reason():
         )
 
     assert res.status_code == 200
-    shared.insert_workflow_audit.assert_called_once()
-    args = shared.insert_workflow_audit.call_args[0]
-    assert args[3] == "version.publish_checks_override"
+    # #2594: the publish itself is audited first, then the override.
+    calls = [c[0] for c in shared.insert_workflow_audit.call_args_list]
+    assert [c[3] for c in calls] == ["version.publish", "version.publish_checks_override"]
+    args = calls[1]
     assert args[4] == "success"
-    assert shared.insert_workflow_audit.call_args[0][6]["reason"] == "Emergency hotfix for prod"
+    assert args[6]["reason"] == "Emergency hotfix for prod"

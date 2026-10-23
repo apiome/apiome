@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 57 operations."
+description: "REST endpoints tagged versions: 58 operations."
 sidebar_position: 95
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.306.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.307.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 57 operations
+Tag: `versions` · 58 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -347,6 +347,40 @@ Operation id: `get_revision_merge_base_v1_versions__tenant_slug___project_id__re
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get revision merge base. | `application/json` [`RevisionMergeBaseResponse`](#schema-revisionmergebaseresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/timeline` {#get-project-timeline-v1-versions-tenant-slug-project-id-timeline-get}
+
+**Get Project Timeline**
+
+The project's activity timeline, newest first (#2594).
+
+Each event that concerns a revision carries ``revisionId`` and ``links`` to that revision, its
+ancestors in the revision DAG and this timeline filtered to it.
+
+Operation id: `get_project_timeline_v1_versions__tenant_slug___project_id__timeline_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `revisionId` | query | string or null | no | Only events that concern this revision. |
+| `kind` | query | array of string or null | no | publish, merge, tag, protection or other (repeatable or comma-separated). |
+| `actorId` | query | string or null | no | Only events by this user. |
+| `since` | query | string or null | no | Inclusive lower bound on occurredAt (ISO 8601). |
+| `until` | query | string or null | no | Inclusive upper bound on occurredAt (ISO 8601). |
+| `limit` | query | integer | no | Page size. |
+| `cursor` | query | string or null | no | nextCursor from the previous page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get project timeline. | `application/json` [`ProjectTimelineResponse`](#schema-projecttimelineresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/versions/{tenant_slug}/{project_id}/version-branches` {#list-version-branches-v1-versions-tenant-slug-project-id-version-branches-get}
@@ -2093,6 +2127,19 @@ A revision's live preservation envelope plus its semantic fingerprint.
 | `dialect` | string | yes | OAS dialect the claims were validated under. |
 | `claims` | array of `PreservationClaimBody` | yes | Claims. |
 | `fingerprint` | `SemanticFingerprint` | yes | Semantic fingerprint of the merged (canonical + preserved) document, reporting the intentionally excluded lexical differences. |
+
+### `ProjectTimelineResponse` {#schema-projecttimelineresponse}
+
+A page of a project's activity timeline, newest first (#2594).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `projectId` | string | yes | Project ID. |
+| `items` | array of `ProjectTimelineEventOut` | no | Items. |
+| `limit` | integer | yes | The page size (after clamping). |
+| `hasMore` | boolean | yes | Has More. |
+| `nextCursor` | string or null | no | Pass as cursor for the next page when hasMore is true. |
+| `restricted` | boolean | yes | True when failures and denied attempts were left out (callers who are not tenant admins). |
 
 ### `RevisionHistoryWindowResponse` {#schema-revisionhistorywindowresponse}
 

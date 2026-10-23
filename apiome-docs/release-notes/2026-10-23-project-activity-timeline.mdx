@@ -1,0 +1,23 @@
+---
+slug: project-activity-timeline
+title: A project activity timeline linked to revisions
+description: See who published, merged, tagged or changed protection, revision by revision.
+authors: [apiome]
+---
+
+Each project now has an activity timeline over the REST API: publishes, merges, tag changes and
+protection changes as one newest-first stream, each linked to the revision it concerns.
+[Read the timeline](/build/project-timeline).
+
+{/* truncate */}
+
+- **Every publish and tag change is recorded.** Publishing a revision, and creating, moving or
+  deleting a tag, now writes an audit event that names the revision — and for the publish of a merge
+  revision, the revision merged in.
+- **From an event to the history graph and back.** Events carry the same revision id as the
+  revision history queries, with links to the revision's ancestors and to the timeline narrowed to
+  that revision.
+- **Scoped and role-aware.** A timeline shows one project only and needs permission to view
+  versions; failed and denied attempts are shown to workspace administrators only.
+- **Retention hooks documented.** The page describes how a retention policy prunes and exports the
+  two ledgers behind the timeline.

@@ -127,6 +127,7 @@ from .publication_change_report import (
 )
 from .rate_limit import FixedWindowRateLimiter
 from .publication_changelog import generate_version_changelog_on_publish
+from .project_timeline import publish_audit_detail
 from .publish_notifications import notify_version_published_on_publish
 from .spec_snapshot import (
     CODE_ALREADY_FROZEN,
@@ -2191,6 +2192,18 @@ async def publish_version(
             status_code=403,
             detail="Only the version creator or a tenant administrator can publish this version"
         )
+
+    # #2594: the publish itself is a timeline event, linked to the revision and — for a merge
+    # revision — to the revision merged in. Best-effort: never fails the completed publish.
+    db.insert_workflow_audit(
+        auth_data["tenant_id"],
+        project_id,
+        version_record_id,
+        "version.publish",
+        "success",
+        user_id,
+        publish_audit_detail(existing, visibility),
+    )
 
     if bool(request.skip_publish_checks):
         db.insert_workflow_audit(
