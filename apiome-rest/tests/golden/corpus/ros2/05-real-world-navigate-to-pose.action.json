@@ -1,0 +1,603 @@
+{
+  "adapter": "ros2",
+  "canonical": {
+    "channels": [
+      {
+        "address": "RealWorldNavigateToPose/_action/feedback",
+        "bindings": {},
+        "description": "Feedback the RealWorldNavigateToPose action server publishes while a goal runs.",
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "An action's feedback is published on <action name>/_action/feedback; the action's runtime name is not part of the interface, so the interface name stands in for it.",
+          "ros2_action": "action/RealWorldNavigateToPose"
+        },
+        "key": "RealWorldNavigateToPose/_action/feedback",
+        "name": "RealWorldNavigateToPose feedback",
+        "parameters": [],
+        "protocol": "ros2"
+      }
+    ],
+    "description": "Navigation goal as a robotics stack ships it: goal, result and feedback separated by the --- delimiters. Reconstructed shape; no upstream text copied.",
+    "extras": {
+      "ros2": {
+        "capability_limits": [
+          {
+            "construct": "ros2.external_reference",
+            "count": 5,
+            "detail": "A field references a message of another package that is not in the import (a standard ROS 2 interface package, or a dependency package.xml declares). The field keeps the any type and names the message in extras['ros2_unresolved']; import that package beside this one to resolve it.",
+            "locations": [
+              "RealWorldNavigateToPose_Feedback.current_pose",
+              "RealWorldNavigateToPose_Feedback.estimated_time_remaining",
+              "RealWorldNavigateToPose_Feedback.navigation_time",
+              "RealWorldNavigateToPose_Goal.pose",
+              "RealWorldNavigateToPose_Result.total_time"
+            ]
+          }
+        ],
+        "input": "file",
+        "interfaces": [
+          {
+            "file": "ros2/05-real-world-navigate-to-pose.action",
+            "full_name": "action/RealWorldNavigateToPose",
+            "kind": "action"
+          }
+        ],
+        "packages": []
+      }
+    },
+    "format": "ros2",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "RealWorldNavigateToPose",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "ros2",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The services and actions of the import.",
+        "extras": {},
+        "key": "RealWorldNavigateToPose",
+        "name": "RealWorldNavigateToPose",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Navigation goal as a robotics stack ships it: goal, result and feedback separated by the --- delimiters. Reconstructed shape; no upstream text copied.",
+            "extras": {
+              "ros2_feedback_channel": "RealWorldNavigateToPose/_action/feedback",
+              "ros2_interface": {
+                "full_name": "action/RealWorldNavigateToPose",
+                "kind": "action"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "RealWorldNavigateToPose.RealWorldNavigateToPose",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "RealWorldNavigateToPose.RealWorldNavigateToPose#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "RealWorldNavigateToPose_Goal",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "RealWorldNavigateToPose.RealWorldNavigateToPose#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "RealWorldNavigateToPose_Result",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "RealWorldNavigateToPose",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": "RealWorldNavigateToPose/_action/feedback",
+            "deprecated": false,
+            "description": "Receive the RealWorldNavigateToPose action's feedback while a goal runs.",
+            "extras": {
+              "ros2_interface": {
+                "full_name": "action/RealWorldNavigateToPose",
+                "kind": "action",
+                "section": "feedback"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "RealWorldNavigateToPose.RealWorldNavigateToPose.feedback",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "RealWorldNavigateToPose.RealWorldNavigateToPose.feedback#event.RealWorldNavigateToPose_Feedback",
+                "name": "RealWorldNavigateToPose_Feedback",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "RealWorldNavigateToPose_Feedback",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "RealWorldNavigateToPose feedback",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "RealWorldNavigateToPose",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "ros2/05-real-world-navigate-to-pose.action",
+            "full_name": "action/RealWorldNavigateToPose",
+            "kind": "action",
+            "section": "feedback"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "geometry_msgs/PoseStamped"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Feedback.current_pose",
+            "name": "current_pose",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "geometry_msgs/msg/PoseStamped"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Feedback.distance_remaining",
+            "name": "distance_remaining",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "builtin_interfaces/Duration"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Feedback.estimated_time_remaining",
+            "name": "estimated_time_remaining",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "builtin_interfaces/msg/Duration"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "builtin_interfaces/Duration"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Feedback.navigation_time",
+            "name": "navigation_time",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "builtin_interfaces/msg/Duration"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int16"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Feedback.number_of_recoveries",
+            "name": "number_of_recoveries",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "RealWorldNavigateToPose_Feedback",
+        "key_type": null,
+        "kind": "record",
+        "name": "RealWorldNavigateToPose_Feedback",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Navigation goal as a robotics stack ships it: goal, result and feedback separated by the --- delimiters. Reconstructed shape; no upstream text copied.",
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "ros2/05-real-world-navigate-to-pose.action",
+            "full_name": "action/RealWorldNavigateToPose",
+            "kind": "action",
+            "section": "goal"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": false,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_default": "false",
+              "ros2_type": "bool"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Goal.allow_reversing",
+            "name": "allow_reversing",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Goal.behavior_tree",
+            "name": "behavior_tree",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": 0.55,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_default": "0.55",
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Goal.max_speed",
+            "name": "max_speed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "geometry_msgs/PoseStamped"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Goal.pose",
+            "name": "pose",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "geometry_msgs/msg/PoseStamped"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "RealWorldNavigateToPose_Goal",
+        "key_type": null,
+        "kind": "record",
+        "name": "RealWorldNavigateToPose_Goal",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ros2_constants": "RealWorldNavigateToPose_Result_Constants",
+          "ros2_interface": {
+            "file": "ros2/05-real-world-navigate-to-pose.action",
+            "full_name": "action/RealWorldNavigateToPose",
+            "kind": "action",
+            "section": "result"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Result.distance_travelled",
+            "name": "distance_travelled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Result.error_code",
+            "name": "error_code",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Result.error_msg",
+            "name": "error_msg",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "builtin_interfaces/Duration"
+            },
+            "field_number": null,
+            "key": "RealWorldNavigateToPose_Result.total_time",
+            "name": "total_time",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "builtin_interfaces/msg/Duration"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "RealWorldNavigateToPose_Result",
+        "key_type": null,
+        "kind": "record",
+        "name": "RealWorldNavigateToPose_Result",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Constants declared on RealWorldNavigateToPose_Result.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "0"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.NONE",
+            "name": "NONE",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "1"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.UNKNOWN",
+            "name": "UNKNOWN",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "2"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.FAILED_TO_MAKE_PROGRESS",
+            "name": "FAILED_TO_MAKE_PROGRESS",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "3"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.NO_VALID_CONTROL",
+            "name": "NO_VALID_CONTROL",
+            "value": 3
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "4"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.TIMEOUT",
+            "name": "TIMEOUT",
+            "value": 4
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "5"
+            },
+            "key": "RealWorldNavigateToPose_Result_Constants.CANCELLED",
+            "name": "CANCELLED",
+            "value": 5
+          }
+        ],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "ROS 2 declares constants inline on the interface; the enum that groups them is named by Apiome.",
+          "ros2_constants_of": "RealWorldNavigateToPose_Result"
+        },
+        "fields": [],
+        "key": "RealWorldNavigateToPose_Result_Constants",
+        "key_type": null,
+        "kind": "enum",
+        "name": "RealWorldNavigateToPose_Result_Constants",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ros2/05-real-world-navigate-to-pose.action",
+  "counts": {
+    "channels": 1,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ros2"
+  },
+  "fingerprint": "sha256:eeb0ec33fff1119d57cd614a4051fe84d4618405c9082d1da402b799911d9af8",
+  "lint": {
+    "findings": 18,
+    "grade": "C",
+    "report_fingerprint": "9a107be8b6efb67787e0fded428800421b1954f9e9180032211f1386c3485bcc",
+    "score": 76,
+    "severity_counts": {
+      "error": 0,
+      "info": 16,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

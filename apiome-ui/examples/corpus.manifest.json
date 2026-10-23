@@ -471,7 +471,7 @@
       "marker": "`grammar`/`element` root in the RELAX NG namespace, or a `.rnc` compact grammar"
     },
     "ros2": {
-      "label": "ROS 2 interfaces (pending #5470)",
+      "label": "ROS 2 interfaces",
       "category": "rpc",
       "paradigm": "rpc",
       "marker": "`.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators"
@@ -24222,7 +24222,7 @@
     {
       "path": "ros2/01-minimal-message.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24230,8 +24230,7 @@
       },
       "features": [
         "msg",
-        "primitives",
-        "pending-adapter"
+        "primitives"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24242,7 +24241,7 @@
     {
       "path": "ros2/02-typical-sensor-message.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24253,8 +24252,7 @@
         "constants",
         "header",
         "unbounded-array",
-        "comments",
-        "pending-adapter"
+        "comments"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24265,7 +24263,7 @@
     {
       "path": "ros2/03-package-set/LiftPallet.srv",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24274,8 +24272,7 @@
       "features": [
         "multi-file",
         "srv",
-        "bare-name-reference",
-        "pending-adapter"
+        "bare-name-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24287,7 +24284,7 @@
     {
       "path": "ros2/03-package-set/LoadCell.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24295,8 +24292,7 @@
       },
       "features": [
         "multi-file",
-        "msg",
-        "pending-adapter"
+        "msg"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24308,7 +24304,7 @@
     {
       "path": "ros2/03-package-set/PalletStatus.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24318,8 +24314,7 @@
         "multi-file",
         "bare-name-reference",
         "cross-package-reference",
-        "constants",
-        "pending-adapter"
+        "constants"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24331,7 +24326,7 @@
     {
       "path": "ros2/03-package-set/package.xml",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24340,8 +24335,7 @@
       "features": [
         "multi-file",
         "package-manifest",
-        "dependencies",
-        "pending-adapter"
+        "dependencies"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24353,7 +24347,7 @@
     {
       "path": "ros2/04-stress-idl-grammar.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24367,8 +24361,7 @@
         "fixed-array",
         "bounded-array",
         "array-default",
-        "cross-package-reference",
-        "pending-adapter"
+        "cross-package-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24379,7 +24372,7 @@
     {
       "path": "ros2/05-real-world-navigate-to-pose.action",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24390,8 +24383,7 @@
         "goal-result-feedback",
         "error-constants",
         "duration",
-        "defaults",
-        "pending-adapter"
+        "defaults"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24402,7 +24394,7 @@
     {
       "path": "ros2/06-typical-service.srv",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24412,8 +24404,7 @@
         "srv",
         "request-response",
         "result-constants",
-        "defaults",
-        "pending-adapter"
+        "defaults"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24424,7 +24415,7 @@
     {
       "path": "ros2/07-composition-nested-messages.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "valid",
       "expected_detection": {
         "format": "ros2",
@@ -24434,8 +24425,7 @@
         "same-package-reference",
         "cross-package-reference",
         "bounded-array-of-composed",
-        "constants",
-        "pending-adapter"
+        "constants"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -24446,7 +24436,7 @@
     {
       "path": "ros2/negative/01-syntactic-bad-field-line.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24455,8 +24445,7 @@
       "features": [
         "negative",
         "syntactic",
-        "malformed-field-line",
-        "pending-adapter"
+        "malformed-field-line"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -24468,7 +24457,7 @@
     {
       "path": "ros2/negative/02-semantic-empty-message.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24477,8 +24466,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-fields",
-        "pending-adapter"
+        "no-fields"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -24490,7 +24478,7 @@
     {
       "path": "ros2/negative/03-truncated-mid-action.action",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24500,8 +24488,7 @@
         "negative",
         "truncated",
         "mid-field",
-        "missing-feedback-section",
-        "pending-adapter"
+        "missing-feedback-section"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -24513,7 +24500,7 @@
     {
       "path": "ros2/negative/04-wrong-format-protobuf.proto",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24522,8 +24509,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "protobuf",
-        "pending-adapter"
+        "protobuf"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -24535,7 +24521,7 @@
     {
       "path": "ros2/negative/05-encoding-utf16.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24544,8 +24530,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -24557,7 +24542,7 @@
     {
       "path": "ros2/negative/06-unresolvable-type-reference.msg",
       "format": "ros2",
-      "adapter_key": null,
+      "adapter_key": "ros2",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "ros2",
@@ -24567,8 +24552,7 @@
         "negative",
         "unresolvable-ref",
         "missing-package",
-        "missing-local-type",
-        "pending-adapter"
+        "missing-local-type"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

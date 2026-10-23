@@ -190914,6 +190914,1599 @@
       "unexplained": []
     },
     {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 4,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "apigee",
+      "emit_key": "apigee",
+      "loss_approx": 1,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Apigee API proxy bundle export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare. (observed: Emit failed: Apigee API proxy bundle export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 7, column 9: 'cell>!<_temperature SEQUENCE OF REAL,': Expected Type. (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 7, column 9: 'cell>!<_temperature SEQUENCE OF REAL,': Expected Type.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: '#/components/schemas/float' does not exist (observed: Re-import failed: '#/components/schemas/float' does not exist)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: TypicalSensorMessage.avsc: Invalid Avro schema: any (observed: Emit failed: TypicalSensorMessage.avsc: Invalid Avro schema: any)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "aws-apigateway",
+      "emit_key": "aws-apigateway",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: AWS API Gateway export requires at least one HTTP operation: a REST API integrates methods, and a model with none has nothing to integrate. (observed: Emit failed: AWS API Gateway export requires at least one HTTP operation: a REST API integrates methods, and a model with none has nothing to integrate.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "azure-apim",
+      "emit_key": "azure-apim",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Azure API Management export requires at least one HTTP operation: an APIM API is a set of HTTP operations, and a model with none has nothing to declare. (observed: Emit failed: Azure API Management export requires at least one HTTP operation: an APIM API is a set of HTTP operations, and a model with none has nothing to declare.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to CDDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 6,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to CloudEvents",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: added channel 'com.example.typicalsensormessage', added operation '0503cff8-7c25-4533-9982-dbefd8d2169f', changed root '', added service 'com.example.typicalsensormessage', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: added channel 'com.example.typicalsensormessage', added operation 'ee4ef937-cdaa-4536-8e4b-4e2ef37cfd42', changed root '', added service 'com.example.typicalsensormessage', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "channel",
+          "key": "com.example.typicalsensormessage"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "ee4ef937-cdaa-4536-8e4b-4e2ef37cfd42"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "com.example.typicalsensormessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-de5a8crr/api.proto:15:3:cannot find `.any` in this scope\n/tmp/apiome-proto-de5a8crr/api.proto:19:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-de5a8crr/api.proto:20:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-de5a8crr/api.proto:21:3:cannot find `.boolean` in this scope\n/tmp/apiome-proto-de5a8crr/api.proto:35:30:enum value `1` used more than once\n/tmp/apiome-proto-de5a8crr/api.proto:36:34:enum value `2` used more than once (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-4cnj44ge/api.proto:15:3:cannot find `.any` in this scope\n/tmp/apiome-proto-4cnj44ge/api.proto:19:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-4cnj44ge/api.proto:20:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-4cnj44ge/api.proto:21:3:cannot find `.boolean` in this scope\n/tmp/apiome-proto-4cnj44ge/api.proto:35:30:enum value `1` used more than once\n/tmp/apiome-proto-4cnj44ge/api.proto:36:34:enum value `2` used more than once)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a CORBA IDL definition (observed: Re-import failed: Content does not appear to be a CORBA IDL definition)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "envoy-xds",
+      "emit_key": "envoy-xds",
+      "loss_approx": 2,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Envoy RouteConfiguration export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare. (observed: Emit failed: Envoy RouteConfiguration export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 10,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: added operation 'GET /TypicalSensorMessage', added operation 'GET /TypicalSensorMessage/{id}', added operation 'POST /TypicalSensorMessage', changed root '', added service 'TypicalSensorMessage.TypicalSensorMessage', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage', added type 'TypicalSensorMessage.any', added type 'TypicalSensorMessage.uint8', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: added operation 'GET /TypicalSensorMessage', added operation 'GET /TypicalSensorMessage/{id}', added operation 'POST /TypicalSensorMessage', changed root '', added service 'TypicalSensorMessage.TypicalSensorMessage', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage', added type 'TypicalSensorMessage.any', added type 'TypicalSensorMessage.uint8', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /TypicalSensorMessage/{id}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /TypicalSensorMessage"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "TypicalSensorMessage.TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessage.TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessage.any"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessage.uint8"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing). (observed: Emit failed: Gateway API export requires at least one HTTP operation: an HTTPRoute is a routing surface, and a model with no operations has no rule to declare (an HTTPRoute with no rules routes nothing).)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 5,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to GraphQL SDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: added operation 'Query._', changed root '', added service 'Query', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: added operation 'Query._', changed root '', added service 'Query', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query._"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 17,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write. (observed: Emit failed: HTTP request-file export requires at least one HTTP operation: a request file is a collection of calls, and a model with no HTTP binding has no request to write.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "idoc",
+      "emit_key": "idoc",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: IDoc export requires `idoc_control` extras from import (observed: Emit failed: IDoc export requires `idoc_control` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "istio",
+      "emit_key": "istio",
+      "loss_approx": 2,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Istio VirtualService export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare. (observed: Emit failed: Istio VirtualService export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to JSON Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to JSON Type Definition",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 5,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to Kubernetes CRD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "typicalsensormessages.example.com"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.TypicalSensorMessage"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 1,
+      "loss_ok": 1,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Kafka Connect Schema",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none). (observed: Emit failed: Kong declarative export requires at least one HTTP operation: a declarative configuration is a routing surface, and a model with no operations has no route to declare (Kong rejects a config with none).)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 6,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "unexplained: added operation 'ros2->llm-tools.TypicalSensorMessage', added service 'ros2->llm-tools', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessageParams', removed type 'TypicalSensorMessage_Constants' (observed: unexplained: added operation 'ros2->llm-tools.TypicalSensorMessage', added service 'ros2->llm-tools', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessageParams', removed type 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "ros2->llm-tools.TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "ros2->llm-tools"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessageParams"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 5,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage_Constants', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', removed type 'TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage', added type 'TypicalSensorMessage.TypicalSensorMessage_Constants', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessage.TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalSensorMessage.TypicalSensorMessage_Constants"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 7,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to ODCS Data Contract",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (ros2->oncrpc) (observed: Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (ros2->oncrpc))",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 4,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to OpenRPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No Postman requests found in collection (ros2->postman) (observed: Re-import failed: No Postman requests found in collection (ros2->postman))",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-lk4tag7p/api.proto:14:3:cannot find `.any` in this scope\n/tmp/apiome-proto-lk4tag7p/api.proto:18:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-lk4tag7p/api.proto:19:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-lk4tag7p/api.proto:20:3:cannot find `.boolean` in this scope\n/tmp/apiome-proto-lk4tag7p/api.proto:34:30:enum value `1` used more than once\n/tmp/apiome-proto-lk4tag7p/api.proto:35:34:enum value `2` used more than once (observed: Re-import failed: buf build failed to compile the supplied .proto files\n/tmp/apiome-proto-lwj_akoo/api.proto:14:3:cannot find `.any` in this scope\n/tmp/apiome-proto-lwj_akoo/api.proto:18:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-lwj_akoo/api.proto:19:3:cannot find `.uint8` in this scope\n/tmp/apiome-proto-lwj_akoo/api.proto:20:3:cannot find `.boolean` in this scope\n/tmp/apiome-proto-lwj_akoo/api.proto:34:30:enum value `1` used more than once\n/tmp/apiome-proto-lwj_akoo/api.proto:35:34:enum value `2` used more than once)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 4,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to Smithy",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to Apache Thrift",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "traefik",
+      "emit_key": "traefik",
+      "loss_approx": 2,
+      "loss_drop": 2,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Traefik dynamic configuration export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare. (observed: Emit failed: Traefik dynamic configuration export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to declare.)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 5,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', added type 'Exported.TypicalSensorMessage', added type 'Exported.TypicalSensorMessage_Constants', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', added type 'Exported.TypicalSensorMessage', added type 'Exported.TypicalSensorMessage_Constants', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Exported.TypicalSensorMessage"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Exported.TypicalSensorMessage_Constants"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 5,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to WIT (WebAssembly)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'apiome:typical-sensor-message.types.typical-sensor-message', added type 'apiome:typical-sensor-message.types.typical-sensor-message-constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'apiome:typical-sensor-message.types.typical-sensor-message', added type 'apiome:typical-sensor-message.types.typical-sensor-message-constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "apiome:typical-sensor-message.types.typical-sensor-message"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "apiome:typical-sensor-message.types.typical-sensor-message-constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 4,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'http://example.com/service.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'http://example.com/service.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http://example.com/service.TypicalSensorMessage"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 3,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "TypicalSensorMessage",
+          "kind": "ok",
+          "message": "object carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "TypicalSensorMessage_Constants",
+          "kind": "ok",
+          "message": "enum type carried to XSD",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "TypicalSensorMessage_Constants"
+        }
+      ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 14,
+      "loss_drop": 0,
+      "loss_ok": 2,
+      "loss_synth": 14,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "ros2",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "sepa/02-typical-pain001-batch.xml",
       "diff_count": 52,
       "emit_format": "apiblueprint",
@@ -266171,6 +267764,7 @@
     "pydantic",
     "raml",
     "relaxng",
+    "ros2",
     "sepa",
     "smithy",
     "sparkplug",

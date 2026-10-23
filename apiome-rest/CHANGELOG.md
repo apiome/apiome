@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.431.0] - 2026-10-22
+
+### Added
+- **ROS 2 interface import (#5470, FMT-9.3)**: a `ros2` import source (alias `ros2-interface`; file, URL, paste and
+  fileset) reads ROS 2 `.msg`, `.srv` and `.action` files and interface packages onto the **rpc** paradigm.
+  - A hand-written reader for the `rosidl` line grammar (`app.ros2_parser`): primitives, bounded strings
+    (`string<=N`), unbounded / fixed / bounded arrays (`T[]`, `T[N]`, `T[<=N]`), constants, defaults (parsed and
+    range-checked against their type, arrays included) and comments as descriptions.
+  - A message becomes a `RECORD`; a service `<Name>_Request` / `<Name>_Response` records and a `request_response`
+    operation; an action `<Name>_Goal` / `_Result` / `_Feedback` records, a goal operation and a `subscribe` operation
+    on the synthesized `<Name>/_action/feedback` channel. Constants become a synthesized `<Record>_Constants` enum.
+    Fixed arrays set `min_items` / `max_items`, bounded arrays `max_items`, bounded strings `max_length`
+    (`item_max_length` for an array of bounded strings).
+  - A package fileset (`package.xml` plus interface files, several packages allowed) resolves bare names within the
+    package and qualified names across the packages in the upload. A reference to a package outside it is a declared
+    unresolved reference (`any`, with `extras.ros2_unresolved`) when the package is a standard ROS 2 interface package
+    or a declared dependency, and `INPUT_REFERENCE_UNRESOLVED` otherwise; a bare name in a single uploaded file is a
+    declared unresolved sibling reference.
+  - Refusals: `FORMAT_MISMATCH` (no ROS 2 line), `INPUT_MALFORMED` (bad lines, all listed), `INPUT_TRUNCATED` (a
+    `.srv` / `.action` missing sections), `INPUT_SEMANTIC_INVALID` (no fields or constants, duplicate names, no
+    interface files), `INPUT_ENCODING_INVALID`.
+  - Declared limits ride in `extras.ros2.capability_limits` and become coverage-ledger rows; capability registry v32,
+    version coverage, inference-provenance entry, MCP toolset goldens and the round-trip matrix row (import-only) are
+    added, and the staged corpus is activated.
+
+The OpenAPI version moves to 1.295.0.
+
 ## [1.430.0] - 2026-10-22
 
 ### Added

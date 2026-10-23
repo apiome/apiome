@@ -1,0 +1,458 @@
+{
+  "adapter": "ros2",
+  "canonical": {
+    "channels": [],
+    "description": "Battery state as a mobile robot publishes it.",
+    "extras": {
+      "ros2": {
+        "capability_limits": [
+          {
+            "construct": "ros2.external_reference",
+            "count": 1,
+            "detail": "A field references a message of another package that is not in the import (a standard ROS 2 interface package, or a dependency package.xml declares). The field keeps the any type and names the message in extras['ros2_unresolved']; import that package beside this one to resolve it.",
+            "locations": [
+              "TypicalSensorMessage.header"
+            ]
+          }
+        ],
+        "input": "file",
+        "interfaces": [
+          {
+            "file": "ros2/02-typical-sensor-message.msg",
+            "full_name": "msg/TypicalSensorMessage",
+            "kind": "msg"
+          }
+        ],
+        "packages": []
+      }
+    },
+    "format": "ros2",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "TypicalSensorMessage",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "ros2",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "TypicalSensorMessage",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Battery state as a mobile robot publishes it.",
+        "enum_values": [],
+        "extras": {
+          "ros2_constants": "TypicalSensorMessage_Constants",
+          "ros2_interface": {
+            "file": "ros2/02-typical-sensor-message.msg",
+            "full_name": "msg/TypicalSensorMessage",
+            "kind": "msg",
+            "section": "message"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Ampere-hours",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.capacity",
+            "name": "capacity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32[]"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.cell_temperature",
+            "name": "cell_temperature",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "float",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Unbounded array, one entry per cell",
+            "extras": {
+              "ros2_type": "float32[]"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.cell_voltage",
+            "name": "cell_voltage",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "float",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Ampere-hours",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.charge",
+            "name": "charge",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Amperes, negative when discharging",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.current",
+            "name": "current",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "std_msgs/Header"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.header",
+            "name": "header",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "std_msgs/msg/Header"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.location",
+            "name": "location",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "0.0 to 1.0",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.percentage",
+            "name": "percentage",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.power_supply_health",
+            "name": "power_supply_health",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.power_supply_status",
+            "name": "power_supply_status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "bool"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.present",
+            "name": "present",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.serial_number",
+            "name": "serial_number",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Degrees Celsius",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.temperature",
+            "name": "temperature",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Volts",
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "TypicalSensorMessage.voltage",
+            "name": "voltage",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "TypicalSensorMessage",
+        "key_type": null,
+        "kind": "record",
+        "name": "TypicalSensorMessage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Constants declared on TypicalSensorMessage.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": "Constants become canonical enum members.",
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "0"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_STATUS_UNKNOWN",
+            "name": "POWER_SUPPLY_STATUS_UNKNOWN",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "1"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_STATUS_CHARGING",
+            "name": "POWER_SUPPLY_STATUS_CHARGING",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "2"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_STATUS_DISCHARGING",
+            "name": "POWER_SUPPLY_STATUS_DISCHARGING",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "4"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_STATUS_FULL",
+            "name": "POWER_SUPPLY_STATUS_FULL",
+            "value": 4
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "1"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_HEALTH_GOOD",
+            "name": "POWER_SUPPLY_HEALTH_GOOD",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "2"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_HEALTH_OVERHEAT",
+            "name": "POWER_SUPPLY_HEALTH_OVERHEAT",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "3"
+            },
+            "key": "TypicalSensorMessage_Constants.POWER_SUPPLY_HEALTH_DEAD",
+            "name": "POWER_SUPPLY_HEALTH_DEAD",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "ROS 2 declares constants inline on the interface; the enum that groups them is named by Apiome.",
+          "ros2_constants_of": "TypicalSensorMessage"
+        },
+        "fields": [],
+        "key": "TypicalSensorMessage_Constants",
+        "key_type": null,
+        "kind": "enum",
+        "name": "TypicalSensorMessage_Constants",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ros2/02-typical-sensor-message.msg",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ros2"
+  },
+  "fingerprint": "sha256:0e43558513728a8cc55b8d19c007c1b03c0199890e313a58a000371353105db4",
+  "lint": {
+    "findings": 7,
+    "grade": "A",
+    "report_fingerprint": "d81f42a447a2f0f9cbd0f1f9fdb958de1cc776fddb91cd30b3b80accf69ad633",
+    "score": 93,
+    "severity_counts": {
+      "error": 0,
+      "info": 7,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

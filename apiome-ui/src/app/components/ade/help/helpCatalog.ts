@@ -727,6 +727,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['industrial', 'iot', 'telemetry', 'topic', 'metric', 'alias', 'nbirth', 'ddata', 'edge node'],
   },
   {
+    id: 'ros2-import',
+    title: 'Import ROS 2 interfaces',
+    summary: 'Catalog ROS 2 messages, services and actions from .msg, .srv and .action files.',
+    page: 'apiome-docs/docs/bring-in/ros2-import.md',
+    section: 'reference',
+    keywords: ['robotics', 'robot', 'msg', 'srv', 'action', 'rosidl', 'package.xml', 'interface package', 'dds'],
+  },
+  {
     id: 'trpc-router-import',
     title: 'Import a tRPC router',
     summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',

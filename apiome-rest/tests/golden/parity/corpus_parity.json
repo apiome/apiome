@@ -3131,6 +3131,49 @@
       "waivers": {}
     },
     {
+      "format_key": "ros2",
+      "label": "ROS 2 interfaces",
+      "paradigm": "rpc",
+      "corpus_formats": [
+        "ros2"
+      ],
+      "corpus_directories": [
+        "ros2"
+      ],
+      "fixtures": {
+        "valid": 10,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 16
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "ros2"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "reviewed",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "smithy",
       "label": "Smithy",
       "paradigm": "rpc",
@@ -4052,7 +4095,6 @@
     "natural-ddm",
     "owl",
     "pli",
-    "ros2",
     "schematron",
     "shacl",
     "soapui",

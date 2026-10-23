@@ -12,6 +12,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   grpc: 'https://grpc.io/docs/',
   protobuf: 'https://protobuf.dev/overview/',
   thrift: 'https://thrift.apache.org/docs/',
+  ros2: 'https://docs.ros.org/en/rolling/Concepts/Basic/About-Interfaces.html',
   connectrpc: 'https://connectrpc.com/docs/introduction',
   capnproto: 'https://capnproto.org/language.html',
   wit: 'https://component-model.bytecodealliance.org/design/wit.html',

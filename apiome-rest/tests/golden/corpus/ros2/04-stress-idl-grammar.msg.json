@@ -1,0 +1,946 @@
+{
+  "adapter": "ros2",
+  "canonical": {
+    "channels": [],
+    "description": "Every field form the ROS 2 .msg grammar admits.",
+    "extras": {
+      "ros2": {
+        "capability_limits": [
+          {
+            "construct": "ros2.external_reference",
+            "count": 4,
+            "detail": "A field references a message of another package that is not in the import (a standard ROS 2 interface package, or a dependency package.xml declares). The field keeps the any type and names the message in extras['ros2_unresolved']; import that package beside this one to resolve it.",
+            "locations": [
+              "StressIdlGrammar.header",
+              "StressIdlGrammar.pose",
+              "StressIdlGrammar.roi",
+              "StressIdlGrammar.waypoints"
+            ]
+          },
+          {
+            "construct": "ros2.sibling_reference",
+            "count": 1,
+            "detail": "A field names a message of its own package by bare name, but the file was imported on its own, without the package's other interfaces. The field keeps the any type and names the message in extras['ros2_unresolved']; import the whole package to resolve it.",
+            "locations": [
+              "StressIdlGrammar.diagnostics"
+            ]
+          },
+          {
+            "construct": "ros2.wide_string",
+            "count": 2,
+            "detail": "A wstring (UTF-16 on the wire) is projected to the canonical string; its wire encoding is kept in extras['ros2_type'].",
+            "locations": [
+              "StressIdlGrammar.bounded_wide",
+              "StressIdlGrammar.wide_text"
+            ]
+          }
+        ],
+        "input": "file",
+        "interfaces": [
+          {
+            "file": "ros2/04-stress-idl-grammar.msg",
+            "full_name": "msg/StressIdlGrammar",
+            "kind": "msg"
+          }
+        ],
+        "packages": []
+      }
+    },
+    "format": "ros2",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "StressIdlGrammar",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "ros2",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "StressIdlGrammar",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Every field form the ROS 2 .msg grammar admits.",
+        "enum_values": [],
+        "extras": {
+          "ros2_constants": "StressIdlGrammar_Constants",
+          "ros2_interface": {
+            "file": "ros2/04-stress-idl-grammar.msg",
+            "full_name": "msg/StressIdlGrammar",
+            "kind": "msg",
+            "section": "message"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 3,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": [
+              true,
+              false,
+              true
+            ],
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_default": "[true, false, true]",
+              "ros2_type": "bool[3]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.array_with_default",
+            "name": "array_with_default",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "boolean",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int64"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.big_signed",
+            "name": "big_signed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint64"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.big_unsigned",
+            "name": "big_unsigned",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 10,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float64[<=10]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.bounded_array",
+            "name": "bounded_array",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "double",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 8
+              },
+              "format": null,
+              "max_items": 4,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string<=8[<=4]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.bounded_array_of_bounded_strings",
+            "name": "bounded_array_of_bounded_strings",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 32,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string<=32"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.bounded_text",
+            "name": "bounded_text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 16,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "wstring<=16"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.bounded_wide",
+            "name": "bounded_wide",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "DiagnosticEntry[]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.diagnostics",
+            "name": "diagnostics",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {
+                  "ros2_unresolved": "DiagnosticEntry"
+                },
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float64"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.double_precision",
+            "name": "double_precision",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 3,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 3,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float64[3]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.fixed_array",
+            "name": "fixed_array",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "double",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "bool"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.flag",
+            "name": "flag",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "std_msgs/Header"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.header",
+            "name": "header",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "std_msgs/msg/Header"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "char"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.legacy_char",
+            "name": "legacy_char",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int16"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.medium_signed",
+            "name": "medium_signed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.medium_unsigned",
+            "name": "medium_unsigned",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "geometry_msgs/Pose"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.pose",
+            "name": "pose",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "geometry_msgs/msg/Pose"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "byte"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.raw_byte",
+            "name": "raw_byte",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "sensor_msgs/RegionOfInterest"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.roi",
+            "name": "roi",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "sensor_msgs/msg/RegionOfInterest"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int32"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.signed",
+            "name": "signed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.single",
+            "name": "single",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int8"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.small_signed",
+            "name": "small_signed",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.small_unsigned",
+            "name": "small_unsigned",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.text",
+            "name": "text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "hello",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_default": "\"hello\"",
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.text_with_default",
+            "name": "text_with_default",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float64[]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.unbounded_array",
+            "name": "unbounded_array",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "double",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint32"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.unsigned",
+            "name": "unsigned",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "geometry_msgs/Point[]"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.waypoints",
+            "name": "waypoints",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {
+                  "ros2_unresolved": "geometry_msgs/msg/Point"
+                },
+                "item": null,
+                "name": "any",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "wstring"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.wide_text",
+            "name": "wide_text",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": 42,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_default": "42",
+              "ros2_type": "int32"
+            },
+            "field_number": null,
+            "key": "StressIdlGrammar.with_default",
+            "name": "with_default",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int32",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "StressIdlGrammar",
+        "key_type": null,
+        "kind": "record",
+        "name": "StressIdlGrammar",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Constants declared on StressIdlGrammar.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "bool",
+              "ros2_value": "true"
+            },
+            "key": "StressIdlGrammar_Constants.FLAG_ENABLED",
+            "name": "FLAG_ENABLED",
+            "value": true
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "byte",
+              "ros2_value": "7"
+            },
+            "key": "StressIdlGrammar_Constants.BYTE_CONST",
+            "name": "BYTE_CONST",
+            "value": 7
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int8",
+              "ros2_value": "-8"
+            },
+            "key": "StressIdlGrammar_Constants.INT8_CONST",
+            "name": "INT8_CONST",
+            "value": -8
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "8"
+            },
+            "key": "StressIdlGrammar_Constants.UINT8_CONST",
+            "name": "UINT8_CONST",
+            "value": 8
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int16",
+              "ros2_value": "-16"
+            },
+            "key": "StressIdlGrammar_Constants.INT16_CONST",
+            "name": "INT16_CONST",
+            "value": -16
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint16",
+              "ros2_value": "16"
+            },
+            "key": "StressIdlGrammar_Constants.UINT16_CONST",
+            "name": "UINT16_CONST",
+            "value": 16
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int32",
+              "ros2_value": "-32"
+            },
+            "key": "StressIdlGrammar_Constants.INT32_CONST",
+            "name": "INT32_CONST",
+            "value": -32
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint32",
+              "ros2_value": "32"
+            },
+            "key": "StressIdlGrammar_Constants.UINT32_CONST",
+            "name": "UINT32_CONST",
+            "value": 32
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int64",
+              "ros2_value": "-64"
+            },
+            "key": "StressIdlGrammar_Constants.INT64_CONST",
+            "name": "INT64_CONST",
+            "value": -64
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint64",
+              "ros2_value": "64"
+            },
+            "key": "StressIdlGrammar_Constants.UINT64_CONST",
+            "name": "UINT64_CONST",
+            "value": 64
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32",
+              "ros2_value": "3.5"
+            },
+            "key": "StressIdlGrammar_Constants.FLOAT32_CONST",
+            "name": "FLOAT32_CONST",
+            "value": 3.5
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float64",
+              "ros2_value": "2.718281828"
+            },
+            "key": "StressIdlGrammar_Constants.FLOAT64_CONST",
+            "name": "FLOAT64_CONST",
+            "value": 2.718281828
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string",
+              "ros2_value": "\"constant text\""
+            },
+            "key": "StressIdlGrammar_Constants.STRING_CONST",
+            "name": "STRING_CONST",
+            "value": "constant text"
+          }
+        ],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "ROS 2 declares constants inline on the interface; the enum that groups them is named by Apiome.",
+          "ros2_constants_of": "StressIdlGrammar"
+        },
+        "fields": [],
+        "key": "StressIdlGrammar_Constants",
+        "key_type": null,
+        "kind": "enum",
+        "name": "StressIdlGrammar_Constants",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ros2/04-stress-idl-grammar.msg",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ros2"
+  },
+  "fingerprint": "sha256:a9a9d242672997e8a833292ea4b92b0707db7662a75f7f8fe7e4bdaf4940abeb",
+  "lint": {
+    "findings": 29,
+    "grade": "B",
+    "report_fingerprint": "03fbe10cdb09c3166512a83c2a1c97340b24bb49bcee6f6f38e9cc4d9a3b1126",
+    "score": 80,
+    "severity_counts": {
+      "error": 0,
+      "info": 29,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

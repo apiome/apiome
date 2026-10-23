@@ -1,0 +1,22 @@
+---
+slug: ros2-import
+title: Import ROS 2 interfaces
+description: Catalog ROS 2 messages, services and actions from .msg, .srv and .action files.
+authors: [apiome]
+---
+
+ROS 2 robots talk through typed interfaces. Apiome now imports `.msg`, `.srv` and `.action` files,
+or a whole interface package, into the catalog as an RPC API.
+[What gets imported](/bring-in/ros2-import).
+
+{/* truncate */}
+
+- **Messages become records.** ROS 2 primitives map to scalars, and constants become an enum on the
+  message.
+- **Services and actions become operations.** A service is a request/response operation; an action
+  is a goal operation plus a subscription to its feedback channel.
+- **Bounds become constraints.** `string<=32` sets a maximum length, `T[3]` an exact item count and
+  `T[<=10]` a maximum item count.
+- **Packages resolve their own references.** Import a package as an archive and fields typed by
+  sibling or cross-package messages link to them. A standard package such as `std_msgs` outside the
+  upload is listed in the coverage ledger; an unknown one is refused.

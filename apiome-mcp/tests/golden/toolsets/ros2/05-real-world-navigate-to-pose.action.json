@@ -1,0 +1,50 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Navigation goal as a robotics stack ships it: goal, result and feedback separated by the --- delimiters. Reconstructed shape; no upstream text copied.\n\nReturns RealWorldNavigateToPose_Result.",
+      "inputSchema": {
+        "properties": {
+          "allow_reversing": {
+            "default": false,
+            "type": "boolean"
+          },
+          "behavior_tree": {
+            "type": "string"
+          },
+          "max_speed": {},
+          "pose": {}
+        },
+        "required": [
+          "allow_reversing",
+          "behavior_tree",
+          "max_speed",
+          "pose"
+        ],
+        "type": "object"
+      },
+      "name": "RealWorldNavigateToPose",
+      "operation": "RealWorldNavigateToPose.RealWorldNavigateToPose",
+      "output": {
+        "schema": {
+          "properties": {
+            "distance_travelled": {},
+            "error_code": {},
+            "error_msg": {
+              "type": "string"
+            },
+            "total_time": {}
+          },
+          "required": [
+            "distance_travelled",
+            "error_code",
+            "error_msg",
+            "total_time"
+          ],
+          "type": "object"
+        },
+        "shape": "RealWorldNavigateToPose_Result"
+      }
+    }
+  ]
+}
