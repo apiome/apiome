@@ -30,6 +30,7 @@ it, such as *Schema inferred from the example request body of POST /orders.*
 | Postman collections | Request and response schemas are inferred from example bodies. A raw body that is not JSON is synthesized as a string. Requests, paths and parameters are declared. |
 | Envoy, Istio, Traefik, NGINX, HAProxy, Consul, Tyk Classic | Every route is inferred from the gateway configuration. A Tyk OAS document is declared. |
 | Kong, Gateway API | Routes are declared. A path recovered from a regex pattern is inferred. |
+| ROS 2 interfaces | Messages, services, actions and fields are declared. The enum that holds an interface's constants and an action's feedback channel are synthesized. |
 | MQTT Sparkplug B payloads | Everything is inferred: a payload does not carry its topic, so its message type comes from the file name or its metrics. A namespace description is declared. A `DataSet` row record is synthesized. |
 | TypeScript, Zod, tRPC, Pydantic, CUE, Pkl, Dhall | Types are declared. An anonymous type or a generic instantiation that Apiome names is synthesized, and so is the type that holds a tRPC procedure's inline input or output. |
 

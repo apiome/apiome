@@ -1,0 +1,48 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Request and response separated by the --- delimiter.\n\nReturns TypicalService_Response.",
+      "inputSchema": {
+        "properties": {
+          "initial_pose": {},
+          "map_name": {
+            "type": "string"
+          },
+          "overwrite_existing": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "initial_pose",
+          "map_name",
+          "overwrite_existing"
+        ],
+        "type": "object"
+      },
+      "name": "TypicalService",
+      "operation": "TypicalService.TypicalService",
+      "output": {
+        "schema": {
+          "properties": {
+            "map_uri": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "result": {}
+          },
+          "required": [
+            "map_uri",
+            "message",
+            "result"
+          ],
+          "type": "object"
+        },
+        "shape": "TypicalService_Response"
+      }
+    }
+  ]
+}

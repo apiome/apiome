@@ -2,8 +2,7 @@
 
 Fixtures for **FMT-9.3** ([#5470](https://github.com/apiome/apiome/issues/5470)). **AsyncAPI 3.1.0
 added ROS 2 bindings in January 2026** — the ecosystem is moving toward standards Apiome already
-speaks, and reading the native files makes Apiome the bridge. Entries carry `adapter_key: null` and
-the `pending-adapter` tag.
+speaks, and reading the native files makes Apiome the bridge. The `ros2` adapter imports them.
 
 **Three file kinds, one grammar.**
 

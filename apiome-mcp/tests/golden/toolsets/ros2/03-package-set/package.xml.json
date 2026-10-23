@@ -1,0 +1,110 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Service in the same package; its request references the sibling message by bare name.\n\nReturns example_interfaces_extra.LiftPallet_Response.",
+      "inputSchema": {
+        "properties": {
+          "expected_cells": {
+            "items": {
+              "description": "Referenced by PalletStatus by bare name, resolvable only within the package.",
+              "properties": {
+                "calibrated": {
+                  "type": "boolean"
+                },
+                "cell_id": {
+                  "type": "string"
+                },
+                "mass_kg": {},
+                "temperature_c": {}
+              },
+              "required": [
+                "calibrated",
+                "cell_id",
+                "mass_kg",
+                "temperature_c"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "pallet_id": {
+            "type": "string"
+          },
+          "target_height_m": {}
+        },
+        "required": [
+          "expected_cells",
+          "pallet_id",
+          "target_height_m"
+        ],
+        "type": "object"
+      },
+      "name": "LiftPallet",
+      "operation": "example_interfaces_extra.LiftPallet",
+      "output": {
+        "schema": {
+          "properties": {
+            "accepted": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            },
+            "status": {
+              "description": "Root message of the package: references a sibling message and a cross-package type.",
+              "properties": {
+                "header": {},
+                "load_cells": {
+                  "items": {
+                    "description": "Referenced by PalletStatus by bare name, resolvable only within the package.",
+                    "properties": {
+                      "calibrated": {
+                        "type": "boolean"
+                      },
+                      "cell_id": {
+                        "type": "string"
+                      },
+                      "mass_kg": {},
+                      "temperature_c": {}
+                    },
+                    "required": [
+                      "calibrated",
+                      "cell_id",
+                      "mass_kg",
+                      "temperature_c"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pallet_id": {
+                  "type": "string"
+                },
+                "pose": {},
+                "state": {},
+                "total_mass_kg": {}
+              },
+              "required": [
+                "header",
+                "load_cells",
+                "pallet_id",
+                "pose",
+                "state",
+                "total_mass_kg"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "accepted",
+            "message",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "example_interfaces_extra.LiftPallet_Response"
+      }
+    }
+  ]
+}

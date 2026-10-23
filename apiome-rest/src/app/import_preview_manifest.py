@@ -167,6 +167,8 @@ from .proto_editions import (
 from .pydantic_normalizer import PYDANTIC_EXTRAS_KEY
 from .pydantic_parser import PARTIAL_LIMITS as PYDANTIC_PARTIAL_LIMITS
 from .relaxng_normalizer import RELAXNG_EXTRAS_KEY
+from .ros2_normalizer import PARTIAL_LIMITS as ROS2_PARTIAL_LIMITS
+from .ros2_normalizer import ROS2_EXTRAS_KEY
 from .sparkplug_normalizer import PARTIAL_LIMITS as SPARKPLUG_PARTIAL_LIMITS
 from .sparkplug_normalizer import SPARKPLUG_EXTRAS_KEY
 from .sql_ddl_normalizer import SQL_DDL_EXTRAS_KEY
@@ -275,6 +277,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # message types, namespace identity, declared limits). Our own bookkeeping about the read
         # — a metric's alias, datatype and properties ride under their `sparkplug_*` keys.
         SPARKPLUG_EXTRAS_KEY,
+        # FMT-9.3: the ROS 2 projection record (input kind, interfaces, packages, declared limits).
+        # Our own bookkeeping — a field's written type rides under `ros2_type`.
+        ROS2_EXTRAS_KEY,
         # FMT-8.5: the CUE / Pkl / Dhall projection records (root file, files, exports, validated
         # instances, declared limits) sit under the format's own key. Our own bookkeeping.
         CUE_FORMAT,
@@ -1226,6 +1231,7 @@ def _document_scope_rows(
     ledger.extend(_pydantic_capability_rows(api))
     ledger.extend(_opcua_capability_rows(api))
     ledger.extend(_sparkplug_capability_rows(api))
+    ledger.extend(_ros2_capability_rows(api))
     ledger.extend(_typed_config_capability_rows(api))
     ledger.extend(_odcs_capability_rows(api))
     ledger.extend(_kafka_connect_capability_rows(api))
@@ -2064,6 +2070,21 @@ def _sparkplug_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="sparkplug", extras_key=SPARKPLUG_EXTRAS_KEY, partial=SPARKPLUG_PARTIAL_LIMITS
     )
+
+
+def _ros2_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-9.3 ROS 2 declared limits as document-scoped ledger rows.
+
+    An unresolved external or sibling reference and a projected ``wstring`` keep their field, so
+    every ROS 2 limit is ``partially-mapped``.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="ros2", extras_key=ROS2_EXTRAS_KEY, partial=ROS2_PARTIAL_LIMITS)
 
 
 def _pydantic_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

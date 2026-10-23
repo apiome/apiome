@@ -1570,6 +1570,21 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "ros2": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="ROS 2 interface definitions (rosidl .msg / .srv / .action)",
+                format_key="ros2",
+                support=VersionSupport.UNGATED,
+                note="Interface files carry no version marker: the `rosidl` line grammar — "
+                "bounded strings, fixed and bounded arrays, constants and defaults — is shared by "
+                "every ROS 2 distribution since Dashing. `package.xml` formats 2 and 3 are read for "
+                "the package name, version and dependencies.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "pydantic": VersionCoverage(
         reads=[
             FormatVersion(

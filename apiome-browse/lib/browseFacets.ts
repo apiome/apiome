@@ -99,6 +99,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   grpc: 'gRPC / Protobuf',
   connectrpc: 'Connect RPC',
   thrift: 'Thrift',
+  ros2: 'ROS 2 interfaces',
   capnproto: "Cap'n Proto",
   wit: 'WIT (WebAssembly)',
   flatbuffers: 'FlatBuffers',

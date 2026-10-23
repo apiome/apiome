@@ -1219,6 +1219,10 @@ def load_builtin_import_sources() -> None:
     # Sparkplug B payloads (binary intake) and topic-namespace descriptions, event paradigm.
     from . import sparkplug_import_source as _sparkplug  # noqa: F401
 
+    # ``ros2_import_source`` (FMT-9.3) self-registers the ``ros2`` adapter — ROS 2 ``.msg`` /
+    # ``.srv`` / ``.action`` interfaces and interface packages, rpc paradigm.
+    from . import ros2_import_source as _ros2  # noqa: F401
+
     from . import postman_import_source as _postman  # noqa: F401
     from . import cloudevents_import_source as _cloudevents  # noqa: F401
     # ``xregistry_import_source`` (MFI-19.2) self-registers the ``xregistry`` adapter — a CNCF

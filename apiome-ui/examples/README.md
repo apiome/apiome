@@ -64,7 +64,7 @@ The corpus holds **1467 files** across **107 format directories**. Every file ha
 | `openrpc/` | OpenRPC (JSON-RPC) | rpc | top-level `openrpc:` version | 11 |
 | `protobuf/` | Protobuf / gRPC | rpc | `syntax = "proto3"` | 17 |
 | `protobuf-editions/` | Protobuf editions (2023/2024) | rpc | `edition = "2023"` / `"2024"` in place of `syntax` | 14 |
-| `ros2/` | ROS 2 interfaces (pending #5470) | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
+| `ros2/` | ROS 2 interfaces | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
 | `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 11 |
 | `thrift/` | Apache Thrift | rpc | `service` / `struct` shapes | 11 |
 | `trpc/` | tRPC routers | rpc | `initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures | 16 |
@@ -2023,26 +2023,26 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/03-truncated-mid-pattern.rng`** — Truncation is grounded at INPUT_MALFORMED, as for every other XML adapter's truncated fixture: a document cut mid-attribute is rejected by the XML parser before RELAX NG semantics are reached, and the intent is kept in failure_class.
 
-### `ros2/` — ROS 2 interfaces (pending #5470)
+### `ros2/` — ROS 2 interfaces
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-message.msg` | minimal | `ros2` ≥ 0.85 | valid | `msg`, `primitives`, `pending-adapter` |
-| `02-typical-sensor-message.msg` | typical | `ros2` ≥ 0.85 | valid | `msg`, `constants`, `header`, `unbounded-array`, `comments`, `pending-adapter` |
-| `03-package-set/LiftPallet.srv` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `srv`, `bare-name-reference`, `pending-adapter` |
-| `03-package-set/LoadCell.msg` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `msg`, `pending-adapter` |
-| `03-package-set/PalletStatus.msg` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `bare-name-reference`, `cross-package-reference`, `constants`, `pending-adapter` |
-| `03-package-set/package.xml` | multi-file (root) | `ros2` ≥ 0.85 | valid | `multi-file`, `package-manifest`, `dependencies`, `pending-adapter` |
-| `04-stress-idl-grammar.msg` | stress | `ros2` ≥ 0.85 | valid | `all-primitives`, `constants`, `wstring`, `bounded-string`, `fixed-array`, `bounded-array`, `array-default`, `cross-package-reference`, `pending-adapter` |
-| `05-real-world-navigate-to-pose.action` | real-world | `ros2` ≥ 0.85 | valid | `action`, `goal-result-feedback`, `error-constants`, `duration`, `defaults`, `pending-adapter` |
-| `06-typical-service.srv` | typical | `ros2` ≥ 0.85 | valid | `srv`, `request-response`, `result-constants`, `defaults`, `pending-adapter` |
-| `07-composition-nested-messages.msg` | composition | `ros2` ≥ 0.85 | valid | `same-package-reference`, `cross-package-reference`, `bounded-array-of-composed`, `constants`, `pending-adapter` |
-| `negative/01-syntactic-bad-field-line.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `syntactic`, `malformed-field-line`, `pending-adapter` |
-| `negative/02-semantic-empty-message.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `semantic`, `no-fields`, `pending-adapter` |
-| `negative/03-truncated-mid-action.action` | — | `ros2` (no guarantee) | invalid | `negative`, `truncated`, `mid-field`, `missing-feedback-section`, `pending-adapter` |
-| `negative/04-wrong-format-protobuf.proto` | — | `ros2` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf`, `pending-adapter` |
-| `negative/05-encoding-utf16.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-type-reference.msg` ⚠ | — | `ros2` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-package`, `missing-local-type`, `pending-adapter` |
+| `01-minimal-message.msg` | minimal | `ros2` ≥ 0.85 | valid | `msg`, `primitives` |
+| `02-typical-sensor-message.msg` | typical | `ros2` ≥ 0.85 | valid | `msg`, `constants`, `header`, `unbounded-array`, `comments` |
+| `03-package-set/LiftPallet.srv` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `srv`, `bare-name-reference` |
+| `03-package-set/LoadCell.msg` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `msg` |
+| `03-package-set/PalletStatus.msg` | multi-file (member) | `ros2` (no guarantee) | valid | `multi-file`, `bare-name-reference`, `cross-package-reference`, `constants` |
+| `03-package-set/package.xml` | multi-file (root) | `ros2` ≥ 0.85 | valid | `multi-file`, `package-manifest`, `dependencies` |
+| `04-stress-idl-grammar.msg` | stress | `ros2` ≥ 0.85 | valid | `all-primitives`, `constants`, `wstring`, `bounded-string`, `fixed-array`, `bounded-array`, `array-default`, `cross-package-reference` |
+| `05-real-world-navigate-to-pose.action` | real-world | `ros2` ≥ 0.85 | valid | `action`, `goal-result-feedback`, `error-constants`, `duration`, `defaults` |
+| `06-typical-service.srv` | typical | `ros2` ≥ 0.85 | valid | `srv`, `request-response`, `result-constants`, `defaults` |
+| `07-composition-nested-messages.msg` | composition | `ros2` ≥ 0.85 | valid | `same-package-reference`, `cross-package-reference`, `bounded-array-of-composed`, `constants` |
+| `negative/01-syntactic-bad-field-line.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `syntactic`, `malformed-field-line` |
+| `negative/02-semantic-empty-message.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `semantic`, `no-fields` |
+| `negative/03-truncated-mid-action.action` | — | `ros2` (no guarantee) | invalid | `negative`, `truncated`, `mid-field`, `missing-feedback-section` |
+| `negative/04-wrong-format-protobuf.proto` | — | `ros2` (no guarantee) | invalid | `negative`, `wrong-format`, `protobuf` |
+| `negative/05-encoding-utf16.msg` | — | `ros2` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-type-reference.msg` ⚠ | — | `ros2` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-package`, `missing-local-type` |
 
 > ⚠ **`negative/06-unresolvable-type-reference.msg`** — The FMT-9.3 acceptance case: cross-package references resolve within a fileset and are declared unresolved otherwise.
 

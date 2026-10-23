@@ -1,0 +1,613 @@
+{
+  "adapter": "ros2",
+  "canonical": {
+    "channels": [],
+    "description": "Interface package: the messages, services and actions of the example robot.",
+    "extras": {
+      "ros2": {
+        "capability_limits": [
+          {
+            "construct": "ros2.external_reference",
+            "count": 2,
+            "detail": "A field references a message of another package that is not in the import (a standard ROS 2 interface package, or a dependency package.xml declares). The field keeps the any type and names the message in extras['ros2_unresolved']; import that package beside this one to resolve it.",
+            "locations": [
+              "example_interfaces_extra.PalletStatus.header",
+              "example_interfaces_extra.PalletStatus.pose"
+            ]
+          }
+        ],
+        "input": "fileset",
+        "interfaces": [
+          {
+            "file": "LiftPallet.srv",
+            "full_name": "example_interfaces_extra/srv/LiftPallet",
+            "kind": "srv"
+          },
+          {
+            "file": "LoadCell.msg",
+            "full_name": "example_interfaces_extra/msg/LoadCell",
+            "kind": "msg"
+          },
+          {
+            "file": "PalletStatus.msg",
+            "full_name": "example_interfaces_extra/msg/PalletStatus",
+            "kind": "msg"
+          }
+        ],
+        "packages": [
+          {
+            "dependencies": [
+              "builtin_interfaces",
+              "geometry_msgs",
+              "rosidl_default_runtime",
+              "std_msgs"
+            ],
+            "license": "Apache-2.0",
+            "name": "example_interfaces_extra",
+            "version": "1.2.0"
+          }
+        ]
+      }
+    },
+    "format": "ros2",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "example_interfaces_extra",
+      "namespace": "example_interfaces_extra"
+    },
+    "paradigm": "rpc",
+    "protocol": "ros2",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The services and actions of the import.",
+        "extras": {},
+        "key": "example_interfaces_extra",
+        "name": "example_interfaces_extra",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Service in the same package; its request references the sibling message by bare name.",
+            "extras": {
+              "ros2_interface": {
+                "full_name": "example_interfaces_extra/srv/LiftPallet",
+                "kind": "srv"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "example_interfaces_extra.LiftPallet",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example_interfaces_extra.LiftPallet#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example_interfaces_extra.LiftPallet_Request",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example_interfaces_extra.LiftPallet#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example_interfaces_extra.LiftPallet_Response",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "LiftPallet",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "example_interfaces_extra",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Service in the same package; its request references the sibling message by bare name.",
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "LiftPallet.srv",
+            "full_name": "example_interfaces_extra/srv/LiftPallet",
+            "kind": "srv",
+            "section": "request"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "LoadCell[]"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Request.expected_cells",
+            "name": "expected_cells",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "example_interfaces_extra.LoadCell",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Request.pallet_id",
+            "name": "pallet_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Request.target_height_m",
+            "name": "target_height_m",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "example_interfaces_extra.LiftPallet_Request",
+        "key_type": null,
+        "kind": "record",
+        "name": "LiftPallet_Request",
+        "namespace": "example_interfaces_extra",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "LiftPallet.srv",
+            "full_name": "example_interfaces_extra/srv/LiftPallet",
+            "kind": "srv",
+            "section": "response"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "bool"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Response.accepted",
+            "name": "accepted",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Response.message",
+            "name": "message",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "PalletStatus"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LiftPallet_Response.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "example_interfaces_extra.PalletStatus",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "example_interfaces_extra.LiftPallet_Response",
+        "key_type": null,
+        "kind": "record",
+        "name": "LiftPallet_Response",
+        "namespace": "example_interfaces_extra",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Referenced by PalletStatus by bare name, resolvable only within the package.",
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "LoadCell.msg",
+            "full_name": "example_interfaces_extra/msg/LoadCell",
+            "kind": "msg",
+            "section": "message"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "bool"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LoadCell.calibrated",
+            "name": "calibrated",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LoadCell.cell_id",
+            "name": "cell_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LoadCell.mass_kg",
+            "name": "mass_kg",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.LoadCell.temperature_c",
+            "name": "temperature_c",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "example_interfaces_extra.LoadCell",
+        "key_type": null,
+        "kind": "record",
+        "name": "LoadCell",
+        "namespace": "example_interfaces_extra",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Root message of the package: references a sibling message and a cross-package type.",
+        "enum_values": [],
+        "extras": {
+          "ros2_constants": "example_interfaces_extra.PalletStatus_Constants",
+          "ros2_interface": {
+            "file": "PalletStatus.msg",
+            "full_name": "example_interfaces_extra/msg/PalletStatus",
+            "kind": "msg",
+            "section": "message"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "std_msgs/Header"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.header",
+            "name": "header",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "std_msgs/msg/Header"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "LoadCell[]"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.load_cells",
+            "name": "load_cells",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "example_interfaces_extra.LoadCell",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.pallet_id",
+            "name": "pallet_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "geometry_msgs/Pose"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.pose",
+            "name": "pose",
+            "type": {
+              "extras": {
+                "ros2_unresolved": "geometry_msgs/msg/Pose"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.state",
+            "name": "state",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "float32"
+            },
+            "field_number": null,
+            "key": "example_interfaces_extra.PalletStatus.total_mass_kg",
+            "name": "total_mass_kg",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "example_interfaces_extra.PalletStatus",
+        "key_type": null,
+        "kind": "record",
+        "name": "PalletStatus",
+        "namespace": "example_interfaces_extra",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Constants declared on PalletStatus.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "0"
+            },
+            "key": "example_interfaces_extra.PalletStatus_Constants.STATE_EMPTY",
+            "name": "STATE_EMPTY",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "1"
+            },
+            "key": "example_interfaces_extra.PalletStatus_Constants.STATE_LOADED",
+            "name": "STATE_LOADED",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "uint8",
+              "ros2_value": "2"
+            },
+            "key": "example_interfaces_extra.PalletStatus_Constants.STATE_IN_TRANSIT",
+            "name": "STATE_IN_TRANSIT",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "provenance": "synthesized",
+          "provenance_evidence": "ROS 2 declares constants inline on the interface; the enum that groups them is named by Apiome.",
+          "ros2_constants_of": "example_interfaces_extra.PalletStatus"
+        },
+        "fields": [],
+        "key": "example_interfaces_extra.PalletStatus_Constants",
+        "key_type": null,
+        "kind": "enum",
+        "name": "PalletStatus_Constants",
+        "namespace": "example_interfaces_extra",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "1.2.0"
+  },
+  "corpus_path": "ros2/03-package-set/package.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.9,
+    "format": "ros2"
+  },
+  "fingerprint": "sha256:edaa0593466f2db525f3dba11c40019ca847a0dbf3c7d7707807c6c29ab4e828",
+  "lint": {
+    "findings": 19,
+    "grade": "C",
+    "report_fingerprint": "cbe2553cf61bd65f221abad6103a646be548753b00d547e1695524e0353721b3",
+    "score": 78,
+    "severity_counts": {
+      "error": 0,
+      "info": 18,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

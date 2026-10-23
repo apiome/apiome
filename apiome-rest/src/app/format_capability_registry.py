@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "31"
+REGISTRY_VERSION = "32"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2587,6 +2587,71 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "A topic-namespace description whose topics contradict its declared namespace, group, "
             "edge node or host application is refused with `INPUT_SEMANTIC_INVALID`.",
             "Sparkplug *output* is not implemented; an import is exported through another "
+            "target's emitter.",
+        ],
+    ),
+    "ros2": _Seed(
+        # FMT-9.3: interface files are schema text, read by the format-blind walk; the reviewed
+        # judgement is the projection statement — messages to records, services to request/response
+        # operations, actions to a goal operation plus a feedback channel.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A type is located by its package and interface name (`nav2_msgs.NavigateToPose_Goal`) "
+                "and the file it came from is kept in `extras['ros2_interface']`; field lines are "
+                "not carried as source positions."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "An interface file describes data without containing any: constants and field "
+                "defaults are part of the schema and are modelled."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "ros2.external_reference",
+                    "ros2.sibling_reference",
+                    "ros2.wide_string",
+                ]
+            ),
+            note=(
+                "Each `.msg` → a `RECORD`; each `.srv` → `<Name>_Request` and `<Name>_Response` "
+                "records and a `request_response` operation; each `.action` → `<Name>_Goal`, "
+                "`<Name>_Result` and `<Name>_Feedback` records, a goal operation (goal → result) and "
+                "a `subscribe` operation on the `<Name>/_action/feedback` channel. Constants become "
+                "the members of a `<Record>_Constants` `ENUM`. Primitives map to canonical scalars "
+                "(`float32`/`float64` → `float`/`double`, `byte`/`char` → `uint8`, `wstring` → "
+                "`string`); `T[]`, `T[N]` and `T[<=N]` are lists (`min_items`/`max_items` for a fixed "
+                "array, `max_items` for a bounded one); `string<=N` sets `max_length`; defaults are "
+                "kept. A reference resolves within the import (a bare name within its package); one "
+                "outside it keeps the `any` type with the message named in "
+                "`extras['ros2_unresolved']`. Declared limits are counted in "
+                "`extras['ros2']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A package-qualified reference to a package outside the import is kept as a declared "
+            "unresolved reference when the package is a standard ROS 2 interface package "
+            "(`std_msgs`, `geometry_msgs`, `builtin_interfaces` …) or a dependency `package.xml` "
+            "declares; any other package is refused with `INPUT_REFERENCE_UNRESOLVED`.",
+            "In a package fileset a bare name must be one of the package's own messages; in a "
+            "single uploaded file the package's other files were not supplied, so a bare name is "
+            "kept as a declared unresolved sibling reference.",
+            "A `.srv` with one section or an `.action` with fewer than three is refused as "
+            "`INPUT_TRUNCATED`; an interface with no fields and no constants as "
+            "`INPUT_SEMANTIC_INVALID`.",
+            "ROS 2 interface *output* is not implemented; an import is exported through another "
             "target's emitter.",
         ],
     ),

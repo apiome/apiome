@@ -1,0 +1,122 @@
+{
+  "adapter": "ros2",
+  "canonical": {
+    "channels": [],
+    "description": "The canonical ROS 2 message: two primitive fields.",
+    "extras": {
+      "ros2": {
+        "capability_limits": [],
+        "input": "file",
+        "interfaces": [
+          {
+            "file": "ros2/01-minimal-message.msg",
+            "full_name": "msg/MinimalMessage",
+            "kind": "msg"
+          }
+        ],
+        "packages": []
+      }
+    },
+    "format": "ros2",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "MinimalMessage",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "ros2",
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "MinimalMessage",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "The canonical ROS 2 message: two primitive fields.",
+        "enum_values": [],
+        "extras": {
+          "ros2_interface": {
+            "file": "ros2/01-minimal-message.msg",
+            "full_name": "msg/MinimalMessage",
+            "kind": "msg",
+            "section": "message"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "string"
+            },
+            "field_number": null,
+            "key": "MinimalMessage.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "ros2_type": "int64"
+            },
+            "field_number": null,
+            "key": "MinimalMessage.seen_at",
+            "name": "seen_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MinimalMessage",
+        "key_type": null,
+        "kind": "record",
+        "name": "MinimalMessage",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "ros2/01-minimal-message.msg",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "ros2"
+  },
+  "fingerprint": "sha256:a0fe602c1ce85e858473b58eef4c5e76ab52cf3b02304f815e06e2a380de3878",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "be64ff8c098d7921643ab90a4704501557a3763c208aa95df05cf0dccebbd683",
+    "score": 98,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}
