@@ -55,7 +55,15 @@ export interface RecentAsyncJobsPanelProps {
   testId?: string;
 }
 
-function listUrl(kind: RecentAsyncJobKind, limit: number, offset: number): string {
+/**
+ * The BFF list URL for one page of recent jobs.
+ *
+ * @param kind Which job store.
+ * @param limit Page size.
+ * @param offset Rows to skip.
+ * @returns The relative URL.
+ */
+export function recentAsyncJobsUrl(kind: RecentAsyncJobKind, limit: number, offset: number): string {
   const base = kind === 'export' ? '/api/export/jobs' : '/api/catalog/import';
   const params = new URLSearchParams({
     limit: String(limit),
@@ -86,7 +94,7 @@ export function RecentAsyncJobsPanel({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(listUrl(kind, pageLimit, nextOffset), { cache: 'no-store' });
+        const res = await fetch(recentAsyncJobsUrl(kind, pageLimit, nextOffset), { cache: 'no-store' });
         const body = (await res.json().catch(() => null)) as ListPayload | null;
         if (!res.ok || !body || body.success === false) {
           setError(body?.error || `Failed to load jobs (${res.status})`);

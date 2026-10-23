@@ -5920,14 +5920,10 @@ button.tfa-reset-notice__close > svg {
   overflow: hidden;
 }
 
+/* HIVE-11.11: a flat band — the profile was the app's only gradient surface. */
 .acct-identity__band {
   height: 4.5rem;
-  background: linear-gradient(
-    100deg,
-    var(--honey-soft),
-    var(--accent-soft) 60%,
-    var(--bg-surface)
-  );
+  background: var(--bg-subtle);
 }
 
 .acct-identity__row {
@@ -18196,6 +18192,66 @@ button.tfa-reset-notice__close > svg {
   gap: 0;
   padding: 0;
   overflow: hidden;
+}
+
+/* HIVE-11.11: the Projects import wizard sizes to its step (DESIGN.md §8: `--lg`), capped
+   at the viewport so a long step still scrolls inside the body. Only the head, stepper and
+   footer reserve height; nothing pads an empty step out to full height. */
+.imp-wizard--fit {
+  max-block-size: calc(100vh - 3rem);
+}
+
+/* The last three imports under the source tiles (HIVE-11.11). */
+.imp-recent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.imp-recent__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.imp-recent__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.imp-recent__list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.imp-recent__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-xs);
+}
+
+.imp-recent__row + .imp-recent__row {
+  border-block-start: 1px solid var(--border);
+}
+
+.imp-recent__id {
+  min-inline-size: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-muted);
+}
+
+.imp-recent__pct {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
 }
 
 .imp-wizard__head {
