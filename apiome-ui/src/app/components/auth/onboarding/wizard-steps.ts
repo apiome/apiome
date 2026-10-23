@@ -6,16 +6,27 @@
  * polish, OLO-4.4 invited-user path) can extend it without touching the shell.
  */
 
-/** Identifier of each wizard step, in visit order. */
-export type FirstTenantWizardStep = 'welcome' | 'organization' | 'summary' | 'done';
+/**
+ * Identifier of each wizard step, in visit order. `security` (TFA-1.4, #5658) is the skippable
+ * **Protect your account** step shown after the review step creates the tenant.
+ */
+export type FirstTenantWizardStep = 'welcome' | 'organization' | 'summary' | 'security' | 'done';
 
 /** All steps in visit order. `done` is terminal and not shown in progress. */
 export const FIRST_TENANT_WIZARD_STEPS: readonly FirstTenantWizardStep[] = [
   'welcome',
   'organization',
   'summary',
+  'security',
   'done',
 ];
+
+/**
+ * Steps that run after the tenant is provisioned. They need the new tenant in memory, and the
+ * onboarding guard stops drawing the wizard once a membership exists, so neither is ever
+ * resumed from saved state.
+ */
+export const POST_PROVISION_WIZARD_STEPS: readonly FirstTenantWizardStep[] = ['security', 'done'];
 
 /**
  * Steps shown in the progress header, with their display labels.
@@ -31,6 +42,7 @@ export const FIRST_TENANT_WIZARD_PROGRESS: ReadonlyArray<{
   { id: 'welcome', label: 'Welcome' },
   { id: 'organization', label: 'Organization' },
   { id: 'summary', label: 'Review' },
+  { id: 'security', label: 'Security' },
 ];
 
 /**
@@ -48,6 +60,17 @@ export function isFirstTenantWizardStep(value: unknown): value is FirstTenantWiz
     typeof value === 'string' &&
     (FIRST_TENANT_WIZARD_STEPS as readonly string[]).includes(value)
   );
+}
+
+/**
+ * Whether a saved step may be reopened on resume (OLO-4.5): a known step that does not need the
+ * just-provisioned tenant ({@link POST_PROVISION_WIZARD_STEPS}).
+ *
+ * @param value An arbitrary value that may be a wizard step.
+ * @returns True when the wizard can reopen on `value`.
+ */
+export function isResumableWizardStep(value: unknown): value is FirstTenantWizardStep {
+  return isFirstTenantWizardStep(value) && !POST_PROVISION_WIZARD_STEPS.includes(value);
 }
 
 /**

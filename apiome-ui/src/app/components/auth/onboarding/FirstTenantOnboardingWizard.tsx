@@ -20,12 +20,13 @@ import { Stepper } from '../../ui/Stepper';
 import { AuthShell } from '../AuthShell';
 import {
   FIRST_TENANT_WIZARD_PROGRESS,
-  isFirstTenantWizardStep,
+  isResumableWizardStep,
   type FirstTenantWizardStep,
 } from './wizard-steps';
 import { WelcomeStep } from './WelcomeStep';
 import { OrganizationStep, type OrganizationStepValues } from './OrganizationStep';
 import { SummaryStep } from './SummaryStep';
+import { SecurityStep } from './SecurityStep';
 import { DoneStep } from './DoneStep';
 
 /** The name the progress row is announced by. */
@@ -44,7 +45,8 @@ const RESUME_NOTE =
  * the authenticated user has zero tenant memberships.
  *
  * Steps: welcome → organization (name/slug; polished by OLO-4.2) → summary
- * (Free license shown before confirm) → done. The wizard is deliberately not
+ * (Free license shown before confirm) → security (TFA-1.4 #5658: skippable
+ * authenticator enrolment, "Protect your account") → done. The wizard is deliberately not
  * dismissible — a tenant-less user has nothing else to see — so the only exits
  * are completing setup, being added to a tenant ("Check again"), or signing
  * out.
@@ -133,9 +135,9 @@ export function FirstTenantOnboardingWizard() {
         }
         if (saved.orgName) setOrgName(saved.orgName);
         if (saved.slug) setSlug(saved.slug);
-        // Never resume onto `done`: it needs the just-provisioned tenant in
-        // memory, and a completed wizard no longer shows. Cap resume at review.
-        if (isFirstTenantWizardStep(saved.step) && saved.step !== 'done') {
+        // Never resume onto `security` or `done`: they need the just-provisioned
+        // tenant in memory, and a completed wizard no longer shows. Cap resume at review.
+        if (isResumableWizardStep(saved.step)) {
           setStep(saved.step);
         }
       })
@@ -171,7 +173,12 @@ export function FirstTenantOnboardingWizard() {
     advanceTo('summary', values.name, values.slug);
   };
 
-  /** Runs provisioning; success reaches `done`, failure stays on the summary. */
+  /**
+   * Runs provisioning; success reaches the security step, failure stays on the summary.
+   *
+   * The security step is not persisted: the resume row is cleared here, and the guard stops
+   * drawing the wizard once the tenant exists.
+   */
   const handleConfirm = async () => {
     setSubmitting(true);
     setSubmitError(null);
@@ -179,7 +186,7 @@ export function FirstTenantOnboardingWizard() {
       const result = await provisionFirstTenant(orgName, slug);
       if (result.success) {
         setTenant(result.tenant);
-        setStep('done');
+        setStep('security');
         // Record the completed funnel event and clear the resume state — the
         // wizard no longer shows once the tenant exists. Fire-and-forget.
         void completeOnboardingWizard().catch((error) => {
@@ -282,6 +289,9 @@ export function FirstTenantOnboardingWizard() {
               onConfirm={handleConfirm}
             />
           )}
+          {step === 'security' && tenant && (
+            <SecurityStep tenantName={tenant.name} onFinish={() => setStep('done')} />
+          )}
           {step === 'done' && tenant && (
             <DoneStep
               tenantName={tenant.name}
@@ -293,7 +303,8 @@ export function FirstTenantOnboardingWizard() {
         </Card>
       </section>
 
-      <p className="auth-terms mt-4">{RESUME_NOTE}</p>
+      {/* Only while there is something to resume: after provisioning the wizard stops showing. */}
+      {isResumableWizardStep(step) && <p className="auth-terms mt-4">{RESUME_NOTE}</p>}
     </AuthShell>
   );
 }

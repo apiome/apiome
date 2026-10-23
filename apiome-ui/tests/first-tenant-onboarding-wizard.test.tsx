@@ -3,12 +3,12 @@
  *
  * The wizard is mounted by the onboarding guard for zero-tenant users:
  * welcome → organization (name/slug) → summary (Free license shown before
- * confirm) → done. Covers step navigation with value retention, form
+ * confirm) → security (skippable two-factor enrolment, TFA-1.4) → done. Covers step navigation with value retention, form
  * validation, the non-dismissible contract, provisioning success/failure, and
  * completion landing in the new tenant's dashboard (session update + /ade).
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockSignOut = jest.fn();
@@ -59,10 +59,33 @@ jest.mock('@lib/auth/onboarding-wizard-state-actions', () => ({
   completeOnboardingWizard: () => mockCompleteWizard(),
 }));
 
+// The security step (TFA-1.4 #5658) draws the shared enrolment dialog: keep the Better Auth
+// client and the server actions out of the test.
+const mockGetReauthStatus = jest.fn();
+jest.mock('@lib/auth/two-factor-profile-actions', () => ({
+  getTwoFactorReauthStatus: () => mockGetReauthStatus(),
+  dismissTwoFactorResetNotice: jest.fn(async () => undefined),
+}));
+const mockTwoFactorEnable = jest.fn();
+const mockVerifyTotp = jest.fn();
+jest.mock('@lib/auth/auth-client', () => ({
+  authClient: {
+    twoFactor: {
+      enable: (...args: unknown[]) => mockTwoFactorEnable(...args),
+      verifyTotp: (...args: unknown[]) => mockVerifyTotp(...args),
+    },
+  },
+}));
+jest.mock('react-qr-code', () => ({
+  __esModule: true,
+  default: ({ value }: { value: string }) => <div data-testid="qr-code" data-value={value} />,
+}));
+
 import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
 import { FREE_LICENSE_SUMMARY } from '@lib/auth/free-license';
 import {
   isFirstTenantWizardStep,
+  isResumableWizardStep,
   nextWizardStep,
   previousWizardStep,
 } from '@/app/components/auth/onboarding/wizard-steps';
@@ -77,7 +100,20 @@ beforeEach(() => {
   mockLoadState.mockResolvedValue(null);
   mockSaveStep.mockResolvedValue(undefined);
   mockCompleteWizard.mockResolvedValue(undefined);
+  mockGetReauthStatus.mockResolvedValue({ hasPassword: true, fresh: true, providers: [] });
+  // `clearAllMocks` keeps implementations; one completion test makes `update` reject.
+  mockUpdate.mockResolvedValue(null);
 });
+
+/**
+ * From the review step: create the organization, then skip the security step. Resolves with
+ * the done step's body.
+ */
+const createAndSkipSecurity = async () => {
+  fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+  fireEvent.click(await screen.findByRole('button', { name: /skip for now/i }));
+  return screen.findByTestId('onboarding-step-done');
+};
 
 /**
  * Clicks through welcome → organization with the given form values. Submit is
@@ -92,15 +128,17 @@ const fillOrganizationStep = (name: string, slug = '') => {
 };
 
 describe('wizard step order helpers', () => {
-  it('walks forward welcome → organization → summary → done and clamps at the end', () => {
+  it('walks forward welcome → organization → summary → security → done and clamps at the end', () => {
     expect(nextWizardStep('welcome')).toBe('organization');
     expect(nextWizardStep('organization')).toBe('summary');
-    expect(nextWizardStep('summary')).toBe('done');
+    expect(nextWizardStep('summary')).toBe('security');
+    expect(nextWizardStep('security')).toBe('done');
     expect(nextWizardStep('done')).toBe('done');
   });
 
   it('walks backward and clamps at the start', () => {
-    expect(previousWizardStep('done')).toBe('summary');
+    expect(previousWizardStep('done')).toBe('security');
+    expect(previousWizardStep('security')).toBe('summary');
     expect(previousWizardStep('summary')).toBe('organization');
     expect(previousWizardStep('organization')).toBe('welcome');
     expect(previousWizardStep('welcome')).toBe('welcome');
@@ -112,6 +150,13 @@ describe('wizard step order helpers', () => {
     expect(isFirstTenantWizardStep('nope')).toBe(false);
     expect(isFirstTenantWizardStep(undefined)).toBe(false);
     expect(isFirstTenantWizardStep(3)).toBe(false);
+  });
+
+  it('never treats a post-provisioning step as resumable', () => {
+    expect(isResumableWizardStep('summary')).toBe(true);
+    expect(isResumableWizardStep('security')).toBe(false);
+    expect(isResumableWizardStep('done')).toBe(false);
+    expect(isResumableWizardStep('nope')).toBe(false);
   });
 });
 
@@ -240,9 +285,7 @@ describe('FirstTenantOnboardingWizard: summary step', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
-
-    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+    expect(await createAndSkipSecurity()).toBeInTheDocument();
     expect(mockProvisionFirstTenant).toHaveBeenCalledWith('Acme Corp', 'acme-corp');
     expect(screen.getByRole('heading', { name: /acme corp is ready/i })).toBeInTheDocument();
   });
@@ -279,7 +322,7 @@ describe('FirstTenantOnboardingWizard: completion', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    await createAndSkipSecurity();
     fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
@@ -293,11 +336,109 @@ describe('FirstTenantOnboardingWizard: completion', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    await createAndSkipSecurity();
     fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
     consoleError.mockRestore();
+  });
+});
+
+describe('FirstTenantOnboardingWizard: protect your account (TFA-1.4)', () => {
+  /** Walks to the security step, which follows a successful create. */
+  const openSecurity = async () => {
+    render(<FirstTenantOnboardingWizard />);
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+    return screen.findByTestId('onboarding-step-security');
+  };
+
+  it('follows the review step once the tenant exists, confirming it first', async () => {
+    const body = await openSecurity();
+
+    expect(within(body).getByRole('heading', { name: 'Protect your account' })).toBeInTheDocument();
+    expect(body).toHaveTextContent('Acme Corp is ready.');
+    expect(within(body).getByText(/authy or google authenticator/i)).toBeInTheDocument();
+    // The tenant already exists: there is no way back to the review step.
+    expect(screen.queryByRole('button', { name: /^back$/i })).not.toBeInTheDocument();
+    // Nothing to resume any more, so the resume footnote is gone.
+    expect(screen.queryByText(/progress is saved server-side/i)).not.toBeInTheDocument();
+  });
+
+  it('is the last step of the progress row', async () => {
+    await openSecurity();
+
+    const list = screen.getByRole('list', { name: /setup progress/i });
+    expect(within(list).getByText('Step 4 of 4')).toBeInTheDocument();
+  });
+
+  it('skips to the last screen with two-factor left off', async () => {
+    await openSecurity();
+
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+
+    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+    expect(mockTwoFactorEnable).not.toHaveBeenCalled();
+  });
+
+  it('runs the profile enrolment and finishes once the backup codes are saved', async () => {
+    mockTwoFactorEnable.mockResolvedValue({
+      data: { totpURI: 'otpauth://totp/apiome:ada?secret=ABC', backupCodes: ['aaaa-bbbb'] },
+    });
+    mockVerifyTotp.mockResolvedValue({ data: { status: true } });
+    await openSecurity();
+
+    fireEvent.click(screen.getByRole('button', { name: /set up two-factor/i }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Enable two-factor authentication')).toBeInTheDocument();
+
+    fireEvent.change(within(dialog).getByLabelText('Current password'), {
+      target: { value: 'hunter2!' },
+    });
+    fireEvent.click(within(dialog).getByTestId('two-factor-enroll-continue'));
+    await waitFor(() => expect(mockTwoFactorEnable).toHaveBeenCalledWith({ password: 'hunter2!' }));
+
+    fireEvent.change(await within(dialog).findByTestId('two-factor-enroll-code'), {
+      target: { value: '123456' },
+    });
+    fireEvent.click(within(dialog).getByTestId('two-factor-enroll-verify'));
+    await waitFor(() => expect(mockVerifyTotp).toHaveBeenCalledWith({ code: '123456' }));
+    // The session is refetched so it carries the new two-factor flag.
+    expect(mockUpdate).toHaveBeenCalledWith({});
+    // Inside the wizard, the backup step points at the profile rather than "this page".
+    expect(
+      await within(dialog).findByText(/regenerate a new set later from your profile/i)
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByTestId('two-factor-enroll-done'));
+    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+  });
+
+  it('stays on the step when the enrolment dialog is cancelled', async () => {
+    await openSecurity();
+
+    fireEvent.click(screen.getByRole('button', { name: /set up two-factor/i }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('onboarding-step-security')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /skip for now/i })).toBeInTheDocument();
+  });
+
+  it('asks a passwordless account for no password', async () => {
+    mockGetReauthStatus.mockResolvedValue({
+      hasPassword: false,
+      fresh: true,
+      providers: [{ id: 'github', label: 'GitHub' }],
+    });
+    await openSecurity();
+
+    fireEvent.click(screen.getByRole('button', { name: /set up two-factor/i }));
+    const dialog = await screen.findByRole('dialog');
+
+    expect(await within(dialog).findByTestId('two-factor-reauth-fresh')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Current password')).not.toBeInTheDocument();
   });
 });
 
@@ -318,6 +459,14 @@ describe('FirstTenantOnboardingWizard: resumability + funnel telemetry (OLO-4.5)
 
     // `done` needs the just-provisioned tenant, so resume caps at the welcome
     // start rather than rendering an empty done step.
+    await waitFor(() => expect(mockLoadState).toHaveBeenCalled());
+    expect(screen.getByTestId('onboarding-step-welcome')).toBeInTheDocument();
+  });
+
+  it('never resumes onto the security step either (it follows provisioning)', async () => {
+    mockLoadState.mockResolvedValue({ step: 'security', orgName: 'Acme Corp', slug: 'acme-corp' });
+    render(<FirstTenantOnboardingWizard />);
+
     await waitFor(() => expect(mockLoadState).toHaveBeenCalled());
     expect(screen.getByTestId('onboarding-step-welcome')).toBeInTheDocument();
   });
@@ -369,8 +518,16 @@ describe('FirstTenantOnboardingWizard: resumability + funnel telemetry (OLO-4.5)
     fillOrganizationStep('Acme Corp', 'acme-corp');
     fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
 
-    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+    // Completion is recorded when the tenant exists, not when the security step is left.
+    expect(await screen.findByTestId('onboarding-step-security')).toBeInTheDocument();
     await waitFor(() => expect(mockCompleteWizard).toHaveBeenCalledTimes(1));
+    // ...and the step after provisioning is never saved for resume.
+    expect(mockSaveStep).not.toHaveBeenCalledWith(
+      'security',
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it('still navigates when persisting the wizard step rejects', async () => {

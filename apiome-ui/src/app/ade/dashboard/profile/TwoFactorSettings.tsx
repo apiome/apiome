@@ -37,10 +37,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import QRCode from 'react-qr-code';
 import {
   Check,
-  Copy,
   KeyRound,
   Mail,
   MonitorSmartphone,
@@ -53,13 +51,10 @@ import {
 import { authClient } from '@lib/auth/auth-client';
 import { signIn, useAuthSession } from '@lib/auth/session-client';
 import {
-  dismissTwoFactorResetNotice,
   getBackupCodeStatus,
   getEmailOtpAvailability,
   getTrustedDeviceStatus,
-  getTwoFactorReauthStatus,
   revokeThisTrustedDevice,
-  type TwoFactorReauthStatus,
 } from '@lib/auth/two-factor-profile-actions';
 import {
   Dialog,
@@ -77,23 +72,18 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Card } from '@/app/components/ui/Card';
 import { Stepper } from '@/app/components/ui/Stepper';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
+import { DismissibleCallout } from '@/app/components/ui/DismissibleCallout';
 import { BackupCodes } from '@/app/components/ade/account/BackupCodes';
 import {
-  REAUTH_REQUIRED_CODE,
-  REAUTH_WINDOW_MINUTES,
-  TRUST_DEVICE_DAYS,
-} from '@lib/auth/two-factor-policy';
+  TwoFactorEnrollDialog,
+  withIdentityStep,
+} from '@/app/components/ade/account/TwoFactorEnrollDialog';
+import { TwoFactorReauthNotice } from '@/app/components/ade/account/TwoFactorReauthNotice';
+import { useTwoFactorReauth } from '@/app/components/ade/account/useTwoFactorReauth';
+import { REAUTH_REQUIRED_CODE, TRUST_DEVICE_DAYS } from '@lib/auth/two-factor-policy';
 import { cn } from '@lib/utils';
 
-type EnrollStep = 'password' | 'qr' | 'backup';
 type RegenStep = 'password' | 'reveal';
-
-/** The enrolment wizard's steps, in order — the header stepper and `step` share this list. */
-const ENROLL_STEPS = [
-  { id: 'password', label: 'Confirm password' },
-  { id: 'qr', label: 'Scan QR code' },
-  { id: 'backup', label: 'Save backup codes' },
-] as const;
 
 /** The regenerate wizard's steps. */
 const REGEN_STEPS = [
@@ -101,17 +91,12 @@ const REGEN_STEPS = [
   { id: 'reveal', label: 'Save new codes' },
 ] as const;
 
-/** How long the "Copied" confirmation on the otpauth URI stays up, in milliseconds. */
-const COPIED_RESET_MS = 2000;
-
 /**
- * Relabel a wizard's first step for an account that has no password to confirm (TFA-1.1 #5655).
- *
- * @param steps A wizard's steps, the first of which is `password`.
- * @returns The same steps with the first one named for what the reader actually does.
+ * The `hive.seen.<id>` key of the "turn on two-factor" reminder (TFA-1.4 #5658). It shows while
+ * two-factor is off — whether the reader skipped it during onboarding or never met it — until
+ * they press **Got it** on this device; the **Enable 2FA** button stays either way.
  */
-const withIdentityStep = <T extends { id: string; label: string }>(steps: readonly T[]): T[] =>
-  steps.map((step) => (step.id === 'password' ? { ...step, label: "Confirm it's you" } : step));
+export const TWO_FACTOR_REMINDER_ID = 'profile-two-factor-reminder';
 
 interface TwoFactorSettingsProps {
   /** Optional class for the outer status block. */
@@ -132,40 +117,18 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
   const [regenOpen, setRegenOpen] = useState(false);
-  const [step, setStep] = useState<EnrollStep>('password');
   const [regenStep, setRegenStep] = useState<RegenStep>('password');
   const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
-  const [totpURI, setTotpURI] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [trusted, setTrusted] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [emailOtpAvailable, setEmailOtpAvailable] = useState(false);
-  /**
-   * How this account confirms it is them (TFA-1.1 #5655). `null` until the server answers, and
-   * for an account with a password — both of which mean "ask for the password", as before.
-   */
-  const [reauth, setReauth] = useState<TwoFactorReauthStatus | null>(null);
-  /** An account that signs in only through a provider: there is no password to ask for. */
-  const passwordless = reauth !== null && !reauth.hasPassword;
-  /** Passwordless and signed in too long ago: the change is refused until they sign in again. */
-  const needsReauth = passwordless && !reauth.fresh;
-
-  useEffect(() => {
-    let cancelled = false;
-    void getTwoFactorReauthStatus()
-      .then((status) => {
-        if (!cancelled) setReauth(status.hasPassword ? null : status);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  /** How this account confirms it is them (TFA-1.1 #5655) — shared with the enrolment dialog. */
+  const reauthState = useTwoFactorReauth();
+  const { reauth, passwordless, needsReauth, markStale } = reauthState;
 
   /**
    * Show a refused change, and switch the open dialog to "sign in again" when the server says
@@ -179,7 +142,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
     fallback: string
   ) => {
     if (refusal.code === REAUTH_REQUIRED_CODE) {
-      setReauth((current) => (current ? { ...current, fresh: false } : current));
+      markStale();
       setError('');
       return;
     }
@@ -225,28 +188,16 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
     void refreshManagementStatus();
   }, [refreshManagementStatus]);
 
-  const resetEnroll = () => {
-    setStep('password');
-    setPassword('');
-    setCode('');
-    setTotpURI('');
-    setBackupCodes([]);
-    setError('');
-    setBusy(false);
-    setCopied(false);
-  };
-
   const resetRegen = () => {
     setRegenStep('password');
     setPassword('');
     setBackupCodes([]);
     setError('');
     setBusy(false);
-    setCopied(false);
   };
 
   const openEnroll = () => {
-    resetEnroll();
+    setError('');
     setEnrollOpen(true);
   };
 
@@ -265,63 +216,6 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   const refreshSessionFlag = async () => {
     // update() always refetches; the server session now carries the flipped twoFactorEnabled.
     await update({});
-  };
-
-  const handleEnablePassword = async () => {
-    if (!passwordless && !password) {
-      setError('Enter your current password to enable two-factor authentication.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const res = await authClient.twoFactor.enable(passwordless ? {} : { password });
-      if (res?.error) {
-        showRefusal(res.error, 'Could not start enrollment. Check your password and try again.');
-        setBusy(false);
-        return;
-      }
-      const data = res.data as { totpURI?: string; backupCodes?: string[] } | null;
-      if (!data?.totpURI) {
-        setError('Enrollment did not return a TOTP URI. Please try again.');
-        setBusy(false);
-        return;
-      }
-      setTotpURI(data.totpURI);
-      setBackupCodes(Array.isArray(data.backupCodes) ? data.backupCodes : []);
-      setStep('qr');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Enrollment failed.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleConfirmTotp = async () => {
-    const trimmed = code.replace(/\s/g, '');
-    if (!/^\d{6}$/.test(trimmed)) {
-      setError('Enter the 6-digit code from your authenticator app.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const res = await authClient.twoFactor.verifyTotp({ code: trimmed });
-      if (res?.error) {
-        setError(res.error.message || 'That code was not accepted. Try again.');
-        setBusy(false);
-        return;
-      }
-      await refreshSessionFlag();
-      // Enrolling again answers an administrator's reset (TFA-1.2 #5656): the "set two-factor up
-      // again" notice has done its job. Best-effort — the notice also hides itself once enrolled.
-      void dismissTwoFactorResetNotice().catch(() => undefined);
-      setStep('backup');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Verification failed.');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const handleDisable = async () => {
@@ -384,40 +278,11 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   /**
    * The first step for an account without a password, in place of the password box.
    *
-   * Recently signed in: one line saying why nothing is asked. Otherwise: why the change is on
-   * hold, and a button per linked provider to sign in again.
-   *
-   * @returns The notice.
+   * @returns The shared notice; `null` for an account with a password.
    */
   const renderReauthNotice = () =>
-    needsReauth ? (
-      <div className="acct-field" data-testid="two-factor-reauth-required">
-        <Alert variant="warn">
-          This account has no password, so confirm it is you by signing in again. You can change
-          two-factor settings for {REAUTH_WINDOW_MINUTES} minutes after you sign in.
-        </Alert>
-        {reauth.providers.length > 0 ? (
-          reauth.providers.map((provider) => (
-            <Button
-              key={provider.id}
-              variant="outline"
-              onClick={() => handleReauth(provider.id)}
-              disabled={busy}
-              data-testid={`two-factor-reauth-${provider.id}`}
-            >
-              <KeyRound aria-hidden />
-              Sign in again with {provider.label}
-            </Button>
-          ))
-        ) : (
-          <p className="acct-hint">Sign out, then sign in again and come back to this page.</p>
-        )}
-      </div>
-    ) : (
-      <p className="acct-hint" data-testid="two-factor-reauth-fresh">
-        This account has no password. You signed in a moment ago, so nothing more is needed to
-        confirm it is you.
-      </p>
+    reauth && (
+      <TwoFactorReauthNotice reauth={reauth} busy={busy} onReauth={handleReauth} />
     );
 
   const handleForgetDevice = async () => {
@@ -434,16 +299,6 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       setError(err instanceof Error ? err.message : 'Could not forget this device.');
     } finally {
       setBusy(false);
-    }
-  };
-
-  const handleCopyUri = async () => {
-    try {
-      await navigator.clipboard.writeText(totpURI);
-      setCopied(true);
-      setTimeout(() => setCopied(false), COPIED_RESET_MS);
-    } catch {
-      // Clipboard unavailable — the URI is on screen and the QR is beside it.
     }
   };
 
@@ -569,177 +424,38 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
           )}
         </>
       ) : (
-        <Button
-          variant="primary"
-          className="w-full"
-          onClick={openEnroll}
-          data-testid="two-factor-enable-open"
-        >
-          <ShieldPlus aria-hidden />
-          Enable 2FA
-        </Button>
+        <>
+          <DismissibleCallout
+            id={TWO_FACTOR_REMINDER_ID}
+            reopenFrom="Enable 2FA (Security card)"
+            tone="honey"
+            icon={<ShieldPlus aria-hidden />}
+          >
+            <span data-testid="two-factor-reminder">
+              <strong>Two-factor is off.</strong> Turn it on to ask for a code from Authy or Google
+              Authenticator whenever you sign in.
+            </span>
+          </DismissibleCallout>
+          <Button
+            variant="primary"
+            className="w-full"
+            onClick={openEnroll}
+            data-testid="two-factor-enable-open"
+          >
+            <ShieldPlus aria-hidden />
+            Enable 2FA
+          </Button>
+        </>
       )}
 
-      {/* Enrollment dialog */}
-      <Dialog
+      <TwoFactorEnrollDialog
         open={enrollOpen}
-        onOpenChange={(open) => {
-          if (busy) return;
-          setEnrollOpen(open);
-          if (!open) {
-            resetEnroll();
-            void refreshManagementStatus();
-          }
+        onClose={() => {
+          setEnrollOpen(false);
+          void refreshManagementStatus();
         }}
-      >
-        <DialogContent size="lg">
-          <DialogHeader className="acct-dialog__header acct-dialog__header--stacked">
-            <div className="acct-dialog__lead">
-              <span className="acct-glyph acct-glyph--ok" aria-hidden>
-                <ShieldPlus />
-              </span>
-              <div className="acct-dialog__heading">
-                <DialogTitle>Enable two-factor authentication</DialogTitle>
-                <DialogDescription>
-                  {step === 'password' &&
-                    (passwordless
-                      ? 'Confirm it is you to start enrollment. You will scan a QR code next.'
-                      : 'Confirm your password to start enrollment. You will scan a QR code next.')}
-                  {step === 'qr' &&
-                    'Scan this QR with Authy or Google Authenticator, then enter the 6-digit code.'}
-                  {step === 'backup' &&
-                    'Store these one-time codes somewhere safe. You can regenerate a new set later from this page.'}
-                </DialogDescription>
-              </div>
-            </div>
-            <Stepper
-              steps={passwordless ? withIdentityStep(ENROLL_STEPS) : ENROLL_STEPS}
-              current={step}
-              fill
-              aria-label="Enrollment progress"
-              data-testid="two-factor-enroll-stepper"
-            />
-          </DialogHeader>
-
-          <div className="acct-dialog__body">
-            {error && <Alert variant="error">{error}</Alert>}
-
-            {step === 'password' && passwordless && renderReauthNotice()}
-            {step === 'password' && !passwordless && (
-              <div className="acct-field">
-                <Label htmlFor="tfa-enroll-password">Current password</Label>
-                <Input
-                  id="tfa-enroll-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={busy}
-                  autoFocus
-                  data-testid="two-factor-enroll-password"
-                  onKeyDown={(e) => e.key === 'Enter' && !busy && handleEnablePassword()}
-                />
-              </div>
-            )}
-
-            {step === 'qr' && (
-              <div className="acct-enroll">
-                {/* Literally white, and deliberately so: a QR code is read by a camera, and
-                    the quiet zone has to stay light in every theme for it to scan. */}
-                <div className="acct-qr bg-white" data-testid="two-factor-qr">
-                  <QRCode value={totpURI} size={180} />
-                </div>
-                <div className="acct-enroll__fields">
-                  <div className="acct-field">
-                    <div className="acct-caps">Or enter this URI</div>
-                    <div className="acct-uri">
-                      <code className="mono">{totpURI}</code>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyUri}
-                        aria-label={copied ? 'Copied URI' : 'Copy URI'}
-                        title={copied ? 'Copied URI' : 'Copy URI'}
-                        data-testid="two-factor-copy-uri"
-                      >
-                        {copied ? <Check className="text-ok" aria-hidden /> : <Copy aria-hidden />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="acct-field">
-                    <Label htmlFor="tfa-enroll-code">Authentication code</Label>
-                    <Input
-                      id="tfa-enroll-code"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      placeholder="000000"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      disabled={busy}
-                      className="acct-code-input mono"
-                      data-testid="two-factor-enroll-code"
-                      onKeyDown={(e) => e.key === 'Enter' && !busy && handleConfirmTotp()}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 'backup' && <BackupCodes codes={backupCodes} />}
-          </div>
-
-          <DialogFooter>
-            {step !== 'backup' && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEnrollOpen(false);
-                  resetEnroll();
-                }}
-                disabled={busy}
-              >
-                Cancel
-              </Button>
-            )}
-            {step === 'password' && (
-              <Button
-                variant="primary"
-                onClick={handleEnablePassword}
-                disabled={busy || needsReauth}
-                data-testid="two-factor-enroll-continue"
-              >
-                {busy ? 'Working…' : 'Continue'}
-              </Button>
-            )}
-            {step === 'qr' && (
-              <Button
-                variant="primary"
-                onClick={handleConfirmTotp}
-                disabled={busy || code.length !== 6}
-                data-testid="two-factor-enroll-verify"
-              >
-                {busy ? 'Verifying…' : 'Confirm and enable'}
-              </Button>
-            )}
-            {step === 'backup' && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setEnrollOpen(false);
-                  resetEnroll();
-                  void refreshManagementStatus();
-                }}
-                data-testid="two-factor-enroll-done"
-              >
-                Done
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        reauth={reauthState}
+      />
 
       {/* Regenerate backup codes */}
       <Dialog

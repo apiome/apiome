@@ -6,7 +6,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { TwoFactorSettings } from '@/app/ade/dashboard/profile/TwoFactorSettings';
+import {
+  TWO_FACTOR_REMINDER_ID,
+  TwoFactorSettings,
+} from '@/app/ade/dashboard/profile/TwoFactorSettings';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const mockEnable = jest.fn();
@@ -228,6 +231,51 @@ describe('TwoFactorSettings', () => {
     await waitFor(() => {
       expect(screen.getByTestId('two-factor-method-email-otp')).toBeInTheDocument();
       expect(screen.getByTestId('two-factor-email-otp-info')).toHaveTextContent(/email/i);
+    });
+  });
+
+  describe('the turn-on reminder (TFA-1.4 #5658)', () => {
+    beforeEach(() => window.localStorage.clear());
+
+    it('reminds a reader with two-factor off, beside the Enable 2FA button', async () => {
+      render(<TwoFactorSettings />);
+
+      expect(await screen.findByTestId('two-factor-reminder')).toHaveTextContent(
+        'Two-factor is off.'
+      );
+      expect(screen.getByRole('note')).toHaveAttribute(
+        'data-reopen-from',
+        'Enable 2FA (Security card)'
+      );
+      expect(screen.getByTestId('two-factor-enable-open')).toBeInTheDocument();
+    });
+
+    it('hides for good on Got it, and keeps the enable action', async () => {
+      const { unmount } = render(<TwoFactorSettings />);
+      await screen.findByTestId('two-factor-reminder');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+
+      expect(screen.queryByTestId('two-factor-reminder')).not.toBeInTheDocument();
+      expect(screen.getByTestId('two-factor-enable-open')).toBeInTheDocument();
+      expect(window.localStorage.getItem(`hive.seen.${TWO_FACTOR_REMINDER_ID}`)).toBe('1');
+
+      // A later visit on this device stays quiet.
+      unmount();
+      render(<TwoFactorSettings />);
+      await waitFor(() => expect(screen.getByTestId('two-factor-enable-open')).toBeInTheDocument());
+      expect(screen.queryByTestId('two-factor-reminder')).not.toBeInTheDocument();
+    });
+
+    it('is not shown once two-factor is on', async () => {
+      mockUseAuthSession.mockReturnValue({
+        data: { user: { user_id: 'u1', email: 'a@b.co', twoFactorEnabled: true }, expires: '' },
+        update: mockUpdate,
+      });
+      render(<TwoFactorSettings />);
+
+      await waitFor(() => expect(mockGetBackupCodeStatus).toHaveBeenCalled());
+      expect(screen.queryByTestId('two-factor-reminder')).not.toBeInTheDocument();
     });
   });
 });

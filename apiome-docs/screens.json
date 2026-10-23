@@ -78,6 +78,12 @@
       "data": "fixture:hive-a11y/onboarding-welcome.html"
     },
     {
+      "id": "onboarding-two-factor",
+      "route": "/onboarding",
+      "waitFor": "[data-testid=\"onboarding-step-security\"]",
+      "data": "fixture:hive-a11y/onboarding-two-factor.html"
+    },
+    {
       "id": "launcher",
       "route": "/ade",
       "waitFor": "[data-testid=\"launch-app-control-panel\"]",

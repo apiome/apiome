@@ -111,7 +111,7 @@ reset a locked-out user~~ (done, #5656), and no tenant can require 2FA.
 | B1 ✅ | [#5006 Backup codes, trusted devices, lockout](https://github.com/apiome/apiome/issues/5006) | — | Redeeming a backup code at `/login/2fa` is the recovery path — do it first |
 | B1 ∥ ✅ | [TFA-1.1 2FA for OAuth-only accounts #5655](https://github.com/apiome/apiome/issues/5655) | — | Re-auth instead of password; second factor after OAuth sign-in |
 | B1 ∥ ✅ | [TFA-1.2 Admin reset of a user's 2FA #5656](https://github.com/apiome/apiome/issues/5656) | — | Server-side admin check, audit, session revoke |
-| B2 | [TFA-1.4 Offer Authy at onboarding, skippable #5658](https://github.com/apiome/apiome/issues/5658) | A2, TFA-1.1 | #2553's original ask: optional, re-enable from the profile |
+| B2 ✅ | [TFA-1.4 Offer Authy at onboarding, skippable #5658](https://github.com/apiome/apiome/issues/5658) | A2, TFA-1.1 | #2553's original ask: optional, re-enable from the profile |
 | B3 | [TFA-1.3 Tenant policy — require 2FA #5657](https://github.com/apiome/apiome/issues/5657) | TFA-1.1 | Grace period, compliance on the members list. Fast-follow inside RC6 |
 
 Out of scope: SMS OTP ([#5071](https://github.com/apiome/apiome/issues/5071), v2, `Future`).

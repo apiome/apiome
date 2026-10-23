@@ -818,6 +818,9 @@ describe('the sources', () => {
     'src/app/components/ade/account/SecurityCard.tsx',
     'src/app/components/ade/account/SessionCard.tsx',
     'src/app/components/ade/account/SignInMethodsCard.tsx',
+    'src/app/components/ade/account/TwoFactorEnrollDialog.tsx',
+    'src/app/components/ade/account/TwoFactorReauthNotice.tsx',
+    'src/app/components/auth/onboarding/SecurityStep.tsx',
   ] as const;
 
   /**
@@ -873,8 +876,9 @@ describe('the sources', () => {
   it('keeps the one white it needs, and says why', () => {
     // A QR code is read by a camera; its quiet zone has to stay light in every theme. It is the
     // only literal colour in the cluster, and the comment beside it is what makes it a decision
-    // rather than an oversight.
-    const path = join(__dirname, '..', 'src/app/ade/dashboard/profile/TwoFactorSettings.tsx');
+    // rather than an oversight. The QR lives in the enrolment dialog shared with onboarding
+    // (TFA-1.4 #5658).
+    const path = join(__dirname, '..', 'src/app/components/ade/account/TwoFactorEnrollDialog.tsx');
     const raw = readFileSync(path, 'utf8');
     expect(raw.match(/\bbg-white\b/g)).toHaveLength(1);
     expect(raw).toContain('read by a camera');

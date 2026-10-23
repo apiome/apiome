@@ -168,6 +168,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Two-factor sign-in now locks for 15 minutes after 10 wrong codes in a row, and says so
   - Accounts that sign in with GitHub, GitLab, Microsoft or Google can now turn two-factor on, and are asked for their code after signing in with the provider
   - A locked-out user's two-factor can be reset by an administrator, or by a workspace owner for a member of their workspace only; the reset is audited and the user is prompted to set it up again
+  - New accounts are offered two-factor as the last step of setting up their first organization — **Protect your account** sets up Authy or Google Authenticator there, or **Skip for now** and turn it on later from **Profile → Security**, which reminds you while it is off
 - Governance:
   - **Shadow APIs** (Govern): what your connected gateways serve that the catalog does not describe, with possible matches, drift and undeployed APIs — link, import or ignore each with a reason
   - **Connectors** (Bring in): add a gateway with a dry run that shows what it would sync before anything is saved, then see each connector's items, runs and settings; Git refreshes and connector runs share one **Recent runs** ledger
