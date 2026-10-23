@@ -2,8 +2,8 @@
 
 Fixtures for the VSAM half of **FMT-11.3** ([#5484](https://github.com/apiome/apiome/issues/5484)).
 VSAM cluster definitions carry key positions, record lengths and organisation — record metadata that
-is a schema in everything but name. The CICS BMS half lives in `cics-bms/`. Entries carry
-`adapter_key: null` and the `pending-adapter` tag.
+is a schema in everything but name. The CICS BMS half lives in `cics-bms/`. Read by the
+`vsam-idcams` adapter (the `mainframe-misc` family).
 
 **Detection markers.** `DEFINE CLUSTER`/`DEFINE AIX`/`DEFINE PATH`/`DEFINE GDG` commands with
 parenthesised parameters and `-` continuations, optionally wrapped in JCL (`//STEP EXEC PGM=IDCAMS`,

@@ -1,0 +1,185 @@
+{
+  "adapter": "vsam-idcams",
+  "canonical": {
+    "channels": [],
+    "description": "VSAM catalog definitions: 1 record envelope(s). Field layouts are not part of IDCAMS; import the copybook for them.",
+    "extras": {
+      "vsam_idcams": {
+        "alternateIndexes": [],
+        "capability_limits": [
+          {
+            "construct": "vsam.record_layout",
+            "count": 1,
+            "detail": "A cluster definition describes the record's envelope — organisation, record size and key positions — and never its fields. The record keeps only its keys; import the COBOL copybook or PL/I declaration the programs use for the field layout.",
+            "locations": [
+              "EXAMPLE.CUSTOMER.KSDS"
+            ]
+          },
+          {
+            "construct": "vsam.utility_command",
+            "count": 1,
+            "detail": "A utility command (REPRO, BLDINDEX, DELETE, LISTCAT, SET …) or a non-VSAM DEFINE describes what is done to a file, not its record; it is listed in extras['vsam_idcams']['commands'] and not modelled.",
+            "locations": [
+              "LISTCAT"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "name": "EXAMPLE.CUSTOMER.KSDS",
+            "organisation": "KSDS"
+          }
+        ],
+        "commands": [
+          {
+            "datasets": [
+              "EXAMPLE.CUSTOMER.KSDS"
+            ],
+            "verb": "LISTCAT"
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "vsam-idcams/02-typical-ksds.idcams"
+        ],
+        "gdgs": [],
+        "input": "file",
+        "paths": []
+      }
+    },
+    "format": "vsam-idcams",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EXAMPLE.CUSTOMER.KSDS",
+      "namespace": "vsam"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EXAMPLE.CUSTOMER.KSDS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM KSDS EXAMPLE.CUSTOMER.KSDS; fixed 200-byte records; primary key 10 bytes at offset 0. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "controlIntervalSize": 4096,
+            "dataComponent": "EXAMPLE.CUSTOMER.KSDS.DATA",
+            "dataset": "EXAMPLE.CUSTOMER.KSDS",
+            "file": "vsam-idcams/02-typical-ksds.idcams",
+            "flags": [
+              "SPEED"
+            ],
+            "freeSpace": {
+              "controlArea": 20,
+              "controlInterval": 10
+            },
+            "indexComponent": "EXAMPLE.CUSTOMER.KSDS.INDEX",
+            "organisation": "KSDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 200,
+              "fixed": true,
+              "maximum": 200
+            },
+            "shareOptions": {
+              "crossRegion": 2,
+              "crossSystem": 3
+            },
+            "storage": {
+              "space": {
+                "primary": 50,
+                "secondary": 10,
+                "unit": "cylinders"
+              },
+              "volumes": [
+                "VOL001",
+                "VOL002"
+              ]
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 10,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Primary key: 10 bytes at offset 0 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "length": 10,
+                "offset": 0,
+                "role": "primary",
+                "unique": true
+              }
+            },
+            "field_number": 1,
+            "key": "vsam.EXAMPLE_CUSTOMER_KSDS.PRIMARY_KEY",
+            "name": "PRIMARY_KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "vsam.EXAMPLE_CUSTOMER_KSDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_CUSTOMER_KSDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "vsam-idcams/02-typical-ksds.idcams",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "vsam-idcams"
+  },
+  "fingerprint": "sha256:2dccf0cab7359cf89264735c925b33f42b65f758336a0ca958d21acf20a99336",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

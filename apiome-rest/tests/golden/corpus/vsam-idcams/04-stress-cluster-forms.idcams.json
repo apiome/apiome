@@ -1,0 +1,427 @@
+{
+  "adapter": "vsam-idcams",
+  "canonical": {
+    "channels": [],
+    "description": "VSAM catalog definitions: 4 record envelope(s). Field layouts are not part of IDCAMS; import the copybook for them.",
+    "extras": {
+      "vsam_idcams": {
+        "alternateIndexes": [
+          {
+            "name": "EXAMPLE.ORDER.AIX.CUST",
+            "relate": "EXAMPLE.ORDER.KSDS"
+          }
+        ],
+        "capability_limits": [
+          {
+            "construct": "vsam.generation_data_group",
+            "count": 1,
+            "detail": "A generation data group is a container of like files and carries no record structure; it is listed in extras['vsam_idcams']['gdgs'] and not modelled.",
+            "locations": [
+              "EXAMPLE.DAILY.EXTRACT"
+            ]
+          },
+          {
+            "construct": "vsam.linear_dataset",
+            "count": 1,
+            "detail": "A LINEAR (LDS) cluster has no record structure at all — its layout is entirely in the application — so no record is modelled for it.",
+            "locations": [
+              "EXAMPLE.LINEAR.LDS"
+            ]
+          },
+          {
+            "construct": "vsam.record_layout",
+            "count": 4,
+            "detail": "A cluster definition describes the record's envelope — organisation, record size and key positions — and never its fields. The record keeps only its keys; import the COBOL copybook or PL/I declaration the programs use for the field layout.",
+            "locations": [
+              "EXAMPLE.AUDIT.ESDS",
+              "EXAMPLE.ORDER.KSDS",
+              "EXAMPLE.SLOT.RRDS",
+              "EXAMPLE.SLOTV.VRRDS"
+            ]
+          },
+          {
+            "construct": "vsam.utility_command",
+            "count": 1,
+            "detail": "A utility command (REPRO, BLDINDEX, DELETE, LISTCAT, SET …) or a non-VSAM DEFINE describes what is done to a file, not its record; it is listed in extras['vsam_idcams']['commands'] and not modelled.",
+            "locations": [
+              "BLDINDEX"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "name": "EXAMPLE.ORDER.KSDS",
+            "organisation": "KSDS"
+          },
+          {
+            "name": "EXAMPLE.AUDIT.ESDS",
+            "organisation": "ESDS"
+          },
+          {
+            "name": "EXAMPLE.SLOT.RRDS",
+            "organisation": "RRDS"
+          },
+          {
+            "name": "EXAMPLE.SLOTV.VRRDS",
+            "organisation": "VRRDS"
+          },
+          {
+            "name": "EXAMPLE.LINEAR.LDS",
+            "organisation": "LDS"
+          }
+        ],
+        "commands": [
+          {
+            "datasets": [
+              "EXAMPLE.ORDER.KSDS",
+              "EXAMPLE.ORDER.AIX.CUST"
+            ],
+            "verb": "BLDINDEX"
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "vsam-idcams/04-stress-cluster-forms.idcams"
+        ],
+        "gdgs": [
+          {
+            "flags": [
+              "SCRATCH",
+              "NOEMPTY"
+            ],
+            "limit": 30,
+            "name": "EXAMPLE.DAILY.EXTRACT"
+          }
+        ],
+        "input": "file",
+        "paths": [
+          {
+            "entry": "EXAMPLE.ORDER.AIX.CUST",
+            "name": "EXAMPLE.ORDER.PATH.CUST",
+            "update": true
+          }
+        ]
+      }
+    },
+    "format": "vsam-idcams",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EXAMPLE.ORDER.KSDS",
+      "namespace": "vsam"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EXAMPLE.ORDER.KSDS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM ESDS EXAMPLE.AUDIT.ESDS; records of 512 bytes on average, at most 4096. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "dataset": "EXAMPLE.AUDIT.ESDS",
+            "file": "vsam-idcams/04-stress-cluster-forms.idcams",
+            "flags": [
+              "SPANNED",
+              "NOREUSE"
+            ],
+            "organisation": "ESDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 512,
+              "fixed": false,
+              "maximum": 4096
+            },
+            "shareOptions": {
+              "crossRegion": 2,
+              "crossSystem": 3
+            },
+            "storage": {
+              "space": {
+                "primary": 500,
+                "secondary": 100,
+                "unit": "megabytes"
+              },
+              "volumes": [
+                "VOL010"
+              ]
+            }
+          }
+        },
+        "fields": [],
+        "key": "vsam.EXAMPLE_AUDIT_ESDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_AUDIT_ESDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM KSDS EXAMPLE.ORDER.KSDS; records of 240 bytes on average, at most 500; primary key 20 bytes at offset 0. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "dataset": "EXAMPLE.ORDER.KSDS",
+            "file": "vsam-idcams/04-stress-cluster-forms.idcams",
+            "flags": [
+              "REUSE",
+              "SPANNED",
+              "ERASE",
+              "RECOVERY"
+            ],
+            "freeSpace": {
+              "controlArea": 20,
+              "controlInterval": 20
+            },
+            "organisation": "KSDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 240,
+              "fixed": false,
+              "maximum": 500
+            },
+            "shareOptions": {
+              "crossRegion": 3,
+              "crossSystem": 3
+            },
+            "storage": {
+              "dataClass": "EXTENDED",
+              "managementClass": "MCSTD",
+              "space": {
+                "primary": 200,
+                "secondary": 50,
+                "unit": "cylinders"
+              },
+              "storageClass": "SCFAST"
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 10,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Alternate key (non-unique) of index EXAMPLE.ORDER.AIX.CUST: 10 bytes at offset 20 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "index": "EXAMPLE.ORDER.AIX.CUST",
+                "indexRecordSize": {
+                  "average": 60,
+                  "fixed": false,
+                  "maximum": 4086
+                },
+                "length": 10,
+                "offset": 20,
+                "paths": [
+                  "EXAMPLE.ORDER.PATH.CUST"
+                ],
+                "role": "alternate",
+                "storage": {
+                  "space": {
+                    "primary": 20,
+                    "secondary": 5,
+                    "unit": "cylinders"
+                  },
+                  "volumes": [
+                    "VOL001"
+                  ]
+                },
+                "unique": false,
+                "upgrade": true
+              }
+            },
+            "field_number": 2,
+            "key": "vsam.EXAMPLE_ORDER_KSDS.ALTERNATE_KEY_CUST",
+            "name": "ALTERNATE_KEY_CUST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 20,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Primary key: 20 bytes at offset 0 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "length": 20,
+                "offset": 0,
+                "role": "primary",
+                "unique": true
+              }
+            },
+            "field_number": 1,
+            "key": "vsam.EXAMPLE_ORDER_KSDS.PRIMARY_KEY",
+            "name": "PRIMARY_KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "vsam.EXAMPLE_ORDER_KSDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_ORDER_KSDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM VRRDS EXAMPLE.SLOTV.VRRDS; records of 80 bytes on average, at most 400. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "dataset": "EXAMPLE.SLOTV.VRRDS",
+            "file": "vsam-idcams/04-stress-cluster-forms.idcams",
+            "organisation": "VRRDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 80,
+              "fixed": false,
+              "maximum": 400
+            },
+            "storage": {
+              "space": {
+                "primary": 100000,
+                "secondary": 20000,
+                "unit": "records"
+              },
+              "volumes": [
+                "VOL012"
+              ]
+            }
+          }
+        },
+        "fields": [],
+        "key": "vsam.EXAMPLE_SLOTV_VRRDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_SLOTV_VRRDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM RRDS EXAMPLE.SLOT.RRDS; fixed 128-byte records. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "dataset": "EXAMPLE.SLOT.RRDS",
+            "file": "vsam-idcams/04-stress-cluster-forms.idcams",
+            "organisation": "RRDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 128,
+              "fixed": true,
+              "maximum": 128
+            },
+            "shareOptions": {
+              "crossRegion": 1,
+              "crossSystem": 3
+            },
+            "storage": {
+              "space": {
+                "primary": 300,
+                "secondary": 60,
+                "unit": "tracks"
+              },
+              "volumes": [
+                "VOL011"
+              ]
+            }
+          }
+        },
+        "fields": [],
+        "key": "vsam.EXAMPLE_SLOT_RRDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_SLOT_RRDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "vsam-idcams/04-stress-cluster-forms.idcams",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.92,
+    "format": "vsam-idcams"
+  },
+  "fingerprint": "sha256:9122fcf4bb7c812b4e0350fe64f85ee13aac204b8d4ba8ea21c8c72e2ffc2b4e",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

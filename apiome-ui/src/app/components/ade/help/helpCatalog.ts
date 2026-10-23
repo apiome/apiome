@@ -783,6 +783,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['robotics', 'robot', 'msg', 'srv', 'action', 'rosidl', 'package.xml', 'interface package', 'dds'],
   },
   {
+    id: 'vsam-cics-bms-import',
+    title: 'Import VSAM cluster definitions and CICS BMS maps',
+    summary: 'Catalog VSAM record envelopes from IDCAMS and 3270 screens from BMS maps.',
+    page: 'apiome-docs/docs/bring-in/vsam-cics-bms-import.md',
+    section: 'reference',
+    keywords: ['mainframe', 'idcams', 'listcat', 'ksds', 'alternate index', '3270', 'mapset', 'symbolic map', 'green screen'],
+  },
+  {
     id: 'trpc-router-import',
     title: 'Import a tRPC router',
     summary: 'Catalog a tRPC router\'s procedures as query, mutation and subscription operations.',

@@ -1,0 +1,328 @@
+{
+  "adapter": "vsam-idcams",
+  "canonical": {
+    "channels": [],
+    "description": "VSAM catalog definitions: 1 record envelope(s). Field layouts are not part of IDCAMS; import the copybook for them.",
+    "extras": {
+      "vsam_idcams": {
+        "alternateIndexes": [
+          {
+            "name": "EXAMPLE.PROD.ACCOUNT.AIX.CUST",
+            "relate": "EXAMPLE.PROD.ACCOUNT.KSDS"
+          },
+          {
+            "name": "EXAMPLE.PROD.ACCOUNT.AIX.IBAN",
+            "relate": "EXAMPLE.PROD.ACCOUNT.KSDS"
+          }
+        ],
+        "capability_limits": [
+          {
+            "construct": "vsam.record_layout",
+            "count": 1,
+            "detail": "A cluster definition describes the record's envelope — organisation, record size and key positions — and never its fields. The record keeps only its keys; import the COBOL copybook or PL/I declaration the programs use for the field layout.",
+            "locations": [
+              "EXAMPLE.PROD.ACCOUNT.KSDS"
+            ]
+          },
+          {
+            "construct": "vsam.utility_command",
+            "count": 3,
+            "detail": "A utility command (REPRO, BLDINDEX, DELETE, LISTCAT, SET …) or a non-VSAM DEFINE describes what is done to a file, not its record; it is listed in extras['vsam_idcams']['commands'] and not modelled.",
+            "locations": [
+              "BLDINDEX",
+              "DELETE",
+              "SET"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "name": "EXAMPLE.PROD.ACCOUNT.KSDS",
+            "organisation": "KSDS"
+          }
+        ],
+        "commands": [
+          {
+            "datasets": [
+              "EXAMPLE.PROD.ACCOUNT.KSDS"
+            ],
+            "verb": "DELETE"
+          },
+          {
+            "datasets": [],
+            "verb": "SET"
+          },
+          {
+            "datasets": [
+              "EXAMPLE.PROD.ACCOUNT.KSDS",
+              "EXAMPLE.PROD.ACCOUNT.AIX.CUST",
+              "EXAMPLE.PROD.ACCOUNT.AIX.IBAN"
+            ],
+            "verb": "BLDINDEX"
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "vsam-idcams/05-real-world-account-cluster.idcams"
+        ],
+        "gdgs": [],
+        "input": "file",
+        "paths": [
+          {
+            "entry": "EXAMPLE.PROD.ACCOUNT.AIX.CUST",
+            "name": "EXAMPLE.PROD.ACCOUNT.PATH.CUST",
+            "update": true
+          },
+          {
+            "entry": "EXAMPLE.PROD.ACCOUNT.AIX.IBAN",
+            "name": "EXAMPLE.PROD.ACCOUNT.PATH.IBAN",
+            "update": true
+          }
+        ]
+      }
+    },
+    "format": "vsam-idcams",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "EXAMPLE.PROD.ACCOUNT.KSDS",
+      "namespace": "vsam"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "EXAMPLE.PROD.ACCOUNT.KSDS",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "VSAM KSDS EXAMPLE.PROD.ACCOUNT.KSDS; fixed 320-byte records; primary key 14 bytes at offset 0. The cluster definition gives the record's envelope, not its fields: import the copybook for the field layout.",
+        "enum_values": [],
+        "extras": {
+          "vsam_idcams": {
+            "controlIntervalSize": 8192,
+            "dataComponent": "EXAMPLE.PROD.ACCOUNT.KSDS.DATA",
+            "dataset": "EXAMPLE.PROD.ACCOUNT.KSDS",
+            "file": "vsam-idcams/05-real-world-account-cluster.idcams",
+            "flags": [
+              "SPEED",
+              "ERASE"
+            ],
+            "freeSpace": {
+              "controlArea": 25,
+              "controlInterval": 15
+            },
+            "indexComponent": "EXAMPLE.PROD.ACCOUNT.KSDS.INDEX",
+            "organisation": "KSDS",
+            "organisationDeclared": true,
+            "origin": "define",
+            "recordSize": {
+              "average": 320,
+              "fixed": true,
+              "maximum": 320
+            },
+            "shareOptions": {
+              "crossRegion": 2,
+              "crossSystem": 3
+            },
+            "storage": {
+              "managementClass": "MCPROD",
+              "space": {
+                "primary": 1200,
+                "secondary": 200,
+                "unit": "cylinders"
+              },
+              "storageClass": "SCPROD"
+            }
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 10,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Alternate key (non-unique) of index EXAMPLE.PROD.ACCOUNT.AIX.CUST: 10 bytes at offset 14 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "index": "EXAMPLE.PROD.ACCOUNT.AIX.CUST",
+                "indexRecordSize": {
+                  "average": 120,
+                  "fixed": false,
+                  "maximum": 2048
+                },
+                "length": 10,
+                "offset": 14,
+                "paths": [
+                  "EXAMPLE.PROD.ACCOUNT.PATH.CUST"
+                ],
+                "role": "alternate",
+                "storage": {
+                  "space": {
+                    "primary": 120,
+                    "secondary": 30,
+                    "unit": "cylinders"
+                  }
+                },
+                "unique": false,
+                "upgrade": true
+              }
+            },
+            "field_number": 2,
+            "key": "vsam.EXAMPLE_PROD_ACCOUNT_KSDS.ALTERNATE_KEY_CUST",
+            "name": "ALTERNATE_KEY_CUST",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 34,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 34,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Alternate key (unique) of index EXAMPLE.PROD.ACCOUNT.AIX.IBAN: 34 bytes at offset 24 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "index": "EXAMPLE.PROD.ACCOUNT.AIX.IBAN",
+                "indexRecordSize": {
+                  "average": 120,
+                  "fixed": false,
+                  "maximum": 2048
+                },
+                "length": 34,
+                "offset": 24,
+                "paths": [
+                  "EXAMPLE.PROD.ACCOUNT.PATH.IBAN"
+                ],
+                "role": "alternate",
+                "storage": {
+                  "space": {
+                    "primary": 150,
+                    "secondary": 30,
+                    "unit": "cylinders"
+                  }
+                },
+                "unique": true,
+                "upgrade": true
+              }
+            },
+            "field_number": 3,
+            "key": "vsam.EXAMPLE_PROD_ACCOUNT_KSDS.ALTERNATE_KEY_IBAN",
+            "name": "ALTERNATE_KEY_IBAN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 14,
+              "maximum": null,
+              "min_items": null,
+              "min_length": 14,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Primary key: 14 bytes at offset 0 of the record.",
+            "extras": {
+              "vsam_idcams": {
+                "length": 14,
+                "offset": 0,
+                "role": "primary",
+                "unique": true
+              }
+            },
+            "field_number": 1,
+            "key": "vsam.EXAMPLE_PROD_ACCOUNT_KSDS.PRIMARY_KEY",
+            "name": "PRIMARY_KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bytes",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "vsam.EXAMPLE_PROD_ACCOUNT_KSDS",
+        "key_type": null,
+        "kind": "record",
+        "name": "EXAMPLE_PROD_ACCOUNT_KSDS",
+        "namespace": "vsam",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "vsam-idcams/05-real-world-account-cluster.idcams",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "vsam-idcams"
+  },
+  "fingerprint": "sha256:1ffb27390c0857d2804d92e13392ca8aeee000fff97f95d97ad5abb7ad7b3473",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

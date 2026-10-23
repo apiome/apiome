@@ -5,6 +5,49 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.438.0] - 2026-10-23
+
+### Added
+- **VSAM catalog and CICS BMS map import (#5484, FMT-11.3)**: two import sources of the `mainframe-misc` family, both on
+  the **data_schema** paradigm. Each is pinned to its sub-format, so each refuses the other's text as `FORMAT_MISMATCH`;
+  they share `app.mainframe_misc_common` (taxonomy-coded `MainframeParseError`, encoding check, identifier helper),
+  `app.mainframe_misc_normalizer` and `app.mainframe_misc_import_source`.
+  - **`vsam-idcams`** (aliases `vsam`, `idcams`; `.idcams`, `.jcl`; file, URL, paste, fileset), read by
+    `app.vsam_idcams_parser`: IDCAMS `DEFINE CLUSTER` / `AIX` / `PATH` / `GDG` commands, bare or wrapped in JCL, with
+    `/* */` comments, `-` / `+` continuations, `IF … THEN` guards, `DATA` / `INDEX` components and the common
+    abbreviations; or a `LISTCAT` listing (`KEYLEN` / `RKP` / `AVGLRECL` / `MAXLRECL` / `SHROPTNS`). Each cluster with a
+    record structure becomes a `RECORD` in the `vsam` namespace: `KEYS(len off)` → a `PRIMARY_KEY` `bytes` field with
+    `min_length` = `max_length` = len; each `AIX` that `RELATE`s to it → an `ALTERNATE_KEY_<qualifier>` field (unique or
+    not, with its `PATH`s). Organisation (KSDS / ESDS / RRDS / VRRDS), record size (`fixed` when average = maximum), key
+    offsets, share options, free space, CI size and storage parameters are declared metadata in
+    `extras['vsam_idcams']`. A fileset resolves `RELATE` / `PATHENTRY` across members.
+  - **`cics-bms`** (aliases `bms`, `cics-map`; `.bms`, `.cpy`; file, URL, paste, fileset), read by
+    `app.cics_bms_parser`: assembler statements with column-72 continuations (an operand that itself runs into column 72
+    is an over-long line, not a continuation), quoted values across lines, `DFHMSD` → identity / namespace, `DFHMDI` → a
+    `RECORD` per map with its `SIZE`, labelled `DFHMDF` → fields numbered in screen order with `position`, `length`,
+    `picin` / `picout`, `initial`, `occurs`, `group`, `color` / `hilight` / `validn` and decoded `attributes`
+    (protection, numeric, intensity, initial cursor, modified-data tag) as declared metadata in `extras['cics_bms']`;
+    mapset / map `COLOR` / `HILIGHT` defaults are recorded as `inherited`. Types come from `PICIN`, else `PICOUT`
+    (`9` → `integer`, with `V` / `P` → `decimal`, alphanumeric / edited / none → `string` with `max_length` = `LENGTH`);
+    `OCCURS=n` is a list with `min_items` = `max_items` = n. Unlabelled literals stay on the map. A BMS-generated
+    symbolic-map copybook (`<map>I` / `<map>O REDEFINES <map>I`, `L` / `F` / `A` / `I` / `O` entries) is detected at 0.99,
+    above the general copybook adapter: beside its mapset it names each field's entries, alone it yields the records
+    without positions.
+  - **Declared limits** (`capability_limits`, graded ledger rows via `_mainframe_misc_capability_rows`): VSAM
+    `vsam.record_layout` (every record — the field layout comes from the copybook), `vsam.linear_dataset`,
+    `vsam.generation_data_group`, `vsam.utility_command`, `vsam.listcat_statistics`, `vsam.unlisted_alternate_index`;
+    BMS `bms.literal_field`, `bms.edited_picture`, `bms.occurs_layout`, `bms.symbolic_map_positions`,
+    `bms.symbolic_map_mismatch`.
+  - **Refusals** carry taxonomy codes: `INPUT_MALFORMED` (unknown command / operation, a parameter nested in another's
+    values, a stray `)`, a missing column-72 mark, unbalanced operands), `INPUT_TRUNCATED` (input ends on a
+    continuation, inside a parameter list, comment or quoted value, or before `DFHMSD TYPE=FINAL`),
+    `INPUT_SEMANTIC_INVALID` (an `INDEXED` cluster without `KEYS` — IDCAMS's `KEYS(64 0)` default is not assumed —, a key
+    past the record, a map with no named field, overlapping or off-screen fields …), `INPUT_REFERENCE_UNRESOLVED` (an
+    `AIX` `RELATE` or `PATH` `PATHENTRY` naming nothing in the upload), `INPUT_ENCODING_INVALID`, `FORMAT_MISMATCH`.
+  - Staged `vsam-idcams` / `cics-bms` corpus activated (28 entries); goldens, round-trip matrix rows (106 xfails),
+    parity, capability registry v35, version coverage, `SCHEMA_ONLY_FORMATS`, provenance extras keys, MCP toolset
+    goldens.
+
 ## [1.437.0] - 2026-10-22
 
 ### Added

@@ -94,6 +94,9 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "asn1",
         "avro",
         "cddl",
+        # FMT-11.3: a CICS BMS map states screen fields and their positions, and a VSAM cluster
+        # definition a record envelope; neither has a place for an owner, an SLA or retention.
+        "cics-bms",
         "cobolcopybook",
         "dicom",
         "dtd",
@@ -131,6 +134,7 @@ SCHEMA_ONLY_FORMATS: frozenset = frozenset(
         "swift-mt",
         "tradacoms",
         "typescript-types",
+        "vsam-idcams",
         "xsd",
         "zod",
     }

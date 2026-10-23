@@ -64,6 +64,7 @@ import {
   Factory,
   RadioTower,
   Lightbulb,
+  Monitor,
 } from 'lucide-react';
 
 /**
@@ -365,6 +366,8 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'odcs', label: 'ODCS Data Contract', icon: Database, tone: 'teal', dataType: 'schema', origin: 'data', importable: true, aliases: ['datacontract', 'data-contract', 'bitol'], description: 'Open Data Contract Standard (ODCS v3.x) — the Linux Foundation data-contract YAML.' },
   { id: 'kafka-connect', label: 'Kafka Connect Schema', icon: Database, tone: 'amber', dataType: 'schema', origin: 'data', importable: true, aliases: ['kafkaconnect', 'connect-schema', 'debezium'], description: 'Kafka Connect schema — the struct/logical-type form a Connect pipeline carries.' },
   { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', dataType: 'records', origin: 'mainframe', importable: true, aliases: ['copybook', 'cobol', 'cobol-copybook'], description: 'COBOL copybook record layout.' },
+  { id: 'vsam-idcams', label: 'VSAM cluster definitions', icon: Database, tone: 'slate', dataType: 'records', origin: 'mainframe', importable: true, aliases: ['vsam', 'idcams'], description: 'IDCAMS DEFINE CLUSTER / AIX / PATH commands or a LISTCAT listing — each cluster\'s record envelope (organisation, record size, primary and alternate keys) as a record.' },
+  { id: 'cics-bms', label: 'CICS BMS maps', icon: Monitor, tone: 'slate', dataType: 'records', origin: 'mainframe', importable: true, aliases: ['bms', 'cics-map'], description: 'CICS BMS mapsets (DFHMSD / DFHMDI / DFHMDF) and symbolic maps — each 3270 screen as a record whose fields are positioned by row and column.' },
 
   // ---- Healthcare ----
   { id: 'dicom', label: 'DICOM', icon: HeartPulse, tone: 'red', dataType: 'schema', origin: 'healthcare', importable: true, aliases: ['dcm', 'dicom-json'], description: 'DICOM Part 10 files and DICOM JSON metadata — SOP classes, attributes by tag and VR, sequences and Structured Report content trees. Pixel data is never read.' },

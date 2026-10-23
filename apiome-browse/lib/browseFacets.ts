@@ -151,6 +151,8 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   pkl: 'Pkl',
   dhall: 'Dhall',
   cobolcopybook: 'COBOL Copybook',
+  'vsam-idcams': 'VSAM cluster definitions',
+  'cics-bms': 'CICS BMS maps',
   fhir: 'FHIR',
   hl7v2: 'HL7 v2',
   hl7v3: 'HL7 v3 / CDA',

@@ -1,0 +1,978 @@
+{
+  "adapter": "cics-bms",
+  "canonical": {
+    "channels": [],
+    "description": "CICS BMS screens: 2 map(s). Field positions, pictures and attributes are declared metadata; the screen says nothing about validation or business meaning.",
+    "extras": {
+      "cics_bms": {
+        "capability_limits": [
+          {
+            "construct": "bms.edited_picture",
+            "count": 1,
+            "detail": "An edited output picture (Z, comma, period, sign, currency or CR / DB insertion) formats a number for display; the field is projected to a string and the picture kept in extras['cics_bms']['picout'].",
+            "locations": [
+              "STRSSET.STRSMAP1.NUMFLD"
+            ]
+          },
+          {
+            "construct": "bms.literal_field",
+            "count": 3,
+            "detail": "An unlabelled DFHMDF is screen text (a title, a prompt, function-key help), not data; it is kept in the map's extras['cics_bms']['literals'] and not modelled as a field.",
+            "locations": [
+              "STRSSET.STRSMAP1",
+              "STRSSET.STRSMAP2"
+            ]
+          },
+          {
+            "construct": "bms.occurs_layout",
+            "count": 1,
+            "detail": "An OCCURS field is a list of its occurrence count; the screen positions of the occurrences after the first are not modelled.",
+            "locations": [
+              "STRSSET.STRSMAP1.TABLINE"
+            ]
+          }
+        ],
+        "family": "mainframe-misc",
+        "files": [
+          "cics-bms/04-stress-field-attributes.bms"
+        ],
+        "input": "file",
+        "mapsets": [
+          {
+            "maps": [
+              "STRSMAP1",
+              "STRSMAP2"
+            ],
+            "name": "STRSSET",
+            "operands": {
+              "ctrl": [
+                "FREEKB",
+                "FRSET",
+                "ALARM"
+              ],
+              "dsatts": [
+                "COLOR",
+                "HILIGHT",
+                "VALIDN"
+              ],
+              "extatt": "YES",
+              "lang": "COBOL",
+              "mapatts": [
+                "COLOR",
+                "HILIGHT",
+                "PS",
+                "VALIDN"
+              ],
+              "mode": "INOUT",
+              "storage": "AUTO",
+              "tioapfx": "YES",
+              "type": "&SYSPARM"
+            }
+          }
+        ],
+        "symbolicMaps": []
+      }
+    },
+    "format": "cics-bms",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "STRSSET",
+      "namespace": "STRSSET"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "STRSSET",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map STRSMAP1 of mapset STRSSET: a 24×80 screen with 14 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "1",
+            "ctrl": [
+              "FREEKB",
+              "ALARM"
+            ],
+            "file": "cics-bms/04-stress-field-attributes.bms",
+            "line": "1",
+            "literals": [
+              {
+                "initial": "ATTRIBUTE COVERAGE",
+                "length": 20,
+                "position": {
+                  "column": 1,
+                  "row": 1
+                }
+              },
+              {
+                "initial": "F3=EXIT   F12=CANCEL",
+                "length": 30,
+                "position": {
+                  "column": 1,
+                  "row": 24
+                }
+              }
+            ],
+            "mapset": "STRSSET",
+            "size": {
+              "columns": 80,
+              "rows": 24
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 2, column 1; 10 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "ASKIP",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 10,
+                "position": {
+                  "column": 1,
+                  "row": 2
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "STRSSET.STRSMAP1.ASKIPFLD",
+            "name": "ASKIPFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 9, column 20; 12 characters; protected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "TURQUOISE",
+                "hilight": "BLINK",
+                "length": 12,
+                "position": {
+                  "column": 20,
+                  "row": 9
+                }
+              }
+            },
+            "field_number": 8,
+            "key": "STRSSET.STRSMAP1.BLNKFLD",
+            "name": "BLNKFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 9, column 1; 12 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "color": "YELLOW",
+                "hilight": "REVERSE",
+                "length": 12,
+                "position": {
+                  "column": 1,
+                  "row": 9
+                }
+              }
+            },
+            "field_number": 7,
+            "key": "STRSSET.STRSMAP1.COLRFLD",
+            "name": "COLRFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 6, column 1; 8 characters; unprotected, initial cursor.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM",
+                    "IC"
+                  ],
+                  "initialCursor": true,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "initial": "________",
+                "length": 8,
+                "position": {
+                  "column": 1,
+                  "row": 6
+                }
+              }
+            },
+            "field_number": 5,
+            "key": "STRSSET.STRSMAP1.CURSFLD",
+            "name": "CURSFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 2, column 15; 10 characters; protected, dark.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "DRK"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "dark",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "length": 10,
+                "position": {
+                  "column": 15,
+                  "row": 2
+                }
+              }
+            },
+            "field_number": 2,
+            "key": "STRSSET.STRSMAP1.DARKFLD",
+            "name": "DARKFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 7, column 1; 8 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM",
+                    "FSET"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": true,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "length": 8,
+                "position": {
+                  "column": 1,
+                  "row": 7
+                }
+              }
+            },
+            "field_number": 6,
+            "key": "STRSSET.STRSMAP1.FSETFLD",
+            "name": "FSETFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 20, column 1; 4 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "group": "DATEGRP",
+                "length": 4,
+                "position": {
+                  "column": 1,
+                  "row": 20
+                }
+              }
+            },
+            "field_number": 11,
+            "key": "STRSSET.STRSMAP1.GRPFLDA",
+            "name": "GRPFLDA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 20, column 6; 2 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "group": "DATEGRP",
+                "length": 2,
+                "position": {
+                  "column": 6,
+                  "row": 20
+                }
+              }
+            },
+            "field_number": 12,
+            "key": "STRSSET.STRSMAP1.GRPFLDB",
+            "name": "GRPFLDB",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 2,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 20, column 9; 2 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "group": "DATEGRP",
+                "length": 2,
+                "position": {
+                  "column": 9,
+                  "row": 20
+                }
+              }
+            },
+            "field_number": 13,
+            "key": "STRSSET.STRSMAP1.GRPFLDC",
+            "name": "GRPFLDC",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 70,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 22, column 1; 70 characters; protected, bright.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "BRT"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "bright",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "color": "RED",
+                "length": 70,
+                "position": {
+                  "column": 1,
+                  "row": 22
+                }
+              }
+            },
+            "field_number": 14,
+            "key": "STRSSET.STRSMAP1.MSGFLD",
+            "name": "MSGFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Row 5, column 1; 9 characters; unprotected, numeric.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NUM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": true,
+                  "protection": "unprotected"
+                },
+                "length": 9,
+                "picin": "9(7)V99",
+                "picout": "ZZZ,ZZ9.99",
+                "position": {
+                  "column": 1,
+                  "row": 5
+                }
+              }
+            },
+            "field_number": 4,
+            "key": "STRSSET.STRSMAP1.NUMFLD",
+            "name": "NUMFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "decimal",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {
+                "item_max_length": 12
+              },
+              "format": null,
+              "max_items": 8,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 8,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 12, column 1; 12 characters; protected; repeated 8 times.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "PROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "protected"
+                },
+                "initial": "            ",
+                "length": 12,
+                "occurs": 8,
+                "position": {
+                  "column": 1,
+                  "row": 12
+                }
+              }
+            },
+            "field_number": 10,
+            "key": "STRSSET.STRSMAP1.TABLINE",
+            "name": "TABLINE",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 9, column 40; 12 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "hilight": "UNDERLINE",
+                "length": 12,
+                "position": {
+                  "column": 40,
+                  "row": 9
+                },
+                "validn": [
+                  "MUSTENTER",
+                  "MUSTFILL"
+                ]
+              }
+            },
+            "field_number": 9,
+            "key": "STRSSET.STRSMAP1.UNDRFLD",
+            "name": "UNDRFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 4, column 1; 20 characters; unprotected.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM"
+                  ],
+                  "initialCursor": false,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "length": 20,
+                "picin": "X(20)",
+                "position": {
+                  "column": 1,
+                  "row": 4
+                }
+              }
+            },
+            "field_number": 3,
+            "key": "STRSSET.STRSMAP1.UNPFLD",
+            "name": "UNPFLD",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "STRSSET.STRSMAP1",
+        "key_type": null,
+        "kind": "record",
+        "name": "STRSMAP1",
+        "namespace": "STRSSET",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "BMS map STRSMAP2 of mapset STRSSET: a 12×40 screen with 1 named field(s).",
+        "enum_values": [],
+        "extras": {
+          "cics_bms": {
+            "column": "20",
+            "file": "cics-bms/04-stress-field-attributes.bms",
+            "justify": [
+              "LEFT",
+              "FIRST"
+            ],
+            "line": "6",
+            "literals": [
+              {
+                "initial": "CONFIRM (Y/N)",
+                "length": 18,
+                "position": {
+                  "column": 1,
+                  "row": 1
+                }
+              }
+            ],
+            "mapset": "STRSSET",
+            "size": {
+              "columns": 40,
+              "rows": 12
+            },
+            "sizeDeclared": true
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "Row 3, column 1; 1 character; unprotected, initial cursor.",
+            "extras": {
+              "cics_bms": {
+                "attributes": {
+                  "declared": [
+                    "UNPROT",
+                    "NORM",
+                    "IC"
+                  ],
+                  "initialCursor": true,
+                  "intensity": "normal",
+                  "modifiedDataTag": false,
+                  "numeric": false,
+                  "protection": "unprotected"
+                },
+                "length": 1,
+                "picin": "X",
+                "position": {
+                  "column": 1,
+                  "row": 3
+                }
+              }
+            },
+            "field_number": 1,
+            "key": "STRSSET.STRSMAP2.CONFIRM",
+            "name": "CONFIRM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "STRSSET.STRSMAP2",
+        "key_type": null,
+        "kind": "record",
+        "name": "STRSMAP2",
+        "namespace": "STRSSET",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "cics-bms/04-stress-field-attributes.bms",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "cics-bms"
+  },
+  "fingerprint": "sha256:e91d3e91beccce243cc4ad5a788c3c1089c8c6bfd5356e6cc3ddb7916c1bf41c",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

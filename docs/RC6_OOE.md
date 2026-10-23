@@ -208,7 +208,6 @@ do. Lane C rows are in pick-up order within their wave.
 | 90 | 4 | C4 | [#5454](https://github.com/apiome/apiome/issues/5454) | FMT-6.10 | Implementation-guide capability statements for every EDI family | FMT-6.1…6.9 | Stretch |
 | 91 | 4 | C4 | [#5406](https://github.com/apiome/apiome/issues/5406) | FMT-EPIC-6 | B2B / EDI / vertical depth | close after FMT-6.1…6.10 | Stretch |
 | 97 | 4 | C5 | [#5409](https://github.com/apiome/apiome/issues/5409) | FMT-EPIC-9 | Industrial, IoT & semantic web | close after FMT-9.1…9.5 | Stretch |
-| 98 | 4 | C6 | [#5484](https://github.com/apiome/apiome/issues/5484) | FMT-11.3 | VSAM catalog and CICS BMS map import | — | Stretch |
 | 99 | 4 | C6 | [#5486](https://github.com/apiome/apiome/issues/5486) | FMT-11.4 | Natural / ADABAS DDM import | — | Stretch |
 | 100 | 4 | C6 | [#5480](https://github.com/apiome/apiome/issues/5480) | FMT-11.1 | PL/I `%INCLUDE` structure import | — | Stretch |
 | 101 | 4 | C6 | [#5482](https://github.com/apiome/apiome/issues/5482) | FMT-11.2 | IMS DBD and PSB import | — | Stretch |

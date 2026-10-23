@@ -1230,6 +1230,10 @@ def load_builtin_import_sources() -> None:
     # ``.srv`` / ``.action`` interfaces and interface packages, rpc paradigm.
     from . import ros2_import_source as _ros2  # noqa: F401
 
+    # ``mainframe_misc_import_source`` (FMT-11.3) self-registers the ``vsam-idcams`` and
+    # ``cics-bms`` adapters — VSAM cluster definitions and CICS BMS maps, data_schema paradigm.
+    from . import mainframe_misc_import_source as _mainframe_misc  # noqa: F401
+
     # ``lwm2m_import_source`` and ``matter_import_source`` (FMT-9.5) self-register the ``lwm2m``
     # adapter (LwM2M / IPSO object definitions, data_schema) and the ``matter`` adapter (Matter
     # cluster and device-type definitions, rpc).
