@@ -141,6 +141,8 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   zod: 'Zod schemas',
   trpc: 'tRPC router',
   'opcua-nodeset': 'OPC UA NodeSet2',
+  lwm2m: 'LwM2M / IPSO objects',
+  matter: 'Matter clusters and device types',
   pydantic: 'Pydantic models',
   cue: 'CUE',
   pkl: 'Pkl',

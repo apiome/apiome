@@ -327,14 +327,14 @@
       "marker": "OpenAI / Anthropic / bare tool-array shape"
     },
     "lwm2m": {
-      "label": "LwM2M / IPSO objects (pending #5472)",
+      "label": "LwM2M / IPSO objects",
       "category": "data-schema",
       "paradigm": "data_schema",
       "marker": "`<LWM2M>` root with `<Object ObjectType=\"MODefinition\">` and `Resources/Item`"
     },
     "matter": {
-      "label": "Matter clusters and device types (pending #5472)",
-      "category": "data-schema",
+      "label": "Matter clusters and device types",
+      "category": "rpc",
       "paradigm": "rpc",
       "marker": "`<configurator>` root with `<cluster>` (name/code/define) or `<deviceType>`"
     },
@@ -16355,7 +16355,7 @@
     {
       "path": "lwm2m/01-minimal-object.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16364,8 +16364,7 @@
       "features": [
         "object-definition",
         "resource",
-        "read-only",
-        "pending-adapter"
+        "read-only"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16376,7 +16375,7 @@
     {
       "path": "lwm2m/02-typical-ipso-temperature.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16387,8 +16386,7 @@
         "units",
         "executable-resource",
         "optional-resources",
-        "multiple-instances",
-        "pending-adapter"
+        "multiple-instances"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16399,7 +16397,7 @@
     {
       "path": "lwm2m/03-composition-multi-object-file.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16408,8 +16406,7 @@
       "features": [
         "multi-object",
         "objlnk",
-        "cross-object-reference",
-        "pending-adapter"
+        "cross-object-reference"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16420,7 +16417,7 @@
     {
       "path": "lwm2m/04-stress-resource-forms.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16435,8 +16432,7 @@
         "enumeration",
         "objlnk",
         "corelnk",
-        "units",
-        "pending-adapter"
+        "units"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16447,7 +16443,7 @@
     {
       "path": "lwm2m/05-real-world-device-object.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16459,8 +16455,7 @@
         "error-codes",
         "reboot",
         "factory-reset",
-        "timezone",
-        "pending-adapter"
+        "timezone"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16471,7 +16466,7 @@
     {
       "path": "lwm2m/06-typical-firmware-update-object.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16482,8 +16477,7 @@
         "write-only",
         "executable-resource",
         "state-enum",
-        "result-enum",
-        "pending-adapter"
+        "result-enum"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16494,7 +16488,7 @@
     {
       "path": "lwm2m/07-object-registry-set/32710.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16502,8 +16496,7 @@
       },
       "features": [
         "objlnk-composition",
-        "registry-convention",
-        "pending-adapter"
+        "registry-convention"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16515,7 +16508,7 @@
     {
       "path": "lwm2m/07-object-registry-set/32711.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16523,8 +16516,7 @@
       },
       "features": [
         "temperature-object",
-        "executable-resource",
-        "pending-adapter"
+        "executable-resource"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16537,7 +16529,7 @@
     {
       "path": "lwm2m/07-object-registry-set/32712.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "valid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16545,8 +16537,7 @@
       },
       "features": [
         "actuator-object",
-        "executable-resource",
-        "pending-adapter"
+        "executable-resource"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16559,7 +16550,7 @@
     {
       "path": "lwm2m/negative/01-syntactic-unclosed-item.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16568,8 +16559,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16581,7 +16571,7 @@
     {
       "path": "lwm2m/negative/02-semantic-no-resources.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16590,8 +16580,7 @@
       "features": [
         "negative",
         "semantic",
-        "empty-resources",
-        "pending-adapter"
+        "empty-resources"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16603,7 +16592,7 @@
     {
       "path": "lwm2m/negative/03-truncated-mid-resource.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16612,8 +16601,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-element",
-        "pending-adapter"
+        "mid-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16625,7 +16613,7 @@
     {
       "path": "lwm2m/negative/04-wrong-format-matter-cluster.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16634,8 +16622,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "matter",
-        "pending-adapter"
+        "matter"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16647,7 +16634,7 @@
     {
       "path": "lwm2m/negative/05-encoding-utf16.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16656,8 +16643,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16669,7 +16655,7 @@
     {
       "path": "lwm2m/negative/06-semantic-unknown-resource-type.xml",
       "format": "lwm2m",
-      "adapter_key": null,
+      "adapter_key": "lwm2m",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "lwm2m",
@@ -16679,8 +16665,7 @@
         "negative",
         "semantic",
         "unknown-type",
-        "invalid-operations",
-        "pending-adapter"
+        "invalid-operations"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16692,7 +16677,7 @@
     {
       "path": "matter/01-minimal-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16701,8 +16686,7 @@
       "features": [
         "cluster",
         "attribute",
-        "command",
-        "pending-adapter"
+        "command"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16713,7 +16697,7 @@
     {
       "path": "matter/02-typical-onoff-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16725,8 +16709,7 @@
         "optional-attribute",
         "nullable-attribute",
         "defaults",
-        "commands",
-        "pending-adapter"
+        "commands"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16737,7 +16720,7 @@
     {
       "path": "matter/03-device-type-set/device-type.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16747,8 +16730,7 @@
         "multi-file",
         "deviceType",
         "cluster-include",
-        "required-members",
-        "pending-adapter"
+        "required-members"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16760,7 +16742,7 @@
     {
       "path": "matter/03-device-type-set/levelcontrol-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16770,8 +16752,7 @@
         "multi-file",
         "cluster",
         "bitmap",
-        "access",
-        "pending-adapter"
+        "access"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16783,7 +16764,7 @@
     {
       "path": "matter/03-device-type-set/onoff-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16791,8 +16772,7 @@
       },
       "features": [
         "multi-file",
-        "cluster",
-        "pending-adapter"
+        "cluster"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16804,7 +16784,7 @@
     {
       "path": "matter/04-stress-structs-enums-bitmaps.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16820,8 +16800,7 @@
         "command-response",
         "events",
         "event-priority",
-        "nullable",
-        "pending-adapter"
+        "nullable"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16832,7 +16811,7 @@
     {
       "path": "matter/05-real-world-thermostat-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16844,8 +16823,7 @@
         "mode-enum",
         "running-state-bitmap",
         "schedule-commands",
-        "command-response",
-        "pending-adapter"
+        "command-response"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16856,7 +16834,7 @@
     {
       "path": "matter/06-typical-events-and-access.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16866,8 +16844,7 @@
         "basic-information",
         "struct-attribute",
         "write-privilege",
-        "lifecycle-events",
-        "pending-adapter"
+        "lifecycle-events"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16878,7 +16855,7 @@
     {
       "path": "matter/07-composition-derived-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "valid",
       "expected_detection": {
         "format": "matter",
@@ -16889,8 +16866,7 @@
         "shared-types",
         "derived-cluster",
         "command-response",
-        "events",
-        "pending-adapter"
+        "events"
       ],
       "expected_outcome": "imports",
       "source": "hand-authored",
@@ -16901,7 +16877,7 @@
     {
       "path": "matter/negative/01-syntactic-unclosed-cluster.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -16910,8 +16886,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16923,7 +16898,7 @@
     {
       "path": "matter/negative/02-semantic-cluster-without-members.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -16932,8 +16907,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-members",
-        "pending-adapter"
+        "no-members"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16945,7 +16919,7 @@
     {
       "path": "matter/negative/03-truncated-mid-attribute.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -16954,8 +16928,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16967,7 +16940,7 @@
     {
       "path": "matter/negative/04-wrong-format-lwm2m.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -16976,8 +16949,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "lwm2m",
-        "pending-adapter"
+        "lwm2m"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -16989,7 +16961,7 @@
     {
       "path": "matter/negative/05-encoding-utf16.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -16998,8 +16970,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -17011,7 +16982,7 @@
     {
       "path": "matter/negative/06-unresolvable-type-reference.xml",
       "format": "matter",
-      "adapter_key": null,
+      "adapter_key": "matter",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "matter",
@@ -17021,8 +16992,7 @@
         "negative",
         "unresolvable-ref",
         "missing-enum",
-        "missing-struct",
-        "pending-adapter"
+        "missing-struct"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

@@ -122,6 +122,7 @@ INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "opcua-nodeset": "The request and response records a method's arguments become are synthesized.",
     "sparkplug": "Every construct of a payload-only import is inferred: a payload does not carry its topic.",
     "ros2": "The enum grouping an interface's constants and an action's feedback channel are synthesized.",
+    "lwm2m": "The Objlnk record an object-link resource is typed as is synthesized.",
     "shacl": "The types of anonymous (blank-node) shapes are synthesized.",
     "owl": "A class's asserted individuals listed as an enum (no owl:oneOf closes it) are inferred.",
     "jsonld": "The types of scoped contexts and container maps are synthesized.",

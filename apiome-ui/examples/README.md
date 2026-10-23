@@ -60,6 +60,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | --- | --- | --- | --- | --- |
 | `connectrpc/` | Connect-RPC | rpc | Protobuf `service` (Connect) | 12 |
 | `corba-idl/` | CORBA / OMG IDL | rpc | `module` + `interface` | 11 |
+| `matter/` | Matter clusters and device types | rpc | `<configurator>` root with `<cluster>` (name/code/define) or `<deviceType>` | 15 |
 | `onc-rpc/` | ONC RPC / XDR | rpc | `program {} = N` + XDR types | 11 |
 | `openrpc/` | OpenRPC (JSON-RPC) | rpc | top-level `openrpc:` version | 11 |
 | `protobuf/` | Protobuf / gRPC | rpc | `syntax = "proto3"` | 17 |
@@ -109,8 +110,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `jtd/` | JSON Type Definition | data_schema | `properties`/`optionalProperties` | 11 |
 | `k8s-crd/` | Kubernetes CRD | data_schema | `apiVersion: apiextensions.k8s.io/*` + `kind: CustomResourceDefinition` | 12 |
 | `kafka-connect/` | Kafka Connect schema | data_schema | `"type": "struct"` + `fields[].field` | 15 |
-| `lwm2m/` | LwM2M / IPSO objects (pending #5472) | data_schema | `<LWM2M>` root with `<Object ObjectType="MODefinition">` and `Resources/Item` | 15 |
-| `matter/` | Matter clusters and device types (pending #5472) | rpc | `<configurator>` root with `<cluster>` (name/code/define) or `<deviceType>` | 15 |
+| `lwm2m/` | LwM2M / IPSO objects | data_schema | `<LWM2M>` root with `<Object ObjectType="MODefinition">` and `Resources/Item` | 15 |
 | `natural-ddm/` | Natural / ADABAS DDM (pending #5486) | data_schema | `DDM Name ......` header + the `T L DB Name … F Leng S D Remark` banner | 14 |
 | `odcs/` | Open Data Contract Standard v3.1 | data_schema | `apiVersion: v3.x` + `kind: DataContract` + `schema:` | 15 |
 | `opcua-nodeset/` | OPC UA NodeSet2 (pending #5468) | rpc | `<UANodeSet>` root in the OPC Foundation NodeSet2 namespace | 14 |
@@ -1414,49 +1414,49 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`08-emitted-anthropic-strict.json`** — The same API as 07 in the strict structured-output subset: every object is closed and every property is required, with the optional ones widened to accept null.
 
-### `lwm2m/` — LwM2M / IPSO objects (pending #5472)
+### `lwm2m/` — LwM2M / IPSO objects
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-object.xml` | minimal | `lwm2m` ≥ 0.9 | valid | `object-definition`, `resource`, `read-only`, `pending-adapter` |
-| `02-typical-ipso-temperature.xml` | typical | `lwm2m` ≥ 0.9 | valid | `ipso`, `units`, `executable-resource`, `optional-resources`, `multiple-instances`, `pending-adapter` |
-| `03-composition-multi-object-file.xml` | composition | `lwm2m` ≥ 0.9 | valid | `multi-object`, `objlnk`, `cross-object-reference`, `pending-adapter` |
-| `04-stress-resource-forms.xml` | stress | `lwm2m` ≥ 0.9 | valid | `all-resource-types`, `write-only`, `executable-resource`, `multiple-instances`, `range`, `enumeration`, `objlnk`, `corelnk`, `units`, `pending-adapter` |
-| `05-real-world-device-object.xml` | real-world | `lwm2m` ≥ 0.9 | valid | `device-object`, `multi-instance-resources`, `error-codes`, `reboot`, `factory-reset`, `timezone`, `pending-adapter` |
-| `06-typical-firmware-update-object.xml` | typical | `lwm2m` ≥ 0.9 | valid | `firmware-update`, `write-only`, `executable-resource`, `state-enum`, `result-enum`, `pending-adapter` |
-| `07-object-registry-set/32710.xml` | multi-file (root) | `lwm2m` ≥ 0.9 | valid | `objlnk-composition`, `registry-convention`, `pending-adapter` |
-| `07-object-registry-set/32711.xml` ⚠ | multi-file (member) | `lwm2m` (no guarantee) | valid | `temperature-object`, `executable-resource`, `pending-adapter` |
-| `07-object-registry-set/32712.xml` ⚠ | multi-file (member) | `lwm2m` (no guarantee) | valid | `actuator-object`, `executable-resource`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-item.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-no-resources.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `semantic`, `empty-resources`, `pending-adapter` |
-| `negative/03-truncated-mid-resource.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `truncated`, `mid-element`, `pending-adapter` |
-| `negative/04-wrong-format-matter-cluster.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `wrong-format`, `matter`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-semantic-unknown-resource-type.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `semantic`, `unknown-type`, `invalid-operations`, `pending-adapter` |
+| `01-minimal-object.xml` | minimal | `lwm2m` ≥ 0.9 | valid | `object-definition`, `resource`, `read-only` |
+| `02-typical-ipso-temperature.xml` | typical | `lwm2m` ≥ 0.9 | valid | `ipso`, `units`, `executable-resource`, `optional-resources`, `multiple-instances` |
+| `03-composition-multi-object-file.xml` | composition | `lwm2m` ≥ 0.9 | valid | `multi-object`, `objlnk`, `cross-object-reference` |
+| `04-stress-resource-forms.xml` | stress | `lwm2m` ≥ 0.9 | valid | `all-resource-types`, `write-only`, `executable-resource`, `multiple-instances`, `range`, `enumeration`, `objlnk`, `corelnk`, `units` |
+| `05-real-world-device-object.xml` | real-world | `lwm2m` ≥ 0.9 | valid | `device-object`, `multi-instance-resources`, `error-codes`, `reboot`, `factory-reset`, `timezone` |
+| `06-typical-firmware-update-object.xml` | typical | `lwm2m` ≥ 0.9 | valid | `firmware-update`, `write-only`, `executable-resource`, `state-enum`, `result-enum` |
+| `07-object-registry-set/32710.xml` | multi-file (root) | `lwm2m` ≥ 0.9 | valid | `objlnk-composition`, `registry-convention` |
+| `07-object-registry-set/32711.xml` ⚠ | multi-file (member) | `lwm2m` (no guarantee) | valid | `temperature-object`, `executable-resource` |
+| `07-object-registry-set/32712.xml` ⚠ | multi-file (member) | `lwm2m` (no guarantee) | valid | `actuator-object`, `executable-resource` |
+| `negative/01-syntactic-unclosed-item.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-no-resources.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `semantic`, `empty-resources` |
+| `negative/03-truncated-mid-resource.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `truncated`, `mid-element` |
+| `negative/04-wrong-format-matter-cluster.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `wrong-format`, `matter` |
+| `negative/05-encoding-utf16.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-unknown-resource-type.xml` | — | `lwm2m` (no guarantee) | invalid | `negative`, `semantic`, `unknown-type`, `invalid-operations` |
 
 > ⚠ **`07-object-registry-set/32711.xml`** — Fileset member: the sensor object the unit links to.
 
 > ⚠ **`07-object-registry-set/32712.xml`** — Fileset member: the actuator object the unit links to.
 
-### `matter/` — Matter clusters and device types (pending #5472)
+### `matter/` — Matter clusters and device types
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-cluster.xml` | minimal | `matter` ≥ 0.9 | valid | `cluster`, `attribute`, `command`, `pending-adapter` |
-| `02-typical-onoff-cluster.xml` | typical | `matter` ≥ 0.9 | valid | `enum`, `bitmap`, `optional-attribute`, `nullable-attribute`, `defaults`, `commands`, `pending-adapter` |
-| `03-device-type-set/device-type.xml` | multi-file (root) | `matter` ≥ 0.9 | valid | `multi-file`, `deviceType`, `cluster-include`, `required-members`, `pending-adapter` |
-| `03-device-type-set/levelcontrol-cluster.xml` | multi-file (member) | `matter` (no guarantee) | valid | `multi-file`, `cluster`, `bitmap`, `access`, `pending-adapter` |
-| `03-device-type-set/onoff-cluster.xml` | multi-file (member) | `matter` (no guarantee) | valid | `multi-file`, `cluster`, `pending-adapter` |
-| `04-stress-structs-enums-bitmaps.xml` | stress | `matter` ≥ 0.9 | valid | `struct`, `nested-struct-array`, `features`, `conformance`, `list-attribute`, `access-privilege`, `command-response`, `events`, `event-priority`, `nullable`, `pending-adapter` |
-| `05-real-world-thermostat-cluster.xml` | real-world | `matter` ≥ 0.9 | valid | `thermostat`, `setpoint-limits`, `mode-enum`, `running-state-bitmap`, `schedule-commands`, `command-response`, `pending-adapter` |
-| `06-typical-events-and-access.xml` | typical | `matter` ≥ 0.9 | valid | `basic-information`, `struct-attribute`, `write-privilege`, `lifecycle-events`, `pending-adapter` |
-| `07-composition-derived-cluster.xml` | composition | `matter` ≥ 0.9 | valid | `struct-of-structs`, `shared-types`, `derived-cluster`, `command-response`, `events`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-cluster.xml` | — | `matter` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-cluster-without-members.xml` | — | `matter` (no guarantee) | invalid | `negative`, `semantic`, `no-members`, `pending-adapter` |
-| `negative/03-truncated-mid-attribute.xml` | — | `matter` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-lwm2m.xml` | — | `matter` (no guarantee) | invalid | `negative`, `wrong-format`, `lwm2m`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `matter` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-type-reference.xml` | — | `matter` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-enum`, `missing-struct`, `pending-adapter` |
+| `01-minimal-cluster.xml` | minimal | `matter` ≥ 0.9 | valid | `cluster`, `attribute`, `command` |
+| `02-typical-onoff-cluster.xml` | typical | `matter` ≥ 0.9 | valid | `enum`, `bitmap`, `optional-attribute`, `nullable-attribute`, `defaults`, `commands` |
+| `03-device-type-set/device-type.xml` | multi-file (root) | `matter` ≥ 0.9 | valid | `multi-file`, `deviceType`, `cluster-include`, `required-members` |
+| `03-device-type-set/levelcontrol-cluster.xml` | multi-file (member) | `matter` (no guarantee) | valid | `multi-file`, `cluster`, `bitmap`, `access` |
+| `03-device-type-set/onoff-cluster.xml` | multi-file (member) | `matter` (no guarantee) | valid | `multi-file`, `cluster` |
+| `04-stress-structs-enums-bitmaps.xml` | stress | `matter` ≥ 0.9 | valid | `struct`, `nested-struct-array`, `features`, `conformance`, `list-attribute`, `access-privilege`, `command-response`, `events`, `event-priority`, `nullable` |
+| `05-real-world-thermostat-cluster.xml` | real-world | `matter` ≥ 0.9 | valid | `thermostat`, `setpoint-limits`, `mode-enum`, `running-state-bitmap`, `schedule-commands`, `command-response` |
+| `06-typical-events-and-access.xml` | typical | `matter` ≥ 0.9 | valid | `basic-information`, `struct-attribute`, `write-privilege`, `lifecycle-events` |
+| `07-composition-derived-cluster.xml` | composition | `matter` ≥ 0.9 | valid | `struct-of-structs`, `shared-types`, `derived-cluster`, `command-response`, `events` |
+| `negative/01-syntactic-unclosed-cluster.xml` | — | `matter` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-cluster-without-members.xml` | — | `matter` (no guarantee) | invalid | `negative`, `semantic`, `no-members` |
+| `negative/03-truncated-mid-attribute.xml` | — | `matter` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-lwm2m.xml` | — | `matter` (no guarantee) | invalid | `negative`, `wrong-format`, `lwm2m` |
+| `negative/05-encoding-utf16.xml` | — | `matter` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-type-reference.xml` | — | `matter` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-enum`, `missing-struct` |
 
 ### `mcp/` — MCP server manifest
 

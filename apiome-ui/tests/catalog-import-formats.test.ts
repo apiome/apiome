@@ -101,6 +101,11 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('ros2')?.sourceKind).toBe('ros2');
     expect(catalogAdapterForFormat('ros2-interface')?.sourceKind).toBe('ros2');
     expect(catalogAdapterForFormat('rosidl')?.sourceKind).toBe('ros2');
+    // FMT-9.5: LwM2M / IPSO objects and Matter clusters, under their keys and aliases.
+    expect(catalogAdapterForFormat('lwm2m')?.sourceKind).toBe('lwm2m');
+    expect(catalogAdapterForFormat('ipso')?.sourceKind).toBe('lwm2m');
+    expect(catalogAdapterForFormat('matter')?.sourceKind).toBe('matter');
+    expect(catalogAdapterForFormat('matter-zap')?.sourceKind).toBe('matter');
     // FMT-8.5: CUE, Pkl and Dhall.
     expect(catalogAdapterForFormat('cue')?.sourceKind).toBe('cue');
     expect(catalogAdapterForFormat('pkl')?.sourceKind).toBe('pkl');
@@ -156,7 +161,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
+    expect(kinds).toEqual(['a2a', 'acp', 'agents-manifest', 'apiblueprint', 'arazzo', 'arrow', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cddl', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'cue', 'dbt', 'dhall', 'dicom', 'discovery', 'dtd', 'edifact', 'edix12', 'fhir', 'fix', 'fix-orchestra', 'flatbuffers', 'gateway-api', 'graphql', 'grpc', 'hl7v2', 'hl7v3', 'http-file', 'idoc', 'iso20022', 'iso8583', 'json-schema', 'jsonld', 'jtd', 'k8s-crd', 'kafka-connect', 'kong', 'llm-tools', 'lwm2m', 'matter', 'mcp', 'nacha', 'ncpdp', 'odata', 'odcs', 'oncrpc', 'opcua-nodeset', 'openrpc', 'owl', 'pkl', 'postman', 'pydantic', 'raml', 'relaxng', 'ros2', 'shacl', 'smithy', 'sparkplug', 'sql-ddl', 'swift-mt', 'thrift', 'tradacoms', 'trpc', 'typescript-types', 'typespec', 'wadl', 'wit', 'wsdl', 'xmlrpc', 'xregistry', 'xsd', 'zod', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -393,6 +398,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
     expect(paradigmForFormat('sparkplug')).toBe('event');
     expect(paradigmForFormat('ros2')).toBe('rpc');
+    expect(paradigmForFormat('lwm2m')).toBe('dataschema');
+    expect(paradigmForFormat('matter')).toBe('rpc');
     expect(paradigmForFormat('shacl')).toBe('dataschema');
     expect(paradigmForFormat('owl')).toBe('dataschema');
     expect(paradigmForFormat('jsonld')).toBe('dataschema');

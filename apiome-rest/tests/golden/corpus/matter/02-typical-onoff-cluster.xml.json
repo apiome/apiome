@@ -1,0 +1,630 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Attributes and commands for switching devices between on and off.",
+    "extras": {
+      "matter": {
+        "capability_limits": [
+          {
+            "construct": "matter.bitmap_flags",
+            "count": 1,
+            "detail": "A bitmap is projected to an enum of its flag masks; a value may combine several flags, which the enum does not express. The bitmap's base type is kept in extras['matter_bitmap'].",
+            "locations": [
+              "OnOffFeature"
+            ]
+          },
+          {
+            "construct": "matter.standard_type_reference",
+            "count": 2,
+            "detail": "A member of a standard cluster uses a data type the import does not declare; the Matter specification defines it for that cluster. The member keeps the any type and names the type in extras['matter_unresolved']; import the file that declares it to resolve it.",
+            "locations": [
+              "OnOff.OffWithEffectRequest.EffectIdentifier",
+              "OnOff.OnWithTimedOffRequest.OnOffControl"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "code": "0x0006",
+            "file": "matter/02-typical-onoff-cluster.xml",
+            "name": "On/Off"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "On/Off",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the On/Off cluster.",
+        "extras": {},
+        "key": "OnOffService",
+        "name": "OnOffService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Set the OnOff attribute to false.",
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.Off",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Off",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x40",
+                "optional": true,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.OffWithEffect",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "OnOffService.OffWithEffect#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OnOff.OffWithEffectRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "OffWithEffect",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Set the OnOff attribute to true.",
+            "extras": {
+              "matter_command": {
+                "code": "0x01",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.On",
+            "kind": "request_response",
+            "messages": [],
+            "name": "On",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x42",
+                "optional": true,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.OnWithTimedOff",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "OnOffService.OnWithTimedOff#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "OnOff.OnWithTimedOffRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "OnWithTimedOff",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Invert the OnOff attribute.",
+            "extras": {
+              "matter_command": {
+                "code": "0x02",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "OnOffService.Toggle",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Toggle",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "On/Off",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Attributes and commands for switching devices between on and off.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0006",
+            "define": "ON_OFF_CLUSTER",
+            "domain": "General",
+            "file": "matter/02-typical-onoff-cluster.xml",
+            "name": "On/Off"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": true,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x4000",
+                "define": "GLOBAL_SCENE_CONTROL",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "true",
+              "matter_type": "boolean"
+            },
+            "field_number": 16384,
+            "key": "OnOff.GlobalSceneControl",
+            "name": "GlobalSceneControl",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x4002",
+                "define": "OFF_WAIT_TIME",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "0x0000",
+              "matter_type": "int16u"
+            },
+            "field_number": 16386,
+            "key": "OnOff.OffWaitTime",
+            "name": "OffWaitTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": false,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "ON_OFF",
+                "nullable": false,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_default": "false",
+              "matter_type": "boolean"
+            },
+            "field_number": 0,
+            "key": "OnOff.OnOff",
+            "name": "OnOff",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": 0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x4001",
+                "define": "ON_TIME",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "0x0000",
+              "matter_type": "int16u"
+            },
+            "field_number": 16385,
+            "key": "OnOff.OnTime",
+            "name": "OnTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x4003",
+                "define": "START_UP_ON_OFF",
+                "nullable": true,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "StartUpOnOffEnum"
+            },
+            "field_number": 16387,
+            "key": "OnOff.StartUpOnOff",
+            "name": "StartUpOnOff",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StartUpOnOffEnum",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "OnOff",
+        "key_type": null,
+        "kind": "record",
+        "name": "OnOff",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x40",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "EffectIdentifierEnum"
+            },
+            "field_number": 0,
+            "key": "OnOff.OffWithEffectRequest.EffectIdentifier",
+            "name": "EffectIdentifier",
+            "type": {
+              "extras": {
+                "matter_unresolved": "EffectIdentifierEnum"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 1,
+            "key": "OnOff.OffWithEffectRequest.EffectVariant",
+            "name": "EffectVariant",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "OnOff.OffWithEffectRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "OffWithEffectRequest",
+        "namespace": "OnOff",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x42",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 2,
+            "key": "OnOff.OnWithTimedOffRequest.OffWaitTime",
+            "name": "OffWaitTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "OnOffControlBitmap"
+            },
+            "field_number": 0,
+            "key": "OnOff.OnWithTimedOffRequest.OnOffControl",
+            "name": "OnOffControl",
+            "type": {
+              "extras": {
+                "matter_unresolved": "OnOffControlBitmap"
+              },
+              "item": null,
+              "name": "any",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 1,
+            "key": "OnOff.OnWithTimedOffRequest.OnTime",
+            "name": "OnTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "OnOff.OnWithTimedOffRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "OnWithTimedOffRequest",
+        "namespace": "OnOff",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A flag set: a value combines any of these masks.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OnOffFeature.Lighting",
+            "name": "Lighting",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OnOffFeature.DeadFrontBehavior",
+            "name": "DeadFrontBehavior",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "OnOffFeature.OffOnly",
+            "name": "OffOnly",
+            "value": 4
+          }
+        ],
+        "extras": {
+          "matter_bitmap": {
+            "base": "bitmap32",
+            "clusters": [
+              "0x0006"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "OnOffFeature",
+        "key_type": null,
+        "kind": "enum",
+        "name": "OnOffFeature",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StartUpOnOffEnum.Off",
+            "name": "Off",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StartUpOnOffEnum.On",
+            "name": "On",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StartUpOnOffEnum.Toggle",
+            "name": "Toggle",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0x0006"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "StartUpOnOffEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "StartUpOnOffEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/02-typical-onoff-cluster.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 1,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:a729e6d17d12a0637f42145e31d7e443aa0b8654d947afe90d15e1a071224b6a",
+  "lint": {
+    "findings": 17,
+    "grade": "D",
+    "report_fingerprint": "678032a604d05a8eca1b6d649696c02a64887b9232b0f027f00b366cfa810c84",
+    "score": 68,
+    "severity_counts": {
+      "error": 0,
+      "info": 12,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

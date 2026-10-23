@@ -1,0 +1,24 @@
+---
+slug: device-model-import
+title: Import LwM2M and Matter device models
+description: Catalog LwM2M / IPSO objects and Matter clusters and device types.
+authors: [apiome]
+---
+
+IoT devices publish their interfaces as LwM2M object definitions and Matter cluster and device-type
+definitions. Apiome now imports both into the catalog.
+[What gets imported](/bring-in/device-model-import).
+
+{/* truncate */}
+
+- **LwM2M objects become data schemas.** IPSO smart objects included: resources become fields
+  numbered by their resource id, with units, ranges, enumerations and the mandatory flag as
+  constraints, and the read/write access mode kept on each field.
+- **Executable resources become operations.** A resource with `Operations` `E` is a one-way
+  operation, not a field.
+- **Matter clusters become RPC APIs.** Attributes are fields with their access, bounds and defaults;
+  client commands are request/response operations with their argument and response records; events
+  are subscriptions with their priority.
+- **Device types compose clusters.** Import a device type beside its cluster files and it links to
+  them; a cluster outside the upload, an object link's target and a Matter bitmap are listed in the
+  coverage ledger.

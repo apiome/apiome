@@ -727,6 +727,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['industrial', 'iot', 'telemetry', 'topic', 'metric', 'alias', 'nbirth', 'ddata', 'edge node'],
   },
   {
+    id: 'device-model-import',
+    title: 'Import LwM2M and Matter device models',
+    summary: 'Catalog LwM2M / IPSO objects and Matter clusters and device types.',
+    page: 'apiome-docs/docs/bring-in/device-model-import.md',
+    section: 'reference',
+    keywords: ['ipso', 'iot', 'cluster', 'device type', 'smart object', 'zap', 'oma', 'resource', 'smart home'],
+  },
+  {
     id: 'linked-data-import',
     title: 'Import SHACL, OWL and JSON-LD',
     summary: 'Catalog SHACL shapes, OWL / RDFS ontologies and JSON-LD contexts as data schemas.',

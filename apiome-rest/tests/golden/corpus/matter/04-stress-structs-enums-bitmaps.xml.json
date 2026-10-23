@@ -1,0 +1,1491 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Coverage cluster: every construct the data model admits.",
+    "extras": {
+      "matter": {
+        "capability_limits": [
+          {
+            "construct": "matter.bitmap_flags",
+            "count": 1,
+            "detail": "A bitmap is projected to an enum of its flag masks; a value may combine several flags, which the enum does not express. The bitmap's base type is kept in extras['matter_bitmap'].",
+            "locations": [
+              "Feature"
+            ]
+          },
+          {
+            "construct": "matter.feature_conformance",
+            "count": 1,
+            "detail": "A cluster declares features whose conformance (which attributes and commands each feature enables) is kept in extras['matter_cluster']['features'] but not evaluated, so feature-gated members are modelled as the definition writes them.",
+            "locations": [
+              "ElectricalPowerMeasurement"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "code": "0xFFF1",
+            "file": "matter/04-stress-structs-enums-bitmaps.xml",
+            "name": "Electrical Power Measurement"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Electrical Power Measurement",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Electrical Power Measurement cluster.",
+        "extras": {},
+        "key": "ElectricalPowerMeasurementService",
+        "name": "ElectricalPowerMeasurementService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x01",
+                "optional": true,
+                "priority": "debug"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ElectricalPowerMeasurementService.HarmonicsReported",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ElectricalPowerMeasurementService.HarmonicsReported#event.HarmonicsReportedEvent",
+                "name": "HarmonicsReported",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ElectricalPowerMeasurement.HarmonicsReportedEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "HarmonicsReported",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_event": {
+                "code": "0x02",
+                "optional": false,
+                "priority": "critical"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ElectricalPowerMeasurementService.MeasurementFault",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ElectricalPowerMeasurementService.MeasurementFault#event.MeasurementFaultEvent",
+                "name": "MeasurementFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ElectricalPowerMeasurement.MeasurementFaultEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "MeasurementFault",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Emitted when a measurement window closes.",
+            "extras": {
+              "matter_event": {
+                "code": "0x00",
+                "optional": true,
+                "priority": "info"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ElectricalPowerMeasurementService.MeasurementPeriodRanges",
+            "kind": "subscribe",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ElectricalPowerMeasurementService.MeasurementPeriodRanges#event.MeasurementPeriodRangesEvent",
+                "name": "MeasurementPeriodRanges",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ElectricalPowerMeasurement.MeasurementPeriodRangesEvent",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "event",
+                "status_code": null
+              }
+            ],
+            "name": "MeasurementPeriodRanges",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x02",
+                "optional": true,
+                "privileges": {
+                  "invoke": "manage"
+                },
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ElectricalPowerMeasurementService.ResetAccumulators",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ResetAccumulators",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Begin a measurement window.",
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": true,
+                "privileges": {
+                  "invoke": "operate"
+                },
+                "response": "StartMeasurementResponse"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ElectricalPowerMeasurementService.StartMeasurement",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ElectricalPowerMeasurementService.StartMeasurement#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ElectricalPowerMeasurement.StartMeasurementRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ElectricalPowerMeasurementService.StartMeasurement#response",
+                "name": "StartMeasurementResponse",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ElectricalPowerMeasurement.StartMeasurementResponse",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "StartMeasurement",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Electrical Power Measurement",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Coverage cluster: every construct the data model admits.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0xFFF1",
+            "define": "ELECTRICAL_POWER_MEASUREMENT_CLUSTER",
+            "domain": "Measurement & Sensing",
+            "features": [
+              {
+                "bit": "0",
+                "code": "DIRC",
+                "conformance": [
+                  "optionalConform"
+                ],
+                "name": "DirectCurrent",
+                "summary": "Direct current measurement."
+              },
+              {
+                "bit": "1",
+                "code": "ALTC",
+                "conformance": [
+                  "optionalConform"
+                ],
+                "name": "AlternatingCurrent",
+                "summary": "Alternating current."
+              },
+              {
+                "bit": "3",
+                "code": "HARM",
+                "conformance": [
+                  "optionalConform"
+                ],
+                "name": "Harmonics",
+                "summary": "Harmonic measurement."
+              }
+            ],
+            "file": "matter/04-stress-structs-enums-bitmaps.xml",
+            "name": "Electrical Power Measurement"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 16,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0002",
+                "define": "ACCURACY",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "array<MeasurementAccuracyStruct>"
+            },
+            "field_number": 2,
+            "key": "ElectricalPowerMeasurement.Accuracy",
+            "name": "Accuracy",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "MeasurementAccuracyStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0005",
+                "define": "ACTIVE_CURRENT",
+                "nullable": true,
+                "optional": true,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "int64s"
+            },
+            "field_number": 5,
+            "key": "ElectricalPowerMeasurement.ActiveCurrent",
+            "name": "ActiveCurrent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0001",
+                "define": "NUMBER_OF_PHASES",
+                "nullable": true,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "int8u"
+            },
+            "field_number": 1,
+            "key": "ElectricalPowerMeasurement.NumberOfMeasurementTypes",
+            "name": "NumberOfMeasurementTypes",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "POWER_MODE",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "MeasurementTypeEnum"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.PowerMode",
+            "name": "PowerMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "MeasurementTypeEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0003",
+                "define": "RANGES",
+                "nullable": false,
+                "optional": true,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "array<MeasurementAccuracyRangeStruct>"
+            },
+            "field_number": 3,
+            "key": "ElectricalPowerMeasurement.Ranges",
+            "name": "Ranges",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "MeasurementAccuracyRangeStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Ok",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0011",
+                "define": "STATUS",
+                "nullable": false,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "StatusEnum"
+            },
+            "field_number": 17,
+            "key": "ElectricalPowerMeasurement.Status",
+            "name": "Status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StatusEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 1000000.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0010",
+                "define": "THRESHOLD",
+                "nullable": false,
+                "optional": true,
+                "privileges": {
+                  "read": "view",
+                  "write": "manage"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "int64s"
+            },
+            "field_number": 16,
+            "key": "ElectricalPowerMeasurement.Threshold",
+            "name": "Threshold",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0004",
+                "define": "VOLTAGE",
+                "nullable": true,
+                "optional": true,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "int64s"
+            },
+            "field_number": 4,
+            "key": "ElectricalPowerMeasurement.Voltage",
+            "name": "Voltage",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement",
+        "key_type": null,
+        "kind": "record",
+        "name": "ElectricalPowerMeasurement",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x01",
+            "priority": "debug"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<HarmonicMeasurementStruct>"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.HarmonicsReportedEvent.Measurements",
+            "name": "Measurements",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "HarmonicMeasurementStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement.HarmonicsReportedEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "HarmonicsReportedEvent",
+        "namespace": "ElectricalPowerMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x02",
+            "priority": "critical"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 128,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "char_string"
+            },
+            "field_number": 1,
+            "key": "ElectricalPowerMeasurement.MeasurementFaultEvent.Detail",
+            "name": "Detail",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "StatusEnum"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.MeasurementFaultEvent.Status",
+            "name": "Status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "StatusEnum",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement.MeasurementFaultEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "MeasurementFaultEvent",
+        "namespace": "ElectricalPowerMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Emitted when a measurement window closes.",
+        "enum_values": [],
+        "extras": {
+          "matter_event": {
+            "code": "0x00",
+            "priority": "info"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "matter-epoch-s",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "epoch_s"
+            },
+            "field_number": 1,
+            "key": "ElectricalPowerMeasurement.MeasurementPeriodRangesEvent.ClosedAt",
+            "name": "ClosedAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<MeasurementAccuracyRangeStruct>"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.MeasurementPeriodRangesEvent.Ranges",
+            "name": "Ranges",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "MeasurementAccuracyRangeStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement.MeasurementPeriodRangesEvent",
+        "key_type": null,
+        "kind": "record",
+        "name": "MeasurementPeriodRangesEvent",
+        "namespace": "ElectricalPowerMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Begin a measurement window.",
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x00",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 86400.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32u"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.StartMeasurementRequest.DurationSeconds",
+            "name": "DurationSeconds",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<MeasurementTypeEnum>"
+            },
+            "field_number": 1,
+            "key": "ElectricalPowerMeasurement.StartMeasurementRequest.Types",
+            "name": "Types",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "MeasurementTypeEnum",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement.StartMeasurementRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "StartMeasurementRequest",
+        "namespace": "ElectricalPowerMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x01",
+            "source": "server"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "boolean"
+            },
+            "field_number": 0,
+            "key": "ElectricalPowerMeasurement.StartMeasurementResponse.Accepted",
+            "name": "Accepted",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 64,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "char_string"
+            },
+            "field_number": 2,
+            "key": "ElectricalPowerMeasurement.StartMeasurementResponse.Reason",
+            "name": "Reason",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int32u"
+            },
+            "field_number": 1,
+            "key": "ElectricalPowerMeasurement.StartMeasurementResponse.WindowId",
+            "name": "WindowId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint32",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ElectricalPowerMeasurement.StartMeasurementResponse",
+        "key_type": null,
+        "kind": "record",
+        "name": "StartMeasurementResponse",
+        "namespace": "ElectricalPowerMeasurement",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A flag set: a value combines any of these masks.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Feature.DirectCurrent",
+            "name": "DirectCurrent",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Feature.AlternatingCurrent",
+            "name": "AlternatingCurrent",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Feature.PolyphasePower",
+            "name": "PolyphasePower",
+            "value": 4
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "Feature.Harmonics",
+            "name": "Harmonics",
+            "value": 8
+          }
+        ],
+        "extras": {
+          "matter_bitmap": {
+            "base": "bitmap32",
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "Feature",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Feature",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64s"
+            },
+            "field_number": 1,
+            "key": "HarmonicMeasurementStruct.Measurement",
+            "name": "Measurement",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "HarmonicMeasurementStruct.Order",
+            "name": "Order",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "HarmonicMeasurementStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "HarmonicMeasurementStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64u"
+            },
+            "field_number": 4,
+            "key": "MeasurementAccuracyRangeStruct.FixedMax",
+            "name": "FixedMax",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint64",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 10000.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "percent100ths"
+            },
+            "field_number": 2,
+            "key": "MeasurementAccuracyRangeStruct.PercentMax",
+            "name": "PercentMax",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 10000.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "percent100ths"
+            },
+            "field_number": 3,
+            "key": "MeasurementAccuracyRangeStruct.PercentMin",
+            "name": "PercentMin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64s"
+            },
+            "field_number": 1,
+            "key": "MeasurementAccuracyRangeStruct.RangeMax",
+            "name": "RangeMax",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64s"
+            },
+            "field_number": 0,
+            "key": "MeasurementAccuracyRangeStruct.RangeMin",
+            "name": "RangeMin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MeasurementAccuracyRangeStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "MeasurementAccuracyRangeStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_struct": {
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<MeasurementAccuracyRangeStruct>"
+            },
+            "field_number": 4,
+            "key": "MeasurementAccuracyStruct.AccuracyRanges",
+            "name": "AccuracyRanges",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "MeasurementAccuracyRangeStruct",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64s"
+            },
+            "field_number": 3,
+            "key": "MeasurementAccuracyStruct.MaxMeasuredValue",
+            "name": "MaxMeasuredValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": false,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_default": "false",
+              "matter_type": "boolean"
+            },
+            "field_number": 1,
+            "key": "MeasurementAccuracyStruct.Measured",
+            "name": "Measured",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "MeasurementTypeEnum"
+            },
+            "field_number": 0,
+            "key": "MeasurementAccuracyStruct.MeasurementType",
+            "name": "MeasurementType",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "MeasurementTypeEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int64s"
+            },
+            "field_number": 2,
+            "key": "MeasurementAccuracyStruct.MinMeasuredValue",
+            "name": "MinMeasuredValue",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int64",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "MeasurementAccuracyStruct",
+        "key_type": null,
+        "kind": "record",
+        "name": "MeasurementAccuracyStruct",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MeasurementTypeEnum.Unspecified",
+            "name": "Unspecified",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MeasurementTypeEnum.Voltage",
+            "name": "Voltage",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MeasurementTypeEnum.ActiveCurrent",
+            "name": "ActiveCurrent",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MeasurementTypeEnum.ReactiveCurrent",
+            "name": "ReactiveCurrent",
+            "value": 3
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "MeasurementTypeEnum.ActivePower",
+            "name": "ActivePower",
+            "value": 5
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum16",
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "MeasurementTypeEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "MeasurementTypeEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StatusEnum.Ok",
+            "name": "Ok",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StatusEnum.Degraded",
+            "name": "Degraded",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "StatusEnum.Failed",
+            "name": "Failed",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0xFFF1"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "StatusEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "StatusEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/04-stress-structs-enums-bitmaps.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 0,
+    "services": 1,
+    "types": 12
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:cc6b33481ab73788b5138a410b37cfcf89bc780023f689b6e4ca9e7c777cbac5",
+  "lint": {
+    "findings": 46,
+    "grade": "F",
+    "report_fingerprint": "14d9431e152f88d96a4696f9c872b27240a49d235d65b074d89dfb65756ce7ba",
+    "score": 43,
+    "severity_counts": {
+      "error": 0,
+      "info": 35,
+      "warning": 11
+    }
+  },
+  "snapshot_version": 1
+}

@@ -63,6 +63,7 @@ import {
   type LucideIcon,
   Factory,
   RadioTower,
+  Lightbulb,
 } from 'lucide-react';
 
 /**
@@ -350,6 +351,8 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cue', label: 'CUE', icon: Braces, tone: 'sky', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['cuelang'], description: 'CUE definitions with their constraints — evaluated by cue export in a sandbox with no network.' },
   { id: 'pkl', label: 'Pkl', icon: Braces, tone: 'violet', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['pkl-lang'], description: 'Pkl classes and type aliases with their type constraints — reflected by pkl eval in a sandbox.' },
   { id: 'dhall', label: 'Dhall', icon: Braces, tone: 'teal', dataType: 'schema', origin: 'cloud', importable: true, aliases: ['dhall-lang'], description: 'Dhall record and union types and schema records — normalized by the Dhall interpreter in a sandbox.' },
+  { id: 'lwm2m', label: 'LwM2M / IPSO objects', icon: Cpu, tone: 'cyan', dataType: 'schema', origin: 'systems', importable: true, aliases: ['ipso'], description: 'OMA LwM2M object definitions, IPSO smart objects included — objects as types, resources as fields with units, ranges and mandatory flags, executable resources as operations.' },
+  { id: 'matter', label: 'Matter clusters and device types', icon: Lightbulb, tone: 'amber', dataType: 'rpc', origin: 'systems', importable: true, aliases: ['matter-zap'], description: 'Matter cluster and device-type definitions — attributes as fields with access and ranges, commands as request/response operations, events as subscriptions, device types as cluster compositions.' },
   { id: 'opcua-nodeset', label: 'OPC UA NodeSet2', icon: Factory, tone: 'cyan', dataType: 'rpc', origin: 'systems', importable: true, aliases: ['nodeset2', 'opcua'], description: 'OPC UA NodeSet2 information model — object, variable and data types, methods and the reference graph, with namespaces and model versions.' },
   { id: 'pydantic', label: 'Pydantic models', icon: FileCode, tone: 'indigo', dataType: 'schema', origin: 'web', importable: true, aliases: ['pydantic-models'], description: 'Pydantic models read statically — fields, Field constraints, enums and unions; the module is never run.' },
   { id: 'trpc', label: 'tRPC router', icon: Network, tone: 'emerald', dataType: 'rpc', origin: 'web', importable: true, aliases: ['trpc-router'], description: 'tRPC routers — procedures as query, mutation and subscription operations, with Zod inputs and outputs.' },

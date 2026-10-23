@@ -2,7 +2,7 @@
 
 Fixtures for the LwM2M half of **FMT-9.5** ([#5472](https://github.com/apiome/apiome/issues/5472)).
 Device models are the interface descriptions of consumer and industrial IoT devices; the Matter half
-lives in `matter/`. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+lives in `matter/`. The `lwm2m` adapter imports them.
 
 **Detection marker.** Root element `LWM2M` containing `<Object ObjectType="MODefinition">` with
 `ObjectID` / `ObjectURN` and a `Resources` list of `<Item ID="…">`.

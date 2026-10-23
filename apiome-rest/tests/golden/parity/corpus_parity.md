@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 87
+- **Formats gated:** 89
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -63,6 +63,8 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `kafka-connect` | Kafka Connect Schema | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `kafka-connect` |
 | `kong` | Kong Declarative Config | rest | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `kong` |
 | `llm-tools` | LLM Tools | agent | 8 | 5 | 0 | 0 | 13 | 5/6 (+1 waived) | 8 | `llm-tools` |
+| `lwm2m` | LwM2M / IPSO objects | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
+| `matter` | Matter clusters and device types | rpc | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `mcp` | MCP Server Manifest | agent | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | — |
 | `nacha` | NACHA ACH | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `ncpdp` | NCPDP SCRIPT / Telecom | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
@@ -157,6 +159,8 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `kafka-connect` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `kong` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `llm-tools` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `lwm2m` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `matter` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `mcp` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `nacha` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `ncpdp` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -213,4 +217,4 @@ None.
 
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
-`cics-bms`, `hoppscotch`, `ims`, `lwm2m`, `matter`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`
+`cics-bms`, `hoppscotch`, `ims`, `natural-ddm`, `pli`, `schematron`, `soapui`, `thunder-client`, `vsam-idcams`

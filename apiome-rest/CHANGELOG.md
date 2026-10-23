@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.433.0] - 2026-10-22
+
+### Added
+- **LwM2M / IPSO and Matter device-model import (#5472, FMT-9.5)**: two import sources (file, URL, paste and fileset)
+  over one hardened XML intake (`app.device_model_xml`: no DTDs or entities; encoding, truncation and wrong-root faults
+  classified the same way for both).
+  - `lwm2m` (alias `ipso`, **data_schema**): each OMA LwM2M `Object` becomes a `RECORD`; `R` / `W` / `RW` resources
+    become fields numbered by resource id with the access mode in `extras.lwm2m_resource.access`; `E` resources become
+    `one_way` operations of `<Object>Service`. `Mandatory` → non-nullable, `Multiple` → list, `RangeEnumeration` →
+    `minimum`/`maximum`, `min_length`/`max_length` (`String`, `Opaque`) or `enum`, `Units` → `constraints.extras.unit`.
+    `Time` → `int64` (`unix-time`), `Corelnk` → `string` (`core-link`), `Objlnk` → the synthesized `Objlnk` record.
+    A registry fileset (one file per object) is read whole.
+  - `matter` (alias `matter-zap`, **rpc**): each `cluster` becomes a `RECORD` of its attributes (access, privileges,
+    bounds, defaults, nullability) and a `<Cluster>Service`; client commands become `request_response` operations with
+    `<Cluster>.<Command>Request` records and the server command their `response` names; events become `subscribe`
+    operations with `<Cluster>.<Event>Event` records; enums and bitmaps become `ENUM`s, structs `RECORD`s, and a
+    `deviceType` a `RECORD` of its included clusters (resolved across a fileset).
+  - An undeclared Matter type on a standard cluster (`0x0000`–`0x7FFF`) is a declared unresolved reference; on any
+    other cluster it is `INPUT_REFERENCE_UNRESOLVED`, as is a missing response command or a device type's required
+    attribute or command missing from an included cluster.
+  - Refusals: `FORMAT_MISMATCH` (wrong root), `INPUT_MALFORMED`, `INPUT_TRUNCATED`, `INPUT_SEMANTIC_INVALID` (no
+    resources or members, unknown resource types, invalid `Operations`, duplicates — all listed),
+    `INPUT_ENCODING_INVALID`, `INPUT_UNSAFE_CONSTRUCT`.
+  - Declared limits ride in `extras.lwm2m.capability_limits` / `extras.matter.capability_limits` and become
+    coverage-ledger rows; capability registry v34, version coverage, inference-provenance entry, data-contract triage,
+    MCP toolset goldens and the round-trip matrix rows (import-only) are added, and the staged corpus is activated.
+    Registry crawling stays with the registry-as-source seam (#3978).
+
+The OpenAPI version moves to 1.297.0.
+
 ## [1.432.0] - 2026-10-22
 
 ### Added

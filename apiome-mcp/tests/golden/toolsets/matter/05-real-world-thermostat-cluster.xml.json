@@ -1,0 +1,95 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ClearWeeklySchedule",
+      "operation": "ThermostatService.ClearWeeklySchedule"
+    },
+    {
+      "description": "Returns Thermostat.GetWeeklyScheduleResponse.",
+      "inputSchema": {
+        "properties": {
+          "DaysToReturn": {},
+          "ModeToReturn": {}
+        },
+        "required": [
+          "DaysToReturn",
+          "ModeToReturn"
+        ],
+        "type": "object"
+      },
+      "name": "GetWeeklySchedule",
+      "operation": "ThermostatService.GetWeeklySchedule",
+      "output": {
+        "schema": {
+          "properties": {
+            "DayOfWeekForSequence": {},
+            "ModeForSequence": {},
+            "NumberOfTransitionsForSequence": {},
+            "Transitions": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "required": [
+            "DayOfWeekForSequence",
+            "ModeForSequence",
+            "NumberOfTransitionsForSequence",
+            "Transitions"
+          ],
+          "type": "object"
+        },
+        "shape": "Thermostat.GetWeeklyScheduleResponse"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "DayOfWeekForSequence": {},
+          "ModeForSequence": {},
+          "NumberOfTransitionsForSequence": {},
+          "Transitions": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "DayOfWeekForSequence",
+          "ModeForSequence",
+          "NumberOfTransitionsForSequence",
+          "Transitions"
+        ],
+        "type": "object"
+      },
+      "name": "SetWeeklySchedule",
+      "operation": "ThermostatService.SetWeeklySchedule"
+    },
+    {
+      "description": "Raise or lower the setpoint by a relative amount.",
+      "inputSchema": {
+        "properties": {
+          "Amount": {},
+          "Mode": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "Amount",
+          "Mode"
+        ],
+        "type": "object"
+      },
+      "name": "SetpointRaiseLower",
+      "operation": "ThermostatService.SetpointRaiseLower"
+    }
+  ]
+}

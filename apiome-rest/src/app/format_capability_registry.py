@@ -158,7 +158,7 @@ __all__ = [
 #: The registry contract version. Bumped whenever an entry, a reviewed seed, an absence
 #: explanation, or a vocabulary member changes, so a consumer can detect a stale contract and
 #: a cached snapshot can be keyed by it. Mirrored in the committed vocabulary snapshot.
-REGISTRY_VERSION = "33"
+REGISTRY_VERSION = "34"
 
 #: The date the current seeds and absence explanations were last reviewed. Recorded as
 #: provenance on every entry, so a claim about a format carries the date somebody checked it.
@@ -2814,6 +2814,133 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "A JSON document with no `@context` is refused (`INPUT_SEMANTIC_INVALID`, or "
             "`FORMAT_MISMATCH` when it reads as another format).",
             "JSON-LD *output* is not implemented; an import is exported through another target's emitter.",
+        ],
+    ),
+    "lwm2m": _Seed(
+        # FMT-9.5: object definitions are XML schema text, read by the format-blind walk; the
+        # reviewed judgement is the projection statement — objects to records, data resources to
+        # fields, executable resources to operations.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A type is located by its object (`Temperature`, id in `extras['lwm2m_object']`) and a "
+                "field by its resource id (`field_number`); in a fileset the file an object came from "
+                "is kept in `extras['lwm2m_object']['file']`. Element positions are not carried."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "An object definition describes data without containing any: ranges, enumerations "
+                "and units are part of the schema and are modelled."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "lwm2m.object_link_target",
+                    "lwm2m.unparsed_range",
+                ]
+            ),
+            note=(
+                "Each `Object` → a `RECORD` named after it (`Sensor Value` → `SensorValue`); each "
+                "`R` / `W` / `RW` resource → a field numbered by its resource id, with the access mode "
+                "declared in `extras['lwm2m_resource']['access']`; each `E` resource → a `one_way` "
+                "operation of the object's service. `Mandatory` → a non-nullable reference, "
+                "`MultipleInstances = Multiple` → a list. `RangeEnumeration` → `minimum`/`maximum` "
+                "(numeric types), `min_length`/`max_length` (`String`, `Opaque`) or `enum` (a value "
+                "list); `Units` → `constraints.extras['unit']`. `Time` is `int64` with format "
+                "`unix-time`, `Corelnk` a string with format `core-link`, and `Objlnk` the synthesized "
+                "`Objlnk` record (object id, instance id). Declared limits are counted in "
+                "`extras['lwm2m']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "An `Objlnk` resource's target object is not part of an object definition (only its "
+            "description names it), so every object link is typed as the generic `Objlnk` record and "
+            "declared.",
+            "An object with no resources, a resource with an unknown `Type` or an invalid "
+            "`Operations` value is refused as `INPUT_SEMANTIC_INVALID`; a Matter `configurator` "
+            "document as `FORMAT_MISMATCH`.",
+            "Crawling the public LwM2M registry is not part of this reader; it belongs to the "
+            "registry-as-source seam (#3978).",
+            "LwM2M object definition *output* is not implemented; an import is exported through "
+            "another target's emitter.",
+        ],
+    ),
+    "matter": _Seed(
+        # FMT-9.5: cluster and device-type definitions are XML schema text, read by the
+        # format-blind walk; the reviewed judgement is the projection statement — clusters to
+        # records plus services, commands to request/response operations, events to subscriptions.
+        native_hierarchy=NativeHierarchy.GENERIC,
+        native_hierarchy_note=(
+            "The format-blind walk records containers, ordered collections and leaves. Nesting "
+            "and ordering survive; this format's own semantics are not named, and their absence "
+            "from the tree says nothing about the source."
+        ),
+        source_location=SourceLocationSupport(
+            quality=SourceLocationQuality.NONE,
+            note=(
+                "A type is located by its cluster (`OnOff`, code in `extras['matter_cluster']`) and a "
+                "field by its attribute or field id (`field_number`); in a fileset the file a cluster "
+                "came from is kept in `extras['matter_cluster']['file']`. Element positions are not "
+                "carried."
+            ),
+        ),
+        value_visibility=ValueVisibilitySupport(
+            default=ValueVisibility.DEFAULT,
+            maximum=ValueVisibility.NONE,
+            note=(
+                "A cluster definition describes data without containing any: defaults, bounds and "
+                "enum values are part of the schema and are modelled."
+            ),
+        ),
+        canonical_projection=CanonicalProjectionSupport(
+            coverage=ProjectionCoverage.PARTIAL,
+            dropped_constructs=sorted(
+                [
+                    "matter.bitmap_flags",
+                    "matter.external_cluster",
+                    "matter.feature_conformance",
+                    "matter.standard_type_reference",
+                ]
+            ),
+            note=(
+                "Each `cluster` → a `RECORD` of its attributes (numbered by attribute id, access "
+                "declared in `extras['matter_attribute']`) and a service; each `source=\"client\"` "
+                "`command` → a `request_response` operation whose request is the "
+                "`<Cluster>.<Command>Request` record of its arguments and whose response is the "
+                "`source=\"server\"` command its `response` names; each `event` → a `subscribe` "
+                "operation carrying the `<Cluster>.<Event>Event` record, priority in extras. `enum` → "
+                "`ENUM`; `bitmap` → `ENUM` of its masks; `struct` → `RECORD`; `deviceType` → a "
+                "`RECORD` with one field per included cluster. `optional` / `isNullable` → a nullable "
+                "reference, `array` → a list, `min`/`max`/`length`/`minLength` → constraints, "
+                "`default` → the field default; semantic types keep their base scalar with the "
+                "written type in `extras['matter_type']`. Declared limits are counted in "
+                "`extras['matter']['capability_limits']`."
+            ),
+        ),
+        notes=[
+            "A type the import does not declare is kept as a declared unresolved reference on a "
+            "standard cluster (code `0x0000`–`0x7FFF`, whose data types the Matter specification "
+            "defines) and refused with `INPUT_REFERENCE_UNRESOLVED` on a manufacturer-specific or "
+            "test cluster.",
+            "A device type's included cluster outside the import is declared unresolved; a required "
+            "attribute or command missing from an included cluster in the import is refused.",
+            "A cluster with no attributes, commands or events is refused as "
+            "`INPUT_SEMANTIC_INVALID`; an LwM2M object definition as `FORMAT_MISMATCH`.",
+            "Crawling the public Matter registries is not part of this reader; it belongs to the "
+            "registry-as-source seam (#3978).",
+            "Matter definition *output* is not implemented; an import is exported through another "
+            "target's emitter.",
         ],
     ),
     "pydantic": _Seed(

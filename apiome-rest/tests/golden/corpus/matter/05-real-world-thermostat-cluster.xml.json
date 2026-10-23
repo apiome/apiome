@@ -1,0 +1,1251 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Controls the temperature of a conditioned space.",
+    "extras": {
+      "matter": {
+        "capability_limits": [
+          {
+            "construct": "matter.bitmap_flags",
+            "count": 1,
+            "detail": "A bitmap is projected to an enum of its flag masks; a value may combine several flags, which the enum does not express. The bitmap's base type is kept in extras['matter_bitmap'].",
+            "locations": [
+              "ThermostatFeature"
+            ]
+          }
+        ],
+        "clusters": [
+          {
+            "code": "0x0201",
+            "file": "matter/05-real-world-thermostat-cluster.xml",
+            "name": "Thermostat"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Thermostat",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Thermostat cluster.",
+        "extras": {},
+        "key": "ThermostatService",
+        "name": "ThermostatService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x03",
+                "optional": true,
+                "privileges": {
+                  "invoke": "manage"
+                },
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ThermostatService.ClearWeeklySchedule",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ClearWeeklySchedule",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x02",
+                "optional": true,
+                "response": "GetWeeklyScheduleResponse"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ThermostatService.GetWeeklySchedule",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ThermostatService.GetWeeklySchedule#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Thermostat.GetWeeklyScheduleRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ThermostatService.GetWeeklySchedule#response",
+                "name": "GetWeeklyScheduleResponse",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Thermostat.GetWeeklyScheduleResponse",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": null
+              }
+            ],
+            "name": "GetWeeklySchedule",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x01",
+                "optional": true,
+                "privileges": {
+                  "invoke": "manage"
+                },
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ThermostatService.SetWeeklySchedule",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ThermostatService.SetWeeklySchedule#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Thermostat.SetWeeklyScheduleRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "SetWeeklySchedule",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Raise or lower the setpoint by a relative amount.",
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": false,
+                "privileges": {
+                  "invoke": "operate"
+                },
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "ThermostatService.SetpointRaiseLower",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "ThermostatService.SetpointRaiseLower#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Thermostat.SetpointRaiseLowerRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "SetpointRaiseLower",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Thermostat",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RunningModeEnum.Off",
+            "name": "Off",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RunningModeEnum.Cool",
+            "name": "Cool",
+            "value": 3
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "RunningModeEnum.Heat",
+            "name": "Heat",
+            "value": 4
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0x0201"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "RunningModeEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "RunningModeEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SetpointRaiseLowerModeEnum.Heat",
+            "name": "Heat",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SetpointRaiseLowerModeEnum.Cool",
+            "name": "Cool",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SetpointRaiseLowerModeEnum.Both",
+            "name": "Both",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0x0201"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "SetpointRaiseLowerModeEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SetpointRaiseLowerModeEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Off",
+            "name": "Off",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Auto",
+            "name": "Auto",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Cool",
+            "name": "Cool",
+            "value": 3
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Heat",
+            "name": "Heat",
+            "value": 4
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.EmergencyHeat",
+            "name": "EmergencyHeat",
+            "value": 5
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Precooling",
+            "name": "Precooling",
+            "value": 6
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.FanOnly",
+            "name": "FanOnly",
+            "value": 7
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Dry",
+            "name": "Dry",
+            "value": 8
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "SystemModeEnum.Sleep",
+            "name": "Sleep",
+            "value": 9
+          }
+        ],
+        "extras": {
+          "matter_enum": {
+            "base": "enum8",
+            "clusters": [
+              "0x0201"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "SystemModeEnum",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SystemModeEnum",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Controls the temperature of a conditioned space.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0201",
+            "define": "THERMOSTAT_CLUSTER",
+            "domain": "HVAC",
+            "file": "matter/05-real-world-thermostat-cluster.xml",
+            "name": "Thermostat"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": 3200,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0006",
+                "define": "ABS_MAX_COOL_SETPOINT_LIMIT",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "3200",
+              "matter_type": "temperature"
+            },
+            "field_number": 6,
+            "key": "Thermostat.AbsMaxCoolSetpointLimit",
+            "name": "AbsMaxCoolSetpointLimit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 3000,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0004",
+                "define": "ABS_MAX_HEAT_SETPOINT_LIMIT",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "3000",
+              "matter_type": "temperature"
+            },
+            "field_number": 4,
+            "key": "Thermostat.AbsMaxHeatSetpointLimit",
+            "name": "AbsMaxHeatSetpointLimit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 1600,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0005",
+                "define": "ABS_MIN_COOL_SETPOINT_LIMIT",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "1600",
+              "matter_type": "temperature"
+            },
+            "field_number": 5,
+            "key": "Thermostat.AbsMinCoolSetpointLimit",
+            "name": "AbsMinCoolSetpointLimit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 700,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0003",
+                "define": "ABS_MIN_HEAT_SETPOINT_LIMIT",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "700",
+              "matter_type": "temperature"
+            },
+            "field_number": 3,
+            "key": "Thermostat.AbsMinHeatSetpointLimit",
+            "name": "AbsMinHeatSetpointLimit",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": 4,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x001B",
+                "define": "CONTROL_SEQUENCE_OF_OPERATION",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "0x04",
+              "matter_type": "enum8"
+            },
+            "field_number": 27,
+            "key": "Thermostat.ControlSequenceOfOperation",
+            "name": "ControlSequenceOfOperation",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0000",
+                "define": "LOCAL_TEMPERATURE",
+                "nullable": true,
+                "optional": false,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "temperature"
+            },
+            "field_number": 0,
+            "key": "Thermostat.LocalTemperature",
+            "name": "LocalTemperature",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 3200.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1600.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 2600,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0011",
+                "define": "OCCUPIED_COOLING_SETPOINT",
+                "nullable": false,
+                "optional": true,
+                "privileges": {
+                  "read": "view",
+                  "write": "operate"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "2600",
+              "matter_type": "temperature"
+            },
+            "field_number": 17,
+            "key": "Thermostat.OccupiedCoolingSetpoint",
+            "name": "OccupiedCoolingSetpoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 3000.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 700.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 2000,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0012",
+                "define": "OCCUPIED_HEATING_SETPOINT",
+                "nullable": false,
+                "optional": true,
+                "privileges": {
+                  "read": "view",
+                  "write": "operate"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "2000",
+              "matter_type": "temperature"
+            },
+            "field_number": 18,
+            "key": "Thermostat.OccupiedHeatingSetpoint",
+            "name": "OccupiedHeatingSetpoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0031",
+                "define": "SETPOINT_CHANGE_AMOUNT",
+                "nullable": true,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "temperature_diff"
+            },
+            "field_number": 49,
+            "key": "Thermostat.SetpointChangeAmount",
+            "name": "SetpointChangeAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int16",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0030",
+                "define": "SETPOINT_CHANGE_SOURCE",
+                "nullable": false,
+                "optional": true,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "enum8"
+            },
+            "field_number": 48,
+            "key": "Thermostat.SetpointChangeSource",
+            "name": "SetpointChangeSource",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": "Auto",
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x001C",
+                "define": "SYSTEM_MODE",
+                "nullable": false,
+                "optional": false,
+                "privileges": {
+                  "read": "view",
+                  "write": "operate"
+                },
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_type": "SystemModeEnum"
+            },
+            "field_number": 28,
+            "key": "Thermostat.SystemMode",
+            "name": "SystemMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SystemModeEnum",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x001E",
+                "define": "THERMOSTAT_RUNNING_MODE",
+                "nullable": false,
+                "optional": true,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "RunningModeEnum"
+            },
+            "field_number": 30,
+            "key": "Thermostat.ThermostatRunningMode",
+            "name": "ThermostatRunningMode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "RunningModeEnum",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read",
+                "code": "0x0029",
+                "define": "THERMOSTAT_RUNNING_STATE",
+                "nullable": false,
+                "optional": true,
+                "reportable": true,
+                "side": "server"
+              },
+              "matter_type": "bitmap16"
+            },
+            "field_number": 41,
+            "key": "Thermostat.ThermostatRunningState",
+            "name": "ThermostatRunningState",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "Thermostat",
+        "key_type": null,
+        "kind": "record",
+        "name": "Thermostat",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x02",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 0,
+            "key": "Thermostat.GetWeeklyScheduleRequest.DaysToReturn",
+            "name": "DaysToReturn",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 1,
+            "key": "Thermostat.GetWeeklyScheduleRequest.ModeToReturn",
+            "name": "ModeToReturn",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Thermostat.GetWeeklyScheduleRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetWeeklyScheduleRequest",
+        "namespace": "Thermostat",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x00",
+            "source": "server"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 1,
+            "key": "Thermostat.GetWeeklyScheduleResponse.DayOfWeekForSequence",
+            "name": "DayOfWeekForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 2,
+            "key": "Thermostat.GetWeeklyScheduleResponse.ModeForSequence",
+            "name": "ModeForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "Thermostat.GetWeeklyScheduleResponse.NumberOfTransitionsForSequence",
+            "name": "NumberOfTransitionsForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<int16u>"
+            },
+            "field_number": 3,
+            "key": "Thermostat.GetWeeklyScheduleResponse.Transitions",
+            "name": "Transitions",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "uint16",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Thermostat.GetWeeklyScheduleResponse",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetWeeklyScheduleResponse",
+        "namespace": "Thermostat",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x01",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 1,
+            "key": "Thermostat.SetWeeklyScheduleRequest.DayOfWeekForSequence",
+            "name": "DayOfWeekForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "bitmap8"
+            },
+            "field_number": 2,
+            "key": "Thermostat.SetWeeklyScheduleRequest.ModeForSequence",
+            "name": "ModeForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8u"
+            },
+            "field_number": 0,
+            "key": "Thermostat.SetWeeklyScheduleRequest.NumberOfTransitionsForSequence",
+            "name": "NumberOfTransitionsForSequence",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "array<int16u>"
+            },
+            "field_number": 3,
+            "key": "Thermostat.SetWeeklyScheduleRequest.Transitions",
+            "name": "Transitions",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "uint16",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Thermostat.SetWeeklyScheduleRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "SetWeeklyScheduleRequest",
+        "namespace": "Thermostat",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Raise or lower the setpoint by a relative amount.",
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x00",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int8s"
+            },
+            "field_number": 1,
+            "key": "Thermostat.SetpointRaiseLowerRequest.Amount",
+            "name": "Amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "int8",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "SetpointRaiseLowerModeEnum"
+            },
+            "field_number": 0,
+            "key": "Thermostat.SetpointRaiseLowerRequest.Mode",
+            "name": "Mode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "SetpointRaiseLowerModeEnum",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Thermostat.SetpointRaiseLowerRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "SetpointRaiseLowerRequest",
+        "namespace": "Thermostat",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "A flag set: a value combines any of these masks.",
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.Heating",
+            "name": "Heating",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.Cooling",
+            "name": "Cooling",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.Occupancy",
+            "name": "Occupancy",
+            "value": 4
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.ScheduleConfiguration",
+            "name": "ScheduleConfiguration",
+            "value": 8
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.Setback",
+            "name": "Setback",
+            "value": 16
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "ThermostatFeature.AutoMode",
+            "name": "AutoMode",
+            "value": 32
+          }
+        ],
+        "extras": {
+          "matter_bitmap": {
+            "base": "bitmap32",
+            "clusters": [
+              "0x0201"
+            ]
+          }
+        },
+        "fields": [],
+        "key": "ThermostatFeature",
+        "key_type": null,
+        "kind": "enum",
+        "name": "ThermostatFeature",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/05-real-world-thermostat-cluster.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 4,
+    "servers": 0,
+    "services": 1,
+    "types": 9
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:bccda70f99f301f9c228e20b9ef33a88dbd65b29e16c0887fcd4fe9168be0c87",
+  "lint": {
+    "findings": 38,
+    "grade": "F",
+    "report_fingerprint": "6224535760ea02ff0c291236c3c82c41fb36b1099b94fc42a635f2f0468d4088",
+    "score": 44,
+    "severity_counts": {
+      "error": 0,
+      "info": 29,
+      "warning": 9
+    }
+  },
+  "snapshot_version": 1
+}

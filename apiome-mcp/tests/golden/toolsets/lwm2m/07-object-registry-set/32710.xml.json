@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Engage the lock.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Lock",
+      "operation": "DoorLockService.Lock"
+    },
+    {
+      "description": "Release the lock.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Unlock",
+      "operation": "DoorLockService.Unlock"
+    },
+    {
+      "description": "Clear the recorded extremes.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ResetMinAndMaxMeasuredValues",
+      "operation": "TemperatureProbeService.ResetMinAndMaxMeasuredValues"
+    }
+  ]
+}

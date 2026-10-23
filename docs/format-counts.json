@@ -1,15 +1,15 @@
 {
   "version": "1",
-  "capability_registry_version": "33",
-  "total": 87,
-  "importable": 87,
+  "capability_registry_version": "34",
+  "total": 89,
+  "importable": 89,
   "exportable": 51,
   "round_trip": 51,
-  "import_only": 36,
+  "import_only": 38,
   "export_only": 0,
   "live_discovery": 8,
   "publishable": 1,
-  "catalog": 86,
+  "catalog": 88,
   "toolchain_gated": 9,
   "paradigms": [
     {
@@ -22,8 +22,8 @@
     {
       "id": "rpc",
       "label": "RPC",
-      "total": 13,
-      "importable": 13,
+      "total": 14,
+      "importable": 14,
       "exportable": 10
     },
     {
@@ -43,8 +43,8 @@
     {
       "id": "data_schema",
       "label": "Data schema",
-      "total": 39,
-      "importable": 39,
+      "total": 40,
+      "importable": 40,
       "exportable": 17
     },
     {

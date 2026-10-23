@@ -1,0 +1,204 @@
+{
+  "adapter": "matter",
+  "canonical": {
+    "channels": [],
+    "description": "Puts the device into an identifying state.",
+    "extras": {
+      "matter": {
+        "capability_limits": [],
+        "clusters": [
+          {
+            "code": "0x0003",
+            "file": "matter/01-minimal-cluster.xml",
+            "name": "Identify"
+          }
+        ],
+        "device_types": [],
+        "input": "file"
+      }
+    },
+    "format": "matter",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Identify",
+      "namespace": null
+    },
+    "paradigm": "rpc",
+    "protocol": "matter",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "The commands and events of the Identify cluster.",
+        "extras": {},
+        "key": "IdentifyService",
+        "name": "IdentifyService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_command": {
+                "code": "0x00",
+                "optional": false,
+                "response": "default"
+              }
+            },
+            "http_method": null,
+            "http_path": null,
+            "key": "IdentifyService.Identify",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "IdentifyService.Identify#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Identify.IdentifyRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "Identify",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Identify",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Puts the device into an identifying state.",
+        "enum_values": [],
+        "extras": {
+          "matter_cluster": {
+            "code": "0x0003",
+            "define": "IDENTIFY_CLUSTER",
+            "domain": "General",
+            "file": "matter/01-minimal-cluster.xml",
+            "name": "Identify"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": 0,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_attribute": {
+                "access": "read-write",
+                "code": "0x0000",
+                "define": "IDENTIFY_TIME",
+                "nullable": false,
+                "optional": false,
+                "reportable": false,
+                "side": "server"
+              },
+              "matter_default": "0x0000",
+              "matter_type": "int16u"
+            },
+            "field_number": 0,
+            "key": "Identify.IdentifyTime",
+            "name": "IdentifyTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Identify",
+        "key_type": null,
+        "kind": "record",
+        "name": "Identify",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "matter_command": {
+            "code": "0x00",
+            "source": "client"
+          }
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "matter_type": "int16u"
+            },
+            "field_number": 0,
+            "key": "Identify.IdentifyRequest.IdentifyTime",
+            "name": "IdentifyTime",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "uint16",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Identify.IdentifyRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "IdentifyRequest",
+        "namespace": "Identify",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "matter/01-minimal-cluster.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "matter"
+  },
+  "fingerprint": "sha256:dea6889c10c4fc257634b834aa8648dceee7127f82dfcde3c03a6157c4ea2d12",
+  "lint": {
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "7857b0bf30f6d4c72ebe4621aca853a5c697cccbb62824bba35d3160b57a7a91",
+    "score": 89,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}
