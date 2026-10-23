@@ -389,14 +389,14 @@ Milestone: **RC6** (all epics and issues).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 12.1 | #5608 | Nav model — default-collapsed groups with counts | `lib/platform-nav.ts` groups gain `defaultCollapsed`; Workspace starts collapsed; collapsed labels show their item count | `ui`, `redesign`, `mvp` | Y | Y | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx`, `src/app/components/shell/navGroupCollapse.ts`, `e2e/fixtures/hive-a11y/shell.html` |
+| 12.1 | #5608 | Nav model — default-collapsed groups with counts ✅ | `lib/platform-nav.ts` groups gain `defaultCollapsed`; Workspace starts collapsed; collapsed labels show their item count | `ui`, `redesign`, `mvp` | Y | Y | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx`, `src/app/components/shell/navGroupCollapse.ts`, `e2e/fixtures/hive-a11y/shell.html` |
 | 12.2 | #5609 | Re-home Tenants, Data browser · Migrations and SDK settings ✅ | Tenants → workspace switcher menu (“Manage workspaces…”); Tools → user menu; SDK settings → Export studio tab | `ui`, `redesign`, `mvp` | N | Y | M | `lib/platform-nav.ts`, `src/app/components/shell/WorkspaceSwitcher.tsx`, `src/app/components/shell/UserMenu.tsx`, `src/app/ade/dashboard/export/studio/*`, `src/app/ade/dashboard/sdk-settings/*` |
 | 12.3 | #5610 | Rail footer — Notifications count and order | Notifications leads the footer and shows an unread count (dot in the icon rail) | `ui`, `redesign` | Y | N | S | `src/app/components/shell/RailFooter.tsx`, `src/app/components/shell/NotificationsMenu.tsx` |
 | 12.4 | #5611 | “Preview” rail pill → honey dot | The always-on honey pill on Lint posture becomes a 6 px dot with the word in the tooltip | `ui`, `redesign` | Y | N | S | `lib/platform-nav.ts`, `src/app/components/shell/RailNav.tsx` |
 | 12.5 | #5612 | Launcher — only openable tiles; `ComingNext` line | Applications shows Control Panel (emphasised), Browser and host-injected tiles; three “coming soon” surfaces collapse into one `ComingNext` text line | `ui`, `dashboard`, `redesign` | Y | N | M | `src/app/components/ade/AdeHome.tsx`, `src/app/components/ade/launcher/*`, `src/app/components/ui/ComingNext.tsx (new)`, `e2e/fixtures/hive-a11y/launcher.html` |
 | 12.6 | #5613 | Launcher — “Recently shipped” from What’s new; build string to the footer | The stale “On the roadmap” card becomes the three latest What’s new entries; the version badge leaves the top row | `ui`, `dashboard`, `redesign` | N | N | S | `src/app/components/ade/AdeHome.tsx`, `src/app/components/shell/whatsNewSeen.ts`, `src/app/components/ade/launcher/ResourceRow.tsx` |
 
-### `apiome: [HIVE-12.1] Nav model — default-collapsed groups with counts` — [#5608](https://github.com/apiome/apiome/issues/5608)
+### `apiome: [HIVE-12.1] Nav model — default-collapsed groups with counts` ✅ — [#5608](https://github.com/apiome/apiome/issues/5608)
 **Problem statement.** The expanded rail carries 17 destinations in 5 groups plus a 4-row footer: ≈ 1 030 px of content measured on the shipped shell. At 900 px tall (a 1440 × 900 laptop, or 1536 × 864 at 125 %) the nav scrolls behind a hidden scrollbar and the Workspace group is below the fold.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/rail-compact.html` (callouts 1); rationale: `docs/mockups/PROPOSALS.md`.
@@ -406,9 +406,9 @@ Milestone: **RC6** (all epics and issues).
 - Re-dump the shell fixture; update `hive-one-chrome.spec.ts`.
 
 **Acceptance criteria.**
-- [ ] Fresh profile: Workspace collapsed with “3”; existing profiles keep their stored choice
-- [ ] Rail content ≤ 900 px tall with Workspace collapsed (comfortable, md) — measured in e2e
-- [ ] axe clean; keyboard toggling unchanged
+- [x] Fresh profile: Workspace collapsed with “3”; existing profiles keep their stored choice — the count is the group’s row count, “5” since Teams (CDG-2.4) and Schema registry (CDG-4.5) joined the group
+- [x] Rail content ≤ 900 px tall with Workspace collapsed (comfortable, md) — measured in e2e (`hive-one-chrome.spec.ts` › *the rail fits 900 px with Workspace folded*)
+- [x] axe clean; keyboard toggling unchanged
 
 **Parallelism / dependencies.** Independent; lands before HIVE-12.2 for a clean diff.
 

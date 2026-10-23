@@ -14,6 +14,7 @@ import {
 } from '@lib/platform-nav';
 import { resolvePlatformNavIcon } from '@lib/platform-nav-icons';
 import {
+  defaultCollapsedNavGroups,
   readCollapsedNavGroups,
   toggleCollapsedNavGroup,
   writeCollapsedNavGroups,
@@ -153,18 +154,36 @@ function RailNavItem({
 }
 
 /**
+ * How a folded heading's count reads to a screen reader, after the group name: the bare
+ * number on screen would be announced as "Workspace 5" with nothing to say what it counts.
+ *
+ * @param count Destinations in the folded group.
+ * @returns e.g. `"5 destinations"`, so the heading reads "Workspace 5 destinations".
+ */
+export function railGroupCountLabel(count: number): string {
+  return `${count} ${count === 1 ? 'destination' : 'destinations'}`;
+}
+
+/**
  * The rail's primary navigation.
  *
  * @param props See {@link RailNavProps}.
  * @returns A `<nav aria-label="Primary">` of grouped destinations.
  */
 export default function RailNav({ groups, pathname, iconRail }: RailNavProps) {
-  // Folds are read after mount, never during render: the server has no `localStorage`, so
+  // The first render folds the model's defaults (HIVE-12.1): the same on the server and the
+  // client, and already right for a reader who has never folded a group. Their stored folds
+  // are read after mount, never during render — the server has no `localStorage`, so
   // reading one while rendering would hand React a tree the client cannot reproduce.
-  const [folded, setFolded] = React.useState<PlatformNavGroupId[]>([]);
+  const [folded, setFolded] = React.useState<PlatformNavGroupId[]>(() =>
+    defaultCollapsedNavGroups(groups)
+  );
 
+  // Mount only: a later `groups` (a contributed destination arriving) must not undo a fold
+  // the reader has just made, so the read uses the groups the rail first rendered.
+  const mountGroups = React.useRef(groups);
   React.useEffect(() => {
-    setFolded(readCollapsedNavGroups());
+    setFolded(readCollapsedNavGroups(mountGroups.current));
   }, []);
 
   const toggleGroup = React.useCallback((groupId: PlatformNavGroupId) => {
@@ -205,12 +224,24 @@ export default function RailNav({ groups, pathname, iconRail }: RailNavProps) {
                 )}
               >
                 {group.label}
+                {/* Folded only: an open group shows its rows, so a count would repeat them.
+                    The heading is a `.rail-label`, so the icon rail hides it with the rest. */}
+                {isFolded ? (
+                  <span
+                    data-testid={`rail-group-count-${group.id}`}
+                    className="ml-auto font-mono font-normal tracking-normal tabular-nums text-fg-muted"
+                  >
+                    <span aria-hidden>{group.items.length}</span>
+                    <span className="sr-only">{railGroupCountLabel(group.items.length)}</span>
+                  </span>
+                ) : null}
                 <ChevronDown
                   size={ICON_SIZE.button}
                   aria-hidden
                   className={cn(
-                    'ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80',
-                    isFolded && 'rotate-[-90deg] opacity-80'
+                    'opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80',
+                    // Pushed right, unless the count already took the free space.
+                    isFolded ? 'ml-1 rotate-[-90deg] opacity-80' : 'ml-auto'
                   )}
                 />
               </button>

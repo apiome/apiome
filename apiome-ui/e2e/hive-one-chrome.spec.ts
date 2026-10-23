@@ -164,3 +164,69 @@ test.describe('destinations that live off the rail', () => {
     await page.waitForURL(/\/ade\/dashboard\/export\/studio\?tab=sdk$/);
   });
 });
+
+/**
+ * Default-collapsed groups (HIVE-12.1, #5608): on a fresh profile the Workspace group starts
+ * folded, showing how many rows it holds, so the expanded rail fits a 1440 × 900 window at the
+ * default (comfortable) density and font scale. A profile that has folded or unfolded anything
+ * keeps that choice.
+ */
+test.describe('the rail fits 900 px with Workspace folded', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const signedIn = await signIn(page);
+    test.skip(!signedIn, 'Seeded test user could not sign in — skipping');
+  });
+
+  test('a fresh profile folds Workspace and shows its count', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const toggle = page.getByTestId('rail-group-toggle-workspace');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#rail-group-workspace')).toBeHidden();
+    const rows = await page.locator('#rail-group-workspace > li').count();
+    await expect(page.getByTestId('rail-group-count-workspace')).toHaveText(new RegExp(`^${rows}\\b`));
+    for (const id of ['build', 'bring-in', 'ship', 'govern']) {
+      await expect(page.getByTestId(`rail-group-toggle-${id}`)).toHaveAttribute('aria-expanded', 'true');
+    }
+  });
+
+  test('nothing in the rail scrolls at 900 px tall', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('rail-group-toggle-workspace')).toHaveAttribute('aria-expanded', 'false');
+
+    const fit = await page.getByTestId('rail-nav').evaluate((nav) => ({
+      content: nav.scrollHeight,
+      box: nav.clientHeight,
+      rail: nav.closest('[data-testid="app-rail"]')?.scrollHeight ?? 0,
+    }));
+    // The nav scrolls only when its content is taller than the space the rail leaves it.
+    expect(fit.content, `nav content ${fit.content}px in a ${fit.box}px box`).toBeLessThanOrEqual(fit.box);
+    expect(fit.rail).toBeLessThanOrEqual(900);
+  });
+
+  test('a stored choice is kept, even one with nothing folded', async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem('hive.navCollapsed', '[]'));
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByTestId('rail-group-toggle-workspace')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('rail-group-count-workspace')).toHaveCount(0);
+  });
+
+  test('the keyboard folds and unfolds the group as before', async ({ page }) => {
+    await page.goto('/ade/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    const toggle = page.getByTestId('rail-group-toggle-workspace');
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#rail-group-workspace')).toBeVisible();
+    await page.keyboard.press('Space');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toBeFocused();
+  });
+});
