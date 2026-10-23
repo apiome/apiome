@@ -760,6 +760,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             cards={sourceCards}
             selected={selectedSource}
             onSelect={handleSourceClick}
+            hotkeys
           />
           {/* HIVE-11.11: the space under the tiles shows the last three imports, when any. */}
           <RecentImportsList onShowAll={() => setJobsDrawerOpen(true)} />

@@ -19,10 +19,13 @@
 import * as React from 'react';
 
 import { cardVariants } from '@/app/components/ui/Card';
+import { Kbd } from '@/app/components/ui/Kbd';
+import { useShortcuts } from '@/app/hooks/useShortcuts';
+import { IMPORT_SOURCE_SHORTCUT, isTypingTarget } from '@lib/shortcuts';
 import { cn } from '@lib/utils';
 
 import type { ImportSourceCard } from '../dashboard/importSourceCatalog';
-import { IMPORT_WIZARD_COPY } from './importWizardModel';
+import { IMPORT_WIZARD_COPY, importSourceHotkeys } from './importWizardModel';
 
 export interface ImportSourceCardsProps {
   /** The cards to draw, in order. */
@@ -42,6 +45,12 @@ export interface ImportSourceCardsProps {
    * of the Catalog keeping a copy of it.
    */
   testId?: (card: ImportSourceCard) => string | undefined;
+  /**
+   * Number the first five usable cards `1` – `5` and answer those keys while the grid is
+   * showing (the Import specification wizard). Off by default, so a grid that is not the
+   * dialog's step never claims a number key.
+   */
+  hotkeys?: boolean;
 }
 
 /**
@@ -63,7 +72,38 @@ export function ImportSourceCards({
   onSelect,
   heading = IMPORT_WIZARD_COPY.sourceHeading,
   testId,
+  hotkeys = false,
 }: ImportSourceCardsProps) {
+  const numbered = React.useMemo(() => (hotkeys ? importSourceHotkeys(cards) : []), [hotkeys, cards]);
+  const keyForCard = React.useMemo(
+    () => new Map(numbered.map((entry) => [entry.cardKey, entry.key] as const)),
+    [numbered]
+  );
+  // The keys are answered here, the way DataTable answers its own (see IMPORT_SOURCE_SHORTCUT):
+  // only while this grid is mounted — the Source step — and with the engine's rules: not while
+  // typing, not with a modifier, not on a keystroke something else already took.
+  const onSelectRef = React.useRef(onSelect);
+  React.useEffect(() => {
+    onSelectRef.current = onSelect;
+  });
+  React.useEffect(() => {
+    if (numbered.length === 0) return;
+    const byKey = new Map(numbered.map((entry) => [entry.key, entry.panel] as const));
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      const panel = byKey.get(event.key);
+      if (!panel) return;
+      event.preventDefault();
+      onSelectRef.current(panel);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [numbered]);
+  // …and the shortcut sheet's row for them, for as long as they work.
+  useShortcuts(numbered.length > 0 ? [IMPORT_SOURCE_SHORTCUT] : []);
+
   return (
     <section aria-labelledby="imp-source-heading" className="flex flex-col gap-3">
       <h2 id="imp-source-heading" className="imp-heading">
@@ -81,6 +121,7 @@ export function ImportSourceCards({
               disabled={disabled}
               data-testid={testId?.(card)}
               aria-pressed={disabled ? undefined : active}
+              aria-keyshortcuts={keyForCard.get(card.key)}
               title={disabled ? IMPORT_WIZARD_COPY.comingSoon : undefined}
               onClick={() => card.panel && onSelect(card.panel)}
               className={cn(
@@ -92,7 +133,14 @@ export function ImportSourceCards({
                 <Icon />
               </span>
               <span className="imp-card__text">
-                <span className="imp-card__title">{card.label}</span>
+                <span className="imp-card__title">
+                  {card.label}
+                  {keyForCard.has(card.key) ? (
+                    <Kbd className="imp-card__key" aria-hidden>
+                      {keyForCard.get(card.key)}
+                    </Kbd>
+                  ) : null}
+                </span>
                 <span className="imp-card__desc">
                   {disabled ? IMPORT_WIZARD_COPY.comingSoon : card.description}
                 </span>

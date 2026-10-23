@@ -29,6 +29,8 @@ import {
   urlTestAction,
   type ImportFooterState,
   type ImportWizardStep,
+  IMPORT_SOURCE_HOTKEY_COUNT,
+  importSourceHotkeys,
 } from '@/app/components/ade/import/importWizardModel';
 import type { ImportSourceCard } from '@/app/components/ade/dashboard/importSourceCatalog';
 
@@ -501,5 +503,28 @@ describe('the accepted file extensions', () => {
     // `.json`; the old last-dot-only rule could not express it.
     expect(isAcceptedImportFile('team.postman_collection.json', ['.postman_collection.json'])).toBe(true);
     expect(isAcceptedImportFile('team.json', ['.postman_collection.json'])).toBe(false);
+  });
+});
+
+describe('importSourceHotkeys (number keys on the Source step)', () => {
+  const card = (key: string, panel: string | null) => ({ key, label: key.toUpperCase(), panel });
+
+  it('numbers the first five usable cards 1–5, in display order', () => {
+    const cards = ['file', 'url', 'clipboard', 'git', 'swaggerhub', 'postman', 'mcp'].map((key) => card(key, key));
+    expect(importSourceHotkeys(cards)).toEqual([
+      { key: '1', cardKey: 'file', panel: 'file', label: 'FILE' },
+      { key: '2', cardKey: 'url', panel: 'url', label: 'URL' },
+      { key: '3', cardKey: 'clipboard', panel: 'clipboard', label: 'CLIPBOARD' },
+      { key: '4', cardKey: 'git', panel: 'git', label: 'GIT' },
+      { key: '5', cardKey: 'swaggerhub', panel: 'swaggerhub', label: 'SWAGGERHUB' },
+    ]);
+    expect(IMPORT_SOURCE_HOTKEY_COUNT).toBe(5);
+  });
+
+  it('skips a card that cannot be chosen rather than numbering it', () => {
+    expect(importSourceHotkeys([card('grpc', null), card('file', 'file'), card('url', 'url')]).map((h) => [h.key, h.cardKey])).toEqual([
+      ['1', 'file'],
+      ['2', 'url'],
+    ]);
   });
 });
