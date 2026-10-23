@@ -5,7 +5,7 @@ name: Apiome REST Scale Benchmarks
 # memory is held to the committed baseline in
 # apiome-rest/tests/scale/scale_budgets.json with a configurable regression margin.
 #
-# Scheduled, not per-PR — by acceptance criterion. The suite runs for about a minute of
+# Scheduled nightly, not per-PR — by acceptance criterion. The suite runs for about a minute of
 # real pipeline work per fixture and allocates hundreds of megabytes, and its numbers are
 # only comparable between runs on the same machine, so gating every PR on it would be both
 # slow and noisy. The per-PR gate is tests/test_scale_harness.py, which runs in the normal
@@ -17,8 +17,9 @@ name: Apiome REST Scale Benchmarks
 
 on:
   schedule:
-    # 04:15 UTC on Mondays — after the week's merges, before anyone needs the answer.
-    - cron: '15 4 * * 1'
+    # 04:15 UTC every night, after the nightly REST test suite (03:00, apiome-rest-test.yml) so the
+    # two never share the runner and the benchmark timings stay comparable.
+    - cron: '15 4 * * *'
   workflow_dispatch:
     inputs:
       regression_margin:
