@@ -222,7 +222,17 @@ export function ExportTargetGrid({
                         {dialect.label}
                       </Badge>
                     )}
-                    {target && (
+                    {/* A target that cannot export this source says why on the card itself — a
+                        disabled button's tooltip never reaches a keyboard reader (RC6-H4). */}
+                    {!card.available && (
+                      <div
+                        data-testid={`export-target-unavailable-${card.key}`}
+                        className="vdlg-quiet"
+                      >
+                        {cardTitle(card, target)}
+                      </div>
+                    )}
+                    {target && card.available && (
                       <div
                         data-testid={`export-target-rationale-${card.key}`}
                         className="vdlg-quiet"

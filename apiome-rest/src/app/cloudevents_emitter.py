@@ -155,7 +155,7 @@ class _CloudEventsWriter:
             for operation in service.operations:
                 if operation.kind not in _EVENT_OPERATION_KINDS:
                     self.losses.record(
-                        LossKind.DROP,
+                        LossKind.NA,
                         operation.key,
                         "Non-event operation omitted from CloudEvents export",
                         pointer=operation.key,

@@ -258,6 +258,10 @@ describe('ExportTargetGrid with a pre-flight ranking', () => {
       'title',
       'Requires the buf toolchain, which is not available in this runtime.',
     );
+    // RC6-H4 (#6211): the reason is on the card too, where a keyboard reader can read it.
+    expect(screen.getByTestId('export-target-unavailable-protobuf')).toHaveTextContent(
+      'Requires the buf toolchain, which is not available in this runtime.',
+    );
   });
 
   it('still selects a ready target', () => {

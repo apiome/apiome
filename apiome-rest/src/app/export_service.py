@@ -197,6 +197,11 @@ def emit_canonical(
     """
     emitter = resolve_emitter(target)
     emitter_cls = type(emitter)
+    # A source-bound target (EDI X12, HL7 v2, …) cannot write a source imported in another format:
+    # refuse with the reason rather than let the emitter fail mid-render (RC6-H4, #6211).
+    unsupported = emitter_cls.source_unsupported_reason(api)
+    if unsupported:
+        raise ExportError(unsupported, status_code=422)
     options = _normalize_opts(emitter_cls, opts)
 
     if persistence is not None and issubclass(emitter_cls, ProtoEmitter):

@@ -556,16 +556,31 @@ def build_target_fidelity_entries(api: Any) -> List[ExportTargetFidelity]:
         api: The source :class:`~app.canonical_model.CanonicalApi` fidelity is measured against.
 
     Returns:
-        One :class:`ExportTargetFidelity` per registered target, in registry (key) order.
+        One :class:`ExportTargetFidelity` per registered target a reader can use, in registry
+        (key) order — internal targets (:data:`app.format_matrix.INTERNAL_FORMAT_KEYS`) excluded.
     """
+    # Imported here: ``format_matrix`` pulls in the import-source registry, which this module's
+    # import graph does not otherwise need.
+    from .format_matrix import INTERNAL_FORMAT_KEYS
+
     entries: List[ExportTargetFidelity] = []
     for target in describe_emit_targets():
+        # Internal machinery (the no-op ``sample`` SPI example) is not a format a reader can use:
+        # the Export dialog and ``apiome export targets`` never offer it (RC6-H4, #6211).
+        if target.descriptor.key in INTERNAL_FORMAT_KEYS:
+            continue
         emitter_cls = get_emitter(target.descriptor.format)
         if emitter_cls is None:  # pragma: no cover - registry/describe are always in sync
             continue
+        descriptor = target.descriptor
+        # A target that cannot export *this* source (a source-bound format, RC6-H4) is listed as
+        # unavailable with the reason, so the dialog draws it disabled instead of failing later.
+        unsupported = emitter_cls.source_unsupported_reason(api)
+        if unsupported and descriptor.available:
+            descriptor = descriptor.model_copy(update={"available": False, "unavailable_reason": unsupported})
         entries.append(
             ExportTargetFidelity(
-                descriptor=target.descriptor,
+                descriptor=descriptor,
                 capability_profile=target.capability_profile,
                 options_schema=target.options_schema,
                 default_options=target.default_options,

@@ -110,6 +110,9 @@ class CobolCopybookEmitOptions(EmitOptions):
 class CobolCopybookEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a COBOL copybook (``.cpy``)."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("cobolcopybook_tree",)
+
     key = "cobolcopybook"
     format = "cobolcopybook"
     label = "COBOL Copybook"

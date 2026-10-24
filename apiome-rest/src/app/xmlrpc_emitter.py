@@ -76,8 +76,44 @@ class XmlRpcEmitOptions(EmitOptions):
     )
 
 
+def _primary_rpc_operation(api: CanonicalApi) -> Optional[Operation]:
+    """The first RPC operation of ``api``: not an event, and with no HTTP method or path.
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        The operation the ``methodCall`` is written for, or ``None`` when the source has none.
+    """
+    for service in api.services:
+        for operation in service.operations:
+            if operation.kind in _EVENT_OPERATION_KINDS:
+                continue
+            if operation.http_method or operation.http_path:
+                continue
+            return operation
+    return None
+
+
 class XmlRpcEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an XML-RPC ``methodCall`` document."""
+
+    @classmethod
+    def source_unsupported_reason(cls, api: CanonicalApi) -> Optional[str]:
+        """XML-RPC writes one RPC call, so a source with no RPC operation cannot be exported.
+
+        Args:
+            api: The source canonical model.
+
+        Returns:
+            The reason, or ``None`` when the source has an RPC operation (RC6-H4, #6211).
+        """
+        if _primary_rpc_operation(api) is None:
+            return (
+                "XML-RPC export needs an RPC operation (one with no HTTP method or path); "
+                "this source has none."
+            )
+        return None
 
     key = "xmlrpc"
     format = "xmlrpc"
@@ -175,14 +211,7 @@ class _XmlRpcWriter:
         return xml + "\n"
 
     def _primary_operation(self) -> Optional[Operation]:
-        for service in self._api.services:
-            for operation in service.operations:
-                if operation.kind in _EVENT_OPERATION_KINDS:
-                    continue
-                if operation.http_method or operation.http_path:
-                    continue
-                return operation
-        return None
+        return _primary_rpc_operation(self._api)
 
     def _value_from_schema(self, schema: Dict[str, Any], sample: Any) -> ET.Element:
         value_el = ET.Element("value")

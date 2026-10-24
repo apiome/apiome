@@ -68,6 +68,9 @@ class Hl7V2EmitOptions(EmitOptions):
 class Hl7V2Emitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an HL7 v2.x message."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("hl7v2_segments", "hl7v2_envelope")
+
     key = "hl7v2"
     format = "hl7v2"
     label = "HL7 v2"

@@ -102,11 +102,13 @@ def test_public_targets_returns_per_target_fidelity():
 
     assert response.status_code == 200
     by_key = {t["descriptor"]["key"]: t for t in response.json()["targets"]}
-    assert "openapi" in by_key and "sample" in by_key
+    assert "openapi" in by_key
+    # The internal no-op `sample` target is never offered (RC6-H4, #6211).
+    assert "sample" not in by_key
     assert by_key["openapi"]["fidelity"]["tier"] == "lossless"
     assert by_key["openapi"]["fidelity"]["preserved_percent"] == 100
     # A schema-only target drops the operation → types-only.
-    assert by_key["sample"]["fidelity"]["tier"] == "types-only"
+    assert by_key["json-schema"]["fidelity"]["tier"] == "types-only"
     # The registry's descriptor + options are surfaced alongside the badge.
     assert "options_schema" in by_key["openapi"]
     assert "capability_profile" in by_key["openapi"]

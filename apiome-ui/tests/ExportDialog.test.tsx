@@ -750,3 +750,34 @@ describe('ExportDialog — pending and failed targets read (RC6-H3, #6210)', () 
     expect(screen.queryByTestId('export-dialog-targets-error')).not.toBeInTheDocument();
   });
 });
+
+describe('ExportDialog — no path into the held-back Export studio (RC6-H4, #6211)', () => {
+  it('offers no studio link or navigation at any step while export-studio is unreleased', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    routerPush.mockClear();
+    global.fetch = mockFetch() as unknown as typeof fetch;
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+
+    /** No anchor, button or navigation reaches the studio route. */
+    const assertNoStudio = () => {
+      const links = Array.from(document.querySelectorAll('a[href]')).map((a) => a.getAttribute('href') ?? '');
+      expect(links.filter((href) => href.includes('/export/studio'))).toEqual([]);
+      expect(screen.queryByRole('button', { name: /export studio/i })).not.toBeInTheDocument();
+      expect(routerPush).not.toHaveBeenCalled();
+    };
+
+    const chooseTarget = await screen.findByTestId('export-dialog-choose-target');
+    await waitFor(() => expect(chooseTarget).toBeEnabled());
+    assertNoStudio();
+    fireEvent.click(chooseTarget);
+    fireEvent.click(await screen.findByTestId('export-target-proto'));
+    assertNoStudio();
+    fireEvent.click(screen.getByTestId('export-dialog-continue'));
+    await screen.findByTestId('export-ack');
+    assertNoStudio();
+    fireEvent.click(screen.getByTestId('export-ack'));
+    fireEvent.click(screen.getByTestId('export-dialog-export'));
+    await screen.findByTestId('export-dialog-emitted');
+    assertNoStudio();
+  });
+});

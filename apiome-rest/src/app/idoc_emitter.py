@@ -79,6 +79,9 @@ class IdocEmitOptions(EmitOptions):
 class IdocEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as SAP IDoc XML."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("idoc_control",)
+
     key = "idoc"
     format = "idoc"
     label = "SAP IDoc"

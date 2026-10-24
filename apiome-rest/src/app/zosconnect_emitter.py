@@ -75,6 +75,9 @@ class ZosConnectEmitOptions(EmitOptions):
 class ZosConnectEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a z/OS Connect JSON descriptor."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("zosconnect_descriptor", "zosconnect_operations")
+
     key = "zosconnect"
     format = "zosconnect"
     label = "z/OS Connect"

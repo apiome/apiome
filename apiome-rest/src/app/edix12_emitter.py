@@ -68,6 +68,9 @@ class EdiX12EmitOptions(EmitOptions):
 class EdiX12Emitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an ANSI X12 EDI interchange."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("x12_transactions", "x12_envelope")
+
     key = "edix12"
     format = "edix12"
     label = "EDI X12"

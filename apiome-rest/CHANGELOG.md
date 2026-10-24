@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.448.0] - 2026-10-23
+
+### Changed
+- **RC6 export targets (RC6-H4, #6211)** — the in-place Export dialog's target list is the release's export promise:
+  - `GET …/export/targets` (and the public browse twin, and `apiome export targets`) no longer lists the internal
+    no-op `sample` target: 53 targets.
+  - Source-bound targets — EDI X12, HL7 v2, SAP IDoc, FIX, ISO 20022, ISO 8583, COBOL copybook, z/OS Connect,
+    which write one format's native structure back out, and XML-RPC, which needs an RPC operation — are listed with
+    `available: false` and an `unavailable_reason` for a source they cannot export (a source not imported in that
+    format), instead of being offered and failing.
+  - `POST …/export/document` (and every emit path) refuses such an export with `422` and the same reason, where it
+    used to fail with `500`. New `Emitter.required_source_extras` / `Emitter.source_unsupported_reason(api)`.
+
+### Fixed
+- The CloudEvents emitter recorded a dropped non-event operation with a `LossKind` that does not exist, so exporting
+  any source with a REST operation to CloudEvents failed; it now records it as `n/a`.
+
 ## [1.447.0] - 2026-10-23
 
 ### Added

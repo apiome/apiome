@@ -74,6 +74,9 @@ class Iso20022EmitOptions(EmitOptions):
 class Iso20022Emitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an ISO 20022 XML message."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("iso20022_tree",)
+
     key = "iso20022"
     format = "iso20022"
     label = "ISO 20022"
