@@ -10,6 +10,7 @@ import {
   Lock,
   Network,
   Pencil,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 
@@ -35,6 +36,7 @@ import TenantMcpSettingsPanel from '@/app/ade/dashboard/tenants/TenantMcpSetting
 import TenantMcpKeysSection from './TenantMcpKeysSection';
 import TenantMembersSection from './TenantMembersSection';
 import TenantOwnershipPolicySection from './TenantOwnershipPolicySection';
+import TenantTwoFactorPolicySection from './TenantTwoFactorPolicySection';
 import { isFeatureReleased } from '@lib/feature-release';
 import {
   TENANT_MANAGE_SECTIONS,
@@ -116,6 +118,7 @@ export interface TenantManageDrawerProps {
 /** The icon each vertical tab carries. */
 const SECTION_ICONS: Readonly<Record<TenantManageSection, React.ElementType>> = {
   members: Users,
+  security: ShieldCheck,
   license: BadgeCheck,
   mcp: Network,
   keys: KeyRound,
@@ -297,6 +300,14 @@ export default function TenantManageDrawer({
                     membersPageHref={membersPageHref}
                   />
                 )}
+              </TabsContent>
+
+              <TabsContent value="security" forceMount className={PANEL_CLASS}>
+                {visited.has('security') &&
+                  gated(
+                    'security',
+                    <TenantTwoFactorPolicySection isAdmin={tenant.isAdmin} membersPageHref={membersPageHref} />
+                  )}
               </TabsContent>
 
               <TabsContent value="license" forceMount className={PANEL_CLASS}>

@@ -977,6 +977,12 @@
       "data": "fixture:hive-a11y/tenants-drawer-members.html"
     },
     {
+      "id": "tenants-drawer-security",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-security-heading",
+      "data": "fixture:hive-a11y/tenants-drawer-security.html"
+    },
+    {
       "id": "tenants-drawer-license",
       "route": "/ade/dashboard/tenants",
       "waitFor": "#tnt-license-heading",

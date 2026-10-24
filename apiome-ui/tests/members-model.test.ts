@@ -37,6 +37,10 @@ import {
   memberPermissionPreview,
   memberRowActions,
   memberStatusLabel,
+  memberNeedsTwoFactor,
+  memberTwoFactorBadge,
+  memberTwoFactorStatus,
+  twoFactorPolicyActive,
   nextMemberStatus,
   searchMembers,
   seatsAfterInvite,
@@ -319,6 +323,7 @@ describe('the toolbar’s facets', () => {
       pending: 1,
       suspended: 1,
       admins: 2,
+      needs2fa: 0,
     });
   });
 
@@ -682,5 +687,49 @@ describe('memberSeatProgress (HIVE-11.9)', () => {
 describe('MEMBERS_COMING_NEXT', () => {
   it('names SSO and SCIM as the issue words them', () => {
     expect(MEMBERS_COMING_NEXT.map((item) => item.label)).toEqual(['SSO (OIDC/SAML)', 'SCIM 2.0 provisioning']);
+  });
+});
+
+
+describe('two-factor compliance (TFA-1.3 #5657)', () => {
+  const NOW = new Date('2026-10-23T12:00:00Z');
+  const required = (overrides: Partial<MemberRecord>) =>
+    member({ status: 'active', two_factor_status: 'grace', two_factor_due_at: '2026-10-26T12:00:00Z', ...overrides });
+
+  it('reads an absent or unknown status as not required, for older servers', () => {
+    expect(memberTwoFactorStatus(member({}))).toBe('not_required');
+    expect(memberTwoFactorStatus(member({ two_factor_status: 'nonsense' as never }))).toBe('not_required');
+    expect(twoFactorPolicyActive(ROSTER)).toBe(false);
+  });
+
+  it('chases only active members in grace or overdue', () => {
+    expect(memberNeedsTwoFactor(required({}))).toBe(true);
+    expect(memberNeedsTwoFactor(required({ two_factor_status: 'overdue' }))).toBe(true);
+    expect(memberNeedsTwoFactor(required({ two_factor_status: 'enabled' }))).toBe(false);
+    // An invitation or a suspended member cannot sign in to comply.
+    expect(memberNeedsTwoFactor(required({ status: 'pending' }))).toBe(false);
+    expect(memberNeedsTwoFactor(required({ status: 'suspended', two_factor_status: 'overdue' }))).toBe(false);
+  });
+
+  it('draws the Needs two-factor chip only while the policy is on', () => {
+    expect(MEMBER_FACETS).toContain('needs2fa');
+    expect(twoFactorPolicyActive([member({ two_factor_status: 'enabled' })])).toBe(true);
+    const roster = [required({ user_id: 'a' }), required({ user_id: 'b', two_factor_status: 'enabled' })];
+    expect(memberFacetCounts(roster).needs2fa).toBe(1);
+    expect(matchesMemberFacet(roster[0], 'needs2fa')).toBe(true);
+    expect(matchesMemberFacet(roster[1], 'needs2fa')).toBe(false);
+  });
+
+  it('badges an overdue member in danger and a member in grace with the days left', () => {
+    expect(memberTwoFactorBadge(required({ two_factor_status: 'overdue' }), NOW)).toEqual({
+      tone: 'danger',
+      label: '2FA overdue',
+    });
+    expect(memberTwoFactorBadge(required({}), NOW)).toEqual({ tone: 'warn', label: '2FA due in 3 days' });
+    expect(memberTwoFactorBadge(required({ two_factor_due_at: '2026-10-23T18:00:00Z' }), NOW)?.label).toBe(
+      '2FA due in 1 day',
+    );
+    expect(memberTwoFactorBadge(required({ two_factor_due_at: null }), NOW)?.label).toBe('2FA due');
+    expect(memberTwoFactorBadge(required({ two_factor_status: 'enabled' }), NOW)).toBeNull();
   });
 });

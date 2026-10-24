@@ -1,6 +1,6 @@
 ---
 title: Tenants & the manage drawer
-description: Switch workspaces, create one, and manage members, plan, MCP policy and key capabilities.
+description: Switch workspaces, create one, and manage members, security, plan, MCP policy and keys.
 sidebar_position: 4
 tags: [workspace, tenancy, mcp, license]
 ---
@@ -48,13 +48,13 @@ changing it asks you to confirm the before → after values first.
 
 ## The manage drawer
 
-**Click “Manage”** on a tenant you administer. **Manage *tenant*** opens with five sections down
-its side; the header shows the slug, the member count and whether it is your current tenant.
+**Click “Manage”** on a tenant you administer. **Manage *tenant*** opens with its sections down
+the side; the header shows the slug, the member count and whether it is your current tenant.
 
 <Screenshot id="tenants-drawer-members" alt="Manage Northwind, Members section: five members with their Admin and Member roles, and Add member" />
 
-**License & plan**, **MCP settings**, **Per-key capabilities** and **Policy history** read the
-*current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
+**Security**, **License & plan**, **MCP settings**, **Per-key capabilities** and **Policy history**
+read the *current* tenant only. For any other tenant they say *Select … as your current tenant to view …* —
 select it first. **Members** works for every tenant you administer. A section keeps its state while
 you look at another, so an unsaved MCP draft survives a glance at the history (the tab shows a dot
 while changes are unsaved).
@@ -73,6 +73,36 @@ The tenant's people, administrators first, with **Filter by name or email…**.
 
 You cannot edit or remove your own row. For invitations, seats and custom roles use the
 [Members](./members.mdx) and [Roles](./roles.mdx) pages.
+
+### Security
+
+Require every member of the tenant to use two-factor authentication (2FA).
+
+<Screenshot id="tenants-drawer-security" alt="Security: Require two-factor on with a 7-day grace period; 4 members with two-factor, 1 in grace period, 0 overdue" />
+
+1. Turn on **Require two-factor**.
+2. Set the **Grace period (days)** — how long a member without 2FA may keep working, from `0` to
+   `90` (default `7`). It counts from when you turn the requirement on, or from when a member joins
+   if that is later.
+3. **Click “Save changes”.** Turning the requirement on starts everyone's grace period now.
+
+While the requirement is on, a line counts the active members **with two-factor**, **in grace
+period** and **overdue**; **See who on the Members page** opens [Members](./members.mdx#two-factor-compliance),
+where each one is marked.
+
+What members see:
+
+- **During the grace period**, a **Set up two-factor in *N* days** reminder on every page, with a
+  link to [their profile](./profile.mdx#turn-it-on). **Dismiss** hides it until they next sign in.
+- **After it**, the app opens on **Set up two-factor to continue** instead of any page. **Set up
+  two-factor** runs the usual enrolment (Authy, Google Authenticator or any TOTP app); **Sign out**
+  is the only other way out. Once enrolled they carry on where they were.
+
+Two-factor protects the whole account, so a person in several workspaces enrols once, by the
+earliest deadline. Members who sign in with GitHub, GitLab, Microsoft or Google can comply too. API
+keys are not affected. Turning the requirement off and on again restarts every grace period; changing
+only the grace period does not. Every change is recorded in the
+[access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get) as `two_factor_policy.update`. Only tenant administrators can change it.
 
 ### License & plan
 
@@ -139,6 +169,7 @@ after values. **Refresh** reloads the list.
 
 | Section | Endpoints |
 | --- | --- |
+| Security | `GET` / `PUT /v1/tenants/{tenant}/two-factor-policy` — see the [reference](../reference/rest/access.md#get-two-factor-policy-v1-tenants-tenant-slug-two-factor-policy-get) |
 | License & plan | `GET /v1/tenants/{tenant}/license` |
 | MCP settings | `GET` / `PUT /v1/tenants/{tenant}/mcp-policy` |
 | Policy history | `GET /v1/tenants/{tenant}/mcp-policy/history` |

@@ -1,6 +1,6 @@
 ---
 title: "Access"
-description: "REST endpoints tagged access: 15 operations."
+description: "REST endpoints tagged access: 17 operations."
 sidebar_position: 2
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.309.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.310.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `access` · 15 operations
+Tag: `access` · 17 operations
 
 ## `GET /v1/access/{tenant_slug}/audit` {#list-audit-v1-access-tenant-slug-audit-get}
 
@@ -466,6 +466,64 @@ Request body for duplicate role.
 | 200 | Successful response for duplicate role. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/two-factor-policy` {#get-two-factor-policy-v1-tenants-tenant-slug-two-factor-policy-get}
+
+**Read the two-factor policy**
+
+Whether every member must turn on two-factor authentication, the grace period in days, when the requirement was turned on, and how many active members have two-factor (`enabled`), are still inside their grace period (`grace`) or are past it (`overdue`).
+
+A member's deadline is the later of the requirement being turned on and the member joining, plus the grace period.
+
+Requires `members:view`.
+
+Operation id: `get_two_factor_policy_v1_tenants__tenant_slug__two_factor_policy_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the two-factor policy. | `application/json` [`TwoFactorPolicy`](#schema-twofactorpolicy) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/two-factor-policy` {#put-two-factor-policy-v1-tenants-tenant-slug-two-factor-policy-put}
+
+**Change the two-factor policy**
+
+Set `require_two_factor` and/or `grace_days` (0–90). Omitted fields are left alone. Turning the requirement on starts every member's grace period; turning it off and on again restarts them. Members past their deadline are asked to set up two-factor before they can use the app; API keys are unaffected.
+
+Audited as `two_factor_policy.update`. Requires `members:edit`.
+
+Operation id: `put_two_factor_policy_v1_tenants__tenant_slug__two_factor_policy_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for change the two-factor policy.
+
+- `application/json` — [`TwoFactorPolicyInput`](#schema-twofactorpolicyinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for change the two-factor policy. | `application/json` [`TwoFactorPolicy`](#schema-twofactorpolicy) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -511,6 +569,26 @@ Create/update payload for a role (name, description, full permission grid).
 | `name` | string | yes | Human-readable name. |
 | `description` | string or null | no | Free-text description. |
 | `permissions` | array of `PermissionCell` | no | Permissions. |
+
+### `TwoFactorPolicy` {#schema-twofactorpolicy}
+
+The tenant's two-factor policy.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `require_two_factor` | boolean | yes | When true, every member must turn on two-factor. |
+| `grace_days` | integer | yes | Days a member without two-factor may keep working after the policy is on or they join. |
+| `required_since` | string or null | no | When the policy was last turned on (ISO-8601); null while off. |
+| `compliance` | `TwoFactorCompliance` | no | Active members by state; all zero while the policy is off. |
+
+### `TwoFactorPolicyInput` {#schema-twofactorpolicyinput}
+
+A policy change. Omitted fields are left alone.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `require_two_factor` | boolean or null | no | Require Two Factor. |
+| `grace_days` | integer or null | no | Grace Days. |
 
 ### `TwoFactorResetRequest` {#schema-twofactorresetrequest}
 

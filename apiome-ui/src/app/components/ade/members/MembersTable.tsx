@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Mail, Power, RotateCcw, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { Mail, Power, RotateCcw, Send, Shield, ShieldAlert, Trash2, UserPlus, Users } from 'lucide-react';
 
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
@@ -28,6 +28,8 @@ import {
   memberFacetCounts,
   memberRowActions,
   memberStatusLabel,
+  memberTwoFactorBadge,
+  twoFactorPolicyActive,
   searchMembers,
   sortMembers,
   summariseMembers,
@@ -158,6 +160,8 @@ export default function MembersTable({
     [searched, facet, sort]
   );
   const summary = React.useMemo(() => summariseMembers(members), [members]);
+  /** The tenant requires two-factor (TFA-1.3): draw the Needs two-factor chip. */
+  const policyActive = React.useMemo(() => twoFactorPolicyActive(members), [members]);
   const narrowed = query.trim().length > 0 || facet !== 'all';
 
   const columns = React.useMemo<DataTableColumn<MemberRecord>[]>(
@@ -246,6 +250,16 @@ export default function MembersTable({
                 Admin
               </Badge>
             )}
+            {(() => {
+              // TFA-1.3: only a member who still has to turn on two-factor gets a badge.
+              const twoFactor = memberTwoFactorBadge(member);
+              return twoFactor ? (
+                <Badge variant={twoFactor.tone} data-testid="member-two-factor-badge">
+                  <ShieldAlert aria-hidden />
+                  {twoFactor.label}
+                </Badge>
+              ) : null;
+            })()}
           </span>
         ),
         skeletonWidth: '5.5rem',
@@ -386,7 +400,7 @@ export default function MembersTable({
             placeholder="Filter by name or email…"
             aria-label="Filter members"
           />
-          {MEMBER_FACETS.map((entry) => (
+          {MEMBER_FACETS.filter((entry) => entry !== 'needs2fa' || policyActive).map((entry) => (
             <DataTableFilterChip
               key={entry}
               active={facet === entry}
@@ -394,6 +408,7 @@ export default function MembersTable({
               onClick={() => setFacet(entry)}
             >
               {entry === 'admins' && <Shield aria-hidden />}
+              {entry === 'needs2fa' && <ShieldAlert aria-hidden />}
               {MEMBER_FACET_LABELS[entry]}
             </DataTableFilterChip>
           ))}

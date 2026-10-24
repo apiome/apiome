@@ -39,6 +39,7 @@ import {
   type MemberCapabilities,
   type MemberRecord,
   type RoleRecord,
+  memberTwoFactorBadge,
 } from './membersModel';
 
 /**
@@ -238,6 +239,18 @@ export default function MemberDetailDrawer({
                     ) : (
                       <Badge variant="outline">Not enabled</Badge>
                     )}
+                    {(() => {
+                      // TFA-1.3: the workspace requires it and this member has not complied yet.
+                      const twoFactor = memberTwoFactorBadge(member);
+                      return twoFactor ? (
+                        <Badge variant={twoFactor.tone} className="ml-1.5" data-testid="member-drawer-two-factor-due">
+                          {twoFactor.label}
+                          {member.two_factor_due_at && twoFactor.tone === 'warn'
+                            ? ` (${formatMemberDate(member.two_factor_due_at)})`
+                            : ''}
+                        </Badge>
+                      ) : null;
+                    })()}
                   </Fact>
                   <Fact label="User id">
                     <span className="font-mono text-xs">{member.user_id}</span>
