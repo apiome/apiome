@@ -48,6 +48,7 @@ import {
   DataTableCellPrimary,
   DataTableCellSub,
   DataTableFoot,
+  DataTablePager,
   type DataTableColumn,
   type DataTableSortState,
 } from '@/app/components/ui/DataTable';
@@ -92,8 +93,13 @@ function formatStamp(iso: string): string {
 }
 
 export interface CatalogTableProps extends CatalogItemHandlers {
-  /** The rows to draw, already searched, filtered and sorted. */
+  /** The rows to draw — one page of the searched, filtered and sorted list. */
   items: readonly CatalogItem[];
+  /**
+   * Paging (RC6-H6, #6213): how many items matched in all, the page shown and how many pages
+   * there are. Omitted, `items` is the whole list and there is no pager.
+   */
+  paging?: { total: number; page: number; pageCount: number; onPageChange: (page: number) => void };
   /** Every item's browser-local quality snapshots. */
   historyById: CatalogQualityHistoryMap;
   /** True while the first read is in flight. */
@@ -155,6 +161,7 @@ export default function CatalogTable({
   toolbar,
   empty,
   onOwnerChange,
+  paging,
 }: CatalogTableProps) {
   const columns = React.useMemo<DataTableColumn<CatalogItem>[]>(
     () => [
@@ -385,7 +392,18 @@ export default function CatalogTable({
       data-testid="catalog-table"
       footer={
         <DataTableFoot>
-          <span data-testid="catalog-table-foot">{catalogFootLabel(items.length, sort)}</span>
+          <span data-testid="catalog-table-foot">
+            {catalogFootLabel(paging?.total ?? items.length, sort, paging?.page)}
+          </span>
+          {paging ? (
+            <DataTablePager
+              page={paging.page}
+              pageCount={paging.pageCount}
+              onPageChange={paging.onPageChange}
+              label="Catalog pages"
+              data-testid="catalog-pager"
+            />
+          ) : null}
         </DataTableFoot>
       }
     />

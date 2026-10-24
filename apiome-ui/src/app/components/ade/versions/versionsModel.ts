@@ -22,7 +22,7 @@
  */
 
 import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
-import type { DataTableSortState } from '@/app/components/ui/DataTable';
+import { dataTableRangeLabel, type DataTableSortState } from '@/app/components/ui/DataTable';
 import {
   destructiveConfirm,
   type DestructiveConfirmOptions,
@@ -488,24 +488,37 @@ export function versionsSortLabel(sort: DataTableSortState): string {
 }
 
 /**
- * The foot's left-hand sentence — `6 revisions · sorted by created ↓ · lifecycle filter: all`.
+ * The foot's left-hand sentence — `6 revisions · sorted by created ↓ · lifecycle filter: all`, or
+ * `Showing 51–100 of 300 revisions · …` once the table needs more than one page.
  *
- * @param count How many rows are drawn.
+ * @param count How many revisions matched.
  * @param sort The sort in force.
  * @param lifecycleFilter The server-side lifecycle filter, `''` for all.
+ * @param page The 1-based page shown (ignored for a one-page table).
+ * @param pageSize Revisions per page.
  * @returns The sentence.
  */
 export function versionsFootLabel(
   count: number,
   sort: DataTableSortState,
-  lifecycleFilter: string
+  lifecycleFilter: string,
+  page = 1,
+  pageSize = VERSIONS_PAGE_SIZE
 ): string {
   const noun = count === 1 ? 'revision' : 'revisions';
+  const counted = count > pageSize ? dataTableRangeLabel(page, pageSize, count, 'revision') : `${count} ${noun}`;
   const lifecycle = lifecycleFilter
     ? VERSION_LIFECYCLE_LABEL[versionLifecycle({ lifecycle: lifecycleFilter })].toLowerCase()
     : 'all';
-  return `${count} ${noun} · sorted by ${versionsSortLabel(sort)} · lifecycle filter: ${lifecycle}`;
+  return `${counted} · sorted by ${versionsSortLabel(sort)} · lifecycle filter: ${lifecycle}`;
 }
+
+/**
+ * How many revisions one page of the versions table draws (RC6-H6, #6213). A project with
+ * hundreds of revisions otherwise mounts every row — each with its quick actions and menu — before
+ * the first one shows.
+ */
+export const VERSIONS_PAGE_SIZE = 50;
 
 // ---------------------------------------------------------------------------------------
 // Head and last published

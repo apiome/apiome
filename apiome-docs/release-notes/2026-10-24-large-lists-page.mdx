@@ -1,0 +1,23 @@
+---
+slug: large-lists-page
+title: Catalog and Versions stay quick with a thousand rows
+description: Catalog and the Versions table show 50 rows a page, fast at any size.
+authors: [apiome]
+---
+
+**Catalog** and the **Versions** table now show 50 rows at a time. A catalog with a thousand items
+opens, filters and sorts as quickly as one with fifty, and so does a project with hundreds of
+versions.
+
+{/* truncate */}
+
+- **Pages.** With more than 50 rows, the foot of the list says which ones you're looking at, for
+  example *Showing 51–100 of 1000 items*, with page buttons beside it. Lists of 50 or fewer look
+  the same as before.
+- **Back to page 1** whenever you filter, sort or turn **Show deleted** on or off. In **Versions**
+  the page is part of the page address with the filters, so a shared link opens on the same page.
+- **Selecting.** In the Catalog's cards view, **Select all** still selects every matching item; the
+  table's header checkbox selects the page you're on.
+- **Measured.** A thousand catalog items used to take over two seconds to show their first row in
+  our test runner; it is now about a quarter of a second. The checks behind this are on
+  [Visual parity](/reference/visual-parity#at-size).

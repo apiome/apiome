@@ -78,4 +78,27 @@ When a redesigned page joins the harness, add a `firstRow` to its entry in
    later ticket, add an allowance as the third argument, with `ceilingPx` set to the next
    multiple of ten above the measurement and a `reason`.
 
+### At size
+
+The parity fixtures hold a handful of rows. A real workspace can have a thousand catalog items, and
+a project can have hundreds of versions. RC6 checks both lists at that size:
+
+- **Offset.** `e2e/visual/at-size.spec.ts` mounts the Catalog table with 1,000 items and the
+  versions table with 300 revisions. Each must meet its route's budget above, allowance included.
+  The Catalog cards with 1,000 items must put their first card within 4 px of where three items
+  put it. The fixtures in `e2e/fixtures/hive-at-size/` are written by
+  `AT_SIZE_FIXTURE_DUMP=1 npx jest tests/rc6-list-budgets -t fixture`.
+- **Time.** `tests/rc6-list-budgets-catalog.test.tsx` and `tests/rc6-list-budgets-versions.test.tsx`
+  render the real screens at that size in jsdom. Each screen must mount only one page (50 rows)
+  and stay inside these ceilings on the CI runner, while other suites run in parallel:
+
+  | Step | Ceiling (jsdom, CI) | Measured (jsdom, idle) |
+  | --- | ---: | ---: |
+  | First row of data | 3,000 ms | 150–330 ms (2.4–2.6 s before paging) |
+  | A filter | 1,000 ms | 100–160 ms |
+  | A re-sort | 1,000 ms | about 120 ms |
+
+  jsdom does the same React work as a browser, without painting, and does it more slowly. So the
+  browser time is lower than the jsdom time, inside the 200 ms target for a filter or a sort.
+
 `apiome-ui/e2e/visual/README.md` has the full detail, including how the parity score is weighted.

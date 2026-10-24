@@ -50,9 +50,12 @@ import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 import { Checkbox } from '@/app/components/ui/Checkbox';
 import {
+  dataTablePage,
   DataTableBulkAction,
   DataTableBulkBar,
   DataTableFilterChip,
+  DataTableFoot,
+  DataTablePager,
   DataTableSearch,
   DataTableToolbar,
   DataTableToolbarSpacer,
@@ -105,7 +108,9 @@ import {
   catalogBulkFailureTitle,
   catalogDomainOptions,
   catalogTagOptions,
+  CATALOG_PAGE_SIZE,
   catalogBulkPlan,
+  catalogFootLabel,
   catalogBulkResultMessage,
   catalogFacetCounts,
   catalogFacts,
@@ -454,6 +459,17 @@ export default function CatalogClient() {
 
   const narrowed = isCatalogNarrowed(query, facet, filters);
 
+  /*
+   * One page of the list is drawn (RC6-H6, #6213): narrowing and ordering a thousand items is
+   * cheap, mounting a thousand cards or rows is not. A narrowing, a re-sort or the deleted switch
+   * starts again at page 1; `dataTablePage` clamps a page the list no longer reaches.
+   */
+  const [page, setPage] = React.useState(1);
+  React.useEffect(() => {
+    setPage(1);
+  }, [query, facet, filters, sort, showDeleted]);
+  const paged = React.useMemo(() => dataTablePage(visible, page, CATALOG_PAGE_SIZE), [visible, page]);
+
   /** Selection follows the list: an id that has been filtered away must not be acted on. */
   React.useEffect(() => {
     setSelectedIds((current) => {
@@ -480,7 +496,7 @@ export default function CatalogClient() {
 
   const facts = React.useMemo(() => catalogFacts(items, showDeleted), [items, showDeleted]);
 
-  const paradigmGroups = React.useMemo(() => groupCatalogItemsByParadigm(visible), [visible]);
+  const paradigmGroups = React.useMemo(() => groupCatalogItemsByParadigm(paged.rows), [paged.rows]);
 
   // ---- overlays ---------------------------------------------------------------------------
 
@@ -1151,7 +1167,13 @@ export default function CatalogClient() {
 
             {view === 'table' ? (
               <CatalogTable
-                items={visible}
+                items={paged.rows}
+                paging={{
+                  total: visible.length,
+                  page: paged.page,
+                  pageCount: paged.pageCount,
+                  onPageChange: setPage,
+                }}
                 historyById={historyById}
                 loading={loading}
                 error={loadError}
@@ -1241,7 +1263,7 @@ export default function CatalogClient() {
                     ))
                   ) : (
                     <div className="cat-grid">
-                      {visible.map((item) => (
+                      {paged.rows.map((item) => (
                         <CatalogCard
                           onOwnerChange={updateOwner}
                           key={item.id}
@@ -1256,6 +1278,20 @@ export default function CatalogClient() {
                       ))}
                     </div>
                   )}
+                  {!loading && !loadError && paged.pageCount > 1 ? (
+                    <DataTableFoot>
+                      <span data-testid="catalog-cards-foot">
+                        {catalogFootLabel(visible.length, sort, paged.page)}
+                      </span>
+                      <DataTablePager
+                        page={paged.page}
+                        pageCount={paged.pageCount}
+                        onPageChange={setPage}
+                        label="Catalog pages"
+                        data-testid="catalog-cards-pager"
+                      />
+                    </DataTableFoot>
+                  ) : null}
                 </Card>
                 {/* The table mounts its own bulk bar; the cards get the same one (MFI-28.5),
                   outside the panel — whose `overflow: hidden` would pin a sticky bar to the

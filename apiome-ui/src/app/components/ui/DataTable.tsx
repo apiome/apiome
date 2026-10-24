@@ -1044,6 +1044,41 @@ export function dataTableRangeLabel(
 }
 
 /**
+ * How many pages a list needs.
+ *
+ * @param total How many rows matched.
+ * @param pageSize How many rows a page holds.
+ * @returns At least 1, so an empty list is "page 1 of 1".
+ */
+export function dataTablePageCount(total: number, pageSize: number): number {
+  return Math.max(1, Math.ceil(total / pageSize));
+}
+
+/**
+ * One page of an already filtered and sorted list, for a screen that pages in the browser.
+ *
+ * Mounting a thousand rich rows is what makes a large list slow to appear and slow to filter
+ * (RC6-H6, #6213): the filter and the sort are cheap over the whole array; drawing it is not. So a
+ * list narrows and orders every row, then draws one page of them.
+ *
+ * @param rows Every matching row, in order.
+ * @param page The 1-based page. Out of range is clamped, so a narrowing that shortens the list
+ *   never leaves the reader on a page that no longer exists.
+ * @param pageSize How many rows a page holds.
+ * @returns The clamped page, the page count, and the page's rows.
+ */
+export function dataTablePage<T>(
+  rows: readonly T[],
+  page: number,
+  pageSize: number
+): { page: number; pageCount: number; rows: T[] } {
+  const pageCount = dataTablePageCount(rows.length, pageSize);
+  const clamped = Math.min(Math.max(1, Math.trunc(page) || 1), pageCount);
+  const first = (clamped - 1) * pageSize;
+  return { page: clamped, pageCount, rows: rows.slice(first, first + pageSize) };
+}
+
+/**
  * The page numbers a pager shows: the ends, the neighbourhood of the current page, and
  * `null` wherever a run was left out.
  *
