@@ -94,6 +94,10 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-apiome}
+      # The HS256 secret apiome-ui signs its REST JWTs with; must match apiome-ui's value. Empty ⇒
+      # unset ⇒ REST's insecure local fallback. Without this line a stack started with a real
+      # secret (the CI journeys) rejects every UI request with 401.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
       APIOME_MOCK_PUBLIC_BASE_URL: ${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
       # `apiome login` (#5501): where people open /cli/login to approve a CLI sign-in.
       APIOME_UI_PUBLIC_URL: ${APIOME_UI_PUBLIC_URL:-http://localhost:3000}
