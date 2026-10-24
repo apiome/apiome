@@ -6,6 +6,12 @@
 
 // Import React Testing Library setup
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+
+// The self-hosted CI runner is about ten times slower than a developer machine, so Testing Library's
+// default 1 s for `findBy…` / `waitFor` fails screens that render fine (MVP launch, B3). Five seconds
+// only changes how long a wait that is going to fail takes; passing waits return as soon as they pass.
+configure({ asyncUtilTimeout: 5000 });
 import { webcrypto } from 'node:crypto';
 import { TextEncoder, TextDecoder } from 'util';
 
