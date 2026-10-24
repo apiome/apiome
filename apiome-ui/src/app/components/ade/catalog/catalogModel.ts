@@ -24,6 +24,7 @@
  *   registry the facets are derived from.
  */
 
+import { isFeatureReleased } from '@lib/feature-release';
 import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { EntityOwner } from '@lib/owners';
 import { dataTableRangeLabel, type DataTableSortState } from '@/app/components/ui/DataTable';
@@ -420,8 +421,8 @@ export const CATALOG_PROTOCOL_OPTIONS: readonly CatalogFilterOption[] = [
   { value: 'agent', label: 'Agent' },
 ] as const;
 
-/** The Source select — the five input kinds an import can have come through. */
-export const CATALOG_SOURCE_OPTIONS: readonly CatalogFilterOption[] = [
+/** Every Source the select knows — the five input kinds an import can have come through. */
+const ALL_CATALOG_SOURCE_OPTIONS: readonly CatalogFilterOption[] = [
   { value: CATALOG_FILTER_ANY, label: 'All sources' },
   { value: 'file', label: 'Uploaded file' },
   { value: 'url', label: 'Source URL' },
@@ -429,6 +430,19 @@ export const CATALOG_SOURCE_OPTIONS: readonly CatalogFilterOption[] = [
   { value: 'discovery', label: 'Live discovery' },
   { value: 'connector', label: 'Catalog connector' },
 ] as const;
+
+/**
+ * The Source select's options. **Catalog connector** is offered only while connectors are released
+ * (`lib/feature-release.ts`): until then nothing can sync an item in, so the option would filter to
+ * an empty list (RC6-H8, #6215).
+ *
+ * @returns The options, in order.
+ */
+export function catalogSourceOptions(): readonly CatalogFilterOption[] {
+  return isFeatureReleased('connectors')
+    ? ALL_CATALOG_SOURCE_OPTIONS
+    : ALL_CATALOG_SOURCE_OPTIONS.filter((option) => option.value !== 'connector');
+}
 
 /** The value the Grade select uses for "has no score at all". */
 export const CATALOG_GRADE_UNSCORED = 'unscored';

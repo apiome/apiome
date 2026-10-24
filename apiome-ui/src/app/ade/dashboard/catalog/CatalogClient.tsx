@@ -93,7 +93,7 @@ import {
   CATALOG_GRADE_OPTIONS,
   CATALOG_PROTOCOL_OPTIONS,
   CATALOG_SORT_OPTIONS,
-  CATALOG_SOURCE_OPTIONS,
+  catalogSourceOptions,
   CatalogAboutDialog,
   CatalogBulkConvertDialog,
   CatalogCategoriesDialog,
@@ -810,7 +810,7 @@ export default function CatalogClient() {
           label="Source"
           testId="catalog-filter-source"
           value={filters.source}
-          options={CATALOG_SOURCE_OPTIONS}
+          options={catalogSourceOptions()}
           onChange={(source) => setFilters((current) => ({ ...current, source }))}
         />
         <CatalogQuickFilter

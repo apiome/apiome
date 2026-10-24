@@ -673,6 +673,16 @@ describe('quickActionsFor', () => {
     expect(quickActionsFor(true).map((action) => action.id)).not.toContain('register-mcp');
   });
 
+  it('withholds what the role cannot do: a Viewer gets no Import a spec or Create an API key (RC6-H8)', () => {
+    const viewer = (permission: string) => permission.endsWith(':view');
+    const ids = quickActionsFor(true, viewer).map((action) => action.id);
+    expect(ids).not.toContain('import-spec');
+    expect(ids).not.toContain('new-api-key');
+    expect(ids).toContain('browse-catalog');
+    const editor = () => true;
+    expect(quickActionsFor(true, editor).map((action) => action.id)).toContain('import-spec');
+  });
+
   it('withholds the workspace-scoped actions from a reader with none', () => {
     const actions = quickActionsFor(false);
     expect(actions.length).toBeGreaterThan(0);

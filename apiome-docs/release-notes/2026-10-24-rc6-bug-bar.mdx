@@ -1,0 +1,24 @@
+---
+slug: rc6-bug-bar
+title: The RC6 bug bar, and four fixes on Catalog, Projects and Versions
+description: RC6 tags only with no severe open bugs on its surface; four small fixes.
+authors: [apiome]
+---
+
+RC6 now has a written bug bar. It doesn't tag while any open bug on **Catalog**, **Projects** or
+**Versions** is severe (`sev:critical` or `sev:high`), or has no severity yet.
+
+{/* truncate */}
+
+- **The bar.** Two GitHub searches, kept in the RC6 release gate. Bugs on these screens carry an
+  area label: `catalog`, `versions`, or the new `projects`. A severe bug is either fixed or
+  downgraded, and a downgrade comes with a written reason.
+- **Fixed while triaging:**
+  - **Home** no longer shows **Import a spec**, **New project** or **Create an API key** to a role
+    that can't use them; a **Viewer** sees **Browse the catalog** instead.
+  - The Catalog's **Source** filter no longer lists **Catalog connector**. Connectors aren't
+    released yet, so it could only ever show an empty list.
+  - The **New version** dialog points at **Compare**, not the **Merge branches** action that
+    released builds don't have.
+  - The **Import to catalog** guide no longer says Arazzo files become projects; they land in the
+    Catalog, ready to convert.

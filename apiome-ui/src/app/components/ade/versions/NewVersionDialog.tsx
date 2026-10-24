@@ -285,9 +285,8 @@ export default function NewVersionDialog({
                 <p className="ver-dialog__subnote">
                   <span className="ver-dialog__subnote-title">Compatibility</span> — after you create a
                   new version, the service records a parent→head compatibility check in the workflow
-                  audit log. Use <strong>Merge branches</strong> on this page or{' '}
-                  <strong>Compare versions</strong> to review a full grouped report between two
-                  existing revisions before you integrate.
+                  audit log. Use <strong>Compare</strong> on this page to review a full grouped
+                  report between two existing revisions before you integrate.
                 </p>
               </Alert>
             ) : null}

@@ -321,6 +321,8 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
    version dialogs, Ship → Publish / Export / Published / Sunset timeline) reviewed; their 62
    screenshots regenerated.
 8. **Bug bar:** zero open bugs labelled `catalog`, `versions` or project-related at P0/P1.
+   ✅ #6215: the two queries are in [`RC6_OOE.md` §7.1](RC6_OOE.md#71-the-bug-bar) (`projects` label added);
+   both return 0, and the four unfiled defects the H7 review found are fixed.
 
 ## 4. Release order for held-back features (proposal)
 

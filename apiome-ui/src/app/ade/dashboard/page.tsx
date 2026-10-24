@@ -42,6 +42,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Upload } from 'lucide-react';
 import { useAuthSession } from '@lib/auth/session-client';
+import { controlState, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 
 import { Button } from '@/app/components/ui/Button';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -123,6 +124,10 @@ const Dashboard = () => {
   const user = session?.user as { user_id?: string; current_tenant_id?: string } | undefined;
   const userId = user?.user_id;
   const hasTenant = Boolean(user?.current_tenant_id);
+  /* What the reader's role may start (RC6-H8): no Import or New project for a Viewer. */
+  const permissions = useMyPermissions(hasTenant);
+  const importControl = controlState(permissions, 'imports:create');
+  const createControl = controlState(permissions, 'projects:create');
   const firstName = firstNameOf(session?.user?.name);
 
   useEffect(() => {
@@ -174,18 +179,22 @@ const Dashboard = () => {
         actions={
           hasTenant ? (
             <>
-              <Button variant="outline" kbd="I" asChild>
-                <Link href={openActionHref(PROJECTS_HREF, OPEN_ACTIONS.importSpec)}>
-                  <Upload aria-hidden />
-                  Import a spec
-                </Link>
-              </Button>
-              <Button variant="primary" kbd="N" asChild>
-                <Link href={openActionHref(PROJECTS_HREF, OPEN_ACTIONS.newProject)}>
-                  <Plus aria-hidden />
-                  New project
-                </Link>
-              </Button>
+              {importControl === 'enabled' ? (
+                <Button variant="outline" kbd="I" asChild>
+                  <Link href={openActionHref(PROJECTS_HREF, OPEN_ACTIONS.importSpec)}>
+                    <Upload aria-hidden />
+                    Import a spec
+                  </Link>
+                </Button>
+              ) : null}
+              {createControl === 'enabled' ? (
+                <Button variant="primary" kbd="N" asChild>
+                  <Link href={openActionHref(PROJECTS_HREF, OPEN_ACTIONS.newProject)}>
+                    <Plus aria-hidden />
+                    New project
+                  </Link>
+                </Button>
+              ) : null}
             </>
           ) : undefined
         }
@@ -213,7 +222,7 @@ const Dashboard = () => {
           </div>
 
           <aside className="home-grid__aside" aria-label="Workspace shortcuts and health">
-            <QuickActions hasTenant={hasTenant} />
+            <QuickActions hasTenant={hasTenant} can={permissions.can} />
             <NeedsAttention items={home.attention} loading={isLoading} />
             <PublishingPulse weeks={home.pulse} loading={isLoading} />
             <TimeSpent timeSpent={home.timeSpent} loading={isLoading} />

@@ -21,7 +21,7 @@ import {
   CATALOG_GRADE_UNSCORED,
   CATALOG_PROTOCOL_OPTIONS,
   CATALOG_SORT_OPTIONS,
-  CATALOG_SOURCE_OPTIONS,
+  catalogSourceOptions,
   DEFAULT_CATALOG_SORT,
   EMPTY_CATALOG_FILTERS,
   catalogBulkFailureTitle,
@@ -228,10 +228,23 @@ describe('quick filters', () => {
   it('offers the neutral option first in all three selects', () => {
     for (const options of [
       CATALOG_PROTOCOL_OPTIONS,
-      CATALOG_SOURCE_OPTIONS,
+      catalogSourceOptions(),
       CATALOG_GRADE_OPTIONS,
     ]) {
       expect(options[0].value).toBe(CATALOG_FILTER_ANY);
+    }
+  });
+
+  it('offers Catalog connector as a source only once connectors are released (RC6-H8)', () => {
+    const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      expect(catalogSourceOptions().map((option) => option.value)).not.toContain('connector');
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'connectors';
+      expect(catalogSourceOptions().map((option) => option.value)).toContain('connector');
+    } finally {
+      if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
     }
   });
 
