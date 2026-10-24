@@ -530,7 +530,7 @@ export function ExportDialog({
         {step === 'export' &&
           (emitted ? (
             <div className="flex h-full min-h-0 flex-col gap-2">
-              <p className="shrink-0 text-xs text-fg-muted">
+              <p className="shrink-0 text-xs text-fg-muted" data-testid="export-dialog-emitted">
                 <CheckCircle2 className="mr-1.5 inline h-4 w-4 text-ok align-text-bottom" aria-hidden />
                 Review <strong>{emitted.filename}</strong> below, then download the file or a .zip bundle.
               </p>
@@ -578,13 +578,21 @@ export function ExportDialog({
               </Button>
             )}
             {step === 'source' && (
-              <Button onClick={() => setStep('target')} disabled={loading || !response}>
+              <Button
+                onClick={() => setStep('target')}
+                disabled={loading || !response}
+                data-testid="export-dialog-choose-target"
+              >
                 <FileOutput className="h-4 w-4" aria-hidden />
                 Choose target
               </Button>
             )}
             {step === 'target' && (
-              <Button onClick={() => setStep('fidelity')} disabled={!selected}>
+              <Button
+                onClick={() => setStep('fidelity')}
+                disabled={!selected}
+                data-testid="export-dialog-continue"
+              >
                 Continue
               </Button>
             )}
@@ -592,6 +600,7 @@ export function ExportDialog({
               <Button
                 onClick={() => void handleExport()}
                 disabled={exporting || (needsAck && !acknowledged)}
+                data-testid="export-dialog-export"
                 title={
                   needsAck && !acknowledged
                     ? 'Acknowledge the fidelity loss to enable the export.'
@@ -612,7 +621,9 @@ export function ExportDialog({
                   <Download className="h-4 w-4" aria-hidden />
                   Download {emitted.filename}
                 </Button>
-                <Button onClick={handleClose}>Done</Button>
+                <Button onClick={handleClose} data-testid="export-dialog-done">
+                  Done
+                </Button>
               </>
             )}
           </div>

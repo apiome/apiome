@@ -159,3 +159,17 @@ function passThrough(keys: readonly string[]): Record<string, string> {
   }
   return values;
 }
+
+/**
+ * The environment the Catalog → Project journey's server boots with (RC6-H1, #6208).
+ *
+ * {@link journeyServerEnv} with the preview override cleared: the OLO journeys still walk features
+ * held back from RC6, but this journey must see only what ships. An empty value — not an absent
+ * one — so a `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` in `apiome-ui/.env` or the shell cannot re-open
+ * a held-back feature for the run.
+ *
+ * @returns The app-under-test environment with no preview features.
+ */
+export function catalogJourneyServerEnv(): Record<string, string> {
+  return { ...journeyServerEnv(), NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: '' };
+}
