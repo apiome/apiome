@@ -65,6 +65,7 @@ import {
   catalogItemSource,
   catalogLifecycle,
   catalogScores,
+  catalogRowActions,
   isCatalogItemOpenable,
   type CatalogItem,
   type CatalogQualityHistoryMap,
@@ -149,6 +150,7 @@ export default function CatalogTable({
   onRestore,
   onPermanentDelete,
   onCategorize,
+  can,
   busy = false,
   toolbar,
   empty,
@@ -303,7 +305,7 @@ export default function CatalogTable({
         actions: true,
         cell: (item) => (
           <>
-            {isCatalogItemOpenable(item) ? null : (
+            {isCatalogItemOpenable(item) || !catalogRowActions(item, can).undelete ? null : (
               <Button
                 variant="ghost"
                 size="sm"
@@ -330,6 +332,7 @@ export default function CatalogTable({
               onRestore={onRestore}
               onPermanentDelete={onPermanentDelete}
               onCategorize={onCategorize}
+              can={can}
             />
           </>
         ),
@@ -349,6 +352,7 @@ export default function CatalogTable({
       onPermanentDelete,
       onRestore,
       onCategorize,
+      can,
       onOwnerChange,
     ]
   );

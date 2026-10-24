@@ -74,6 +74,7 @@ import { isRegistryFormat } from '@lib/schema-registry';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
 import { useAuthSession } from '@lib/auth/session-client';
+import { useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { isFeatureReleased } from '@lib/feature-release';
 
 import PageHeader from '@/app/components/shell/PageHeader';
@@ -286,6 +287,8 @@ export function CatalogItemDetailClient({
   const { data: session } = useAuthSession();
   const currentTenantId =
     (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id ?? null;
+  /* What the viewer's role may write (RC6-H5): Convert and Categorize only for a role that can. */
+  const permissions = useMyPermissions(Boolean(currentTenantId));
 
   const sourceDeepLink = useMemo(() => parseCompatibilitySourceQuery(searchParams), [searchParams]);
 
@@ -540,7 +543,7 @@ export function CatalogItemDetailClient({
   }
 
   const lifecycle = catalogDetailLifecycle(item);
-  const actions = catalogDetailActions(item);
+  const actions = catalogDetailActions(item, permissions.can);
   const source = item.source ?? null;
   const resolvedSource = resolveCatalogSource(item.formatMetadata, item.metadata);
   const summary = item.summary ?? EMPTY_SUMMARY;
@@ -581,7 +584,7 @@ export function CatalogItemDetailClient({
             />
             {/* MFI-6.3: the item's domain and tags, and the way to change them. */}
             <CatalogCategoryRow item={item} />
-            {isCatalogDetailReadonly(item) ? null : (
+            {actions.categorize.shown ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -591,7 +594,7 @@ export function CatalogItemDetailClient({
                 <Tags aria-hidden />
                 {item.domain || (item.tags ?? []).length > 0 ? 'Edit categories' : 'Categorize…'}
               </Button>
-            )}
+            ) : null}
           </div>
         }
         actions={
@@ -818,7 +821,7 @@ export function CatalogItemDetailClient({
           <CatalogConversionHistoryPanel
             itemId={item.id}
             active={activeTab === 'conversions'}
-            onOpenConvertPreview={() => setConvertOpen(true)}
+            onOpenConvertPreview={actions.convert.shown ? () => setConvertOpen(true) : undefined}
             onCountChange={setConversionsCount}
           />
         </TabPanel>

@@ -93,6 +93,13 @@ jest.mock('@/app/ade/dashboard/primitives/PrimitiveImportDialog', () => ({
 import CatalogClient from '../src/app/ade/dashboard/catalog/CatalogClient';
 import { CATALOG_VIEW_PREFS_STORAGE_KEY } from '../src/app/utils/catalog-view-preferences';
 
+// These suites cover the screen as an Owner; what each role is offered is
+// tests/permission-matrix-ui.test.tsx (RC6-H5, #6212).
+jest.mock('../src/app/components/ade/access/useMyPermissions', () => ({
+  ...jest.requireActual('../src/app/components/ade/access/useMyPermissions'),
+  useMyPermissions: () => ({ status: 'ready', can: () => true, isAdmin: true }),
+}));
+
 // ---------------------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------------------

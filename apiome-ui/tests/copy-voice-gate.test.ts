@@ -78,7 +78,7 @@ const SONNER_ALLOWED = new Set([
  * must equal the source exactly: a new reason-less disabled button fails, and a page that
  * gives its buttons reasons lowers this number in the same change.
  */
-const DISABLED_WITHOUT_REASON_BASELINE = 470;
+const DISABLED_WITHOUT_REASON_BASELINE = 467;
 
 /** Attributes that give a disabled button its reason. */
 const DISABLED_REASON_ATTRIBUTES: ReadonlySet<string> = new Set(['title', 'aria-describedby']);

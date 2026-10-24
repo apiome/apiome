@@ -15,8 +15,8 @@
  * | `requireTenantAdmin(tenant)` | workspace settings and membership (Tenants page) |
  * | `requireTenantPermission(tenant, perm)` | role-gated writes, as REST enforces them |
  *
- * The project actions (`createProject` … `permanentDeleteProject`), `deleteVersion` and
- * `getCurrentUserLastLoginAt` check the session themselves and are passed through.
+ * The project actions (`createProject` … `permanentDeleteProject`) and `getCurrentUserLastLoginAt`
+ * check the session themselves and are passed through.
  *
  * A refusal is returned in each function's own result shape — `{ success: false, error }` as a JSON
  * string — so callers' existing error handling shows it. Adding an export here is a security
@@ -195,8 +195,12 @@ export async function updateVersionVisibility(...args: Parameters<typeof helper.
   );
 }
 
+/** Needs `versions:delete` in the version's workspace; the helper adds creator-or-admin and the lock. */
 export async function deleteVersion(...args: Parameters<typeof helper.deleteVersion>) {
-  return helper.deleteVersion(...args);
+  return guarded(
+    tenantOfVersion(args[0]).then((tenant) => requireTenantPermission(tenant, 'versions:delete')),
+    () => helper.deleteVersion(...args)
+  );
 }
 
 export async function getClassesForVersion(...args: Parameters<typeof helper.getClassesForVersion>) {

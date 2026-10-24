@@ -524,6 +524,7 @@ describe('row verbs', () => {
       delete: true,
       undelete: false,
       permanentDelete: true,
+      categorize: true,
     });
   });
 
@@ -537,6 +538,37 @@ describe('row verbs', () => {
       delete: false,
       undelete: true,
       permanentDelete: true,
+      categorize: false,
+    });
+  });
+
+  it('offers a Viewer only the reads (RC6-H5)', () => {
+    const viewer = (permission: string) => permission.endsWith(':view');
+    expect(catalogRowActions(LEDGER, viewer)).toMatchObject({
+      details: true,
+      export: true,
+      convert: false,
+      delete: false,
+      permanentDelete: false,
+      categorize: false,
+    });
+    expect(catalogRowActions(RETIRED, viewer)).toMatchObject({ undelete: false, permanentDelete: false });
+  });
+
+  it('gates each write on the permission apiome-rest checks for it', () => {
+    const only = (granted: string) => (permission: string) => permission === granted;
+    expect(catalogRowActions(LEDGER, only('projects:create')).convert).toBe(true);
+    expect(catalogRowActions(LEDGER, only('projects:edit')).categorize).toBe(true);
+    expect(catalogRowActions(RETIRED, only('projects:edit')).undelete).toBe(true);
+    expect(catalogRowActions(LEDGER, only('projects:delete'))).toMatchObject({ delete: true, permanentDelete: true });
+  });
+
+  it('keeps a Viewer’s bulk bar empty however much is selected', () => {
+    const viewer = (permission: string) => permission.endsWith(':view');
+    expect(catalogBulkPlan([LEDGER, RETIRED], [LEDGER.id, RETIRED.id], viewer)).toEqual({
+      deletable: [],
+      restorable: [],
+      convertible: [],
     });
   });
 });

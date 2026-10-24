@@ -100,6 +100,13 @@ jest.mock('@/app/components/ade/dashboard/LLMImportDialog', () => ({
 import ProjectsClient from '../src/app/ade/dashboard/projects/ProjectsClient';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
+// These suites cover the screen as an Owner; what each role is offered is
+// tests/permission-matrix-ui.test.tsx (RC6-H5, #6212).
+jest.mock('../src/app/components/ade/access/useMyPermissions', () => ({
+  ...jest.requireActual('../src/app/components/ade/access/useMyPermissions'),
+  useMyPermissions: () => ({ status: 'ready', can: () => true, isAdmin: true }),
+}));
+
 // ---------------------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------------------

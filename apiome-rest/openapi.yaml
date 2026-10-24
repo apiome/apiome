@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.312.0
+  version: 1.313.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11565,12 +11565,13 @@ paths:
         \ where\nthe source is empty.\n\nA catalog item's id is a project id; this\
         \ is restricted to the non-publishable slice, so a\nProject's id — or an unknown\
         \ id — yields 404. An item with no captured source material to\nreconstruct\
-        \ from yields 422. Authenticated via JWT token or API key.\n\nArgs:\n    tenant_slug:\
-        \ The tenant slug (used to reconstruct/commit the OpenAPI document).\n   \
-        \ item_id: The catalog item ID (a project id).\n    request: The conversion\
-        \ target + dryRun + optional defaults.\n    dry_run: Authoritative dryRun\
-        \ query override (``None`` falls back to the body).\n    auth_data: Authentication\
-        \ data (injected by dependency).\n\nReturns:\n    A :class:`ConvertDryRunResponse`\
+        \ from yields 422. A commit needs ``projects:create`` (403 otherwise); a dry-run\
+        \ needs\nonly membership. Authenticated via JWT token or API key.\n\nArgs:\n\
+        \    tenant_slug: The tenant slug (used to reconstruct/commit the OpenAPI\
+        \ document).\n    item_id: The catalog item ID (a project id).\n    request:\
+        \ The conversion target + dryRun + optional defaults.\n    dry_run: Authoritative\
+        \ dryRun query override (``None`` falls back to the body).\n    auth_data:\
+        \ Authentication data (injected by dependency).\n\nReturns:\n    A :class:`ConvertDryRunResponse`\
         \ for a dry-run, or a :class:`ConvertCommitResponse` for a commit."
       operationId: convert_catalog_item_v1_catalog__tenant_slug___item_id__convert_post
       parameters:
@@ -23849,7 +23850,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-24T05:53:42Z'
+                        example: '2026-10-24T17:14:42Z'
                       method:
                         type: string
                         example: GET
@@ -85469,7 +85470,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         completed_at:
           anyOf:
           - type: string
@@ -86687,7 +86688,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
       type: object
       required:
       - api_key
@@ -86730,7 +86731,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -87191,7 +87192,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87364,7 +87365,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87969,13 +87970,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -90494,7 +90495,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: d89b4c09-31fc-4f18-a085-fbd6be6b526a
+          example: 0d6a6fd1-0e66-4693-aba4-4bd69426ae2a
         method:
           type: string
           title: Method
@@ -92637,7 +92638,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         envelope:
           additionalProperties: true
           type: object
@@ -94128,7 +94129,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         browse_url:
           anyOf:
           - type: string
@@ -130480,7 +130481,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
       additionalProperties: false
       type: object
       required:
@@ -140018,12 +140019,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
       additionalProperties: false
       type: object
       required:
@@ -141152,7 +141153,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         detected_by:
           anyOf:
           - type: string
@@ -147529,13 +147530,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-24T05:53:42Z'
+          example: '2026-10-24T17:14:42Z'
         outcome:
           anyOf:
           - type: string

@@ -111,7 +111,7 @@ Each check is an issue in the `RC6` milestone.
 | [#6209](https://github.com/apiome/apiome/issues/6209) H2 ✅ | Every Catalog, Projects and Versions route passes the HIVE-10.2 axe gate with no route-ledger exemptions | 1 |
 | [#6210](https://github.com/apiome/apiome/issues/6210) H3 ✅ | Skeletons and `ErrorState` on every fetch on those pages; no blank screen on a slow or failed request | 1 |
 | [#6211](https://github.com/apiome/apiome/issues/6211) H4 ✅ | Catalog and version export through the in-place Export dialog covers the formats RC6 promises; the dialog's fidelity report is the only fidelity surface | 2 |
-| [#6212](https://github.com/apiome/apiome/issues/6212) H5 | Viewer / editor / owner matrices tested for every Catalog and Projects action (REST and UI), including bulk actions | 2 |
+| [#6212](https://github.com/apiome/apiome/issues/6212) H5 ✅ | Viewer / editor / owner matrices tested for every Catalog and Projects action (REST and UI), including bulk actions | 2 |
 | [#6213](https://github.com/apiome/apiome/issues/6213) H6 | Catalog list and versions table meet the HIVE-13.3 first-row budget with 1,000 items | 2 |
 | [#6214](https://github.com/apiome/apiome/issues/6214) H7 | Every Catalog, Projects and Versions page in `apiome-docs/` is current, with fresh screenshots and no links into held-back features | 3 |
 | [#6215](https://github.com/apiome/apiome/issues/6215) H8 | Zero open P0/P1 bugs on Catalog, Versions or Projects | 3 |

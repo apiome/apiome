@@ -309,6 +309,8 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
    ✅ #6211: 53 targets, listed on *Export a spec* and pinned by `apiome-rest/tests/test_rc6_export_targets.py`.
 5. **Permissions:** viewer / editor / owner matrices tested for every Catalog and Projects action
    (REST and UI), including bulk actions (#4121).
+   ✅ #6212: `docs/catalog-projects-permission-matrix.json`, read by `apiome-rest/tests/test_permission_matrix.py`
+   and `apiome-ui/tests/permission-matrix-*.test.tsx`; printed on the *Roles* docs page.
 6. **Performance:** catalog list and versions table meet the HIVE-13.3 first-row budget with
    1,000 items.
 7. **Docs:** every Catalog, Projects and Versions page in `apiome-docs/` is current, with fresh

@@ -698,7 +698,8 @@ async def convert_catalog_item(
 
     A catalog item's id is a project id; this is restricted to the non-publishable slice, so a
     Project's id — or an unknown id — yields 404. An item with no captured source material to
-    reconstruct from yields 422. Authenticated via JWT token or API key.
+    reconstruct from yields 422. A commit needs ``projects:create`` (403 otherwise); a dry-run needs
+    only membership. Authenticated via JWT token or API key.
 
     Args:
         tenant_slug: The tenant slug (used to reconstruct/commit the OpenAPI document).
@@ -723,6 +724,12 @@ async def convert_catalog_item(
         raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
 
     effective_dry_run = dry_run if dry_run is not None else request.dry_run
+    if not effective_dry_run:
+        # A commit mints a Project (or a new version of the one a re-convert targets), so it needs
+        # the same grant as creating a project (RC6-H5, #6212). The dry-run preview is a read.
+        enforce_permission(
+            db, auth_data, Resource.PROJECTS, Action.CREATE, target=f"catalog:{item_id}:convert"
+        )
     defaults = _conversion_defaults(request)
 
     try:

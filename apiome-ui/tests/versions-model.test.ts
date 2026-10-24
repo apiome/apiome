@@ -535,9 +535,33 @@ describe('versionRowMenuItems', () => {
   });
 
   it('offers Unpublish rather than Publish for a published revision', () => {
-    const list = ids(PUBLISHED_231);
+    const list = ids(PUBLISHED_231, { effectiveIsAdmin: true });
     expect(list).toContain('unpublish');
     expect(list).not.toContain('publish');
+  });
+
+  it('withholds Unpublish from someone who is neither its creator nor an admin, as REST does (RC6-H5)', () => {
+    expect(ids(PUBLISHED_231)).not.toContain('unpublish');
+    expect(ids(PUBLISHED_231, { currentUserId: PUBLISHED_231.creator_id ?? undefined })).toContain('unpublish');
+  });
+
+  it('lists each write only for a role holding its permission (RC6-H5)', () => {
+    const viewer = (permission: string) => permission.endsWith(':view');
+    const editor = (permission: string) => !permission.endsWith(':publish');
+    const asViewer = ids(HEAD_DRAFT, { effectiveIsAdmin: false, can: viewer });
+    for (const write of ['edit', 'scheduleSunset', 'publish', 'unpublish', 'forkToProject', 'tagFrom', 'freezeSchema', 'delete']) {
+      expect(asViewer).not.toContain(write);
+    }
+    expect(asViewer).toEqual(expect.arrayContaining(['view', 'export']));
+    const asEditor = ids(HEAD_DRAFT, { currentUserId: HEAD_DRAFT.creator_id ?? undefined, can: editor });
+    expect(asEditor).toContain('edit');
+    expect(asEditor).not.toContain('publish');
+    expect(
+      versionRowQuickActions(HEAD_DRAFT, { ...CONTEXT, currentUserId: HEAD_DRAFT.creator_id ?? undefined, can: editor }).map(
+        (a) => a.id
+      )
+    ).not.toContain('publish');
+    expect(versionRowQuickActions(HEAD_DRAFT, { ...CONTEXT, can: viewer })).toEqual([]);
   });
 
   it('withholds Publish for a catalog item (not publishable)', () => {

@@ -10,6 +10,7 @@ import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { controlState, PERMISSIONS_PENDING_TITLE, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import {
   createProject,
@@ -147,6 +148,10 @@ export default function ProjectsClient() {
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)
     ?.current_tenant_id;
   const currentUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
+  /* What the viewer's role may write (RC6-H5): a control the API would refuse is not offered. */
+  const permissions = useMyPermissions(Boolean(currentTenantId));
+  const createControl = controlState(permissions, 'projects:create');
+  const importControl = controlState(permissions, 'imports:create');
 
   // Pin to Home from each ⋯ menu (#513).
   const { isPinned, togglePin } = useProjectPins(currentTenantId);
@@ -363,8 +368,12 @@ export default function ProjectsClient() {
    * so the two entry points cannot drift into two different forms. `useOpenAction` strips the
    * parameter, so a reload or the back button does not reopen the dialog.
    */
-  useOpenAction(OPEN_ACTIONS.newProject, openCreate);
-  useOpenAction(OPEN_ACTIONS.importSpec, openImport);
+  useOpenAction(OPEN_ACTIONS.newProject, () => {
+    if (createControl !== 'hidden') openCreate();
+  });
+  useOpenAction(OPEN_ACTIONS.importSpec, () => {
+    if (importControl !== 'hidden') openImport();
+  });
 
   /**
    * `N`, `I` and `/` — DESIGN.md §8's list-page keys.
@@ -378,20 +387,28 @@ export default function ProjectsClient() {
     () =>
       currentTenantId
         ? [
-            {
-              id: 'projects-new',
-              scope: 'list',
-              description: 'New project',
-              chord: { key: 'n' },
-              run: openCreate,
-            },
-            {
-              id: 'projects-import',
-              scope: 'list',
-              description: 'Import a specification',
-              chord: { key: 'i' },
-              run: openImport,
-            },
+            ...(createControl === 'enabled'
+              ? [
+                  {
+                    id: 'projects-new',
+                    scope: 'list',
+                    description: 'New project',
+                    chord: { key: 'n' },
+                    run: openCreate,
+                  } satisfies ShortcutBinding,
+                ]
+              : []),
+            ...(importControl === 'enabled'
+              ? [
+                  {
+                    id: 'projects-import',
+                    scope: 'list',
+                    description: 'Import a specification',
+                    chord: { key: 'i' },
+                    run: openImport,
+                  } satisfies ShortcutBinding,
+                ]
+              : []),
             {
               id: 'projects-filter',
               scope: 'list',
@@ -401,7 +418,7 @@ export default function ProjectsClient() {
             },
           ]
         : [],
-    [currentTenantId, openCreate, openImport]
+    [currentTenantId, createControl, importControl, openCreate, openImport]
   );
   useShortcuts(shortcuts);
 
@@ -602,8 +619,8 @@ export default function ProjectsClient() {
   );
 
   const bulk = React.useMemo(
-    () => projectBulkPlan(visible, selectedIds),
-    [visible, selectedIds]
+    () => projectBulkPlan(visible, selectedIds, permissions.can),
+    [visible, selectedIds, permissions.can]
   );
 
   const handleImportSuccess = React.useCallback(async () => {
@@ -745,16 +762,29 @@ export default function ProjectsClient() {
       title="No projects yet"
       description="Create one, or import an OpenAPI specification you already have."
       action={
-        <Button onClick={openCreate}>
-          <Plus aria-hidden />
-          New project
-        </Button>
+        createControl !== 'hidden' ? (
+          <Button
+            onClick={openCreate}
+            disabled={createControl === 'disabled'}
+            title={createControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+          >
+            <Plus aria-hidden />
+            New project
+          </Button>
+        ) : undefined
       }
       secondaryAction={
-        <Button variant="outline" onClick={openImport}>
-          <Upload aria-hidden />
-          Import
-        </Button>
+        importControl !== 'hidden' ? (
+          <Button
+            variant="outline"
+            onClick={openImport}
+            disabled={importControl === 'disabled'}
+            title={importControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+          >
+            <Upload aria-hidden />
+            Import
+          </Button>
+        ) : undefined
       }
     />
   );
@@ -821,25 +851,31 @@ export default function ProjectsClient() {
               />
               <Label htmlFor="projects-show-deleted">Show deleted</Label>
             </span>
-            <Button
-              variant="outline"
-              kbd="I"
-              disabled={!currentTenantId}
-              onClick={openImport}
-              data-testid="projects-import"
-            >
-              <Upload aria-hidden />
-              Import
-            </Button>
-            <Button
-              kbd="N"
-              disabled={!currentTenantId}
-              onClick={openCreate}
-              data-testid="projects-create"
-            >
-              <Plus aria-hidden />
-              New project
-            </Button>
+            {importControl !== 'hidden' ? (
+              <Button
+                variant="outline"
+                kbd="I"
+                disabled={!currentTenantId || importControl === 'disabled'}
+                title={importControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+                onClick={openImport}
+                data-testid="projects-import"
+              >
+                <Upload aria-hidden />
+                Import
+              </Button>
+            ) : null}
+            {createControl !== 'hidden' ? (
+              <Button
+                kbd="N"
+                disabled={!currentTenantId || createControl === 'disabled'}
+                title={createControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+                onClick={openCreate}
+                data-testid="projects-create"
+              >
+                <Plus aria-hidden />
+                New project
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -868,6 +904,7 @@ export default function ProjectsClient() {
                 onDelete={(project) => void handleDelete(project)}
                 onRestore={(project) => void handleRestore(project)}
                 onPermanentDelete={(project) => void handlePermanentDelete(project)}
+                can={permissions.can}
                 busy={busy}
                 toolbar={toolbar}
                 empty={emptyState}
@@ -913,12 +950,13 @@ export default function ProjectsClient() {
                         onDelete={(target) => void handleDelete(target)}
                         onRestore={(target) => void handleRestore(target)}
                         onPermanentDelete={(target) => void handlePermanentDelete(target)}
+                        can={permissions.can}
                         onOwnerChange={updateOwner}
                         pinned={isPinned(project.id)}
                         onTogglePin={(target) => void togglePin(target)}
                       />
                     ))}
-                    <ProjectCreateTile onCreate={openCreate} />
+                    {createControl === 'enabled' ? <ProjectCreateTile onCreate={openCreate} /> : null}
                   </div>
                 )}
               </Card>

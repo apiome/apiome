@@ -16,6 +16,8 @@ on:
       - 'apiome-docs/docs/**'
       - 'docs/mockups/**'
       - 'docs/guide/README.md'
+      # RC6-H5: the Catalog/Projects permission matrix the role suites read.
+      - 'docs/catalog-projects-permission-matrix.json'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'
@@ -38,6 +40,8 @@ on:
       - 'apiome-docs/docs/**'
       - 'docs/mockups/**'
       - 'docs/guide/README.md'
+      # RC6-H5: the Catalog/Projects permission matrix the role suites read.
+      - 'docs/catalog-projects-permission-matrix.json'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'

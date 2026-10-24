@@ -30,6 +30,7 @@
  * @see `./projectsModel.ts` — the facets, the scores and the sort bridging.
  */
 
+import type { PermissionCheck } from '../access/permissionCheck';
 import { OwnerCell } from '@/app/components/ade/owners';
 import { isFeatureReleased } from '@lib/feature-release';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
@@ -60,6 +61,7 @@ import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-h
 import {
   PROJECT_LIFECYCLE_LABEL,
   isProjectOpenable,
+  projectRowActions,
   projectDomainLabel,
   projectLifecycle,
   projectScores,
@@ -131,6 +133,8 @@ export interface ProjectsTableProps {
   onRestore: (project: Project) => void;
   /** Destroy it, after the type-to-confirm gate. */
   onPermanentDelete: (project: Project) => void;
+  /** The viewer's grants; a write the role cannot make is not offered (RC6-H5). Omitted, all are. */
+  can?: PermissionCheck;
   /** True while a write is in flight — every verb goes inert. */
   busy?: boolean;
   /** The toolbar the screen composes; passed through to {@link DataTable}. */
@@ -168,6 +172,7 @@ export default function ProjectsTable({
   onDelete,
   onRestore,
   onPermanentDelete,
+  can,
   busy = false,
   toolbar,
   empty,
@@ -324,9 +329,11 @@ export default function ProjectsTable({
         actions: true,
         cell: (project) => {
           const deleted = !isProjectOpenable(project);
+          const actions = projectRowActions(project, can);
           return (
             <>
               {deleted ? (
+                actions.restore ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -339,7 +346,8 @@ export default function ProjectsTable({
                 >
                   <Undo2 aria-hidden />
                 </Button>
-              ) : (
+                ) : null
+              ) : actions.edit ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -352,7 +360,7 @@ export default function ProjectsTable({
                 >
                   <Pencil aria-hidden />
                 </Button>
-              )}
+              ) : null}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <Button
@@ -369,13 +377,16 @@ export default function ProjectsTable({
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
                     {deleted ? (
-                      <DropdownMenu.Item
-                        className={MENU_ITEM_CLASS}
-                        onSelect={() => onRestore(project)}
-                      >
-                        <Undo2 aria-hidden />
-                        Undelete project
-                      </DropdownMenu.Item>
+                      actions.restore ? (
+                        <DropdownMenu.Item
+                          className={MENU_ITEM_CLASS}
+                          data-testid="projects-action-restore"
+                          onSelect={() => onRestore(project)}
+                        >
+                          <Undo2 aria-hidden />
+                          Undelete project
+                        </DropdownMenu.Item>
+                      ) : null
                     ) : (
                       <>
                         <DropdownMenu.Item
@@ -394,13 +405,16 @@ export default function ProjectsTable({
                             </Link>
                           </DropdownMenu.Item>
                         ) : null}
-                        <DropdownMenu.Item
-                          className={MENU_ITEM_CLASS}
-                          onSelect={() => onEdit(project)}
-                        >
-                          <Pencil aria-hidden />
-                          Edit project
-                        </DropdownMenu.Item>
+                        {actions.edit ? (
+                          <DropdownMenu.Item
+                            className={MENU_ITEM_CLASS}
+                            data-testid="projects-action-edit"
+                            onSelect={() => onEdit(project)}
+                          >
+                            <Pencil aria-hidden />
+                            Edit project
+                          </DropdownMenu.Item>
+                        ) : null}
                         {onTogglePin ? (
                           <PinMenuItem
                             project={project}
@@ -408,23 +422,31 @@ export default function ProjectsTable({
                             onTogglePin={onTogglePin}
                           />
                         ) : null}
-                        <DropdownMenu.Item
-                          className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
-                          onSelect={() => onDelete(project)}
-                        >
-                          <Trash2 aria-hidden />
-                          Delete project
-                        </DropdownMenu.Item>
+                        {actions.delete ? (
+                          <DropdownMenu.Item
+                            className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
+                            data-testid="projects-action-delete"
+                            onSelect={() => onDelete(project)}
+                          >
+                            <Trash2 aria-hidden />
+                            Delete project
+                          </DropdownMenu.Item>
+                        ) : null}
                       </>
                     )}
-                    <DropdownMenu.Separator className="tnt-menu__sep" />
-                    <DropdownMenu.Item
-                      className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
-                      onSelect={() => onPermanentDelete(project)}
-                    >
-                      <Trash2 aria-hidden />
-                      Permanently delete
-                    </DropdownMenu.Item>
+                    {actions.permanentDelete ? (
+                      <>
+                        <DropdownMenu.Separator className="tnt-menu__sep" />
+                        <DropdownMenu.Item
+                          className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
+                          data-testid="projects-action-permanent-delete"
+                          onSelect={() => onPermanentDelete(project)}
+                        >
+                          <Trash2 aria-hidden />
+                          Permanently delete
+                        </DropdownMenu.Item>
+                      </>
+                    ) : null}
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
@@ -444,6 +466,7 @@ export default function ProjectsTable({
       onOpenTrend,
       onOwnerChange,
       onPermanentDelete,
+      can,
       onRestore,
       onTogglePin,
       reviewsByProjectId,

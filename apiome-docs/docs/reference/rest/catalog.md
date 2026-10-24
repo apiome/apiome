@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.312.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.313.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -418,7 +418,8 @@ the source is empty.
 
 A catalog item's id is a project id; this is restricted to the non-publishable slice, so a
 Project's id — or an unknown id — yields 404. An item with no captured source material to
-reconstruct from yields 422. Authenticated via JWT token or API key.
+reconstruct from yields 422. A commit needs ``projects:create`` (403 otherwise); a dry-run needs
+only membership. Authenticated via JWT token or API key.
 
 Args:
     tenant_slug: The tenant slug (used to reconstruct/commit the OpenAPI document).

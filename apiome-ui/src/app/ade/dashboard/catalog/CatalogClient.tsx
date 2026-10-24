@@ -38,6 +38,7 @@ import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { controlState, PERMISSIONS_PENDING_TITLE, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { isFeatureReleased } from '@lib/feature-release';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { deleteProject, permanentDeleteProject, restoreProject } from '@lib/db/helper-actions';
@@ -235,6 +236,9 @@ export default function CatalogClient() {
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)
     ?.current_tenant_id;
   const currentUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
+  /* What the viewer's role may write (RC6-H5): a control the API would refuse is not offered. */
+  const permissions = useMyPermissions(Boolean(currentTenantId));
+  const importControl = controlState(permissions, 'imports:create');
 
   // ---- the list ---------------------------------------------------------------------------
 
@@ -550,19 +554,24 @@ export default function CatalogClient() {
   /*
    * `I` and `/` — DESIGN.md §8's list-page keys, and the two the mockup's header prints.
    * Registered only while a workspace is chosen, because both act on a list that does not
-   * exist without one. There is no `N`: nothing on this screen creates an item by hand.
+   * exist without one — and `I` only for a role that may import. There is no `N`: nothing on
+   * this screen creates an item by hand.
    */
   const shortcuts = React.useMemo<readonly ShortcutBinding[]>(
     () =>
       currentTenantId && currentUserId
         ? [
-            {
-              id: 'catalog-import',
-              scope: 'list',
-              description: 'Import to catalog',
-              chord: { key: 'i' },
-              run: openImport,
-            },
+            ...(importControl === 'enabled'
+              ? [
+                  {
+                    id: 'catalog-import',
+                    scope: 'list',
+                    description: 'Import to catalog',
+                    chord: { key: 'i' },
+                    run: openImport,
+                  } satisfies ShortcutBinding,
+                ]
+              : []),
             {
               id: 'catalog-filter',
               scope: 'list',
@@ -572,7 +581,7 @@ export default function CatalogClient() {
             },
           ]
         : [],
-    [currentTenantId, currentUserId, openImport]
+    [currentTenantId, currentUserId, importControl, openImport]
   );
   useShortcuts(shortcuts);
 
@@ -696,7 +705,10 @@ export default function CatalogClient() {
     [alert, loadCatalog, runWrite]
   );
 
-  const bulk = React.useMemo(() => catalogBulkPlan(visible, selectedIds), [visible, selectedIds]);
+  const bulk = React.useMemo(
+    () => catalogBulkPlan(visible, selectedIds, permissions.can),
+    [visible, selectedIds, permissions.can]
+  );
 
   /**
    * Tick or untick one card (MFI-28.5). The cards share the table's `selectedIds`, so a
@@ -751,6 +763,7 @@ export default function CatalogClient() {
     onRestore: (item: CatalogItem) => void handleRestore(item),
     onPermanentDelete: (item: CatalogItem) => void handlePermanentDelete(item),
     onCategorize: (item: CatalogItem) => setCategorizeFor(item),
+    can: permissions.can,
   };
 
   const toolbar = (
@@ -958,8 +971,13 @@ export default function CatalogClient() {
         </>
       }
       action={
-        currentUserId ? (
-          <Button onClick={openImport} data-testid="catalog-empty-import">
+        currentUserId && importControl !== 'hidden' ? (
+          <Button
+            onClick={openImport}
+            disabled={importControl === 'disabled'}
+            title={importControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+            data-testid="catalog-empty-import"
+          >
             <Upload aria-hidden />
             Import to catalog
           </Button>
@@ -1068,10 +1086,11 @@ export default function CatalogClient() {
                 <Link href={IMPORT_REPORTS_ROUTE}>Import reports</Link>
               </Button>
             ) : null}
-            {currentUserId ? (
+            {currentUserId && importControl !== 'hidden' ? (
               <Button
                 kbd="I"
-                disabled={!currentTenantId}
+                disabled={!currentTenantId || importControl === 'disabled'}
+                title={importControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
                 onClick={openImport}
                 data-testid="catalog-import"
               >

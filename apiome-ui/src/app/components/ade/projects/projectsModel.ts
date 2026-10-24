@@ -20,6 +20,7 @@
  *   and are unchanged; this module only bridges them to `DataTable`'s sort state.
  */
 
+import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { EntityOwner } from '@lib/owners';
 import type { DataTableSortState } from '@/app/components/ui/DataTable';
 import {
@@ -539,6 +540,43 @@ export function undeleteProjectConfirm(project: Project): {
 }
 
 // ---------------------------------------------------------------------------------------
+// Row actions
+// ---------------------------------------------------------------------------------------
+
+/** Which writes a row offers. */
+export interface ProjectRowActions {
+  /** Edit its name, slug, description and status — live rows only. */
+  edit: boolean;
+  /** Soft-delete it — live rows only. */
+  delete: boolean;
+  /** Restore it — deleted rows only. */
+  restore: boolean;
+  /** Destroy it — offered on both kinds of row. */
+  permanentDelete: boolean;
+}
+
+/**
+ * The single gate on what a row may write, for the table, the cards and the bulk bar alike.
+ *
+ * Each verb needs the permission apiome-rest checks for it (RC6-H5, #6212 —
+ * `docs/catalog-projects-permission-matrix.json`): editing and undeleting need `projects:edit`,
+ * deleting either way `projects:delete`. A role without it is not offered the verb.
+ *
+ * @param project The row.
+ * @param can The viewer's grants (`useMyPermissions().can`); omitted, every write is offered.
+ * @returns One flag per verb.
+ */
+export function projectRowActions(project: Project, can: PermissionCheck = allowEverything): ProjectRowActions {
+  const deleted = Boolean(project.deleted_at);
+  return {
+    edit: !deleted && can('projects:edit'),
+    delete: !deleted && can('projects:delete'),
+    restore: deleted && can('projects:edit'),
+    permanentDelete: can('projects:delete'),
+  };
+}
+
+// ---------------------------------------------------------------------------------------
 // Selection
 // ---------------------------------------------------------------------------------------
 
@@ -558,19 +596,23 @@ export interface ProjectBulkPlan {
  * clearing and re-selecting. Each button states its own count, so neither can be pressed
  * without knowing how many rows it reaches.
  *
+ * Both verbs follow {@link projectRowActions}, role gate included.
+ *
  * @param projects Every row currently on screen.
  * @param selectedIds The ids the table reports as selected.
+ * @param can The viewer's grants; omitted, every write is allowed.
  * @returns The rows each verb applies to. See {@link ProjectBulkPlan}.
  */
 export function projectBulkPlan(
   projects: readonly Project[],
-  selectedIds: readonly string[]
+  selectedIds: readonly string[],
+  can: PermissionCheck = allowEverything
 ): ProjectBulkPlan {
   const chosen = new Set(selectedIds);
   const selected = projects.filter((project) => chosen.has(project.id));
   return {
-    deletable: selected.filter((project) => !project.deleted_at),
-    restorable: selected.filter((project) => Boolean(project.deleted_at)),
+    deletable: selected.filter((project) => projectRowActions(project, can).delete),
+    restorable: selected.filter((project) => projectRowActions(project, can).restore),
   };
 }
 

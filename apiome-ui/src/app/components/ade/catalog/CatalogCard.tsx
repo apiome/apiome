@@ -28,6 +28,7 @@
  * @see `./catalogModel.ts` — every figure and every string on this card.
  */
 
+import type { PermissionCheck } from '../access/permissionCheck';
 import { OwnerCell } from '@/app/components/ade/owners';
 import { isFeatureReleased } from '@lib/feature-release';
 import type { EntityOwner } from '@lib/owners';
@@ -93,6 +94,11 @@ export interface CatalogItemHandlers {
   onPermanentDelete: (item: CatalogItem) => void;
   /** Set its domain and tags (MFI-6.3). Absent, the menu offers no Categorize… verb. */
   onCategorize?: (item: CatalogItem) => void;
+  /**
+   * The viewer's grants (`useMyPermissions().can`). A write the role cannot make is not offered
+   * (RC6-H5, #6212); see {@link catalogRowActions}. Omitted, every write is offered.
+   */
+  can?: PermissionCheck;
 }
 
 export interface CatalogCardProps extends CatalogItemHandlers {
@@ -133,6 +139,7 @@ export default function CatalogCard({
   onRestore,
   onPermanentDelete,
   onCategorize,
+  can,
   busy = false,
   selected = false,
   onSelectedChange,
@@ -140,6 +147,7 @@ export default function CatalogCard({
 }: CatalogCardProps) {
   const lifecycle = catalogLifecycle(item);
   const isDeleted = lifecycle === 'deleted';
+  const actions = catalogRowActions(item, can);
   const scores = catalogScores(item, qualityHistory);
   const updated = formatRelativeTime(item.updated_at);
 
@@ -252,19 +260,30 @@ export default function CatalogCard({
 
       {isDeleted ? (
         <footer className="cat-card__footer cat-card__above" data-testid="catalog-card-recovery">
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => onRestore(item)}>
-            <Undo2 aria-hidden />
-            Undelete
-          </Button>
-          <Button
-            variant="danger-soft"
-            size="sm"
-            disabled={busy}
-            onClick={() => onPermanentDelete(item)}
-          >
-            <Trash2 aria-hidden />
-            Permanently delete
-          </Button>
+          {actions.undelete ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => onRestore(item)}
+              data-testid={`catalog-card-restore-${item.id}`}
+            >
+              <Undo2 aria-hidden />
+              Undelete
+            </Button>
+          ) : null}
+          {actions.permanentDelete ? (
+            <Button
+              variant="danger-soft"
+              size="sm"
+              disabled={busy}
+              onClick={() => onPermanentDelete(item)}
+              data-testid={`catalog-card-permanent-delete-${item.id}`}
+            >
+              <Trash2 aria-hidden />
+              Permanently delete
+            </Button>
+          ) : null}
         </footer>
       ) : (
         <footer className="cat-card__footer">
@@ -299,6 +318,7 @@ export default function CatalogCard({
             onRestore={onRestore}
             onPermanentDelete={onPermanentDelete}
             onCategorize={onCategorize}
+            can={can}
           />
         </div>
       )}
@@ -400,8 +420,9 @@ export function CatalogRowMenu({
   onRestore,
   onPermanentDelete,
   onCategorize,
+  can,
 }: CatalogRowMenuProps) {
-  const actions = catalogRowActions(item);
+  const actions = catalogRowActions(item, can);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   /** The verb chosen from the menu, waiting for the menu to hand focus back. */
   const pendingRef = React.useRef<(() => void) | null>(null);
@@ -487,7 +508,7 @@ export function CatalogRowMenu({
               {convertActionLabel(item.conversion, item.sourceFormat)}
             </DropdownMenu.Item>
           ) : null}
-          {onCategorize && !item.deleted_at ? (
+          {onCategorize && actions.categorize ? (
             <DropdownMenu.Item
               className={MENU_ITEM_CLASS}
               data-testid="catalog-action-categorize"
@@ -498,32 +519,38 @@ export function CatalogRowMenu({
             </DropdownMenu.Item>
           ) : null}
           {actions.undelete ? (
-            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onRestore(item))}>
+            <DropdownMenu.Item
+              className={MENU_ITEM_CLASS}
+              data-testid="catalog-action-restore"
+              onSelect={queue(() => onRestore(item))}
+            >
               <Undo2 aria-hidden />
               Undelete item
             </DropdownMenu.Item>
           ) : null}
-          {actions.delete ? (
-            <>
-              <DropdownMenu.Separator className="tnt-menu__sep" />
-              <DropdownMenu.Item
-                className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
-                onSelect={queue(() => onDelete(item))}
-              >
-                <Trash2 aria-hidden />
-                Delete item
-              </DropdownMenu.Item>
-            </>
-          ) : (
+          {actions.delete || actions.permanentDelete ? (
             <DropdownMenu.Separator className="tnt-menu__sep" />
-          )}
-          <DropdownMenu.Item
-            className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
-            onSelect={queue(() => onPermanentDelete(item))}
-          >
-            <Trash2 aria-hidden />
-            Permanently delete
-          </DropdownMenu.Item>
+          ) : null}
+          {actions.delete ? (
+            <DropdownMenu.Item
+              className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
+              data-testid="catalog-action-delete"
+              onSelect={queue(() => onDelete(item))}
+            >
+              <Trash2 aria-hidden />
+              Delete item
+            </DropdownMenu.Item>
+          ) : null}
+          {actions.permanentDelete ? (
+            <DropdownMenu.Item
+              className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
+              data-testid="catalog-action-permanent-delete"
+              onSelect={queue(() => onPermanentDelete(item))}
+            >
+              <Trash2 aria-hidden />
+              Permanently delete
+            </DropdownMenu.Item>
+          ) : null}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

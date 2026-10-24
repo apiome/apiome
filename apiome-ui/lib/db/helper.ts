@@ -1447,10 +1447,23 @@ export async function deleteVersion(versionRecordId: string) {
     const session = await getAuthSession();
     const userId = (session?.user as { user_id?: string })?.user_id;
     const tenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
-    const isTenantAdmin = Boolean((session?.user as { is_tenant_admin?: boolean })?.is_tenant_admin);
     if (!userId || !tenantId) {
       return JSON.stringify({ success: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
+    // A tenant administrator may delete anyone's revision, and a locked one. The session carries
+    // no admin flag, so ask the table apiome-rest's own creator-or-admin checks read (RC6-H5,
+    // #6212) — only when the answer matters.
+    let tenantAdmin: boolean | undefined;
+    const isTenantAdmin = async () => {
+      tenantAdmin ??=
+        (
+          await connectionPool.query(
+            'SELECT 1 FROM apiome.tenant_administrators WHERE tenant_id = $1 AND user_id = $2 LIMIT 1',
+            [tenantId, userId]
+          )
+        ).rows.length > 0;
+      return tenantAdmin;
+    };
 
     const row = await connectionPool.query(
       `SELECT v.id, v.creator_id, v.revision_locked, v.project_id
@@ -1469,7 +1482,7 @@ export async function deleteVersion(versionRecordId: string) {
       project_id: string;
     };
 
-    const mayManage = v.creator_id === userId || isTenantAdmin;
+    const mayManage = v.creator_id === userId || (await isTenantAdmin());
     if (!mayManage) {
       await insertVersionProtectionAudit({
         tenantId,
@@ -1488,7 +1501,7 @@ export async function deleteVersion(versionRecordId: string) {
       });
     }
 
-    if (v.revision_locked && !isTenantAdmin) {
+    if (v.revision_locked && !(await isTenantAdmin())) {
       await insertVersionProtectionAudit({
         tenantId,
         projectId: v.project_id,
@@ -1516,7 +1529,7 @@ export async function deleteVersion(versionRecordId: string) {
       return JSON.stringify({ success: false, error: 'Version not found or already deleted', code: 'NOT_FOUND' });
     }
 
-    if (v.revision_locked && isTenantAdmin) {
+    if (v.revision_locked && (await isTenantAdmin())) {
       await insertVersionProtectionAudit({
         tenantId,
         projectId: v.project_id,

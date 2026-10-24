@@ -21,6 +21,7 @@
  *   are unchanged; this module only bridges them to `DataTable`'s sort state.
  */
 
+import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { DataTableSortState } from '@/app/components/ui/DataTable';
 import {
   destructiveConfirm,
@@ -1047,6 +1048,13 @@ export interface VersionRowMenuContext {
   freezing: boolean;
   /** How git-like affordances are treated in this build. */
   gitlike: GitlikeAffordance;
+  /**
+   * The viewer's role grants (`useMyPermissions().can`). A write the role cannot make is not
+   * listed (RC6-H5, #6212): editing needs `versions:edit`, publishing and unpublishing
+   * `versions:publish`, forking and tagging `versions:create`, deleting `versions:delete`.
+   * Omitted, every write is listed.
+   */
+  can?: PermissionCheck;
 }
 
 /**
@@ -1074,9 +1082,12 @@ export function versionRowMenuItems(
     publishable,
     freezing,
     gitlike,
+    can = allowEverything,
   } = context;
   const lifecycle = versionLifecycle(version);
   const isOwnerOrAdmin = version.creator_id === currentUserId || effectiveIsAdmin;
+  /* Publishing also needs the creator or a tenant admin, as apiome-rest's publish route does. */
+  const mayPublish = can('versions:publish') && isOwnerOrAdmin;
   const items: VersionRowMenuItem[] = [];
 
   /**
@@ -1130,12 +1141,15 @@ export function versionRowMenuItems(
       disabled: false,
     });
   }
-  gitlikeItem({ id: 'forkToProject', label: 'Fork to another project…', disabled: false });
-  gitlikeItem({ id: 'tagFrom', label: 'Tag this revision', disabled: false });
+  if (can('versions:create')) {
+    gitlikeItem({ id: 'forkToProject', label: 'Fork to another project…', disabled: false });
+    gitlikeItem({ id: 'tagFrom', label: 'Tag this revision', disabled: false });
+  }
 
   const sunsetLocked =
     (version.published && !effectiveIsAdmin) || (lifecycle === 'archived' && !effectiveIsAdmin);
-  items.push({
+  const mayEdit = can('versions:edit');
+  if (mayEdit) items.push({
     id: 'scheduleSunset',
     label: 'Schedule sunset (EOL)…',
     gitlike: false,
@@ -1148,7 +1162,7 @@ export function versionRowMenuItems(
           : 'Deprecation, sunset instant, and successor revision',
     separatorBefore: true,
   });
-  items.push({
+  if (mayEdit) items.push({
     id: 'edit',
     label: 'Edit',
     gitlike: false,
@@ -1161,13 +1175,13 @@ export function versionRowMenuItems(
   if (!version.published) {
     // Catalog items (non-publishable projects, MFI-23.1) are never publish candidates
     // (MFI-23.8, #4017): withhold the Publish affordance entirely.
-    if (publishable) {
+    if (publishable && mayPublish) {
       items.push({ id: 'publish', label: 'Publish', gitlike: false, disabled: false });
     }
-  } else {
+  } else if (mayPublish) {
     items.push({ id: 'unpublish', label: 'Unpublish', gitlike: false, disabled: false });
   }
-  if (!schemaFrozen && isOwnerOrAdmin) {
+  if (!schemaFrozen && isOwnerOrAdmin && mayEdit) {
     gitlikeItem({
       id: 'freezeSchema',
       label: freezing ? 'Freezing...' : 'Freeze schema',
@@ -1185,7 +1199,7 @@ export function versionRowMenuItems(
       disabled: false,
     });
   }
-  gitlikeItem({
+  if (can('versions:delete')) gitlikeItem({
     id: 'delete',
     label: 'Delete',
     disabled: Boolean(version.revisionLocked) && !effectiveIsAdmin,
@@ -1214,24 +1228,30 @@ export interface VersionRowQuickAction {
  * which is the edit that row is for. Every one of these is also in the menu, so nothing is
  * *only* reachable by hovering.
  *
+ * Each follows the menu's role gate: publish and unpublish need `versions:publish` (and the
+ * creator or a tenant admin), edit and sunset `versions:edit`.
+ *
  * @param version The revision.
  * @param context The same context the menu reads.
  * @returns The quick actions, at most two.
  */
 export function versionRowQuickActions(
   version: Version,
-  context: Pick<VersionRowMenuContext, 'effectiveIsAdmin' | 'currentUserId' | 'publishable'>
+  context: Pick<VersionRowMenuContext, 'effectiveIsAdmin' | 'currentUserId' | 'publishable' | 'can'>
 ): VersionRowQuickAction[] {
-  const { effectiveIsAdmin, currentUserId, publishable } = context;
+  const { effectiveIsAdmin, currentUserId, publishable, can = allowEverything } = context;
   const lifecycle = versionLifecycle(version);
-  const canModify = version.creator_id === currentUserId || effectiveIsAdmin;
+  const canModify = (version.creator_id === currentUserId || effectiveIsAdmin) && can('versions:publish');
   const actions: VersionRowQuickAction[] = [];
   if (!version.published && publishable && canModify) {
     actions.push({ id: 'publish', label: 'Publish' });
   } else if (version.published && canModify) {
     actions.push({ id: 'unpublish', label: 'Unpublish' });
   }
-  const canEdit = !(version.published && !effectiveIsAdmin) && !(lifecycle === 'archived' && !effectiveIsAdmin);
+  const canEdit =
+    can('versions:edit') &&
+    !(version.published && !effectiveIsAdmin) &&
+    !(lifecycle === 'archived' && !effectiveIsAdmin);
   if (lifecycle === 'deprecated' && canEdit) {
     actions.push({ id: 'scheduleSunset', label: 'Schedule sunset (EOL)' });
   } else if (canEdit) {
