@@ -1,7 +1,7 @@
 /**
  * Email sign-up screens (SGN-1.1, #5650): the `/signup` page's email form (SGN-1.2), the no-sender
  * notice and check-your-email, and `/signup/verify` (confirmed, expired, used, invalid). Also dumps
- * the docs fixtures `signup-form`, `signup-check-email` and `signup-verified`.
+ * the docs fixtures `signup-form`, `signup-check-email`, `signup-verify-confirm` and `signup-verified`.
  */
 import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -211,16 +211,36 @@ describe('the email form on /signup', () => {
 });
 
 describe('/signup/verify', () => {
-  it('confirms a valid link once, even under Strict Mode, and signs in with the one-time code', async () => {
+  /** Type the sign-up password and press Confirm and sign in. */
+  async function confirmWith(password: string) {
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: password } });
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('signup-verify-submit'));
+    });
+  }
+
+  it('asks for the sign-up password before redeeming anything, even under Strict Mode', () => {
+    render(
+      <StrictMode>
+        <VerifyEmailClient token={TOKEN} />
+      </StrictMode>
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'Confirm your email' })).toBeInTheDocument();
+    expect(screen.getByTestId('signup-verify-submit')).toBeDisabled();
+    expect(mockVerify).not.toHaveBeenCalled();
+  });
+
+  it('confirms the link with the password once, and signs in with the one-time code', async () => {
     mockVerify.mockResolvedValue({ state: 'valid', oneTimeCode: 'code-1' });
     render(
       <StrictMode>
         <VerifyEmailClient token={TOKEN} />
       </StrictMode>
     );
+    await confirmWith('Analytical1');
     expect(await screen.findByTestId('signup-verified')).toHaveTextContent('Email confirmed');
     expect(mockVerify).toHaveBeenCalledTimes(1);
-    expect(mockVerify).toHaveBeenCalledWith(TOKEN);
+    expect(mockVerify).toHaveBeenCalledWith({ token: TOKEN, password: 'Analytical1' });
     await waitFor(() =>
       expect(mockSignIn).toHaveBeenCalledWith('credentials', {
         payload: JSON.stringify({ oneTimeCode: 'code-1' }),
@@ -230,10 +250,25 @@ describe('/signup/verify', () => {
     );
   });
 
+  it('keeps the form and says why when the password belongs to a different sign-up', async () => {
+    mockVerify.mockResolvedValue({ state: 'password-mismatch' });
+    render(<VerifyEmailClient token={TOKEN} />);
+    await confirmWith('Someone-elses1');
+    expect(screen.getByTestId('signup-verify-password-mismatch')).toHaveTextContent('not the password chosen');
+    expect(screen.getByTestId('signup-verify-confirm')).toBeInTheDocument();
+    expect(mockSignIn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a link with no token without asking for a password', () => {
+    render(<VerifyEmailClient token="" />);
+    expect(screen.getByRole('heading', { level: 1, name: 'This link does not work' })).toBeInTheDocument();
+  });
+
   it('offers the sign-in page when the session exchange fails', async () => {
     mockVerify.mockResolvedValue({ state: 'valid', oneTimeCode: 'code-1' });
     mockSignIn.mockResolvedValue({ error: 'CredentialsSignin' });
     render(<VerifyEmailClient token={TOKEN} />);
+    await confirmWith('Analytical1');
     expect(await screen.findByTestId('signup-verified-sign-in')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
@@ -246,6 +281,7 @@ describe('/signup/verify', () => {
     mockVerify.mockResolvedValue({ state });
     mockResend.mockResolvedValue({ ok: true });
     render(<VerifyEmailClient token={TOKEN} />);
+    await confirmWith('Analytical1');
     expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument();
     expect(mockSignIn).not.toHaveBeenCalled();
 
@@ -267,7 +303,12 @@ describe('/signup/verify', () => {
     expect(screen.getByTestId('signup-resend-error')).toHaveTextContent('Too many sign-up attempts');
   });
 
-  it('renders the docs fixtures `signup-verified` and `signup-verify-expired`, axe-clean', async () => {
+  it('renders the docs fixtures `signup-verify-confirm`, `signup-verified` and `signup-verify-expired`, axe-clean', async () => {
+    const confirm = render(<VerifyEmailClient token={TOKEN} />);
+    writeA11yFixture('signup-verify-confirm', confirm.container.innerHTML);
+    expect(await axe(confirm.container)).toHaveNoViolations();
+    confirm.unmount();
+
     const verified = render(<VerifyEmailClient token={TOKEN} initialResult={{ state: 'valid', oneTimeCode: 'c' }} />);
     expect(mockVerify).not.toHaveBeenCalled();
     writeA11yFixture('signup-verified', verified.container.innerHTML);

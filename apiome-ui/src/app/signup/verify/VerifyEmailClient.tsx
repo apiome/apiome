@@ -3,20 +3,22 @@
 /**
  * The sign-up confirmation screen (SGN-1.1, #5650).
  *
- * Redeems the link's token once (`verifyEmailSignup`), then:
+ * Asks for the password the person chose when they signed up, then redeems the link
+ * (`verifyEmailSignup`). The password is what ties the link to *their* sign-up: a link sent because
+ * someone else signed up with the address cannot be completed without that someone's password, and
+ * a completed link makes the entered password the account's only credential (RC6 security review —
+ * account pre-hijacking). Then:
  *
  * - **valid** — "Email confirmed", and the one-time code is exchanged for a session
  *   (`signIn('credentials', { payload: { oneTimeCode } })`, the OAuth sign-up path). `/ade` then
  *   shows the first-tenant onboarding wizard, since the account has no workspace yet.
+ * - **password-mismatch** — the form says so and stays; the link still works.
  * - **expired**, **used** or **invalid** — says which, and offers **Resend email** for the address
  *   plus a way to sign in. A used link is refused rather than signing in again.
- *
- * The redemption runs once per mount even under React Strict Mode's double effect: a second call
- * would find the link already used and show the wrong state.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { CircleAlert, Mail, MailCheck, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { CircleAlert, Lock, Mail, MailCheck, RotateCcw } from 'lucide-react';
 
 import { resendSignupVerification, verifyEmailSignup, type VerifyEmailSignupResult } from '@lib/auth/email-signup-actions';
 import { signIn } from '@lib/auth/session-client';
@@ -45,8 +47,15 @@ export interface VerifyEmailClientProps {
 /** Where a confirmed account goes; the onboarding guard takes over from there. */
 const AFTER_VERIFY = '/ade';
 
+/** A link the page cannot redeem: why, with the way out. */
+type RefusedState = Exclude<VerifyEmailSignupResult['state'], 'valid' | 'password-mismatch'>;
+
+/** What the confirm form says when the password does not belong to this link's sign-up. */
+export const PASSWORD_MISMATCH_TEXT =
+  "That is not the password chosen for this sign-up. If you signed up more than once, use the link in your newest email — or sign up again.";
+
 /** Heading and sentence per refused state. */
-const REFUSED_COPY: Record<Exclude<VerifyEmailSignupResult['state'], 'valid'>, { title: string; text: string }> = {
+const REFUSED_COPY: Record<RefusedState, { title: string; text: string }> = {
   expired: {
     title: 'This link has expired',
     text: 'Confirmation links work for 24 hours. Enter your email address and we will send a new one.',
@@ -68,28 +77,30 @@ const REFUSED_COPY: Record<Exclude<VerifyEmailSignupResult['state'], 'valid'>, {
  * @returns The page body inside the auth shell.
  */
 export default function VerifyEmailClient({ token, initialResult }: VerifyEmailClientProps) {
-  const [result, setResult] = useState<VerifyEmailSignupResult | null>(initialResult ?? null);
+  const [result, setResult] = useState<VerifyEmailSignupResult | null>(
+    initialResult ?? (token ? null : { state: 'invalid' })
+  );
   const [signInFailed, setSignInFailed] = useState(false);
-  const started = useRef(Boolean(initialResult));
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    void (async () => {
-      const redeemed = await verifyEmailSignup(token).catch(
-        (): VerifyEmailSignupResult => ({ state: 'invalid' })
-      );
-      setResult(redeemed);
-      if (redeemed.state === 'valid') {
-        const outcome = await signIn('credentials', {
-          payload: JSON.stringify({ oneTimeCode: redeemed.oneTimeCode }),
-          callbackUrl: AFTER_VERIFY,
-          redirect: true,
-        }).catch(() => null);
-        if (!outcome || (outcome as { error?: unknown }).error) setSignInFailed(true);
-      }
-    })();
-  }, [token]);
+  const handleConfirm = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    const redeemed = await verifyEmailSignup({ token, password }).catch(
+      (): VerifyEmailSignupResult => ({ state: 'invalid' })
+    );
+    setBusy(false);
+    setResult(redeemed);
+    if (redeemed.state === 'valid') {
+      const outcome = await signIn('credentials', {
+        payload: JSON.stringify({ oneTimeCode: redeemed.oneTimeCode }),
+        callbackUrl: AFTER_VERIFY,
+        redirect: true,
+      }).catch(() => null);
+      if (!outcome || (outcome as { error?: unknown }).error) setSignInFailed(true);
+    }
+  };
 
   return (
     <AuthShell>
@@ -98,11 +109,46 @@ export default function VerifyEmailClient({ token, initialResult }: VerifyEmailC
         <BetaBadge />
       </div>
       <Card className="auth-card" data-testid="signup-verify-card">
-        {!result ? (
-          <div className="auth-wait" role="status" aria-live="polite" data-testid="signup-verifying">
-            <Spinner size="md" aria-hidden="true" />
-            <div className="text-sm font-semibold text-fg">Confirming your email…</div>
-          </div>
+        {!result || result.state === 'password-mismatch' ? (
+          <form onSubmit={handleConfirm} data-testid="signup-verify-confirm">
+            <span className="auth-icon" aria-hidden="true">
+              <Mail />
+            </span>
+            <h1 className="auth-title mt-4">Confirm your email</h1>
+            <div className="auth-sub mt-1">
+              Enter the password you chose when you signed up to finish creating your account.
+            </div>
+            {result?.state === 'password-mismatch' ? (
+              <Alert variant="danger" role="alert" className="mt-4" data-testid="signup-verify-password-mismatch">
+                {PASSWORD_MISMATCH_TEXT}
+              </Alert>
+            ) : null}
+            <div className="mt-5 space-y-4">
+              <AuthField
+                id="verify-password"
+                label="Password"
+                icon={<Lock size={ICON_SIZE.dense} aria-hidden="true" />}
+                type="password"
+                name="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+              />
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={busy || password.length === 0}
+                title={password.length === 0 ? 'Enter your password first' : undefined}
+                data-testid="signup-verify-submit"
+              >
+                {busy ? <Spinner size="sm" aria-hidden="true" /> : null}
+                {busy ? 'Confirming…' : 'Confirm and sign in'}
+              </Button>
+            </div>
+          </form>
         ) : result.state === 'valid' ? (
           <Confirmed signInFailed={signInFailed} />
         ) : (
@@ -152,7 +198,7 @@ function Confirmed({ signInFailed }: { signInFailed: boolean }) {
  * @param props.state Which refusal.
  * @returns The refused panel.
  */
-function Refused({ state }: { state: Exclude<VerifyEmailSignupResult['state'], 'valid'> }) {
+function Refused({ state }: { state: RefusedState }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<{ kind: 'idle' | 'busy' | 'sent' } | { kind: 'error'; text: string }>({
     kind: 'idle',
