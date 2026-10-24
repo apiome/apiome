@@ -89,7 +89,7 @@ function MatrixCell({
   if (state === 'denied') {
     return (
       <span
-        className="inline-flex size-6 items-center justify-center rounded-md text-xs font-medium text-fg-faint shadow-[inset_0_0_0_1px_var(--border)]"
+        className="inline-flex size-6 items-center justify-center rounded-md text-xs font-medium text-fg-muted shadow-[inset_0_0_0_1px_var(--border)]"
         role="img"
         aria-label={label}
         title={label}
@@ -297,7 +297,7 @@ export function SafetyPosturePanel({ items, authType, loading, error }: Props) {
           Asserted
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="inline-flex size-4 items-center justify-center rounded-sm text-2xs font-medium text-fg-faint shadow-[inset_0_0_0_1px_var(--border)]">
+          <span className="inline-flex size-4 items-center justify-center rounded-sm text-2xs font-medium text-fg-muted shadow-[inset_0_0_0_1px_var(--border)]">
             false
           </span>
           Declared false

@@ -48,7 +48,8 @@ const EXCELLENT = tier(
   '90–100',
   'Excellent',
   'Production ready',
-  'text-green-600 dark:text-green-400',
+  // The ok ink token, not `text-green-600` (3.2:1 on the light canvas), for the same reason as GOOD.
+  'text-ok-fg',
   'text-green-500 dark:text-green-400',
   'from-green-500 to-green-600',
   'bg-green-500'

@@ -14,6 +14,23 @@ const MonacoDiffEditor = dynamic(
   { ssr: false },
 );
 
+/**
+ * `vs-dark` with fainter diff tints: its stock green and red stack to a background that drops
+ * syntax colours under 3:1 (WCAG 1.4.3). The light theme's tints already pass.
+ */
+const DIFF_DARK_THEME_ID = 'apiome-diff-dark';
+const DIFF_DARK_THEME = {
+  base: 'vs-dark' as const,
+  inherit: true,
+  rules: [],
+  colors: {
+    'diffEditor.insertedTextBackground': '#9ccc2c1a',
+    'diffEditor.insertedLineBackground': '#9bb9550f',
+    'diffEditor.removedTextBackground': '#ff00001a',
+    'diffEditor.removedLineBackground': '#ff00000f',
+  },
+};
+
 /** How the two sides are laid out: `split` (side-by-side) or `unified` (inline). */
 export type DiffMode = 'split' | 'unified';
 
@@ -38,6 +55,9 @@ export interface JsonDiffViewerProps {
    * how the catalog Versions pane's "expand all" control works, MFI-28.1 #4117).
    */
   hideUnchangedRegions?: boolean;
+  /** Accessible names of the two read-only editors (each side is an ARIA input field). */
+  originalAriaLabel?: string;
+  modifiedAriaLabel?: string;
   className?: string;
 }
 
@@ -58,6 +78,8 @@ export function JsonDiffViewer({
   minLines = 8,
   maxLines = 30,
   hideUnchangedRegions = true,
+  originalAriaLabel = 'Before',
+  modifiedAriaLabel = 'After',
   className,
 }: JsonDiffViewerProps) {
   const [isDark, setIsDark] = React.useState(false);
@@ -88,9 +110,15 @@ export function JsonDiffViewer({
       <MonacoDiffEditor
         height={height}
         language={language}
-        theme={isDark ? 'vs-dark' : 'light'}
+        theme={isDark ? DIFF_DARK_THEME_ID : 'light'}
+        beforeMount={(monaco) => monaco.editor.defineTheme(DIFF_DARK_THEME_ID, DIFF_DARK_THEME)}
         original={original}
         modified={modified}
+        // Each side is an ARIA input field; the diff-level label options do not reach them.
+        onMount={(editor) => {
+          editor.getOriginalEditor().updateOptions({ ariaLabel: originalAriaLabel });
+          editor.getModifiedEditor().updateOptions({ ariaLabel: modifiedAriaLabel });
+        }}
         options={{
           readOnly: true,
           domReadOnly: true,

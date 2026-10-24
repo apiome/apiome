@@ -81,6 +81,7 @@ function AxisRow({ axis }: { axis: McpTrustAxis }) {
             {axis.label}
             {/* Methodology on hover — the native title makes it discoverable and accessible. */}
             <span
+              role="img"
               className="inline-flex cursor-help text-fg-subtle"
               title={axis.methodology}
               aria-label={`How ${axis.label} is computed: ${axis.methodology}`}
@@ -91,7 +92,7 @@ function AxisRow({ axis }: { axis: McpTrustAxis }) {
           {axis.available ? (
             <span className={`mcp-tone-figure text-sm ${BAND_TEXT_TONE[band]}`}>
               {mcpTrustFormatValue(axis.value)}
-              <span className="text-xs font-normal opacity-80">/100</span>
+              <span className="text-xs font-normal">/100</span>
             </span>
           ) : (
             <span className="rounded-full bg-inset px-2 py-0.5 text-2xs font-medium uppercase tracking-wider text-fg-muted">
@@ -168,7 +169,7 @@ export function TrustProfilePanel({ profile, loading, error }: Props) {
           <div className="text-center">
             <div className={`mcp-tone-figure mcp-tone-figure--lead ${BAND_TEXT_TONE[overallBand]}`}>
               {mcpTrustFormatValue(profile.overall)}
-              <span className="text-base font-normal text-fg-subtle">/100</span>
+              <span className="text-base font-normal">/100</span>
             </div>
             <div className="mt-0.5 text-xs text-fg-muted">
               overall ·{' '}

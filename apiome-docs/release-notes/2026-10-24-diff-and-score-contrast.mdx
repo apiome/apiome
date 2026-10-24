@@ -1,0 +1,18 @@
+---
+slug: diff-and-score-contrast
+title: Easier-to-read version diffs and score colours
+description: The version diff names its two sides for screen readers, and diff highlights and Excellent scores meet contrast.
+authors: [apiome]
+---
+
+The side-by-side diff on a catalog item's **Versions** tab is easier to read, with a screen reader
+and in the dark theme. Scores in the **Excellent** band also meet contrast.
+
+{/* truncate */}
+
+- **Screen readers** announce the two sides of a version diff as **Before** and **After**. Until now,
+  neither side had a name.
+- **In the dark theme,** added and removed lines get a fainter highlight, so the code on them keeps
+  enough contrast to read.
+- **Excellent scores** (90–100) use the theme's success colour instead of a fixed green. The fixed
+  green fell below the contrast minimum on the light background.

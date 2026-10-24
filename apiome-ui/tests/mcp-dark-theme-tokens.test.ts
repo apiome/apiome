@@ -306,8 +306,8 @@ describe('numeric score-tier dark-theme tokens', () => {
     }
   });
 
-  it('keeps the light score-tier tints (light theme is unchanged)', () => {
-    expect(getNumericScoreTier(95).textClass).toContain('text-green-600');
-    expect(getNumericScoreTier(95).textClass).toContain('dark:text-green-400');
+  it('paints the Excellent band with the ok ink token, which is calibrated per theme', () => {
+    // `text-green-600` is 3.2:1 on the light canvas; the axe gate fails it (WCAG 1.4.3).
+    expect(getNumericScoreTier(95).textClass).toBe('text-ok-fg');
   });
 });
