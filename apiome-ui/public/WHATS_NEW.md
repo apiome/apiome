@@ -155,6 +155,7 @@ We continue to improve the platform based on your feedback with improvements and
 ## Bug Fixes
 
 - Import:
+  - Importing a spec larger than 1 MB from **Projects** or **Versions** no longer fails with *Body exceeded 1 MB limit*; the wizard now accepts specs up to 25 MB (set `APIOME_SERVER_ACTION_BODY_LIMIT` to change it)
   - Fixed upload to accept all file format extensions instead of just the 10 it had previously
   - Fixes dependency for AsyncAPI to re-enable import functionality
   - Fixing durability of import process, added extra tests to REST service test suite

@@ -15,6 +15,12 @@ const allowedDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// Server actions carry whole documents: the import wizard sends the parsed spec to `startImport`
+// (lib/db/import-actions.ts), so Next's 1 MB default refused any spec over ~1 MB with a 413.
+// Override with APIOME_SERVER_ACTION_BODY_LIMIT (Next's size syntax, e.g. "50mb").
+const serverActionBodySizeLimit = (process.env.APIOME_SERVER_ACTION_BODY_LIMIT?.trim() ||
+  "25mb") as `${number}mb`;
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
   // Enable standalone output for Docker
@@ -25,6 +31,9 @@ const nextConfig: NextConfig = {
     root: monorepoRoot,
   },
   experimental: {
+    serverActions: {
+      bodySizeLimit: serverActionBodySizeLimit,
+    },
     cpus: 4,
     memoryBasedWorkersCount: true,
   },
