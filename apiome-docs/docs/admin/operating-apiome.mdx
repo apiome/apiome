@@ -115,6 +115,14 @@ Provider sign-up and **Resend email** never show it. Refusals are listed under
 [Recent blocked sign-ups](./auth-providers.mdx#abuse-protection); they reach it only when
 `INTERNAL_SERVICE_TOKEN` is set on apiome-ui and apiome-rest, like every sign-in event.
 
+### Largest spec the import wizard accepts
+
+The **Import** wizard on **Projects** and **Versions** sends the whole parsed spec to apiome-ui in
+one request, which is capped at **25 MB** by default. A larger spec fails with *Body exceeded … limit*.
+To raise the cap, set `APIOME_SERVER_ACTION_BODY_LIMIT` (for example `50mb`) in `apiome-ui/.env`
+**before building** apiome-ui. The value is baked into the build, so rebuild the image after
+changing it. **Import to catalog** uploads through the REST API instead and is not affected.
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a
