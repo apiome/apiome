@@ -6,6 +6,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- Large lists:
+  - **Catalog** and the **Versions** table show 50 rows at a time, with *Showing 1–50 of 1000 items* and page buttons in the foot. A catalog of a thousand items now opens and filters as quickly as one of fifty
 - API Formats:
   - Hardening import functionality
   - Adds formats:

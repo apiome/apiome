@@ -313,8 +313,13 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
    and `apiome-ui/tests/permission-matrix-*.test.tsx`; printed on the *Roles* docs page.
 6. **Performance:** catalog list and versions table meet the HIVE-13.3 first-row budget with
    1,000 items.
+   ✅ #6213: both lists draw 50 rows a page; `apiome-ui/e2e/visual/at-size.spec.ts` (offset) and
+   `apiome-ui/tests/rc6-list-budgets-*.test.tsx` (time) at 1,000 items and 300 revisions.
 7. **Docs:** every Catalog, Projects and Versions page in `apiome-docs/` is current, with fresh
    screenshots and no links into held-back features.
+   ✅ #6214: 24 pages (Getting started, Bring in → Catalog / Import wizard, Build → Projects / Versions /
+   version dialogs, Ship → Publish / Export / Published / Sunset timeline) reviewed; their 62
+   screenshots regenerated.
 8. **Bug bar:** zero open bugs labelled `catalog`, `versions` or project-related at P0/P1.
 
 ## 4. Release order for held-back features (proposal)

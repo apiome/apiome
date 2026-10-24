@@ -63,6 +63,8 @@ import {
   DataTableClearFilters,
   DataTableFilterChip,
   DataTableFoot,
+  DataTablePager,
+  dataTablePage,
   DataTableToolbar,
   DataTableToolbarSpacer,
   type DataTableSortState,
@@ -143,6 +145,7 @@ import {
   versionCopySummary,
   versionFacetCounts,
   versionsFootLabel,
+  VERSIONS_PAGE_SIZE,
   versionsHeadLine,
   versionsSortFromMenu,
   versionsSortLabel,
@@ -551,6 +554,7 @@ const Versions = () => {
   const {
     view: tableView,
     setFilters: setTableFilters,
+    setPage: setTablePage,
     clearFilters: clearTableFilters,
   } = useDataTableUrlState(VERSIONS_TABLE_FILTERS);
   const historyTagFilter = tableView.filters.tag;
@@ -2417,6 +2421,12 @@ const Versions = () => {
     () => tableDisplayVersions.filter((v) => matchesVersionFacet(v, versionFacet)),
     [tableDisplayVersions, versionFacet]
   );
+  /* One page of revisions is drawn (RC6-H6, #6213); the page lives in the URL with the filters,
+     which return it to 1. `dataTablePage` clamps a page the narrowed list no longer reaches. */
+  const pagedVersions = useMemo(
+    () => dataTablePage(visibleVersions, tableView.page, VERSIONS_PAGE_SIZE),
+    [visibleVersions, tableView.page]
+  );
 
   /** A header click, through the primitive's asc → desc → null cycle, kept to two states. */
   const handleVersionsSortChange = useCallback((next: DataTableSortState | null) => {
@@ -3684,8 +3694,15 @@ const Versions = () => {
   const tableFooter = (
     <DataTableFoot>
       <span data-testid="versions-table-foot">
-        {versionsFootLabel(visibleVersions.length, versionsSort, lifecycleFilter)}
+        {versionsFootLabel(visibleVersions.length, versionsSort, lifecycleFilter, pagedVersions.page)}
       </span>
+      <DataTablePager
+        page={pagedVersions.page}
+        pageCount={pagedVersions.pageCount}
+        onPageChange={setTablePage}
+        label="Revision pages"
+        data-testid="versions-pager"
+      />
       <span className="ver-foot-side" data-testid="versions-table-foot-head">
         Head <span className="mono">{headLine.head ?? '—'}</span> · last published{' '}
         <span className="mono">{headLine.lastPublished ?? '—'}</span>
@@ -4003,7 +4020,7 @@ const Versions = () => {
                 ) : null}
 
                 <VersionsTable
-                  versions={visibleVersions}
+                  versions={pagedVersions.rows}
                   loading={!versionsLoaded}
                   error={versionsError}
                   onRetry={() => {

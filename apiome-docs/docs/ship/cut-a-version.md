@@ -5,8 +5,8 @@ sidebar_position: 2
 tags: [versions]
 ---
 
-Cutting a version creates a new **revision** of a project. Classes are carried over from the base,
-while paths are authored on the new revision (see [Edit paths and operations](../build/edit-paths.md)). A version is the
+Cutting a version creates a new **revision** of a project. Classes are copied from the base version,
+and so are its paths unless you untick **Copy paths** (see [Edit paths and operations](../build/edit-paths.md)). A version is the
 unit you later **publish** ([Publish a version](./publish-a-version.md)).
 
 ---
@@ -14,8 +14,10 @@ unit you later **publish** ([Publish a version](./publish-a-version.md)).
 ## In the UI
 
 1. Open **Versions** at `/ade/dashboard/versions`.
-2. Choose **Cut a version**, set the version number and a revision note.
-3. The new revision becomes the working revision you edit.
+2. **Click “New version”**, keep **Auto-generate version** or type a **Version ID**, write a
+   **Message**, and **click “Create version”**. (A **Viewer** doesn't see **New version**.)
+3. The new revision becomes the working revision you edit. The full walk-through is in [Version and
+   publish](../getting-started/versions-and-publishing.mdx).
 
 ## With the REST API
 

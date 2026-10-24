@@ -105,3 +105,20 @@ with what it is based on and a link to check it. There is no score until maturit
 available.
 
 <Screenshot id="entity-facts" alt="A catalog item's Facts: owner present but not contactable, three consumers, no declared dependencies, refreshed within cadence, deployed on two environments, compatibility level not set" />
+
+{/* RC6-H7 (#6214): the connector provenance paragraph (`connectors`), back on "An item's page" right
+     after "On **Provenance**, an item imported before the import recorded its fingerprint …": */}
+
+An item synced by a connector shows **Synced by a connector** on the
+**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
+**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
+connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
+
+{/* RC6-H7 (#6214): the entities bullet (`catalog-entities`, `teams`), back at the top of
+     "With the CLI or the API": */}
+
+- REST: `GET /v1/catalog/{tenant}/entities` lists every kind in one shape (`kind`, `id`, `slug`,
+  `name`, `description`, `owner`, `updatedAt`, `href`, `graphNode`), filtered by repeatable `kind`,
+  `team` and `q` and paged with `cursor` (`pagination.nextCursor`);
+  `GET /v1/catalog/{tenant}/entities/summary` returns the count of each kind and the three callouts
+  — see [Catalog entities](../reference/rest/catalog-entities.md).

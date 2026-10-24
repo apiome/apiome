@@ -15,10 +15,11 @@ Apiome repository.
 ## Open the import wizard
 
 **On Home, click “Import a spec”** (or press <Kbd keys="I"/>). The same wizard opens from
-**Import** on the **Projects** page. (The **Catalog** has its own wizard for other formats — see the
+**Import** on the **Projects** page. You need a role that can import: a **Viewer** can't, so ask an
+Editor or an administrator. (The **Catalog** has its own wizard for other formats — see the
 [Import wizard](../bring-in/import-wizard.mdx).)
 
-<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with File Upload, URL Import, Clipboard Paste, Git Repository and other source cards" caption="Shown with every source. Opened from Home or Projects, the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
+<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with File Upload, URL Import, Clipboard Paste, Git Repository and other source cards" caption="Shown with every source. Opened from Home or Projects, the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository, SwaggerHub and Design with AI." />
 
 ## Import a file
 
@@ -27,13 +28,15 @@ Apiome repository.
    - **URL Import** — a link to the file;
    - **Clipboard Paste** — paste JSON or YAML;
    - **Git Repository** — a file in GitHub or GitLab;
-   - **SwaggerHub** — an API published on SwaggerHub.
+   - **SwaggerHub** — an API published on SwaggerHub;
+   - **Design with AI** — describe an API and let the assistant draft the specification.
 
    Choose **File Upload**, select the petstore file and **click “Analyze →”**.
 2. **Analyze.** Apiome detects the format and checks the document. **Click “Continue”.**
 3. **Preview.** Review the schemas Apiome found and select the ones to keep, then **click
    “Import →”**.
-4. **Import.** The import runs as a job — you can close the dialog and it keeps running.
+4. **Import.** The import runs as a job — you can close the dialog and it keeps running. When it
+   says **Completed**, **click “Continue”**.
 5. **Done.** The new project is ready. **Click “Done”.**
 
 If the import fails, the wizard lists the failures and nothing is saved — fix the specification or

@@ -112,10 +112,11 @@ describe('the rules live in the model, not in the screen', () => {
     expect(table).toContain('CatalogRowMenu');
   });
 
-  it('hands both views the same narrowed array', () => {
+  it('hands both views the same narrowed array, one page of it (RC6-H6)', () => {
     expect(client).toMatch(/const visible = React\.useMemo\(/);
-    expect(client).toContain('items={visible}');
-    expect(client).toMatch(/visible\.map\(\(item\) => \(/);
+    expect(client).toMatch(/const paged = React\.useMemo\(\(\) => dataTablePage\(visible,/);
+    expect(client).toContain('items={paged.rows}');
+    expect(client).toMatch(/paged\.rows\.map\(\(item\) => \(/);
   });
 });
 

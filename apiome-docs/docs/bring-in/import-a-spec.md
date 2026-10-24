@@ -98,10 +98,13 @@ it for you.
 
 ## In the UI
 
-1. Open the **Designer** at `/ade/studio`.
-2. Choose **Import** and select a file (or paste a document / URL).
-3. Watch the job progress; when it reaches **completed**, the imported classes and paths appear on
-   the canvas.
+1. On **Projects**, **click “Import”** (or press <kbd>I</kbd>) and choose a source — a file, a URL,
+   pasted content or a Git repository.
+2. Go through **Analyze → Preview → Import**; see [Import your first
+   project](../getting-started/first-project.mdx) for each step, and the [Import
+   wizard](./import-wizard.mdx) for formats other than OpenAPI.
+3. When the job says **Completed**, **click “Continue”**; the wizard shows **Import Complete!** and
+   the new project appears on **Projects**.
 
 ## With the CLI
 
@@ -181,8 +184,8 @@ pre-flight still runs, and the step still stops whenever the verdict blocks or c
 ### Set the tenant quality policy
 
 By default nothing is blocked: a fresh tenant scores every import and reports the result without
-refusing anything. To make the gate real, set the **import & export quality policy**. The
-Style guides screen where it is edited is not yet available, so set it over the REST API with
+refusing anything. To make the gate real, set the **import & export quality policy**. Set it
+over the REST API with
 [`PUT /v1/tenants/{tenant_slug}/governance/quality-policy`](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put):
 
 - **Minimum grade / minimum score / refuse findings at** — the three floors. Leave one blank to
@@ -223,7 +226,7 @@ check is server-side, so a client cannot grant itself one.
 
 ## Verify
 
-- **UI:** the imported classes are listed in the Designer.
+- **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.
 - **CLI:** `apiome schemas list` shows the new classes; `apiome projects list` shows the
   project the import created.
 

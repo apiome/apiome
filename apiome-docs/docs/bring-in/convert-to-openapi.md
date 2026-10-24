@@ -35,7 +35,7 @@ flowchart LR
 
 ## Walkthrough: in the UI
 
-1. Open **Control Panel → Dashboard → Catalog**, select the item, and open the
+1. Go to **Bring in → Catalog**, select the item, and open the
    **Convert** preview (dialog title **Convert to OpenAPI Project — _item_**). Nothing
    is created until you convert.
 2. The header shows the **fidelity score** (`Fidelity n/100`), tier pill, and a banner.
@@ -47,7 +47,8 @@ flowchart LR
      missing*, with coverage badges (`from source`, `inferred`, `partial`, `missing`,
      `no OpenAPI form`).
    - **Projection graph** is the per-construct evidence (next section).
-   - **Conversion** holds the target project settings.
+   - **Conversion** shows the OpenAPI document the conversion would create. The **Fill cheap
+     gaps** fields (**Title**, **Version**, **Servers**) are on **Summary**.
 4. **Select any graph node or table row** to open the evidence drawer; use the safe
    defaults it offers (**Apply & recompute**) to close cheap gaps.
 5. Tick the acknowledgement if the tier requires it, then **Convert** — or **Cancel**,
@@ -147,8 +148,8 @@ and the same values can be supplied in the CLI, so the manifest is reproducible.
 
 | Fidelity tier | Banner | Acknowledgement |
 |---|---|---|
-| `high` | High fidelity — a near-lossless conversion | Optional confirmation. |
-| `medium` | Partial fidelity — some constructs had to be inferred | Optional confirmation. |
+| `high` | High fidelity — a near-lossless conversion | None — **Convert** is enabled. |
+| `medium` | Partial fidelity — some constructs had to be inferred | None — **Convert** is enabled. |
 | `low` | Low fidelity — this conversion will be substantially incomplete | **Required** — Convert stays disabled until you tick *"I understand the converted spec will be incomplete and want to convert anyway."* |
 
 Recomputing (changed defaults, changed source) always resets the acknowledgement.

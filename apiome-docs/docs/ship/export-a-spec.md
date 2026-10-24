@@ -36,7 +36,8 @@ you download anything.
    where each one lands. If the conversion loses something, tick the acknowledgement, or type the
    phrase it asks for when the result would be types only.
 5. **Click "Export"** (**"Export anyway"** after an acknowledgement), review the file, and
-   **click "Download"** or **"Download .zip"** for a format that writes several files.
+   **click the "Download" button that names the file**, or **"Download .zip"** for everything in one
+   archive.
 
 <Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
 
@@ -290,7 +291,7 @@ downloaded document with `openapi-spec-validator`.
 ## Test-drive it
 
 For OpenAPI targets, the REST API can turn the artifact you just generated into
-a **live mock** for a few minutes — one click, a base URL you can `curl`, responses generated from
+a **live mock** for a few minutes — a base URL you can `curl`, responses generated from
 the document's own response schemas, and a log of everything it served. It is the strongest check
 available: a document that cannot answer its own operations is a finding no static validation would
 surface.
@@ -303,8 +304,7 @@ POST /v1/export/{tenant_slug}/mock
 The mock expires by itself, and servers without the Mock Server deployed report the capability as
 unavailable rather than offering a button that cannot work. See
 [export_mock_test_drive.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_mock_test_drive.md) for the endpoints,
-the lifetime rules and the configuration. The test-drive panel lives in the Export studio, which is
-not yet available.
+the lifetime rules and the configuration.
 
 ## Related
 

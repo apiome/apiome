@@ -64,7 +64,7 @@ measurement mistake.
 **The mockups are read-only.** They are loaded over `file://`, exactly as
 `docs/mockups/README.md` describes its own QA sweep. Nothing here writes to `docs/mockups/`.
 
-## The four suites
+## The five suites
 
 | File | What it holds the line on |
 | --- | --- |
@@ -72,6 +72,7 @@ measurement mistake.
 | `self-test.spec.ts` | that the gate can fail: 20 px of extra padding on a passing page must fall through it, and must cost at least five points |
 | `first-row.spec.ts` | that the first-row budget can fail: the pre-quiet-pass Catalog must fail it and the HIVE-11.6 Catalog must pass it |
 | `theme-swap.spec.ts` | that a theme is a token swap — every page's chrome lands on the same pixel in dark as in light |
+| `at-size.spec.ts` | that the Catalog (1,000 items) and the versions table (300 revisions) still meet their first-row budgets at size (RC6-H6) — fixtures in `e2e/fixtures/hive-at-size/`, written by `AT_SIZE_FIXTURE_DUMP=1 npx jest tests/rc6-list-budgets -t fixture` |
 
 ## Coverage is a ledger
 

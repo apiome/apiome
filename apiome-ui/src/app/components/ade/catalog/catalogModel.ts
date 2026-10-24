@@ -26,7 +26,7 @@
 
 import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { EntityOwner } from '@lib/owners';
-import type { DataTableSortState } from '@/app/components/ui/DataTable';
+import { dataTableRangeLabel, type DataTableSortState } from '@/app/components/ui/DataTable';
 import {
   destructiveConfirm,
   type DestructiveConfirmOptions,
@@ -830,12 +830,36 @@ export function catalogSortLabel(sort: DataTableSortState | null | undefined): s
   return `${CATALOG_SORT_COLUMN_LABELS[column].toLowerCase()} ${direction === 'asc' ? '↑' : '↓'}`;
 }
 
-/** The table foot: `7 items · sorted by artifact ↑`. */
+/**
+ * How many items one page of the Catalog draws, in either view (RC6-H6, #6213).
+ *
+ * A thousand cards or rows take seconds to mount, and every keystroke in the filter re-draws them
+ * all; fifty keep the first row and each filter well inside budget, and are more than a 1440 × 900
+ * screen shows at once.
+ */
+export const CATALOG_PAGE_SIZE = 50;
+
+/**
+ * The table foot: `7 items · sorted by artifact ↑`, or — once the list needs more than one page —
+ * `Showing 51–100 of 1000 items · sorted by artifact ↑`.
+ *
+ * @param count How many items matched.
+ * @param sort The table's sort.
+ * @param page The 1-based page shown (ignored for a one-page list).
+ * @param pageSize Items per page.
+ * @returns The sentence.
+ */
 export function catalogFootLabel(
   count: number,
-  sort: DataTableSortState | null | undefined
+  sort: DataTableSortState | null | undefined,
+  page = 1,
+  pageSize = CATALOG_PAGE_SIZE
 ): string {
-  return `${count} ${count === 1 ? 'item' : 'items'} · sorted by ${catalogSortLabel(sort)}`;
+  const counted =
+    count > pageSize
+      ? dataTableRangeLabel(page, pageSize, count, 'item')
+      : `${count} ${count === 1 ? 'item' : 'items'}`;
+  return `${counted} · sorted by ${catalogSortLabel(sort)}`;
 }
 
 // ---------------------------------------------------------------------------------------
