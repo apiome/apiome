@@ -23,7 +23,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 1 | ✅ | Sat afternoon | Fix the apiome-ui image build (`--legacy-peer-deps` + pin `@better-auth/core` 1.6.25) | B1 | Claude | `apiome-ui-publish` pushes an image from `main` | #6259; publish green on `main` |
 | 2 | ✅ | Sat afternoon | Install Chromium's system libraries on runner `server-node-5` | B2 | You | the a11y job gets past "Install Chromium's system libraries" | Done by you; visual parity ran green afterwards |
 | 3 | ✅ | Sat afternoon | Raise the RC6-H6 timing ceilings for the CI runner | B3 | Claude | `apiome-ui.yml` green on `main` | #6259 (ceilings) and #6261 (5 s Testing Library wait for every suite) |
-| 4 | 🔄 | Sat afternoon | Replace the hand-typed "53 formats" with the tagged count | B4 | Claude | `generate_format_counts.py --check` passes | Fixed in #6259 and passes locally; the nightly REST run on `main` is confirming it |
+| 4 | ✅ | Sat afternoon | Replace the hand-typed "53 formats" with the tagged count | B4 | Claude | `generate_format_counts.py --check` passes | #6259; the check passes on `main` (run 40125702755). That run still failed on 8 tests needing a database or a faster machine; fixed in #PR |
 | 5 | 🔄 | Sat afternoon | **Gate 1:** re-run every workflow on `main` | — | You | all green | Runs queued behind the single self-hosted runner after #6260 and #6261 merged; `apiome-rest` green |
 | 6 | ✅ | Sat evening | Move the 10 deferred issues out of `RC6`; update the milestone description | B9 | You approve, Claude applies | `RC6` has 0 open issues | Moved to the new `RC7` milestone; `RC6` has 0 open issues |
 | 7 | ✅ | Sat evening | Decide lane E (recommended: "allow-lists only shrink" + a post-launch ticket) | B8 | You | decision recorded in `RC6_OOE.md` §4 | Accepted; §4 reworded; follow-up #6263 (RC7) |
@@ -56,7 +56,7 @@ decisions). **Claude** = a code or docs change Claude can make and open as a PR.
 | **B1** | ✅ | **The apiome-ui image does not build.** `apiome-ui-publish` has failed on every run since 2026-10-23 18:27 UTC: `npm install` in `apiome-ui/Dockerfile` resolves without a lockfile and hits `ERESOLVE` (`@better-auth/sso@1.6.25` pins `@better-auth/utils@0.4.2`; a fresh resolve now picks `@better-auth/core@1.7.12`, and a second, unrelated `vitest`/`@sveltejs/kit` peer conflict). | No UI image ⇒ nothing to deploy | Claude | 30 min |
 | **B2** | ✅ | **The self-hosted runner `server-node-5` cannot start Chromium** (system libraries missing, no passwordless sudo). The accessibility gate, the visual-parity harness and the Catalog → Project journey (RC6-H1) all fail before running a test. | The release gate's journey and a11y checks cannot go green | You | 5 min |
 | **B3** | ✅ | **Two of the RC6-H6 timing tests fail on the CI runner** (`tests/rc6-list-budgets-*.test.tsx`): the runner is ~10× slower than a laptop, so a 1 s ceiling for filter/sort trips (1.0–1.4 s measured). The exact guard (one page of rows mounted) passes. | `apiome-ui.yml` is red | Claude | 15 min |
-| **B4** | 🔄 | **The nightly REST suite fails its format-count check**: `apiome-docs/docs/ship/export-a-spec.md:48` hand-types "**53 formats**" (from #6211). | `apiome-rest-test.yml` is red | Claude | 10 min |
+| **B4** | ✅ | **The nightly REST suite fails its format-count check**: `apiome-docs/docs/ship/export-a-spec.md:48` hand-types "**53 formats**" (from #6211). Fixed in #6259. With that fixed, the suite still showed 8 failures: 6 tests that open a real Postgres connection, which CI does not have, and 2 timing ceilings set for a laptop. Fixed in #PR. | `apiome-rest-test.yml` is red | Claude | 10 min |
 | **B5** | ✅ | **`https://get.apiome.dev` does not serve the CLI installer.** DNS points at the `apiome.dev` host, whose certificate is for `ai-dev.apiome.dev` only (TLS fails); plain HTTP returns 404; the production `Caddyfile` has no `get.` site. | Lane D's exit criterion and every "install the CLI" instruction in the docs fail | You (Claude can write the Caddy block) | 30 min |
 | **B6** | ✅ | **No recorded `/security-review`** of the sign-up and two-factor changes (SGN-1.1…1.5, TFA-1.1…1.4) — a release-gate item. | Release gate | Claude runs it, You accept | 1 h |
 | **B7** | ✅ | **What's new still says "Apiome 08-2026 RC5".** | Release gate | Claude (You pick the label) | 5 min |
@@ -172,7 +172,7 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] B1 UI image builds and publishes from `main` (#6259)
 - [x] B2 runner can start Chromium
 - [x] B3 UI unit suite fixes merged (#6259, #6261) — confirm on the next `main` run
-- [ ] B4 nightly REST suite green (fix merged in #6259; run in progress)
+- [x] B4 format-count check passes on `main` (#6259); the remaining 8 suite failures fixed in #PR — confirm on the next `apiome-rest-test` run
 - [ ] Gate 1: every workflow on `main` green
 - [x] B9 `RC6` milestone has 0 open issues (deferred work → `RC7`)
 - [x] B8 lane E decision recorded ("allow-lists only shrink", #6263)

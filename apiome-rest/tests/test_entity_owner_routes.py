@@ -91,6 +91,9 @@ def store(monkeypatch) -> _FakeStore:
     fake = _FakeStore()
     for name in ("read_owners", "assign_owner", "remove_owner", "confirm_owner", "bulk_assign_owner"):
         monkeypatch.setattr(routes, name, getattr(fake, name))
+    # The GET route also reads the owner.* facts straight from Postgres; CI has no database.
+    no_owner = {"owner.present": False, "owner.contactable": False}
+    monkeypatch.setattr(routes, "owner_facts", lambda tenant_id, kind, entity_id: dict(no_owner))
     return fake
 
 

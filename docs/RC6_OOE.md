@@ -238,9 +238,10 @@ RC6 is ready to tag when every box below is ticked. **Blockers as of 2026-10-24*
 - [ ] Lanes A, B, D, E and H are closed. *(All tickets closed. **B5 resolved 2026-10-24** — `https://get.apiome.dev`
       serves `install.sh` over a valid certificate. Lane E: **B8 resolved 2026-10-24** — criterion is "allow-lists only shrink",
       follow-up #6263.)*
-- [ ] **Every workflow on `main` is green.** *(⛔ **B1** apiome-ui image build fails (npm `ERESOLVE`); ⛔ **B2**
-      runner cannot start Chromium (a11y, visual parity, Catalog journey); ⛔ **B3** RC6-H6 timing ceilings
-      trip on the runner; ⛔ **B4** nightly REST format-count check.)*
+- [ ] **Every workflow on `main` is green.** *(✅ **B1** apiome-ui image builds (#6259); ✅ **B2**
+      runner starts Chromium; ✅ **B3** RC6-H6 timing ceilings raised (#6259, #6261); ✅ **B4** format-count
+      check passes on `main` (#6259), with the suite's 8 remaining failures (no database in CI, laptop timing
+      ceilings) fixed in #PR. Gate 1 re-run still open.)*
 - [ ] A clean-stack journey passes: **sign up (email) → verify → onboard → enrol Authy → sign out →
       sign in with a code → `apiome login` → import a non-OpenAPI spec into the Catalog → convert it
       to a project → cut a version → publish → export through the Export dialog**.

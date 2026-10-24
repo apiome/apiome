@@ -38,6 +38,9 @@ from app.main import app
 from app.sso_metadata import CODE_DOMAIN_CLAIMED, CODE_SLUG_TAKEN, SsoConfigError
 
 client = TestClient(app)
+#: For sweeping every GET route: a route that fails (say, one that needs a database CI does not
+#: have) answers 500 instead of raising, and its body is still checked for leaks.
+sweep_client = TestClient(app, raise_server_exceptions=False)
 
 BASE = "/v1/admin/sso/providers"
 ISSUER = "https://idp.example.com/realms/acme"
@@ -660,7 +663,7 @@ def test_no_get_route_returns_an_sso_secret_or_its_ciphertext(admin) -> None:
         if route.path in _SECRET_BEARING:
             continue
         for provider in (oidc, saml):
-            response = client.get(_fill(route.path, {"provider_id": provider["id"]}), headers=headers)
+            response = sweep_client.get(_fill(route.path, {"provider_id": provider["id"]}), headers=headers)
             body = response.text
             leaks = [n for n in needles if n and n in body]
             assert not leaks, f"GET {route.path} returned SSO secret material"
