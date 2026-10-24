@@ -76,7 +76,11 @@ export function CatalogConvertedStrip({
           <>: </>
         )}
         {view.projectHref ? (
-          <Link href={view.projectHref} className="cid-converted__link">
+          <Link
+            href={view.projectHref}
+            className="cid-converted__link"
+            data-testid="catalog-detail-converted-project"
+          >
             {view.projectLabel}
           </Link>
         ) : (

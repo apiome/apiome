@@ -282,6 +282,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['copy', 'empty state', 'error message', 'loading', 'tone', 'writing', 'microcopy'],
   },
   {
+    id: 'visual-parity',
+    title: 'Visual parity and first-row budgets',
+    summary: 'How redesigned pages are scored against the mockups, and the first-row budget.',
+    page: 'apiome-docs/docs/reference/visual-parity.md',
+    section: 'reference',
+    keywords: ['mockup', 'playwright', 'design tokens', 'above the fold', 'screenshot'],
+  },
+  {
+    id: 'catalog-journey',
+    title: 'Catalog to project journey test',
+    summary: 'The end-to-end test that walks Catalog import through export on every pull request.',
+    page: 'apiome-docs/docs/reference/catalog-journey.md',
+    section: 'reference',
+    keywords: ['e2e', 'end to end', 'playwright', 'ci', 'regression', 'pull request'],
+  },
+  {
     id: 'ci-diff-gate',
     title: 'CI contract gate (GitHub Action)',
     summary:

@@ -1,0 +1,134 @@
+name: Catalog Journey (RC6-H1)
+
+# End-to-end Catalog → Project journey (RC6-H1, #6208): the one test that walks the whole path
+# RC6 ships through the real UI, REST and Postgres —
+#   paste a RAML spec into the Catalog import dialog → open the catalog item → convert to OpenAPI
+#   (new project) → edit the project → cut a version → publish → unpublish → export through the
+#   in-place Export dialog.
+# Spec: apiome-ui/e2e/journey/catalog-project-journey.spec.ts, config
+# apiome-ui/playwright.catalog-journey.config.ts. Sign-in uses the mock OAuth provider; nothing
+# else is mocked.
+#
+# Unlike the on-demand OLO journey (e2e-journey.yml) and golden path (golden-path.yml), this runs
+# on every pull request that touches the three packages the journey crosses. It runs with **no
+# preview override** (NEXT_PUBLIC_APIOME_PREVIEW_FEATURES is empty at build and at run time), so
+# it exercises only RC6's released surfaces; the spec's first step fails if a held-back route
+# opens.
+#
+# The runner is self-hosted and shared, so every host port is picked free per run and the compose
+# project is named per run: two runs (or local dev) on one node never collide.
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apiome-ui/**'
+      - 'apiome-rest/**'
+      - 'apiome-db/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/e2e-catalog-journey.yml'
+      # Root workspace resolution decides apiome-ui's dependencies.
+      - 'package.json'
+      - 'yarn.lock'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-catalog-journey-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  journey:
+    name: Catalog → Project journey
+    runs-on: self-hosted
+    timeout-minutes: 45
+
+    env:
+      COMPOSE_PROJECT_NAME: catalog-journey-${{ github.run_id }}-${{ github.run_attempt }}
+      # Throwaway value for an ephemeral CI stack, deliberately inline and obviously non-secret.
+      BETTER_AUTH_SECRET: catalog-journey-ci-secret
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Released surfaces only. Inlined at build time, so the build step sees it too.
+      NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: ""
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Pick free host ports
+        run: |
+          set -euo pipefail
+          # Ask the OS for a currently-free port (python3 binding to port 0).
+          pick_free_port() {
+            python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+          }
+          pg_port="$(pick_free_port)"
+          rest_port="$(pick_free_port)"
+          ui_port="$(pick_free_port)"
+          mock_port="$(pick_free_port)"
+          echo "postgres -> ${pg_port}, rest -> ${rest_port}, ui -> ${ui_port}, mock oauth -> ${mock_port}"
+          {
+            echo "POSTGRES_PUBLISH_PORT=${pg_port}"
+            echo "APIOME_REST_HTTP_PORT=${rest_port}"
+            echo "JOURNEY_UI_PORT=${ui_port}"
+            echo "MOCK_OAUTH_PORT=${mock_port}"
+            echo "DATABASE_URL=postgresql://postgres:apiome_local_dev@localhost:${pg_port}/apiome"
+            echo "NEXT_PUBLIC_REST_API_BASE_URL=http://localhost:${rest_port}/v1"
+          } >> "$GITHUB_ENV"
+
+      - name: Bring up the spine (postgres -> migrate -> rest)
+        run: docker compose up --build --wait postgres migrate rest
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install Apiome UI dependencies
+        run: yarn install
+        working-directory: apiome-ui
+
+      - name: Install Playwright Chromium
+        run: yarn playwright install chromium
+        working-directory: apiome-ui
+
+      - name: Build Apiome UI (no preview override)
+        run: yarn build
+        working-directory: apiome-ui
+
+      - name: Run the Catalog → Project journey
+        run: yarn test:e2e:catalog-journey
+        working-directory: apiome-ui
+        env:
+          CI: "1"
+          CATALOG_JOURNEY_USE_BUILD: "1"
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-journey-playwright-report
+          path: |
+            apiome-ui/playwright-report-catalog-journey/
+            apiome-ui/test-results/
+          if-no-files-found: ignore
+        continue-on-error: true
+
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose logs --no-color > docker-compose.logs.txt 2>&1 || true
+
+      - name: Upload stack logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-journey-stack-logs
+          path: docker-compose.logs.txt
+          if-no-files-found: ignore
+        continue-on-error: true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

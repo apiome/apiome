@@ -71,10 +71,43 @@ admin edit reaches the login path within a bounded wait instead of the 30s defau
 (alphabetically) and clears its `auth_provider_config` row before *and* after: that table is
 **global**, so a leaked row would change which credentials every other spec signs in with.
 
+## Catalog → Project journey (RC6-H1, #6208)
+
+`catalog-project-journey.spec.ts` walks the path RC6 ships, one serial step per screen:
+
+1. a held-back route shows *Not available yet* (proves the run has no preview override);
+2. a RAML spec from the examples corpus, retitled per run, is pasted into the Catalog import dialog;
+3. its catalog item is opened from the Catalog list;
+4. **Convert to OpenAPI** creates a new project;
+5. the project's description is edited (and read back after a reload);
+6. a version is cut on the Versions page;
+7. it is published;
+8. it is unpublished;
+9. that version is exported to Protobuf through the in-place **Export** dialog.
+
+It has its own config, `playwright.catalog-journey.config.ts`, because it must run with **no**
+`NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` (`support/env.ts` → `catalogJourneyServerEnv()`), while the
+OLO config turns every preview on and ignores this file. Every wait is on a `data-testid` or role;
+`tests/catalog-journey-config.test.ts` fails if a test id the spec waits on is no longer drawn.
+
+```bash
+# from apiome-ui/, with Postgres + migrations + REST up
+yarn test:e2e:catalog-journey
+
+# against a production build, as CI does (build with the override empty — it is inlined)
+NEXT_PUBLIC_APIOME_PREVIEW_FEATURES= yarn build
+CATALOG_JOURNEY_USE_BUILD=1 yarn test:e2e:catalog-journey
+```
+
+CI: `.github/workflows/e2e-catalog-journey.yml`, on every pull request that touches `apiome-ui`,
+`apiome-rest` or `apiome-db`. It picks free host ports and a per-run compose project, so it can
+share the self-hosted runner.
+
 ## Suite layout
 
 - `oauth-onboarding-journey.spec.ts` — the eleven-step journey (serial): four OAuth providers,
   invariants, onboarding, license, switcher, credentials sign-in, and the 2FA legs.
+- `catalog-project-journey.spec.ts` — the RC6-H1 Catalog → Project journey (above), own config.
 - `provider-config-precedence.spec.ts` — the OLO-8.9 DB-over-`.env` provider-config story (above).
 - `support/env.ts` — ports, URLs, and the app-under-test environment (the four provider mock
   overrides, plus the OLO-8.9 database-config-source variables).
