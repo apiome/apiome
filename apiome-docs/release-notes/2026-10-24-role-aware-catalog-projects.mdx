@@ -1,0 +1,26 @@
+---
+slug: role-aware-catalog-projects
+title: Catalog, Projects and Versions show only what your role can do
+description: Buttons and menu items appear only for roles the API lets use them.
+authors: [apiome]
+---
+
+**Catalog**, **Projects** and **Versions** now draw each write control only for a role that can
+use it. The REST API refuses the same actions with `403` for every other role. One table decides
+both, and it's on the [Roles](/workspace/roles#what-each-role-can-do-in-catalog-projects-and-versions)
+page.
+
+{/* truncate */}
+
+- **Viewer** can open, lint and **Export** anything, but sees no **Import**, **New project**,
+  **Convert**, **Categorize…**, **Delete**, **Undelete**, **Edit** or **Publish**. The bulk bar
+  offers nothing to delete or convert.
+- **Editor** can do everything in these areas except **Publish** and **Unpublish**.
+- **Owner** (a tenant administrator) can do everything.
+- **Converting** a catalog item needs `projects:create`, because it creates a project. The REST API
+  used to allow it for every member. Previewing a conversion still works for everyone.
+- **Custom roles** follow their own matrix. A role with `projects:create` but not `projects:delete`
+  sees **Convert** and **New project**, but no **Delete**.
+
+While your permissions load, the header buttons wait, disabled, for a moment. They're never shown
+and then taken away.

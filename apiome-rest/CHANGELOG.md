@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.449.0] - 2026-10-24
+
+### Changed
+- **Permission matrix for Catalog and Projects (RC6-H5, #6212)** — `docs/catalog-projects-permission-matrix.json`
+  tables every Catalog, Projects and Versions action, the permission it needs and its REST calls;
+  `tests/test_permission_matrix.py` proves each call refuses Viewer / Editor / Owner exactly as the table says.
+  - `POST /v1/catalog/{tenant_slug}/{item_id}/convert` with `dryRun=false` now needs `projects:create` (`403`
+    otherwise): a commit creates a project, and the route had no permission check. The dry-run preview still needs
+    only membership.
+
 ## [1.448.0] - 2026-10-23
 
 ### Changed

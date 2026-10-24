@@ -51,6 +51,13 @@ import {
   x12ScannedRecord,
 } from './helpers/payload-analysis-fixture';
 
+// These suites cover the screen as an Owner; what each role is offered is
+// tests/permission-matrix-ui.test.tsx (RC6-H5, #6212).
+jest.mock('../src/app/components/ade/access/useMyPermissions', () => ({
+  ...jest.requireActual('../src/app/components/ade/access/useMyPermissions'),
+  useMyPermissions: () => ({ status: 'ready', can: () => true, isAdmin: true }),
+}));
+
 /** The mockup's item: an X12 interchange, scored B, already converted once. */
 const ITEM = {
   id: 'c3a5e1f0-0000-4000-8000-000000000001',

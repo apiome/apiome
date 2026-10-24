@@ -1,0 +1,645 @@
+{
+  "$comment": "RC6-H5 (#6212): what viewer, editor and owner may do in Catalog, Projects and Versions. Read by apiome-rest/tests/test_permission_matrix.py and apiome-ui/tests/permission-matrix-ui.test.tsx; rendered on apiome-docs/docs/workspace/roles.mdx. A role may perform an action when it is a tenant administrator or its grants contain the action's permission; permission null means any member.",
+  "roles": {
+    "viewer": {
+      "label": "Viewer",
+      "tenantAdmin": false,
+      "grants": [
+        "projects:view",
+        "versions:view",
+        "imports:view"
+      ]
+    },
+    "editor": {
+      "label": "Editor",
+      "tenantAdmin": false,
+      "grants": [
+        "projects:view",
+        "projects:create",
+        "projects:edit",
+        "projects:delete",
+        "versions:view",
+        "versions:create",
+        "versions:edit",
+        "versions:delete",
+        "imports:view",
+        "imports:create",
+        "imports:edit",
+        "imports:delete"
+      ]
+    },
+    "owner": {
+      "label": "Owner",
+      "tenantAdmin": true,
+      "grants": [
+        "projects:view",
+        "projects:create",
+        "projects:edit",
+        "projects:delete",
+        "versions:view",
+        "versions:create",
+        "versions:edit",
+        "versions:delete",
+        "imports:view",
+        "imports:create",
+        "imports:edit",
+        "imports:delete",
+        "versions:publish"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "id": "catalog.import",
+      "surface": "Catalog",
+      "label": "Import to catalog",
+      "permission": "imports:create",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/imports",
+          "body": {
+            "metadata": {
+              "source_kind": "openapi",
+              "project": {
+                "name": "Payments",
+                "slug": "payments"
+              },
+              "version": {
+                "version_id": "1.0.0"
+              }
+            },
+            "document_base64": "b3BlbmFwaTogMy4xLjA="
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/import/preflight",
+          "body": {
+            "document_base64": "b3BlbmFwaTogMy4xLjA="
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/import/bulk",
+          "body": {}
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/import/bulk/plan",
+          "body": {}
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/import/git/fileset",
+          "body": {
+            "repo_url": "https://github.com/acme/specs"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/imports/{job}/commit"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/tenants/{tenant}/imports/{job}/rollback"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-import"
+        },
+        {
+          "screen": "projects",
+          "testid": "projects-import"
+        },
+        {
+          "screen": "versions",
+          "testid": "versions-import-button"
+        }
+      ]
+    },
+    {
+      "id": "catalog.import.cancel",
+      "surface": "Catalog",
+      "label": "Cancel an import",
+      "permission": "imports:delete",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/tenants/{tenant}/imports/{job}"
+        }
+      ],
+      "ui": [],
+      "ui_note": "Cancel sits inside the import dialog, which opens only for a role holding imports:create."
+    },
+    {
+      "id": "catalog.categorize",
+      "surface": "Catalog",
+      "label": "Categorize",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "PUT",
+          "path": "/v1/catalog/{tenant}/{item}/categories",
+          "body": {
+            "categories": []
+          },
+          "stub": "catalog_item"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-categorize",
+          "menu": "catalog-menu-{live}"
+        },
+        {
+          "screen": "catalog-detail",
+          "testid": "catalog-detail-categorize"
+        }
+      ]
+    },
+    {
+      "id": "catalog.convert",
+      "surface": "Catalog",
+      "label": "Convert to project",
+      "permission": "projects:create",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/catalog/{tenant}/{item}/convert",
+          "body": {
+            "target": "openapi",
+            "dryRun": false
+          },
+          "query": {
+            "dryRun": "false"
+          },
+          "stub": "catalog_item"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-convert",
+          "menu": "catalog-menu-{live}"
+        },
+        {
+          "screen": "catalog",
+          "testid": "catalog-bulk-convert",
+          "bulk": true
+        },
+        {
+          "screen": "catalog-detail",
+          "testid": "catalog-detail-convert"
+        }
+      ]
+    },
+    {
+      "id": "catalog.delete",
+      "surface": "Catalog",
+      "label": "Delete item",
+      "permission": "projects:delete",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/projects/{tenant}/{item}"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-delete",
+          "menu": "catalog-menu-{live}"
+        },
+        {
+          "screen": "catalog",
+          "testid": "catalog-bulk-delete",
+          "bulk": true
+        }
+      ]
+    },
+    {
+      "id": "catalog.restore",
+      "surface": "Catalog",
+      "label": "Undelete item",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/projects/{tenant}/{item}/restore"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-restore-{deleted}"
+        },
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-restore",
+          "menu": "catalog-menu-{deleted}"
+        },
+        {
+          "screen": "catalog",
+          "testid": "catalog-bulk-restore",
+          "bulk": true
+        }
+      ]
+    },
+    {
+      "id": "catalog.permanentDelete",
+      "surface": "Catalog",
+      "label": "Permanently delete item",
+      "permission": "projects:delete",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/projects/{tenant}/{item}",
+          "query": {
+            "permanent": "true"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-permanent-delete",
+          "menu": "catalog-menu-{deleted}"
+        }
+      ]
+    },
+    {
+      "id": "catalog.export",
+      "surface": "Catalog",
+      "label": "Export an item",
+      "permission": null,
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/v1/export/{tenant}/targets",
+          "query": {
+            "artifact": "{item}"
+          },
+          "stub": "export_source"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-action-export",
+          "menu": "catalog-menu-{live}"
+        },
+        {
+          "screen": "catalog-detail",
+          "testid": "catalog-detail-export"
+        }
+      ]
+    },
+    {
+      "id": "project.create",
+      "surface": "Projects",
+      "label": "New project",
+      "permission": "projects:create",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/projects/{tenant}",
+          "body": {
+            "name": "Payments",
+            "slug": "payments"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "projects",
+          "testid": "projects-create"
+        }
+      ]
+    },
+    {
+      "id": "project.edit",
+      "surface": "Projects",
+      "label": "Edit project",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "PUT",
+          "path": "/v1/projects/{tenant}/{project}",
+          "body": {
+            "name": "Payments",
+            "slug": "payments"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "projects",
+          "testid": "projects-edit-{live}"
+        },
+        {
+          "screen": "projects",
+          "testid": "projects-action-edit",
+          "menu": "projects-menu-{live}"
+        }
+      ]
+    },
+    {
+      "id": "project.delete",
+      "surface": "Projects",
+      "label": "Delete project",
+      "permission": "projects:delete",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/projects/{tenant}/{project}"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "projects",
+          "testid": "projects-action-delete",
+          "menu": "projects-menu-{live}"
+        },
+        {
+          "screen": "projects",
+          "testid": "projects-bulk-delete",
+          "bulk": true
+        }
+      ]
+    },
+    {
+      "id": "project.restore",
+      "surface": "Projects",
+      "label": "Undelete project",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/projects/{tenant}/{project}/restore"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "projects",
+          "testid": "projects-restore-{deleted}"
+        },
+        {
+          "screen": "projects",
+          "testid": "projects-action-restore",
+          "menu": "projects-menu-{deleted}"
+        },
+        {
+          "screen": "projects",
+          "testid": "projects-bulk-restore",
+          "bulk": true
+        }
+      ]
+    },
+    {
+      "id": "project.permanentDelete",
+      "surface": "Projects",
+      "label": "Permanently delete project",
+      "permission": "projects:delete",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/projects/{tenant}/{project}",
+          "query": {
+            "permanent": "true"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "projects",
+          "testid": "projects-action-permanent-delete",
+          "menu": "projects-menu-{deleted}"
+        }
+      ]
+    },
+    {
+      "id": "version.cut",
+      "surface": "Versions",
+      "label": "New version",
+      "permission": "versions:create",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/versions/{tenant}/{project}",
+          "body": {
+            "version_id": "1.1.0",
+            "baseRevisionId": "ver-1"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "versions",
+          "testid": "versions-new-button"
+        }
+      ]
+    },
+    {
+      "id": "version.edit",
+      "surface": "Versions",
+      "label": "Edit version",
+      "permission": "versions:edit",
+      "rest": [
+        {
+          "method": "PUT",
+          "path": "/v1/versions/{tenant}/{project}/{version}",
+          "body": {
+            "description": "x"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "versions",
+          "testid": "versions-quick-edit-{draft}"
+        },
+        {
+          "screen": "versions",
+          "testid": "versions-row-action-edit",
+          "menu": "versions-row-menu-{draft}"
+        }
+      ]
+    },
+    {
+      "id": "version.publish",
+      "surface": "Versions",
+      "label": "Publish",
+      "permission": "versions:publish",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/versions/{tenant}/{project}/{version}/publish",
+          "body": {}
+        }
+      ],
+      "ui": [
+        {
+          "screen": "versions",
+          "testid": "versions-quick-publish-{draft}"
+        },
+        {
+          "screen": "versions",
+          "testid": "versions-row-action-publish",
+          "menu": "versions-row-menu-{draft}"
+        }
+      ]
+    },
+    {
+      "id": "version.unpublish",
+      "surface": "Versions",
+      "label": "Unpublish",
+      "permission": "versions:publish",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/versions/{tenant}/{project}/{version}/unpublish",
+          "body": {}
+        }
+      ],
+      "ui": [
+        {
+          "screen": "versions",
+          "testid": "versions-quick-unpublish-{published}"
+        },
+        {
+          "screen": "versions",
+          "testid": "versions-row-action-unpublish",
+          "menu": "versions-row-menu-{published}"
+        }
+      ]
+    },
+    {
+      "id": "version.freeze",
+      "surface": "Versions",
+      "label": "Freeze schema",
+      "permission": "versions:edit",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/versions/{tenant}/{project}/{version}/freeze-schema",
+          "body": {}
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/versions/{tenant}/{project}/{version}/freeze-schema"
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.fork",
+      "surface": "Versions",
+      "label": "Fork to another project",
+      "permission": "versions:create",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/versions/{tenant}/{project}/fork",
+          "body": {
+            "sourceRevisionId": "ver-1",
+            "targetProjectId": "proj-2"
+          }
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.delete",
+      "surface": "Versions",
+      "label": "Delete version",
+      "permission": "versions:delete",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/versions/{tenant}/{project}/{version}"
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.tag.create",
+      "surface": "Versions",
+      "label": "Create a version tag",
+      "permission": "versions:create",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/version-tags/{tenant}/{project}",
+          "body": {
+            "name": "stable",
+            "version_id": "1.0.0"
+          }
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.tag.edit",
+      "surface": "Versions",
+      "label": "Move or rename a version tag",
+      "permission": "versions:edit",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "PATCH",
+          "path": "/v1/version-tags/{tenant}/{project}/{tag}",
+          "body": {
+            "name": "stable"
+          }
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.tag.delete",
+      "surface": "Versions",
+      "label": "Delete a version tag",
+      "permission": "versions:delete",
+      "held_back": "git-like",
+      "rest": [
+        {
+          "method": "DELETE",
+          "path": "/v1/version-tags/{tenant}/{project}/{tag}"
+        }
+      ],
+      "ui": []
+    },
+    {
+      "id": "version.export",
+      "surface": "Versions",
+      "label": "Export a version",
+      "permission": null,
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/v1/export/{tenant}/targets",
+          "query": {
+            "artifact": "{project}",
+            "version": "1.0.0"
+          },
+          "stub": "export_source"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "versions",
+          "testid": "versions-row-action-export",
+          "menu": "versions-row-menu-{draft}"
+        }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,7 @@
  * @see `./projectsModel.ts` — every figure and every string on this card.
  */
 
+import type { PermissionCheck } from '../access/permissionCheck';
 import { OwnerCell } from '@/app/components/ade/owners';
 import { isFeatureReleased } from '@lib/feature-release';
 import { parseEntityOwner, type EntityOwner } from '@lib/owners';
@@ -55,6 +56,7 @@ import {
   projectConsumersHref,
   projectVersionsHref,
   projectVersionsLabel,
+  projectRowActions,
   type Project,
 } from './projectsModel';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
@@ -84,6 +86,8 @@ export interface ProjectCardProps {
   onRestore: (project: Project) => void;
   /** Destroy it, after the type-to-confirm gate. */
   onPermanentDelete: (project: Project) => void;
+  /** The viewer's grants; a write the role cannot make is not offered (RC6-H5). Omitted, all are. */
+  can?: PermissionCheck;
   /** True while a write is in flight — every verb on the card goes inert. */
   busy?: boolean;
   /** The project's owner changed in place (a suggestion confirmed on the card, CDG-2.4). */
@@ -109,6 +113,7 @@ export default function ProjectCard({
   onDelete,
   onRestore,
   onPermanentDelete,
+  can,
   busy = false,
   onOwnerChange,
   pinned = false,
@@ -116,6 +121,7 @@ export default function ProjectCard({
 }: ProjectCardProps) {
   const lifecycle = projectLifecycle(project);
   const isDeleted = lifecycle === 'deleted';
+  const actions = projectRowActions(project, can);
   const scores = projectScores(project, qualityHistory);
   const domain = projectDomainLabel(project);
   const updated = formatRelativeTime(project.updated_at);
@@ -218,19 +224,30 @@ export default function ProjectCard({
 
       {isDeleted ? (
         <footer className="prj-card__footer prj-card__above" data-testid="project-card-recovery">
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => onRestore(project)}>
-            <Undo2 aria-hidden />
-            Undelete
-          </Button>
-          <Button
-            variant="danger-soft"
-            size="sm"
-            disabled={busy}
-            onClick={() => onPermanentDelete(project)}
-          >
-            <Trash2 aria-hidden />
-            Permanently delete
-          </Button>
+          {actions.restore ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => onRestore(project)}
+              data-testid={`project-card-restore-${project.id}`}
+            >
+              <Undo2 aria-hidden />
+              Undelete
+            </Button>
+          ) : null}
+          {actions.permanentDelete ? (
+            <Button
+              variant="danger-soft"
+              size="sm"
+              disabled={busy}
+              onClick={() => onPermanentDelete(project)}
+              data-testid={`project-card-permanent-delete-${project.id}`}
+            >
+              <Trash2 aria-hidden />
+              Permanently delete
+            </Button>
+          ) : null}
         </footer>
       ) : (
         <footer className="prj-card__footer">
@@ -274,22 +291,30 @@ export default function ProjectCard({
                     </Link>
                   </DropdownMenu.Item>
                 ) : null}
-                <DropdownMenu.Item
-                  className={MENU_ITEM_CLASS}
-                  onSelect={() => onEdit(project)}
-                >
-                  <Pencil aria-hidden />
-                  Edit project
-                </DropdownMenu.Item>
+                {actions.edit ? (
+                  <DropdownMenu.Item
+                    className={MENU_ITEM_CLASS}
+                    data-testid="project-card-action-edit"
+                    onSelect={() => onEdit(project)}
+                  >
+                    <Pencil aria-hidden />
+                    Edit project
+                  </DropdownMenu.Item>
+                ) : null}
                 {onTogglePin ? <PinMenuItem project={project} pinned={pinned} onTogglePin={onTogglePin} /> : null}
-                <DropdownMenu.Separator className="tnt-menu__sep" />
-                <DropdownMenu.Item
-                  className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
-                  onSelect={() => onDelete(project)}
-                >
-                  <Trash2 aria-hidden />
-                  Delete project
-                </DropdownMenu.Item>
+                {actions.delete ? (
+                  <>
+                    <DropdownMenu.Separator className="tnt-menu__sep" />
+                    <DropdownMenu.Item
+                      className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
+                      data-testid="project-card-action-delete"
+                      onSelect={() => onDelete(project)}
+                    >
+                      <Trash2 aria-hidden />
+                      Delete project
+                    </DropdownMenu.Item>
+                  </>
+                ) : null}
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>

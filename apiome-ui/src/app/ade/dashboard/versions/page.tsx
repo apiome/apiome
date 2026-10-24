@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
+import { controlState, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Check,
@@ -756,8 +757,13 @@ const Versions = () => {
     | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
   const currentUserId = sessionUser?.user_id;
-  const isAdmin = Boolean(sessionUser?.is_tenant_admin);
+  /* The viewer's role grants (RC6-H5): a write the API would refuse is not offered. REST's
+     `is_admin` is the tenant-administrator answer the publish and edit routes use. */
+  const permissions = useMyPermissions(Boolean(currentTenantId));
+  const isAdmin = Boolean(sessionUser?.is_tenant_admin) || permissions.isAdmin;
   const [effectiveIsAdmin, setEffectiveIsAdmin] = useState<boolean>(isAdmin);
+  const importControl = controlState(permissions, 'imports:create');
+  const cutControl = controlState(permissions, 'versions:create');
 
   useEffect(() => {
     let cancelled = false;
@@ -2460,7 +2466,10 @@ const Versions = () => {
     requestAnimationFrame(() => { isSyncingScroll.current = false; });
   };
 
-  const canModify = (version: Version) => version.creator_id === currentUserId || !!effectiveIsAdmin;
+  /* Publish / unpublish / freeze: the creator or a tenant admin, holding `versions:publish`
+     (freeze: `versions:edit`) — the same pair of checks apiome-rest makes (RC6-H5). */
+  const canModify = (version: Version, permission = 'versions:publish') =>
+    (version.creator_id === currentUserId || !!effectiveIsAdmin) && permissions.can(permission);
 
   const openBranchFromRevisionDialog = useCallback(
     (revisionId: string) => {
@@ -2547,7 +2556,7 @@ const Versions = () => {
         }
         break;
       case 'unpublish': if (canUnpub) await handleUnpublish(version.id); else toast.warning('Only owner or admin can unpublish'); break;
-      case 'freezeSchema': if (canModify(version)) await handleFreezeSchema(version); else toast.warning('Only owner or admin can freeze schema'); break;
+      case 'freezeSchema': if (canModify(version, 'versions:edit')) await handleFreezeSchema(version); else toast.warning('Only owner or admin can freeze schema'); break;
       case 'delete':
         if (version.revisionLocked && !effectiveIsAdmin) {
           toast.warning('This revision is locked by policy; only a tenant admin can delete it.');
@@ -3350,20 +3359,22 @@ const Versions = () => {
         Compare
       </Button>
       {/* Import (#5260): start an import here instead of backtracking to Projects. */}
-      <Button
-        variant="outline"
-        data-testid="versions-import-button"
-        onClick={() => setShowImportDialog(true)}
-        disabled={!currentUserId}
-        title={
-          currentUserId
-            ? 'Import a specification into a new project'
-            : 'Your session is still resolving — try again in a moment'
-        }
-      >
-        <Upload aria-hidden />
-        Import
-      </Button>
+      {importControl !== 'hidden' ? (
+        <Button
+          variant="outline"
+          data-testid="versions-import-button"
+          onClick={() => setShowImportDialog(true)}
+          disabled={!currentUserId || importControl === 'disabled'}
+          title={
+            currentUserId
+              ? 'Import a specification into a new project'
+              : 'Your session is still resolving — try again in a moment'
+          }
+        >
+          <Upload aria-hidden />
+          Import
+        </Button>
+      ) : null}
     </>
   );
 
@@ -3379,10 +3390,10 @@ const Versions = () => {
     }),
   };
 
-  const headerPrimaryAction = (
+  const headerPrimaryAction = cutControl === 'hidden' ? null : (
     <Button
       onClick={handleNewVersionClick}
-      disabled={!selectedProjectId}
+      disabled={!selectedProjectId || cutControl === 'disabled'}
       title="Start a new version (fresh release line, defaults to a minor bump)"
       data-testid="versions-new-button"
     >
@@ -4006,6 +4017,7 @@ const Versions = () => {
                   hasClassSchemaMap={hasClassSchemaMap}
                   reviewsByVersionId={reviewsByVersionId}
                   effectiveIsAdmin={!!effectiveIsAdmin}
+                  can={permissions.can}
                   currentUserId={currentUserId}
                   hasBranches={versionBranches.length > 0}
                   freezingSchemaVersionId={freezingSchemaVersionId}

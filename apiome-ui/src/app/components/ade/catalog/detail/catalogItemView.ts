@@ -24,6 +24,7 @@
  *   predates this ticket and is unchanged.
  */
 
+import { allowEverything, type PermissionCheck } from '../../access/permissionCheck';
 import {
   CATALOG_LIFECYCLE_LABEL,
   type CatalogLifecycle,
@@ -171,6 +172,8 @@ export interface CatalogDetailActions {
   export: { shown: boolean };
   /** "View code" — always offered; a deleted item's captured source is still readable. */
   viewCode: { shown: boolean };
+  /** Categorize… / Edit categories — hidden once the item is deleted. */
+  categorize: { shown: boolean };
 }
 
 /**
@@ -182,20 +185,27 @@ export interface CatalogDetailActions {
  * written 20 lines apart. "View code" survives, because reading what was imported is exactly
  * what a reader wants from a deleted item.
  *
+ * The writes also follow the viewer's role (RC6-H5, #6212): Convert needs `projects:create` and
+ * Categorize `projects:edit`, as apiome-rest checks them; Export and View code need only
+ * membership.
+ *
  * @param item The item.
+ * @param can The viewer's grants (`useMyPermissions().can`); omitted, every write is offered.
  * @returns Which CTAs to draw, and the convert verb's label.
  */
 export function catalogDetailActions(
   item: Pick<CatalogDetailItem, 'deleted_at' | 'sourceFormat' | 'conversion'>,
+  can: PermissionCheck = allowEverything,
 ): CatalogDetailActions {
   const live = !item.deleted_at;
   return {
     convert: {
-      shown: live,
+      shown: live && can('projects:create'),
       label: convertActionLabel(item.conversion ?? null, item.sourceFormat ?? null),
     },
     export: { shown: live },
     viewCode: { shown: true },
+    categorize: { shown: live && can('projects:edit') },
   };
 }
 

@@ -24,6 +24,7 @@
  *   registry the facets are derived from.
  */
 
+import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { EntityOwner } from '@lib/owners';
 import type { DataTableSortState } from '@/app/components/ui/DataTable';
 import {
@@ -857,8 +858,10 @@ export interface CatalogRowActions {
   delete: boolean;
   /** Restore it. */
   undelete: boolean;
-  /** Destroy it — always offered, on both kinds of row. */
+  /** Destroy it — offered on both kinds of row. */
   permanentDelete: boolean;
+  /** Edit its categories. */
+  categorize: boolean;
 }
 
 /**
@@ -870,20 +873,27 @@ export interface CatalogRowActions {
  * job. There is deliberately **no Publish and no Edit**: the catalog is the non-publishable
  * slice (MFI-23.1) and its items are minted by the import routing (MFI-23.7), not here.
  *
+ * The writes are also gated on the viewer's role (RC6-H5, #6212), with the permission apiome-rest
+ * checks for each — `docs/catalog-projects-permission-matrix.json`: converting creates a project
+ * (`projects:create`), categorizing and undeleting edit one (`projects:edit`), and deleting either
+ * way needs `projects:delete`. Reading, linting and exporting need only membership.
+ *
  * @param item The row.
+ * @param can The viewer's grants (`useMyPermissions().can`); omitted, every write is allowed.
  * @returns One flag per verb. See {@link CatalogRowActions}.
  */
-export function catalogRowActions(item: CatalogItem): CatalogRowActions {
+export function catalogRowActions(item: CatalogItem, can: PermissionCheck = allowEverything): CatalogRowActions {
   const deleted = Boolean(item.deleted_at);
   return {
     details: !deleted,
     versions: !deleted,
     lint: !deleted,
     export: !deleted,
-    convert: !deleted,
-    delete: !deleted,
-    undelete: deleted,
-    permanentDelete: true,
+    convert: !deleted && can('projects:create'),
+    delete: !deleted && can('projects:delete'),
+    undelete: deleted && can('projects:edit'),
+    permanentDelete: can('projects:delete'),
+    categorize: !deleted && can('projects:edit'),
   };
 }
 
@@ -975,20 +985,26 @@ export interface CatalogBulkPlan {
  * acknowledgement (or one explicit "apply the warning to all"). Which rows reach it is
  * {@link catalogRowActions}'s `convert` gate, so the bar and the row menu cannot disagree.
  *
+ * Every verb follows {@link catalogRowActions}, role gate included, so a role that cannot delete
+ * sees no Delete button however many rows it selects.
+ *
  * @param items Every row currently on screen.
  * @param selectedIds The ids the table reports as selected.
+ * @param can The viewer's grants; omitted, every write is allowed.
  * @returns The rows each verb applies to. See {@link CatalogBulkPlan}.
  */
 export function catalogBulkPlan(
   items: readonly CatalogItem[],
-  selectedIds: readonly string[]
+  selectedIds: readonly string[],
+  can: PermissionCheck = allowEverything
 ): CatalogBulkPlan {
   const chosen = new Set(selectedIds);
   const selected = items.filter((item) => chosen.has(item.id));
+  const actions = (item: CatalogItem) => catalogRowActions(item, can);
   return {
-    deletable: selected.filter((item) => !item.deleted_at),
-    restorable: selected.filter((item) => Boolean(item.deleted_at)),
-    convertible: selected.filter((item) => catalogRowActions(item).convert),
+    deletable: selected.filter((item) => actions(item).delete),
+    restorable: selected.filter((item) => actions(item).undelete),
+    convertible: selected.filter((item) => actions(item).convert),
   };
 }
 

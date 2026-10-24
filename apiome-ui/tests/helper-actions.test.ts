@@ -105,6 +105,7 @@ const CASES: Case[] = [
   ['removeTenantUser', ['rec-1'], 'requireTenantAdmin', ['tenant-of-member-record']],
   ['getPublishedVersionsForTenant', ['tenant-1', null], 'requireTenantMember', ['tenant-1']],
   ['updateVersionVisibility', ['ver-1', 'public'], 'requireTenantPermission', ['tenant-of-version', 'versions:publish']],
+  ['deleteVersion', ['ver-1'], 'requireTenantPermission', ['tenant-of-version', 'versions:delete']],
   ['getClassesForVersion', ['ver-1'], 'requireTenantMember', ['tenant-of-version']],
   ['getPropertiesForClass', ['cls-1'], 'requireTenantMember', ['tenant-of-class']],
   ['getPropertiesForClassesBatch', [['cls-1', 'cls-2']], 'requireTenantMember', ['tenant-of-classes']],
@@ -125,7 +126,6 @@ const PASS_THROUGH: Array<keyof typeof actions> = [
   'deleteProject',
   'restoreProject',
   'permanentDeleteProject',
-  'deleteVersion',
 ];
 
 beforeEach(() => {

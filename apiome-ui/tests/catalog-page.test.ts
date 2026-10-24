@@ -107,7 +107,7 @@ describe('the rules live in the model, not in the screen', () => {
   });
 
   it('derives a row menu from catalogRowActions rather than from deleted_at in the JSX', () => {
-    expect(card).toContain('catalogRowActions(item)');
+    expect(card).toContain('catalogRowActions(item, can)');
     // The two views share one menu component, so the seven verbs cannot drift apart.
     expect(table).toContain('CatalogRowMenu');
   });

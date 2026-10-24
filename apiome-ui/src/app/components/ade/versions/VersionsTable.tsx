@@ -35,6 +35,7 @@
  * @see `./versionsModel.ts` — the labels, the stamps and the row-menu rules.
  */
 
+import type { PermissionCheck } from '../access/permissionCheck';
 import * as React from 'react';
 import { CircleCheck, GitFork, Lock, LockOpen, Pencil, Shield, Sunset } from 'lucide-react';
 
@@ -102,6 +103,8 @@ export interface VersionsTableProps {
   reviewsByVersionId?: ReadonlyMap<string, ReviewStatusRow> | null;
   /** Whether the viewer is a tenant admin (resolved). */
   effectiveIsAdmin: boolean;
+  /** The viewer's grants; a write the role cannot make is not offered (RC6-H5). Omitted, all are. */
+  can?: PermissionCheck;
   /** The viewer's user id. */
   currentUserId: string | undefined;
   /** Whether the project has any named branch. */
@@ -149,6 +152,7 @@ export default function VersionsTable({
   hasClassSchemaMap,
   reviewsByVersionId = null,
   effectiveIsAdmin,
+  can,
   currentUserId,
   hasBranches,
   freezingSchemaVersionId,
@@ -175,8 +179,10 @@ export default function VersionsTable({
       publishable: isVersionPublishable(version),
       freezing: freezingSchemaVersionId === version.id,
       gitlike,
+      can,
     }),
     [
+      can,
       currentUserId,
       effectiveIsAdmin,
       freezingSchemaVersionId,

@@ -57,6 +57,41 @@ The line above the matrix counts what is on — *23 of 75 cells on*.
 **Admin** roles hold all of it; **Editor** and **Viewer** can only view teams. Custom roles do not
 get it automatically — grant it on each custom role that should manage teams.
 
+## What each role can do in Catalog, Projects and Versions
+
+The built-in roles, action by action. A button or menu item appears only for a role that can use
+it, and the REST API refuses the same action with `403` for a role that cannot. **Owner** here
+means a tenant administrator; **Admin** has the same rights in these areas.
+
+| Area | Action | Needs | Viewer | Editor | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Catalog | Import to catalog | `imports:create` | — | ✓ | ✓ |
+| Catalog | Cancel an import | `imports:delete` | — | ✓ | ✓ |
+| Catalog | Categorize | `projects:edit` | — | ✓ | ✓ |
+| Catalog | Convert to project | `projects:create` | — | ✓ | ✓ |
+| Catalog | Delete item | `projects:delete` | — | ✓ | ✓ |
+| Catalog | Undelete item | `projects:edit` | — | ✓ | ✓ |
+| Catalog | Permanently delete item | `projects:delete` | — | ✓ | ✓ |
+| Catalog | Export an item | any member | ✓ | ✓ | ✓ |
+| Projects | New project | `projects:create` | — | ✓ | ✓ |
+| Projects | Edit project | `projects:edit` | — | ✓ | ✓ |
+| Projects | Delete project | `projects:delete` | — | ✓ | ✓ |
+| Projects | Undelete project | `projects:edit` | — | ✓ | ✓ |
+| Projects | Permanently delete project | `projects:delete` | — | ✓ | ✓ |
+| Versions | New version | `versions:create` | — | ✓ | ✓ |
+| Versions | Edit version | `versions:edit` | — | ✓ | ✓ |
+| Versions | Publish | `versions:publish` | — | — | ✓ |
+| Versions | Unpublish | `versions:publish` | — | — | ✓ |
+| Versions | Export a version | any member | ✓ | ✓ | ✓ |
+
+Publishing and unpublishing also need you to be the revision's creator or a tenant administrator.
+Restoring a project needs `projects:edit`, the same as editing it. Version tags, forking, freezing
+and deleting a revision follow the same rule (`versions:create`, `versions:edit`,
+`versions:delete`), but the app does not offer them in this release.
+
+A custom role gets exactly what its matrix grants. For example, a role with `projects:view` and
+`projects:create` can create and convert projects, but can't delete them.
+
 ## Edit a role
 
 1. **Select the role** on the left.

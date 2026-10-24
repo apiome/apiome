@@ -38,6 +38,13 @@ jest.mock('@monaco-editor/react', () => ({
 
 import { CatalogItemDetailClient } from '../src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient';
 
+// These suites cover the screen as an Owner; what each role is offered is
+// tests/permission-matrix-ui.test.tsx (RC6-H5, #6212).
+jest.mock('../src/app/components/ade/access/useMyPermissions', () => ({
+  ...jest.requireActual('../src/app/components/ade/access/useMyPermissions'),
+  useMyPermissions: () => ({ status: 'ready', can: () => true, isAdmin: true }),
+}));
+
 const RICH_ITEM = {
   id: '11111111-2222-3333-4444-555555555555',
   name: 'Acme gRPC API',
