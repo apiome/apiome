@@ -1,0 +1,21 @@
+---
+slug: project-actions-authorized
+title: Project changes from the app now check your role
+description: Project edits, deletes and restores in the app enforce sign-in, workspace and role.
+authors: [apiome]
+---
+
+Editing, deleting, restoring and permanently deleting a project from **Projects** or **Catalog** now
+follows the same rule as the REST API: you must be signed in, the project must be in your current
+workspace, and your role must grant the action.
+
+{/* truncate */}
+
+- **Role checked.** **Edit** and **Restore** need `projects:edit`; **Delete** and **Delete permanently**
+  need `projects:delete`; **New project** needs `projects:create`. A **Viewer** who tries gets
+  *You do not have permission to … projects in this workspace* and nothing changes. Tenant
+  administrators can do everything, as before. See [Roles](/workspace/roles).
+- **Your workspace only.** A project in another workspace is reported as *Project not found*, and a
+  new project is always created in the workspace you are signed in to.
+- **Fails safe.** If Apiome cannot confirm your permissions, the change is refused rather than
+  allowed. Try again in a moment.
