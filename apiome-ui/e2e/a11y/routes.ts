@@ -66,6 +66,7 @@ const ADDITIONAL: A11yRoute[] = [
         'signup-closed.html',
         'signup-form.html',
         'signup-check-email.html',
+        'signup-verify-confirm.html',
         'signup-verified.html',
         'signup-verify-expired.html',
       ],

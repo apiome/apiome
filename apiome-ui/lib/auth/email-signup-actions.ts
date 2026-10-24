@@ -10,10 +10,18 @@
  *   form answers the same way in both cases, so it never reveals whether an address is registered.
  * - {@link resendSignupVerification} — "Resend email", from the check-your-email screen and from an
  *   expired or used link. Answers the same way whether or not anything was sent.
- * - {@link verifyEmailSignup} — the link. Marks the account verified and returns a one-time code
- *   the page exchanges for a session (`signIn('credentials', { payload: { oneTimeCode } })`, the
- *   path OAuth sign-up already uses). With no workspace yet, the person then meets the first-tenant
- *   onboarding wizard (`FirstTenantOnboardingGuard`).
+ * - {@link verifyEmailSignup} — the link, plus the password the person chose. Marks the account
+ *   verified and returns a one-time code the page exchanges for a session
+ *   (`signIn('credentials', { payload: { oneTimeCode } })`, the path OAuth sign-up already uses).
+ *   With no workspace yet, the person then meets the first-tenant onboarding wizard
+ *   (`FirstTenantOnboardingGuard`).
+ *
+ * **Each link is bound to the sign-up that sent it.** The link carries the bcrypt hash of the
+ * password submitted with that sign-up, and opening it asks for that password. On a match the hash
+ * becomes the account's only credential, other links are deleted and every session is revoked
+ * (`redeemVerificationToken`). So someone who signs up first with *your* address cannot keep a
+ * password on the account you later confirm — the account pre-hijacking the RC6 security review
+ * found, where the first submitter's password survived verification.
  *
  * Safeguards: the SGN-1.4 sign-up policy is checked before the address is looked up, so a refusal
  * never depends on whether an account exists; per-IP and per-address budgets bound the email a
@@ -32,9 +40,11 @@ import { headers } from 'next/headers';
 
 import { createUser } from '../db/admin-helper';
 import {
+  findPendingSignup,
   findSignupAccount,
   issueVerificationToken,
   redeemVerificationToken,
+  type PendingSignup,
   type SignupAccount,
 } from '../db/email-verification';
 import { insertAuthOneTimeCode } from '../db/oauth-signup';
@@ -72,6 +82,9 @@ import {
 import { resolveSignupPolicy } from './signup-policy-resolver';
 import { turnstileConfig, verifyTurnstileToken } from './turnstile';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const bcrypt = require('bcrypt');
+
 /** What the sign-up form and the resend button are told. */
 export type EmailSignupResult =
   | { ok: true }
@@ -86,7 +99,12 @@ export type EmailSignupResult =
 /** What the verification page is told. */
 export type VerifyEmailSignupResult =
   | { state: 'valid'; oneTimeCode: string }
-  | { state: Exclude<VerificationTokenState, 'valid'> };
+  | { state: Exclude<VerificationTokenState, 'valid'> }
+  /** The password is not the one chosen with the sign-up this link belongs to; the link still works. */
+  | { state: 'password-mismatch' };
+
+/** bcrypt cost for the pending password, the same as every other password write. */
+const PASSWORD_HASH_ROUNDS = 10;
 
 /**
  * Refuse an attempt on behalf of an abuse guard: record it in `auth_events`, then answer the code.
@@ -157,16 +175,26 @@ async function passesCaptcha(token: unknown): Promise<boolean> {
 /**
  * Issue a fresh link for an unverified account and email it.
  *
- * @param account The account (its stored email and name are used).
+ * @param account The account (its stored email is used).
  * @param baseUrl From `publicBaseUrl`.
+ * @param pending The password and name of the sign-up this link confirms; the email greets that name.
  * @returns `true` once the email was accepted for delivery.
  */
-async function sendVerification(account: SignupAccount, baseUrl: string): Promise<boolean> {
+async function sendVerification(
+  account: SignupAccount,
+  baseUrl: string,
+  pending: PendingSignup | null
+): Promise<boolean> {
   const { token, tokenHash } = generateVerificationToken();
-  await issueVerificationToken(account.id, tokenHash, new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS));
+  await issueVerificationToken(
+    account.id,
+    tokenHash,
+    new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+    pending
+  );
   return sendSignupEmail(
     account.email,
-    buildVerificationEmail({ name: account.name, link: verificationLink(baseUrl, token) })
+    buildVerificationEmail({ name: pending?.name || account.name, link: verificationLink(baseUrl, token) })
   );
 }
 
@@ -241,24 +269,30 @@ export async function startEmailSignup(input: {
   if (addressRefusal) return addressRefusal;
 
   try {
+    // This sign-up's password, bound to the link it sends (see the module note).
+    const pending: PendingSignup = {
+      passwordHash: await bcrypt.hash(input.password as string, PASSWORD_HASH_ROUNDS),
+      name,
+    };
     let account = await findSignupAccount(email);
     if (!account) {
-      const created = JSON.parse(await createUser(name, email, input.password as string, false));
+      const created = JSON.parse(await createUser(name, email, pending.passwordHash, false));
       // A concurrent sign-up for the same address may have won the unique index; read it back.
       account = await findSignupAccount(email);
       if (!created.success && !account) throw new Error('user insert failed');
       if (created.success && account) {
-        const sent = await sendVerification(account, baseUrl);
+        const sent = await sendVerification(account, baseUrl, pending);
         return sent ? { ok: true } : { ok: false, code: EMAIL_SIGNUP_CODES.SEND_FAILED };
       }
     }
     if (!account) throw new Error('account lookup failed');
-    // An existing address: a disabled account gets nothing, an unconfirmed one a fresh link, and a
-    // confirmed one the account-exists note. The answer is the same in every case.
+    // An existing address: a disabled account gets nothing, an unconfirmed one a fresh link — bound
+    // to *this* sign-up's password, never to the one an earlier sign-up stored — and a confirmed one
+    // the account-exists note. The answer is the same in every case.
     if (!account.enabled) return { ok: true };
     const sent = account.verified
       ? await sendAccountExists(account, baseUrl)
-      : await sendVerification(account, baseUrl);
+      : await sendVerification(account, baseUrl, pending);
     return sent ? { ok: true } : { ok: false, code: EMAIL_SIGNUP_CODES.SEND_FAILED };
   } catch (error) {
     console.error('[email-signup] sign-up failed', error instanceof Error ? error.name : 'unknown');
@@ -291,7 +325,10 @@ export async function resendSignupVerification(email: unknown): Promise<EmailSig
 
   try {
     const account = await findSignupAccount(canonical);
-    if (account && account.enabled && !account.verified) await sendVerification(account, baseUrl);
+    if (account && account.enabled && !account.verified) {
+      // The resend form never sees a password, so the new link carries the newest sign-up's.
+      await sendVerification(account, baseUrl, await findPendingSignup(account.id));
+    }
   } catch (error) {
     console.error('[email-signup] resend failed', error instanceof Error ? error.name : 'unknown');
   }
@@ -299,15 +336,24 @@ export async function resendSignupVerification(email: unknown): Promise<EmailSig
 }
 
 /**
- * Redeem a verification link.
+ * Redeem a verification link, with the password chosen at sign-up.
  *
- * @param token The `token` parameter from the link.
- * @returns `valid` with a one-time sign-in code, or why the link was refused.
+ * @param input.token The `token` parameter from the link.
+ * @param input.password The password the person chose when they signed up.
+ * @returns `valid` with a one-time sign-in code; `password-mismatch` when the password is not the
+ *   one this link's sign-up set (the link still works); or why the link was refused.
  */
-export async function verifyEmailSignup(token: unknown): Promise<VerifyEmailSignupResult> {
+export async function verifyEmailSignup(input: {
+  token: unknown;
+  password: unknown;
+}): Promise<VerifyEmailSignupResult> {
+  const token = input?.token;
   if (!isWellFormedVerificationToken(token)) return { state: 'invalid' };
+  const password = input?.password;
+  if (typeof password !== 'string' || password.length === 0) return { state: 'password-mismatch' };
   try {
-    const redeemed = await redeemVerificationToken(hashVerificationToken(token));
+    const redeemed = await redeemVerificationToken(hashVerificationToken(token), password);
+    if (redeemed.state === 'password-mismatch') return { state: 'password-mismatch' };
     if (redeemed.state !== 'valid' || !redeemed.userId) {
       return { state: redeemed.state === 'valid' ? 'invalid' : redeemed.state };
     }
