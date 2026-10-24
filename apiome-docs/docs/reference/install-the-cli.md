@@ -5,8 +5,10 @@ sidebar_position: 3
 tags: [cli]
 ---
 
-The `apiome` command line installs on Linux and macOS without the rest of the Apiome suite. Download the
-installer, then run it:
+The `apiome` command line installs on Linux and macOS without the rest of the Apiome suite.
+
+**[Download the CLI here](https://get.apiome.dev)**: `https://get.apiome.dev` serves the installer script.
+Download it, then run it:
 
 ```bash
 curl -fsSL https://get.apiome.dev -o get-apiome.sh
