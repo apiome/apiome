@@ -386,6 +386,8 @@ export function CatalogSourceViewer({
                 value={raw}
                 theme="vs-dark"
                 options={{
+                  // The editor's input names the pane for assistive technology (RC6-H2, #6209).
+                  ariaLabel: 'Source code',
                   readOnly: true,
                   domReadOnly: true,
                   minimap: { enabled: true },

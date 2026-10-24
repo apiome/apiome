@@ -81,36 +81,72 @@ export interface DialogContentProps
   closeLabel?: string;
 }
 
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  DialogContentProps
->(({ className, children, size, showCloseButton = true, closeLabel = 'Close', ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(dialogContentVariants({ size }), className)}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close
-          title={closeLabel}
-          className="hit-target absolute right-4 top-4 rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
+/**
+ * The dialog panel.
+ *
+ * **Focus goes back to whatever opened it.** Radix returns focus on close only to a
+ * `Dialog.Trigger`; a dialog opened from an ordinary button — `open` held in the page's state,
+ * which is how almost every dialog here is opened — otherwise drops focus on `<body>`, and a
+ * keyboard reader starts again from the top of the page (RC6-H2, #6209). So the element that had
+ * focus when the dialog opened is remembered and focused again on close, as `ModalFrame` does.
+ * A caller's own `onCloseAutoFocus` runs first and can still `preventDefault()` to send focus
+ * elsewhere; an opener that left the page (the action re-rendered it) is skipped.
+ */
+const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, DialogContentProps>(
+  (
+    {
+      className,
+      children,
+      size,
+      showCloseButton = true,
+      closeLabel = 'Close',
+      onOpenAutoFocus,
+      onCloseAutoFocus,
+      ...props
+    },
+    ref,
+  ) => {
+    const returnFocusTo = React.useRef<HTMLElement | null>(null);
+    return (
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(dialogContentVariants({ size }), className)}
+          {...props}
+          onOpenAutoFocus={(event) => {
+            // Runs before Radix moves focus in, so this is still the element that opened it.
+            const active = document.activeElement;
+            returnFocusTo.current = active instanceof HTMLElement && active !== document.body ? active : null;
+            onOpenAutoFocus?.(event);
+          }}
+          onCloseAutoFocus={(event) => {
+            onCloseAutoFocus?.(event);
+            const target = returnFocusTo.current;
+            returnFocusTo.current = null;
+            if (event.defaultPrevented || !target?.isConnected) return;
+            event.preventDefault();
+            target.focus();
+          }}
         >
-          <X className="size-4" aria-hidden="true" />
-          <span className="sr-only">{closeLabel}</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+          {children}
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              title={closeLabel}
+              className="hit-target absolute right-4 top-4 rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
+            >
+              <X className="size-4" aria-hidden="true" />
+              <span className="sr-only">{closeLabel}</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Content>
+      </DialogPortal>
+    );
+  },
+);
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('flex flex-col gap-1 pr-8 text-left', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
@@ -133,7 +169,7 @@ const DialogFooter = ({ className, bleed = true, ...props }: DialogFooterProps) 
       'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
       bleed &&
         '-mx-6 -mb-6 mt-2 rounded-b-xl border-t border-border bg-[color-mix(in_srgb,var(--bg-subtle)_60%,var(--bg-surface))] px-6 py-3.5',
-      className
+      className,
     )}
     {...props}
   />
@@ -156,11 +192,7 @@ const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn('text-sm text-fg-muted', className)}
-    {...props}
-  />
+  <DialogPrimitive.Description ref={ref} className={cn('text-sm text-fg-muted', className)} {...props} />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 

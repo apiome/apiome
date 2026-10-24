@@ -688,7 +688,7 @@ describe('the edit dialog', () => {
  * with `A11Y_FIXTURE_DUMP=1 npx jest tests/projects-hive-redesign.test.tsx -t "docs fixtures"`.
  */
 describe('the docs fixtures', () => {
-  it('renders the cards, the table and the New project dialog', async () => {
+  it('renders the cards, the table, and the New project and Edit project dialogs', async () => {
     const { user } = await renderProjects();
     const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
     writeA11yFixture('projects-cards', page().outerHTML);
@@ -699,5 +699,12 @@ describe('the docs fixtures', () => {
 
     await user.click(screen.getByTestId('projects-create'));
     writeA11yFixture('projects-create-dialog', (await screen.findByTestId('projects-create-dialog')).outerHTML);
+
+    // RC6-H2 (#6209): the axe gate also holds the Edit project dialog.
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('projects-create-dialog')).toBeNull());
+    const [edit] = document.querySelectorAll<HTMLButtonElement>('[data-testid^="projects-edit-"]');
+    await user.click(edit);
+    writeA11yFixture('projects-edit-dialog', (await screen.findByTestId('projects-edit-dialog')).outerHTML);
   });
 });

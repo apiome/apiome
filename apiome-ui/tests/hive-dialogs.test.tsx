@@ -23,6 +23,11 @@ import AlertDialog from '../src/app/components/dialogs/AlertDialog';
 import { DialogProvider, useDialog } from '../src/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '../src/app/components/dialogs/destructiveConfirm';
 import {
+  Dialog as UiDialog,
+  DialogContent as UiDialogContent,
+  DialogTitle as UiDialogTitle,
+} from '../src/app/components/ui/Dialog';
+import {
   DIALOG_TONE_BUTTON,
   DIALOG_TONE_INK,
   DIALOG_TONE_TITLE,
@@ -625,5 +630,72 @@ describe('useDialog', () => {
       await user.click(await screen.findByRole('button', { name: 'Close' }));
       await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('undefined'));
     });
+  });
+});
+
+describe('Dialog (ui/Dialog) — focus returns to the opener (RC6-H2, #6209)', () => {
+  /** A page that opens a dialog from an ordinary button, with `open` in its own state. */
+  function Page({ onCloseAutoFocus }: { onCloseAutoFocus?: (event: Event) => void }) {
+    const [open, setOpen] = React.useState(false);
+    const [show, setShow] = React.useState(true);
+    return (
+      <>
+        {show ? (
+          <button type="button" onClick={() => setOpen(true)}>
+            Publish
+          </button>
+        ) : null}
+        <button type="button">Elsewhere</button>
+        <UiDialog open={open} onOpenChange={setOpen}>
+          <UiDialogContent onCloseAutoFocus={onCloseAutoFocus}>
+            <UiDialogTitle>Publish v1.2.0</UiDialogTitle>
+            <button type="button" onClick={() => setShow(false)}>
+              Remove the opener
+            </button>
+          </UiDialogContent>
+        </UiDialog>
+      </>
+    );
+  }
+
+  it('focuses the button that opened it again on Escape', async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+    const opener = screen.getByRole('button', { name: 'Publish' });
+    opener.focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('dialog');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(opener).toHaveFocus();
+  });
+
+  it('lets a caller send focus elsewhere with preventDefault', async () => {
+    const user = userEvent.setup();
+    render(
+      <Page
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          screen.getByRole('button', { name: 'Elsewhere' }).focus();
+        }}
+      />
+    );
+    screen.getByRole('button', { name: 'Publish' }).focus();
+    await user.keyboard('{Enter}');
+    await screen.findByRole('dialog');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
+  });
+
+  it('does not try to focus an opener that has left the page', async () => {
+    const user = userEvent.setup();
+    render(<Page />);
+    screen.getByRole('button', { name: 'Publish' }).focus();
+    await user.keyboard('{Enter}');
+    await user.click(await screen.findByRole('button', { name: 'Remove the opener' }));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 });

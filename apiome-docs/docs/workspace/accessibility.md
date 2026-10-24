@@ -40,6 +40,26 @@ on every change to `apiome-ui/`. It needs no database and no session:
 - **`e2e/a11y/sr-smoke.spec.ts`** pins what a screen reader is given on login, home and a
   dialog (projects is pinned in `e2e/hive-projects.spec.ts`).
 
+### Catalog, Projects and Versions
+
+RC6 releases Catalog, Projects and Versions, so the gate holds every one of their screens and
+dialogs with no exceptions (RC6-H2, [#6209](https://github.com/apiome/apiome/issues/6209)):
+
+| Surface | Ledger entry | Fixtures |
+| --- | --- | --- |
+| Catalog list, cards, bulk bar, categorize, bulk convert, About | `catalog` | `hive-catalog/` |
+| Catalog item and all its tabs | `catalog-item` | `hive-catalog-item/` |
+| Import specification wizard | `import-wizard` | `hive-import-wizard/` |
+| **Import to catalog**, **Convert to OpenAPI**, the version **Export** dialog, the **Unpublish** confirm | `rc6-dialogs` | `hive-rc6-dialogs/`, dumped by `tests/rc6-dialog-fixtures.test.tsx` |
+| Projects cards and table, **New project** and **Edit project** | `projects-rendered` (and the `projects` layout spec) | `hive-a11y/projects-*.html` |
+| Versions timeline, tabs, row and header menus, New version, Publish, Edit, Sunset | `versions` | `hive-versions/` |
+| Compare, compatibility report, export panel, merge conflicts | `version-dialogs` | `hive-version-dialogs/` |
+
+The keyboard path through them — open **Import to catalog**, **Convert to OpenAPI** and
+**Publish** with Enter, close with Esc — returns focus to the button that opened each dialog.
+Every `ui/Dialog` does this, whether or not it has a Radix trigger; the unit tests in
+`tests/hive-dialogs.test.tsx` and the three page suites pin it.
+
 ### Running it locally
 
 `next dev` can serve a stale CSS chunk after a `globals.css` edit, which makes axe pass or fail

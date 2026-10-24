@@ -1113,6 +1113,22 @@ describe('the row menu', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('the dialogs', () => {
+  it('opens Publish from the keyboard and returns focus to the row button on Escape (RC6-H2)', async () => {
+    await renderVersions();
+    // `userEvent.setup()` swaps in its own clipboard; the suite's `beforeEach` needs the mock back.
+    const clipboard = navigator.clipboard;
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+    const trigger = screen.getByTestId(`versions-quick-publish-${HEAD_ID}`);
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const dialog = await screen.findByTestId('publish-version-dialog');
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('publish-version-dialog')).toBeNull());
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
   it('opens New version with the bump preview and creates through POST /api/versions', async () => {
     await renderVersions();
     fireEvent.click(screen.getByTestId('versions-new-button'));
@@ -1488,6 +1504,12 @@ describe('the browser fixtures', () => {
     write('menu', menu.outerHTML);
     fireEvent.keyDown(document.body, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId(`versions-row-menu-content-${HEAD_ID}`)).not.toBeInTheDocument());
+
+    // The header's ⋯ menu (HIVE-11.3), which the axe gate holds too (RC6-H2, #6209).
+    fireEvent.keyDown(screen.getByTestId('page-header-overflow'), { key: 'Enter' });
+    write('header-menu', (await screen.findByTestId('page-header-overflow-menu')).outerHTML);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('page-header-overflow-menu')).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('versions-new-button'));
     const newDialog = await screen.findByTestId('new-version-dialog');
