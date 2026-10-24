@@ -1,5 +1,3 @@
-'use server';
-
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
 import { entitlementLimitsFromLicenseSeats } from './entitlement-limits-from-license-seats';

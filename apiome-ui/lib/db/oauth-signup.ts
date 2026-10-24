@@ -1,5 +1,3 @@
-'use server';
-
 import { sealTokenOrNull, unsealToken } from '../auth/linked-account-token-crypto';
 
 const crypto = require('crypto');

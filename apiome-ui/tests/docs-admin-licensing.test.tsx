@@ -43,7 +43,7 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
 }));
 
 /** Every server action the three screens call, answered from the fixtures below. */
-jest.mock('../lib/db/admin-helper', () => ({
+jest.mock('../lib/db/admin-actions', () => ({
   getTenantStats: jest.fn(),
   getTenantUsers: jest.fn(),
   getUsersNotInTenant: jest.fn(),
@@ -77,7 +77,7 @@ jest.mock('../lib/db/admin-helper', () => ({
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const helper = require('../lib/db/admin-helper') as Record<string, jest.Mock<(...args: unknown[]) => Promise<string>>>;
+const helper = require('../lib/db/admin-actions') as Record<string, jest.Mock<(...args: unknown[]) => Promise<string>>>;
 
 import AdminSidebar from '../src/app/admin/dashboard/AdminSidebar';
 import TenantManagementClient from '../src/app/admin/dashboard/tenants/TenantManagementClient';

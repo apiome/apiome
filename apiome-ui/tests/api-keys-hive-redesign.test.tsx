@@ -46,7 +46,7 @@ let deleteResponse = JSON.stringify({ success: true });
 /** What `toggleApiKeyStatus` answers with next. */
 let toggleResponse = JSON.stringify({ success: true });
 
-jest.mock('../lib/db/helper', () => ({
+jest.mock('../lib/db/helper-actions', () => ({
   getApiKeysForTenant: jest.fn(async (...args: unknown[]) => {
     calls.push({ fn: 'getApiKeysForTenant', args });
     return keysResponse;

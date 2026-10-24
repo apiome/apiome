@@ -172,7 +172,7 @@ import {
   getPropertiesForClass,
   getPropertiesForClassesBatch,
   getTenantsAdministratedByUser
-} from '../../../../../lib/db/helper';
+} from '../../../../../lib/db/helper-actions';
 import { coerceProjectMetadataRecord } from '@lib/project-metadata';
 import YAML from 'yaml';
 import { diffLines, Change } from 'diff';

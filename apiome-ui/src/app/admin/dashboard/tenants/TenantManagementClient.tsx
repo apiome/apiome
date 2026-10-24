@@ -32,7 +32,7 @@ import {
   getUsersNotInTenant,
   getAllUsers,
   provisionSampleProject,
-} from '../../../../../lib/db/admin-helper';
+} from '../../../../../lib/db/admin-actions';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';

@@ -37,7 +37,7 @@ import {
   getAllUsersWithLicenses,
   assignLicenseToUser,
   removeUserLicense,
-} from '../../../../../lib/db/admin-helper';
+} from '../../../../../lib/db/admin-actions';
 import { isCommercialProductFlag } from '../../../../../lib/commercial-products';
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';

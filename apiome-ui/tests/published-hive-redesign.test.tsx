@@ -74,7 +74,7 @@ const mockReadVersions = jest.fn<Promise<string>, [string]>();
 const mockReadApiKeys = jest.fn<Promise<string>, [string]>();
 const mockUpdateVisibility = jest.fn<Promise<string>, [string, string]>();
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   getPublishedVersionsForTenant: (...args: unknown[]) => mockReadVersions(...(args as [string])),
   getApiKeysForTenant: (...args: unknown[]) => mockReadApiKeys(...(args as [string])),
   updateVersionVisibility: (...args: unknown[]) =>

@@ -22,7 +22,7 @@ import { jest } from '@jest/globals';
 
 const TENANT_ID = 't-acme';
 
-jest.mock('../lib/db/helper', () => ({
+jest.mock('../lib/db/helper-actions', () => ({
   getPublishedVersionsForTenant: jest.fn(async () =>
     JSON.stringify({
       success: true,

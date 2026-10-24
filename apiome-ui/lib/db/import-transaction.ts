@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Transaction-aware database functions for imports.
  * These functions accept an optional client parameter to run within a transaction.

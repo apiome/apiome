@@ -1,6 +1,4 @@
 // Helper functions for class template management
-'use server';
-
 const connectionPool = require('./db');
 
 // =============================================================================

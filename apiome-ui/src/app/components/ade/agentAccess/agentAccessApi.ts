@@ -6,7 +6,7 @@
  * {@link AgentAccessError} carrying apiome-rest's message, status and stable refusal code.
  */
 
-import { getPublishedVersionsForTenant } from '@lib/db/helper';
+import { getPublishedVersionsForTenant } from '@lib/db/helper-actions';
 
 import {
   parseAgentKey,

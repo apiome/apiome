@@ -51,7 +51,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/ade/dashboard/repositories/new',
 }));
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   getLinkedAccountsForUser: (userId: string) => mockLinkedAccounts(userId),
 }));
 

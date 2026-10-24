@@ -21,7 +21,7 @@ import AdminSidebar from '../src/app/admin/dashboard/AdminSidebar';
 import DashboardOverview from '../src/app/admin/dashboard/DashboardOverview';
 import UserManagementClient from '../src/app/admin/dashboard/users/UserManagementClient';
 import { DialogProvider } from '../src/app/components/providers/DialogProvider';
-import * as adminHelper from '../lib/db/admin-helper';
+import * as adminHelper from '../lib/db/admin-actions';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-jest.mock('../lib/db/admin-helper', () => ({
+jest.mock('../lib/db/admin-actions', () => ({
   createUser: jest.fn(),
   updateUser: jest.fn(),
   deleteUser: jest.fn(),

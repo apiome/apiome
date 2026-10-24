@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from '../../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
-import { getLinkedAccountsForUser } from '@lib/db/helper';
+import { getLinkedAccountsForUser } from '@lib/db/helper-actions';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';

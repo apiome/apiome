@@ -57,7 +57,7 @@ import {
   removePersonalAccessToken,
   unlinkExternalAccount,
   updatePersonalAccessToken,
-} from '@lib/db/helper';
+} from '@lib/db/helper-actions';
 import type { ProviderSummary } from '@lib/auth/provider-registry';
 
 import { Alert } from '@/app/components/ui/Alert';

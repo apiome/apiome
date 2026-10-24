@@ -42,8 +42,9 @@ Rows are resources — **Projects**, **Versions**, **Classes**, **Properties**, 
 **Verification targets**, **Verification evidence**, **Consumer contracts** and **Teams** — each
 with the key the server checks under it (`projects`, `api_keys`, …). Columns are the five actions. Each cell is a
 `resource:action` permission (for example `versions:publish`), checked on every REST route. The
-app applies the same check when you create, edit, delete or restore a project from **Projects** or
-**Catalog**.
+app applies the same check to its own screens — creating, editing, deleting or restoring a project,
+creating, disabling or deleting an API key, making a published version public or private, and
+starting an import — and only shows you workspaces you belong to.
 
 - **Click a cell** to grant or remove one permission.
 - **Click the box at the start of a row** to grant or remove the whole row. It shows a tick when the

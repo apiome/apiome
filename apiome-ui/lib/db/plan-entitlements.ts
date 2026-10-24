@@ -1,5 +1,3 @@
-'use server';
-
 const connectionPool = require('./db');
 import { entitlementLimitsFromLicenseSeats } from './entitlement-limits-from-license-seats';
 import { DEFAULT_FREE_MAX_TENANTS } from '../auth/tenant-membership-context-mapping';

@@ -47,7 +47,7 @@ const FormControlLabel = ({ control, label, ...rest }: any) => <label className=
 const Checkbox = ({ checked, onChange, disabled, ...rest }: any) => <input type="checkbox" checked={checked} onChange={(e) => onChange?.(e, e.target.checked)} disabled={disabled} {...rest} />;
 const CircularProgress = ({ size }: any) => <span className="animate-spin rounded-full border-2 border-current border-t-transparent" style={{ width: size || 24, height: size || 24 }} />;
 import { parseOpenAPISpec, ParsedClass, type ParsedPath, type ParsedSecurityScheme, type ParsedOpenAPIServer } from '../../../utils/openapi-import';
-import { importProjectFromOpenAPI, getLinkedAccountsForUser } from '../../../../../lib/db/helper';
+import { importProjectFromOpenAPI, getLinkedAccountsForUser } from '../../../../../lib/db/helper-actions';
 import { filterSlugInput, generateSlug } from '../../../utils/slug';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 

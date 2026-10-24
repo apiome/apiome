@@ -58,7 +58,7 @@ describe('data wiring', () => {
 describe('the writes this screen is allowed to make', () => {
   it('reuses the project server actions — a catalog item id is a project id', () => {
     expect(client).toMatch(
-      /import \{ deleteProject, permanentDeleteProject, restoreProject \} from '@lib\/db\/helper'/
+      /import \{ deleteProject, permanentDeleteProject, restoreProject \} from '@lib\/db\/helper-actions'/
     );
     expect(client).toContain('deleteProject(item.id)');
     expect(client).toContain('restoreProject(item.id)');

@@ -18,6 +18,16 @@ jest.mock('../lib/db/import-helper', () => ({
   rollbackImport: jest.fn(),
   rollbackCompletedImport: jest.fn(),
   retryImport: jest.fn(),
+  getImportJobOwner: jest.fn(() => null),
+  importJobNotFoundStatus: jest.fn(),
+}));
+
+// Delegation is what these suites cover; the session checks have their own suite
+// (tests/import-actions-guard.test.ts), so here every caller is allowed.
+jest.mock('../lib/auth/action-guard', () => ({
+  requireSelf: jest.fn(async () => null),
+  requireTenantMember: jest.fn(async () => null),
+  requireTenantPermission: jest.fn(async () => null),
 }));
 
 describe('Import Actions - Module Exports', () => {

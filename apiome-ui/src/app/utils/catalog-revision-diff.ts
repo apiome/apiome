@@ -13,7 +13,7 @@
  * tests a single module to mock (the action needs the server DB, so it never runs under jsdom).
  */
 
-import { buildOpenApiSpecJsonForVersion } from '@lib/db/helper';
+import { buildOpenApiSpecJsonForVersion } from '@lib/db/helper-actions';
 import { coerceProjectMetadataRecord } from '@lib/project-metadata';
 import type { CatalogVersionRevision } from '@/app/utils/catalog-versions-timeline';
 

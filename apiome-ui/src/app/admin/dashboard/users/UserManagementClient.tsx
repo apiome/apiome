@@ -28,7 +28,7 @@ import {
   getAllLicenses,
   assignLicenseToUser,
   removeUserLicense,
-} from '../../../../../lib/db/admin-helper';
+} from '../../../../../lib/db/admin-actions';
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';

@@ -1,6 +1,4 @@
 // Read access to imported Arazzo workflows (REPO-3.4, #2773).
-'use server';
-
 const connectionPool = require('./db');
 
 /**

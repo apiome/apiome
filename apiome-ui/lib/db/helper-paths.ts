@@ -1,6 +1,4 @@
 // Helper functions for path management in the database
-'use server';
-
 const connectionPool = require('./db');
 
 /**

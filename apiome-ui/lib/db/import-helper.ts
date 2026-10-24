@@ -1,5 +1,3 @@
-'use server';
-
 import {
   PoolClient,
   getTransactionClient,
@@ -254,6 +252,17 @@ interface JobRepositoryMerge {
 }
 
 const jobs = new Map<string, JobState>();
+
+/**
+ * Who started an import job, for the action layer's ownership check (`lib/db/import-actions.ts`).
+ *
+ * @param jobId The job id.
+ * @returns The starting user and workspace, or `null` for an unknown job.
+ */
+export function getImportJobOwner(jobId: string): { userId: string; tenantId: string } | null {
+  const job = jobs.get(jobId);
+  return job ? { userId: job.input.userId, tenantId: job.input.tenantId } : null;
+}
 
 /**
  * Plan the multi-repository merge of a repository-file import (REPO-5.7) before anything is written.
@@ -1881,17 +1890,26 @@ export async function rollbackCompletedImport(jobId: string): Promise<{ success:
   }
 }
 
+/** The single event a status for a missing job carries. */
+function jobNotFoundEvent(): ImportEvent {
+  return { id: rndId(), ts: now(), level: 'error', code: 'NOT_FOUND', message: 'Job not found' };
+}
+
+/**
+ * The status reported for a job that does not exist — and, by the action layer, for one the
+ * caller may not see.
+ *
+ * @param jobId The requested job id.
+ * @returns A failed status carrying one `NOT_FOUND` event.
+ */
+export function importJobNotFoundStatus(jobId: string): Awaited<ReturnType<typeof getImportStatus>> {
+  return { jobId, state: 'failed', percent: 0, events: [jobNotFoundEvent()] };
+}
+
 export async function getImportStatus(jobId: string) {
   const job = jobs.get(jobId);
   if (!job) {
-    const ev: ImportEvent = {
-      id: rndId(),
-      ts: now(),
-      level: 'error',
-      code: 'NOT_FOUND',
-      message: 'Job not found',
-    };
-    return { jobId, state: 'failed' as ImportJobState, percent: 0, events: [ev] };
+    return { jobId, state: 'failed' as ImportJobState, percent: 0, events: [jobNotFoundEvent()] };
   }
   return {
     jobId,

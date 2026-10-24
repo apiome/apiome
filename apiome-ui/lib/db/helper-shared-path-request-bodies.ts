@@ -1,5 +1,3 @@
-'use server';
-
 // Helper functions for shared path request body management
 // Request bodies can reference existing apiome.classes (class_id) or use inline schemas (inline_schema)
 

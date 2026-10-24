@@ -25,7 +25,7 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
   useDialog: () => ({ confirm: jest.fn() }),
 }));
 
-jest.mock('../lib/db/helper', () => ({
+jest.mock('../lib/db/helper-actions', () => ({
   getLinkedAccountsForUser: (...args: unknown[]) => mockGetLinkedAccounts(...args),
   getUserHasPassword: (...args: unknown[]) => mockGetHasPassword(...args),
   unlinkExternalAccount: jest.fn(),

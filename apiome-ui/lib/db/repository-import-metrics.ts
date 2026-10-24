@@ -1,5 +1,3 @@
-'use server';
-
 import type { Pool } from 'pg';
 
 // db.ts is CommonJS (module.exports); keep parity with helper-database.ts.

@@ -72,7 +72,7 @@ import {
 } from '@lib/db/dashboard-home-model';
 import { getDashboardHomeForSession } from '@lib/db/dashboard-home';
 import { useUnpinProject } from '@/app/hooks/useUnpinProject';
-import { getDashboardStats, getRecentActivity } from '@lib/db/helper';
+import { getDashboardStats, getRecentActivity } from '@lib/db/helper-actions';
 
 /** The projects list, which owns both of the header's action dialogs. */
 const PROJECTS_HREF = '/ade/dashboard/projects';

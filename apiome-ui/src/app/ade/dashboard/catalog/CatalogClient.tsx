@@ -40,7 +40,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useAuthSession } from '@lib/auth/session-client';
 import { isFeatureReleased } from '@lib/feature-release';
 import type { ShortcutBinding } from '@lib/shortcuts';
-import { deleteProject, permanentDeleteProject, restoreProject } from '@lib/db/helper';
+import { deleteProject, permanentDeleteProject, restoreProject } from '@lib/db/helper-actions';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';

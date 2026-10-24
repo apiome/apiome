@@ -7,7 +7,7 @@ import {
   getDefaultCanvasLayout,
   getEffectiveDefaultLayoutName,
   getNamedCanvasLayout,
-} from './db/helper';
+} from './db/helper-actions';
 
 function parseMaybeJson<T>(v: unknown): T | null {
   if (v == null) return null;
