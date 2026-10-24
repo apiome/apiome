@@ -12,8 +12,11 @@ RUN apk add --no-cache libc6-compat python3 make g++
 COPY package.json ./
 
 # Install ALL dependencies (including dev deps) for build
-# Using npm to avoid yarn workspace complications
-RUN npm install
+# Using npm to avoid yarn workspace complications. There is no lockfile here, so npm resolves fresh
+# on every build: `--legacy-peer-deps` keeps a newly published upstream peer range (e.g.
+# @better-auth/core 1.7.x against @better-auth/sso's exact @better-auth/utils pin) from failing the
+# build with ERESOLVE, and package.json `overrides` pins the versions the app is tested with.
+RUN npm install --legacy-peer-deps
 
 
 # Stage 2: Builder

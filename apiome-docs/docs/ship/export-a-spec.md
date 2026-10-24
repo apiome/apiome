@@ -45,7 +45,7 @@ you download anything.
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **53 formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **53<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
