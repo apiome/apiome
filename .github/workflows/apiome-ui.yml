@@ -6,7 +6,7 @@ on:
     paths:
       - 'apiome-ui/**'
       # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
-      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
+      # the a11y and visual route ledgers and the fixture dumps are unit-tested here.)
       - '!apiome-ui/playwright*.config.ts'
       - '!apiome-ui/docs/**'
       - '.github/workflows/apiome-ui.yml'
@@ -28,7 +28,7 @@ on:
     paths:
       - 'apiome-ui/**'
       # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
-      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
+      # the a11y and visual route ledgers and the fixture dumps are unit-tested here.)
       - '!apiome-ui/playwright*.config.ts'
       - '!apiome-ui/docs/**'
       - '.github/workflows/apiome-ui.yml'
@@ -155,6 +155,12 @@ jobs:
         run: |
           cd apiome-ui
           # yarn test:import --ci
+          # This step is also where the design gates run, as ordinary Jest suites (no browser):
+          # the copy-voice gate (tests/copy-voice-gate.test.ts, HIVE-10.4, with HIVE-13.2's
+          # disabled-button ratchet and "Coming soon" rule) and the page gates
+          # (tests/page-header-gate.test.tsx, HIVE-13.2: header action cap, one banner, no select
+          # in a header). The page gates read every fixture dump under e2e/fixtures/, which is why
+          # a change there triggers this workflow.
           # The self-hosted nodes run more than one runner, and Jest's default (one worker per core,
           # each a jsdom + coverage process) lets two jobs on a node starve each other: tests time
           # out at random and the OOM killer takes workers. Half the cores per job, and recycling a

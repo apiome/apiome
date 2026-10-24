@@ -306,7 +306,7 @@ describe('AuthProviderSettingsClient — rendering', () => {
     expect(dialog.getByRole('option', { name: /OIDC/ })).toBeEnabled();
     expect(dialog.getByRole('option', { name: /Auth0/ })).toBeEnabled();
     expect(dialog.getByRole('option', { name: /LINE/ })).toBeEnabled();
-    expect(dialog.getByRole('option', { name: /Atlassian/ })).toBeDisabled();
+    expect(dialog.getByRole('option', { name: /Atlassian/ })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('closes the Add modal via Cancel without adding a card', async () => {
@@ -524,7 +524,7 @@ describe('AuthProviderSettingsClient — Add modal search & scroll', () => {
     fireEvent.keyDown(search, { key: 'Enter' });
 
     expect(screen.queryByText('Configure Atlassian')).not.toBeInTheDocument();
-    expect(dialog.getByRole('option', { name: /Atlassian/ })).toBeDisabled();
+    expect(dialog.getByRole('option', { name: /Atlassian/ })).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 

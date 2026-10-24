@@ -381,16 +381,8 @@ function AddProviderModal({
                         filtered.map((candidate) => {
                           const brand = getProviderBrand(candidate.provider_id);
                           const comingSoon = candidate.status !== 'available';
-                          return (
-                            <button
-                              key={candidate.provider_id}
-                              type="button"
-                              role="option"
-                              aria-selected={false}
-                              disabled={comingSoon}
-                              onClick={() => pick(candidate)}
-                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                            >
+                          const content = (
+                            <>
                               <brand.Icon size={ICON_SIZE.button} className={brand.iconClassName} />
                               <span className="min-w-0 flex-1 truncate">{candidate.label}</span>
                               <span className="truncate text-xs text-slate-400 dark:text-slate-500">
@@ -401,6 +393,33 @@ function AddProviderModal({
                                   Coming soon
                                 </span>
                               )}
+                            </>
+                          );
+                          // A coming-soon provider is listed but not a button: "Coming soon" may
+                          // not sit inside one (HIVE-13.2, `tests/page-header-gate.test.tsx`).
+                          if (comingSoon) {
+                            return (
+                              <div
+                                key={candidate.provider_id}
+                                role="option"
+                                aria-selected={false}
+                                aria-disabled="true"
+                                className="flex w-full cursor-not-allowed items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 opacity-50 dark:text-slate-200"
+                              >
+                                {content}
+                              </div>
+                            );
+                          }
+                          return (
+                            <button
+                              key={candidate.provider_id}
+                              type="button"
+                              role="option"
+                              aria-selected={false}
+                              onClick={() => pick(candidate)}
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                              {content}
                             </button>
                           );
                         })

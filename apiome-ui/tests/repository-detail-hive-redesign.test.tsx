@@ -554,17 +554,16 @@ describe('the header', () => {
     expect(screen.getByTestId('repository-rescan')).toBeDisabled();
   });
 
-  test('the header branch control is the Files tab’s branch, not a second one', async () => {
+  test('the header draws no branch select — the Files tab’s picker is the one control (HIVE-13.2)', async () => {
     await renderScreen();
-    // Before the files read there is only the registration's default to offer.
-    expect(screen.getByTestId('repository-header-branch')).toHaveTextContent('main');
+    const header = within(screen.getByTestId('page-header'));
+    expect(header.queryByRole('combobox')).toBeNull();
+    // The registration's default branch is still named, as a chip under the title.
+    expect(screen.getByTestId('repository-default-branch-chip')).toHaveTextContent('main');
 
     await openTab('files');
     await screen.findByTestId('repository-files-table-wrap');
-
-    // Once the listing has reported its branches, the header lists them too.
-    await userEvent.click(screen.getByRole('combobox', { name: 'Branch' }));
-    expect(await screen.findByRole('option', { name: 'release/2.4' })).toBeInTheDocument();
+    expect(screen.getByTestId('repository-branch-trigger')).toHaveTextContent('main');
   });
 });
 

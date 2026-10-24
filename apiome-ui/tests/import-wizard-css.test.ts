@@ -93,7 +93,7 @@ const IMPORT_PRELUDES = [
   '.imp-heading',
   '.imp-cards',
   '.imp-card',
-  '.imp-card:disabled',
+  ".imp-card[aria-disabled='true']",
   '.imp-card__text',
   '.imp-card__title',
   '.imp-card__desc',

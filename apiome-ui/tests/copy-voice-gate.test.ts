@@ -18,6 +18,11 @@
  *        - and no component imports `toast` from `sonner` directly, which would bypass
  *          the voiced `toast.error` (`src/app/components/ui/toast.ts`).
  *
+ *   3. **No dead controls** (HIVE-13.2, #5615): a disabled button carries its reason — a
+ *      `title` or an `aria-describedby` — and "Coming soon" is never the text of a button.
+ *      The first is a ratchet ({@link DISABLED_WITHOUT_REASON_BASELINE}); the second is a
+ *      hard rule, held on rendered pages as well by `tests/page-header-gate.test.tsx`.
+ *
  * The runtime half — that `ErrorState`, `ErrorBanner`, `AlertDialog` and `toast.error`
  * really do add the next action — is `tests/copy-voice-surfaces.test.tsx`.
  */
@@ -63,6 +68,20 @@ const SONNER_ALLOWED = new Set([
   ['src', 'app', 'components', 'ui', 'Toaster.tsx'].join(sep),
   ['src', 'app', 'components', 'ui', 'toast.ts'].join(sep),
 ]);
+
+/**
+ * Disabled buttons in `src/` that give no reason, when HIVE-13.2 (#5615) introduced the rule.
+ *
+ * DESIGN.md §10: a control that cannot be used says why, in a `title` or through
+ * `aria-describedby`. Most of these are form buttons that wait for a change, pager arrows and
+ * wizard steps — they were left to their pages rather than rewritten in one sweep. The count
+ * must equal the source exactly: a new reason-less disabled button fails, and a page that
+ * gives its buttons reasons lowers this number in the same change.
+ */
+const DISABLED_WITHOUT_REASON_BASELINE = 470;
+
+/** Attributes that give a disabled button its reason. */
+const DISABLED_REASON_ATTRIBUTES: ReadonlySet<string> = new Set(['title', 'aria-describedby']);
 
 /** Every `.ts` / `.tsx` source under `src/`, outside {@link SKIPPED_DIRECTORIES}. */
 function sources(directory: string = SRC): string[] {
@@ -170,6 +189,49 @@ function jsxText(): Copy[] {
     if (!ts.isJsxText(node)) return;
     const text = node.text.replace(/\s+/g, ' ').trim();
     if (text) found.push({ where: at(rel, file, node), text });
+  });
+  return found;
+}
+
+/** Whether a JSX tag is a button: the native element or the `Button` primitive. */
+function isButtonTag(tag: string): boolean {
+  return tag === 'button' || tag === 'Button';
+}
+
+/**
+ * Every `<button>` / `<Button>` that sets `disabled` and gives no reason for it.
+ *
+ * A `disabled` attribute of any value counts — `disabled={saving}` is disabled some of the
+ * time, and the reader meets it then. A `{...props}` spread is not followed.
+ */
+function disabledWithoutReason(): string[] {
+  const found: string[] = [];
+  walk((node, rel, file) => {
+    if (!ts.isJsxOpeningElement(node) && !ts.isJsxSelfClosingElement(node)) return;
+    if (!isButtonTag(node.tagName.getText(file))) return;
+    const names = node.attributes.properties
+      .filter(ts.isJsxAttribute)
+      .map((attribute) => attribute.name.getText(file));
+    if (!names.includes('disabled')) return;
+    if (names.some((name) => DISABLED_REASON_ATTRIBUTES.has(name))) return;
+    found.push(at(rel, file, node));
+  });
+  return found;
+}
+
+/** Every literal "Coming soon" — JSX text or a string child — with a button among its ancestors. */
+function comingSoonInsideButtons(): Copy[] {
+  const found: Copy[] = [];
+  walk((node, rel, file) => {
+    const text = ts.isJsxText(node) ? node.text : ts.isJsxExpression(node) ? literalOf(node) : null;
+    if (!text || !/coming soon/i.test(text)) return;
+    if (ts.isJsxExpression(node) && ts.isJsxAttribute(node.parent)) return;
+    for (let parent = node.parent; parent; parent = parent.parent) {
+      if (ts.isJsxElement(parent) && isButtonTag(parent.openingElement.tagName.getText(file))) {
+        found.push({ where: at(rel, file, node), text: text.replace(/\s+/g, ' ').trim() });
+        return;
+      }
+    }
   });
   return found;
 }
@@ -354,6 +416,18 @@ describe('the source passes the §10 voice check', () => {
     });
     expect(callouts.length).toBeGreaterThan(0);
     expect(offenders(callouts, (text) => text.trim().length === 0)).toEqual([]);
+  });
+
+  it('adds no disabled button without a reason (HIVE-13.2 ratchet)', () => {
+    // Give the button a `title` (or `aria-describedby`) that says why it is unavailable. If
+    // you gave existing buttons their reasons, lower DISABLED_WITHOUT_REASON_BASELINE to match.
+    expect(disabledWithoutReason()).toHaveLength(DISABLED_WITHOUT_REASON_BASELINE);
+  });
+
+  it('never makes "Coming soon" the text of a button (HIVE-13.2)', () => {
+    // A feature that is not there yet is a fact about the page: put the label on a plain
+    // element, or in a disabled control's `title`.
+    expect(comingSoonInsideButtons().map(({ where, text }) => `${where}  “${text}”`)).toEqual([]);
   });
 
   it('raises every toast through the voiced wrapper, never sonner directly', () => {
