@@ -104,7 +104,7 @@ onboards into their own workspace with no admin involved — and `closed` stops 
 QR, and `/login/2fa` verifies the code. Email OTP is the second method when SendGrid is configured.
 **Gaps:** ~~backup codes are generated but cannot be redeemed at login~~ (done, #5006). ~~OAuth-only users have no
 password, so they cannot enrol, and the OAuth sign-in path skips the second factor~~ (done, #5655). ~~No admin can
-reset a locked-out user~~ (done, #5656), and no tenant can require 2FA.
+reset a locked-out user~~ (done, #5656), and ~~no tenant can require 2FA~~ (done, #5657).
 
 | # | Ticket | Depends on | Notes |
 | --- | --- | --- | --- |
@@ -118,6 +118,8 @@ Out of scope: SMS OTP ([#5071](https://github.com/apiome/apiome/issues/5071), v2
 
 **Lane B is done when** a new user is offered Authy during onboarding, an OAuth-only user can enrol,
 a lost phone is recoverable with a backup code or an admin reset, and #2553 can be closed.
+
+✅ **Lane B is done** (2026-10-23): every criterion above holds on `main`, and #2553 is closed.
 
 ---
 
