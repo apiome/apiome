@@ -126,8 +126,8 @@ describe('the CI summary', () => {
       report(),
       report({ id: 'catalog', score: 0.91, passed: false }),
     ]);
-    expect(markdown).toContain('| `published` | 98.1 % | pass |');
-    expect(markdown).toContain('| `catalog` | 91.0 % | **fail** |');
+    expect(markdown).toContain('| `published` | 98.1 % | — | pass |');
+    expect(markdown).toContain('| `catalog` | 91.0 % | — | **fail** |');
     expect(markdown).toContain('1 of 2 routes clear the gate.');
   });
 });

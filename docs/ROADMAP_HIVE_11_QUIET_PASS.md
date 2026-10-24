@@ -518,7 +518,7 @@ Milestone: **RC6** (all epics and issues).
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 13.1 | #5614 | Honey audit — saved-search chip, gitlike flags, token gate | MCP saved searches use `.chip`; feature-flag markers are outline badges; `hive-design-tokens.test.ts` fails on honey outside the allow-list | `ui`, `design-system`, `testing`, `mcp` | Y | N | S | `src/app/ade/dashboard/mcp/*`, `src/app/components/ade/versions/GitlikeFlag.tsx`, `tests/hive-design-tokens.test.ts` |
 | 13.2 | #5615 | Gates — header action cap, single banner, no dead controls | Jest/Playwright rules: ≤ 1 primary + 2 secondaries + ⋯ per `PageHeader`; at most one `Alert` between header and body; no disabled buttons that lead nowhere | `testing`, `ui`, `design-system` | N | N | M | `tests/page-header-gate.test.tsx (new)`, `tests/copy-voice-gate.test.ts`, `e2e/hive-page-header.spec.ts`, `docs/guide/content-voice.md` |
-| 13.3 | #5616 | Parity harness — first-row-of-data budget per list page | The visual-parity harness measures the y-offset of the first data row at 1440 × 900 and fails above a per-page budget | `testing`, `ui` | N | N | M | `e2e/visual/landmarks.ts`, `e2e/visual/score.ts`, `e2e/visual/routes.ts`, `e2e/visual/README.md` |
+| 13.3 | #5616 | Parity harness — first-row-of-data budget per list page ✅ | The visual-parity harness measures the y-offset of the first data row at 1440 × 900 and fails above a per-page budget | `testing`, `ui` | N | N | M | `e2e/visual/landmarks.ts`, `e2e/visual/score.ts`, `e2e/visual/routes.ts`, `e2e/visual/README.md` |
 | 13.4 | #5617 | DESIGN.md amendments, mockup promotion and fixture re-dump | Fold PROPOSALS.md into DESIGN.md §2 · §5 · §8 · §10 · §12; replace the superseded parts of the original mockups; move the four proposals into `PARITY_ROUTES` | `documentation`, `design-system`, `mvp` | N | Y | S | `docs/mockups/DESIGN.md`, `docs/mockups/PROPOSALS.md`, `docs/mockups/build/versions.html`, `docs/mockups/sources/catalog.html`, `docs/mockups/home/launcher.html`, `docs/mockups/foundations/shell.html`, `apiome-ui/e2e/visual/routes.ts` |
 
 ### `apiome: [HIVE-13.1] Honey audit — saved-search chip, gitlike flags, token gate` — [#5614](https://github.com/apiome/apiome/issues/5614)
@@ -560,7 +560,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-13.3] Parity harness — first-row-of-data budget per list page` — [#5616](https://github.com/apiome/apiome/issues/5616)
+### `apiome: [HIVE-13.3] Parity harness — first-row-of-data budget per list page` ✅ — [#5616](https://github.com/apiome/apiome/issues/5616)
 **Problem statement.** The review had to measure first-row offsets by hand (Published 236 px, Catalog 600, Repositories 600, Versions 870). Without a measured budget the quiet pass regresses the first time a new strip or banner is added.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/catalog-quiet.html` (callouts —); rationale: `docs/mockups/PROPOSALS.md`.
@@ -569,9 +569,9 @@ Milestone: **RC6** (all epics and issues).
 - Report the measurement in the parity report next to the parity score.
 
 **Acceptance criteria.**
-- [ ] Harness fails on the pre-quiet-pass Catalog fixture and passes on the post-11.6 one
-- [ ] Numbers appear in `visual-parity-report`
-- [ ] README documents how to set a budget
+- [x] Harness fails on the pre-quiet-pass Catalog fixture and passes on the post-11.6 one
+- [x] Numbers appear in `visual-parity-report`
+- [x] README documents how to set a budget
 
 **Parallelism / dependencies.** Depends on HIVE-11.6 for the first green run; can be written in parallel with allow-listed budgets.
 

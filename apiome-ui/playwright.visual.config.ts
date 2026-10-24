@@ -73,9 +73,10 @@ export default defineConfig({
       name: 'dark',
       use: { ...devices['Desktop Chrome'] },
       metadata: { themeId: 'dark', theme: 'dark' },
-      // The theme-swap test owns both themes, and the self-test's arithmetic does not depend
+      // The theme-swap test owns both themes, and the self-tests' arithmetic (padding and
+      // first-row) does not depend
       // on the palette; running either again here would only cost time.
-      testIgnore: ['**/theme-swap.spec.ts', '**/self-test.spec.ts'],
+      testIgnore: ['**/theme-swap.spec.ts', '**/self-test.spec.ts', '**/first-row.spec.ts'],
     },
   ],
 

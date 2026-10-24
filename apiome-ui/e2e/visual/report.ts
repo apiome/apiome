@@ -9,7 +9,7 @@
  * uploaded as a CI artefact and read from a file system where nothing else is fetchable.
  */
 
-import { DIMENSION_IDS, type ParityReport } from './score';
+import { DIMENSION_IDS, type FirstRowVerdict, type ParityReport } from './score';
 
 /** The three images published beside one route's verdict. */
 export interface RouteImages {
@@ -41,6 +41,25 @@ function escapeHtml(value: string): string {
 /** Format a fraction as a percentage. */
 function percent(value: number): string {
   return `${(value * 100).toFixed(1)} %`;
+}
+
+/** Whether a first-row verdict passes, for the CSS class. */
+function firstRowClass(verdict: FirstRowVerdict | null | undefined): string {
+  return verdict && !verdict.passed ? 'fail' : '';
+}
+
+/**
+ * The first-row measurement as a short cell (HIVE-13.3): `344 / 360 px`, or a dash for a route
+ * with no budget.
+ *
+ * @param verdict The route's first-row verdict, if any.
+ * @returns Plain text; the caller escapes it.
+ */
+export function firstRowCell(verdict: FirstRowVerdict | null | undefined): string {
+  if (!verdict) return '—';
+  const top = verdict.topPx === null ? 'no match' : `${verdict.topPx}`;
+  const allowance = verdict.ceilingPx === null ? '' : ` (allowed ${verdict.ceilingPx})`;
+  return `${top} / ${verdict.budgetPx} px${allowance}`;
 }
 
 /**
@@ -123,6 +142,13 @@ function routeSection(artefact: RouteArtefact): string {
   <p class="lede">${escapeHtml(report.mockup)} vs ${escapeHtml(report.subject)} — gate ${percent(
     report.gate
   )}</p>
+  ${
+    report.firstRow
+      ? `<p class="${firstRowClass(report.firstRow)}">First row of data: ${escapeHtml(
+          report.firstRow.detail
+        )} (<code>${escapeHtml(report.firstRow.selector)}</code>)</p>`
+      : ''
+  }
   <div class="scroll"><table>
     <thead><tr><th>Dimension</th><th class="num">Weight</th><th class="num">Score</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -153,6 +179,8 @@ export function parityReportHtml(
           artefact.report.id
         )}</a></td><td>${escapeHtml(artefact.report.mockup)}</td><td class="num">${percent(
           artefact.report.score
+        )}</td><td class="num ${firstRowClass(artefact.report.firstRow)}">${escapeHtml(
+          firstRowCell(artefact.report.firstRow)
         )}</td><td class="${artefact.report.passed ? 'pass' : 'fail'}">${
           artefact.report.passed ? 'PASS' : 'FAIL'
         }</td></tr>`
@@ -172,9 +200,10 @@ export function parityReportHtml(
 <p class="lede">${passed} of ${artefacts.length} routes clear the gate${
     options.theme ? `, measured in the ${escapeHtml(options.theme)} theme` : ''
   }. Each score is a weighted comparison of the app and the mockup in design-token space; the
-images beside it are the two pages and their difference, for the eye.</p>
+images beside it are the two pages and their difference, for the eye. First row is how far down the
+page, at 1440 × 900, the first row of data starts, against the route's budget.</p>
 <div class="scroll"><table>
-  <thead><tr><th>Route</th><th>Mockup</th><th class="num">Score</th><th>Verdict</th></tr></thead>
+  <thead><tr><th>Route</th><th>Mockup</th><th class="num">Score</th><th class="num">First row</th><th>Verdict</th></tr></thead>
   <tbody>${summaryRows}</tbody>
 </table></div>
 ${artefacts.map(routeSection).join('\n')}
@@ -189,10 +218,17 @@ ${artefacts.map(routeSection).join('\n')}
  * @returns The Markdown table.
  */
 export function parityMarkdownSummary(reports: readonly ParityReport[]): string {
-  const lines = ['### Visual parity against the mockups', '', '| Route | Score | Verdict |', '|---|---:|---|'];
+  const lines = [
+    '### Visual parity against the mockups',
+    '',
+    '| Route | Score | First row | Verdict |',
+    '|---|---:|---:|---|',
+  ];
   for (const report of reports) {
     lines.push(
-      `| \`${report.id}\` | ${percent(report.score)} | ${report.passed ? 'pass' : '**fail**'} |`
+      `| \`${report.id}\` | ${percent(report.score)} | ${firstRowCell(report.firstRow)} | ${
+        report.passed ? 'pass' : '**fail**'
+      } |`
     );
   }
   const passed = reports.filter((report) => report.passed).length;

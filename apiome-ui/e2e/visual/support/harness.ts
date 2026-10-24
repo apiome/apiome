@@ -18,9 +18,9 @@ import type { Page } from '@playwright/test';
 import { collectRaw, type RawSignature } from '../collect';
 import { landmarkSelectors, scopeSelector, type Side } from '../landmarks';
 import { buildSignature, type ParitySignature } from '../signature';
-import { scoreParity, type ParityReport } from '../score';
+import { judgeFirstRow, scoreParity, type FirstRowVerdict, type ParityReport } from '../score';
 import { ALL_TOKENS, COLOUR_TOKENS } from '../tokens';
-import type { ParityRoute, ParitySubject } from '../routes';
+import type { FirstRowBudget, ParityRoute, ParitySubject } from '../routes';
 
 /** `docs/mockups/`, the read-only source of truth. */
 export const MOCKUP_ROOT = path.resolve(__dirname, '..', '..', '..', '..', 'docs', 'mockups');
@@ -248,7 +248,8 @@ export interface ParityMeasurement {
  * @param options.theme The theme to pin on both sides.
  * @param options.paddingDeltaPx Padding to inject into the app; the self-test hook.
  * @param options.capture Whether to screenshot both sides and blend them.
- * @returns Both signatures, the report and — when asked for — the images.
+ * @returns Both signatures, the report (with the first-row verdict when the route declares a
+ *   budget) and — when asked for — the images.
  */
 export async function measureParity(
   page: Page,
@@ -269,6 +270,10 @@ export async function measureParity(
   });
   const app = await collectSide(page, 'app', options.paddingDeltaPx ?? 0);
   const appShot = options.capture ? await captureScope(page, 'app') : null;
+  // Read last: it resizes the viewport to 1440 × 900, which the screenshot must not see.
+  const firstRow = route.firstRow
+    ? judgeFirstRow(route.firstRow, await measureFirstRow(page, route.firstRow.selector))
+    : null;
 
   let images: ParityImages | null = null;
   if (mockupShot && appShot) {
@@ -300,6 +305,7 @@ export async function measureParity(
       subject,
       app,
       mockupSignature: mockup,
+      firstRow,
     }),
   };
 }
@@ -367,4 +373,63 @@ export async function renderDifference(
     </body></html>`
   );
   return page.screenshot({ clip: { x: 0, y: 0, width: size.width, height: size.height } });
+}
+
+/**
+ * The viewport the first-row budget is measured at (HIVE-13.3, #5616).
+ *
+ * `docs/mockups/PROPOSALS.md` measured every first-row offset at 1440 × 900, so a budget taken
+ * from it only means something at that size. The parity comparison itself runs at
+ * {@link PARITY_VIEWPORT}; the budget is read after it, once the viewport has been set to this.
+ */
+export const FIRST_ROW_VIEWPORT = { width: 1440, height: 900 };
+
+/**
+ * Read how far down the page region the first row of data starts.
+ *
+ * The page region is the top of the viewport on both shells (neither has a top bar), so the
+ * offset from the region's top edge is the same y the proposals measured by eye. The page is
+ * scrolled to the top first, so a previous measurement cannot leave the row half-way up.
+ *
+ * @param page A page with the app side loaded and its appearance pinned.
+ * @param rowSelector The selector of the first data row; the first match is read.
+ * @returns The row's top edge in CSS pixels below the page region's top, rounded to a whole
+ *   pixel, or `null` when nothing matched the selector.
+ * @throws When the page region itself is missing, which is a harness error, not a budget miss.
+ */
+export async function measureFirstRow(page: Page, rowSelector: string): Promise<number | null> {
+  await page.setViewportSize(FIRST_ROW_VIEWPORT);
+  return page.evaluate(
+    ({ scope, row }) => {
+      window.scrollTo(0, 0);
+      const region = document.querySelector(scope);
+      if (!region) throw new Error(`visual-parity: no element matched scope selector "${scope}"`);
+      const first = region.querySelector(row);
+      if (!first) return null;
+      return Math.round(first.getBoundingClientRect().top - region.getBoundingClientRect().top);
+    },
+    { scope: scopeSelector('app'), row: rowSelector }
+  );
+}
+
+/**
+ * Mount one fixture and judge its first row against a budget, without a parity comparison.
+ *
+ * The first-row self-test uses this to hold frozen fixtures — the Catalog before and after its
+ * quiet pass — against the Catalog budget, so the gate is proven to tell the two apart.
+ *
+ * @param page The page to drive.
+ * @param subject The fixture to mount.
+ * @param budget The budget to judge it against.
+ * @param scopeWidth The width to give the page region, normally the paired mockup's page width.
+ * @returns The verdict.
+ */
+export async function judgeFixtureFirstRow(
+  page: Page,
+  subject: ParitySubject,
+  budget: FirstRowBudget,
+  scopeWidth: number
+): Promise<FirstRowVerdict> {
+  await openApp(page, subject, { theme: null, scopeWidth });
+  return judgeFirstRow(budget, await measureFirstRow(page, budget.selector));
 }
