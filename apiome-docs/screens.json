@@ -60,6 +60,12 @@
       "data": "fixture:hive-a11y/cli-login-approved.html"
     },
     {
+      "id": "signup-verify-confirm",
+      "route": "/signup/verify",
+      "waitFor": "[data-testid=\"signup-verify-confirm\"]",
+      "data": "fixture:hive-a11y/signup-verify-confirm.html"
+    },
+    {
       "id": "signup-verified",
       "route": "/signup/verify",
       "waitFor": "[data-testid=\"signup-verified\"]",

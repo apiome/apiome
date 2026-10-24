@@ -171,7 +171,7 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [ ] Gate 1: every workflow on `main` green
 - [ ] B9 `RC6` milestone has 0 open issues
 - [ ] B8 lane E decision recorded
-- [ ] B6 security review recorded
+- [x] B6 security review recorded — one HIGH finding (sign-up pre-hijacking), fixed
 - [ ] B7 What's new reads RC6
 - [ ] Production host, DNS, secrets and email ready
 - [ ] B5 `get.apiome.dev` installs the CLI

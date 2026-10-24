@@ -8,6 +8,7 @@
 const mockFindSignupAccount = jest.fn();
 const mockIssueVerificationToken = jest.fn();
 const mockRedeemVerificationToken = jest.fn();
+const mockFindPendingSignup = jest.fn();
 const mockCreateUser = jest.fn();
 const mockInsertAuthOneTimeCode = jest.fn();
 const mockSendSignupEmail = jest.fn();
@@ -22,6 +23,7 @@ jest.mock('../lib/db/email-verification', () => ({
   findSignupAccount: (...args: unknown[]) => mockFindSignupAccount(...args),
   issueVerificationToken: (...args: unknown[]) => mockIssueVerificationToken(...args),
   redeemVerificationToken: (...args: unknown[]) => mockRedeemVerificationToken(...args),
+  findPendingSignup: (...args: unknown[]) => mockFindPendingSignup(...args),
 }));
 jest.mock('../lib/db/admin-helper', () => ({
   createUser: (...args: unknown[]) => mockCreateUser(...args),
@@ -44,6 +46,7 @@ jest.mock('../lib/auth/turnstile', () => ({
   verifyTurnstileToken: (...args: unknown[]) => mockVerifyTurnstileToken(...args),
 }));
 
+import bcrypt from 'bcrypt';
 import {
   resendSignupVerification,
   startEmailSignup,
@@ -86,6 +89,7 @@ beforeEach(() => {
   mockResolveSignupPolicy.mockResolvedValue(OPEN);
   mockSendSignupEmail.mockResolvedValue(true);
   mockIssueVerificationToken.mockResolvedValue(undefined);
+  mockFindPendingSignup.mockResolvedValue(null);
   mockCreateUser.mockResolvedValue(JSON.stringify({ success: true }));
 });
 
@@ -96,8 +100,13 @@ describe('startEmailSignup', () => {
     await expect(startEmailSignup(GOOD)).resolves.toEqual({ ok: true });
 
     expect(mockFindSignupAccount).toHaveBeenCalledWith('ada@example.com');
-    expect(mockCreateUser).toHaveBeenCalledWith('Ada Lovelace', 'ada@example.com', 'Analytical1', false);
-    const [userId, tokenHash, expiresAt] = mockIssueVerificationToken.mock.calls[0];
+    // The account is created with this sign-up's bcrypt hash, never the plain password…
+    const [createdName, createdEmail, createdHash, createdVerified] = mockCreateUser.mock.calls[0];
+    expect([createdName, createdEmail, createdVerified]).toEqual(['Ada Lovelace', 'ada@example.com', false]);
+    expect(bcrypt.compareSync('Analytical1', createdHash)).toBe(true);
+    // …and the link is bound to that same hash and name.
+    const [userId, tokenHash, expiresAt, pending] = mockIssueVerificationToken.mock.calls[0];
+    expect(pending).toEqual({ passwordHash: createdHash, name: 'Ada Lovelace' });
     expect(userId).toBe('u-1');
     expect(tokenHash).toMatch(/^[0-9a-f]{64}$/);
     expect((expiresAt as Date).getTime() - Date.now()).toBeGreaterThan(23.9 * 60 * 60 * 1000);
@@ -118,11 +127,17 @@ describe('startEmailSignup', () => {
     expect(mockSendSignupEmail.mock.calls[0][1].text).toContain('https://app.apiome.dev/login');
   });
 
-  it('re-sends a link to an existing, unconfirmed address without touching its password', async () => {
+  it('binds the new link to *this* sign-up’s password for an existing, unconfirmed address (pre-hijacking fix)', async () => {
+    // Someone signed up with this address first; the owner now signs up with their own password.
     mockFindSignupAccount.mockResolvedValue(NEW_ACCOUNT);
-    await expect(startEmailSignup({ ...GOOD, password: 'Different9' })).resolves.toEqual({ ok: true });
+    await expect(startEmailSignup({ ...GOOD, name: 'Ada (owner)', password: 'Different9' })).resolves.toEqual({
+      ok: true,
+    });
     expect(mockCreateUser).not.toHaveBeenCalled();
     expect(mockIssueVerificationToken).toHaveBeenCalledTimes(1);
+    const pending = mockIssueVerificationToken.mock.calls[0][3];
+    expect(pending.name).toBe('Ada (owner)');
+    expect(bcrypt.compareSync('Different9', pending.passwordHash)).toBe(true);
     expect(mockSendSignupEmail.mock.calls[0][1].subject).toBe('Confirm your email for Apiome');
   });
 
@@ -324,6 +339,15 @@ describe('resendSignupVerification', () => {
     expect(mockSendSignupEmail).toHaveBeenCalledTimes(1);
   });
 
+  it('carries the newest sign-up’s pending password onto the resent link', async () => {
+    const pending = { passwordHash: bcrypt.hashSync('Analytical1', 4), name: 'Ada Lovelace' };
+    mockFindSignupAccount.mockResolvedValue(NEW_ACCOUNT);
+    mockFindPendingSignup.mockResolvedValue(pending);
+    await expect(resendSignupVerification('ada@example.com')).resolves.toEqual({ ok: true });
+    expect(mockFindPendingSignup).toHaveBeenCalledWith('u-1');
+    expect(mockIssueVerificationToken.mock.calls[0][3]).toEqual(pending);
+  });
+
   it.each([
     ['an unknown address', null],
     ['a confirmed account', { ...NEW_ACCOUNT, verified: true }],
@@ -363,27 +387,47 @@ describe('resendSignupVerification', () => {
 describe('verifyEmailSignup', () => {
   const TOKEN = 'a'.repeat(43);
 
+  const PASSWORD = 'Analytical1';
+
   it('refuses a malformed token without touching the database', async () => {
-    await expect(verifyEmailSignup('../etc')).resolves.toEqual({ state: 'invalid' });
+    await expect(verifyEmailSignup({ token: '../etc', password: PASSWORD })).resolves.toEqual({ state: 'invalid' });
     expect(mockRedeemVerificationToken).not.toHaveBeenCalled();
   });
 
-  it('redeems a valid link into a workspace-less one-time sign-in code', async () => {
+  it('asks for the password before touching the database', async () => {
+    await expect(verifyEmailSignup({ token: TOKEN, password: '' })).resolves.toEqual({ state: 'password-mismatch' });
+    await expect(verifyEmailSignup({ token: TOKEN, password: 42 })).resolves.toEqual({ state: 'password-mismatch' });
+    expect(mockRedeemVerificationToken).not.toHaveBeenCalled();
+  });
+
+  it('redeems a valid link with its password into a workspace-less one-time sign-in code', async () => {
     mockRedeemVerificationToken.mockResolvedValue({ state: 'valid', userId: 'u-1' });
     mockInsertAuthOneTimeCode.mockResolvedValue('code-1');
-    await expect(verifyEmailSignup(TOKEN)).resolves.toEqual({ state: 'valid', oneTimeCode: 'code-1' });
+    await expect(verifyEmailSignup({ token: TOKEN, password: PASSWORD })).resolves.toEqual({
+      state: 'valid',
+      oneTimeCode: 'code-1',
+    });
     expect(mockRedeemVerificationToken.mock.calls[0][0]).toMatch(/^[0-9a-f]{64}$/);
+    expect(mockRedeemVerificationToken.mock.calls[0][1]).toBe(PASSWORD);
     expect(mockInsertAuthOneTimeCode).toHaveBeenCalledWith('u-1', null);
+  });
+
+  it('passes a wrong password through without signing in', async () => {
+    mockRedeemVerificationToken.mockResolvedValue({ state: 'password-mismatch', userId: null });
+    await expect(verifyEmailSignup({ token: TOKEN, password: 'Attacker#Pass1' })).resolves.toEqual({
+      state: 'password-mismatch',
+    });
+    expect(mockInsertAuthOneTimeCode).not.toHaveBeenCalled();
   });
 
   it.each(['expired', 'used', 'invalid'] as const)('passes a %s link through without signing in', async (state) => {
     mockRedeemVerificationToken.mockResolvedValue({ state, userId: null });
-    await expect(verifyEmailSignup(TOKEN)).resolves.toEqual({ state });
+    await expect(verifyEmailSignup({ token: TOKEN, password: PASSWORD })).resolves.toEqual({ state });
     expect(mockInsertAuthOneTimeCode).not.toHaveBeenCalled();
   });
 
   it('fails closed when the database throws', async () => {
     mockRedeemVerificationToken.mockRejectedValue(new Error('down'));
-    await expect(verifyEmailSignup(TOKEN)).resolves.toEqual({ state: 'invalid' });
+    await expect(verifyEmailSignup({ token: TOKEN, password: PASSWORD })).resolves.toEqual({ state: 'invalid' });
   });
 });
