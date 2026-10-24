@@ -10,12 +10,8 @@ on:
       - 'apiome-rest/src/**'
       - 'apiome-rest/pyproject.toml'
       - 'apiome-rest/README.md'
-<<<<<<< Updated upstream
       # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser,
       # typescript-types-extractor, zod-schema-extractor).
-=======
-      # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser).
->>>>>>> Stashed changes
       - 'apiome-rest/toolchain/**'
       - 'apiome-rest/scripts/install_dev_toolchain.sh'
       # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.
@@ -36,12 +32,8 @@ on:
       - 'apiome-rest/src/**'
       - 'apiome-rest/pyproject.toml'
       - 'apiome-rest/README.md'
-<<<<<<< Updated upstream
       # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser,
       # typescript-types-extractor, zod-schema-extractor).
-=======
-      # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser).
->>>>>>> Stashed changes
       - 'apiome-rest/toolchain/**'
       - 'apiome-rest/scripts/install_dev_toolchain.sh'
       # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.

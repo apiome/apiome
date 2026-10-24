@@ -6,11 +6,7 @@ on:
     paths:
       - 'apiome-ui/**'
       # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
-<<<<<<< Updated upstream
       # the a11y and visual route ledgers and the fixture dumps are unit-tested here.)
-=======
-      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
->>>>>>> Stashed changes
       - '!apiome-ui/playwright*.config.ts'
       - '!apiome-ui/docs/**'
       - '.github/workflows/apiome-ui.yml'
@@ -20,11 +16,8 @@ on:
       - 'apiome-docs/docs/**'
       - 'docs/mockups/**'
       - 'docs/guide/README.md'
-<<<<<<< Updated upstream
       # RC6-H5: the Catalog/Projects permission matrix the role suites read.
       - 'docs/catalog-projects-permission-matrix.json'
-=======
->>>>>>> Stashed changes
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'
@@ -37,11 +30,7 @@ on:
     paths:
       - 'apiome-ui/**'
       # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
-<<<<<<< Updated upstream
       # the a11y and visual route ledgers and the fixture dumps are unit-tested here.)
-=======
-      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
->>>>>>> Stashed changes
       - '!apiome-ui/playwright*.config.ts'
       - '!apiome-ui/docs/**'
       - '.github/workflows/apiome-ui.yml'
@@ -51,11 +40,8 @@ on:
       - 'apiome-docs/docs/**'
       - 'docs/mockups/**'
       - 'docs/guide/README.md'
-<<<<<<< Updated upstream
       # RC6-H5: the Catalog/Projects permission matrix the role suites read.
       - 'docs/catalog-projects-permission-matrix.json'
-=======
->>>>>>> Stashed changes
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'
