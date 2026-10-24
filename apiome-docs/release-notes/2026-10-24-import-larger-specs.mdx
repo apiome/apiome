@@ -1,0 +1,16 @@
+---
+slug: import-larger-specs
+title: The import wizard takes specs over 1 MB
+description: Projects and Versions imports accept specs up to 25 MB, and the limit is configurable.
+authors: [apiome]
+---
+
+Importing a spec larger than 1 MB from **Projects** or **Versions** used to fail with
+*Body exceeded 1 MB limit*. The wizard now accepts specs up to **25 MB**.
+
+{/* truncate */}
+
+- **Configurable.** Self-hosted installs can raise or lower the cap with
+  `APIOME_SERVER_ACTION_BODY_LIMIT`. See
+  [Largest spec the import wizard accepts](/admin/operating-apiome#largest-spec-the-import-wizard-accepts).
+- **Import to catalog** was not affected. It uploads through the REST API.
