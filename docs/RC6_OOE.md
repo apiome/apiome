@@ -235,8 +235,8 @@ description now points at this plan and `MVP_LAUNCH.md`. `RC6` has no open issue
 RC6 is ready to tag when every box below is ticked. **Blockers as of 2026-10-24** are marked
 **⛔ B1–B9** and ordered with owners in [`MVP_LAUNCH.md`](MVP_LAUNCH.md).
 
-- [ ] Lanes A, B, D, E and H are closed. *(All tickets closed. ⛔ **B5** — lane D's installer: `get.apiome.dev`
-      does not serve `install.sh`. Lane E: **B8 resolved 2026-10-24** — criterion is "allow-lists only shrink",
+- [ ] Lanes A, B, D, E and H are closed. *(All tickets closed. **B5 resolved 2026-10-24** — `https://get.apiome.dev`
+      serves `install.sh` over a valid certificate. Lane E: **B8 resolved 2026-10-24** — criterion is "allow-lists only shrink",
       follow-up #6263.)*
 - [ ] **Every workflow on `main` is green.** *(⛔ **B1** apiome-ui image build fails (npm `ERESOLVE`); ⛔ **B2**
       runner cannot start Chromium (a11y, visual parity, Catalog journey); ⛔ **B3** RC6-H6 timing ceilings

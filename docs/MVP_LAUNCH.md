@@ -29,9 +29,9 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 7 | ✅ | Sat evening | Decide lane E (recommended: "allow-lists only shrink" + a post-launch ticket) | B8 | You | decision recorded in `RC6_OOE.md` §4 | Accepted; §4 reworded; follow-up #6263 (RC7) |
 | 8 | ✅ | Sat evening | Run `/security-review` on the sign-up and two-factor changes | B6 | Claude runs, You accept | findings recorded in `RC6_OOE.md` §7 | One HIGH finding (sign-up pre-hijacking), fixed in #6260; deploy V318 with it |
 | 9 | ✅ | Sat evening | Bump What's new to RC6 | B7 | Claude (You pick the heading) | `WHATS_NEW.md` starts with RC6 | "Apiome 10-2026 RC6" |
-| 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | §1, §4, §6 and §7 current; B6, B7, B9 ticked; Gate 1 and B5 still open |
+| 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | §1, §4, §6 and §7 current; B6, B7, B9 ticked; B5 resolved; Gate 1 still open |
 | 11 | ⬜ | Sat night | Production host: DNS, firewall, secrets, **SendGrid email** | — | You | `PRODUCTION_DEPLOY.md` §2–§3 done | |
-| 12 | ⏳ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You (script ready) | the install one-liner works on a clean machine | Run `sudo deploy/get-apiome/get-apiome-installer.sh setup --email <ops address>` on the `get.apiome.dev` host: nginx site, Let's Encrypt cert, 15-min refresh from `main` |
+| 12 | ✅ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You | the install one-liner works on a clean machine | Done 2026-10-24: `https://get.apiome.dev` serves `install.sh` over a valid certificate; `deploy/get-apiome/get-apiome-installer.sh` (#6265) refreshes it from `main` |
 | 13 | ⬜ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Include the new sign-up confirmation step (password) |
 | 14 | ⬜ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-24 |
 | 15 | ⬜ | Sun morning | Tag `RC6`; merge the release-notes PR it opens | — | You | RC6 post published | |
@@ -57,7 +57,7 @@ decisions). **Claude** = a code or docs change Claude can make and open as a PR.
 | **B2** | ✅ | **The self-hosted runner `server-node-5` cannot start Chromium** (system libraries missing, no passwordless sudo). The accessibility gate, the visual-parity harness and the Catalog → Project journey (RC6-H1) all fail before running a test. | The release gate's journey and a11y checks cannot go green | You | 5 min |
 | **B3** | ✅ | **Two of the RC6-H6 timing tests fail on the CI runner** (`tests/rc6-list-budgets-*.test.tsx`): the runner is ~10× slower than a laptop, so a 1 s ceiling for filter/sort trips (1.0–1.4 s measured). The exact guard (one page of rows mounted) passes. | `apiome-ui.yml` is red | Claude | 15 min |
 | **B4** | 🔄 | **The nightly REST suite fails its format-count check**: `apiome-docs/docs/ship/export-a-spec.md:48` hand-types "**53 formats**" (from #6211). | `apiome-rest-test.yml` is red | Claude | 10 min |
-| **B5** | ⬜ | **`https://get.apiome.dev` does not serve the CLI installer.** DNS points at the `apiome.dev` host, whose certificate is for `ai-dev.apiome.dev` only (TLS fails); plain HTTP returns 404; the production `Caddyfile` has no `get.` site. | Lane D's exit criterion and every "install the CLI" instruction in the docs fail | You (Claude can write the Caddy block) | 30 min |
+| **B5** | ✅ | **`https://get.apiome.dev` does not serve the CLI installer.** DNS points at the `apiome.dev` host, whose certificate is for `ai-dev.apiome.dev` only (TLS fails); plain HTTP returns 404; the production `Caddyfile` has no `get.` site. | Lane D's exit criterion and every "install the CLI" instruction in the docs fail | You (Claude can write the Caddy block) | 30 min |
 | **B6** | ✅ | **No recorded `/security-review`** of the sign-up and two-factor changes (SGN-1.1…1.5, TFA-1.1…1.4) — a release-gate item. | Release gate | Claude runs it, You accept | 1 h |
 | **B7** | ✅ | **What's new still says "Apiome 08-2026 RC5".** | Release gate | Claude (You pick the label) | 5 min |
 | **B8** | ✅ | **Lane E's exit criterion is not met as written** ("gates … without allow-listed exceptions"): first-row allowances remain on Catalog (390 px) and Versions (710 px), and the disabled-button-without-reason ratchet still tolerates ~92 offenders on released screens. | Lane E is not formally exited | You decide | — |
@@ -179,7 +179,7 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] B6 security review recorded — one HIGH finding (sign-up pre-hijacking), fixed
 - [x] B7 What's new reads RC6 ("Apiome 10-2026 RC6")
 - [ ] Production host, DNS, secrets and email ready
-- [ ] B5 `get.apiome.dev` installs the CLI
+- [x] B5 `get.apiome.dev` installs the CLI
 - [ ] Staging release journey passes
 - [ ] Bug bar returns 0
 - [ ] `RC6` tagged; release-notes PR merged
