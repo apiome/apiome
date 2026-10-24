@@ -156,6 +156,10 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Catalog, Projects and Versions:
+  - **Home** no longer offers **Import a spec**, **New project** or **Create an API key** to a role that can't use them
+  - The Catalog's **Source** filter no longer offers **Catalog connector**, which can't apply until connectors ship
+  - The **New version** dialog points at **Compare**, not the hidden **Merge branches**; the Catalog import guide no longer says Arazzo creates projects
 - Import:
   - Importing a spec larger than 1 MB from **Projects** or **Versions** no longer fails with *Body exceeded 1 MB limit*; the wizard now accepts specs up to 25 MB (set `APIOME_SERVER_ACTION_BODY_LIMIT` to change it)
   - Fixed upload to accept all file format extensions instead of just the 10 it had previously

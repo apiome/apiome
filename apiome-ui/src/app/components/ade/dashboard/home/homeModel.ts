@@ -17,6 +17,7 @@
  *   pins every string against the pre-redesign page.
  */
 
+import { allowEverything, type PermissionCheck } from '../../access/permissionCheck';
 import {
   Activity,
   BellRing,
@@ -338,6 +339,8 @@ export interface QuickAction {
   requiresTenant: boolean;
   /** Rail item id of the feature the action opens, when that feature may be unreleased. */
   feature?: string;
+  /** The `resource:action` the action's write needs; a role without it is not offered it (RC6-H8). */
+  permission?: string;
 }
 
 /**
@@ -356,6 +359,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     href: openActionHref('/ade/dashboard/projects', OPEN_ACTIONS.importSpec),
     kbd: 'I',
     requiresTenant: true,
+    permission: 'imports:create',
   },
   {
     id: 'browse-catalog',
@@ -370,6 +374,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     icon: KeyRound,
     href: openActionHref('/ade/dashboard/api-keys', OPEN_ACTIONS.newApiKey),
     requiresTenant: true,
+    permission: 'api_keys:create',
   },
   {
     id: 'invite-teammate',
@@ -394,13 +399,19 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
  * A reader with no workspace cannot import a spec into one, and an action that navigates to a
  * page which will only tell them so is worse than an action that is not there.
  *
+ * Nor is an action the reader's role cannot use: a Viewer is not offered **Import a spec** or
+ * **Create an API key**, which the API would refuse (RC6-H8, #6215).
+ *
  * @param hasTenant Whether the session has a current workspace.
+ * @param can The reader's grants (`useMyPermissions().can`); omitted, every action is allowed.
  * @returns The actions to draw.
  */
-export function quickActionsFor(hasTenant: boolean): QuickAction[] {
+export function quickActionsFor(hasTenant: boolean, can: PermissionCheck = allowEverything): QuickAction[] {
   return QUICK_ACTIONS.filter(
     (action) =>
-      (hasTenant || !action.requiresTenant) && (!action.feature || isFeatureReleased(action.feature))
+      (hasTenant || !action.requiresTenant) &&
+      (!action.feature || isFeatureReleased(action.feature)) &&
+      (!action.permission || can(action.permission))
   );
 }
 

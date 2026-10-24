@@ -1009,7 +1009,7 @@ export function CatalogImportDialog({
                   <dt>Catalog only</dt>
                   <dd>{supportedLabel} stay non-publishable until explicit Convert.</dd>
                   <dt>Projects</dt>
-                  <dd>OpenAPI, Swagger, and Arazzo create publishable Project versions.</dd>
+                  <dd>OpenAPI and Swagger create publishable Project versions.</dd>
                   <dt>JSON Schema asks first</dt>
                   <dd>Choose Catalog for later conversion or Types/Projects as current schema.</dd>
                 </dl>

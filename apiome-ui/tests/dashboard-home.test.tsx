@@ -70,6 +70,16 @@ jest.mock('@lib/db/project-pins', () => ({
 const mockToast = { success: jest.fn(), error: jest.fn() };
 jest.mock('@/app/components/ui/toast', () => ({ toast: mockToast }));
 
+/** The reader's role; the suite runs as an Owner unless a test says otherwise (RC6-H8). */
+let mockViewer = false;
+jest.mock('@/app/components/ade/access/useMyPermissions', () => ({
+  ...jest.requireActual('@/app/components/ade/access/useMyPermissions'),
+  useMyPermissions: () =>
+    mockViewer
+      ? { status: 'ready', can: (permission: string) => permission.endsWith(':view'), isAdmin: false }
+      : { status: 'ready', can: () => true, isAdmin: true },
+}));
+
 // The Designer is not configured in the test environment, so the checklist shows its three core
 // steps — the pre-existing behaviour `FirstRunChecklist.test.tsx` covers in both configurations.
 import Dashboard from '@/app/ade/dashboard/page';
@@ -394,6 +404,21 @@ describe('Home — what fills the half that used to be empty', () => {
       'href',
       '/ade/dashboard/projects?open=new-project',
     );
+  });
+
+  it('offers a Viewer neither header action, nor Import a spec among the quick actions (RC6-H8)', async () => {
+    mockViewer = true;
+    try {
+      await renderLoaded();
+      const header = within(screen.getByTestId('page-header'));
+      expect(header.queryByRole('link', { name: /Import a spec/ })).not.toBeInTheDocument();
+      expect(header.queryByRole('link', { name: /New project/ })).not.toBeInTheDocument();
+      const panel = screen.getByRole('group', { name: 'Quick actions' });
+      expect(within(panel).queryByRole('link', { name: /Import a spec/ })).not.toBeInTheDocument();
+      expect(within(panel).getByRole('link', { name: /Browse the catalog/ })).toBeInTheDocument();
+    } finally {
+      mockViewer = false;
+    }
   });
 
   it('draws one continue card per project, each linking into that project versions', async () => {

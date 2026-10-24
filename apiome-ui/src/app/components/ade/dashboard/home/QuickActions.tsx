@@ -15,6 +15,7 @@
  * advertises the chord HIVE-3.7 binds without promising an assistive technology anything.
  */
 
+import type { PermissionCheck } from '../../access/permissionCheck';
 import * as React from 'react';
 import Link from 'next/link';
 
@@ -31,6 +32,8 @@ export interface QuickActionsProps {
    * told so is worse than an action that is not offered.
    */
   hasTenant: boolean;
+  /** The reader's grants; an action the role cannot use is not offered. Omitted, all are. */
+  can?: PermissionCheck;
 }
 
 /**
@@ -39,8 +42,8 @@ export interface QuickActionsProps {
  * @param props See {@link QuickActionsProps}.
  * @returns The card, or `null` when no action applies to this reader.
  */
-export function QuickActions({ hasTenant }: QuickActionsProps) {
-  const actions = quickActionsFor(hasTenant);
+export function QuickActions({ hasTenant, can }: QuickActionsProps) {
+  const actions = quickActionsFor(hasTenant, can);
   if (actions.length === 0) return null;
 
   const Icon = PANEL.quickActions.icon;
