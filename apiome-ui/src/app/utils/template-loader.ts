@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Handlebars Template Loader and Helpers
  *

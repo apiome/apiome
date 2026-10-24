@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * The launcher's summary chips (HIVE-4.5, #5299).
  *

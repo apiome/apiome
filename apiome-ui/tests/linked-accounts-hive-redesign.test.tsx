@@ -68,7 +68,7 @@ const mockUnlink = jest.fn<Promise<string>, [string, string]>();
 const mockUpdatePat = jest.fn<Promise<string>, [string, string, string]>();
 const mockRemovePat = jest.fn<Promise<string>, [string, string]>();
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   getLinkedAccountsForUser: (userId: string) => mockLinkedAccounts(userId),
   getUserHasPassword: (userId: string) => mockHasPassword(userId),
   unlinkExternalAccount: (userId: string, accountId: string) => mockUnlink(userId, accountId),

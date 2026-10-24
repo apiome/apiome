@@ -14,7 +14,7 @@ import {
   removeTenantAdministrator,
   removeTenantUser,
   updateTenant,
-} from '../../../../../lib/db/helper';
+} from '../../../../../lib/db/helper-actions';
 
 import { Button } from '@/app/components/ui/Button';
 import PageHeader from '@/app/components/shell/PageHeader';

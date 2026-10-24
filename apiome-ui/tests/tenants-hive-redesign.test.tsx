@@ -73,7 +73,7 @@ const mockRemoveTenantAdmin = jest.fn<Promise<string>, [string]>();
 const mockUpdateTenant =
   jest.fn<Promise<string>, [string, string, string, string]>();
 
-jest.mock('../lib/db/helper', () => ({
+jest.mock('../lib/db/helper-actions', () => ({
   getTenantsForUser: (userId: string) => mockGetTenants(userId),
   getTenantsAdministratedByUser: (userId: string) => mockGetAdminTenants(userId),
   getTenantUsers: (tenantId: string) => mockGetTenantUsers(tenantId),

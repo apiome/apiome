@@ -1,5 +1,3 @@
-'use server';
-
 import { createClass, addPropertyToClass, updateClass, getClassesForVersion, getClassWithPropertiesAndTags, deleteClassPropertiesForClass } from './helper';
 import { getImporter, NormalizedClass, type NormalizedProperty } from '../importers';
 import { cookies } from 'next/headers';

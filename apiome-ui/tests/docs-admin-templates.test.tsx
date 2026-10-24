@@ -18,7 +18,7 @@ import '@testing-library/jest-dom';
 import AdminSidebar from '../src/app/admin/dashboard/AdminSidebar';
 import PropertyTemplateManagementClient from '../src/app/admin/dashboard/templates/PropertyTemplateManagementClient';
 import { DialogProvider } from '../src/app/components/providers/DialogProvider';
-import * as adminHelper from '../lib/db/admin-helper';
+import * as adminHelper from '../lib/db/admin-actions';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 jest.mock('next/navigation', () => ({
@@ -26,7 +26,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/admin/dashboard/templates',
 }));
 
-jest.mock('../lib/db/admin-helper', () => ({
+jest.mock('../lib/db/admin-actions', () => ({
   getAllPropertyTemplates: jest.fn(),
   getPropertyTemplateStats: jest.fn(),
   getPropertyTemplateCategoriesAdmin: jest.fn(),

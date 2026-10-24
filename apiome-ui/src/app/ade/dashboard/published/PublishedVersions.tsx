@@ -54,7 +54,7 @@ import {
   getApiKeysForTenant,
   getPublishedVersionsForTenant,
   updateVersionVisibility,
-} from '@lib/db/helper';
+} from '@lib/db/helper-actions';
 import { buildMockBaseUrl } from '@lib/mock/mockUrl';
 
 import PageHeader from '@/app/components/shell/PageHeader';

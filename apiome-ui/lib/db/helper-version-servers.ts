@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Helper functions for version server definitions (OpenAPI servers array).
  * Section 4.3: Multiple servers, variables (enum), environment (dev/staging/prod), description, relative paths.

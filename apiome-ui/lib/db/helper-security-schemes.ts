@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Helper functions for version security schemes (OpenAPI components.securitySchemes)
  * Supports API Key (header, query, cookie) and future scheme types.

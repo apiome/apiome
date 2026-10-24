@@ -52,7 +52,7 @@ import {
 import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '../../../ui/toast';
-import { createProject } from '@lib/db/helper';
+import { createProject } from '@lib/db/helper-actions';
 import { startImport, getImportStatus } from '@lib/db/import-actions';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '@/app/utils/project-quality-score-history';
 import { analyzeSpecification, type AnalysisResult } from '@/app/utils/openapi-analyzer';

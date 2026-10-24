@@ -60,7 +60,7 @@ const mockHasPassword = jest.fn<Promise<string>, [string]>();
 const mockUpdateUserName = jest.fn<Promise<string>, [string, string]>();
 const mockUpdateUserPassword = jest.fn<Promise<string>, [string, string, string]>();
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   getCurrentUserLastLoginAt: () => mockLastLogin(),
   getLinkedAccountsForUser: (userId: string) => mockLinkedAccounts(userId),
   getUserHasPassword: (userId: string) => mockHasPassword(userId),

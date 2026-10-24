@@ -8,7 +8,7 @@ import {
   getUserLicense,
   setUserFeatureFlag,
   removeUserFeatureFlag,
-} from '../../../../../lib/db/admin-helper';
+} from '../../../../../lib/db/admin-actions';
 
 export interface FeatureFlagRow {
   id: string;

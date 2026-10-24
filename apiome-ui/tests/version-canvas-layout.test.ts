@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
-jest.mock('../lib/db/helper', () => ({
+jest.mock('../lib/db/helper-actions', () => ({
   getDefaultCanvasLayout: jest.fn(),
   getEffectiveDefaultLayoutName: jest.fn(),
   getNamedCanvasLayout: jest.fn(),
 }));
 
-import { getDefaultCanvasLayout, getEffectiveDefaultLayoutName, getNamedCanvasLayout } from '../lib/db/helper';
+import { getDefaultCanvasLayout, getEffectiveDefaultLayoutName, getNamedCanvasLayout } from '../lib/db/helper-actions';
 import { rowToLayoutState, loadLayoutStateForVersionCompare } from '../lib/version-canvas-layout';
 
 const mockGetDefault = getDefaultCanvasLayout as jest.Mock<any>;

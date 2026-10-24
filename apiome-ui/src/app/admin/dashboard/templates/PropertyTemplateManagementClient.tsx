@@ -30,7 +30,7 @@ import {
   updatePropertyTemplateAdmin,
   deletePropertyTemplateAdmin,
   togglePropertyTemplateStatus,
-} from '../../../../../lib/db/admin-helper';
+} from '../../../../../lib/db/admin-actions';
 
 /**
  * Placeholder bar width per column of the templates table, in header order — template,

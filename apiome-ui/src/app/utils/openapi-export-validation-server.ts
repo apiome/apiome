@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * OpenAPI JSON Schema validation runs only on the server (#2655 / P-16).
  * `@seriousme/openapi-schema-validator` depends on Node built-ins (`fs`) and must not be imported from Client Components.

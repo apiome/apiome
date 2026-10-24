@@ -24,7 +24,7 @@ import {
   deleteApiKey,
   getApiKeysForTenant,
   toggleApiKeyStatus,
-} from '../../../../../lib/db/helper';
+} from '../../../../../lib/db/helper-actions';
 
 import type { ApiKeyRecord } from './apiKeysModel';
 

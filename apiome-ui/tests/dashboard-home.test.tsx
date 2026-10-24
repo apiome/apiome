@@ -52,7 +52,7 @@ const mockGetDashboardStats = jest.fn<Promise<string>, [string]>();
 const mockGetRecentActivity = jest.fn<Promise<string>, [string, number]>();
 const mockGetDashboardHome = jest.fn<Promise<DashboardHome>, []>();
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   getDashboardStats: (userId: string) => mockGetDashboardStats(userId),
   getRecentActivity: (userId: string, limit: number) => mockGetRecentActivity(userId, limit),
 }));

@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Import OpenAPI paths and security schemes into an existing version (#425).
  * Call after importProjectFromOpenAPI when the spec contains paths or components.securitySchemes.

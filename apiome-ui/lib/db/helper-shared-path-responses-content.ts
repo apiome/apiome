@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Helper functions for managing response body schemas (class references and inline schemas)
  * Mirrors the request body implementation for consistency

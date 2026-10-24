@@ -17,7 +17,7 @@ import {
   permanentDeleteProject,
   restoreProject,
   updateProject,
-} from '@lib/db/helper';
+} from '@lib/db/helper-actions';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';

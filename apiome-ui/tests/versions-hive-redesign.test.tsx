@@ -94,7 +94,7 @@ const mockBuildSpec = jest.fn(async () =>
 const mockGetClasses = jest.fn(async (): Promise<string> => '[]');
 const mockGetPropsBatch = jest.fn(async (): Promise<string> => '{}');
 
-jest.mock('@lib/db/helper', () => ({
+jest.mock('@lib/db/helper-actions', () => ({
   deleteVersion: (...args: unknown[]) => mockDeleteVersion(...(args as [])),
   buildOpenApiSpecJsonForVersion: (...args: unknown[]) => mockBuildSpec(...(args as [])),
   getClassesForVersion: (...args: unknown[]) => mockGetClasses(...(args as [])),

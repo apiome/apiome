@@ -1,5 +1,3 @@
-'use server';
-
 import { sanitizeTeamParam } from '@lib/owners';
 import { validatePassword } from '@lib/auth/password-policy';
 import { generateOpenApiSpec } from '@/app/utils/openapi';

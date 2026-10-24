@@ -1,0 +1,28 @@
+---
+slug: app-actions-check-the-caller
+title: Every change the app makes now checks who is asking
+description: The app's own actions check sign-in, workspace and role, as the REST API does.
+authors: [apiome]
+---
+
+The app's screens change data through server actions. Each of these now checks who is calling
+before doing anything: the signed-in account, the workspace the data belongs to, and the role
+[permission](/workspace/roles#the-permission-matrix) the REST API would ask for.
+
+{/* truncate */}
+
+- **Your own account only.** Your profile name, password, dashboard and linked accounts accept only
+  your own account.
+- **Workspace settings and members** (**Tenants**) need a tenant administrator of that workspace.
+- **API keys** need `api_keys:create` to create one, `api_keys:edit` to turn one on or off, and
+  `api_keys:delete` to delete one. The keys list needs `api_keys:view`.
+- **Public or private** on a published version needs `versions:publish`.
+- **Imports** need `imports:create` to start or retry one. Progress, commit and roll back are
+  only for the person who started it.
+- **Reading** a workspace's versions, classes, properties and canvas layouts needs membership of
+  that workspace. Anything outside your workspaces is reported as *Not found*.
+- **The admin console** needs the admin sign-in for every user, workspace, licence, feature-flag
+  and template change.
+
+If Apiome cannot confirm your permissions, the change is refused rather than allowed. Try again
+in a moment.

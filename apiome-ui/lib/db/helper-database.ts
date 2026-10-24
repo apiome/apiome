@@ -1,5 +1,3 @@
-'use server';
-
 const connectionPool = require('./db');
 
 export interface ClassSchemaTable {

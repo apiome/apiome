@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Helper functions for loading path data for OpenAPI export
  */

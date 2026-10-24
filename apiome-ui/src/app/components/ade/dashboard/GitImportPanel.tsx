@@ -18,7 +18,7 @@ import {
   FolderGit2,
 } from 'lucide-react';
 import { SiGithub, SiGitlab, SiGoogle, SiAmazon } from 'react-icons/si';
-import { getLinkedAccountsForUser } from '../../../../../lib/db/helper';
+import { getLinkedAccountsForUser } from '../../../../../lib/db/helper-actions';
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
 import { parseGitHubRepoUrl } from '../../../utils/git-repo-url';
 import { TAB_LIST_SCROLL_CLASS, tabTriggerClass } from '../../ui/tabStyles';

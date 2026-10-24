@@ -58,7 +58,7 @@ import {
   getUserHasPassword,
   updateUserName,
   updateUserPassword,
-} from '@lib/db/helper';
+} from '@lib/db/helper-actions';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';

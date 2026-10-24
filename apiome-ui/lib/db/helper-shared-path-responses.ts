@@ -1,5 +1,3 @@
-'use server';
-
 // Helper functions for shared path response management
 
 const connectionPool = require('./db');
