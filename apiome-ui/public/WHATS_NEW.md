@@ -1,4 +1,4 @@
-# Apiome 08-2026 RC5
+# Apiome 10-2026 RC6
 
 We continue to improve the platform based on your feedback with improvements and new features!
 

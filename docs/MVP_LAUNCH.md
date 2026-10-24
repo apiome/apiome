@@ -1,6 +1,6 @@
 # MVP launch — the weekend plan
 
-> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-24 20:00 UTC (see the table below) ·
+> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-24 20:30 UTC (see the table below) ·
 > **Target:** launch the first MVP (RC6) by **Sunday 2026-10-25**.
 > **Scope:** RC6 as defined in [`RC6_OOE.md`](RC6_OOE.md) — Catalog, Projects (with Versions),
 > sign-in and sign-up. Nothing else ships; held-back features stay behind
@@ -14,7 +14,7 @@ Work top to bottom. A **gate** row must be green before the next phase starts. D
 step are under [Order of execution](#order-of-execution); blockers **B1–B9** are described under
 [Blockers](#blockers).
 
-**Last updated:** Saturday 2026-10-24, 20:00 UTC.
+**Last updated:** Saturday 2026-10-24, 20:30 UTC.
 
 **Status key:** ✅ Done · 🔄 In progress · ⏳ Waiting on you · ⬜ Not started
 
@@ -24,12 +24,12 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 2 | ✅ | Sat afternoon | Install Chromium's system libraries on runner `server-node-5` | B2 | You | the a11y job gets past "Install Chromium's system libraries" | Done by you; visual parity ran green afterwards |
 | 3 | ✅ | Sat afternoon | Raise the RC6-H6 timing ceilings for the CI runner | B3 | Claude | `apiome-ui.yml` green on `main` | #6259 (ceilings) and #6261 (5 s Testing Library wait for every suite) |
 | 4 | 🔄 | Sat afternoon | Replace the hand-typed "53 formats" with the tagged count | B4 | Claude | `generate_format_counts.py --check` passes | Fixed in #6259 and passes locally; the nightly REST run on `main` is confirming it |
-| 5 | 🔄 | Sat afternoon | **Gate 1:** re-run every workflow on `main` | — | You | all green | Runs queued after #6260 and #6261 merged |
-| 6 | ⏳ | Sat evening | Move the 10 deferred issues out of `RC6`; update the milestone description | B9 | You approve, Claude applies | `RC6` has 0 open issues | Needs your OK; `RC6` still has 10 open issues |
-| 7 | ⏳ | Sat evening | Decide lane E (recommended: "allow-lists only shrink" + a post-launch ticket) | B8 | You | decision recorded in `RC6_OOE.md` §4 | Needs your decision |
+| 5 | 🔄 | Sat afternoon | **Gate 1:** re-run every workflow on `main` | — | You | all green | Runs queued behind the single self-hosted runner after #6260 and #6261 merged; `apiome-rest` green |
+| 6 | ✅ | Sat evening | Move the 10 deferred issues out of `RC6`; update the milestone description | B9 | You approve, Claude applies | `RC6` has 0 open issues | Moved to the new `RC7` milestone; `RC6` has 0 open issues |
+| 7 | ✅ | Sat evening | Decide lane E (recommended: "allow-lists only shrink" + a post-launch ticket) | B8 | You | decision recorded in `RC6_OOE.md` §4 | Accepted; §4 reworded; follow-up #6263 (RC7) |
 | 8 | ✅ | Sat evening | Run `/security-review` on the sign-up and two-factor changes | B6 | Claude runs, You accept | findings recorded in `RC6_OOE.md` §7 | One HIGH finding (sign-up pre-hijacking), fixed in #6260; deploy V318 with it |
-| 9 | ⏳ | Sat evening | Bump What's new to RC6 | B7 | Claude (You pick the heading) | `WHATS_NEW.md` starts with RC6 | Needs the heading; still "Apiome 08-2026 RC5" |
-| 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | Status, §1 and §7 updated (#6258); B6 ticked (#6260); the rest follow their steps |
+| 9 | ✅ | Sat evening | Bump What's new to RC6 | B7 | Claude (You pick the heading) | `WHATS_NEW.md` starts with RC6 | "Apiome 10-2026 RC6" |
+| 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | §1, §4, §6 and §7 current; B6, B7, B9 ticked; Gate 1 and B5 still open |
 | 11 | ⬜ | Sat night | Production host: DNS, firewall, secrets, **SendGrid email** | — | You | `PRODUCTION_DEPLOY.md` §2–§3 done | |
 | 12 | ⬜ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You (Claude writes the Caddy block) | the install one-liner works on a clean machine | `https://get.apiome.dev` still fails TLS |
 | 13 | ⬜ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Include the new sign-up confirmation step (password) |
@@ -59,9 +59,9 @@ decisions). **Claude** = a code or docs change Claude can make and open as a PR.
 | **B4** | 🔄 | **The nightly REST suite fails its format-count check**: `apiome-docs/docs/ship/export-a-spec.md:48` hand-types "**53 formats**" (from #6211). | `apiome-rest-test.yml` is red | Claude | 10 min |
 | **B5** | ⬜ | **`https://get.apiome.dev` does not serve the CLI installer.** DNS points at the `apiome.dev` host, whose certificate is for `ai-dev.apiome.dev` only (TLS fails); plain HTTP returns 404; the production `Caddyfile` has no `get.` site. | Lane D's exit criterion and every "install the CLI" instruction in the docs fail | You (Claude can write the Caddy block) | 30 min |
 | **B6** | ✅ | **No recorded `/security-review`** of the sign-up and two-factor changes (SGN-1.1…1.5, TFA-1.1…1.4) — a release-gate item. | Release gate | Claude runs it, You accept | 1 h |
-| **B7** | ⏳ | **What's new still says "Apiome 08-2026 RC5".** | Release gate | Claude (You pick the label) | 5 min |
-| **B8** | ⏳ | **Lane E's exit criterion is not met as written** ("gates … without allow-listed exceptions"): first-row allowances remain on Catalog (390 px) and Versions (710 px), and the disabled-button-without-reason ratchet still tolerates ~92 offenders on released screens. | Lane E is not formally exited | You decide | — |
-| **B9** | ⏳ | **The RC6 milestone still holds 10 deferred issues** (the §6 "move out" list) and its description still promises formats and the full HIVE pass. | Tagging `RC6` closes the milestone with open issues in it | You approve, Claude applies | 10 min |
+| **B7** | ✅ | **What's new still says "Apiome 08-2026 RC5".** | Release gate | Claude (You pick the label) | 5 min |
+| **B8** | ✅ | **Lane E's exit criterion is not met as written** ("gates … without allow-listed exceptions"): first-row allowances remain on Catalog (390 px) and Versions (710 px), and the disabled-button-without-reason ratchet still tolerates ~92 offenders on released screens. | Lane E is not formally exited | You decide | — |
+| **B9** | ✅ | **The RC6 milestone still holds 10 deferred issues** (the §6 "move out" list) and its description still promises formats and the full HIVE pass. | Tagging `RC6` closes the milestone with open issues in it | You approve, Claude applies | 10 min |
 
 **Not blockers** (fix after launch): the OpenAPI catalog push (`apiome-openapi.yml`) times out
 uploading the 7.4 MB spec — it publishes the API document to the live catalog and does not gate a
@@ -174,10 +174,10 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] B3 UI unit suite fixes merged (#6259, #6261) — confirm on the next `main` run
 - [ ] B4 nightly REST suite green (fix merged in #6259; run in progress)
 - [ ] Gate 1: every workflow on `main` green
-- [ ] B9 `RC6` milestone has 0 open issues
-- [ ] B8 lane E decision recorded
+- [x] B9 `RC6` milestone has 0 open issues (deferred work → `RC7`)
+- [x] B8 lane E decision recorded ("allow-lists only shrink", #6263)
 - [x] B6 security review recorded — one HIGH finding (sign-up pre-hijacking), fixed
-- [ ] B7 What's new reads RC6
+- [x] B7 What's new reads RC6 ("Apiome 10-2026 RC6")
 - [ ] Production host, DNS, secrets and email ready
 - [ ] B5 `get.apiome.dev` installs the CLI
 - [ ] Staging release journey passes
