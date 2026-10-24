@@ -299,6 +299,7 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
    ✅ #6208: `apiome-ui/e2e/journey/catalog-project-journey.spec.ts`, `e2e-catalog-journey.yml`.
 2. **Accessibility:** every Catalog, Projects and Versions route passes the HIVE-10.2 axe gate with
    no route-ledger exemptions.
+   ✅ #6209: ledger entries `projects-rendered` and `rc6-dialogs`; `ui/Dialog` returns focus to its opener.
 3. **Loading and error states:** skeletons (#4122) and `ErrorState` on every fetch on those pages;
    no blank screen on a slow or failed request.
 4. **Export without the studio:** catalog and version export through the in-place dialog covers the

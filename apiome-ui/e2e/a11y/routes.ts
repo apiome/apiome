@@ -115,6 +115,26 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['two-factor-required.html'] },
   },
   { id: 'projects', mockup: null, subject: { kind: 'spec', file: 'hive-projects.spec.ts' } },
+  {
+    // RC6-H2 (#6209): the Projects page as the components render it — `hive-projects.spec.ts`
+    // above checks hand-written copies of its markup — plus the New and Edit project dialogs,
+    // dumped by `tests/projects-hive-redesign.test.tsx`.
+    id: 'projects-rendered',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['projects-cards.html', 'projects-table.html', 'projects-create-dialog.html', 'projects-edit-dialog.html'],
+    },
+  },
+  {
+    // RC6-H2 (#6209): the Catalog and Versions dialogs no page suite dumps — Convert to OpenAPI,
+    // Import to catalog, the version Export dialog and the Unpublish confirm — dumped by
+    // `tests/rc6-dialog-fixtures.test.tsx`.
+    id: 'rc6-dialogs',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-rc6-dialogs' },
+  },
   { id: 'profile', mockup: null, subject: { kind: 'spec', file: 'hive-profile.spec.ts' } },
   { id: 'linked-accounts', mockup: null, subject: { kind: 'spec', file: 'hive-linked-accounts.spec.ts' } },
   { id: 'project-discussion', mockup: null, subject: { kind: 'fixtures', dir: 'project-discussion' } },

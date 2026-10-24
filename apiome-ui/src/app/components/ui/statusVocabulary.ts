@@ -374,15 +374,20 @@ export type GradeLetter = 'A' | 'B' | 'C' | 'D' | 'F';
 export const GRADE_LETTERS: readonly GradeLetter[] = ['A', 'B', 'C', 'D', 'F'] as const;
 
 /**
- * B sits between "good" and "needs a look", and hive.css §20 gives it exactly that: `--ok`
- * pulled 30% of the way towards honey. Spelled as a `color-mix` of two tokens rather than as a
- * sixth colour, so it swaps with the theme like everything else.
+ * B sits between "good" and "needs a look": `--ok` pulled towards honey. Spelled as a
+ * `color-mix` of two tokens rather than as a sixth colour, so it swaps with the theme like
+ * everything else.
+ *
+ * hive.css §20 pulls it 30% of the way; RC6-H2 (#6209) pulls it 40% and inks the solid chip with
+ * the fixed dark `--honey-ink`. With `--fg-on-accent` on the 30% fill the light theme's "Grade B"
+ * chip measured 3.6:1 (axe flagged it on the import quality step); the dark ink on the 40% fill is
+ * ≥ 4.89:1 in all nine themes, and the arc stays ≥ 3.3:1 against the surface.
  */
-const GRADE_B_FILL = 'bg-[color-mix(in_srgb,var(--ok)_70%,var(--honey))]';
+const GRADE_B_FILL = 'bg-[color-mix(in_srgb,var(--ok)_60%,var(--honey))]';
 /** The on-surface ink for band B — the same mix taken between the two `-fg` inks. */
 const GRADE_B_INK = 'text-[color-mix(in_srgb,var(--ok-fg)_70%,var(--honey-fg))]';
 /** The gauge arc for band B. The arc paints from `currentColor`, so this is a text colour. */
-const GRADE_B_ARC = 'text-[color-mix(in_srgb,var(--ok)_70%,var(--honey))]';
+const GRADE_B_ARC = 'text-[color-mix(in_srgb,var(--ok)_60%,var(--honey))]';
 
 /** How one quality band is painted, in the three places a grade appears. */
 export interface GradeBand {
@@ -413,7 +418,7 @@ export const GRADE_BANDS: Readonly<Record<GradeLetter, GradeBand>> = {
   B: {
     letter: 'B',
     tone: 'ok',
-    solidClass: `${GRADE_B_FILL} text-fg-on-accent`,
+    solidClass: `${GRADE_B_FILL} text-honey-ink`,
     textClass: GRADE_B_INK,
     arcClass: GRADE_B_ARC,
   },

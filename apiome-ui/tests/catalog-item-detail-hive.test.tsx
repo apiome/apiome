@@ -18,6 +18,7 @@ import * as path from 'path';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 
 const mockPush = jest.fn();
 let mockSearch = '';
@@ -33,7 +34,10 @@ jest.mock('@lib/auth/session-client', () => ({
 // The Test bench's Monaco payload editor is irrelevant here; stub it to a plain textarea.
 jest.mock('@monaco-editor/react', () => ({
   __esModule: true,
-  default: (props: { value?: string }) => <textarea readOnly value={props.value ?? ''} />,
+  // Labelled the way Monaco labels its own input: `options.ariaLabel`, else "Editor content".
+  default: (props: { value?: string; options?: { ariaLabel?: string } }) => (
+    <textarea readOnly aria-label={props.options?.ariaLabel ?? 'Editor content'} value={props.value ?? ''} />
+  ),
 }));
 
 import { CatalogItemDetailClient } from '../src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient';
@@ -306,6 +310,21 @@ describe('the nine panes', () => {
     for (const id of ['conversions', 'lint', 'versions']) {
       expect(screen.getByTestId(`catalog-detail-tab-${id}`).querySelector('.tab-count')).toBeNull();
     }
+  });
+});
+
+describe('the keyboard path (RC6-H2, #6209)', () => {
+  it('opens Convert to OpenAPI from the keyboard and returns focus to the button on Escape', async () => {
+    await renderDetail();
+    const user = userEvent.setup();
+    const trigger = screen.getByTestId('catalog-detail-convert');
+    trigger.focus();
+    await user.keyboard('{Enter}');
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 });
 

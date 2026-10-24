@@ -59,7 +59,9 @@ const GOOD = tier(
   '70–89',
   'Good',
   'Minor improvements needed',
-  'text-yellow-600 dark:text-yellow-400',
+  // The warning ink token, not `text-yellow-600`: yellow on the light canvas is 2.9:1, under
+  // even the 3:1 large-text bar (RC6-H2, #6209); `--warn-fg` is calibrated per theme.
+  'text-warn-fg',
   'text-yellow-500 dark:text-yellow-400',
   'from-yellow-500 to-amber-500',
   'bg-yellow-500'

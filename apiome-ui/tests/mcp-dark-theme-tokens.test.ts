@@ -69,6 +69,15 @@ function hasDarkVariant(className: string): boolean {
   return /(^|\s)dark:/.test(className);
 }
 
+/**
+ * Whether a text class follows the dark theme: a `dark:` variant, or a theme ink token
+ * (`text-warn-fg`, …), which every theme block re-declares — so it needs no `dark:` of its own.
+ * RC6-H2 (#6209) moved the "good" score band onto `text-warn-fg` for light-theme contrast.
+ */
+function followsDarkTheme(className: string): boolean {
+  return hasDarkVariant(className) || /(^|\s)text-[a-z]+-fg(\s|$)/.test(className);
+}
+
 const GRADE_LETTERS: McpGradeLetter[] = ['A', 'B', 'C', 'D', 'F'];
 const HEALTH_STATUSES: McpHealthStatus[] = ['healthy', 'degraded', 'unreachable', 'unknown'];
 const BADGE_TONES: McpBadgeTone[] = ['indigo', 'green', 'amber', 'red', 'blue', 'slate', 'violet'];
@@ -286,13 +295,13 @@ describe('numeric score-tier dark-theme tokens', () => {
   // One representative score per band (excellent / good / fair / poor).
   it.each([95, 80, 60, 20])('gives the score-%d tier text & gauge stroke a dark variant', (score) => {
     const tier = getNumericScoreTier(score);
-    expect(hasDarkVariant(tier.textClass)).toBe(true);
+    expect(followsDarkTheme(tier.textClass)).toBe(true);
     expect(hasDarkVariant(tier.gaugeStrokeClass)).toBe(true);
   });
 
   it('gives every legend band a dark variant on its surface tints', () => {
     for (const band of NUMERIC_SCORE_TIER_LEGEND) {
-      expect(hasDarkVariant(band.textClass)).toBe(true);
+      expect(followsDarkTheme(band.textClass)).toBe(true);
       expect(hasDarkVariant(band.gaugeStrokeClass)).toBe(true);
     }
   });
