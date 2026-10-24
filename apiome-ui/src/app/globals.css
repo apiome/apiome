@@ -4067,20 +4067,35 @@ button.auth-link:disabled {
 }
 
 /* ---- "Your two-factor was reset" (TFA-1.2, #5656) ------------------------
-   The prompt to enrol again after an administrator's reset. It floats over the
-   bottom corner instead of taking a row of the layout: the signed-in shell is a
+   The prompt to enrol again after an administrator's reset, and — since TFA-1.3
+   (#5657) — the grace-period reminder of a workspace that requires two-factor,
+   which wears the same card. Both float in `.tfa-notice-stack` over the bottom
+   corner instead of taking a row of the layout: the signed-in shell is a
    fixed-height box each route fills, so a banner inside it would shorten every
-   page. Above the rail and page chrome (`z-index: 20`), below dialogs. The
-   close button is an element selector for the reason given at `button.auth-link`. */
-.tfa-reset-notice {
+   page. The stack keeps two notices from landing on top of each other. Above
+   the rail and page chrome (`z-index: 20`), below dialogs. The close button is
+   an element selector for the reason given at `button.auth-link`. */
+.tfa-notice-stack {
   position: fixed;
   right: var(--space-4);
   bottom: var(--space-4);
   z-index: 40;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--space-3);
   width: min(26rem, calc(100vw - 2 * var(--space-4)));
+  pointer-events: none;
+}
+
+.tfa-notice-stack:empty {
+  display: none;
+}
+
+.tfa-reset-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  pointer-events: auto;
   padding: var(--space-4);
   border-radius: var(--r-lg);
   background: var(--bg-surface);
@@ -36624,6 +36639,11 @@ a.tm-fact:focus-visible {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
+}
+
+/* The Security section's grace-period box (TFA-1.3, #5657): a two- or three-digit number. */
+.tnt-2fa-grace {
+  max-width: 8rem;
 }
 
 /* ===========================================================================

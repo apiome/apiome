@@ -11056,10 +11056,17 @@ class Database:
         * ``two_factor_enabled`` — the Better Auth ``users."twoFactorEnabled"`` flag
           (V201, #5005). Quoted because Better Auth owns the column and spells it in
           camel case.
+        * ``two_factor_status`` / ``two_factor_due_at`` — compliance with the tenant's
+          two-factor policy (TFA-1.3, #5657): ``not_required``, ``enabled``, ``grace`` or
+          ``overdue``, and the member's deadline (``NULL`` while the policy is off). Both
+          come from :mod:`app.two_factor_policy`'s shared SQL so the rule lives once.
 
         :param tenant_id: Canonical UUID string of the tenant.
         :returns: One row per non-deleted member, ordered by display name.
         """
+        from .two_factor_policy import DUE_AT_SQL, STATUS_SQL
+
+
         return self.execute_query(
             """
             SELECT u.id::text AS user_id, u.name, u.email,
@@ -11068,19 +11075,22 @@ class Database:
                    tu.created_at AS joined_at,
                    u.last_login_at AS last_active,
                    COALESCE(u."twoFactorEnabled", FALSE) AS two_factor_enabled,
+                   ({STATUS_SQL}) AS two_factor_status,
+                   ({DUE_AT_SQL}) AS two_factor_due_at,
                    r.id::text AS role_id, r.name AS role_name, r.slug AS role_slug,
                    EXISTS (
                        SELECT 1 FROM apiome.tenant_administrators ta
                        WHERE ta.tenant_id = tu.tenant_id AND ta.user_id = u.id
                    ) AS is_admin
             FROM apiome.tenant_users tu
+            JOIN apiome.tenants tn ON tn.id = tu.tenant_id
             JOIN apiome.users u ON u.id = tu.user_id
             LEFT JOIN apiome.tenant_user_roles tur
                    ON tur.tenant_id = tu.tenant_id AND tur.user_id = tu.user_id
             LEFT JOIN apiome.roles r ON r.id = tur.role_id
             WHERE tu.tenant_id = %s::uuid AND u.deleted_at IS NULL
             ORDER BY u.name ASC
-            """,
+            """.replace("{STATUS_SQL}", STATUS_SQL).replace("{DUE_AT_SQL}", DUE_AT_SQL),
             (tenant_id,),
         )
 

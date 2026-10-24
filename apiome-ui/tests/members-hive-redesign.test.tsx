@@ -487,6 +487,61 @@ describe('the roster', () => {
    4. Capability gating
    ------------------------------------------------------------------------- */
 
+describe('two-factor compliance (TFA-1.3 #5657)', () => {
+  /** Put the roster under a two-factor policy for one test. */
+  const withPolicy = async (run: () => Promise<void>) => {
+    // Restored in place afterwards: other suites hold references to these very objects.
+    const saved = MEMBERS.map((member) => ({ ...member }));
+    const statuses: Record<string, [string, string | null]> = {
+      'ada@acme.io': ['enabled', '2026-10-20T12:00:00Z'],
+      'grace@acme.io': ['overdue', '2026-10-20T12:00:00Z'],
+      'linus@acme.io': ['grace', new Date(Date.now() + 3 * 86_400_000 - 60_000).toISOString()],
+    };
+    for (const member of MEMBERS as Array<Record<string, unknown>>) {
+      const [status, due] = statuses[member.email as string] ?? ['overdue', '2026-10-20T12:00:00Z'];
+      member.two_factor_status = status;
+      member.two_factor_due_at = due;
+    }
+    try {
+      await run();
+    } finally {
+      MEMBERS.forEach((member, index) => {
+        const record = member as Record<string, unknown>;
+        delete record.two_factor_status;
+        delete record.two_factor_due_at;
+        Object.assign(member, saved[index]);
+      });
+    }
+  };
+
+  it('has no Needs two-factor chip or badges while the policy is off', async () => {
+    await renderMembers();
+    expect(screen.queryByRole('button', { name: /Needs two-factor/ })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('member-two-factor-badge')).not.toBeInTheDocument();
+  });
+
+  it('badges who still has to comply, and filters to them', async () => {
+    await withPolicy(async () => {
+      const { user } = await renderMembers();
+
+      expect(within(rowFor('grace@acme.io')).getByTestId('member-two-factor-badge')).toHaveTextContent('2FA overdue');
+      expect(within(rowFor('linus@acme.io')).getByTestId('member-two-factor-badge')).toHaveTextContent(
+        '2FA due in 3 days'
+      );
+      // Compliant, suspended and pending members are not chased.
+      for (const email of ['ada@acme.io', 'margaret@acme.io', 'dev-partner@globex.io']) {
+        expect(within(rowFor(email)).queryByTestId('member-two-factor-badge')).not.toBeInTheDocument();
+      }
+
+      await user.click(screen.getByRole('button', { name: /Needs two-factor/ }));
+      expect(screen.getAllByTestId('member-row').map((row) => row.dataset.memberEmail)).toEqual([
+        'grace@acme.io',
+        'linus@acme.io',
+      ]);
+    });
+  });
+});
+
 describe('when the roster cannot be read', () => {
   it('says so inside the card, rather than claiming the workspace is empty', async () => {
     mockApi({ failRoster: true });

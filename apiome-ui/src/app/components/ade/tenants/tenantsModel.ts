@@ -512,11 +512,19 @@ export function suggestTenantSlug(name: string): string {
 // ---------------------------------------------------------------------------------------
 
 /** The manage drawer's vertical tabs, in the mockup's order. */
-export type TenantManageSection = 'members' | 'license' | 'mcp' | 'keys' | 'ownership' | 'history';
+export type TenantManageSection =
+  | 'members'
+  | 'security'
+  | 'license'
+  | 'mcp'
+  | 'keys'
+  | 'ownership'
+  | 'history';
 
 /** Those sections in order, so the tab strip and the panels cannot disagree. */
 export const TENANT_MANAGE_SECTIONS: readonly TenantManageSection[] = [
   'members',
+  'security',
   'license',
   'mcp',
   'keys',
@@ -527,6 +535,7 @@ export const TENANT_MANAGE_SECTIONS: readonly TenantManageSection[] = [
 /** The tab labels, which the mockup fixes. */
 export const TENANT_MANAGE_SECTION_LABELS: Readonly<Record<TenantManageSection, string>> = {
   members: 'Members',
+  security: 'Security',
   license: 'License & plan',
   mcp: 'MCP settings',
   keys: 'Per-key capabilities',
@@ -562,6 +571,8 @@ export function tenantSectionLockNote(
       return `Select ${subject} as your current tenant to view its policy history.`;
     case 'ownership':
       return `Select ${subject} as your current tenant to view or edit its ownership policy.`;
+    case 'security':
+      return `Select ${subject} as your current tenant to view or edit its two-factor policy.`;
     default:
       // Members come from the tenant list the page already loaded, not from the
       // current-tenant proxy, so they are readable for every tenant the viewer administers.

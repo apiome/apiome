@@ -108,6 +108,12 @@ const ADDITIONAL: A11yRoute[] = [
   { id: 'tenants', mockup: 'workspace/tenants.html', subject: { kind: 'spec', file: 'hive-tenants.spec.ts' } },
 
   // Redesigned ahead of their mockup's roadmap slot, or with no page mockup at all.
+  // TFA-1.3 (#5657): the blocking enrolment screen of a workspace that requires two-factor.
+  {
+    id: 'two-factor-required',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['two-factor-required.html'] },
+  },
   { id: 'projects', mockup: null, subject: { kind: 'spec', file: 'hive-projects.spec.ts' } },
   { id: 'profile', mockup: null, subject: { kind: 'spec', file: 'hive-profile.spec.ts' } },
   { id: 'linked-accounts', mockup: null, subject: { kind: 'spec', file: 'hive-linked-accounts.spec.ts' } },

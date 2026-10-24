@@ -16,6 +16,11 @@
  * decisions.
  */
 
+import {
+  daysUntil,
+  toMemberTwoFactorStatus,
+  type MemberTwoFactorStatus,
+} from '@lib/two-factor-policy';
 import type { MyPermissions, RoleRecord } from '../access/accessApi';
 import type { TenantLicensePlan, TenantLicenseSeats } from '@/app/ade/dashboard/tenants/licenseApi';
 import {
@@ -63,6 +68,14 @@ export interface MemberRecord {
   last_active?: string | null;
   /** The Better Auth `twoFactorEnabled` flag. */
   two_factor_enabled?: boolean | null;
+  /**
+   * Compliance with the tenant's two-factor policy (TFA-1.3, #5657): `not_required` while the
+   * policy is off; otherwise `enabled`, `grace` (before the deadline) or `overdue`. Absent from
+   * older servers, which reads as `not_required`.
+   */
+  two_factor_status?: MemberTwoFactorStatus | null;
+  /** The member's two-factor deadline (ISO-8601); `null` while the policy is off. */
+  two_factor_due_at?: string | null;
   role_id: string | null;
   role_name: string | null;
   role_slug: string | null;
@@ -248,15 +261,19 @@ export function memberRowActions(
 // ---------------------------------------------------------------------------------------
 
 /** The toolbar's facets. `all` is the resting state, not a filter. */
-export type MemberFacet = 'all' | 'active' | 'pending' | 'suspended' | 'admins';
+export type MemberFacet = 'all' | 'active' | 'pending' | 'suspended' | 'admins' | 'needs2fa';
 
-/** The facets in the order the toolbar draws them. */
+/**
+ * The facets in the order the toolbar draws them. `needs2fa` (TFA-1.3) is drawn only while the
+ * tenant requires two-factor — see {@link twoFactorPolicyActive}.
+ */
 export const MEMBER_FACETS: readonly MemberFacet[] = [
   'all',
   'active',
   'pending',
   'suspended',
   'admins',
+  'needs2fa',
 ];
 
 /** The chip labels, which the mockup fixes. */
@@ -266,6 +283,7 @@ export const MEMBER_FACET_LABELS: Readonly<Record<MemberFacet, string>> = {
   pending: 'Pending',
   suspended: 'Suspended',
   admins: 'Admins',
+  needs2fa: 'Needs two-factor',
 };
 
 /**
@@ -277,6 +295,7 @@ export const MEMBER_FACET_LABELS: Readonly<Record<MemberFacet, string>> = {
  */
 export function matchesMemberFacet(member: MemberRecord, facet: MemberFacet): boolean {
   if (facet === 'admins') return member.is_admin;
+  if (facet === 'needs2fa') return memberNeedsTwoFactor(member);
   if (facet === 'all') return true;
   return member.status === facet;
 }
@@ -300,7 +319,69 @@ export function memberFacetCounts(
     pending: members.filter((member) => member.status === 'pending').length,
     suspended: members.filter((member) => member.status === 'suspended').length,
     admins: members.filter((member) => member.is_admin).length,
+    needs2fa: members.filter(memberNeedsTwoFactor).length,
   };
+}
+
+// ---------------------------------------------------------------------------------------
+// Two-factor compliance (TFA-1.3, #5657)
+// ---------------------------------------------------------------------------------------
+
+/**
+ * A member's compliance with the tenant's two-factor policy.
+ *
+ * @param member The row.
+ * @returns The status REST computed; `not_required` when it sent none.
+ */
+export function memberTwoFactorStatus(member: MemberRecord): MemberTwoFactorStatus {
+  return toMemberTwoFactorStatus(member.two_factor_status);
+}
+
+/**
+ * Whether a member still has to turn on two-factor: the policy is on and they are in their grace
+ * period or past it. A pending invitation or a suspended member is not counted — they cannot sign
+ * in to comply, and REST's compliance totals count active members only.
+ *
+ * @param member The row.
+ * @returns True for an active member in `grace` or `overdue`.
+ */
+export function memberNeedsTwoFactor(member: MemberRecord): boolean {
+  const status = memberTwoFactorStatus(member);
+  return member.status === 'active' && (status === 'grace' || status === 'overdue');
+}
+
+/**
+ * Whether the tenant requires two-factor, as far as the rows say: any row carries a status other
+ * than `not_required`. Decides whether the **Needs two-factor** chip is drawn.
+ *
+ * @param members Every member of the tenant.
+ * @returns True when the policy is on.
+ */
+export function twoFactorPolicyActive(members: readonly MemberRecord[]): boolean {
+  return members.some((member) => memberTwoFactorStatus(member) !== 'not_required');
+}
+
+/** What a row's two-factor compliance badge says. */
+export interface MemberTwoFactorBadge {
+  /** `danger` past the deadline, `warn` before it (Badge variants). */
+  tone: 'danger' | 'warn';
+  /** The badge text, e.g. `2FA overdue` or `2FA due in 3 days`. */
+  label: string;
+}
+
+/**
+ * The compliance badge a row carries, if any: only a member who still has to comply gets one.
+ *
+ * @param member The row.
+ * @param now The current time (injectable for tests).
+ * @returns The badge, or `null` when there is nothing to chase.
+ */
+export function memberTwoFactorBadge(member: MemberRecord, now: Date = new Date()): MemberTwoFactorBadge | null {
+  if (!memberNeedsTwoFactor(member)) return null;
+  if (memberTwoFactorStatus(member) === 'overdue') return { tone: 'danger', label: '2FA overdue' };
+  const days = member.two_factor_due_at ? daysUntil(member.two_factor_due_at, now) : null;
+  if (days === null) return { tone: 'warn', label: '2FA due' };
+  return { tone: 'warn', label: `2FA due in ${days} ${days === 1 ? 'day' : 'days'}` };
 }
 
 /**

@@ -453,13 +453,13 @@ describe('suggestTenantSlug', () => {
 });
 
 describe('the drawer’s sections', () => {
-  it('lists the mockup’s five sections, with Ownership (CDG-2.5) before the history', () => {
-    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'license', 'mcp', 'keys', 'ownership', 'history']);
+  it('lists the sections, Security (TFA-1.3) after Members and Ownership (CDG-2.5) before the history', () => {
+    expect(TENANT_MANAGE_SECTIONS).toEqual(['members', 'security', 'license', 'mcp', 'keys', 'ownership', 'history']);
   });
 
   it('needs the current tenant for everything but members', () => {
     expect(tenantSectionNeedsCurrent('members')).toBe(false);
-    for (const section of ['license', 'mcp', 'keys', 'ownership', 'history'] as const) {
+    for (const section of ['security', 'license', 'mcp', 'keys', 'ownership', 'history'] as const) {
       expect(tenantSectionNeedsCurrent(section)).toBe(true);
     }
   });
@@ -469,6 +469,9 @@ describe('the drawer’s sections', () => {
       'Select Globex Labs as your current tenant to view its license details.',
     );
     expect(tenantSectionLockNote('mcp', 'Globex Labs')).toContain('view or edit MCP settings');
+    expect(tenantSectionLockNote('security', 'Globex Labs')).toBe(
+      'Select Globex Labs as your current tenant to view or edit its two-factor policy.',
+    );
   });
 
   it('falls back to "this tenant" rather than printing a blank name', () => {

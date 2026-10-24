@@ -36,6 +36,8 @@ not shown. Free a seat by cancelling an invitation or offboarding someone, or ch
 
 - **Filter by name or email…** narrows the roster as you type.
 - The chips — **All**, **Active**, **Pending**, **Suspended** and **Admins** — each show their count.
+  When the workspace requires two-factor, a **Needs two-factor** chip is added (see
+  [Two-factor compliance](#two-factor-compliance)).
 - **User**, **Status**, **Last active** and **Joined** sort; click the header again to reverse.
 
 The header reads *9 members · 2 pending*, and the table foot counts every state — *9 people · 6
@@ -79,6 +81,19 @@ The footer has **Offboard** (or **Cancel invite**), **Resend** for an invitation
 two-factor** for a member who has two-factor on.
 
 <Screenshot id="members-drawer" alt="Sam Okafor's drawer: active Release manager with two-factor enabled, their effective permissions and recent access activity" />
+
+## Two-factor compliance
+
+When the workspace requires two-factor (**Tenants → Manage → [Security](./tenants.mdx#security)**),
+each active member who has not turned it on carries a badge beside their status:
+
+- **2FA due in *N* days** — still inside their grace period. They see a reminder on every page.
+- **2FA overdue** — the grace period has ended. The next time they open the app they must set up
+  two-factor before anything else.
+
+**Click “Needs two-factor”** to list only those members. A member's drawer shows the same badge,
+with the deadline, beside **Two-factor**. Pending invitations and suspended members are not counted:
+they cannot sign in to comply.
 
 ## Reset a member's two-factor
 
@@ -145,12 +160,13 @@ The page calls the access API, scoped to the workspace — see the
 
 | Call | Does |
 | --- | --- |
-| `GET /v1/access/{tenant}/members` | The roster |
+| `GET /v1/access/{tenant}/members` | The roster, with each member's `two_factor_status` (`not_required`, `enabled`, `grace`, `overdue`) and `two_factor_due_at` |
 | `POST /v1/access/{tenant}/members` | Invite (`email`, optional `role_id`) |
 | `PATCH /v1/access/{tenant}/members/{user_id}` | Change `role_id` or `status` (`active`, `suspended`) |
 | `POST /v1/access/{tenant}/members/{user_id}/resend-invite` | Renew a pending invitation |
 | `DELETE /v1/access/{tenant}/members/{user_id}` | Offboard, or cancel an invitation |
 | `GET /v1/tenants/{tenant}/license` | Plan and seat usage |
+| `GET` / `PUT /v1/tenants/{tenant}/two-factor-policy` | The two-factor requirement and its compliance counts |
 
 There is no CLI command for members.
 

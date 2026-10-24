@@ -157,6 +157,7 @@ from .team_routes import router as team_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
+from .two_factor_policy_routes import router as two_factor_policy_router
 from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
 from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .type_namespaces_routes import router as type_namespaces_router
@@ -191,7 +192,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.309.0",
+    version="1.310.0",
 )
 
 
@@ -414,6 +415,8 @@ app.include_router(catalog_agent_router)
 app.include_router(entity_owner_router)
 app.include_router(unowned_findings_router)
 app.include_router(ownership_policy_router)
+# two_factor_policy_router: TFA-1.3 tenant two-factor requirement GET|PUT …/two-factor-policy (#5657).
+app.include_router(two_factor_policy_router)
 app.include_router(graph_router)
 # usage_ingest_router: RDG-1.2 usage ingest door POST /v1/tenants/{t}/usage/ingest (#5760).
 app.include_router(usage_ingest_router)

@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.446.0] - 2026-10-23
+
+### Added
+- **Tenant policy — require two-factor for members (TFA-1.3, #5657)** (apiome-db V316):
+  - `GET|PUT /v1/tenants/{tenant_slug}/two-factor-policy` — `require_two_factor`, `grace_days` (0–90, default 7),
+    `required_since`, and `compliance` (active members `enabled` / `grace` / `overdue`). Reading needs
+    `members:view`; changing needs `members:edit`. Audited as `two_factor_policy.update` in the same transaction.
+    Turning the requirement on starts every grace period; turning it off and on again restarts them.
+  - A member's deadline is the later of the requirement being turned on and the member joining, plus the grace
+    days. `GET /v1/access/{tenant_slug}/members` gains `two_factor_status` (`not_required`, `enabled`, `grace`,
+    `overdue`) and `two_factor_due_at` per member.
+  - Enforcement is in apiome-ui sign-in (a blocking enrolment screen past the deadline); API keys are unaffected.
+  - OpenAPI 1.310.0.
+
 ## [1.445.0] - 2026-10-23
 
 ### Added

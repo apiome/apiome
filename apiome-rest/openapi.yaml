@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.309.0
+  version: 1.310.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -22881,6 +22881,141 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listownershipdriftresponse422.
+  /v1/tenants/{tenant_slug}/two-factor-policy:
+    get:
+      tags:
+      - access
+      summary: Read the two-factor policy
+      description: 'Whether every member must turn on two-factor authentication, the
+        grace period in days, when the requirement was turned on, and how many active
+        members have two-factor (`enabled`), are still inside their grace period (`grace`)
+        or are past it (`overdue`).
+
+
+        A member''s deadline is the later of the requirement being turned on and the
+        member joining, plus the grace period.
+
+
+        Requires `members:view`.'
+      operationId: get_two_factor_policy_v1_tenants__tenant_slug__two_factor_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthetwofactorpolicyauthorization schema.
+          - type: 'null'
+            description: Readthetwofactorpolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthetwofactorpolicy Xapikey schema.
+          - type: 'null'
+            description: Readthetwofactorpolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the two-factor policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorPolicy'
+                description: Response payload for readthetwofactorpolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthetwofactorpolicyresponse422.
+    put:
+      tags:
+      - access
+      summary: Change the two-factor policy
+      description: 'Set `require_two_factor` and/or `grace_days` (0–90). Omitted fields
+        are left alone. Turning the requirement on starts every member''s grace period;
+        turning it off and on again restarts them. Members past their deadline are
+        asked to set up two-factor before they can use the app; API keys are unaffected.
+
+
+        Audited as `two_factor_policy.update`. Requires `members:edit`.'
+      operationId: put_two_factor_policy_v1_tenants__tenant_slug__two_factor_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changethetwofactorpolicyauthorization schema.
+          - type: 'null'
+            description: Changethetwofactorpolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changethetwofactorpolicy Xapikey schema.
+          - type: 'null'
+            description: Changethetwofactorpolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorPolicyInput'
+              description: Request body for changethetwofactorpolicyrequest.
+        description: Request body for change the two-factor policy.
+      responses:
+        '200':
+          description: Successful response for change the two-factor policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorPolicy'
+                description: Response payload for changethetwofactorpolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for changethetwofactorpolicyresponse422.
   /v1/graph/{tenant_slug}/entities/{kind}/{entity_id}/edges:
     get:
       tags:
@@ -23714,7 +23849,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-23T23:01:53Z'
+                        example: '2026-10-23T23:46:15Z'
                       method:
                         type: string
                         example: GET
@@ -85186,7 +85321,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         completed_at:
           anyOf:
           - type: string
@@ -86404,7 +86539,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
       type: object
       required:
       - api_key
@@ -86447,7 +86582,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -86908,7 +87043,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87081,7 +87216,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87686,13 +87821,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -90211,7 +90346,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 6a04f649-ce5a-463f-a809-fcc9486e0f5c
+          example: 48f45588-c69c-4481-9156-8e5a6e63317d
         method:
           type: string
           title: Method
@@ -92354,7 +92489,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         envelope:
           additionalProperties: true
           type: object
@@ -93845,7 +93980,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         browse_url:
           anyOf:
           - type: string
@@ -130197,7 +130332,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
       additionalProperties: false
       type: object
       required:
@@ -139717,12 +139852,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
       additionalProperties: false
       type: object
       required:
@@ -140851,7 +140986,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         detected_by:
           anyOf:
           - type: string
@@ -144353,6 +144488,85 @@ components:
         from safest to worst — ``clean`` needs no attention, ``severe`` needs an explicit
 
         confirmation before the export runs.'
+    TwoFactorCompliance:
+      properties:
+        enabled:
+          type: integer
+          title: Enabled
+          description: Active members with two-factor on.
+          default: 0
+          example: true
+        grace:
+          type: integer
+          title: Grace
+          description: Active members without it, before their deadline.
+          default: 0
+          example: 1
+        overdue:
+          type: integer
+          title: Overdue
+          description: Active members without it, past their deadline.
+          default: 0
+          example: 1
+      additionalProperties: false
+      type: object
+      title: TwoFactorCompliance
+      description: How many active members are in each state.
+    TwoFactorPolicy:
+      properties:
+        require_two_factor:
+          type: boolean
+          title: Require Two Factor
+          description: When true, every member must turn on two-factor.
+          example: false
+        grace_days:
+          type: integer
+          title: Grace Days
+          description: Days a member without two-factor may keep working after the
+            policy is on or they join.
+          example: 1
+        required_since:
+          anyOf:
+          - type: string
+            description: Two Factor Policy schema.
+          - type: 'null'
+            description: Two Factor Policy schema.
+          title: Required Since
+          description: When the policy was last turned on (ISO-8601); null while off.
+        compliance:
+          $ref: '#/components/schemas/TwoFactorCompliance'
+          description: Active members by state; all zero while the policy is off.
+      additionalProperties: false
+      type: object
+      required:
+      - require_two_factor
+      - grace_days
+      title: TwoFactorPolicy
+      description: The tenant's two-factor policy.
+    TwoFactorPolicyInput:
+      properties:
+        require_two_factor:
+          anyOf:
+          - type: boolean
+            description: Two Factor Policy Input schema.
+          - type: 'null'
+            description: Two Factor Policy Input schema.
+          title: Require Two Factor
+          description: Require Two Factor.
+        grace_days:
+          anyOf:
+          - type: integer
+            maximum: 90.0
+            minimum: 0.0
+            description: Two Factor Policy Input schema.
+          - type: 'null'
+            description: Two Factor Policy Input schema.
+          title: Grace Days
+          description: Grace Days.
+      additionalProperties: false
+      type: object
+      title: TwoFactorPolicyInput
+      description: A policy change. Omitted fields are left alone.
     TwoFactorResetRequest:
       properties:
         reason:
@@ -147149,13 +147363,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-23T23:01:53Z'
+          example: '2026-10-23T23:46:15Z'
         outcome:
           anyOf:
           - type: string

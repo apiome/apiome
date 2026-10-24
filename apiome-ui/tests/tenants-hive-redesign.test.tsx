@@ -426,6 +426,7 @@ describe('the five sections', () => {
 
       expect(within(drawer).getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual([
         expect.stringContaining('Members'),
+        'Security',
         'License & plan',
         'MCP settings',
         'Per-key capabilities',
@@ -443,6 +444,7 @@ describe('the five sections', () => {
 
     expect(within(drawer).getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual([
       expect.stringContaining('Members'),
+      'Security',
       'License & plan',
       'MCP settings',
       'Per-key capabilities',
@@ -1088,6 +1090,15 @@ describe('the docs fixtures', () => {
         });
       }
       if (url.includes('/api/tenants/mcp-keys')) return respond(DOCS_MCP_KEYS);
+      // TFA-1.3: the Security section reads the two-factor policy.
+      if (url === '/api/two-factor-policy') {
+        return { status: 200, ok: true, json: async () => ({
+          require_two_factor: true,
+          grace_days: 7,
+          required_since: '2026-10-20T12:00:00Z',
+          compliance: { enabled: 4, grace: 1, overdue: 0 },
+        }) };
+      }
       // CDG-2.5: the Ownership section reads the policy and the teams.
       if (url === '/api/ownership-policy') {
         return { status: 200, ok: true, json: async () => ({
@@ -1115,6 +1126,10 @@ describe('the docs fixtures', () => {
     const drawer = await openDrawer('Northwind');
     await within(drawer).findByText('sam.okafor@northwind.io');
     writeA11yFixture('tenants-drawer-members', bodyMarkup());
+
+    selectTab(drawer, /Security/);
+    await within(drawer).findByTestId('tenant-two-factor-compliance');
+    writeA11yFixture('tenants-drawer-security', bodyMarkup());
 
     selectTab(drawer, /License & plan/);
     await within(drawer).findByText('9 of 10 used');
