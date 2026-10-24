@@ -74,6 +74,9 @@ class Iso8583EmitOptions(EmitOptions):
 class Iso8583Emitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an ISO 8583 field-map JSON document."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("iso8583_data_elements",)
+
     key = "iso8583"
     format = "iso8583"
     label = "ISO 8583"

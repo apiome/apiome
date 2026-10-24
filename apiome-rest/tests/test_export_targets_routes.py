@@ -94,7 +94,9 @@ def test_list_export_targets_returns_registered_emitters_with_fidelity():
     assert body["version_label"] == "1.0.0"
 
     by_key = {t["descriptor"]["key"]: t for t in body["targets"]}
-    assert "openapi" in by_key and "sample" in by_key
+    assert "openapi" in by_key
+    # The internal no-op `sample` target is never offered (RC6-H4, #6211).
+    assert "sample" not in by_key
 
     openapi = by_key["openapi"]
     assert openapi["descriptor"]["label"]
@@ -105,8 +107,8 @@ def test_list_export_targets_returns_registered_emitters_with_fidelity():
     assert openapi["fidelity"]["tier"] == "lossless"
     assert openapi["fidelity"]["preserved_percent"] == 100
 
-    sample = by_key["sample"]
-    assert sample["fidelity"]["tier"] == "types-only"
+    # A schema-only target drops the operation → types-only.
+    assert by_key["json-schema"]["fidelity"]["tier"] == "types-only"
 
 
 def test_list_export_targets_is_sorted_by_key():

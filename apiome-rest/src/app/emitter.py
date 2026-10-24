@@ -486,6 +486,10 @@ class Emitter(ABC):
     #: Toolchain tool keys this emitter's emit **hard-requires**. When any is
     #: unavailable in the runtime, the descriptor reports ``available = False``.
     required_tools: ClassVar[Tuple[str, ...]] = ()
+    #: Canonical-model ``extras`` this emitter cannot write without — the native trees only a
+    #: same-format import leaves behind (an EDI X12 interchange's ``x12_transactions``). Empty for
+    #: an emitter that projects any source. See :meth:`source_unsupported_reason` (RC6-H4, #6211).
+    required_source_extras: ClassVar[Tuple[str, ...]] = ()
     #: Pydantic model describing this emitter's per-target options (MFX-1.4).
     options_model: ClassVar[type[EmitOptions]] = EmitOptions
 
@@ -522,6 +526,27 @@ class Emitter(ABC):
         profile-derived :class:`~app.fidelity_rulepack.CapabilityRulePack` — so a
         target with no special degradation rules needs no pack at all.
         """
+        return None
+
+    @classmethod
+    def source_unsupported_reason(cls, api: "CanonicalApi") -> Optional[str]:
+        """Why ``api`` cannot be exported to this target at all, or ``None`` when it can.
+
+        A *source-bound* target writes the native structure of one format back out — EDI X12, HL7 v2,
+        SAP IDoc — so only a source imported in that format carries what it needs
+        (:attr:`required_source_extras`). The targets list marks such a target unavailable for any
+        other source, with this sentence as the reason, so the Export dialog never offers an export
+        that can only fail; the emit path refuses it with the same sentence (HTTP 422).
+
+        Args:
+            api: The source canonical model.
+
+        Returns:
+            A reader-facing reason, or ``None`` when the source can be exported to this target.
+        """
+        missing = [key for key in cls.required_source_extras if not api.extras.get(key)]
+        if missing:
+            return f"Only a source imported as {cls.label} can be exported to {cls.label}."
         return None
 
     @classmethod

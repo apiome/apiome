@@ -1,6 +1,6 @@
 ---
 title: "Export a spec"
-description: "Download a published version as OpenAPI, Arazzo or JSON Schema."
+description: "Export a catalog item or version to another format, in the app or CLI."
 sidebar_position: 5
 tags: [export]
 ---
@@ -18,6 +18,93 @@ export) versus export only, is generated at [Supported formats](../bring-in/supp
 Run `apiome export targets` to see the same list for a specific version, and
 `apiome export evidence --target <format>` to see what a given conversion preserves before you
 generate it.
+
+## In the app: the Export dialog
+
+The **Export** dialog exports one source to one format, and shows what the conversion keeps before
+you download anything.
+
+1. Open it from a catalog item (**click "Export"** in the item's header) or from a version
+   (on **Versions**, open the version's **⋯** menu and **click "Export to another format…"**).
+2. The **Source** step names the item and version, and measures how well each format can carry
+   it. **Click "Choose target"**.
+3. Pick a format. Each card shows a fidelity badge for *this* source, such as *lossless* or
+   *lossy*, and the line under the cards says how much is preserved (*64% preserved*). A card
+   that cannot export this source is greyed out, with the reason written on it. **Click
+   "Continue"**.
+4. The fidelity report lists every construct the conversion drops, approximates or invents, and
+   where each one lands. If the conversion loses something, tick the acknowledgement, or type the
+   phrase it asks for when the result would be types only.
+5. **Click "Export"** (**"Export anyway"** after an acknowledgement), review the file, and
+   **click "Download"** or **"Download .zip"** for a format that writes several files.
+
+<Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
+
+<Screenshot id="export-dialog-fidelity" alt="The Export dialog's fidelity report for Protobuf: what is kept, approximated and dropped, and the acknowledgement" />
+
+## Formats the Export dialog offers
+
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **53 formats**.
+Most export from any source. A few write one format's own structure back out, so they export only
+a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
+but an OpenAPI version does not. For any other source their card is greyed out with that reason,
+and an export request is refused with `422`.
+
+| Format | Kind | Exports from |
+| --- | --- | --- |
+| Apache Avro | Data schema | Any source |
+| Apache Thrift | RPC | Any source |
+| API Blueprint | REST | Any source |
+| Apigee API proxy | REST | Any source |
+| Arazzo | REST | Any source |
+| ASN.1 | Data schema | Any source |
+| AsyncAPI 3.1 | Events | Any source |
+| AWS API Gateway | REST | Any source |
+| Azure API Management | REST | Any source |
+| Cap'n Proto | RPC | Any source |
+| CDDL | Data schema | Any source |
+| CloudEvents | Events | Any source |
+| COBOL Copybook | Data schema | A source imported as COBOL Copybook |
+| Connect RPC | RPC | Any source |
+| CORBA IDL | RPC | Any source |
+| EDI X12 | Data schema | A source imported as EDI X12 |
+| Envoy xDS RouteConfiguration | REST | Any source |
+| FHIR | REST | Any source |
+| FIX | Data schema | A source imported as FIX |
+| FlatBuffers | Data schema | Any source |
+| Gateway API HTTPRoute | REST | Any source |
+| GraphQL SDL | Graph | Any source |
+| HL7 v2 | Data schema | A source imported as HL7 v2 |
+| Hoppscotch | REST | Any source |
+| HTTP Request File | REST | Any source |
+| ISO 20022 | Data schema | A source imported as ISO 20022 |
+| ISO 8583 | Data schema | A source imported as ISO 8583 |
+| Istio VirtualService | REST | Any source |
+| JSON Schema | Data schema | Any source |
+| JSON Type Definition | Data schema | Any source |
+| Kafka Connect Schema | Data schema | Any source |
+| Kong Declarative Config | REST | Any source |
+| Kubernetes CRD | Data schema | Any source |
+| LLM Tool Definitions | Agent tools | Any source |
+| OData | REST | Any source |
+| ODCS Data Contract | Data schema | Any source |
+| ONC RPC | RPC | Any source |
+| OpenAPI 3.1 | REST | Any source |
+| OpenRPC | RPC | Any source |
+| Postman | REST | Any source |
+| Protocol Buffers (proto3) | RPC | Any source |
+| RAML | REST | Any source |
+| SAP IDoc | Data schema | A source imported as SAP IDoc |
+| Smithy | RPC | Any source |
+| Thunder Client | REST | Any source |
+| Traefik dynamic configuration | REST | Any source |
+| TypeSpec | REST | Any source |
+| WADL | REST | Any source |
+| WIT (WebAssembly) | RPC | Any source |
+| WSDL | REST | Any source |
+| XML-RPC | RPC | A source with an RPC operation |
+| XSD | Data schema | Any source |
+| z/OS Connect | REST | A source imported as z/OS Connect |
 
 ---
 

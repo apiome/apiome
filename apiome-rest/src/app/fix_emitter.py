@@ -64,6 +64,9 @@ class FixEmitOptions(EmitOptions):
 class FixEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a FIX tag=value message."""
 
+    #: Only a same-format import carries these (RC6-H4, #6211).
+    required_source_extras = ("fix_fields",)
+
     key = "fix"
     format = "fix"
     label = "FIX"

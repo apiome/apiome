@@ -300,6 +300,26 @@
       "data": "fixture:hive-version-dialogs/export-panel.html"
     },
     {
+      "id": "export-dialog-targets",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"export-dialog-body\"]",
+      "data": "fixture:hive-rc6-dialogs/export-target.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportTargetGrid.tsx"
+      ]
+    },
+    {
+      "id": "export-dialog-fidelity",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"export-dialog-body\"]",
+      "data": "fixture:hive-rc6-dialogs/export-fidelity.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/FidelityWarningPanel.tsx"
+      ]
+    },
+    {
       "id": "version-merge-conflicts",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",
