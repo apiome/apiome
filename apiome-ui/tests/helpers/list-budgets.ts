@@ -16,15 +16,17 @@ import path from 'node:path';
  * jsdom timings swing with whatever else the worker is doing, so these are backstops against a
  * gross regression; the exact guard is that a screen at size mounts one page of rows (each suite
  * asserts the count). Measured idle on a developer machine (2026-10-24), at size: first row
- * 150–330 ms, filter 100–160 ms, sort ≈ 120 ms — and before paging, a 2.4–2.6 s first row.
+ * 150–330 ms, filter 100–160 ms, sort ≈ 120 ms — and before paging, a 2.4–2.6 s first row. The
+ * self-hosted CI runner is about ten times slower (filter 1.0 s, sort 1.2–1.4 s under load), so
+ * the ceilings leave room for it.
  */
 export const LIST_BUDGET_MS = {
   /** From mount to the first row of data on screen (the read itself is mocked). */
-  firstRow: 3000,
+  firstRow: 5000,
   /** From a filter keystroke (or chip) to the narrowed list on screen. */
-  filter: 1000,
+  filter: 3000,
   /** From a header click to the re-ordered list on screen. */
-  sort: 1000,
+  sort: 3000,
 } as const;
 
 /**
