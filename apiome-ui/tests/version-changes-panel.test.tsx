@@ -237,3 +237,54 @@ describe('VersionChangesPanel', () => {
     expect(screen.getByText('No Published Versions')).toBeInTheDocument();
   });
 });
+
+describe('VersionChangesPanel — pending and failed reads (RC6-H3, #6210)', () => {
+  /** Wrap the suite's fetch so URLs matching `pattern` are held or rejected until `recover()`. */
+  function intercept(pattern: RegExp, mode: 'hold' | 'fail') {
+    const answer = global.fetch;
+    let active = true;
+    global.fetch = jest.fn((url: string) => {
+      if (active && pattern.test(url)) {
+        return mode === 'hold' ? new Promise(() => {}) : Promise.reject(new Error('Network unreachable'));
+      }
+      return answer(url);
+    }) as unknown as typeof fetch;
+    return { recover: () => { active = false; } };
+  }
+
+  it('draws placeholder badges, not "Pending", while the classifications load', async () => {
+    intercept(/\/changelogs$/, 'hold');
+    render(<VersionChangesPanel projectId={PROJECT_ID} versions={VERSIONS} onOpenDiff={jest.fn()} />);
+    expect(await screen.findAllByTestId('changes-badge-loading')).toHaveLength(2);
+    expect(screen.queryByText('Pending')).toBeNull();
+  });
+
+  it('says the classifications failed, with a retry that restores the badges', async () => {
+    const read = intercept(/\/changelogs$/, 'fail');
+    render(<VersionChangesPanel projectId={PROJECT_ID} versions={VERSIONS} onOpenDiff={jest.fn()} />);
+    const error = await screen.findByTestId('changes-summaries-error');
+    expect(error).toHaveTextContent("Couldn't load the change classifications");
+    read.recover();
+    await userEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('changes-summaries-error')).toBeNull());
+    expect(within(screen.getByTestId(`changes-version-${REV_2}`)).getByText('Breaking')).toBeInTheDocument();
+  });
+
+  it('holds the changelog with a skeleton, then says a failed read failed, with a retry', async () => {
+    const hold = intercept(/\/changelog\?/, 'hold');
+    const { unmount } = render(
+      <VersionChangesPanel projectId={PROJECT_ID} versions={VERSIONS} onOpenDiff={jest.fn()} />
+    );
+    expect(await screen.findByTestId('changes-detail-loading')).toHaveTextContent('Loading changelog…');
+    unmount();
+    hold.recover();
+
+    const read = intercept(/\/changelog\?/, 'fail');
+    render(<VersionChangesPanel projectId={PROJECT_ID} versions={VERSIONS} onOpenDiff={jest.fn()} />);
+    const error = await screen.findByTestId('changes-detail-error');
+    expect(error).toHaveTextContent("Couldn't load this version's changelog");
+    read.recover();
+    await userEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('changes-detail-error')).toBeNull());
+  });
+});

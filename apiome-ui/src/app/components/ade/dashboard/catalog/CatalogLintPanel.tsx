@@ -31,7 +31,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle,
   AlertTriangle,
   ArrowUpRight,
   Clock,
@@ -39,11 +38,11 @@ import {
   FileSearch,
   Fingerprint,
   History,
-  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
-import { CatalogLintSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
+import { CatalogCodeSkeleton, CatalogLintSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Alert } from '@/app/components/ui/Alert';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { Stat } from '@/app/components/ui/metrics';
 import { STATUS_TONE_DOT_CLASS } from '@/app/components/ui/statusVocabulary';
 import { Switch } from '@/app/components/ui/Switch';
@@ -891,23 +890,15 @@ export function CatalogLintPanel({
           className="mt-4"
         />
       ) : status === 'error' ? (
-        <div
+        // RC6-H3 (#6210): the shared error state, naming what failed.
+        <ErrorState
+          variant="compact"
+          className="mt-6"
+          title="Couldn't load the lint report"
+          description={errorMessage || 'The lint report could not be read.'}
+          onRetry={retry}
           data-testid="catalog-lint-error"
-          className="mt-6 flex flex-col items-start gap-3 rounded-xl border border-danger bg-danger-soft p-4 text-sm"
-        >
-          <span className="flex items-center gap-2 text-danger-fg">
-            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-            {errorMessage || 'Failed to load lint report.'}
-          </span>
-          <button
-            type="button"
-            data-testid="catalog-lint-retry"
-            onClick={retry}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle"
-          >
-            <RefreshCw className="h-4 w-4" /> Retry
-          </button>
-        </div>
+        />
       ) : report ? (
         <>
         {/* Report provenance (MFI-28.2): version, scored-at, stored-vs-computed, fingerprint. */}
@@ -1115,15 +1106,18 @@ export function CatalogLintPanel({
                     source lines here.
                   </p>
                 ) : sourceState.status === 'error' ? (
-                  <Alert
-                    variant="danger"
-                    className="m-3 text-xs"
+                  <ErrorState
+                    variant="compact"
+                    title="Couldn't load the raw source"
+                    description={sourceState.error || 'The raw source could not be loaded.'}
+                    onRetry={() => {
+                      sourceFetchStartedRef.current = false;
+                      void loadSource();
+                    }}
                     data-testid="catalog-lint-source-error"
-                  >
-                    {sourceState.error || 'The raw source could not be loaded.'}
-                  </Alert>
+                  />
                 ) : sourceState.status !== 'loaded' ? (
-                  <p className="p-4 text-xs text-fg-muted">Loading source…</p>
+                  <CatalogCodeSkeleton message="Loading source…" testId="catalog-lint-source-loading" />
                 ) : rawAllLines.length === 0 ? (
                   <p className="p-4 text-xs text-fg-muted">
                     The captured source is empty.

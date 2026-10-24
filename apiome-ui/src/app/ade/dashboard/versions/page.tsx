@@ -53,6 +53,7 @@ import { Input } from '../../../components/ui/Input';
 import { Label } from '../../../components/ui/Label';
 import { Alert } from '../../../components/ui/Alert';
 import { LoadingState } from '../../../components/ui/LoadingState';
+import { ErrorBanner, ErrorState } from '../../../components/ui/ErrorState';
 import { EmptyState, GatedState } from '../../../components/ui/EmptyState';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Badge } from '../../../components/ui/Badge';
@@ -493,6 +494,9 @@ const Versions = () => {
   const [canvasCompareRight, setCanvasCompareRight] = useState<LayoutState | null>(null);
   const [canvasCompareDiff, setCanvasCompareDiff] = useState<LayoutDiffSummary | null>(null);
   const [canvasCompareLoading, setCanvasCompareLoading] = useState(false);
+  const [canvasCompareError, setCanvasCompareError] = useState<string | null>(null);
+  /** Bumped by the Canvas tab's retry, to re-run the layout read for the same pair. */
+  const [canvasCompareAttempt, setCanvasCompareAttempt] = useState(0);
   /** When this matches `baseId:compareId`, canvas snapshots for that pair are loaded (lazy). */
   const [canvasComparePairKey, setCanvasComparePairKey] = useState('');
   const [canvasCompareViewMode, setCanvasCompareViewMode] = useState<'split' | 'overlay'>('split');
@@ -574,6 +578,14 @@ const Versions = () => {
    * rows it has while the new ones arrive.
    */
   const [versionsLoaded, setVersionsLoaded] = useState(false);
+  // RC6-H3 (#6210): a pending or failed read is said as such — never "No projects yet" or an
+  // empty table that reads as "No versions yet".
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  const [specError, setSpecError] = useState<string | null>(null);
+  const [heatmapError, setHeatmapError] = useState<string | null>(null);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [versionsError, setVersionsError] = useState<string | null>(null);
   /**
    * The project's stored change classifications (`/api/projects/{id}/changelogs`) — what the
    * compatibility banner reads (HIVE-6.2). The Changes tab reads the same list itself.
@@ -777,6 +789,7 @@ const Versions = () => {
 
     let cancelled = false;
     setCanvasCompareLoading(true);
+    setCanvasCompareError(null);
     (async () => {
       try {
         const [left, right] = await Promise.all([
@@ -794,7 +807,8 @@ const Versions = () => {
         console.error('Canvas compare load failed:', e);
         if (!cancelled) {
           setCanvasCompareDiff(null);
-          toast.error('Could not load canvas layouts for comparison');
+          // RC6-H3 (#6210): said in the tab, with a retry, rather than a toast over a blank canvas.
+          setCanvasCompareError(e instanceof Error && e.message ? e.message : 'The canvas layouts could not be read.');
         }
       } finally {
         if (!cancelled) setCanvasCompareLoading(false);
@@ -809,6 +823,7 @@ const Versions = () => {
     compareVersion1Id,
     compareVersion2Id,
     canvasComparePairKey,
+    canvasCompareAttempt,
     currentUserId,
     currentTenantId,
   ]);
@@ -1017,6 +1032,7 @@ const Versions = () => {
         // project here for the publish gate (MFI-23.8) and catalog deep-links must keep working.
         // The *selector options* exclude catalog items instead — see `selectableProjects` (#4587).
         setProjects(data.projects);
+        setProjectsError(null);
         return data.projects as Project[];
       } else {
         throw new Error(data.error || 'Failed to load projects');
@@ -1024,7 +1040,10 @@ const Versions = () => {
     } catch (error) {
       console.error('Failed to load projects:', error);
       setProjects([]);
+      setProjectsError(error instanceof Error ? error.message : 'Failed to load projects');
       return null;
+    } finally {
+      setProjectsLoaded(true);
     }
   };
 
@@ -1061,6 +1080,7 @@ const Versions = () => {
       const data = await response.json();
       if (data.success && data.versions) {
         setVersions(data.versions);
+        setVersionsError(null);
         await loadVersionTags();
         return true;
       } else {
@@ -1069,6 +1089,7 @@ const Versions = () => {
     } catch (error) {
       console.error('Failed to load versions:', error);
       setVersions([]);
+      setVersionsError(error instanceof Error ? error.message : 'Failed to load versions');
       return false;
     } finally {
       setVersionsLoaded(true);
@@ -1791,6 +1812,7 @@ const Versions = () => {
 
   const handleViewOpenApi = async (version: Version) => {
     setViewingVersion(version); setShowOpenApiDialog(true); setIsLoadingSpec(true); setOpenApiFormat('json');
+    setSpecError(null);
     try {
       const project = projects.find(p => p.id === version.project_id);
       const spec = await buildOpenApiSpecJsonForVersion(
@@ -1799,7 +1821,11 @@ const Versions = () => {
         coerceProjectMetadataRecord((project as { metadata?: unknown })?.metadata)
       );
       setOpenApiSpec(spec);
-    } catch { setOpenApiSpec(JSON.stringify({ openapi: '3.1.0', info: { title: 'Error Loading Spec', version: version.version_id }, components: { schemas: {} } }, null, 2)); }
+    } catch (error) {
+      // RC6-H3 (#6210): say the build failed, with a retry, instead of showing a made-up spec.
+      setOpenApiSpec('');
+      setSpecError(error instanceof Error && error.message ? error.message : 'The specification could not be built.');
+    }
     finally { setIsLoadingSpec(false); }
   };
 
@@ -1825,21 +1851,23 @@ const Versions = () => {
 
   /**
    * Open the class heatmap (#560) for a revision: its classes, then every class's properties
-   * in one batch query. A failed load shows the dialog's empty state rather than an error.
+   * in one batch query. A failed load shows an error with a retry (RC6-H3, #6210).
    */
   const handleShowHeatmap = async (version: Version) => {
     setHeatmapVersion(version);
     setShowHeatmapDialog(true);
     setIsLoadingHeatmap(true);
     setHeatmapClasses(null);
+    setHeatmapError(null);
     try {
       const classesData = JSON.parse(await getClassesForVersion(version.id)) as HeatmapClass[];
       const byClass = JSON.parse(
         await getPropertiesForClassesBatch(classesData.map((cls) => cls.id))
       ) as Record<string, HeatmapClass['properties']>;
       setHeatmapClasses(classesData.map((cls) => ({ ...cls, properties: byClass[cls.id] ?? [] })));
-    } catch {
-      setHeatmapClasses([]);
+    } catch (error) {
+      // RC6-H3 (#6210): a failed read is an error with a retry, not "no classes yet".
+      setHeatmapError(error instanceof Error && error.message ? error.message : 'The classes could not be read.');
     } finally {
       setIsLoadingHeatmap(false);
     }
@@ -1895,6 +1923,7 @@ const Versions = () => {
     setCanvasCompareRight(null);
     setCanvasCompareDiff(null);
     setCanvasComparePairKey('');
+    setCompareError(null);
     setIsLoadingComparison(true);
     void loadStoredChangelogForPair(baseId, targetId);
     try {
@@ -1909,7 +1938,8 @@ const Versions = () => {
       setDiffResult(diffLines(content1, content2));
     } catch (error) {
       console.error('Comparison error:', error);
-      await alertDialog({ message: 'Failed to load specs for comparison', variant: 'error' });
+      // RC6-H3 (#6210): said in the dialog, with a retry, rather than a modal on top of it.
+      setCompareError(error instanceof Error && error.message ? error.message : 'The two specifications could not be built.');
     } finally {
       setIsLoadingComparison(false);
     }
@@ -3219,6 +3249,37 @@ const Versions = () => {
     );
   }
 
+  if (!projectsLoaded) {
+    return (
+      <Page>
+        <PageHeader breadcrumb={breadcrumb} title="Versions" description={pageDescription} />
+        <PageBody>
+          <LoadingState
+            minHeightClassName="min-h-[13.75rem]"
+            message="Loading projects…"
+            data-testid="versions-projects-loading"
+          />
+        </PageBody>
+      </Page>
+    );
+  }
+
+  if (projectsError) {
+    return (
+      <Page>
+        <PageHeader breadcrumb={breadcrumb} title="Versions" description={pageDescription} />
+        <PageBody>
+          <ErrorState
+            title="Couldn't load your projects"
+            description={projectsError}
+            onRetry={() => void loadProjects()}
+            data-testid="versions-projects-error"
+          />
+        </PageBody>
+      </Page>
+    );
+  }
+
   if (projects.length === 0) {
     return (
       <Page>
@@ -3249,7 +3310,8 @@ const Versions = () => {
     : null;
   const lastPublished = lastPublishedVersion(versions);
   const projectPublishable = isProjectPublishable(selectedProject);
-  const noVersionsYet = versionsLoaded && versions.length === 0 && !lifecycleFilter;
+  // A failed read is not "No versions yet": the table draws its error state instead (RC6-H3).
+  const noVersionsYet = versionsLoaded && !versionsError && versions.length === 0 && !lifecycleFilter;
 
   const headerBadges = (
     <span className="ver-header__badges">
@@ -3932,6 +3994,11 @@ const Versions = () => {
                 <VersionsTable
                   versions={visibleVersions}
                   loading={!versionsLoaded}
+                  error={versionsError}
+                  onRetry={() => {
+                    setVersionsLoaded(false);
+                    void loadVersions();
+                  }}
                   projectId={selectedProjectId}
                   projectSlug={selectedProject?.slug}
                   headRevisionId={headRevisionId}
@@ -3986,6 +4053,8 @@ const Versions = () => {
         branches={versionBranches}
         branchListLoading={branchListLoading}
         branchListError={branchListError}
+        // A permission refusal does not change on retry; any other failure might.
+        onRetryBranches={branchPermissionDenied ? undefined : () => void loadBranches()}
         branchPermissionDenied={branchPermissionDenied}
         copySourceBranchKey={copySourceBranchKey}
         onCopySourceBranchKeyChange={handleCopySourceBranchKeyChange}
@@ -4134,6 +4203,8 @@ const Versions = () => {
         projectSlug={viewingProject?.slug}
         spec={openApiSpec}
         loading={isLoadingSpec}
+        error={specError}
+        onRetry={viewingVersion ? () => void handleViewOpenApi(viewingVersion) : undefined}
         format={openApiFormat}
         onFormatChange={setOpenApiFormat}
         recentExportsRefresh={recentExportsRefresh}
@@ -4280,6 +4351,14 @@ const Versions = () => {
                     </div>
                   </div>
                 )}
+                {compareError ? (
+                  <ErrorBanner
+                    title="Couldn't load the two specifications"
+                    description={compareError}
+                    onRetry={() => void handleCompareVersions()}
+                    data-testid="compare-error"
+                  />
+                ) : null}
                 <div className="vdlg-compare__picker-cta">
                   <Button onClick={handleCompareVersions} disabled={!compareVersion1Id || !compareVersion2Id || isLoadingComparison}>
                     <GitCompareArrows aria-hidden />
@@ -4936,6 +5015,14 @@ const Versions = () => {
                         spinnerSize="md"
                         message={VERSION_DIALOG_COPY.canvasLoading}
                       />
+                    ) : canvasCompareError ? (
+                      <ErrorState
+                        className="vdlg-canvas__loading"
+                        title="Couldn't load the canvas layouts"
+                        description={canvasCompareError}
+                        onRetry={() => setCanvasCompareAttempt((attempt) => attempt + 1)}
+                        data-testid="compare-canvas-error"
+                      />
                     ) : (
                       <VersionCanvasCompare
                         left={canvasCompareLeft}
@@ -5570,6 +5657,8 @@ const Versions = () => {
         projectName={projects.find(p => p.id === heatmapVersion?.project_id)?.name ?? ''}
         classes={heatmapClasses}
         isLoading={isLoadingHeatmap}
+        error={heatmapError}
+        onRetry={heatmapVersion ? () => void handleShowHeatmap(heatmapVersion) : undefined}
       />
     </Page>
   );

@@ -544,7 +544,17 @@ describe('degradation', () => {
     await renderPanel({ failWith: 'Not authenticated' });
 
     expect(screen.getByTestId('bundle-error')).toHaveTextContent('Not authenticated');
-    expect(screen.getByTestId('bundle-retry')).toBeInTheDocument();
+    // RC6-H3 (#6210): the retry reads the bundle again.
+    mockEndpoint({});
+    fireEvent.click(within(screen.getByTestId('bundle-error')).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('bundle-error')).not.toBeInTheDocument());
+  });
+
+  it('holds the tab with placeholder rows while the bundle reads (RC6-H3)', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<CatalogImportBundlePanel request={REQUEST} />);
+    const loading = await screen.findByTestId('bundle-loading');
+    expect(loading).toHaveTextContent('Reading the bundle — nothing has been written yet.');
   });
 
   it('shows the taxonomy remediation for an archive that could not be unpacked', async () => {

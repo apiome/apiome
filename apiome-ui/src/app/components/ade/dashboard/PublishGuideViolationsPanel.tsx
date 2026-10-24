@@ -17,6 +17,7 @@ import { BookOpenCheck, ChevronDown, ChevronRight } from 'lucide-react';
 import { Alert } from '../../ui/Alert';
 import { Badge } from '../../ui/Badge';
 import { LoadingState } from '../../ui/LoadingState';
+import { ErrorBanner } from '../../ui/ErrorState';
 import { fetchVersionLintReport, type VersionLintReport } from '@/app/utils/version-lint-report';
 
 export interface PublishGuideViolationsPanelProps {
@@ -114,9 +115,13 @@ export function PublishGuideViolationsPanel({
 
   if (error) {
     return (
-      <Alert variant="warning" data-testid="publish-guide-violations-error">
-        Could not load style-guide violations: {error}
-      </Alert>
+      // RC6-H3 (#6210): the rest of the publish dialog still works, so a banner with a retry.
+      <ErrorBanner
+        title="Couldn't check style-guide violations"
+        description={error}
+        onRetry={() => loadReport()}
+        data-testid="publish-guide-violations-error"
+      />
     );
   }
 

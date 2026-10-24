@@ -23,7 +23,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useReportedCount } from './useReportedCount';
 import { useRouter } from 'next/navigation';
 import {
-  AlertCircle,
   AlignJustify,
   ChevronsDownUp,
   ChevronsUpDown,
@@ -31,10 +30,10 @@ import {
   GitBranch,
   Loader2,
   Lock,
-  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
-import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
+import { CatalogCodeSkeleton, CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { Card } from '@/app/components/ui/Card';
 import { formatVersionWithPrefix, getVersionRevisionNote } from '@/app/utils/version-display';
 import {
@@ -259,6 +258,9 @@ export function CatalogVersionsPanel({
     [selected, revisions],
   );
 
+  // RC6-H3 (#6210): bumped by the diff error's retry, to build the same pair again.
+  const [compareAttempt, setCompareAttempt] = useState(0);
+
   // Run the compare read whenever the ordered pair changes; clear it when the pair is incomplete.
   useEffect(() => {
     const token = (compareTokenRef.current += 1);
@@ -285,7 +287,7 @@ export function CatalogVersionsPanel({
         });
       }
     })();
-  }, [pair, itemId, itemName, itemMetadata]);
+  }, [pair, itemId, itemName, itemMetadata, compareAttempt]);
 
   const openHistory = useCallback(() => {
     router.push(`/ade/dashboard/versions?projectId=${encodeURIComponent(itemId)}`);
@@ -324,23 +326,15 @@ export function CatalogVersionsPanel({
           className="mt-3"
         />
       ) : status === 'error' ? (
-        <div
+        // RC6-H3 (#6210): the shared error state, naming what failed.
+        <ErrorState
+          variant="compact"
+          className="mt-6"
+          title="Couldn't load this item's versions"
+          description={errorMessage || 'The versions could not be read.'}
+          onRetry={retry}
           data-testid="catalog-versions-error"
-          className="mt-6 flex flex-col items-start gap-3 rounded-xl border border-danger bg-danger-soft p-4 text-sm"
-        >
-          <span className="flex items-center gap-2 text-danger-fg">
-            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-            {errorMessage || 'Failed to load versions.'}
-          </span>
-          <button
-            type="button"
-            data-testid="catalog-versions-retry"
-            onClick={retry}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle"
-          >
-            <RefreshCw className="h-4 w-4" /> Retry
-          </button>
-        </div>
+        />
       ) : revisions.length === 0 ? (
         <p
           data-testid="catalog-versions-empty"
@@ -457,13 +451,13 @@ export function CatalogVersionsPanel({
               </div>
 
               {compare.status === 'error' ? (
-                <div
+                <ErrorState
+                  variant="compact"
+                  title="Couldn't build the diff"
+                  description={compare.error || 'The two revisions could not be read.'}
+                  onRetry={() => setCompareAttempt((count) => count + 1)}
                   data-testid="catalog-versions-diff-error"
-                  className="flex items-center gap-2 rounded-xl border border-danger bg-danger-soft p-4 text-sm text-danger-fg"
-                >
-                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-                  {compare.error || 'Failed to build the diff.'}
-                </div>
+                />
               ) : compare.status === 'loaded' ? (
                 <JsonDiffViewer
                   original={compare.original}
@@ -474,12 +468,11 @@ export function CatalogVersionsPanel({
                   hideUnchangedRegions={!expandAll}
                 />
               ) : (
-                <p
-                  data-testid="catalog-versions-diff-loading"
-                  className="rounded-xl border border-border bg-subtle p-4 text-sm text-fg"
-                >
-                  Building the diff…
-                </p>
+                <CatalogCodeSkeleton
+                  message="Building the diff…"
+                  testId="catalog-versions-diff-loading"
+                  className="rounded-xl border border-border bg-subtle"
+                />
               )}
             </div>
           ) : null}

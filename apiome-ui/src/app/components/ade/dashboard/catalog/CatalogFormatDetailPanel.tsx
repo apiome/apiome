@@ -57,6 +57,7 @@ import {
 import { cn } from '@lib/utils';
 import { CatalogAnalysisSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Card } from '@/app/components/ui/Card';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { clampRowIndex, computeWindowedRange } from '@/app/utils/windowed-rows';
 import { ANALYSIS_TREE_VIRTUALIZE_ABOVE } from '@/app/utils/preview-budgets';
 import {
@@ -311,6 +312,12 @@ export function CatalogFormatDetailPanel({
   const focusArmHandled = useRef(0);
   // The item the record has been requested for, so re-activating the tab never re-fetches.
   const fetchedForRef = useRef<string | null>(null);
+  // RC6-H3 (#6210): the error state's retry clears the once-per-item guard and reads again.
+  const [attempt, setAttempt] = useState(0);
+  const retryAnalysis = useCallback(() => {
+    fetchedForRef.current = null;
+    setAttempt((count) => count + 1);
+  }, []);
   // The deep link already honoured, so re-renders do not fight the user's later navigation.
   const revealedRef = useRef<string | null>(null);
   // Armed when this pane sends the reader to the Source tab, so focus returns to the row they left.
@@ -366,7 +373,7 @@ export function CatalogFormatDetailPanel({
         setStatus('error');
       });
     return () => controller.abort();
-  }, [itemId, requested]);
+  }, [itemId, requested, attempt]);
 
   const analysisDocument = record?.analysis ?? null;
   // Memoised so the empty-tree fallback is not a fresh array on every render (which would make the
@@ -916,16 +923,14 @@ export function CatalogFormatDetailPanel({
           </span>
         </div>
       ) : status === 'error' ? (
-        <div
+        <ErrorState
+          variant="compact"
+          className="mt-4"
+          title="Couldn't load the native payload analysis"
+          description={`${errorMessage || 'The read failed.'} Nothing is claimed about the source from a failed read.`}
+          onRetry={retryAnalysis}
           data-testid="catalog-format-detail-error"
-          className="mt-4 flex items-start gap-1.5 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm text-danger-fg"
-        >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-          <span>
-            {errorMessage || 'The native payload analysis could not be loaded.'} Nothing is claimed
-            about the source from a failed read.
-          </span>
-        </div>
+        />
       ) : null}
 
       {recordWarnings.length > 0 ? (

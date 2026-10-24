@@ -23,6 +23,8 @@ import * as React from 'react';
 import { ExternalLink, GitPullRequest } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
+import { ErrorState } from '@/app/components/ui/ErrorState';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import {
@@ -236,8 +238,12 @@ export function PrBackPanel({ projectId, versionId, versionLabel }: PrBackPanelP
   // Keyed by version and repository: a result describes one version, so picking another shows none.
   const [results, setResults] = React.useState<Record<string, RepositoryResult>>({});
 
+  // RC6-H3 (#6210): bumped by the load error's retry.
+  const [attempt, setAttempt] = React.useState(0);
+
   React.useEffect(() => {
     let cancelled = false;
+    setLoadError(null);
     (async () => {
       try {
         const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/pr-back/repositories`);
@@ -253,7 +259,7 @@ export function PrBackPanel({ projectId, versionId, versionLabel }: PrBackPanelP
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, attempt]);
 
   const run = React.useCallback(
     async (repositoryId: string, dryRun: boolean) => {
@@ -285,13 +291,26 @@ export function PrBackPanel({ projectId, versionId, versionLabel }: PrBackPanelP
     return (
       <div className="rsrc-section" data-testid="pr-back-panel">
         <h3 className="rsrc-section__title">Sync back to repositories</h3>
-        <Alert variant="error" data-testid="pr-back-load-error">
-          {loadError}
-        </Alert>
+        <ErrorState
+          variant="compact"
+          title="Couldn't load the repositories to sync back to"
+          description={loadError}
+          onRetry={() => setAttempt((count) => count + 1)}
+          data-testid="pr-back-load-error"
+        />
       </div>
     );
   }
-  if (!repositories || repositories.length === 0) return null;
+  if (!repositories) {
+    return (
+      <div className="rsrc-section" data-testid="pr-back-panel">
+        <h3 className="rsrc-section__title">Sync back to repositories</h3>
+        <CatalogTimelineSkeleton message="Loading the repositories to sync back to…" testId="pr-back-loading" rows={2} />
+      </div>
+    );
+  }
+  // No repository this project may sync back to: the section has nothing to offer.
+  if (repositories.length === 0) return null;
 
   return (
     <div className="rsrc-section" data-testid="pr-back-panel">

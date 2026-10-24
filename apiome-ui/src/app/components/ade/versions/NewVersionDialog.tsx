@@ -24,6 +24,7 @@ import * as React from 'react';
 import { GitFork, Info } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
+import { ErrorBanner } from '@/app/components/ui/ErrorState';
 import { Button } from '@/app/components/ui/Button';
 import { Checkbox } from '@/app/components/ui/Checkbox';
 import { Dialog, DialogContent, DialogFooter } from '@/app/components/ui/Dialog';
@@ -64,6 +65,8 @@ export interface NewVersionDialogProps {
   branches: readonly VersionBranchRow[];
   branchListLoading: boolean;
   branchListError: string | null;
+  /** Read the branch list again after it failed (RC6-H3, #6210). */
+  onRetryBranches?: () => void;
   branchPermissionDenied: boolean;
   /** `'blank'` or `branch:<id>` — the branch-tip mode's value. */
   copySourceBranchKey: string;
@@ -117,6 +120,7 @@ export default function NewVersionDialog({
   branches,
   branchListLoading,
   branchListError,
+  onRetryBranches,
   branchPermissionDenied,
   copySourceBranchKey,
   onCopySourceBranchKeyChange,
@@ -173,10 +177,12 @@ export default function NewVersionDialog({
         <div className="ver-dialog__body">
           {error ? <Alert variant="error">{error}</Alert> : null}
           {branchListError ? (
-            <Alert variant="warning" role="status">
-              {branchListError} Branch names may be missing; you can still pick a revision below if
-              your role allows.
-            </Alert>
+            <ErrorBanner
+              title="Couldn't load this project's branches"
+              description={`${branchListError} You can still pick a revision below.`}
+              onRetry={onRetryBranches}
+              data-testid="new-version-branches-error"
+            />
           ) : null}
 
           <section className="ver-form-section">

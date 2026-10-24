@@ -80,4 +80,24 @@ describe('RecentAsyncJobsPanel', () => {
       expect.anything(),
     );
   });
+
+  it('skeletons the table while the first page is pending (RC6-H3, #6210)', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<RecentAsyncJobsPanel kind="import" limit={10} />);
+    expect(await screen.findByText('Loading import jobs…')).toBeInTheDocument();
+  });
+
+  it('says a failed read failed, with a retry that reads again (RC6-H3, #6210)', async () => {
+    let fail = true;
+    global.fetch = jest.fn(async () =>
+      fail
+        ? { ok: false, status: 503, json: async () => ({ success: false, error: 'Job store unavailable' }) }
+        : { ok: true, json: async () => ({ success: true, jobs: [{ job_id: 'j9', state: 'completed', percent: 100 }], total: 1, limit: 10, offset: 0 }) }
+    ) as unknown as typeof fetch;
+    render(<RecentAsyncJobsPanel kind="import" limit={10} />);
+    expect(await screen.findByTestId('import-recent-jobs-error')).toHaveTextContent('Job store unavailable');
+    fail = false;
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByText('j9')).toBeInTheDocument();
+  });
 });

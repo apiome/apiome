@@ -406,6 +406,16 @@ describe('states', () => {
     render(<ProjectDiscussionPanel projectId={PROJECT_ID} versions={VERSIONS} workspaceRoute={WORKSPACE} now={NOW} />);
     expect(await screen.findByTestId('discussion-error')).toHaveTextContent('Project not found');
   });
+
+  it('retries a failed list read from the error state (RC6-H3, #6210)', async () => {
+    installFetch([{ test: /\/comment-threads\?/, reply: () => ({ success: false, error: 'Thread store unavailable' }) }]);
+    render(<ProjectDiscussionPanel projectId={PROJECT_ID} versions={VERSIONS} workspaceRoute={WORKSPACE} now={NOW} />);
+    const error = await screen.findByTestId('discussion-error');
+    expect(error).toHaveTextContent("Couldn't load the comment threads");
+    installFetch();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('discussion-thread-list')).toBeInTheDocument();
+  });
 });
 
 describe('load more', () => {

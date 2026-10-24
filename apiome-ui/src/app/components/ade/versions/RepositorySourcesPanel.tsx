@@ -28,7 +28,6 @@
 import * as React from 'react';
 import { Boxes, GitMerge, Route } from 'lucide-react';
 
-import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import {
   DataTable,
@@ -39,7 +38,8 @@ import {
 } from '@/app/components/ui/DataTable';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { FormField } from '@/app/components/ui/FormField';
-import { LoadingState } from '@/app/components/ui/LoadingState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import {
   ENTITY_ORIGIN_LABEL,
   ENTITY_ORIGIN_TONE,
@@ -158,11 +158,16 @@ export function RepositorySourcesPanel({
   // Bumped when the federation switch moves, so the merge history re-reads.
   const [federationKey, setFederationKey] = React.useState(0);
 
+  // RC6-H3 (#6210): bumped by the error state's retry, to read the same version again.
+  const [attempt, setAttempt] = React.useState(0);
+
   React.useEffect(() => {
     if (!versionId) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
+    // A different version's provenance is not this one's: drop it rather than show it stale.
+    setReply(null);
     (async () => {
       try {
         const response = await fetch(
@@ -180,7 +185,10 @@ export function RepositorySourcesPanel({
           setReply(parsed);
         }
       } catch {
-        if (!cancelled) setError(LOAD_ERROR);
+        if (!cancelled) {
+          setReply(null);
+          setError(LOAD_ERROR);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -188,7 +196,7 @@ export function RepositorySourcesPanel({
     return () => {
       cancelled = true;
     };
-  }, [projectId, versionId]);
+  }, [projectId, versionId, attempt]);
 
   const rows = React.useMemo<ProvenanceRow[]>(
     () =>
@@ -247,12 +255,22 @@ export function RepositorySourcesPanel({
       </div>
 
       {error ? (
-        <Alert variant="error" data-testid="repository-sources-error">
-          {error}
-        </Alert>
+        <ErrorState
+          className="rsrc-state"
+          title="Couldn't load this version's repository sources"
+          description={error}
+          onRetry={() => setAttempt((count) => count + 1)}
+          data-testid="repository-sources-error"
+        />
       ) : null}
 
-      {loading && !reply ? <LoadingState className="rsrc-state" message="Loading repository sources…" /> : null}
+      {loading && !reply ? (
+        <CatalogTimelineSkeleton
+          className="rsrc-state"
+          message="Loading repository sources…"
+          testId="repository-sources-loading"
+        />
+      ) : null}
 
       {reply ? (
         <>

@@ -76,8 +76,18 @@ describe('ClassHeatmapDialog', () => {
 
   it('shows the loading state', () => {
     renderDialog({ isLoading: true, classes: null });
-    expect(screen.getByText('Loading schema…')).toBeInTheDocument();
+    // RC6-H3 (#6210): tile placeholders under a named live region, not a bare sentence.
+    expect(screen.getByTestId('heatmap-loading')).toHaveTextContent('Loading the version’s classes…');
     expect(screen.queryByTestId('heatmap-grid')).not.toBeInTheDocument();
+  });
+
+  it('shows a failed read as an error with a retry, not as "no classes yet"', () => {
+    const onRetry = jest.fn();
+    renderDialog({ isLoading: false, classes: null, error: 'Classes unavailable', onRetry });
+    expect(screen.getByTestId('heatmap-error')).toHaveTextContent("Couldn't load this version's classes");
+    expect(screen.queryByTestId('heatmap-empty')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(onRetry).toHaveBeenCalled();
   });
 
   it('distinguishes an empty revision from a failed or missing load', () => {

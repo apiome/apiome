@@ -192,7 +192,7 @@ describe('ConversionPreviewDialog', () => {
 
     await waitFor(() => expect(screen.getByTestId('conversion-preview-error')).toBeInTheDocument());
     expect(screen.getByText('boom')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Retry'));
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.getByTestId('conversion-convert-btn')).toBeInTheDocument());
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -574,5 +574,16 @@ describe('ConversionPreviewDialog — approved defaults recompute (CPDO-3.2)', (
     // The previous report is untouched and the affordance remains for another try.
     expect(screen.getByTestId('conversion-tier-pill')).toHaveTextContent('low');
     expect(screen.getByTestId('conversion-defaults-recompute')).toBeInTheDocument();
+  });
+});
+
+describe('ConversionPreviewDialog — pending dry run (RC6-H3, #6210)', () => {
+  it('holds the dialog with the report’s two columns as placeholders', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<ConversionPreviewDialog itemId="cat-1" itemName="Orders" open onOpenChange={() => {}} />);
+    const loading = await screen.findByTestId('conversion-preview-loading');
+    expect(loading).toHaveTextContent('Analyzing conversion fidelity…');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('conversion-convert-btn')).not.toBeInTheDocument();
   });
 });

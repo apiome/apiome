@@ -675,9 +675,22 @@ describe('states', () => {
 
   it('says a failed read failed, instead of showing an empty catalog', async () => {
     await renderCatalog(ALL_ROWS, { fail: true });
-    expect(await screen.findByText('The catalog could not be loaded')).toBeInTheDocument();
+    const error = await screen.findByTestId('catalog-cards-error');
+    expect(error).toHaveTextContent("Couldn't load the catalog");
     expect(screen.queryByText('Your catalog is empty')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    // RC6-H3 (#6210): the retry reads again and the cards come back.
+    mockCatalog(ALL_ROWS);
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect((await screen.findAllByTestId('catalog-card')).length).toBeGreaterThan(0);
+  });
+
+  it('says a failed read failed in the table view too (RC6-H3)', async () => {
+    await renderCatalog();
+    await showTable();
+    mockCatalog(ALL_ROWS, { fail: true });
+    // Including deleted items re-reads the catalog; that read fails.
+    fireEvent.click(document.getElementById('catalog-show-deleted') as HTMLElement);
+    expect(await screen.findByText("Couldn't load this list")).toBeInTheDocument();
   });
 
   it('explains what the catalog is when it is empty, and points OpenAPI at Projects', async () => {

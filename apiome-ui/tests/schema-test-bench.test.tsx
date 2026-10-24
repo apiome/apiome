@@ -448,6 +448,12 @@ describe('SchemaTestBench', () => {
         'No catalog named x is visible.',
       ),
     );
+
+    // RC6-H3 (#6210): the retry lists the revision's schemas again.
+    const fetchMock = mockFetch();
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('test-bench-targets-error')).not.toBeInTheDocument());
+    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/schemas/targets'))).toBe(true);
   });
 
   it('passes the a11y suite in its richest state (findings + chips + saved payloads)', async () => {

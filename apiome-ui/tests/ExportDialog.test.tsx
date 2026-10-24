@@ -19,7 +19,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -721,5 +721,32 @@ describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
     expect(query.get('from')).toBe('catalog');
     expect(query.get('sourceFormat')).toBe('protobuf');
     expect(query.get('target')).toBe('openapi');
+  });
+});
+
+describe('ExportDialog — pending and failed targets read (RC6-H3, #6210)', () => {
+  it('says it is measuring while the targets load', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+    expect(await screen.findByText('Measuring export fidelity for this source…')).toBeInTheDocument();
+    expect(screen.getByTestId('export-dialog-choose-target')).toBeDisabled();
+  });
+
+  it('says a failed targets read failed, with a retry that loads them', async () => {
+    const answer = mockFetch();
+    let fail = true;
+    global.fetch = jest.fn((input: unknown, init?: { method?: string; body?: string }) =>
+      fail && String(input).includes('/api/export/targets')
+        ? Promise.resolve({ ok: false, status: 503, json: () => Promise.resolve({ success: false, error: 'Registry unavailable' }) })
+        : answer(input, init)
+    ) as unknown as typeof fetch;
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+    const error = await screen.findByTestId('export-dialog-targets-error');
+    expect(error).toHaveTextContent("Couldn't load the export targets");
+    expect(error).toHaveTextContent('Registry unavailable');
+    fail = false;
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.getByTestId('export-dialog-choose-target')).toBeEnabled());
+    expect(screen.queryByTestId('export-dialog-targets-error')).not.toBeInTheDocument();
   });
 });

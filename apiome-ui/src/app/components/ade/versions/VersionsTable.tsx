@@ -77,6 +77,14 @@ export interface VersionsTableProps {
   versions: readonly Version[];
   /** True until the project's first read has landed. */
   loading?: boolean;
+  /**
+   * Why the revisions read failed, or `null`. Drawn as the table's `ErrorState`, with
+   * {@link VersionsTableProps.onRetry}, instead of an empty table that reads as "No versions yet"
+   * (RC6-H3, #6210).
+   */
+  error?: string | null;
+  /** Run the revisions read again. */
+  onRetry?: () => void;
   /** The selected project's id — every lint badge and mock cell is scoped to it. */
   projectId: string;
   /** The project's slug, which keys the mock-usage series. */
@@ -132,6 +140,8 @@ export interface VersionsTableProps {
 export default function VersionsTable({
   versions,
   loading = false,
+  error = null,
+  onRetry,
   projectId,
   projectSlug,
   headRevisionId,
@@ -373,6 +383,9 @@ export default function VersionsTable({
       scrollX
       loading={loading}
       loadingLabel="Loading versions..."
+      error={error}
+      errorTitle="Couldn't load this project's versions"
+      onRetry={onRetry}
       sort={sort}
       onSortChange={onSortChange}
       toolbar={toolbar}

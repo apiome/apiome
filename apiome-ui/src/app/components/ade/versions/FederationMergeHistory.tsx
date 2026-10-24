@@ -16,10 +16,10 @@
 import * as React from 'react';
 import { GitMerge } from 'lucide-react';
 
-import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { EmptyState } from '@/app/components/ui/EmptyState';
-import { LoadingState } from '@/app/components/ui/LoadingState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import {
   FEDERATION_STATUS_LABEL,
   FEDERATION_STATUS_TONE,
@@ -140,9 +140,12 @@ export function FederationMergeHistory({
 }: FederationMergeHistoryProps): React.JSX.Element {
   const [merges, setMerges] = React.useState<FederationMerge[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  // RC6-H3 (#6210): bumped by the error state's retry.
+  const [attempt, setAttempt] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
+    setError(null);
     (async () => {
       try {
         const response = await fetch(url);
@@ -162,16 +165,22 @@ export function FederationMergeHistory({
     return () => {
       cancelled = true;
     };
-  }, [url, refreshKey]);
+  }, [url, refreshKey, attempt]);
 
   if (error) {
     return (
-      <Alert variant="error" data-testid={`${testId}-error`}>
-        {error}
-      </Alert>
+      <ErrorState
+        variant="compact"
+        title="Couldn't load the merge history"
+        description={error}
+        onRetry={() => setAttempt((count) => count + 1)}
+        data-testid={`${testId}-error`}
+      />
     );
   }
-  if (!merges) return <LoadingState message="Loading merge history…" />;
+  if (!merges) {
+    return <CatalogTimelineSkeleton message="Loading merge history…" testId={`${testId}-loading`} />;
+  }
   if (merges.length === 0) {
     return (
       <EmptyState

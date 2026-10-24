@@ -285,3 +285,22 @@ describe('guardrailStatusLabel', () => {
     expect(guardrailStatusLabel('something-new')).toBe('Not checked');
   });
 });
+
+describe('BreakingPublishGuardrailPanel — pending and failed reads (RC6-H3, #6210)', () => {
+  it('says what it is checking while the read is pending', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<BreakingPublishGuardrailPanel projectId={PROJECT_ID} versionId={VERSION_ID} />);
+    expect(await screen.findByText('Checking breaking changes…')).toBeInTheDocument();
+  });
+
+  it('says the check failed, with a retry that runs it again', async () => {
+    mockFailingFetch('Guardrail service unavailable');
+    render(<BreakingPublishGuardrailPanel projectId={PROJECT_ID} versionId={VERSION_ID} />);
+    const error = await screen.findByTestId('breaking-publish-guardrail-error');
+    expect(error).toHaveTextContent("Couldn't check for breaking changes");
+    expect(error).toHaveTextContent('Guardrail service unavailable');
+    const calls = (global.fetch as jest.Mock).mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.length).toBeGreaterThan(calls));
+  });
+});

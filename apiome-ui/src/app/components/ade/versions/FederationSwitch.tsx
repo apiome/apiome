@@ -16,6 +16,8 @@ import * as React from 'react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
+import { ErrorBanner } from '@/app/components/ui/ErrorState';
+import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Label } from '@/app/components/ui/Label';
 import { Switch } from '@/app/components/ui/Switch';
 import { FEDERATION_SWITCH_COPY, parseFederationSetting } from '@lib/repository-federation';
@@ -39,26 +41,31 @@ export function FederationSwitch({ projectId, onChanged }: FederationSwitchProps
   const [enabled, setEnabled] = React.useState<boolean | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // RC6-H3 (#6210): a failed *read* gets its own error with a retry; a failed save keeps the
+  // plain alert (the switch is still there to try again).
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [attempt, setAttempt] = React.useState(0);
   const url = `/api/projects/${encodeURIComponent(projectId)}/repository-federation`;
 
   React.useEffect(() => {
     let cancelled = false;
+    setLoadError(null);
     (async () => {
       try {
         const response = await fetch(url);
         const payload = await response.json().catch(() => null);
         const parsed = response.ok ? parseFederationSetting(payload) : null;
         if (cancelled) return;
-        if (parsed === null) setError((payload as { error?: string } | null)?.error || LOAD_ERROR);
+        if (parsed === null) setLoadError((payload as { error?: string } | null)?.error || LOAD_ERROR);
         else setEnabled(parsed);
       } catch {
-        if (!cancelled) setError(LOAD_ERROR);
+        if (!cancelled) setLoadError(LOAD_ERROR);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, attempt]);
 
   const change = async (next: boolean) => {
     setSaving(true);
@@ -95,6 +102,13 @@ export function FederationSwitch({ projectId, onChanged }: FederationSwitchProps
               <Badge variant={enabled ? 'ok' : 'outline'} data-testid="federation-state">
                 {enabled ? 'On' : 'Off'}
               </Badge>
+            ) : !loadError ? (
+              <>
+                <Skeleton className="h-5 w-9 rounded-sm" data-testid="federation-state-loading" />
+                <span className="sr-only" role="status">
+                  Loading the federation setting…
+                </span>
+              </>
             ) : null}
           </span>
           {enabled !== null ? (
@@ -112,6 +126,14 @@ export function FederationSwitch({ projectId, onChanged }: FederationSwitchProps
           data-testid="federation-toggle"
         />
       </div>
+      {loadError ? (
+        <ErrorBanner
+          title="Couldn't load the federation setting"
+          description={loadError}
+          onRetry={() => setAttempt((count) => count + 1)}
+          data-testid="federation-switch-load-error"
+        />
+      ) : null}
       {error ? (
         <Alert variant="error" data-testid="federation-switch-error">
           {error}

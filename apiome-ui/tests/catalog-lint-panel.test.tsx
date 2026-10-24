@@ -334,7 +334,7 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
 
     // Retry now succeeds and renders the report.
     mockLintFetch(BASE_REPORT);
-    fireEvent.click(screen.getByTestId('catalog-lint-retry'));
+    fireEvent.click(within(screen.getByTestId('catalog-lint-error')).getByRole('button', { name: /try again/i }));
     await screen.findByTestId('catalog-lint-gauge');
   });
 
@@ -372,6 +372,32 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
     expect(card).toHaveTextContent('72/100');
     // The strip leads with the tally cards.
     expect(strip.firstElementChild).toHaveTextContent('MUST');
+  });
+
+  it('holds the source pane with code placeholders while the source loads (RC6-H3, #6210)', async () => {
+    mockLintFetch(BASE_REPORT);
+    const answer = global.fetch;
+    global.fetch = jest.fn((input: RequestInfo | URL) =>
+      String(input).includes('/source') ? new Promise(() => {}) : answer(input)
+    ) as unknown as typeof fetch;
+    renderPanel({ sourceHref: `/api/catalog/${ITEM_ID}/source`, sourceAvailable: true });
+    const loading = await screen.findByTestId('catalog-lint-source-loading');
+    expect(loading).toHaveTextContent('Loading source…');
+  });
+
+  it('says a failed source read failed, with a retry (RC6-H3, #6210)', async () => {
+    mockLintFetch(BASE_REPORT);
+    const answer = global.fetch;
+    let fail = true;
+    global.fetch = jest.fn((input: RequestInfo | URL) =>
+      fail && String(input).includes('/source') ? Promise.reject(new Error('Source store unreachable')) : answer(input)
+    ) as unknown as typeof fetch;
+    renderPanel({ sourceHref: `/api/catalog/${ITEM_ID}/source`, sourceAvailable: true });
+    const error = await screen.findByTestId('catalog-lint-source-error');
+    expect(error).toHaveTextContent("Couldn't load the raw source");
+    fail = false;
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('catalog-lint-source-line-active')).toHaveTextContent('6');
   });
 
   it('fetches the raw source lazily and highlights the most severe finding by default', async () => {

@@ -441,3 +441,26 @@ describe('CatalogBulkConvertDialog', () => {
     expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
   });
 });
+
+describe('CatalogBulkConvertDialog — pending and failed previews (RC6-H3, #6210)', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('marks each row as previewing while its dry run is pending', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    renderDialog([ORDERS, BILLING]);
+    expect(within(row('orders')).getByText('Previewing…')).toBeInTheDocument();
+    expect(submit()).toBeDisabled();
+  });
+
+  it('says a row’s preview failed, and retries just that row', async () => {
+    const plan: Plan = { orders: { tier: 'high' }, billing: { previewError: 'Adapter crashed' } };
+    mockConvert(plan);
+    renderDialog([ORDERS, BILLING]);
+    await previewed();
+    expect(within(row('billing')).getByRole('alert')).toHaveTextContent('Adapter crashed');
+    plan.billing = { tier: 'medium' };
+    fireEvent.click(screen.getByTestId('catalog-bulk-convert-retry-billing'));
+    await waitFor(() => expect(within(row('billing')).getByText('medium fidelity')).toBeInTheDocument());
+    expect(within(row('billing')).queryByRole('alert')).toBeNull();
+  });
+});

@@ -233,7 +233,24 @@ describe('CatalogVersionsPanel', () => {
     fireEvent.click(screen.getAllByTestId('catalog-versions-checkbox')[0]);
     fireEvent.click(screen.getAllByTestId('catalog-versions-checkbox')[1]);
 
-    expect(await screen.findByTestId('catalog-versions-diff-error')).toHaveTextContent('spec boom');
+    const error = await screen.findByTestId('catalog-versions-diff-error');
+    expect(error).toHaveTextContent("Couldn't build the diff");
+    expect(error).toHaveTextContent('spec boom');
+
+    // RC6-H3 (#6210): the retry builds the same pair again.
+    mockLoadSpec.mockImplementation(async () => '{"openapi":"3.1.0"}');
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('catalog-versions-diff-error')).not.toBeInTheDocument());
+  });
+
+  it('holds the diff with code placeholders while the two revisions build (RC6-H3)', async () => {
+    mockVersionsFetch(VERSIONS);
+    mockLoadSpec.mockImplementation(() => new Promise(() => {}));
+    render(<CatalogVersionsPanel itemId={ITEM_ID} active />);
+    await screen.findByTestId('catalog-versions-timeline');
+    fireEvent.click(screen.getAllByTestId('catalog-versions-checkbox')[0]);
+    fireEvent.click(screen.getAllByTestId('catalog-versions-checkbox')[1]);
+    expect(await screen.findByTestId('catalog-versions-diff-loading')).toHaveTextContent('Building the diff…');
   });
 
   it('keeps the off-page history link as a fallback', async () => {
@@ -261,7 +278,7 @@ describe('CatalogVersionsPanel', () => {
 
     // Retry re-fetches, this time succeeding.
     mockVersionsFetch(VERSIONS);
-    fireEvent.click(screen.getByTestId('catalog-versions-retry'));
+    fireEvent.click(within(screen.getByTestId('catalog-versions-error')).getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.getByTestId('catalog-versions-timeline')).toBeInTheDocument());
   });
 });

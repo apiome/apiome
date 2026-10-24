@@ -58,6 +58,7 @@ import {
   type DataTableSortState,
 } from '@/app/components/ui/DataTable';
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { FactsLine } from '@/app/components/ui/FactsLine';
 import { Label } from '@/app/components/ui/Label';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
@@ -1158,17 +1159,14 @@ export default function CatalogClient() {
                     <CatalogCardGridSkeleton />
                   ) : loadError ? (
                     <div className="cat-cards-panel__empty">
-                      <EmptyState
+                      {/* RC6-H3 (#6210): the shared error state, as the table view draws it. */}
+                      <ErrorState
                         variant="compact"
                         surface={false}
-                        tone="danger"
-                        title="The catalog could not be loaded"
+                        title="Couldn't load the catalog"
                         description={loadError}
-                        action={
-                          <Button variant="outline" onClick={() => void loadCatalog()}>
-                            Try again
-                          </Button>
-                        }
+                        onRetry={() => void loadCatalog()}
+                        data-testid="catalog-cards-error"
                       />
                     </div>
                   ) : visible.length === 0 ? (

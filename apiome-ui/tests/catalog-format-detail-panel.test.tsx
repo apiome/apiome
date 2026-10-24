@@ -326,6 +326,16 @@ describe('authorization', () => {
     expect(failure).toHaveTextContent(/Nothing is claimed about the source/i);
   });
 
+  it('retries a failed read from the error state (RC6-H3, #6210)', async () => {
+    mockTransport({ status: 500, error: 'upstream exploded' });
+    renderPanel();
+    const failure = await screen.findByTestId('catalog-format-detail-error');
+    const analysisReads = () => fetchMock.mock.calls.filter(([url]) => /\/analysis(\?|$)/.test(String(url))).length;
+    const before = analysisReads();
+    fireEvent.click(within(failure).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(analysisReads()).toBeGreaterThan(before));
+  });
+
   it('never links at raw source itself — the jump goes through the Source & Code tab', async () => {
     await renderLoadedPanel();
 

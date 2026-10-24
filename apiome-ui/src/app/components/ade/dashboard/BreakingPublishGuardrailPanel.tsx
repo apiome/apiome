@@ -22,6 +22,7 @@ import { ChevronDown, ChevronRight, OctagonAlert } from 'lucide-react';
 import { Alert } from '../../ui/Alert';
 import { Badge } from '../../ui/Badge';
 import { LoadingState } from '../../ui/LoadingState';
+import { ErrorBanner } from '../../ui/ErrorState';
 import type { StatusTone } from '../../ui/statusVocabulary';
 import {
   fetchBreakingPublishGuardrail,
@@ -128,9 +129,13 @@ export function BreakingPublishGuardrailPanel({
 
   if (error) {
     return (
-      <Alert variant="warning" data-testid="breaking-publish-guardrail-error">
-        Could not check for breaking changes: {error}
-      </Alert>
+      // RC6-H3 (#6210): the rest of the publish dialog still works, so a banner with a retry.
+      <ErrorBanner
+        title="Couldn't check for breaking changes"
+        description={error}
+        onRetry={() => void loadGuardrail()}
+        data-testid="breaking-publish-guardrail-error"
+      />
     );
   }
 

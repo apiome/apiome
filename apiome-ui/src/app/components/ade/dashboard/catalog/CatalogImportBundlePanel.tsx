@@ -43,9 +43,11 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { AlertTriangle, ChevronRight, FileWarning, Filter, Loader2, RefreshCw, X } from 'lucide-react';
+import { ChevronRight, FileWarning, Filter, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { Button } from '../../../ui/Button';
+import { ErrorState } from '../../../ui/ErrorState';
+import { CatalogTimelineSkeleton } from '../../catalog/CatalogSkeletons';
 import { clampRowIndex, computeWindowedRange } from '@/app/utils/windowed-rows';
 import {
   BUNDLE_TREE_VIRTUALIZE_ABOVE,
@@ -561,27 +563,16 @@ export function CatalogImportBundlePanel({
       </div>
 
       {loading ? (
-        <div
-          className="flex flex-col items-center justify-center gap-2 py-8 text-center"
-          data-testid="bundle-loading"
-        >
-          <Loader2 className="h-6 w-6 motion-safe:animate-spin text-accent" aria-hidden />
-          <span className="text-xs text-fg-muted">
-            Reading the bundle — nothing has been written yet.
-          </span>
-        </div>
+        // RC6-H3 (#6210): placeholder rows while it reads, the shared error state when it fails.
+        <CatalogTimelineSkeleton message="Reading the bundle — nothing has been written yet." testId="bundle-loading" rows={3} />
       ) : transportError ? (
-        <div
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-warn p-3 text-sm text-warn-fg"
+        <ErrorState
+          variant="compact"
+          title="Couldn't read the bundle"
+          description={transportError}
+          onRetry={() => setAttempt((n) => n + 1)}
           data-testid="bundle-error"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="min-w-0 flex-1">{transportError}</span>
-          <Button variant="outline" onClick={() => setAttempt((n) => n + 1)} data-testid="bundle-retry">
-            <RefreshCw className="h-4 w-4" aria-hidden />
-            Retry
-          </Button>
-        </div>
+        />
       ) : response && !response.ok ? (
         <div
           className="rounded-lg border border-danger p-3 text-sm text-danger-fg"

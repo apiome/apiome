@@ -14,7 +14,7 @@
 ## 1. Recommendation
 
 RC6 is **five lanes**: four product lanes and a hardening lane (§2.3, lane H). As of 2026-10-23 the
-four product lanes are done; the **6 open tickets** are all in lane H.
+four product lanes are done; the **5 open tickets** are all in lane H.
 
 - **Only Catalog, Projects and sign-in/sign-up are in.** A stranger can sign up, secure the
   account, sign in from the browser or the CLI, and then bring specs into the Catalog, convert
@@ -40,7 +40,7 @@ four product lanes are done; the **6 open tickets** are all in lane H.
 | **B — Two-factor** | Authy offered at sign-up, usable by OAuth-only accounts, recoverable, enforceable per tenant | 0 | 6 |
 | **D — CLI sign-in** | One-line install and `apiome login` | 0 | 2 |
 | **E — Catalog & Projects polish** | The HIVE quiet pass and gates on the pages RC6 ships | 0 | 14 |
-| **H — Hardening** | Catalog and Projects meet the MVP hardening checklist | 6 | 2 |
+| **H — Hardening** | Catalog and Projects meet the MVP hardening checklist | 5 | 3 |
 
 Lanes C (formats), F (Enterprise SSO) and G (agent authorization) from the 2026-10-10 plan are out
 (§5).
@@ -109,7 +109,7 @@ Each check is an issue in the `RC6` milestone.
 | --- | --- | --- |
 | [#6208](https://github.com/apiome/apiome/issues/6208) H1 ✅ | Playwright journey in CI: import → catalog item → convert to project → edit → cut version → publish → unpublish → export | 1 |
 | [#6209](https://github.com/apiome/apiome/issues/6209) H2 ✅ | Every Catalog, Projects and Versions route passes the HIVE-10.2 axe gate with no route-ledger exemptions | 1 |
-| [#6210](https://github.com/apiome/apiome/issues/6210) H3 | Skeletons and `ErrorState` on every fetch on those pages; no blank screen on a slow or failed request | 1 |
+| [#6210](https://github.com/apiome/apiome/issues/6210) H3 ✅ | Skeletons and `ErrorState` on every fetch on those pages; no blank screen on a slow or failed request | 1 |
 | [#6211](https://github.com/apiome/apiome/issues/6211) H4 | Catalog and version export through the in-place Export dialog covers the formats RC6 promises; the dialog's fidelity report is the only fidelity surface | 2 |
 | [#6212](https://github.com/apiome/apiome/issues/6212) H5 | Viewer / editor / owner matrices tested for every Catalog and Projects action (REST and UI), including bulk actions | 2 |
 | [#6213](https://github.com/apiome/apiome/issues/6213) H6 | Catalog list and versions table meet the HIVE-13.3 first-row budget with 1,000 items | 2 |
