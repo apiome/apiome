@@ -31,7 +31,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 9 | ✅ | Sat evening | Bump What's new to RC6 | B7 | Claude (You pick the heading) | `WHATS_NEW.md` starts with RC6 | "Apiome 10-2026 RC6" |
 | 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | §1, §4, §6 and §7 current; B6, B7, B9 ticked; Gate 1 and B5 still open |
 | 11 | ⬜ | Sat night | Production host: DNS, firewall, secrets, **SendGrid email** | — | You | `PRODUCTION_DEPLOY.md` §2–§3 done | |
-| 12 | ⬜ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You (Claude writes the Caddy block) | the install one-liner works on a clean machine | `https://get.apiome.dev` still fails TLS |
+| 12 | ⏳ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You (script ready) | the install one-liner works on a clean machine | Run `sudo deploy/get-apiome/get-apiome-installer.sh setup --email <ops address>` on the `get.apiome.dev` host: nginx site, Let's Encrypt cert, 15-min refresh from `main` |
 | 13 | ⬜ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Include the new sign-up confirmation step (password) |
 | 14 | ⬜ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-24 |
 | 15 | ⬜ | Sun morning | Tag `RC6`; merge the release-notes PR it opens | — | You | RC6 post published | |
