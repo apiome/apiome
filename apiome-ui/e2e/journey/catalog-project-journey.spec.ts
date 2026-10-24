@@ -18,7 +18,7 @@
  * and the spec's title carries a per-run suffix, so the catalog item and project it creates never
  * collide with an earlier run's on a shared stack.
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Cookie, type Page } from '@playwright/test';
 import { loadCorpus, readCorpusFile } from '../../lib/corpus/corpus';
 import { setMockPersona, type MockPersona } from './support/mock-oauth';
 import { closeDb, seedMultiTenantFixture, MULTITENANT_FIXTURE } from './support/db';
@@ -63,17 +63,29 @@ let itemId: string | null = null;
 let projectId: string | null = null;
 let versionRecordId: string | null = null;
 
+/** The session the first step signed in with, reused by every later step. */
+let sessionCookies: Cookie[] | null = null;
+
 /**
  * Sign in as {@link PERSONA} through the mock GitHub provider.
+ *
+ * Only the first step signs in for real; later steps install that session's cookies. A production
+ * build rate-limits `/sign-in/*` (Better Auth's default, three per ten seconds), and nine sign-ins
+ * in a row trip it with a 429.
  *
  * @param page The test's page.
  */
 async function login(page: Page): Promise<void> {
   await page.context().clearCookies();
+  if (sessionCookies) {
+    await page.context().addCookies(sessionCookies);
+    return;
+  }
   await setMockPersona(PERSONA);
   await page.goto('/login');
   await page.getByRole('button', { name: /continue with github/i }).click();
   await page.waitForURL(/\/ade/, { timeout: 60_000 });
+  sessionCookies = await page.context().cookies();
 }
 
 /**
