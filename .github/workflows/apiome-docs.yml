@@ -69,7 +69,11 @@ on:
       - 'scripts/package.json'
       # Stale-screenshot rule: a screenshot is stale when its route's source changed after it.
       - 'apiome-ui/src/**'
+<<<<<<< Updated upstream
   # Allow manual trigger
+=======
+  # Allow manual trigger (deploys when run on main)
+>>>>>>> Stashed changes
   workflow_dispatch:
 
 permissions:
@@ -162,6 +166,28 @@ jobs:
       - name: CI action pages (diff-action / mock-action READMEs)
         run: node apiome-docs/scripts/sync-action-pages.mjs --check
 
+<<<<<<< Updated upstream
+=======
+  deploy:
+    name: Deploy Apiome Docs to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [build, reference]
+    runs-on: self-hosted
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+>>>>>>> Stashed changes
   # The gate runs on every docs-affecting pull request; the image only needs rebuilding when its own inputs moved.
   # (On `main`, apiome-docs-publish.yml decides that with its own path filter.)
   changes:

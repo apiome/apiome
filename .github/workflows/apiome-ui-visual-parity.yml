@@ -26,9 +26,12 @@ on:
       - '!apiome-ui/public/WHATS_NEW.md'
       - '!apiome-ui/playwright.config.ts'
       - '!apiome-ui/playwright.a11y.config.ts'
+<<<<<<< Updated upstream
       # Nearly every apiome-ui/package.json edit is a version bump. A dependency change also
       # rewrites yarn.lock, which is listed below, so it still triggers this harness.
       - '!apiome-ui/package.json'
+=======
+>>>>>>> Stashed changes
       - '.github/workflows/apiome-ui-visual-parity.yml'
       - 'docs/mockups/**'
       - 'package.json'
@@ -45,9 +48,12 @@ on:
       - '!apiome-ui/public/WHATS_NEW.md'
       - '!apiome-ui/playwright.config.ts'
       - '!apiome-ui/playwright.a11y.config.ts'
+<<<<<<< Updated upstream
       # Nearly every apiome-ui/package.json edit is a version bump. A dependency change also
       # rewrites yarn.lock, which is listed below, so it still triggers this harness.
       - '!apiome-ui/package.json'
+=======
+>>>>>>> Stashed changes
       - '.github/workflows/apiome-ui-visual-parity.yml'
       - 'docs/mockups/**'
       - 'package.json'
