@@ -14,6 +14,7 @@ import { getServersForVersion, serversToOpenAPI } from './helper-version-servers
 import { isValidVersionBranchName } from '../version-branch-utils';
 import { isValidVersionTagName } from '../version-tag-utils';
 import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
+import { authorizeProjectAction } from './project-access';
 import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
@@ -495,10 +496,12 @@ export async function createProject(tenantId: string, creatorId: string, name: s
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
 
-    const session = await getAuthSession();
-    const sessionUserId = (session?.user as any)?.user_id;
-    if (!sessionUserId) return errorResponse('Unauthorized');
-    if (sessionUserId !== creatorId) return errorResponse('Unauthorized');
+    // A server action is a public endpoint: the caller must hold projects:create in their *current*
+    // tenant, and may only create there and as themselves (see `project-access.ts`).
+    const access = await authorizeProjectAction('create');
+    if (!access.ok) return errorResponse(access.error);
+    const sessionUserId = access.userId;
+    if (sessionUserId !== creatorId || access.tenantId !== tenantId) return errorResponse('Unauthorized');
 
     const planErr = await getPlanBlockMessageForNewProject(sessionUserId);
     if (planErr) return errorResponse(planErr);
@@ -520,9 +523,12 @@ export async function updateProject(projectId: string, name: string, description
     const slugError = validateSlug(slug.trim());
     if (slugError) return errorResponse(slugError);
 
+    const access = await authorizeProjectAction('edit', projectId);
+    if (!access.ok) return errorResponse(access.error);
+
     await connectionPool.query(
-      `UPDATE apiome.projects SET name = $1, description = $2, slug = $3, enabled = $4, metadata = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 AND deleted_at IS NULL`,
-      [name.trim(), description?.trim() || null, slug.trim().toLowerCase(), enabled, metadata ? JSON.stringify(metadata) : '{}', projectId]);
+      `UPDATE apiome.projects SET name = $1, description = $2, slug = $3, enabled = $4, metadata = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 AND tenant_id = $7 AND deleted_at IS NULL`,
+      [name.trim(), description?.trim() || null, slug.trim().toLowerCase(), enabled, metadata ? JSON.stringify(metadata) : '{}', projectId, access.tenantId]);
     return successResponse();
   } catch (error: any) {
     if (error.code === '23505') return errorResponse('A project with this slug already exists in this tenant');
@@ -532,9 +538,11 @@ export async function updateProject(projectId: string, name: string, description
 
 export async function deleteProject(projectId: string) {
   try {
+    const access = await authorizeProjectAction('delete', projectId);
+    if (!access.ok) return errorResponse(access.error);
     await connectionPool.query(
-      `UPDATE apiome.projects SET pre_delete_enabled = enabled, enabled = false, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL`,
-      [projectId]);
+      `UPDATE apiome.projects SET pre_delete_enabled = enabled, enabled = false, deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+      [projectId, access.tenantId]);
     return successResponse();
   } catch (error: any) {
     return errorResponse(error.message);
@@ -543,9 +551,12 @@ export async function deleteProject(projectId: string) {
 
 export async function restoreProject(projectId: string) {
   try {
+    // Restore is an edit, as apiome-rest's restore route enforces (projects:edit).
+    const access = await authorizeProjectAction('edit', projectId);
+    if (!access.ok) return errorResponse(access.error);
     const result = await connectionPool.query(
-      `UPDATE apiome.projects SET deleted_at = NULL, enabled = COALESCE(pre_delete_enabled, TRUE), pre_delete_enabled = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NOT NULL`,
-      [projectId]
+      `UPDATE apiome.projects SET deleted_at = NULL, enabled = COALESCE(pre_delete_enabled, TRUE), pre_delete_enabled = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NOT NULL`,
+      [projectId, access.tenantId]
     );
     if (!result.rowCount) {
       return errorResponse('Project not found or not deleted');
@@ -558,6 +569,8 @@ export async function restoreProject(projectId: string) {
 
 export async function permanentDeleteProject(projectId: string) {
   try {
+    const access = await authorizeProjectAction('delete', projectId);
+    if (!access.ok) return errorResponse(access.error);
     // Begin transaction to ensure all related data is deleted atomically
     const client = await connectionPool.connect();
     try {

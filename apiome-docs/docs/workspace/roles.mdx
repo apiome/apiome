@@ -41,7 +41,9 @@ Rows are resources — **Projects**, **Versions**, **Classes**, **Properties**, 
 **Primitives / Types**, **Imports**, **Members**, **API keys**, **Billing**, **Lint findings**,
 **Verification targets**, **Verification evidence**, **Consumer contracts** and **Teams** — each
 with the key the server checks under it (`projects`, `api_keys`, …). Columns are the five actions. Each cell is a
-`resource:action` permission (for example `versions:publish`), checked on every REST route.
+`resource:action` permission (for example `versions:publish`), checked on every REST route. The
+app applies the same check when you create, edit, delete or restore a project from **Projects** or
+**Catalog**.
 
 - **Click a cell** to grant or remove one permission.
 - **Click the box at the start of a row** to grant or remove the whole row. It shows a tick when the

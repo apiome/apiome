@@ -49,6 +49,12 @@ jest.mock('../lib/db/plan-entitlements', () => ({
   getPlanBlockMessageForNewVersion: jest.fn(async () => null),
 }));
 
+// Project writes are authorized against the session tenant and the caller's REST grants
+// (lib/db/project-access); its own suite covers the refusals, so here every caller is allowed.
+jest.mock('../lib/db/project-access', () => ({
+  authorizeProjectAction: jest.fn(async () => ({ ok: true, userId: 'user-1', tenantId: 'tenant-1' })),
+}));
+
 function mockAuthenticatedSession(userId = 'user-1') {
   const serverSession = require('../lib/auth/server-session');
   (serverSession.getAuthSession as jest.Mock).mockResolvedValue({
@@ -524,8 +530,34 @@ describe('Database Helper - Project Functions', () => {
     expect(parsed.success).toBe(true);
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('pre_delete_enabled = enabled'),
-      ['proj-1']
+      ['proj-1', 'tenant-1']
     );
+  });
+
+  test.each([
+    ['updateProject', (h: typeof import('../lib/db/helper')) => h.updateProject('proj-1', 'N', 'D', 'n', true)],
+    ['deleteProject', (h: typeof import('../lib/db/helper')) => h.deleteProject('proj-1')],
+    ['restoreProject', (h: typeof import('../lib/db/helper')) => h.restoreProject('proj-1')],
+    ['permanentDeleteProject', (h: typeof import('../lib/db/helper')) => h.permanentDeleteProject('proj-1')],
+  ])('%s writes nothing when the caller is refused', async (_name, call) => {
+    const helper = await import('../lib/db/helper');
+    const access = require('../lib/db/project-access');
+    (access.authorizeProjectAction as jest.Mock).mockResolvedValueOnce({ ok: false, error: 'Project not found' });
+
+    const parsed = JSON.parse(await call(helper));
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error).toBe('Project not found');
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  test('createProject refuses a tenant other than the session tenant', async () => {
+    const { createProject } = await import('../lib/db/helper');
+
+    const parsed = JSON.parse(await createProject('tenant-other', 'user-1', 'P', 'D', 'p'));
+
+    expect(parsed.success).toBe(false);
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 
   test('restoreProject should restore pre-delete enabled state', async () => {
@@ -539,11 +571,11 @@ describe('Database Helper - Project Functions', () => {
     expect(parsed.success).toBe(true);
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('deleted_at = NULL'),
-      ['proj-1']
+      ['proj-1', 'tenant-1']
     );
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('COALESCE(pre_delete_enabled, TRUE)'),
-      ['proj-1']
+      ['proj-1', 'tenant-1']
     );
   });
 

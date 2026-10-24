@@ -202,6 +202,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours
   - Linking a sign-in provider and linking related APIs can now only be started from Apiome's own pages, and a sign-in during a database outage no longer trusts the remembered workspace
+  - Editing, deleting, restoring and permanently deleting a project from **Projects** or **Catalog** now checks that you are signed in, that the project is in your workspace and that your role allows it (`projects:edit` / `projects:delete`) — the same rule the REST API applies; creating a project is checked the same way and always lands in your current workspace
 
 ---
 
