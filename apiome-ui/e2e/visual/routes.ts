@@ -17,7 +17,16 @@
  * {@link UNCOVERED_MOCKUPS} names every mockup that is not, with the reason. Together they
  * must account for every page mockup in `docs/mockups/` — `tests/visual-parity-routes.test.ts`
  * fails if one is missing from both, so a new mockup cannot quietly slip past the harness.
+ *
+ * ### The first-row budget (HIVE-13.3, #5616)
+ *
+ * Parity says a page is built from the right tokens; it cannot say the page has piled standing
+ * furniture above its data. So every pairing also either declares a {@link FirstRowBudget} —
+ * how far down the page its first row of data may start — or is named in
+ * {@link FIRST_ROW_EXEMPT} with the reason it has none. The same routes test enforces that.
  */
+
+import { FIRST_DATA_ROW } from './landmarks';
 
 /** Where the app side of a comparison comes from. */
 export type ParitySubject =
@@ -38,7 +47,103 @@ export interface ParityRoute {
   subject: ParitySubject;
   /** The roadmap ticket that redesigned the route. */
   roadmapRef: string;
+  /**
+   * How far down the page the first row of data may start. Omitted only when the id is in
+   * {@link FIRST_ROW_EXEMPT}.
+   */
+  firstRow?: FirstRowBudget;
 }
+
+/**
+ * The first-row budgets `docs/mockups/PROPOSALS.md` sets, in CSS pixels at 1440 × 900
+ * (comfortable density, `md` font scale).
+ *
+ * The review measured Published — header straight into the table — at ≈ 236 px and set it as
+ * the bar; the quiet pass brought Catalog from ≈ 600 px to ≈ 345 px and Versions from ≈ 870 px
+ * to ≈ 670 px. A budget is one of these three, never a number picked to fit a page.
+ */
+export const FIRST_ROW_BUDGET_PX = {
+  /** A list page: facts line, one card, the rows. */
+  list: 360,
+  /** A detail page: a record's header and summary before its content. */
+  detail: 560,
+  /** Versions, which keeps a status strip and the artifacts card above its revisions. */
+  versions: 700,
+} as const;
+
+/** Which of the three budgets a page is held to. */
+export type FirstRowBudgetKind = keyof typeof FIRST_ROW_BUDGET_PX;
+
+/**
+ * A known overrun, allowed until the page's quiet pass lands.
+ *
+ * The gates in Epic 13 are introduced with allow-lists that only shrink. An allowance holds the
+ * page at its ceiling — so it cannot get worse — and fails the run once the page comes back
+ * within budget, so the entry is deleted rather than left to excuse a later regression.
+ */
+export interface FirstRowAllowance {
+  /**
+   * The furthest down the first row may start, in CSS pixels: today's measurement, rounded up
+   * to the next multiple of ten above it, so a pixel of font rasterisation does not trip it.
+   */
+  ceilingPx: number;
+  /** Why the page is over budget, and what brings it back. */
+  reason: string;
+}
+
+/** How far down the page a route's first row of data may start. */
+export interface FirstRowBudget {
+  /**
+   * The first row of data, read with `querySelector` inside the page region. Usually
+   * {@link FIRST_DATA_ROW}; a page whose data is not a `DataTable` names its own.
+   */
+  selector: string;
+  /** The budget, in CSS pixels below the page region's top edge: one of {@link FIRST_ROW_BUDGET_PX}. */
+  budgetPx: number;
+  /** A known overrun, when the page is over budget today. */
+  allowance?: FirstRowAllowance;
+}
+
+/**
+ * Build a route's first-row budget.
+ *
+ * @param kind Which budget the page is held to.
+ * @param selector The first row of data; defaults to the first `DataTable` body row.
+ * @param allowance A known overrun, when the page is over budget today.
+ * @returns The budget to put on the route map entry.
+ */
+export function firstRowBudget(
+  kind: FirstRowBudgetKind,
+  selector: string = FIRST_DATA_ROW,
+  allowance?: FirstRowAllowance
+): FirstRowBudget {
+  return allowance
+    ? { selector, budgetPx: FIRST_ROW_BUDGET_PX[kind], allowance }
+    : { selector, budgetPx: FIRST_ROW_BUDGET_PX[kind] };
+}
+
+/** Why a route carries no first-row budget. */
+export type FirstRowExemptReason =
+  /** The numbers are the page (PROPOSALS.md: Home and the Analytics pages keep full strips). */
+  | 'analytics'
+  /** The page is a form or a wizard: its controls come first by design, and its rows are a by-product. */
+  | 'form-page';
+
+/** What each exemption means, for the README and the routes test. */
+export const FIRST_ROW_EXEMPT_REASONS: Record<FirstRowExemptReason, string> = {
+  analytics:
+    'an analytics page: its figures and charts are the data, so there is no row standing furniture could push down',
+  'form-page':
+    'a form or a wizard: the controls that edit the data come first by design',
+};
+
+/** Every route that carries no first-row budget, and why. */
+export const FIRST_ROW_EXEMPT: Readonly<Record<string, FirstRowExemptReason>> = {
+  'repository-telemetry': 'analytics',
+  'mcp-analytics': 'analytics',
+  'webhook-allowlist': 'form-page',
+  'export-studio': 'form-page',
+};
 
 /** Why a mockup is not compared. */
 export type UncoveredReason =
@@ -94,6 +199,11 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/versions',
     subject: { kind: 'fixture', dir: 'hive-versions', file: 'timeline.html' },
     roadmapRef: 'HIVE-6.2',
+    firstRow: firstRowBudget('versions', FIRST_DATA_ROW, {
+      ceilingPx: 710,
+      reason:
+        'at the build/versions.html page width the first revision row lands at 702 px; HIVE-13.4 moves the pairing to proposals/versions-status-strip.html',
+    }),
   },
   {
     // HIVE-11.8 (#5604) re-dumped `registry.html` with the quiet pass applied: the five-tile
@@ -105,6 +215,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/primitives',
     subject: { kind: 'fixture', dir: 'hive-primitives', file: 'registry.html' },
     roadmapRef: 'HIVE-6.5',
+    firstRow: firstRowBudget('list'),
   },
   {
     id: 'primitive-detail',
@@ -112,6 +223,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/primitives/[id]',
     subject: { kind: 'fixture', dir: 'hive-primitive-detail', file: 'detail.html' },
     roadmapRef: 'HIVE-6.5',
+    // A detail page's data is the record itself: the schema card that opens the main column.
+    firstRow: firstRowBudget('detail', '[data-testid="primitive-detail-schema"]'),
   },
   {
     id: 'catalog',
@@ -121,6 +234,11 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/catalog',
     subject: { kind: 'fixture', dir: 'hive-catalog', file: 'table.html' },
     roadmapRef: 'HIVE-11.6',
+    firstRow: firstRowBudget('list', FIRST_DATA_ROW, {
+      ceilingPx: 390,
+      reason:
+        'HIVE-11.6 brought the first row to 344 px; #3755 (categorization) then added a second toolbar row inside the card',
+    }),
   },
   {
     id: 'catalog-item',
@@ -128,6 +246,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/catalog/[id]',
     subject: { kind: 'fixture', dir: 'hive-catalog-item', file: 'overview.html' },
     roadmapRef: 'HIVE-7.2',
+    // The overview pane is the record's content; the converted banner and related card precede it.
+    firstRow: firstRowBudget('detail', '[data-testid="catalog-detail-pane-overview"]'),
   },
   {
     // HIVE-11.7 (#5603) re-dumped the fixtures with the quiet pass: the KPI strip folded into
@@ -138,6 +258,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/repositories',
     subject: { kind: 'fixture', dir: 'hive-repositories', file: 'table.html' },
     roadmapRef: 'HIVE-7.3',
+    firstRow: firstRowBudget('list'),
   },
   {
     // HIVE-11.7 (#5603): facts line under the title (strip behind Show stats); the filter form
@@ -147,6 +268,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/repositories/[id]',
     subject: { kind: 'fixture', dir: 'hive-repository-detail', file: 'files.html' },
     roadmapRef: 'HIVE-7.5',
+    // The file tree is a plain table, so its rows carry no `data-row-id`.
+    firstRow: firstRowBudget('detail', '.page-body tbody tr'),
   },
   {
     id: 'repository-catalog',
@@ -154,6 +277,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/repositories/[id]/catalog',
     subject: { kind: 'fixture', dir: 'hive-repository-bring-in', file: 'catalog.html' },
     roadmapRef: 'HIVE-7.6',
+    firstRow: firstRowBudget('detail'),
   },
   {
     id: 'repository-telemetry',
@@ -175,6 +299,12 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/mcp',
     subject: { kind: 'fixture', dir: 'hive-mcp-catalog', file: 'catalog-list.html' },
     roadmapRef: 'HIVE-7.7',
+    // The catalog groups servers by host; the first host section is the first row of data.
+    firstRow: firstRowBudget('list', '.page-body section[data-testid^="mcp-host-"]', {
+      ceilingPx: 520,
+      reason:
+        'no quiet pass yet: toolbar, owner filter, saved-search and collection strips, totals and the shadowed-names alert stand above the first host',
+    }),
   },
   {
     id: 'mcp-endpoint',
@@ -182,6 +312,12 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/mcp/[endpointId]',
     subject: { kind: 'fixture', dir: 'hive-mcp-endpoint', file: 'versions.html' },
     roadmapRef: 'HIVE-7.8',
+    // The versions panel is the endpoint's content; the stat grid and the notes card precede it.
+    firstRow: firstRowBudget('detail', '[data-testid="mcp-endpoint-panel-versions"]', {
+      ceilingPx: 590,
+      reason:
+        'no quiet pass yet: a four-tile stat grid and the notes card stand above the versions panel',
+    }),
   },
   {
     id: 'mcp-capabilities',
@@ -189,6 +325,10 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/mcp/capabilities',
     subject: { kind: 'fixture', dir: 'hive-mcp-analytics', file: 'capabilities.html' },
     roadmapRef: 'HIVE-7.9',
+    firstRow: firstRowBudget('list', FIRST_DATA_ROW, {
+      ceilingPx: 420,
+      reason: 'no quiet pass yet: the preset tiles stand above the capability table',
+    }),
   },
   {
     id: 'mcp-analytics',
@@ -203,6 +343,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/mcp/compare',
     subject: { kind: 'fixture', dir: 'hive-mcp-analytics', file: 'compare.html' },
     roadmapRef: 'HIVE-7.9',
+    // The comparison opens on a section row, which carries no `data-row-id`.
+    firstRow: firstRowBudget('list', '.page-body tbody tr'),
   },
   {
     id: 'published',
@@ -210,6 +352,7 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/published',
     subject: { kind: 'fixture', dir: 'hive-published', file: 'table.html' },
     roadmapRef: 'HIVE-8.1',
+    firstRow: firstRowBudget('list'),
   },
   {
     id: 'sunset-timeline',
@@ -217,6 +360,8 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/versions/sunset-timeline',
     subject: { kind: 'fixture', dir: 'hive-sunset-timeline', file: 'timeline.html' },
     roadmapRef: 'HIVE-8.2',
+    // The timeline plot is the page's data; the table under it repeats the same revisions.
+    firstRow: firstRowBudget('list', '[data-testid="sunset-timeline-plot"]'),
   },
   {
     id: 'export-studio',

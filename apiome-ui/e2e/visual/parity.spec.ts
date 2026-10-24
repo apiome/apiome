@@ -10,7 +10,8 @@ import { measureParity } from './support/harness';
  *
  * One test per route map entry: the mockup is rendered, the app's page is rendered at the
  * same width, both are reduced to a design-token signature, and the two are scored along the
- * eight dimensions `score.ts` documents. The gate is the ticket's **95 %**.
+ * eight dimensions `score.ts` documents. The gate is the ticket's **95 %**. A route that
+ * declares a first-row budget (HIVE-13.3, #5616) must also start its first row of data within it.
  *
  * What each test leaves behind — the verdict as JSON, the two screenshots and their
  * difference — is written under `visual-parity-report/<theme>/`, which the global teardown
@@ -55,6 +56,12 @@ test.describe('visual parity against the mockups', () => {
       }
 
       expect(report.score, explainReport(report)).toBeGreaterThanOrEqual(PARITY_GATE);
+      // HIVE-13.3: the first row of data must start within the route's budget (or allowance).
+      if (report.firstRow) {
+        expect(report.firstRow.passed, `${route.id} first row: ${report.firstRow.detail}`).toBe(
+          true
+        );
+      }
     });
   }
 });

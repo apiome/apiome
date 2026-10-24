@@ -35,6 +35,7 @@ import {
   type TokenDistribution,
 } from './signature';
 import { ALL_TOKENS, OFF_SCALE } from './tokens';
+import type { FirstRowBudget } from './routes';
 
 /** The structural-parity gate #5337 sets: 95 %. */
 export const PARITY_GATE = 0.95;
@@ -153,12 +154,109 @@ export interface ParityReport {
   score: number;
   /** The gate it was measured against. */
   gate: number;
-  /** Whether it cleared the gate. */
+  /** Whether it cleared the gate and, when it declares one, its first-row budget. */
   passed: boolean;
   /** Every dimension's own verdict. */
   dimensions: DimensionScore[];
   /** Observations that are reported but deliberately not scored. */
   notes: string[];
+  /**
+   * Where the first row of data landed against the route's budget (HIVE-13.3), or `null` for
+   * a route exempt from the budget. Absent on artefacts written before the budget existed.
+   */
+  firstRow?: FirstRowVerdict | null;
+}
+
+/**
+ * What a first-row measurement concluded (HIVE-13.3, #5616).
+ *
+ * - `within-budget` — the row starts at or above the budget.
+ * - `allowed-overrun` — over budget, but at or above the ceiling of a recorded allowance.
+ * - `over-budget` — over budget (or over its allowance's ceiling): the page has gained furniture.
+ * - `stale-allowance` — within budget while an allowance is still recorded; delete the allowance.
+ * - `missing` — nothing matched the selector, so the budget is measuring nothing.
+ */
+export type FirstRowStatus =
+  | 'within-budget'
+  | 'allowed-overrun'
+  | 'over-budget'
+  | 'stale-allowance'
+  | 'missing';
+
+/** The verdict on one route's first row of data. */
+export interface FirstRowVerdict {
+  /** The selector that was read. */
+  selector: string;
+  /** The budget, in CSS pixels. */
+  budgetPx: number;
+  /** The allowance's ceiling, or `null` when the route has no allowance. */
+  ceilingPx: number | null;
+  /** Where the row's top edge landed below the page region's top, or `null` when nothing matched. */
+  topPx: number | null;
+  /** What the measurement concluded. */
+  status: FirstRowStatus;
+  /** Whether the route clears this check. */
+  passed: boolean;
+  /** One sentence a reader can act on. */
+  detail: string;
+}
+
+/**
+ * Judge a first-row measurement against its budget.
+ *
+ * An allowance is a ratchet, not a waiver: the row may not drop below its ceiling, and once it
+ * is back within budget the allowance itself fails the check until it is deleted — otherwise it
+ * would quietly excuse the next regression up to the old ceiling.
+ *
+ * @param budget The route's budget, as declared in `routes.ts`.
+ * @param topPx The measured top edge in CSS pixels, or `null` when the selector matched nothing.
+ * @returns The verdict.
+ */
+export function judgeFirstRow(budget: FirstRowBudget, topPx: number | null): FirstRowVerdict {
+  const ceilingPx = budget.allowance?.ceilingPx ?? null;
+  const base = { selector: budget.selector, budgetPx: budget.budgetPx, ceilingPx, topPx };
+
+  if (topPx === null) {
+    return {
+      ...base,
+      status: 'missing',
+      passed: false,
+      detail: `nothing matched "${budget.selector}", so the first-row budget measured nothing — fix the selector in routes.ts`,
+    };
+  }
+  if (topPx <= budget.budgetPx) {
+    if (ceilingPx !== null) {
+      return {
+        ...base,
+        status: 'stale-allowance',
+        passed: false,
+        detail: `${topPx} px is within the ${budget.budgetPx} px budget — delete the allowance in routes.ts so it cannot excuse a later regression`,
+      };
+    }
+    return {
+      ...base,
+      status: 'within-budget',
+      passed: true,
+      detail: `${topPx} px, within the ${budget.budgetPx} px budget`,
+    };
+  }
+  if (ceilingPx !== null && topPx <= ceilingPx) {
+    return {
+      ...base,
+      status: 'allowed-overrun',
+      passed: true,
+      detail: `${topPx} px, over the ${budget.budgetPx} px budget but within its ${ceilingPx} px allowance: ${budget.allowance?.reason}`,
+    };
+  }
+  return {
+    ...base,
+    status: 'over-budget',
+    passed: false,
+    detail:
+      ceilingPx !== null
+        ? `${topPx} px, past both the ${budget.budgetPx} px budget and its ${ceilingPx} px allowance — something new stands above the data`
+        : `${topPx} px, ${topPx - budget.budgetPx} px over the ${budget.budgetPx} px budget — something new stands above the data`,
+  };
 }
 
 /** How a distribution comparison splits its marks. */
@@ -500,6 +598,7 @@ export function scoreGeometry(
  * @param options.app The app's signature.
  * @param options.mockupSignature The mockup's signature.
  * @param options.gate The score the page must reach; defaults to {@link PARITY_GATE}.
+ * @param options.firstRow The route's first-row verdict, or `null`/absent when it has no budget.
  * @returns The full verdict.
  */
 export function scoreParity(options: {
@@ -509,6 +608,7 @@ export function scoreParity(options: {
   app: ParitySignature;
   mockupSignature: ParitySignature;
   gate?: number;
+  firstRow?: FirstRowVerdict | null;
 }): ParityReport {
   const { app, mockupSignature: mockup } = options;
   const gate = options.gate ?? PARITY_GATE;
@@ -555,15 +655,17 @@ export function scoreParity(options: {
     );
   }
 
+  const firstRow = options.firstRow ?? null;
   return {
     id: options.id,
     mockup: options.mockup,
     subject: options.subject,
     score,
     gate,
-    passed: score >= gate,
+    passed: score >= gate && (firstRow?.passed ?? true),
     dimensions,
     notes,
+    firstRow,
   };
 }
 
@@ -598,6 +700,7 @@ export function explainReport(report: ParityReport): string {
     );
     for (const line of dimension.detail) lines.push(`      · ${line}`);
   }
+  if (report.firstRow) lines.push(`  First row          ${report.firstRow.detail}`);
   for (const note of report.notes) lines.push(`  note: ${note}`);
   return lines.join('\n');
 }

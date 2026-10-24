@@ -5,7 +5,7 @@ Without automation that is a matter of opinion, and it drifts one ticket at a ti
 harness makes it a number.
 
 ```bash
-# The whole thing: eighteen routes, light and dark, plus the self-test and the theme swap.
+# The whole thing: eighteen routes, light and dark, plus the self-tests and the theme swap.
 yarn test:e2e:visual
 
 # One route.
@@ -64,12 +64,13 @@ measurement mistake.
 **The mockups are read-only.** They are loaded over `file://`, exactly as
 `docs/mockups/README.md` describes its own QA sweep. Nothing here writes to `docs/mockups/`.
 
-## The three suites
+## The four suites
 
 | File | What it holds the line on |
 | --- | --- |
-| `parity.spec.ts` | the gate — one test per route map entry, in light and dark |
+| `parity.spec.ts` | the gate — one test per route map entry, in light and dark: the parity score, and the first-row budget where the route declares one |
 | `self-test.spec.ts` | that the gate can fail: 20 px of extra padding on a passing page must fall through it, and must cost at least five points |
+| `first-row.spec.ts` | that the first-row budget can fail: the pre-quiet-pass Catalog must fail it and the HIVE-11.6 Catalog must pass it |
 | `theme-swap.spec.ts` | that a theme is a token swap — every page's chrome lands on the same pixel in dark as in light |
 
 ## Coverage is a ledger
@@ -82,6 +83,79 @@ so a newly drawn screen cannot quietly slip past the harness.
 
 When a redesign ticket lands, move its mockup from `UNCOVERED_MOCKUPS` into `PARITY_ROUTES`
 and point it at the fixture that ticket dumped. That is the whole extension procedure.
+
+## The first-row budget (HIVE-13.3, #5616)
+
+A page can score 99 % on parity and still bury its data under three banners and a stat strip,
+because every one of those is built from the right tokens. `docs/mockups/PROPOSALS.md` measured
+it by hand — the first row of data at 600–870 px on a 1440 × 900 screen — and the quiet pass
+(Epic 11) brought it back up. The budget is what stops the next strip from undoing that.
+
+After the parity comparison, the harness resizes to **1440 × 900** (comfortable, `md` — the
+same pins as the comparison) and reads how far below the top of the page region the route's
+first-row selector starts. Neither shell has a top bar, so that is the y a reader sees. The
+budgets come from the proposals and nowhere else:
+
+| Kind | Budget | `firstRowBudget(…)` |
+| --- | ---: | --- |
+| List page | 360 px | `'list'` |
+| Detail page | 560 px | `'detail'` |
+| Versions | 700 px | `'versions'` |
+
+The number lands next to the parity score in `visual-parity-report/<theme>/index.html` (a
+**First row** column, plus a line under each route's heading), in `summary.md` / the CI job
+summary, and in the assertion message when it fails.
+
+### Setting a budget
+
+Every entry in `PARITY_ROUTES` either declares a `firstRow` or is named in `FIRST_ROW_EXEMPT`
+— `tests/visual-parity-first-row.test.ts` fails otherwise, and also fails a budget that is not
+one of the three above.
+
+```ts
+{
+  id: 'published',
+  // …
+  firstRow: firstRowBudget('list'),               // the first DataTable body row
+},
+{
+  id: 'primitive-detail',
+  // …
+  // A page whose data is not a DataTable names its own selector.
+  firstRow: firstRowBudget('detail', '[data-testid="primitive-detail-schema"]'),
+},
+```
+
+The default selector, `FIRST_DATA_ROW` in `landmarks.ts`, is `.page-body tbody tr[data-row-id]`
+— the shared `DataTable` stamps every body row with `data-row-id`. A selector that matches
+nothing **fails** rather than passing vacuously.
+
+Exempt a route only for a reason in `FIRST_ROW_EXEMPT_REASONS`: `analytics` (the figures *are*
+the page — PROPOSALS.md keeps Home's and Analytics' full strips) or `form-page` (a form or a
+wizard, whose controls come first by design).
+
+### Allowances
+
+A page that is over budget today, with its fix owned by a later ticket, carries an allowance:
+
+```ts
+firstRow: firstRowBudget('list', FIRST_DATA_ROW, {
+  ceilingPx: 390, // today's 382 px, rounded up to the next multiple of ten above it
+  reason: 'HIVE-11.6 brought the first row to 344 px; #3755 then added a second toolbar row',
+}),
+```
+
+An allowance is a ratchet. The row may not go past the ceiling, and once the page is back within
+budget the check **fails** with "delete the allowance", so a stale allowance can never excuse
+the next regression. The list only shrinks. Today it holds Versions, Catalog, MCP servers,
+MCP endpoint and MCP capabilities.
+
+### The frozen Catalog fixtures
+
+`e2e/fixtures/hive-first-row/` holds two copies of the Catalog table dump that nothing re-dumps:
+one from before HIVE-11.6 (≈ 609 px) and one as HIVE-11.6 merged (≈ 344 px). `first-row.spec.ts`
+holds both to the plain list budget with no allowance, which proves the budget can tell a
+cluttered page from a quiet one.
 
 ## Reading a failure
 
@@ -97,6 +171,7 @@ catalog: 91.5 % against sources/catalog.html (gate 95.0 %)
   Spacing rhythm      85.5 %  (weight 20.0 %)
       · padding: values the mockup never uses: 40 px (1.0 %)
   …
+  First row          382 px, over the 360 px budget but within its 390 px allowance: …
 ```
 
 Lines marked *reported, not scored* are there for the reader and cost nothing: which token

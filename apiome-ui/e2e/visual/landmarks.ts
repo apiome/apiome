@@ -81,3 +81,13 @@ export function landmarkSelectors(side: Side): Record<LandmarkId, string> {
 export function scopeSelector(side: Side): string {
   return side === 'mockup' ? 'main.page, .page' : '.page';
 }
+
+/**
+ * How the app spells "the first row of data" (HIVE-13.3, #5616).
+ *
+ * Every Hive list page renders its rows through the shared `DataTable`, which stamps each body
+ * row with `data-row-id`. Scoped to `.page-body`, the first match is the first row a reader
+ * sees under the page chrome — which is what the first-row budget measures. A page whose data
+ * is not a `DataTable` (a card list, an entry list) names its own selector in `routes.ts`.
+ */
+export const FIRST_DATA_ROW = '.page-body tbody tr[data-row-id]';
