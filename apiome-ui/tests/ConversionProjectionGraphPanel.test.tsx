@@ -549,7 +549,7 @@ describe('ConversionProjectionGraphPanel — refusals', () => {
     const error = await screen.findByTestId('conversion-projection-error');
     expect(error).toHaveTextContent('kaboom');
 
-    fireEvent.click(screen.getByTestId('conversion-projection-retry'));
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
     await waitForLoaded();
   });
 
@@ -749,5 +749,15 @@ describe('ConversionProjectionGraphPanel — evidenceSource override', () => {
       'failed its integrity check',
     );
     expect(screen.queryByTestId('conversion-projection-table')).not.toBeInTheDocument();
+  });
+});
+
+describe('ConversionProjectionGraphPanel — pending first page (RC6-H3, #6210)', () => {
+  it('holds the table’s place with placeholder rows while the first page loads', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<ConversionProjectionGraphPanel itemId="item-1" enabled />);
+    const loading = await screen.findByTestId('conversion-projection-loading');
+    expect(loading).toHaveTextContent('Loading the projection graph…');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
   });
 });

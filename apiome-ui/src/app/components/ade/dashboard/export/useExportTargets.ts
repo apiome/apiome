@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ExportTargetsResponse } from './exportTargetCatalog';
 
 export interface UseExportTargetsResult {
   /** The targets response once loaded (targets + resolved source coordinates), else null. */
   response: ExportTargetsResponse | null;
   loading: boolean;
-  /** Load error; the dialog surfaces it and offers a retry by reopening. */
+  /** Load error; the dialog surfaces it with {@link UseExportTargetsResult.retry}. */
   error: string | null;
   /**
    * The HTTP status of a failed load (null while ok/loading). The Export Studio uses it to explain
@@ -15,6 +15,8 @@ export interface UseExportTargetsResult {
    * instead of repeating the generic loader message (MFX-41.4).
    */
   status: number | null;
+  /** Read the targets again after a failed load (RC6-H3, #6210). */
+  retry: () => void;
 }
 
 /**
@@ -38,6 +40,8 @@ export function useExportTargets(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((count) => count + 1), []);
 
   useEffect(() => {
     if (!enabled || !artifact) return;
@@ -79,7 +83,7 @@ export function useExportTargets(
     return () => {
       cancelled = true;
     };
-  }, [enabled, artifact, version]);
+  }, [enabled, artifact, version, attempt]);
 
-  return { response, loading, error, status };
+  return { response, loading, error, status, retry };
 }

@@ -520,7 +520,7 @@ describe('CatalogImportPreviewPanel — degradation', () => {
       'The preview service is unavailable.',
     );
 
-    fireEvent.click(screen.getByTestId('import-preview-retry'));
+    fireEvent.click(within(screen.getByTestId('import-preview-error')).getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.getByTestId('import-preview-summary')).toBeInTheDocument());
     expect(screen.queryByTestId('import-preview-error')).not.toBeInTheDocument();
   });
@@ -683,5 +683,22 @@ describe('CatalogImportPreviewPanel — re-import delta integration (IXH-3.4)', 
     expect(screen.getByTestId('import-reimport-noop')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('import-reimport-skip'));
     expect(onSkipCommit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CatalogImportPreviewPanel — pending read (RC6-H3, #6210)', () => {
+  it('holds the tab with placeholder rows while the preview builds', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(
+      <CatalogImportPreviewPanel
+        request={{ document_base64: 'dHlwZSBRdWVyeQ==', import_target: 'catalog' }}
+        rawSourceAvailable
+        rawLineCount={600}
+        onSelectSourceLine={() => {}}
+      />,
+    );
+    const loading = await screen.findByTestId('import-preview-loading');
+    expect(loading).toHaveTextContent('Building the entity preview — nothing has been written yet.');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
   });
 });

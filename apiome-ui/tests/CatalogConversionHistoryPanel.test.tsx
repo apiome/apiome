@@ -306,7 +306,15 @@ describe('CatalogConversionHistoryPanel', () => {
     const error = await screen.findByTestId('conversion-history-error');
     expect(error).toHaveTextContent('History store down');
 
-    fireEvent.click(screen.getByRole('button', { name: /Retry/ }));
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.getByTestId('conversion-history-list')).toBeInTheDocument());
+  });
+
+  it('holds the tab with timeline placeholders while the history loads (RC6-H3, #6210)', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<CatalogConversionHistoryPanel itemId="item-1" active />);
+    const loading = await screen.findByTestId('conversion-history-loading');
+    expect(loading).toHaveTextContent('Loading conversion history…');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
   });
 });

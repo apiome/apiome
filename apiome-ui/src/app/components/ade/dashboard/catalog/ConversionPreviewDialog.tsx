@@ -40,6 +40,9 @@ import {
 } from '../../../ui/Dialog';
 import { Alert } from '../../../ui/Alert';
 import { Badge } from '../../../ui/Badge';
+import { ErrorBanner, ErrorState } from '../../../ui/ErrorState';
+import { LoadingState } from '../../../ui/LoadingState';
+import { Skeleton } from '../../../ui/Skeleton';
 import { Button } from '../../../ui/Button';
 import { gradeBand } from '../../../ui/statusVocabulary';
 import { cn } from '@lib/utils';
@@ -327,23 +330,31 @@ export function ConversionPreviewDialog({
         </DialogHeader>
 
         {loading ? (
-          <p
-            className="py-8 text-center text-sm text-fg-muted"
+          // RC6-H3 (#6210): the provided / missing columns the report fills, as placeholders.
+          <LoadingState
+            message="Analyzing conversion fidelity…"
             data-testid="conversion-preview-loading"
-          >
-            Analyzing conversion fidelity…
-          </p>
+            skeleton={
+              <div className="grid gap-4 py-2 sm:grid-cols-2">
+                {[0, 1].map((column) => (
+                  <div key={column} className="flex flex-col gap-2 rounded-xl border border-border p-4">
+                    <Skeleton className="h-3 w-1/3" />
+                    {[0, 1, 2].map((row) => (
+                      <Skeleton key={row} className="h-3 w-4/5" />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            }
+          />
         ) : error || !report ? (
-          <div className="flex flex-col items-center gap-3 py-8 text-center" data-testid="conversion-preview-error">
-            <p className="text-sm text-fg-muted">{error || 'Conversion preview unavailable.'}</p>
-            <button
-              type="button"
-              onClick={retry}
-              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle"
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorState
+            variant="compact"
+            title="Couldn't preview this conversion"
+            description={error || 'Conversion preview unavailable.'}
+            onRetry={retry}
+            data-testid="conversion-preview-error"
+          />
         ) : (
           <>
             {/* Header: grade + score + tier + penalty */}
@@ -507,13 +518,13 @@ export function ConversionPreviewDialog({
                   </div>
                 )}
                 {recomputeError && (
-                  <p
-                    className="mt-2 text-xs text-danger"
+                  <ErrorBanner
+                    className="mt-2"
+                    title="Couldn't recompute the preview"
+                    description={`It still shows the previous defaults. ${recomputeError}`}
+                    onRetry={() => void recompute({ ...defaults, servers: serversText.split(',') })}
                     data-testid="conversion-recompute-error"
-                  >
-                    The preview could not be recomputed — it still shows the previous defaults.{' '}
-                    {recomputeError}
-                  </p>
+                  />
                 )}
               </section>
                 </TabsContent>

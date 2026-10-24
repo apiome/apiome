@@ -25,7 +25,8 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { DataTableFilterChip, DataTableToolbar } from '@/app/components/ui/DataTable';
 import { EmptyState } from '@/app/components/ui/EmptyState';
-import { LoadingState } from '@/app/components/ui/LoadingState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { formatRelativeWhen } from '@/app/components/ade/repositories/repositoryDetailModel';
 import { formatVersionWithPrefix } from '@/app/utils/version-display';
 import { cn } from '@lib/utils';
@@ -241,6 +242,8 @@ export function ProjectDiscussionPanel({
   const [listError, setListError] = React.useState<{ key: string; message: string } | null>(null);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [moreError, setMoreError] = React.useState<string | null>(null);
+  // RC6-H3 (#6210): bumped by the list error's retry, to read the same page again.
+  const [listAttempt, setListAttempt] = React.useState(0);
   const [summary, setSummary] = React.useState<{ key: string; data: DiscussionSummary } | null>(null);
   const [mountedAt] = React.useState(() => Date.now());
 
@@ -283,7 +286,7 @@ export function ProjectDiscussionPanel({
     return () => {
       cancelled = true;
     };
-  }, [routeBase, listKey]);
+  }, [routeBase, listKey, listAttempt]);
 
   // The counts for the current mentions / element-type filters.
   React.useEffect(() => {
@@ -445,13 +448,26 @@ export function ProjectDiscussionPanel({
   } else if (currentError) {
     body = (
       <div className="disc-state">
-        <Alert variant="error" data-testid="discussion-error">
-          {currentError}
-        </Alert>
+        <ErrorState
+          variant="compact"
+          title="Couldn't load the comment threads"
+          description={currentError}
+          onRetry={() => {
+            setListError(null);
+            setListAttempt((count) => count + 1);
+          }}
+          data-testid="discussion-error"
+        />
       </div>
     );
   } else {
-    body = <LoadingState message="Loading comment threads…" minHeightClassName="disc-min-h" />;
+    body = (
+      <CatalogTimelineSkeleton
+        message="Loading comment threads…"
+        testId="discussion-loading"
+        className="disc-min-h"
+      />
+    );
   }
 
   return (

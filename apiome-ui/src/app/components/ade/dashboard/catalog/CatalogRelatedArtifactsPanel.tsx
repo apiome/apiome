@@ -17,6 +17,7 @@ import { Link2, Unlink, Sparkles } from 'lucide-react';
 import { toast } from '../../../ui/toast';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
+import { ErrorBanner } from '@/app/components/ui/ErrorState';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { ProtocolPill } from '@/app/components/ui/catalog/ProtocolPill';
 import {
@@ -45,6 +46,7 @@ export function CatalogRelatedArtifactsPanel({
   const [related, setRelated] = useState<RelatedArtifact[]>(initialRelated);
   const [suggestions, setSuggestions] = useState<IdentitySuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export function CatalogRelatedArtifactsPanel({
 
   const loadSuggestions = useCallback(async () => {
     setLoadingSuggestions(true);
+    setSuggestionsError(null);
     try {
       const res = await fetch(`/api/identity/projects/${encodeURIComponent(projectId)}/suggestions`);
       const data = await res.json();
@@ -61,8 +64,8 @@ export function CatalogRelatedArtifactsPanel({
       }
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
     } catch (error) {
-      console.error(error);
-      toast.error('Could not load link suggestions');
+      // RC6-H3 (#6210): said in the panel, with a retry, rather than a toast that fades.
+      setSuggestionsError(error instanceof Error && error.message ? error.message : 'The suggestions could not be read.');
     } finally {
       setLoadingSuggestions(false);
     }
@@ -200,6 +203,14 @@ export function CatalogRelatedArtifactsPanel({
             <Sparkles aria-hidden />
             {loadingSuggestions ? 'Loading suggestions…' : 'Suggest links'}
           </Button>
+          {suggestionsError ? (
+            <ErrorBanner
+              title="Couldn't load link suggestions"
+              description={suggestionsError}
+              onRetry={() => void loadSuggestions()}
+              data-testid="catalog-suggestions-error"
+            />
+          ) : null}
           {suggestions.length > 0 ? (
             <ul className="rart__suggestions" data-testid="catalog-identity-suggestions">
               {suggestions.map((suggestion) => (

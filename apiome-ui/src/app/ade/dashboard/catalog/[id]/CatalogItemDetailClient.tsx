@@ -508,8 +508,10 @@ export function CatalogItemDetailClient({
     [tabs, selectTab],
   );
 
-  if (loading) {
-    // The page's own header, tab strip and Overview, pending (MFI-28.6) — not a spinner.
+  if (loading && !item) {
+    // The page's own header, tab strip and Overview, pending (MFI-28.6) — not a spinner. Only on
+    // the first read: a reload after a convert or a link change keeps the page (and the open
+    // tab's state) on screen rather than flashing back to the skeleton (RC6-H3, #6210).
     return <CatalogDetailSkeleton />;
   }
 

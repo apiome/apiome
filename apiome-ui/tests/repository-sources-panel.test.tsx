@@ -160,6 +160,26 @@ describe('RepositorySourcesPanel', () => {
     expect(await screen.findByTestId('repository-sources-error')).toHaveTextContent("no project 'x' in this tenant");
   });
 
+  test('holds the panel with a skeleton while the sources read (RC6-H3)', async () => {
+    const answer = global.fetch;
+    global.fetch = jest.fn((input: RequestInfo | URL) =>
+      String(input).includes('/repository-sources?') ? new Promise(() => {}) : answer(input)
+    ) as unknown as typeof fetch;
+    render(<RepositorySourcesPanel projectId={PROJECT_ID} versions={VERSIONS} />);
+    expect(await screen.findByTestId('repository-sources-loading')).toHaveTextContent('Loading repository sources…');
+  });
+
+  test('a failed read names what failed and retries it (RC6-H3)', async () => {
+    replies[REV_2] = { status: 503, body: { success: false, error: 'Provenance store unavailable' } };
+    render(<RepositorySourcesPanel projectId={PROJECT_ID} versions={VERSIONS} />);
+    const error = await screen.findByTestId('repository-sources-error');
+    expect(error).toHaveTextContent("Couldn't load this version's repository sources");
+    delete replies[REV_2];
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('repository-sources-summary')).toBeInTheDocument();
+    expect(screen.queryByTestId('repository-sources-error')).toBeNull();
+  });
+
   test('a project without versions has nothing to load', () => {
     render(<RepositorySourcesPanel projectId={PROJECT_ID} versions={[]} />);
     expect(screen.getByText('This project has no versions yet')).toBeInTheDocument();

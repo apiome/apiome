@@ -107,6 +107,30 @@ export function CatalogBulkConvertDialog({
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }, []);
 
+  /**
+   * Preview one item and record the outcome on its row.
+   *
+   * @param item The catalog item.
+   * @param signal Aborts the read when the dialog closes.
+   */
+  const previewItem = React.useCallback(
+    async (item: CatalogItem, signal?: AbortSignal) => {
+      try {
+        const result = await fetchConversionDryRun(item.id, { signal });
+        if (signal?.aborted) return;
+        patchRow(item.id, { status: 'ready', report: result.report, error: null });
+      } catch (error) {
+        if (signal?.aborted) return;
+        patchRow(item.id, {
+          status: 'preview-failed',
+          error:
+            error instanceof Error && error.message ? error.message : 'Failed to preview conversion',
+        });
+      }
+    },
+    [patchRow],
+  );
+
   // Preview every item once, in order, when the dialog opens; abort the rest on close.
   React.useEffect(() => {
     if (!open) return undefined;
@@ -114,24 +138,20 @@ export function CatalogBulkConvertDialog({
     void (async () => {
       for (const item of items) {
         if (controller.signal.aborted) return;
-        try {
-          const result = await fetchConversionDryRun(item.id, { signal: controller.signal });
-          if (controller.signal.aborted) return;
-          patchRow(item.id, { status: 'ready', report: result.report, error: null });
-        } catch (error) {
-          if (controller.signal.aborted) return;
-          patchRow(item.id, {
-            status: 'preview-failed',
-            error:
-              error instanceof Error && error.message
-                ? error.message
-                : 'Failed to preview conversion',
-          });
-        }
+        await previewItem(item, controller.signal);
       }
     })();
     return () => controller.abort();
-  }, [open, items, patchRow]);
+  }, [open, items, previewItem]);
+
+  /** Preview a row again after its dry run failed (RC6-H3, #6210). */
+  const retryPreview = React.useCallback(
+    (item: CatalogItem) => {
+      patchRow(item.id, { status: 'previewing', error: null });
+      void previewItem(item);
+    },
+    [patchRow, previewItem],
+  );
 
   const lowTierCount = bulkConvertLowTierCount(rows);
   /** The apply-to-all gate, in force only while it is offered (see the model). */
@@ -248,6 +268,16 @@ export function CatalogBulkConvertDialog({
                 {row.error ? (
                   <div className="cbc-row__error" role="alert">
                     {row.error}
+                    {row.status === 'preview-failed' && item ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => retryPreview(item)}
+                        data-testid={`catalog-bulk-convert-retry-${row.id}`}
+                      >
+                        Try again
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
                 {needsAck && warning && row.included && editable && !applyAll ? (

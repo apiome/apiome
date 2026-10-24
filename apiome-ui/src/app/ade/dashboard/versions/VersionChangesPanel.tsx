@@ -5,7 +5,9 @@ import { GitCompareArrows, Loader2, ScrollText } from 'lucide-react';
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { EmptyState } from '@/app/components/ui/EmptyState';
-import { LoadingState } from '@/app/components/ui/LoadingState';
+import { ErrorBanner, ErrorState } from '@/app/components/ui/ErrorState';
+import { Skeleton } from '@/app/components/ui/Skeleton';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import {
   countsSummary,
   groupChangelogEntries,
@@ -71,6 +73,10 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
 
   const [summaries, setSummaries] = useState<VersionChangelogSummary[] | null>(null);
   const [summariesError, setSummariesError] = useState<string | null>(null);
+  // RC6-H3 (#6210): while the summaries load each revision's badge is a placeholder, not
+  // "Pending" — which is a real classification state — and a failed read can be retried.
+  const [summariesLoading, setSummariesLoading] = useState(false);
+  const [summariesAttempt, setSummariesAttempt] = useState(0);
   const [revisionId, setRevisionId] = useState<string>('');
   const [detail, setDetail] = useState<VersionChangelog | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -92,6 +98,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
       return;
     }
     let cancelled = false;
+    setSummariesLoading(true);
     (async () => {
       try {
         const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/changelogs`);
@@ -113,12 +120,14 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
           setSummaries(null);
           setSummariesError(e instanceof Error ? e.message : 'Failed to load changelogs');
         }
+      } finally {
+        if (!cancelled) setSummariesLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, summariesAttempt]);
 
   const summaryByRevision = useMemo(() => {
     const map = new Map<string, VersionChangelogSummary>();
@@ -194,9 +203,13 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
             Published versions
           </h3>
           {summariesError ? (
-            <Alert variant="error" className="vdlg-changes__alert">
-              {summariesError}
-            </Alert>
+            <ErrorBanner
+              className="vdlg-changes__alert"
+              title="Couldn't load the change classifications"
+              description={summariesError}
+              onRetry={() => setSummariesAttempt((attempt) => attempt + 1)}
+              data-testid="changes-summaries-error"
+            />
           ) : null}
           <div className="vdlg-changes__list">
             {published.map((v) => {
@@ -215,7 +228,9 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
                   <span className="vdlg-changes__item-label">
                     {formatVersionWithPrefix(v.version_id)}
                   </span>
-                  {s?.maxSeverity ? (
+                  {summariesLoading && !s ? (
+                    <Skeleton className="h-5 w-16 rounded-sm" data-testid="changes-badge-loading" />
+                  ) : s?.maxSeverity ? (
                     <Badge variant={severityBadgeVariant(s.maxSeverity)}>
                       {severityLabel(s.maxSeverity)}
                     </Badge>
@@ -237,9 +252,14 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
         {/* Stored changelog for the selected revision */}
         <div className="vdlg-changes__main" data-testid="changes-detail">
           {detailLoading ? (
-            <LoadingState minHeightClassName="vdlg-min-h-block" message="Loading changelog…" />
+            <CatalogTimelineSkeleton message="Loading changelog…" testId="changes-detail-loading" />
           ) : detailError ? (
-            <Alert variant="error">{detailError}</Alert>
+            <ErrorState
+              title="Couldn't load this version's changelog"
+              description={detailError}
+              onRetry={() => void loadDetail()}
+              data-testid="changes-detail-error"
+            />
           ) : !detail ? (
             <p className="vdlg-changes__note">
               Changelog not available yet — classification runs right after publish.

@@ -47,11 +47,9 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  AlertTriangle,
   Check,
   Copy,
   Download,
-  Loader2,
   Network,
   RotateCcw,
   ShieldAlert,
@@ -85,6 +83,8 @@ import {
   type ProjectionTableRow,
 } from './conversionProjectionGraph';
 import { ConversionEvidenceDrawer, StatusText } from './ConversionEvidenceDrawer';
+import { ErrorState } from '../../../ui/ErrorState';
+import { CatalogTimelineSkeleton } from '../../catalog/CatalogSkeletons';
 import { useConversionProjection } from './useConversionProjection';
 import type {
   ConversionEvidencePageSource,
@@ -489,33 +489,24 @@ export function ConversionProjectionGraphPanel({
         — both show the same evidence.
       </p>
 
+      {/* RC6-H3 (#6210): placeholder rows of the table below while the first page loads, and
+          the shared error state, with a retry, when it fails. */}
       {loading && rows.length === 0 && (
-        <div
-          data-testid="conversion-projection-loading"
-          className="flex items-center gap-2 text-sm text-fg-muted"
-        >
-          <Loader2 className="h-4 w-4 motion-safe:animate-spin text-accent" aria-hidden />
-          Loading the projection graph…
-        </div>
+        <CatalogTimelineSkeleton
+          message="Loading the projection graph…"
+          testId="conversion-projection-loading"
+          rows={3}
+        />
       )}
 
       {error && (
-        <div
+        <ErrorState
+          variant="compact"
+          title="Couldn't load the projection graph"
+          description={`The fidelity report still reflects this conversion. ${error}`}
+          onRetry={retry}
           data-testid="conversion-projection-error"
-          className="rounded-lg border border-warn bg-warn-soft p-3 text-sm text-warn-fg"
-        >
-          <AlertTriangle className="mr-1.5 inline h-4 w-4 align-text-bottom" aria-hidden />
-          The projection graph could not be loaded — the fidelity report above still reflects
-          this conversion. {error}{' '}
-          <button
-            type="button"
-            onClick={retry}
-            data-testid="conversion-projection-retry"
-            className="font-medium underline underline-offset-2"
-          >
-            Retry
-          </button>
-        </div>
+        />
       )}
 
       {integrityIssues.length > 0 && (

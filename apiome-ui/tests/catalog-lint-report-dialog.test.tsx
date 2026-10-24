@@ -140,7 +140,7 @@ describe('CatalogLintReportDialog', () => {
     await waitFor(() => expect(screen.getByTestId('lint-report-error')).toBeInTheDocument());
     expect(screen.getByText('No revision to lint')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('Retry'));
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
 
     await waitFor(() =>
       expect(screen.getByTestId('lint-violation-rule-chip')).toHaveTextContent(
@@ -151,5 +151,15 @@ describe('CatalogLintReportDialog', () => {
       String(call[0]).includes('/api/catalog/cat-1/lint'),
     );
     expect(lintCalls).toHaveLength(2);
+  });
+});
+
+describe('CatalogLintReportDialog — pending read (RC6-H3, #6210)', () => {
+  it('holds the dialog with a lint-summary skeleton while the report reads', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<CatalogLintReportDialog itemId="cat-1" itemName="Acme" open onOpenChange={() => {}} />);
+    const loading = await screen.findByTestId('lint-report-loading');
+    expect(loading).toHaveTextContent('Loading lint report…');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
   });
 });

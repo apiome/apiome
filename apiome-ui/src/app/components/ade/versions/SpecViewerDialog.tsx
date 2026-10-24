@@ -23,6 +23,8 @@ import { toast } from '../../ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
 import { Dialog, DialogContent, DialogFooter } from '@/app/components/ui/Dialog';
+import { ErrorState } from '@/app/components/ui/ErrorState';
+import { CatalogCodeSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
@@ -59,6 +61,13 @@ export interface SpecViewerDialogProps {
   spec: string;
   /** True while the spec is being built. */
   loading: boolean;
+  /**
+   * Why the spec could not be built, or `null`. Shown as an `ErrorState` with
+   * {@link SpecViewerDialogProps.onRetry} — never as a placeholder document (RC6-H3, #6210).
+   */
+  error?: string | null;
+  /** Build the spec again. */
+  onRetry?: () => void;
   format: SpecFormat;
   onFormatChange: (next: SpecFormat) => void;
   /** Bumped when a new export lands, so the recent-exports card re-reads. */
@@ -78,6 +87,8 @@ export default function SpecViewerDialog({
   projectSlug,
   spec,
   loading,
+  error = null,
+  onRetry,
   format,
   onFormatChange,
   recentExportsRefresh,
@@ -132,7 +143,19 @@ export default function SpecViewerDialog({
 
           <div className="ver-spec__editor" data-testid="spec-viewer-editor">
             {loading ? (
-              <LoadingState className="ver-spec__loading" minHeightClassName="min-h-0" spinnerSize="md" message="Loading specification..." />
+              <CatalogCodeSkeleton
+                className="ver-spec__loading"
+                message="Loading specification…"
+                testId="spec-viewer-loading"
+              />
+            ) : error ? (
+              <ErrorState
+                className="ver-spec__loading"
+                title="Couldn't build this specification"
+                description={error}
+                onRetry={onRetry}
+                data-testid="spec-viewer-error"
+              />
             ) : (
               <Editor
                 height="100%"
@@ -164,11 +187,11 @@ export default function SpecViewerDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button variant="outline" onClick={() => void handleCopy()} disabled={loading} data-testid="spec-viewer-copy">
+          <Button variant="outline" onClick={() => void handleCopy()} disabled={loading || Boolean(error)} data-testid="spec-viewer-copy">
             <Copy aria-hidden />
             Copy
           </Button>
-          <Button onClick={handleDownload} disabled={loading} data-testid="spec-viewer-download">
+          <Button onClick={handleDownload} disabled={loading || Boolean(error)} data-testid="spec-viewer-download">
             <Download aria-hidden />
             Download
             <span className="ver-spec__filename mono">{fileName}</span>

@@ -213,3 +213,43 @@ describe('FederationSwitch', () => {
     expect(screen.getByTestId('federation-state')).toHaveTextContent('On');
   });
 });
+
+describe('pending and failed reads (RC6-H3, #6210)', () => {
+  test('the merge history holds a skeleton, then retries a failed read', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    const { unmount } = render(<FederationMergeHistory url="/x" scope="project" emptyDescription="none" />);
+    expect(await screen.findByTestId('federation-history-loading')).toHaveTextContent('Loading merge history…');
+    unmount();
+
+    let fail = true;
+    global.fetch = jest.fn(async () =>
+      fail ? reply(503, { success: false, error: 'Merge ledger unavailable' }) : reply(200, MERGES)
+    ) as unknown as typeof fetch;
+    render(<FederationMergeHistory url="/x" scope="project" emptyDescription="none" />);
+    const error = await screen.findByTestId('federation-history-error');
+    expect(error).toHaveTextContent("Couldn't load the merge history");
+    fail = false;
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findAllByTestId('federation-merge')).toHaveLength(2);
+  });
+
+  test('the switch shows a placeholder while it reads, and a failed read can be retried', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    const { unmount } = render(<FederationSwitch projectId={PROJECT} />);
+    expect(await screen.findByTestId('federation-state-loading')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading the federation setting…');
+    unmount();
+
+    let fail = true;
+    global.fetch = jest.fn(async () =>
+      fail ? reply(500, { success: false, error: 'Settings unavailable' }) : reply(200, { success: true, enabled: false })
+    ) as unknown as typeof fetch;
+    render(<FederationSwitch projectId={PROJECT} />);
+    const error = await screen.findByTestId('federation-switch-load-error');
+    expect(error).toHaveTextContent("Couldn't load the federation setting");
+    fail = false;
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('federation-state')).toHaveTextContent('Off');
+    expect(screen.queryByTestId('federation-switch-load-error')).toBeNull();
+  });
+});

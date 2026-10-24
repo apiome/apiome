@@ -41,9 +41,11 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { AlertTriangle, ChevronRight, Filter, Loader2, RefreshCw, X } from 'lucide-react';
+import { ChevronRight, Filter, X } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { Button } from '../../../ui/Button';
+import { ErrorState } from '../../../ui/ErrorState';
+import { CatalogTimelineSkeleton } from '../../catalog/CatalogSkeletons';
 import { gradeBand } from '../../../ui/statusVocabulary';
 import { parsedTagToneClass } from './CatalogParsedModel';
 import { CatalogImportProjectionGraph } from './CatalogImportProjectionGraph';
@@ -592,31 +594,16 @@ export function CatalogImportPreviewPanel({
       </div>
 
       {loading ? (
-        <div
-          className="flex flex-col items-center justify-center gap-2 py-8 text-center"
-          data-testid="import-preview-loading"
-        >
-          <Loader2 className="h-6 w-6 motion-safe:animate-spin text-accent" aria-hidden />
-          <span className="text-xs text-fg-muted">
-            Building the entity preview — nothing has been written yet.
-          </span>
-        </div>
+        // RC6-H3 (#6210): placeholder rows while it reads, the shared error state when it fails.
+        <CatalogTimelineSkeleton message="Building the entity preview — nothing has been written yet." testId="import-preview-loading" rows={3} />
       ) : transportError ? (
-        <div
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-warn p-3 text-sm text-warn-fg"
+        <ErrorState
+          variant="compact"
+          title="Couldn't build the entity preview"
+          description={transportError}
+          onRetry={() => setAttempt((n) => n + 1)}
           data-testid="import-preview-error"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="min-w-0 flex-1">{transportError}</span>
-          <Button
-            variant="outline"
-            onClick={() => setAttempt((n) => n + 1)}
-            data-testid="import-preview-retry"
-          >
-            <RefreshCw className="h-4 w-4" aria-hidden />
-            Retry preview
-          </Button>
-        </div>
+        />
       ) : !response?.ok || !manifest ? (
         <div
           className="rounded-lg border border-border p-3 text-sm text-fg-muted"

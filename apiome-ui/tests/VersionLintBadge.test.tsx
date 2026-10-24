@@ -297,7 +297,7 @@ describe('VersionLintBadge', () => {
     // The chip stays unscored: a failed fetch never fabricates a grade.
     expect(screen.getByTestId('version-lint-badge-unscored')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /retry/i }));
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
 
     await waitFor(() =>
       expect(screen.getByTestId('version-lint-badge')).toHaveTextContent('C · 72')

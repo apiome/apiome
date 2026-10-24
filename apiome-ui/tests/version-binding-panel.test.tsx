@@ -435,3 +435,29 @@ describe('releasing', () => {
     expect(screen.queryByTestId('binding-card')).not.toBeInTheDocument();
   });
 });
+
+describe('VersionBindingPanel — pending and failed reads (RC6-H3, #6210)', () => {
+  it('holds the binding’s place with a card placeholder while it reads', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<VersionBindingPanel projectId={PROJECT_ID} versions={VERSIONS} now={NOW} />);
+    expect(await screen.findByTestId('binding-loading')).toHaveTextContent('Loading the repository binding…');
+  });
+
+  it('says a failed read failed, with a retry that reads the binding again', async () => {
+    let fail = true;
+    installFetch([
+      {
+        test: /\/bindings\?/,
+        status: 503,
+        reply: () => (fail ? { success: false, error: 'Binding store unavailable' } : { success: true, version_id: REV_2, published: false, bound: false, binding: null, released: [] }),
+      },
+    ]);
+    await renderPanel();
+    const error = await screen.findByTestId('binding-load-error');
+    expect(error).toHaveTextContent("Couldn't load the repository binding");
+    fail = false;
+    installFetch();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('binding-load-error')).not.toBeInTheDocument());
+  });
+});

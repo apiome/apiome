@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../ui/Dialog';
+import { ErrorBanner } from '../../../ui/ErrorState';
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { useExportTargets } from './useExportTargets';
@@ -172,7 +173,7 @@ export function ExportDialog({
   /** Whether the user has acknowledged a lossy conversion ("Export anyway", MFX-6.2). */
   const [acknowledged, setAcknowledged] = useState(false);
 
-  const { response, loading, error: targetsError } = useExportTargets(open, artifact, version);
+  const { response, loading, error: targetsError, retry: retryTargets } = useExportTargets(open, artifact, version);
   // IXH-2.4: the same readiness ranking the Studio uses, so the dialog's grid orders by expected
   // outcome and surfaces a policy-blocked target's reason before a job is submitted.
   const { report: preflight, readiness } = useExportPreflight(open, artifact, version);
@@ -405,11 +406,20 @@ export function ExportDialog({
           ))}
         </div>
 
-        {(error || targetsError) && (
+        {error ? (
           <Alert variant="error" className="mt-3 shrink-0">
-            {error || targetsError}
+            {error}
           </Alert>
-        )}
+        ) : targetsError ? (
+          // RC6-H3 (#6210): the targets read failed — say so, with a retry, not "reopen the dialog".
+          <ErrorBanner
+            className="mt-3 shrink-0"
+            title="Couldn't load the export targets"
+            description={targetsError}
+            onRetry={retryTargets}
+            data-testid="export-dialog-targets-error"
+          />
+        ) : null}
 
         <div
           data-testid="export-dialog-body"

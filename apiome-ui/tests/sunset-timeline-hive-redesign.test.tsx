@@ -692,6 +692,22 @@ describe('the states', () => {
     expect(screen.getByTestId('sunset-toolbar')).toBeInTheDocument();
   });
 
+  it('holds the table with skeleton rows while the timeline read is pending (RC6-H3, #6210)', async () => {
+    global.fetch = jest.fn((input: unknown) =>
+      String(input).startsWith('/api/projects')
+        ? Promise.resolve({ ok: true, json: async () => ({ projects: PROJECTS }) } as Response)
+        : new Promise<Response>(() => {})
+    ) as unknown as typeof fetch;
+    render(
+      <TooltipProvider>
+        <SunsetTimelinePage />
+      </TooltipProvider>
+    );
+    const table = await screen.findByTestId('sunset-table');
+    await waitFor(() => expect(table.querySelectorAll('tr[aria-hidden] .hive-skeleton').length).toBeGreaterThan(0));
+    expect(screen.queryByText('No deprecation or sunset entries')).not.toBeInTheDocument();
+  });
+
   it('draws a failed read as a failure with a retry, not as an empty workspace', async () => {
     timelineResponse = { ok: false, body: { success: false, error: '503 Service Unavailable' } };
     await renderScreen();

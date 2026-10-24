@@ -35,6 +35,29 @@ and handle the live regions, so a screen only has to supply the words.
 - **Gated**: `GatedState` when the page needs something first, such as a workspace or a
   linked account.
 
+## Every read on Catalog, Projects and Versions
+
+RC6 releases Catalog, Projects and Versions, so none of their reads may leave a blank area, a
+stale view, or an empty state that is really a failure (RC6-H3,
+[#6210](https://github.com/apiome/apiome/issues/6210)).
+
+| While the read is… | The screen shows |
+| --- | --- |
+| Pending | A skeleton shaped like the content (`CatalogSkeletons` presets, `DataTable` rows, `SkeletonCard`), with a live region that names it: *Loading the projection graph…* |
+| Failed, and it filled a page, tab or dialog | `ErrorState` that names what failed (*Couldn't load this version's changelog*), the server's reason, and **Try again** |
+| Failed, inside a dialog or form that still works | `ErrorBanner` with **Try again**, for example a branch list or a publish check |
+| Failed because of a rule (no permission, an invalid URL) | A plain alert, with no retry: trying again cannot change it |
+
+Never turn a failed read into "No projects yet" or "No versions yet", and never show placeholder
+content in its place (a made-up spec, an empty class list).
+
+A few reads only decorate content that is already there: tag filter options, review pills, mock
+sparklines, lint rule descriptions. They fail silently and leave the content as it was.
+`apiome-ui/tests/rc6-fetch-states-ledger.test.ts` lists every read on these screens. Each
+content read names the tests that hold it pending and make it fail; each decoration says what
+the screen shows without it. The suite fails if a read moves or a named test disappears, so a new
+read joins the ledger with its tests.
+
 ## Several statuses on one page
 
 A page shows at most one `Alert` under its header (the page gates below check it). When it has more than one thing to say

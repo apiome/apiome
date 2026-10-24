@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { PublishGuideViolationsPanel } from '../src/app/components/ade/dashboard/PublishGuideViolationsPanel';
 import type { VersionLintReport } from '../src/app/utils/version-lint-report';
@@ -67,5 +67,30 @@ describe('PublishGuideViolationsPanel', () => {
     expect(screen.queryByText('Checking style-guide violations…')).not.toBeInTheDocument();
     expect(screen.getByText('No style-guide violations.')).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PublishGuideViolationsPanel — pending and failed reads (RC6-H3, #6210)', () => {
+  it('says what it is checking while the report is pending', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<PublishGuideViolationsPanel projectId={PROJECT_ID} versionId={VERSION_ID} />);
+    expect(await screen.findByText('Checking style-guide violations…')).toBeInTheDocument();
+  });
+
+  it('says the check failed, with a retry that loads the report', async () => {
+    let fail = true;
+    global.fetch = jest.fn(() =>
+      Promise.resolve(
+        fail
+          ? { ok: false, status: 503, json: async () => ({ success: false, error: 'Lint service unavailable' }) }
+          : { ok: true, status: 200, json: async () => ({ success: true, ...LINT_REPORT }) }
+      )
+    ) as unknown as typeof fetch;
+    render(<PublishGuideViolationsPanel projectId={PROJECT_ID} versionId={VERSION_ID} />);
+    const error = await screen.findByTestId('publish-guide-violations-error');
+    expect(error).toHaveTextContent("Couldn't check style-guide violations");
+    fail = false;
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('publish-guide-violations-error')).toBeNull());
   });
 });

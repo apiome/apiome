@@ -30,6 +30,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { VERSION_DIALOG_COPY } from '@/app/components/ade/version-dialogs/versionDialogsModel';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
@@ -131,6 +132,11 @@ jest.mock('@/app/ade/dashboard/versions/RelationshipGraphDialog', () => ({
 jest.mock('@/app/ade/dashboard/versions/VersionHistoryGraphPanel', () => ({
   __esModule: true,
   default: () => <div data-testid="history-graph">graph</div>,
+}));
+/** The Compare dialog's Canvas tab reads both layouts through this (RC6-H3 tests fail it). */
+const mockLoadLayout = jest.fn(async (): Promise<unknown> => ({ nodes: [], edges: [] }));
+jest.mock('../lib/version-canvas-layout', () => ({
+  loadLayoutStateForVersionCompare: (...args: unknown[]) => mockLoadLayout(...(args as [])),
 }));
 jest.mock('@/app/ade/dashboard/versions/VersionCanvasCompare', () => ({
   __esModule: true,
@@ -464,6 +470,164 @@ beforeEach(() => {
   mockDeleteVersion.mockClear();
   (navigator.clipboard.writeText as jest.Mock).mockClear();
 });
+
+// ---------------------------------------------------------------------------------------
+// Loading and failure (RC6-H3, #6210)
+// ---------------------------------------------------------------------------------------
+
+describe('a pending or failed projects or versions read', () => {
+  /**
+   * Wrap the suite's fetch so reads matching `pattern` are held (`'hold'`) or fail with a 503
+   * (`'fail'`) until the returned `recover()` is called; everything else answers as usual.
+   */
+  function intercept(pattern: RegExp, mode: 'hold' | 'fail') {
+    const answer = global.fetch;
+    let failing = true;
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (failing && pattern.test(String(input))) {
+        if (mode === 'hold') return new Promise<Response>(() => {});
+        return Promise.resolve(jsonResponse({ success: false, error: 'Service unavailable' }, 503));
+      }
+      return answer(input, init);
+    }) as unknown as typeof fetch;
+    return { recover: () => { failing = false; } };
+  }
+
+  it('keeps the page when every enrichment read fails — no blank, no error (the ledger’s promise)', async () => {
+    const answer = global.fetch;
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      /\/version-tags$|\/has-class-schema|\/changelogs$|\/api\/mocks\/usage|\/api\/reviews\/status/.test(String(input))
+        ? Promise.resolve(jsonResponse({ success: false, error: 'enrichment down' }, 503))
+        : answer(input, init)
+    ) as unknown as typeof fetch;
+    await renderVersions();
+    expect(screen.getByTestId(`versions-cell-${HEAD_ID}`)).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't load this project's versions")).toBeNull();
+    expect(screen.queryByTestId('versions-projects-error')).toBeNull();
+  });
+
+  it('shows a loading state, not "No projects yet", while the projects read is pending', async () => {
+    intercept(/^\/api\/projects\?include_catalog=true$/, 'hold');
+    render(<Versions />);
+    expect(await screen.findByTestId('versions-projects-loading')).toHaveTextContent('Loading projects…');
+    expect(screen.queryByTestId('versions-no-projects')).toBeNull();
+  });
+
+  it('says a failed projects read failed, and retries it', async () => {
+    const read = intercept(/^\/api\/projects\?include_catalog=true$/, 'fail');
+    render(<Versions />);
+    const error = await screen.findByTestId('versions-projects-error');
+    read.recover();
+    expect(error).toHaveTextContent("Couldn't load your projects");
+    expect(screen.queryByTestId('versions-no-projects')).toBeNull();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('versions-table')).toBeInTheDocument();
+  });
+
+  it('holds the table with skeleton rows while the versions read is pending', async () => {
+    intercept(/^\/api\/versions\?projectId=/, 'hold');
+    render(<Versions />);
+    const table = await screen.findByTestId('versions-table');
+    expect(await within(table).findByText('Loading versions...')).toBeInTheDocument();
+    expect(screen.queryByText('No versions yet')).toBeNull();
+  });
+
+  it('says a failed versions read failed, instead of "No versions yet", and retries it', async () => {
+    const read = intercept(/^\/api\/versions\?projectId=/, 'fail');
+    render(<Versions />);
+    expect(await screen.findByText("Couldn't load this project's versions")).toBeInTheDocument();
+    expect(screen.queryByText('No versions yet')).toBeNull();
+    read.recover();
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId(`versions-cell-${HEAD_ID}`)).toBeInTheDocument();
+  });
+});
+
+describe('a pending or failed read inside a Versions dialog (RC6-H3, #6210)', () => {
+  it('View spec: a code skeleton while the spec builds, then an error with a retry — never a made-up spec', async () => {
+    let release: () => void = () => {};
+    mockBuildSpec.mockImplementationOnce(
+      () => new Promise((_, reject) => { release = () => reject(new Error('Schema store unreachable')); })
+    );
+    await renderVersions();
+    fireEvent.click(within(screen.getByTestId(`versions-cell-${V231_ID}`)).getByRole('button', { name: 'v2.3.1' }));
+    const dialog = await screen.findByTestId('spec-viewer-dialog');
+    expect(await within(dialog).findByTestId('spec-viewer-loading')).toBeInTheDocument();
+    await act(async () => release());
+    const error = await within(dialog).findByTestId('spec-viewer-error');
+    expect(error).toHaveTextContent("Couldn't build this specification");
+    expect(error).toHaveTextContent('Schema store unreachable');
+    expect(dialog).not.toHaveTextContent('Error Loading Spec');
+    expect(within(dialog).getByTestId('spec-viewer-download')).toBeDisabled();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await within(dialog).findByTestId('mock-monaco')).toBeInTheDocument();
+  });
+
+  it('Heatmap: tile skeletons while the classes load, then an error with a retry — not "no classes yet"', async () => {
+    let release: () => void = () => {};
+    mockGetClasses.mockImplementationOnce(
+      () => new Promise((_, reject) => { release = () => reject(new Error('Classes unavailable')); })
+    );
+    await renderVersions();
+    const menu = await openRowMenu(V231_ID);
+    fireEvent.click(within(menu).getByTestId('versions-row-action-heatmap'));
+    expect(await screen.findByTestId('heatmap-loading')).toBeInTheDocument();
+    await act(async () => release());
+    const error = await screen.findByTestId('heatmap-error');
+    expect(error).toHaveTextContent("Couldn't load this version's classes");
+    expect(screen.queryByTestId('heatmap-empty')).toBeNull();
+    mockGetClasses.mockResolvedValueOnce(JSON.stringify([{ id: 'c-order', name: 'Order', description: null, updated_at: null }]));
+    mockGetPropsBatch.mockResolvedValueOnce(JSON.stringify({}));
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('heatmap-grid')).toBeInTheDocument();
+  });
+
+  it('New version: a failed branch read says so, with a retry, and the rest of the dialog still works', async () => {
+    installFetch([{ test: /\/version-branches$/, status: 500, reply: () => ({ success: false, error: 'Branch index unavailable' }) }]);
+    await renderVersions();
+    fireEvent.click(screen.getByTestId('versions-new-button'));
+    const dialog = await screen.findByTestId('new-version-dialog');
+    const error = await within(dialog).findByTestId('new-version-branches-error');
+    expect(error).toHaveTextContent("Couldn't load this project's branches");
+    expect(within(dialog).getByTestId('new-version-message')).toBeEnabled();
+    const before = calls.filter((call) => call.url.endsWith('/version-branches')).length;
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() =>
+      expect(calls.filter((call) => call.url.endsWith('/version-branches')).length).toBeGreaterThan(before)
+    );
+  });
+
+  it('Compare: a failed spec build is said in the dialog, with a retry — no modal on top of it', async () => {
+    mockBuildSpec.mockRejectedValueOnce(new Error('Spec build failed'));
+    // The deep link the canvas divergence chip uses (#2723); the row's compare verb is git-like.
+    window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
+    await renderVersions();
+    const error = await screen.findByTestId('compare-error');
+    expect(error).toHaveTextContent("Couldn't load the two specifications");
+    expect(mockAlert).not.toHaveBeenCalled();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByTestId('compare-error')).toBeNull());
+    expect(await screen.findByRole('tab', { name: /canvas/i })).toBeInTheDocument();
+  });
+
+  it('Compare › Canvas: a spinner while the layouts load, then an error with a retry — not a toast', async () => {
+    let release: () => void = () => {};
+    mockLoadLayout.mockImplementationOnce(
+      () => new Promise((_, reject) => { release = () => reject(new Error('Layout store unreachable')); })
+    );
+    // The deep link the canvas divergence chip uses (#2723); the row's compare verb is git-like.
+    window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
+    await renderVersions();
+    fireEvent.click(await screen.findByRole('tab', { name: /canvas/i }));
+    expect(await screen.findByText(VERSION_DIALOG_COPY.canvasLoading)).toBeInTheDocument();
+    await act(async () => release());
+    const error = await screen.findByTestId('compare-canvas-error');
+    expect(error).toHaveTextContent("Couldn't load the canvas layouts");
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('canvas-compare')).toBeInTheDocument();
+  });
+});
+
 
 // ---------------------------------------------------------------------------------------
 // The header

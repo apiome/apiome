@@ -14,6 +14,9 @@
 import React, { useMemo, useState } from 'react';
 import { Flame } from 'lucide-react';
 import { Dialog, DialogContent } from '../../../components/ui/Dialog';
+import { ErrorState } from '../../../components/ui/ErrorState';
+import { LoadingState } from '../../../components/ui/LoadingState';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { Segmented, SegmentedItem } from '../../../components/ui/Segmented';
 import { VersionDialogHead } from '../../../components/ade/versions';
 import {
@@ -45,6 +48,13 @@ export interface ClassHeatmapDialogProps {
   classes: HeatmapClass[] | null;
   /** True while the classes load. */
   isLoading?: boolean;
+  /**
+   * Why the classes could not be read, or `null`. Shown as an `ErrorState` with
+   * {@link ClassHeatmapDialogProps.onRetry} — not as "no classes yet" (RC6-H3, #6210).
+   */
+  error?: string | null;
+  /** Read the classes again. */
+  onRetry?: () => void;
   /** The time "recently" is measured from — injectable for tests. Defaults to now. */
   now?: Date;
 }
@@ -61,6 +71,8 @@ export default function ClassHeatmapDialog({
   projectName,
   classes,
   isLoading = false,
+  error = null,
+  onRetry,
   now,
 }: ClassHeatmapDialogProps) {
   const [metric, setMetric] = useState<HeatmapMetric>('complexity');
@@ -110,7 +122,28 @@ export default function ClassHeatmapDialog({
         </div>
         <div className="vdlg-heatmap__frame">
           {isLoading ? (
-            <p className="vdlg-relgraph__state">Loading schema…</p>
+            <LoadingState
+              message="Loading the version’s classes…"
+              data-testid="heatmap-loading"
+              skeleton={
+                <ul className="vdlg-heatmap__grid" aria-hidden>
+                  {Array.from({ length: 8 }, (_, index) => (
+                    <li key={index} className="vdlg-heatmap__tile">
+                      <Skeleton className="h-3 w-2/3" />
+                      <Skeleton className="mt-2 h-2.5 w-1/3" />
+                    </li>
+                  ))}
+                </ul>
+              }
+            />
+          ) : error ? (
+            <ErrorState
+              variant="compact"
+              title="Couldn't load this version's classes"
+              description={error}
+              onRetry={onRetry}
+              data-testid="heatmap-error"
+            />
           ) : cells.length === 0 ? (
             <div className="vdlg-relgraph__state" data-testid="heatmap-empty">
               <p className="vdlg-relgraph__state-title">

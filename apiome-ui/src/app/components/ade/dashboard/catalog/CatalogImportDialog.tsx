@@ -19,6 +19,8 @@ import { isFeatureReleased } from '@lib/feature-release';
 import { Dialog, DialogContent } from '../../../ui/Dialog';
 import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
+import { ErrorBanner } from '../../../ui/ErrorState';
+import { LoadingState } from '../../../ui/LoadingState';
 import { Card } from '../../../ui/Card';
 import { EmptyState } from '../../../ui/EmptyState';
 import { FormField } from '../../../ui/FormField';
@@ -220,6 +222,11 @@ export function CatalogImportDialog({
   const [formatOverride, setFormatOverride] = useState<string | null>(null);
   const [jsonSchemaChoice, setJsonSchemaChoice] = useState<JsonSchemaChoice>('catalog');
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Re-run the read that failed — detection, a URL fetch or a repository read — when `error`
+   * came from one (RC6-H3, #6210). `null` for a validation message, which a retry cannot fix.
+   */
+  const [retryRead, setRetryRead] = useState<(() => void) | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   // Power-user preference: a clean, non-blocking pre-flight commits without stopping on the quality
   // step. Read once per opening so a change made mid-wizard cannot retroactively skip the step the
@@ -321,6 +328,7 @@ export function CatalogImportDialog({
   }, [open]);
 
   const reset = useCallback(() => {
+    setRetryRead(null);
     setStep('source');
     setSourceMethod('file');
     setCompassRun(null);
@@ -398,6 +406,7 @@ export function CatalogImportDialog({
   const detectContent = useCallback(async (text: string, label: string, method: SourceMethod) => {
     setState('detecting');
     setError(null);
+    setRetryRead(null);
     setDocumentBase64(null);
     setArchiveRoot(null);
     clearGitSelection();
@@ -422,6 +431,7 @@ export function CatalogImportDialog({
     } catch (e) {
       setDetection(null);
       setError(e instanceof Error ? e.message : 'Could not detect that source.');
+      setRetryRead(() => () => void detectContentRef.current(text, label, method));
     } finally {
       setState('idle');
       setStep('detect');
@@ -431,6 +441,7 @@ export function CatalogImportDialog({
   const detectArchive = useCallback(async (base64: string, label: string) => {
     setState('detecting');
     setError(null);
+    setRetryRead(null);
     setContent('');
     setMetadata(null);
     setFileName(label);
@@ -464,6 +475,7 @@ export function CatalogImportDialog({
     if (failure && !offersBulk) {
       setDocumentBase64(null);
       setError(failure);
+      setRetryRead(() => () => void detectArchiveRef.current(base64, label));
     }
     setState('idle');
     setStep('detect');
@@ -487,6 +499,7 @@ export function CatalogImportDialog({
   );
 
   const handleUrlFetch = useCallback(async () => {
+    setRetryRead(null);
     const url = urlInput.trim();
     if (!url) {
       setError('Enter a URL to import.');
@@ -507,6 +520,7 @@ export function CatalogImportDialog({
       await detectContent(text, url, 'url');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not fetch that URL.');
+      setRetryRead(() => () => void handleUrlFetchRef.current());
     } finally {
       setState('idle');
     }
@@ -520,6 +534,7 @@ export function CatalogImportDialog({
    * selection exactly like an archive, with the commit provenance carried alongside.
    */
   const handleGitFetch = useCallback(async () => {
+    setRetryRead(null);
     const repoUrl = gitRepoUrl.trim();
     if (!repoUrl) {
       setError('Enter a repository URL to import.');
@@ -566,6 +581,7 @@ export function CatalogImportDialog({
     const offersBulk = await loadBulkPlan({ git: selection });
     if (failure && !offersBulk) {
       setError(failure);
+      setRetryRead(() => () => void handleGitFetchRef.current());
       setState('idle');
       return;
     }
@@ -574,6 +590,7 @@ export function CatalogImportDialog({
   }, [clearBulkPlan, gitPath, gitRef, gitRepoUrl, loadBulkPlan]);
 
   const handlePasteDetect = useCallback(async () => {
+    setRetryRead(null);
     const text = pasteText.trim();
     if (!text) {
       setError('Paste source content before continuing.');
@@ -581,6 +598,19 @@ export function CatalogImportDialog({
     }
     await detectContent(text, 'Pasted source', 'paste');
   }, [detectContent, pasteText]);
+
+  // The retries above call the latest handlers (their closures read the current form), never a
+  // stale render's copy.
+  const detectContentRef = useRef(detectContent);
+  const detectArchiveRef = useRef(detectArchive);
+  const handleUrlFetchRef = useRef(handleUrlFetch);
+  const handleGitFetchRef = useRef(handleGitFetch);
+  useEffect(() => {
+    detectContentRef.current = detectContent;
+    detectArchiveRef.current = detectArchive;
+    handleUrlFetchRef.current = handleUrlFetch;
+    handleGitFetchRef.current = handleGitFetch;
+  });
 
   // Store-raw catalog import for a given adapter `source_kind`. Shared by the adapter-backed
   // catalog formats (gRPC/GraphQL/AsyncAPI) and the JSON Schema "Catalog" choice (MFI-26.7),
@@ -786,10 +816,26 @@ export function CatalogImportDialog({
         />
 
         <ImportWizardBody>
-          {error ? (
+          {error && retryRead ? (
+            <ErrorBanner
+              className="mb-4"
+              title="Couldn't read that source"
+              description={error}
+              onRetry={retryRead}
+              data-testid="catalog-import-read-error"
+            />
+          ) : error ? (
             <Alert variant="danger" className="mb-4">
               {error}
             </Alert>
+          ) : null}
+
+          {state === 'detecting' ? (
+            <LoadingState
+              className="mb-4"
+              message="Detecting the format…"
+              data-testid="catalog-import-detecting"
+            />
           ) : null}
 
           {step === 'source' && (
@@ -898,7 +944,11 @@ export function CatalogImportDialog({
                         className="mono"
                       />
                     </FormField>
-                    <Button onClick={handlePasteDetect}>
+                    <Button
+                      onClick={handlePasteDetect}
+                      disabled={state === 'detecting'}
+                      title={state === 'detecting' ? 'Detecting the format…' : undefined}
+                    >
                       <Clipboard aria-hidden />
                       Detect pasted source
                     </Button>

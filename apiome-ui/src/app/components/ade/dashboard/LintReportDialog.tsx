@@ -12,10 +12,9 @@
  * authoritative values computed by apiome-rest — this component never recomputes them.
  */
 
-import { AlertCircle, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Alert } from '../../ui/Alert';
 import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../../ui/Dialog';
-import { LoadingState } from '../../ui/LoadingState';
+import { ErrorState } from '../../ui/ErrorState';
+import { CatalogLintSkeleton } from '../catalog/CatalogSkeletons';
 import { gradeBand } from '../../ui/statusVocabulary';
 import { sortLintFindings, type VersionLintReport } from '../../../utils/version-lint-report';
 import { catalogDisplayLintScore } from '../../../utils/catalog-lint-panel';
@@ -111,24 +111,16 @@ export function LintReportDialog({
         </DialogHeader>
 
         {loading ? (
-          <LoadingState message="Loading lint report…" data-testid="lint-report-loading" />
+          // RC6-H3 (#6210): shaped like the summary it is about to show.
+          <CatalogLintSkeleton message="Loading lint report…" testId="lint-report-loading" />
         ) : error || !report ? (
-          <Alert
-            variant="error"
+          <ErrorState
+            variant="compact"
+            title="Couldn't load the lint report"
+            description={error || 'The report could not be read.'}
+            onRetry={onRetry}
             data-testid="lint-report-error"
-            icon={<AlertCircle className="mt-px size-4 shrink-0" aria-hidden />}
-            actions={
-              onRetry ? (
-                <Button variant="outline" size="sm" onClick={onRetry}>
-                  Retry
-                </Button>
-              ) : undefined
-            }
-          >
-            <span>
-              <strong>Lint report unavailable.</strong> {error || 'The report could not be read.'}
-            </span>
-          </Alert>
+          />
         ) : (
           /* `contents` keeps the compact layout exactly as before (children stay direct grid
              items); expanded turns this wrapper into the 1fr grid row as a flex column. */

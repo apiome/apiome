@@ -17,8 +17,8 @@
  */
 
 import { useMemo, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
 import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { ConversionHistoryList } from './ConversionHistoryList';
 import { ConversionProjectionGraphPanel } from './ConversionProjectionGraphPanel';
 import { useConversionHistory } from './useConversionHistory';
@@ -86,21 +86,14 @@ export function CatalogConversionHistoryPanel({
       ) : null}
 
       {error ? (
-        <div
+        // RC6-H3 (#6210): the shared error state, naming what failed.
+        <ErrorState
+          variant="compact"
+          title="Couldn't load the conversion history"
+          description={error}
+          onRetry={retry}
           data-testid="conversion-history-error"
-          role="alert"
-          className="rounded-md border border-danger bg-danger-soft px-3 py-2 text-sm text-danger-fg"
-        >
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={retry}
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium underline"
-          >
-            <RotateCcw className="h-3 w-3" aria-hidden="true" />
-            Retry
-          </button>
-        </div>
+        />
       ) : null}
 
       {loaded && rows.length === 0 ? (

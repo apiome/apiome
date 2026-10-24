@@ -302,6 +302,7 @@ Before **any** held-back feature is released, Catalog and Projects must meet all
    ✅ #6209: ledger entries `projects-rendered` and `rc6-dialogs`; `ui/Dialog` returns focus to its opener.
 3. **Loading and error states:** skeletons (#4122) and `ErrorState` on every fetch on those pages;
    no blank screen on a slow or failed request.
+   ✅ #6210: every read is listed in `apiome-ui/tests/rc6-fetch-states-ledger.test.ts` with its pending and failed tests.
 4. **Export without the studio:** catalog and version export through the in-place dialog covers the
    formats the MVP promises; the dialog’s fidelity report is the only fidelity surface while the
    studio is held back.

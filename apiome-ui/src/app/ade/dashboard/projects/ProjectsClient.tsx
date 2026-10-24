@@ -36,6 +36,7 @@ import {
 } from '@/app/components/ui/DataTable';
 import { Card } from '@/app/components/ui/Card';
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { Label } from '@/app/components/ui/Label';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { Switch } from '@/app/components/ui/Switch';
@@ -886,6 +887,15 @@ export default function ProjectsClient() {
                       Loading projects…
                     </p>
                   </div>
+                ) : loadError ? (
+                  // RC6-H3 (#6210): a failed read says so, with a retry — never "No projects yet".
+                  <ErrorState
+                    className="prj-cards-panel__empty"
+                    title="Couldn't load your projects"
+                    description={loadError}
+                    onRetry={() => void loadProjects()}
+                    data-testid="projects-cards-error"
+                  />
                 ) : visible.length === 0 ? (
                   <div className="prj-cards-panel__empty">{emptyState}</div>
                 ) : (

@@ -27,6 +27,7 @@ import { SourceBadge } from '@/app/components/ui/catalog/SourceBadge';
 import { monacoLanguageForCatalogFormat } from '@/app/utils/catalog-source-language';
 import type { CatalogSource } from '@/app/utils/catalog-format-registry';
 import { Card } from '@/app/components/ui/Card';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { cn } from '@lib/utils';
 import { CatalogCodeSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
@@ -406,12 +407,18 @@ export function CatalogSourceViewer({
                 }}
               />
             ) : status === 'error' ? (
-              <div
+              // RC6-H3 (#6210): the shared error state; its retry re-arms the one-shot read.
+              <ErrorState
+                variant="compact"
+                className="h-full"
+                title="Couldn't load the raw source"
+                description={errorMessage || 'The raw source could not be loaded.'}
+                onRetry={() => {
+                  fetchStartedRef.current = false;
+                  void loadSource();
+                }}
                 data-testid="catalog-detail-source-error"
-                className="flex h-full items-center justify-center p-6 text-center text-sm text-fg-muted"
-              >
-                {errorMessage || 'The raw source could not be loaded.'}
-              </div>
+              />
             ) : (
               <CatalogCodeSkeleton
                 message="Loading source…"

@@ -31,7 +31,7 @@ jest.mock('@monaco-editor/react', () => ({
 }));
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { CatalogSourceViewer } from '../src/app/components/ade/dashboard/catalog/CatalogSourceViewer';
 import type { CatalogSource } from '../src/app/utils/catalog-format-registry';
@@ -214,5 +214,23 @@ describe('CatalogSourceViewer (MFI-25.4)', () => {
 
     const err = await screen.findByTestId('catalog-detail-source-error');
     expect(err).toHaveTextContent('Failed to fetch');
+  });
+
+  it('holds the viewer with code-shaped placeholders while the source loads (RC6-H3, #6210)', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    renderViewer();
+    const loading = await screen.findByTestId('catalog-detail-source-loading');
+    expect(loading).toHaveTextContent('Loading source…');
+    expect(loading.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(0);
+  });
+
+  it('retries a failed read from the error state (RC6-H3, #6210)', async () => {
+    global.fetch = jest.fn().mockRejectedValueOnce(new Error('Failed to fetch')) as unknown as typeof fetch;
+    renderViewer();
+    const err = await screen.findByTestId('catalog-detail-source-error');
+    expect(err).toHaveTextContent("Couldn't load the raw source");
+    mockSourceFetch(RAW_PROTO);
+    fireEvent.click(within(err).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('mock-monaco')).toBeInTheDocument();
   });
 });

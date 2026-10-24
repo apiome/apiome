@@ -28,7 +28,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FlaskConical, Play, Terminal, PackagePlus } from 'lucide-react';
-import { Alert } from '@/app/components/ui/Alert';
+import { ErrorBanner } from '@/app/components/ui/ErrorState';
 import { Button } from '@/app/components/ui/Button';
 import {
   TEST_BENCH_MAX_FINDINGS,
@@ -153,6 +153,9 @@ export function SchemaTestBench({
     if (active) setActivated(true);
   }, [active]);
 
+  // RC6-H3 (#6210): bumped by the targets error's retry, to list the same revision again.
+  const [targetsAttempt, setTargetsAttempt] = useState(0);
+
   // Targets for the selected revision.
   useEffect(() => {
     if (!activated) return;
@@ -184,7 +187,7 @@ export function SchemaTestBench({
     return () => {
       cancelled = true;
     };
-  }, [activated, revisionRef]);
+  }, [activated, revisionRef, targetsAttempt]);
 
   // Registry types, once.
   useEffect(() => {
@@ -481,9 +484,12 @@ export function SchemaTestBench({
       </div>
 
       {targetsError ? (
-        <Alert variant="warn" data-testid="test-bench-targets-error">
-          {targetsError}
-        </Alert>
+        <ErrorBanner
+          title="Couldn't list this revision's schemas"
+          description={targetsError}
+          onRetry={() => setTargetsAttempt((count) => count + 1)}
+          data-testid="test-bench-targets-error"
+        />
       ) : null}
 
       <SchemaTargetPicker

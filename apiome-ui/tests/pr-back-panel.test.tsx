@@ -150,10 +150,28 @@ test('renders nothing without repositories, and an error when the list fails', a
   listReply = { status: 200, body: { success: true, repositories: [] } };
   const { container, unmount } = mount();
   await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-  expect(container).toBeEmptyDOMElement();
+  await waitFor(() => expect(container).toBeEmptyDOMElement());
   unmount();
 
   listReply = { status: 500, body: { success: false, error: 'boom' } };
   mount();
   expect(await screen.findByTestId('pr-back-load-error')).toHaveTextContent('boom');
+});
+
+test('holds the section with a skeleton while the repositories read (RC6-H3)', async () => {
+  const answer = global.fetch;
+  global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+  mount();
+  expect(await screen.findByTestId('pr-back-loading')).toHaveTextContent('Loading the repositories to sync back to…');
+  global.fetch = answer;
+});
+
+test('retries a failed repositories read (RC6-H3)', async () => {
+  listReply = { status: 500, body: { success: false, error: 'boom' } };
+  mount();
+  const error = await screen.findByTestId('pr-back-load-error');
+  expect(error).toHaveTextContent("Couldn't load the repositories to sync back to");
+  listReply = { status: 200, body: { success: true, repositories: [] } };
+  fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+  await waitFor(() => expect(screen.queryByTestId('pr-back-load-error')).toBeNull());
 });

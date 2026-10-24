@@ -32,7 +32,9 @@ import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { FormField } from '@/app/components/ui/FormField';
 import { Input } from '@/app/components/ui/Input';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
+import { SkeletonCard } from '@/app/components/ui/Skeleton';
 import { formatRelativeWhen } from '@/app/components/ade/repositories/repositoryDetailModel';
 import { VersionSyncPanel } from './VersionSyncPanel';
 import { cn } from '@lib/utils';
@@ -222,17 +224,21 @@ export function VersionBindingPanel({
   const base = `/api/projects/${encodeURIComponent(projectId)}/bindings`;
   const query = `?version=${encodeURIComponent(versionId)}`;
 
+  // RC6-H3 (#6210): a failed *read* is its own error state, with a retry; a failed write keeps
+  // the alert above the form, which is still there to try again.
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+
   const load = React.useCallback(async () => {
     if (!versionId) return;
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     const payload = await callBindings(`${base}${query}`);
     setLoading(false);
     if (payload.success) {
       setStatus(payload as unknown as VersionBindingStatus);
     } else {
       setStatus(null);
-      setError(bindingErrorMessage(payload.code, payload.error ?? 'The binding could not be read'));
+      setLoadError(bindingErrorMessage(payload.code, payload.error ?? 'The binding could not be read'));
     }
   }, [base, query, versionId]);
 
@@ -370,7 +376,23 @@ export function VersionBindingPanel({
         </Alert>
       ) : null}
 
-      {loading ? <LoadingState className="bnd-state" message="Loading the repository binding…" /> : null}
+      {loading ? (
+        <LoadingState
+          className="bnd-state"
+          message="Loading the repository binding…"
+          data-testid="binding-loading"
+          skeleton={<SkeletonCard media={false} chips={2} lines={1} />}
+        />
+      ) : loadError ? (
+        <ErrorState
+          variant="compact"
+          className="bnd-state"
+          title="Couldn't load the repository binding"
+          description={loadError}
+          onRetry={() => void load()}
+          data-testid="binding-load-error"
+        />
+      ) : null}
 
       {!loading && status && binding ? (
         <div className="bnd-card" data-testid="binding-card">

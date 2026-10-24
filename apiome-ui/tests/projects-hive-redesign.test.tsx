@@ -679,6 +679,67 @@ describe('the edit dialog', () => {
 });
 
 // ---------------------------------------------------------------------------------------
+// Loading and failure (RC6-H3, #6210)
+// ---------------------------------------------------------------------------------------
+
+describe('a pending or failed projects read', () => {
+  /** A fetch whose projects read never settles. */
+  function holdProjects() {
+    global.fetch = jest.fn((input: RequestInfo | URL) =>
+      String(input).startsWith('/api/projects') ? new Promise(() => {}) : Promise.resolve({ ok: false } as Response)
+    ) as unknown as typeof fetch;
+  }
+
+  /** A fetch whose projects read fails once, then succeeds. */
+  function failProjectsOnce() {
+    let failed = false;
+    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+      if (String(input).startsWith('/api/projects') && !failed) {
+        failed = true;
+        return { ok: false, status: 503, statusText: 'Service Unavailable', json: async () => ({}) } as Response;
+      }
+      return { ok: true, statusText: 'OK', json: async () => ({ success: true, projects: ALL_ROWS }) } as Response;
+    }) as unknown as typeof fetch;
+  }
+
+  it('holds the cards view with card-shaped skeletons while the read is pending', async () => {
+    holdProjects();
+    render(<ProjectsClient />);
+    const cards = await screen.findByTestId('projects-cards');
+    expect(cards.querySelectorAll('.prj-card--skeleton')).toHaveLength(3);
+    expect(within(cards).getByRole('status')).toHaveTextContent('Loading projects…');
+    expect(screen.queryByText('No projects yet')).toBeNull();
+  });
+
+  it('says a failed read failed, with a retry, instead of "No projects yet"', async () => {
+    failProjectsOnce();
+    render(<ProjectsClient />);
+    const error = await screen.findByTestId('projects-cards-error');
+    expect(error).toHaveTextContent("Couldn't load your projects");
+    expect(screen.queryByText('No projects yet')).toBeNull();
+    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByText('Payments API')).toBeInTheDocument();
+    expect(screen.queryByTestId('projects-cards-error')).toBeNull();
+  });
+
+  it('shows the table view’s skeleton rows and its error state too', async () => {
+    const { user } = await renderProjects();
+    await user.click(screen.getByTestId('projects-view-table'));
+    await screen.findByTestId('projects-table-foot');
+
+    // Turn on "Show deleted": the re-read is held, then fails.
+    let release: (response: Response) => void = () => {};
+    global.fetch = jest.fn(
+      () => new Promise<Response>((resolve) => { release = resolve; })
+    ) as unknown as typeof fetch;
+    fireEvent.click(document.getElementById('projects-show-deleted') as HTMLElement);
+    expect(await screen.findByText('Loading projects…')).toBeInTheDocument();
+    release({ ok: false, status: 500, statusText: 'Internal Server Error', json: async () => ({}) } as Response);
+    expect(await screen.findByText("Couldn't load this list")).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
 // The docs fixtures
 // ---------------------------------------------------------------------------------------
 
