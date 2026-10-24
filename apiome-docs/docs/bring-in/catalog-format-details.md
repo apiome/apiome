@@ -35,9 +35,9 @@ flowchart LR
 
 ## In the UI
 
-1. Open **Control Panel → Dashboard → Catalog** and select an item. The detail page has
-   eight tabs: **Overview**, **Format details**, **Source & Code**, **Provenance**,
-   **Conversions**, **Lint & Score**, **Test Bench**, **Versions**.
+1. Go to **Bring in → Catalog** and select an item. The detail page has
+   eight tabs: **Overview**, **Format details**, **Source & code**, **Provenance**,
+   **Conversions**, **Lint & score**, **Test bench**, **Versions**.
 2. Select **Format details**. The analysis is fetched only when the tab is selected —
    opening the item alone never loads (or logs access to) the native tree.
 3. Use the filter box (**Filter structure…**) and the tree's arrow keys to navigate;
@@ -46,7 +46,7 @@ flowchart LR
    (`?tab=format&node=<id>`).
 4. Where the analyzer recorded a source position, the evidence offers **View source at
    line _n_** (or **Highlight _n_ characters in the source**), which opens the
-   **Source & Code** tab at exactly that range.
+   **Source & code** tab at exactly that range.
 
 Reading the analysis requires the `imports:view` permission, and every read is
 audit-logged (`catalog.analysis.view`), as is raw-source access (`catalog.source.view`).
@@ -131,7 +131,7 @@ So that a green import is never read as a compliance verdict, the **Format detai
 **No implementation guide was consulted** banner under the status badges for every format in the
 family. It names:
 
-- **What is read** — the syntax Apiome actually checks.
+- A statement of what Apiome actually checks — the syntax it reads.
 - **Not consulted** — the guides and rules that are not applied, by name.
 - **Recorded as the sender's claim** — what the document says about itself (an X12 `ST03`
   reference, a CDA `templateId`, a NACHA SEC code…), kept as written and never checked.

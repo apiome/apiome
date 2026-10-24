@@ -25,7 +25,9 @@ in-scope API keys can reach it).
 ## In the UI
 
 1. Open **Versions** at `/ade/dashboard/versions` and select the version.
-2. Choose **Publish**, pick **public** or **private**, and add a revision note.
+2. Choose **Publish**, pick **public** or **private**, and add a revision note. **Publish** is shown
+   only to a role that can publish (an **Editor** can't), and only to the version's creator or a
+   workspace administrator; it never appears on a catalog item.
 3. If a gate fails, the UI reports which one — fix it (usually a missing description or an
    unacknowledged breaking change) and publish again. When the owner gate would refuse the publish,
    an **Owner team** card under **Publish gates** says **Blocked** — give the project a confirmed

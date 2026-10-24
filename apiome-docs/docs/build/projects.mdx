@@ -30,7 +30,9 @@ projects after each import.
 
 ## Create a project
 
-1. **Click “New project”** (or press <Kbd keys="N"/>).
+1. **Click “New project”** (or press <Kbd keys="N"/>). A **Viewer** doesn't see **New project** or
+   **Import**, and sees no **Edit** or **Delete** on a project — see
+   [Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and-versions).
 2. On **Create manually**, choose a **Starting template** — **Blank** starts empty.
 3. Enter a **Project name** (for example `Payments API`); the **Slug** (`payments-api`) is suggested
    from it. **Description** and **Domain category** are optional.
@@ -46,7 +48,9 @@ project](../getting-started/first-project.mdx).
 
 ## Edit, delete and restore
 
-Open a project's menu (**⋯** on a card or row):
+Open a project's menu (**⋯** on a card or row). **Open versions** and **Undelete project** are in the
+table's row menu; on a deleted card, use the **Undelete** and **Permanently delete** buttons at the
+bottom of the card instead:
 
 | Item | Does |
 | --- | --- |
@@ -67,9 +71,6 @@ In the table, tick rows to **Delete** or **Undelete** several at once.
   back the whole project up as one document ([format](../reference/cli-export-format.md)) — see the
   [`projects` command reference](../reference/cli/projects.md) and the [CLI
   quick-start](../reference/cli-quickstart.md).
-- REST, consumers: `GET` / `POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/bindings`,
-  `DELETE …/bindings/{id}` and `GET …/consumers/{consumer}/runtime` — see
-  [Runtime usage](../govern/runtime-usage.mdx#bindings-with-the-api).
 - REST: `GET` / `POST /v1/projects/{tenant}`, `GET` / `PUT` / `DELETE
   /v1/projects/{tenant}/{project}`, `POST /v1/projects/{tenant}/{project}/restore` — see the [API
   reference](../reference/api-reference.md). `DELETE` is a soft delete (undone with `restore`);

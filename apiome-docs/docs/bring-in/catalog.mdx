@@ -89,7 +89,8 @@ wizard](./import-wizard.mdx#import-to-catalog).
 <Route path="/ade/dashboard/catalog/[id]" />
 
 **Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
-**“Convert to OpenAPI Project”**, **“Export”** and **“View code”** — plus **“Open in Designer”**
+**“Convert to OpenAPI Project”** (**“Convert to Project”** for an OpenAPI or Arazzo item,
+**“Re-convert…”** once it has been converted), **“Export”** and **“View code”** — plus **“Open in Designer”**
 when your workspace has the Designer suite (see [View an item in Designer](#view-an-item-in-designer)).
 Eight tabs follow:
 
@@ -125,11 +126,6 @@ same with placeholder cards and table rows.
 On **Provenance**, an item imported before the import recorded its fingerprint and routing reason
 shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
 marked *Derived from the format*.
-
-An item synced by a connector shows **Synced by a connector** on the
-**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
-**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
-connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
 
 <Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
 
@@ -179,14 +175,18 @@ it never creates a project.
 
 ## Delete and restore
 
+Converting, categorizing, deleting and restoring are offered only to a role that can use them — a
+**Viewer** can open, lint and export items but sees none of these. See
+[Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and-versions).
+
 **Delete item** hides an item; turn on **Show deleted** and choose **Undelete item** to bring it
 back. **Permanently delete** asks you to type the item's slug, then **“Delete everything”**.
 
 ## Act on several items at once
 
-1. **Tick the checkbox** on each card (or table row) you want. **Select all** above the cards —
-   or the header checkbox in Table view — ticks every item the current filters show. Your
-   selection is kept when you switch between Cards and Table.
+1. **Tick the checkbox** on each card (or table row) you want. **Select all** above the cards ticks
+   every item the current filters show; in Table view the header checkbox ticks the items on the
+   current page. Your selection is kept when you switch between Cards and Table.
 2. A bar appears at the bottom of the page: **“Convert N…”**, **“Delete N”** and
    **“Undelete N”**, each counting the items it applies to (Convert and Delete reach live
    items; Undelete reaches deleted ones).
@@ -233,11 +233,6 @@ Every control on the list and on an item's page works from the keyboard.
 
 - CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
   --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
-- REST: `GET /v1/catalog/{tenant}/entities` lists every kind in one shape (`kind`, `id`, `slug`,
-  `name`, `description`, `owner`, `updatedAt`, `href`, `graphNode`), filtered by repeatable `kind`,
-  `team` and `q` and paged with `cursor` (`pagination.nextCursor`);
-  `GET /v1/catalog/{tenant}/entities/summary` returns the count of each kind and the three callouts
-  — see [Catalog entities](../reference/rest/catalog-entities.md).
 - REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain` and
   `tag`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
   (the count per value), `PUT /v1/catalog/{tenant}/{item}/categories` (`{ "domain", "tags" }`),

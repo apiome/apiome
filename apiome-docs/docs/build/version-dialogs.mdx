@@ -44,13 +44,14 @@ change. You can set the **Lifecycle** (Stable, Beta, Deprecated, Archived), a **
 a **Sunset** date (entered in local time, stored as UTC), a **Successor revision**, and the
 **Revision note** and **Changelog**. **Click “Save changes”.**
 
-On a published version the notes are frozen; only the deprecation and sunset metadata can change.
+On a published version only a workspace administrator can edit, and only the deprecation and sunset metadata.
 
 <Screenshot id="version-edit-dialog" alt="The Edit version dialog: lifecycle, deprecation message, sunset, successor, revision note and changelog" />
 
 ## Publish
 
-**Click “Publish”** on a draft's row. Choose **Private** or **Public**, write a **Revision note**,
+**Click “Publish”** on a draft's row — shown to the version's creator or a workspace administrator
+whose role can publish (an **Editor** can't). Choose **Private** or **Public**, write a **Revision note**,
 check the **Publish gates**, and **click “Publish”**. The full walk-through, including **Force
 publish (ignore validation errors)**, is in [Version and
 publish](../getting-started/versions-and-publishing.mdx).
@@ -59,7 +60,8 @@ publish](../getting-started/versions-and-publishing.mdx).
 
 ## Schedule sunset
 
-**Choose “Schedule sunset (EOL)…”** from a published version's **Actions** menu.
+**Choose “Schedule sunset (EOL)…”** from a version's **Actions** menu. On a published version only a
+workspace administrator can do this.
 
 1. Set **Lifecycle** to **Deprecated** — a sunset needs it.
 2. Write a **Deprecation message** telling consumers what to do.
@@ -67,7 +69,7 @@ publish](../getting-started/versions-and-publishing.mdx).
 4. Pick the **Successor revision** consumers should move to, if there is one.
 5. **Click “Save”.**
 
-The version then appears on the [sunset timeline](/ship) and under the **deprecated** status chip on the
+The version then appears on the [sunset timeline](../ship/sunset-timeline.mdx) and under the **deprecated** status chip on the
 timeline.
 
 <Screenshot id="version-sunset-dialog" alt="The Schedule sunset (EOL) dialog: revision, lifecycle, deprecation message, sunset date and successor" />
@@ -96,7 +98,7 @@ timeline.
 fidelity — what survives the conversion — and **click “Export”** (or **“Export anyway”** when the
 fidelity check warns).
 
-<Screenshot id="version-export-panel" alt="The export panel: convert to any format, best-fidelity and lossy targets, and recent exports" />
+<Screenshot id="export-dialog-targets" alt="The Export dialog on its Target step: target formats with their fidelity" />
 
 **View spec** from the same menu shows the generated OpenAPI document as JSON or YAML, with
 **“Copy”** and **“Download”**.

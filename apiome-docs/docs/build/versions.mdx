@@ -18,10 +18,8 @@ The header holds **“Compare”** (needs two versions), **“Import”**, **Mor
 
 | Item | Does |
 | --- | --- |
-| **Merge branches…** | Opens the merge dialog. Marked `gitlike`; unavailable until the project has two named branches, and the row says why |
-| **Sunset timeline** | Opens the [sunset timeline](/ship) |
+| **Sunset timeline** | Opens the [sunset timeline](../ship/sunset-timeline.mdx) |
 | **Published surface** | Opens the published surface |
-| **Export studio** | Opens the Export studio, once it is released |
 | **Copy link to project** | Copies a link to this project's Versions page (**`⌘ ⇧ C`**) |
 
 The dialogs are on [Version dialogs](./version-dialogs.mdx). Keyboard paths are on
@@ -80,7 +78,11 @@ engine](../reference/mock-runtime/one-mock-engine.md).
 ### Row actions
 
 The row's quick buttons are **Publish** (or **Unpublish**) and **Edit** or **Schedule sunset
-(EOL)**. Its **Actions** menu holds:
+(EOL)**. Buttons and menu items your role can't use are not shown: a **Viewer** sees no **New
+version**, **Import**, **Edit** or **Publish**, and an **Editor** sees no **Publish** or
+**Unpublish**. Publishing also needs you to be the version's creator or a workspace administrator —
+see [Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and-versions). Its
+**Actions** menu holds:
 
 | Item | Does |
 | --- | --- |
@@ -91,7 +93,7 @@ The row's quick buttons are **Publish** (or **Unpublish**) and **Edit** or **Sch
 | **Edit** | Changes lifecycle, notes and sunset metadata |
 | **Publish** / **Unpublish** | Publishes the version, or takes it back after a confirmation. Unpublishing moves the version's tags back to the previous published version and notifies webhook subscribers — see [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version) |
 
-Git-like actions (branch, fork, tag, freeze, lock, delete) also live here when <Flag
+Git-like actions (branch, fork, tag, freeze, lock, delete) and **More actions → Merge branches…** also live here when <Flag
 name="FEATURE_GITLIKE"/> is on — it is off in every shipped build. See [Git-like
 features](./version-dialogs.mdx#git-like-features). With the flag on, a **Server ahead** chip joins
 the status row — on every tab — when someone pushed after you; its detail offers **“Pull”** and
@@ -237,7 +239,7 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
 
 A **fork** copies one version of a project into **another** project as a new draft version, and
 records where it came from so it can be merged back later. (To start a new version inside the same
-project, branch it instead.) The CLI can fork whether or not the Git-like features are switched on
+project, use **New version** instead.) The CLI can fork whether or not the Git-like features are switched on
 in the web app.
 
 1. **Preview** what would be copied:

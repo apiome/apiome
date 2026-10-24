@@ -19,6 +19,10 @@ first; **All**, **Drafts** and **Published** filter it.
 
 ## Cut a version
 
+You need a role that can do this: a **Viewer** sees neither **New version** nor **Publish**, and an
+**Editor** can cut versions but not publish them — see
+[Roles](../workspace/roles.mdx#what-each-role-can-do-in-catalog-projects-and-versions).
+
 1. **Click “New version”.**
 2. Under **Copy source**, pick a version in **Copy from version** to start from its classes — and,
    with **Copy paths** ticked, its paths — or keep **Create blank version**.
@@ -30,7 +34,8 @@ first; **All**, **Drafts** and **Published** filter it.
 
 ## Publish it
 
-1. On the draft's row, **click the “Publish” lock button**, or open the row's **Actions** menu and
+1. On the draft's row, **click the “Publish” lock button** (shown to the draft's creator and to
+   workspace administrators), or open the row's **Actions** menu and
    **choose “Publish”**.
 2. Choose the **Visibility**:
    - **Private** (the default) — readers need an API key;

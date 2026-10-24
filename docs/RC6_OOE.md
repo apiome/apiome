@@ -113,7 +113,7 @@ Each check is an issue in the `RC6` milestone.
 | [#6211](https://github.com/apiome/apiome/issues/6211) H4 ✅ | Catalog and version export through the in-place Export dialog covers the formats RC6 promises; the dialog's fidelity report is the only fidelity surface | 2 |
 | [#6212](https://github.com/apiome/apiome/issues/6212) H5 ✅ | Viewer / editor / owner matrices tested for every Catalog and Projects action (REST and UI), including bulk actions | 2 |
 | [#6213](https://github.com/apiome/apiome/issues/6213) H6 ✅ | Catalog list and versions table meet the HIVE-13.3 first-row budget with 1,000 items | 2 |
-| [#6214](https://github.com/apiome/apiome/issues/6214) H7 | Every Catalog, Projects and Versions page in `apiome-docs/` is current, with fresh screenshots and no links into held-back features | 3 |
+| [#6214](https://github.com/apiome/apiome/issues/6214) H7 ✅ | Every Catalog, Projects and Versions page in `apiome-docs/` is current, with fresh screenshots and no links into held-back features | 3 |
 | [#6215](https://github.com/apiome/apiome/issues/6215) H8 | Zero open P0/P1 bugs on Catalog, Versions or Projects | 3 |
 
 ## 3. Ticket list

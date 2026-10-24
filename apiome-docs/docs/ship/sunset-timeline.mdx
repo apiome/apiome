@@ -62,7 +62,7 @@ project.
 | **Notes / #507** | The deprecation message or warning, and a **Migration guide** link. |
 
 When rows carry the same structured warnings as compatibility checks, a **Where these warnings come
-from** link appears beside the page description. **Click it** for the explanation, then open the
+from** button appears next to **Export CSV**. **Click it** for the explanation, then open the
 version on [Versions](../build/versions.mdx) to see the warnings in context.
 
 <Screenshot id="sunset-timeline-warnings" alt="Where these warnings come from: the dialog explaining the #507 structured warnings, with a link to Versions" />
@@ -85,17 +85,7 @@ sunset schedule* with the reason and **“Try again”**.
 the sunset itself is version metadata, set with `PUT /v1/versions/{tenant}/{project_id}/{version_record_id}`.
 See the [API reference](../reference/api-reference.md).
 
-## Before you sunset
-
-To see who still depends on a version before you sunset it, run a
-[blast radius](../reference/rest/graph.md) query. Its `sunset_consumers` list shows
-the consumers whose contracts are pinned to a deprecated or sunset version. A client that calls the API without being
-registered isn't in that list: register it from the project's
-[suggested consumers](../reference/rest/graph.md) first, so it is counted and
-can be told about the sunset.
-
 ## Where next
 
 - [Published](./published.mdx)
-- [Graph API](../reference/rest/graph.md)
 - [Versions](../build/versions.mdx)
