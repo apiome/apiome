@@ -56,8 +56,11 @@ export interface ImportSourceCardsProps {
 /**
  * The grid.
  *
- * A card with no intake panel is drawn as a disabled button rather than dropped: the server
- * advertises the adapter, and a source that silently is not there reads as a bug.
+ * A card with no intake panel is drawn dimmed rather than dropped: the server advertises the
+ * adapter, and a source that silently is not there reads as a bug. It is a plain
+ * `aria-disabled` element, not a disabled button, because a "Coming soon" label may not sit
+ * inside a button (the HIVE-13.2 page gate, `tests/page-header-gate.test.tsx`): it is a fact
+ * about the source, not an action that leads nowhere.
  *
  * The card *is* the button — `cardVariants` is applied to the `<button>` rather than wrapping
  * one, because a button inside a clickable div is two things a pointer can land on and only one
@@ -114,21 +117,8 @@ export function ImportSourceCards({
           const Icon = card.icon;
           const disabled = card.panel === null;
           const active = !disabled && selected === card.panel;
-          return (
-            <button
-              key={card.key}
-              type="button"
-              disabled={disabled}
-              data-testid={testId?.(card)}
-              aria-pressed={disabled ? undefined : active}
-              aria-keyshortcuts={keyForCard.get(card.key)}
-              title={disabled ? IMPORT_WIZARD_COPY.comingSoon : undefined}
-              onClick={() => card.panel && onSelect(card.panel)}
-              className={cn(
-                cardVariants({ variant: 'flat', hover: !disabled, selected: active }),
-                'imp-card'
-              )}
-            >
+          const content = (
+            <>
               <span className="tnt-icon-tile" data-tone={active ? 'accent' : undefined} aria-hidden>
                 <Icon />
               </span>
@@ -145,6 +135,34 @@ export function ImportSourceCards({
                   {disabled ? IMPORT_WIZARD_COPY.comingSoon : card.description}
                 </span>
               </span>
+            </>
+          );
+          if (disabled) {
+            return (
+              <div
+                key={card.key}
+                aria-disabled="true"
+                data-testid={testId?.(card)}
+                className={cn(cardVariants({ variant: 'flat', hover: false }), 'imp-card')}
+              >
+                {content}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={card.key}
+              type="button"
+              data-testid={testId?.(card)}
+              aria-pressed={active}
+              aria-keyshortcuts={keyForCard.get(card.key)}
+              onClick={() => card.panel && onSelect(card.panel)}
+              className={cn(
+                cardVariants({ variant: 'flat', hover: true, selected: active }),
+                'imp-card'
+              )}
+            >
+              {content}
             </button>
           );
         })}

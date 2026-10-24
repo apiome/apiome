@@ -18398,7 +18398,7 @@ button.tfa-reset-notice__close > svg {
   cursor: pointer;
 }
 
-.imp-card:disabled {
+.imp-card[aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.6;
 }

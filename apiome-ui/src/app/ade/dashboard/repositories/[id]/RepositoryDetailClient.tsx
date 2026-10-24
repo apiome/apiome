@@ -28,13 +28,6 @@ import { ErrorState } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { LiveRegion } from '@/app/components/ui/LiveRegion';
 import { useSettledRepositoriesAnnouncement } from '@/app/hooks/useSettledRepositoriesAnnouncement';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/app/components/ui/Select';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import {
   REPOSITORY_STATUS_POLL_MS,
@@ -114,8 +107,9 @@ const TAB_ICON: Readonly<Record<RepositoryDetailTab, typeof Eye>> = {
  *
  * 1. **Two branch controls could disagree.** The header carried a `Select` with exactly one
  *    option and no handler; the Files tab carried a popover that actually switched branches.
- *    Both are the same state now, so the header always names the branch the table is showing —
- *    and the header's control does something, which is what "visually honest" asks of it.
+ *    The branch is this client's state, so it survives a tab switch, and the Files tab's
+ *    popover is its one control: HIVE-13.2's header gate (`tests/page-header-gate.test.tsx`)
+ *    keeps selects out of a header's actions, so the header's copy of it is gone.
  * 2. **A failed read looked like a missing repository.** The screen rendered a hand-rolled
  *    rose panel with the raw message and no way to retry. It is an `ErrorState` with a retry
  *    and a way back to the list.
@@ -476,41 +470,17 @@ export function RepositoryDetailClient() {
           </div>
         }
         actions={
-          <>
-            <Select
-              value={activeBranch}
-              onValueChange={(next) => {
-                setBranch(next);
-                selectTab('files');
-              }}
-            >
-              <SelectTrigger
-                aria-label="Branch"
-                className="w-[10rem]"
-                data-testid="repository-header-branch"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {branchOptions.map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={scanning}
-              title={scanning ? RESCAN_IN_PROGRESS_TITLE : undefined}
-              onClick={() => toast.message(RESCAN_STUB_TOAST)}
-              data-testid="repository-rescan"
-            >
-              <RefreshCw aria-hidden />
-              Rescan
-            </Button>
-          </>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={scanning}
+            title={scanning ? RESCAN_IN_PROGRESS_TITLE : undefined}
+            onClick={() => toast.message(RESCAN_STUB_TOAST)}
+            data-testid="repository-rescan"
+          >
+            <RefreshCw aria-hidden />
+            Rescan
+          </Button>
         }
         tabs={tabs}
       />

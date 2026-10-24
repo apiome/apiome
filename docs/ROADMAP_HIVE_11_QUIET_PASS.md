@@ -517,7 +517,7 @@ Milestone: **RC6** (all epics and issues).
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 13.1 | #5614 | Honey audit — saved-search chip, gitlike flags, token gate | MCP saved searches use `.chip`; feature-flag markers are outline badges; `hive-design-tokens.test.ts` fails on honey outside the allow-list | `ui`, `design-system`, `testing`, `mcp` | Y | N | S | `src/app/ade/dashboard/mcp/*`, `src/app/components/ade/versions/GitlikeFlag.tsx`, `tests/hive-design-tokens.test.ts` |
-| 13.2 | #5615 | Gates — header action cap, single banner, no dead controls | Jest/Playwright rules: ≤ 1 primary + 2 secondaries + ⋯ per `PageHeader`; at most one `Alert` between header and body; no disabled buttons that lead nowhere | `testing`, `ui`, `design-system` | N | N | M | `tests/page-header-gate.test.tsx (new)`, `tests/copy-voice-gate.test.ts`, `e2e/hive-page-header.spec.ts`, `docs/guide/content-voice.md` |
+| 13.2 | #5615 | Gates — header action cap, single banner, no dead controls ✅ | Jest/Playwright rules: ≤ 1 primary + 2 secondaries + ⋯ per `PageHeader`; at most one `Alert` between header and body; no disabled buttons that lead nowhere | `testing`, `ui`, `design-system` | N | N | M | `tests/page-header-gate.test.tsx (new)`, `tests/copy-voice-gate.test.ts`, `e2e/hive-page-header.spec.ts`, `docs/guide/content-voice.md` |
 | 13.3 | #5616 | Parity harness — first-row-of-data budget per list page ✅ | The visual-parity harness measures the y-offset of the first data row at 1440 × 900 and fails above a per-page budget | `testing`, `ui` | N | N | M | `e2e/visual/landmarks.ts`, `e2e/visual/score.ts`, `e2e/visual/routes.ts`, `e2e/visual/README.md` |
 | 13.4 | #5617 | DESIGN.md amendments, mockup promotion and fixture re-dump | Fold PROPOSALS.md into DESIGN.md §2 · §5 · §8 · §10 · §12; replace the superseded parts of the original mockups; move the four proposals into `PARITY_ROUTES` | `documentation`, `design-system`, `mvp` | N | Y | S | `docs/mockups/DESIGN.md`, `docs/mockups/PROPOSALS.md`, `docs/mockups/build/versions.html`, `docs/mockups/sources/catalog.html`, `docs/mockups/home/launcher.html`, `docs/mockups/foundations/shell.html`, `apiome-ui/e2e/visual/routes.ts` |
 
@@ -540,7 +540,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-13.2] Gates — header action cap, single banner, no dead controls` — [#5615](https://github.com/apiome/apiome/issues/5615)
+### `apiome: [HIVE-13.2] Gates — header action cap, single banner, no dead controls` ✅ — [#5615](https://github.com/apiome/apiome/issues/5615)
 **Problem statement.** DESIGN.md §1.2 and §5.3 state the one-primary rule and §10 the voice rules, but nothing enforces action count, banner stacking or no-op controls, which is how Versions reached six header controls and three banners.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/versions-status-strip.html` (callouts 2); rationale: `docs/mockups/PROPOSALS.md`.
@@ -550,9 +550,9 @@ Milestone: **RC6** (all epics and issues).
 - Document the rules in `docs/guide/content-voice.md` and DESIGN.md (HIVE-13.4).
 
 **Acceptance criteria.**
-- [ ] Gates fail on the pre-11.3 Versions header and pre-11.2 banner stack (fixtures kept as negative cases)
-- [ ] All routes green after Epics 11–12 land
-- [ ] CI wiring documented in the workflow
+- [x] Gates fail on the pre-11.3 Versions header and pre-11.2 banner stack (fixtures kept as negative cases)
+- [x] All routes green after Epics 11–12 land (held-back Primitives allow-listed until released; disabled-button reasons are a 470 ratchet)
+- [x] CI wiring documented in the workflow
 
 **Parallelism / dependencies.** Depends on HIVE-11.2, 11.3, 11.9, 12.5 landing (or the gate is introduced with allow-listed exceptions that are removed as they land).
 

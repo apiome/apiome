@@ -37,7 +37,7 @@ and handle the live regions, so a screen only has to supply the words.
 
 ## Several statuses on one page
 
-A page shows at most one `Alert` under its header. When it has more than one thing to say
+A page shows at most one `Alert` under its header (the page gates below check it). When it has more than one thing to say
 about the same object (compatible, what's new, deprecated, server is ahead), use
 `StatusStrip` instead of stacking banners. The strip shows one row of chips and one detail row
 underneath.
@@ -84,6 +84,30 @@ information on the page without taking a fixed block of space.
 
 The **Facts line & callout** section of `/design-system` shows every state.
 
+## Page headers and unavailable controls
+
+A page header holds the actions for the whole page, and only a few of them
+(DESIGN.md §1.2, §5.3).
+
+| In the header's actions | Limit |
+| --- | --- |
+| Primary (ink) `Button` | 1, drawn last |
+| Other `Button`s (outline, soft, ghost, accent, danger) | 2 |
+| ⋯ overflow menu (`overflow` on `PageHeader`) | 1, between the secondaries and the primary |
+| `<select>` or `Select` | none. Put a filter or a picker in the page body, next to what it filters |
+
+- Move a page's extra actions into `overflow` rows. An unavailable row uses `disabledReason`
+  rather than disappearing.
+- Only `Button`s count. Read-outs in the cluster, such as the score orbs on a catalog item, do not.
+
+A control that cannot be used says why:
+
+- A disabled button carries a `title` or an `aria-describedby` that gives the reason, such as
+  *Rescan is already running*.
+- "Coming soon" is never the text of a button. Draw a feature that is not there yet as a dimmed,
+  `aria-disabled` element with the label, the way the import wizard draws a source it cannot read
+  yet. A short "Coming soon" as a disabled control's `title` is also fine.
+
 ## What enforces it
 
 **At runtime**, every shared error surface makes sure a failure names a next action
@@ -108,10 +132,29 @@ TypeScript compiler and fails when:
   rules above (over 14 words, "No … found", "Manage …", "… Management");
 - any JSX text is "No records found"-class copy;
 - an admin navigation title is not a noun;
-- a component imports `toast` from `sonner` instead of `components/ui/toast`.
-- a `DismissibleCallout` has no literal `reopenFrom`.
+- a component imports `toast` from `sonner` instead of `components/ui/toast`;
+- a `DismissibleCallout` has no literal `reopenFrom`;
+- "Coming soon" is the text of a `button` or `Button`;
+- the number of disabled buttons with no `title` or `aria-describedby` changes. This is a ratchet
+  (HIVE-13.2): 470 older buttons are pinned, a new one fails, and a change that gives older
+  buttons their reasons lowers the number to match.
 
 The runtime behaviour is pinned in `tests/copy-voice-surfaces.test.tsx`.
+
+**The page gates**, `tests/page-header-gate.test.tsx` (HIVE-13.2,
+[#5615](https://github.com/apiome/apiome/issues/5615)), read every rendered page the test suites
+dump under `apiome-ui/e2e/fixtures/` and fail when:
+
+- a header breaks the limits in [Page headers and unavailable controls](#page-headers-and-unavailable-controls);
+- more than one banner (`Alert`, a status bar or a callout) sits under the header before the
+  page's content starts. A `StatusStrip` counts as one;
+- a button's text says "Coming soon".
+
+The gates also read the source, so a `select` inside a `PageHeader`'s `actions` fails even on a
+route nothing dumps. Two frozen copies of the old Versions page, with three banners and a
+six-control header, are kept as cases the gates must fail (`e2e/fixtures/hive-page-gates/`).
+Pages that are not released yet can be allow-listed in the test with a reason. An entry fails as
+stale once its page passes. Both suites run in the **Apiome UI** workflow's unit-test step.
 
 ## Route checklist
 

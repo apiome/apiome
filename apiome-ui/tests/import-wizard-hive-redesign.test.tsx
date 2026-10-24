@@ -258,14 +258,19 @@ describe('the Source step', () => {
     ]) {
       expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument();
     }
-    await waitFor(() => expect(screen.getByRole('button', { name: /gRPC/ })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('gRPC')).toBeInTheDocument());
   });
 
-  it('draws a discovery-only adapter disabled rather than dropping it', async () => {
+  it('draws a discovery-only adapter dimmed rather than dropping it — and not as a button', async () => {
     renderWizard();
-    const grpc = await screen.findByRole('button', { name: /gRPC/ });
-    expect(grpc).toBeDisabled();
-    expect(grpc).toHaveAttribute('title', IMPORT_WIZARD_COPY.comingSoon);
+    // HIVE-13.2: "Coming soon" may not sit inside a button, so the card is a plain
+    // aria-disabled element that keeps the label.
+    const grpc = (await screen.findByText('gRPC')).closest('.imp-card');
+    expect(grpc).not.toBeNull();
+    expect(grpc!.tagName).toBe('DIV');
+    expect(grpc).toHaveAttribute('aria-disabled', 'true');
+    expect(grpc).toHaveTextContent(IMPORT_WIZARD_COPY.comingSoon);
+    expect(screen.queryByRole('button', { name: /gRPC/ })).toBeNull();
   });
 
   it('opens the chosen source’s intake when a card is pressed', async () => {
@@ -301,7 +306,7 @@ describe('the Source step', () => {
 
   it('has no serious or critical axe violations', async () => {
     const { container } = renderWizard();
-    await screen.findByRole('button', { name: /gRPC/ });
+    await screen.findByText('gRPC');
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
   });
 });
@@ -314,7 +319,7 @@ describe('number keys on the Source step', () => {
     expect(screen.getByRole('button', { name: /SwaggerHub/ })).toHaveAttribute('aria-keyshortcuts', '5');
     // Only five are numbered; the sixth and the "Coming soon" card are not.
     expect(screen.getByRole('button', { name: /Postman Collection/ })).not.toHaveAttribute('aria-keyshortcuts');
-    await waitFor(() => expect(screen.getByRole('button', { name: /gRPC/ })).not.toHaveAttribute('aria-keyshortcuts'));
+    await waitFor(() => expect(screen.getByText('gRPC').closest('.imp-card')).not.toHaveAttribute('aria-keyshortcuts'));
     expect(document.querySelectorAll('.imp-card__key')).toHaveLength(5);
 
     fireEvent.keyDown(window, { key: '1' });
@@ -900,7 +905,7 @@ describe('the browser fixtures', () => {
       return Promise.resolve({ ok: true, json: async () => ({}) });
     }) as never);
     renderWizard();
-    await screen.findByRole('button', { name: /gRPC/ });
+    await screen.findByText('gRPC');
     await screen.findByTestId('import-recent-list');
     write('source', wizard().outerHTML);
 
