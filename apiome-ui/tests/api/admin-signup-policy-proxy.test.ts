@@ -121,10 +121,30 @@ describe('route file contract', () => {
     expect(source).toMatch(/export async function PUT\(/);
   });
 
+  // The gate lives beside the route since SGN-1.5, shared with the blocked-attempts route.
+  const gate = fs.readFileSync(
+    path.join(__dirname, '../../src/app/api/admin/signup-policy/admin-session-gate.ts'),
+    'utf8',
+  );
+  const attemptsRoute = fs.readFileSync(
+    path.join(__dirname, '../../src/app/api/admin/signup-policy/blocked-attempts/route.ts'),
+    'utf8',
+  );
+
   it('verifies the signed admin session before forwarding', () => {
-    expect(source).toContain("cookieStore.get('admin_session')");
-    expect(source).toContain('verifyAdminSessionToken(token)');
-    expect(source).toContain('status: 401');
-    expect(source).toContain('status: 403');
+    expect(gate).toContain("cookieStore.get('admin_session')");
+    expect(gate).toContain('verifyAdminSessionToken(token)');
+    expect(gate).toContain('status: 401');
+    expect(gate).toContain('status: 403');
+    expect(source).toContain("from './admin-session-gate'");
+    expect(source).toContain('await requireAdminSession()');
+    expect(attemptsRoute).toContain("from '../admin-session-gate'");
+  });
+
+  it('forwards blocked attempts only after the gate', () => {
+    expect(attemptsRoute).toMatch(/export async function GET\(/);
+    expect(attemptsRoute.indexOf('requireAdminSession()')).toBeLessThan(
+      attemptsRoute.indexOf('proxyListBlockedSignupAttempts(session.token'),
+    );
   });
 });

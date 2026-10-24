@@ -15,6 +15,11 @@
  * again. The same policy is enforced for the email form and every OAuth provider, and a save
  * applies to the next sign-up without a restart.
  *
+ * Abuse protection (SGN-1.5, #5654): **Blocked email domains** extends the disposable-email list
+ * Apiome bundles (email sign-up only; a listed domain also blocks its subdomains), and
+ * **Recent blocked sign-ups** lists what the guards refused. The extra domains are stored with the
+ * policy, so **Use .env** removes them as well; the bundled list always applies.
+ *
  * Reads and writes go through the super-admin proxy (`/api/admin/signup-policy`), gated by the
  * hardened admin session (OLO-8.1).
  */
@@ -27,12 +32,15 @@ import {
   type AdminSignupPolicyUpdatePayload,
   type AdminSignupPolicyView,
 } from '@lib/auth/admin-signup-policy';
+import { BUNDLED_DISPOSABLE_EMAIL_DOMAINS } from '@lib/auth/disposable-email-domains';
 import {
   MAX_ALLOWED_EMAIL_DOMAINS,
+  MAX_BLOCKED_EMAIL_DOMAINS,
   parseAllowedEmailDomains,
   type SignupMode,
 } from '@lib/auth/signup-policy';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
+import BlockedSignupAttempts from './BlockedSignupAttempts';
 import {
   INPUT_CLASSES,
   NEUTRAL_CHIP_CLASSES,
@@ -67,7 +75,22 @@ function failureMessage(status: number, body: unknown, fallback: string): string
   return extractRestErrorMessage(body, fallback);
 }
 
-/** The Sign-up card: mode, allowed email domains, save, and revert to .env. */
+/**
+ * Validate a typed domain list.
+ *
+ * @param invalid Entries that are not domains.
+ * @param count How many valid domains were typed.
+ * @param max The most the list may hold.
+ * @returns The message to show, or null when the list is fine.
+ */
+function domainListError(invalid: string[], count: number, max: number): string | null {
+  if (invalid.length > 0) {
+    return `Not a valid email domain: ${invalid.join(', ')}. Enter domains such as example.com.`;
+  }
+  return count > max ? `Enter at most ${max} domains.` : null;
+}
+
+/** The Sign-up card: mode, allowed and blocked email domains, save, revert to .env, blocked sign-ups. */
 export default function SignupPolicyCard() {
   const [view, setView] = useState<AdminSignupPolicyView | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,6 +99,7 @@ export default function SignupPolicyCard() {
   // Draft state — what the form shows, separate from what is stored.
   const [mode, setMode] = useState<SignupMode>('open');
   const [domainsText, setDomainsText] = useState('');
+  const [blockedText, setBlockedText] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -84,12 +108,15 @@ export default function SignupPolicyCard() {
   const groupName = useId();
   const domainsId = useId();
   const domainsHelpId = useId();
+  const blockedId = useId();
+  const blockedHelpId = useId();
 
   /** Adopt a view from the server as both the stored state and the draft. */
   const adopt = useCallback((next: AdminSignupPolicyView) => {
     setView(next);
     setMode(next.mode);
     setDomainsText(next.allowed_email_domains.join('\n'));
+    setBlockedText((next.blocked_email_domains ?? []).join('\n'));
   }, []);
 
   const load = useCallback(async () => {
@@ -126,18 +153,22 @@ export default function SignupPolicyCard() {
   const domainsError =
     mode !== 'open'
       ? null
-      : parsed.invalid.length > 0
-        ? `Not a valid email domain: ${parsed.invalid.join(', ')}. Enter domains such as example.com.`
-        : parsed.domains.length > MAX_ALLOWED_EMAIL_DOMAINS
-          ? `Enter at most ${MAX_ALLOWED_EMAIL_DOMAINS} domains.`
-          : null;
+      : domainListError(parsed.invalid, parsed.domains.length, MAX_ALLOWED_EMAIL_DOMAINS);
+  // The blocklist has the same shape as the allowed list, so it shares the parser.
+  const blocked = parseAllowedEmailDomains(blockedText);
+  const blockedError = domainListError(
+    blocked.invalid,
+    blocked.domains.length,
+    MAX_BLOCKED_EMAIL_DOMAINS,
+  );
 
   const stored = view?.source === 'db';
   const dirty =
     view !== null &&
     (!stored ||
       mode !== view.mode ||
-      draftDomains.join('\n') !== view.allowed_email_domains.join('\n'));
+      draftDomains.join('\n') !== view.allowed_email_domains.join('\n') ||
+      blocked.domains.join('\n') !== (view.blocked_email_domains ?? []).join('\n'));
 
   /** Send a policy to the proxy and adopt the result. */
   const submit = async (payload: AdminSignupPolicyUpdatePayload, fallback: string) => {
@@ -165,11 +196,14 @@ export default function SignupPolicyCard() {
   };
 
   const handleSave = () =>
-    submit({ mode, allowed_email_domains: draftDomains }, 'Could not save the sign-up policy.');
+    submit(
+      { mode, allowed_email_domains: draftDomains, blocked_email_domains: blocked.domains },
+      'Could not save the sign-up policy.',
+    );
 
   const handleUseEnv = () =>
     submit(
-      { mode: null, allowed_email_domains: [] },
+      { mode: null, allowed_email_domains: [], blocked_email_domains: [] },
       'Could not remove the stored sign-up policy.',
     );
 
@@ -302,6 +336,39 @@ export default function SignupPolicyCard() {
               )}
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor={blockedId}
+                className="text-sm font-medium text-slate-700 dark:text-slate-200"
+              >
+                Blocked email domains
+              </label>
+              <textarea
+                id={blockedId}
+                rows={2}
+                value={blockedText}
+                onChange={(event) => {
+                  setBlockedText(event.target.value);
+                  touch();
+                }}
+                disabled={saving}
+                placeholder="throwaway.example"
+                spellCheck={false}
+                aria-describedby={blockedHelpId}
+                aria-invalid={blockedError ? true : undefined}
+                className={`${INPUT_CLASSES} font-mono`}
+                data-testid="signup-blocked-domains"
+              />
+              <p id={blockedHelpId} className="text-xs text-slate-600 dark:text-slate-400">
+                {`Email sign-up refuses these domains and their subdomains, on top of the ${BUNDLED_DISPOSABLE_EMAIL_DOMAINS.length} disposable-email domains Apiome always blocks. Sign-up with a provider is not affected. Enter one domain per line.`}
+              </p>
+              {blockedError && (
+                <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">
+                  {blockedError}
+                </p>
+              )}
+            </div>
+
             {saveError && (
               <div
                 role="alert"
@@ -316,7 +383,7 @@ export default function SignupPolicyCard() {
               <button
                 type="button"
                 onClick={() => void handleSave()}
-                disabled={!dirty || saving || domainsError !== null}
+                disabled={!dirty || saving || domainsError !== null || blockedError !== null}
                 className={PRIMARY_BUTTON_CLASSES}
               >
                 {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -347,6 +414,10 @@ export default function SignupPolicyCard() {
                     : 'Stored in the database'
                   : `Not stored — .env gives ${signupModeLabel(view.env_mode)}`}
               </span>
+            </div>
+
+            <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
+              <BlockedSignupAttempts />
             </div>
           </>
         )}

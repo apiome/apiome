@@ -59,6 +59,78 @@ async function submitSignup(email = 'ada@example.com') {
   });
 }
 
+describe('the email form with Turnstile (SGN-1.5)', () => {
+  const SITE_KEY = '1x00000000000000000000AA';
+  let issueToken: ((token: string) => void) | null = null;
+  const turnstile = {
+    render: jest.fn((_el: HTMLElement, options: { sitekey: string; callback: (token: string) => void }) => {
+      issueToken = options.callback;
+      return 'widget-1';
+    }),
+    reset: jest.fn(),
+    remove: jest.fn(),
+  };
+
+  beforeEach(() => {
+    issueToken = null;
+    (window as unknown as { turnstile?: unknown }).turnstile = turnstile;
+  });
+  afterEach(() => {
+    delete (window as unknown as { turnstile?: unknown }).turnstile;
+  });
+
+  /** The page with the CAPTCHA on. */
+  const renderWithCaptcha = () =>
+    render(
+      <SignupClient
+        providers={[]}
+        state={signupPageState(OPEN, true)}
+        legalLinks={NO_LEGAL}
+        turnstileSiteKey={SITE_KEY}
+      />
+    );
+
+  it('draws the check and holds Create account until it passes', async () => {
+    renderWithCaptcha();
+    await waitFor(() => expect(turnstile.render).toHaveBeenCalled());
+    expect(turnstile.render.mock.calls[0][1]).toMatchObject({ sitekey: SITE_KEY, theme: 'auto' });
+    expect(screen.getByTestId('email-signup-submit')).toBeDisabled();
+
+    act(() => issueToken?.('tok-1'));
+    expect(screen.getByTestId('email-signup-submit')).toBeEnabled();
+  });
+
+  it('sends the token, and resets the check after a refusal', async () => {
+    mockStartEmailSignup.mockResolvedValue({ ok: false, code: 'email-signup-captcha-failed' });
+    renderWithCaptcha();
+    await waitFor(() => expect(turnstile.render).toHaveBeenCalled());
+    act(() => issueToken?.('tok-1'));
+
+    await submitSignup();
+
+    expect(mockStartEmailSignup).toHaveBeenCalledWith(expect.objectContaining({ captchaToken: 'tok-1' }));
+    expect(screen.getByTestId('email-signup-error')).toHaveTextContent('We could not confirm the security check.');
+    expect(turnstile.reset).toHaveBeenCalledWith('widget-1');
+    // The used token is gone, so the button waits for a fresh one.
+    expect(screen.getByTestId('email-signup-submit')).toBeDisabled();
+  });
+
+  it('shows the disposable-address message', async () => {
+    mockStartEmailSignup.mockResolvedValue({ ok: false, code: 'email-signup-disposable-domain' });
+    renderSignup();
+    await submitSignup('bot@mailinator.com');
+    expect(screen.getByTestId('email-signup-error')).toHaveTextContent(
+      'Addresses from disposable email services cannot be used to sign up.'
+    );
+  });
+
+  it('draws no check when Turnstile is off', () => {
+    renderSignup();
+    expect(screen.queryByTestId('signup-turnstile')).not.toBeInTheDocument();
+    expect(screen.getByTestId('email-signup-submit')).toBeEnabled();
+  });
+});
+
 describe('the email form on /signup', () => {
   it('offers name, email and password with the password rules as a hint', () => {
     renderSignup();

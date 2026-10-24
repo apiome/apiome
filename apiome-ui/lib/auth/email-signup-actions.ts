@@ -20,6 +20,12 @@
  * stranger can trigger; links carry 256 random bits, are stored hashed, expire after 24 hours and
  * work once. Neither sign-in engine admits an unverified account (`users.verified`), so a created
  * but unconfirmed account cannot be used.
+ *
+ * Abuse guards (SGN-1.5, #5654), on the sign-up form only unless noted: the per-IP and per-address
+ * budgets (sign-up and resend), the disposable-email blocklist (`disposable-email-domains.ts`) and,
+ * when configured, a Cloudflare Turnstile CAPTCHA (`turnstile.ts`). Each refuses with its own code
+ * and appends an `auth_events` row (`signup-guard-events.ts`); a budget refusal is recorded once
+ * per window. Like the policy, every guard runs before the address is looked up.
  */
 
 import { headers } from 'next/headers';
@@ -53,10 +59,18 @@ import {
   verificationLink,
   type VerificationTokenState,
 } from './email-signup';
+import { isDisposableEmail } from './disposable-email-domains';
 import { checkRequestBudget } from './login-rate-limit';
 import { validatePassword } from './password-policy';
 import { sendSignupEmail } from './send-signup-email';
+import {
+  EMAIL_SIGNUP_PROVIDER,
+  recordSignupGuardEvent,
+  type SignupGuard,
+  type SignupRateLimitScope,
+} from './signup-guard-events';
 import { resolveSignupPolicy } from './signup-policy-resolver';
+import { turnstileConfig, verifyTurnstileToken } from './turnstile';
 
 /** What the sign-up form and the resend button are told. */
 export type EmailSignupResult =
@@ -75,27 +89,69 @@ export type VerifyEmailSignupResult =
   | { state: Exclude<VerificationTokenState, 'valid'> };
 
 /**
- * Charge the caller's IP against the sign-up budget.
+ * Refuse an attempt on behalf of an abuse guard: record it in `auth_events`, then answer the code.
  *
- * @returns `true` while the client is within budget.
+ * @param guard Which guard refused it.
+ * @param code The code the person is shown.
+ * @param email The canonical address, when one was read.
+ * @param scope For a rate limit: what was over budget.
+ * @returns The refusal to send back.
  */
-async function withinIpBudget(): Promise<boolean> {
-  const ip = resolveClientIp(await headers());
-  return checkRequestBudget(`signup-ip:${ip}`, SIGNUP_REQUESTS_PER_IP, SIGNUP_BUDGET_WINDOW_MS).allowed;
+async function refuse(
+  guard: SignupGuard,
+  code: string,
+  email: string | null,
+  scope?: SignupRateLimitScope
+): Promise<EmailSignupResult> {
+  await recordSignupGuardEvent({
+    guard,
+    code,
+    scope,
+    email,
+    provider: EMAIL_SIGNUP_PROVIDER,
+    headers: await headers(),
+  });
+  return { ok: false, code };
 }
 
 /**
- * Charge an address against the per-address email budget.
+ * Charge a budget and, when it is spent, build the refusal.
  *
- * @param canonicalEmail The address.
- * @returns `true` while the address may receive another email.
+ * Only the first refused request of a window is recorded, so a flood past the budget writes one
+ * ledger row, not one per request.
+ *
+ * @param scope `ip` (the caller's IP, {@link SIGNUP_REQUESTS_PER_IP}) or `address` (the address,
+ *   {@link SIGNUP_EMAILS_PER_ADDRESS}).
+ * @param email The canonical address — the `address` bucket key, and the event label.
+ * @returns Null while within budget; otherwise the refusal to send back.
  */
-function withinAddressBudget(canonicalEmail: string): boolean {
-  return checkRequestBudget(
-    `signup-addr:${canonicalEmail}`,
-    SIGNUP_EMAILS_PER_ADDRESS,
-    SIGNUP_BUDGET_WINDOW_MS
-  ).allowed;
+async function chargeBudget(
+  scope: SignupRateLimitScope,
+  email: string | null
+): Promise<EmailSignupResult | null> {
+  const budget =
+    scope === 'ip'
+      ? checkRequestBudget(
+          `signup-ip:${resolveClientIp(await headers())}`,
+          SIGNUP_REQUESTS_PER_IP,
+          SIGNUP_BUDGET_WINDOW_MS
+        )
+      : checkRequestBudget(`signup-addr:${email}`, SIGNUP_EMAILS_PER_ADDRESS, SIGNUP_BUDGET_WINDOW_MS);
+  if (budget.allowed) return null;
+  if (!budget.firstRefusal) return { ok: false, code: EMAIL_SIGNUP_CODES.RATE_LIMITED };
+  return refuse('rate_limit', EMAIL_SIGNUP_CODES.RATE_LIMITED, email, scope);
+}
+
+/**
+ * Check the CAPTCHA, when Turnstile is configured.
+ *
+ * @param token The widget token the form sent.
+ * @returns True when CAPTCHA is off or Cloudflare confirmed the token.
+ */
+async function passesCaptcha(token: unknown): Promise<boolean> {
+  const config = turnstileConfig();
+  if (!config) return true;
+  return verifyTurnstileToken(token, config.secretKey, resolveClientIp(await headers()));
 }
 
 /**
@@ -138,18 +194,22 @@ async function sendAccountExists(account: SignupAccount, baseUrl: string): Promi
  * @param input.name Display name.
  * @param input.email Address (canonicalized here: trimmed and lowercased).
  * @param input.password Password, checked against the credential policy.
+ * @param input.captchaToken The Turnstile widget's token; required only while Turnstile is
+ *   configured.
  * @returns `{ ok: true }` when the person should check their email; otherwise a code.
  */
 export async function startEmailSignup(input: {
   name: unknown;
   email: unknown;
   password: unknown;
+  captchaToken?: unknown;
 }): Promise<EmailSignupResult> {
   const baseUrl = publicBaseUrl();
   if (!isEmailSignupAvailable() || !baseUrl) {
     return { ok: false, code: EMAIL_SIGNUP_CODES.UNAVAILABLE };
   }
-  if (!(await withinIpBudget())) return { ok: false, code: EMAIL_SIGNUP_CODES.RATE_LIMITED };
+  const ipRefusal = await chargeBudget('ip', canonicalSignupEmail(input?.email));
+  if (ipRefusal) return ipRefusal;
 
   const name = typeof input?.name === 'string' ? input.name.trim() : '';
   if (!name || name.length > SIGNUP_NAME_MAX_LENGTH) {
@@ -162,12 +222,23 @@ export async function startEmailSignup(input: {
   const passwordError = validatePassword(input?.password);
   if (passwordError) return { ok: false, code: EMAIL_SIGNUP_CODES.INVALID, message: `${passwordError}.` };
 
+  // After the field checks, so a typo does not spend the person's one-use widget token.
+  if (!(await passesCaptcha(input?.captchaToken))) {
+    return refuse('captcha', EMAIL_SIGNUP_CODES.CAPTCHA_FAILED, email);
+  }
+
   // The policy decision for a *new* address — computed before the lookup, so a refusal (closed,
   // invite-only, domain not allowed) is the same whether or not the address has an account.
-  const decision = resolveEmailSignupDecision(email, await resolveSignupPolicy(), null);
+  const policy = await resolveSignupPolicy();
+  const decision = resolveEmailSignupDecision(email, policy, null);
   if (decision.action === 'reject') return { ok: false, code: decision.code };
 
-  if (!withinAddressBudget(email)) return { ok: false, code: EMAIL_SIGNUP_CODES.RATE_LIMITED };
+  if (isDisposableEmail(email, policy.blockedEmailDomains)) {
+    return refuse('disposable_domain', EMAIL_SIGNUP_CODES.DISPOSABLE_DOMAIN, email);
+  }
+
+  const addressRefusal = await chargeBudget('address', email);
+  if (addressRefusal) return addressRefusal;
 
   try {
     let account = await findSignupAccount(email);
@@ -209,12 +280,14 @@ export async function resendSignupVerification(email: unknown): Promise<EmailSig
   if (!isEmailSignupAvailable() || !baseUrl) {
     return { ok: false, code: EMAIL_SIGNUP_CODES.UNAVAILABLE };
   }
-  if (!(await withinIpBudget())) return { ok: false, code: EMAIL_SIGNUP_CODES.RATE_LIMITED };
   const canonical = canonicalSignupEmail(email);
+  const ipRefusal = await chargeBudget('ip', canonical);
+  if (ipRefusal) return ipRefusal;
   if (!canonical) {
     return { ok: false, code: EMAIL_SIGNUP_CODES.INVALID, message: 'Enter a valid email address.' };
   }
-  if (!withinAddressBudget(canonical)) return { ok: false, code: EMAIL_SIGNUP_CODES.RATE_LIMITED };
+  const addressRefusal = await chargeBudget('address', canonical);
+  if (addressRefusal) return addressRefusal;
 
   try {
     const account = await findSignupAccount(canonical);

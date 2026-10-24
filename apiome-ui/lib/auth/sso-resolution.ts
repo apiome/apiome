@@ -56,7 +56,7 @@ import {
   type ResolvedSsoProvider,
   type ResolvedSsoProviders,
 } from './sso-provider-resolver';
-import { REST_API_BASE_URL } from '../rest-auth';
+import { postAuthEvent, type AuthEventInput } from './auth-event-writer';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CommonJS pool singleton
 const connectionPool = require('../db/db') as {
@@ -164,17 +164,9 @@ function currentState(): SsoRequestState {
 
 /* ── Dependencies (injectable for tests) ───────────────────────────────────────────────────── */
 
-/** One `auth_events` row, as `/v1/internal/auth-events` accepts it. */
-export interface SsoAuthEvent {
-  event_type: 'sign_in' | 'sign_up' | 'link';
-  outcome: 'success' | 'failure';
+/** One `auth_events` row, as `/v1/internal/auth-events` accepts it (an SSO row always names its provider). */
+export interface SsoAuthEvent extends AuthEventInput {
   provider: string;
-  user_id?: string | null;
-  user_label?: string | null;
-  error_code?: string | null;
-  ip?: string | null;
-  user_agent?: string | null;
-  detail?: Record<string, unknown>;
 }
 
 /** Everything the hooks touch outside this module. */
@@ -215,23 +207,6 @@ export async function verifyProviderIdToken(provider: ResolvedSsoProvider, idTok
   return payload;
 }
 
-/** The internal REST write path for `auth_events`. */
-async function postAuthEvent(event: SsoAuthEvent): Promise<void> {
-  const token = process.env.INTERNAL_SERVICE_TOKEN?.trim();
-  if (!token) return;
-  const base = process.env.REST_API_BASE_URL?.trim().replace(/\/+$/, '') || REST_API_BASE_URL;
-  try {
-    await fetch(`${base}/internal/auth-events`, {
-      method: 'POST',
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json', 'X-Internal-Service-Token': token },
-      body: JSON.stringify(event),
-      signal: AbortSignal.timeout(2_000),
-    });
-  } catch {
-    // Best-effort: an audit write never fails the sign-in it records.
-  }
-}
 
 /** Production dependencies. */
 export const defaultSsoResolutionDeps: SsoResolutionDeps = {

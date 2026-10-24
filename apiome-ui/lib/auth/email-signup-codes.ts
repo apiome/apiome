@@ -1,5 +1,6 @@
 /**
- * The stable codes email sign-up answers with (SGN-1.1, #5650), beyond the SGN-1.4 policy codes.
+ * The stable codes email sign-up answers with (SGN-1.1, #5650; abuse guards SGN-1.5, #5654), beyond
+ * the SGN-1.4 policy codes.
  *
  * Kept in their own dependency-free module so the browser form can import them without pulling the
  * server-only parts of `email-signup.ts` (Node `crypto`, the mail sender) into the client bundle.
@@ -16,6 +17,10 @@ export const EMAIL_SIGNUP_CODES = {
   RATE_LIMITED: 'email-signup-rate-limited',
   /** The mail sender refused the message. */
   SEND_FAILED: 'email-signup-send-failed',
+  /** The address is at a disposable email provider (SGN-1.5, #5654). */
+  DISPOSABLE_DOMAIN: 'email-signup-disposable-domain',
+  /** The CAPTCHA was missing or Cloudflare did not confirm it (SGN-1.5, #5654). */
+  CAPTCHA_FAILED: 'email-signup-captcha-failed',
 } as const;
 
 /** One of {@link EMAIL_SIGNUP_CODES}. */

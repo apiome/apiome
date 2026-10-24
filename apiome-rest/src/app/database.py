@@ -3387,8 +3387,16 @@ class Database:
     # Installation sign-up policy (SGN-1.4, #5653) — apiome.signup_policy (V274)
     # ------------------------------------------------------------------
 
-    #: Columns read back for the sign-up policy row.
-    SIGNUP_POLICY_READ_COLUMNS = ("mode", "allowed_email_domains", "updated_at", "updated_by")
+    #: Columns read back for the sign-up policy row (``blocked_email_domains`` since V317).
+    SIGNUP_POLICY_READ_COLUMNS = (
+        "mode",
+        "allowed_email_domains",
+        "blocked_email_domains",
+        "updated_at",
+        "updated_by",
+    )
+    #: The pre-V317 column set, read when the blocklist column does not exist yet.
+    _SIGNUP_POLICY_LEGACY_COLUMNS = ("mode", "allowed_email_domains", "updated_at", "updated_by")
 
     def get_signup_policy(self) -> Optional[Dict[str, Any]]:
         """Read the stored installation sign-up policy (SGN-1.4, #5653).
@@ -3397,14 +3405,21 @@ class Database:
             The single ``apiome.signup_policy`` row, or ``None`` when no policy is stored — the
             caller then falls back to env (``AUTH_SIGNUP_DISABLED``). A database that has not had
             V274 applied yet also reads as ``None``: the table not existing is the same "nothing
-            stored" state, so env behaviour is unchanged until the migration runs.
+            stored" state, so env behaviour is unchanged until the migration runs. Before V317 the
+            row is read without ``blocked_email_domains`` (an empty blocklist).
         """
-        select_cols = ", ".join(self.SIGNUP_POLICY_READ_COLUMNS)
-        query = f"SELECT {select_cols} FROM apiome.signup_policy WHERE singleton"
         try:
-            results = self.execute_query(query)
+            results = self.execute_query(
+                f"SELECT {', '.join(self.SIGNUP_POLICY_READ_COLUMNS)} "
+                "FROM apiome.signup_policy WHERE singleton"
+            )
         except pg_errors.UndefinedTable:
             return None
+        except pg_errors.UndefinedColumn:
+            results = self.execute_query(
+                f"SELECT {', '.join(self._SIGNUP_POLICY_LEGACY_COLUMNS)} "
+                "FROM apiome.signup_policy WHERE singleton"
+            )
         return results[0] if results else None
 
     def set_signup_policy(
@@ -3412,6 +3427,7 @@ class Database:
         mode: Optional[str],
         allowed_email_domains: List[str],
         updated_by: Optional[str] = None,
+        blocked_email_domains: Optional[List[str]] = None,
     ) -> Optional[Dict[str, Any]]:
         """Store, change or clear the installation sign-up policy, with its audit row.
 
@@ -3426,6 +3442,8 @@ class Database:
                 V274 CHECK is the final backstop.
             allowed_email_domains: Normalized lower-case domains (ignored when clearing).
             updated_by: Identity of the super-admin making the change.
+            blocked_email_domains: Normalized extra domains refused for email sign-up (V317,
+                SGN-1.5); None or empty for none. Ignored when clearing.
 
         Returns:
             The stored row after the write, or ``None`` when the policy was cleared.
@@ -3434,15 +3452,17 @@ class Database:
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
+                blocked = list(blocked_email_domains or [])
                 cursor.execute(
-                    "SELECT mode, allowed_email_domains FROM apiome.signup_policy "
-                    "WHERE singleton FOR UPDATE"
+                    "SELECT mode, allowed_email_domains, blocked_email_domains "
+                    "FROM apiome.signup_policy WHERE singleton FOR UPDATE"
                 )
                 existing = cursor.fetchone()
                 before = (
                     {
                         "mode": existing["mode"],
                         "allowed_email_domains": list(existing["allowed_email_domains"] or []),
+                        "blocked_email_domains": list(existing["blocked_email_domains"] or []),
                     }
                     if existing
                     else None
@@ -3457,18 +3477,24 @@ class Database:
                     cursor.execute(
                         f"""
                         INSERT INTO apiome.signup_policy
-                            (singleton, mode, allowed_email_domains, updated_by)
-                        VALUES (TRUE, %s, %s, %s)
+                            (singleton, mode, allowed_email_domains, blocked_email_domains,
+                             updated_by)
+                        VALUES (TRUE, %s, %s, %s, %s)
                         ON CONFLICT (singleton) DO UPDATE SET
                             mode = EXCLUDED.mode,
                             allowed_email_domains = EXCLUDED.allowed_email_domains,
+                            blocked_email_domains = EXCLUDED.blocked_email_domains,
                             updated_by = EXCLUDED.updated_by
                         RETURNING {select_cols}
                         """,
-                        (mode, list(allowed_email_domains), updated_by),
+                        (mode, list(allowed_email_domains), blocked, updated_by),
                     )
                     result = cursor.fetchone()
-                    after = {"mode": mode, "allowed_email_domains": list(allowed_email_domains)}
+                    after = {
+                        "mode": mode,
+                        "allowed_email_domains": list(allowed_email_domains),
+                        "blocked_email_domains": blocked,
+                    }
                     action = "updated"
 
                 # Nothing changed (clearing an already-absent policy, or re-saving identical
@@ -10894,6 +10920,34 @@ class Database:
             LIMIT %s
             """,
             (user_id, max(1, min(int(limit), 1000))),
+        )
+
+    def list_signup_guard_events(self, *, limit: int = 50) -> List[Dict[str, Any]]:
+        """Return the sign-up attempts an abuse guard refused, newest first (SGN-1.5, #5654).
+
+        Feeds the super-admin **Recent blocked sign-ups** list on the System settings Sign-up card.
+        A guard refusal is a failed ``sign_up`` row whose ``detail.guard`` names the guard
+        (``rate_limit`` | ``disposable_domain`` | ``captcha``); policy refusals carry no guard and
+        are not returned.
+
+        Args:
+            limit: Max rows (clamped to 1..200).
+
+        Returns:
+            Rows (id, provider, error_code, user_label, guard, scope, ip_hash, created_at), newest
+            first. ``ip_hash`` is the salted digest the ledger stores — never a raw address.
+        """
+        return self.execute_query(
+            """
+            SELECT id::text, provider, error_code, user_label,
+                   detail->>'guard' AS guard, detail->>'scope' AS scope,
+                   ip_hash, created_at
+            FROM apiome.auth_events
+            WHERE event_type = 'sign_up' AND outcome = 'failure' AND detail ? 'guard'
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+            """,
+            (max(1, min(int(limit), 200)),),
         )
 
     def prune_auth_events(self, *, retention_days: int) -> int:

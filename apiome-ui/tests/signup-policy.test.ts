@@ -318,6 +318,7 @@ describe('env fallback', () => {
       mode,
       allowedEmailDomains: [],
       source: 'env',
+      blockedEmailDomains: [],
     });
   });
 });
@@ -336,6 +337,22 @@ describe('signupPolicyFromRow', () => {
         mode: 'open',
         allowed_email_domains: ['Example.com', 'not a domain', 'example.com'],
       }),
-    ).toEqual({ mode: 'open', allowedEmailDomains: ['example.com'], source: 'db' });
+    ).toEqual({
+      mode: 'open',
+      allowedEmailDomains: ['example.com'],
+      source: 'db',
+      blockedEmailDomains: [],
+    });
+  });
+
+  test('reads the stored blocklist the same way (SGN-1.5)', () => {
+    const policy = signupPolicyFromRow({
+      mode: 'open',
+      allowed_email_domains: [],
+      blocked_email_domains: ['@Throwaway.example', '*bad', 'throwaway.example'],
+    });
+    expect(policy?.blockedEmailDomains).toEqual(['throwaway.example']);
+    // Email-only: the shared gate every path uses ignores it.
+    expect(signupRejectionCode(policy!, 'ada@throwaway.example')).toBeNull();
   });
 });

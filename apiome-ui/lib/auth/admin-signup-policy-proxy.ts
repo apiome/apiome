@@ -56,3 +56,26 @@ export async function proxyUpdateSignupPolicy(
   }
   return result;
 }
+
+/**
+ * Read the sign-up attempts an abuse guard refused (forwards
+ * `GET /v1/admin/signup-policy/blocked-attempts`, SGN-1.5 #5654).
+ *
+ * @param adminSessionToken The verified signed admin-session token.
+ * @param limit How many attempts to ask for (REST bounds it to 1–200).
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The upstream status and body (a `BlockedSignupAttemptList` on 200).
+ */
+export async function proxyListBlockedSignupAttempts(
+  adminSessionToken: string,
+  limit: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<AdminProviderProxyResult> {
+  const bounded = Math.min(200, Math.max(1, Math.trunc(Number.isFinite(limit) ? limit : 50)));
+  return forwardToAdminRest(
+    `/signup-policy/blocked-attempts?limit=${bounded}`,
+    { method: 'GET' },
+    adminSessionToken,
+    fetchImpl,
+  );
+}

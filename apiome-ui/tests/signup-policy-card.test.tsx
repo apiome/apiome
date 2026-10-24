@@ -3,7 +3,9 @@
  *
  * Integration tests (RTL) for `SignupPolicyCard` against a mocked `/api/admin/signup-policy`
  * proxy: the env-derived and stored states, choosing a mode, the allowed-domain list (validated,
- * normalized, sent only for Open), saving, reverting to .env, and the failure paths.
+ * normalized, sent only for Open), saving, reverting to .env, and the failure paths. SGN-1.5
+ * (#5654) adds the blocked-domain list and the Recent blocked sign-ups list
+ * (`/api/admin/signup-policy/blocked-attempts`).
  *
  * The docs fixture at the end is what `apiome-docs/screens.json` captures as
  * `admin-signup-policy`.
@@ -13,7 +15,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 
 import SignupPolicyCard from '../src/app/admin/dashboard/settings/SignupPolicyCard';
-import type { AdminSignupPolicyView } from '../lib/auth/admin-signup-policy';
+import type { AdminSignupPolicyView, BlockedSignupAttempt } from '../lib/auth/admin-signup-policy';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
@@ -41,18 +43,50 @@ const STORED = makeView({
   updated_by: 'admin',
 });
 
+/** The blocked-attempts proxy the card's list reads. */
+const BLOCKED_URL = '/api/admin/signup-policy/blocked-attempts?limit=20';
+
+/** Two refused attempts, as the proxy returns them. */
+const ATTEMPTS: BlockedSignupAttempt[] = [
+  {
+    id: 'a1',
+    created_at: '2026-10-23T09:15:00Z',
+    guard: 'disposable_domain',
+    scope: null,
+    error_code: 'email-signup-disposable-domain',
+    provider: 'email',
+    email: 'bot@mailinator.com',
+    client: '3f9c2a1b7d4e',
+  },
+  {
+    id: 'a2',
+    created_at: '2026-10-23T09:10:00Z',
+    guard: 'rate_limit',
+    scope: 'ip',
+    error_code: 'auth-rate-limited',
+    provider: null,
+    email: null,
+    client: '3f9c2a1b7d4e',
+  },
+];
+
 /**
  * Install a fetch mock for the proxy: GET answers `initial`; PUT answers what `put` returns
- * (default: the payload echoed back as a stored policy).
+ * (default: the payload echoed back as a stored policy); the blocked-attempts list answers
+ * `attempts`.
  */
 function mockFetch(
   initial: AdminSignupPolicyView,
   put?: (body: { mode: string | null; allowed_email_domains: string[] }) => {
     status: number;
     body: unknown;
-  }
+  },
+  attempts: BlockedSignupAttempt[] = [],
 ) {
   const impl = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === BLOCKED_URL) {
+      return { ok: true, status: 200, json: async () => ({ attempts }) } as unknown as Response;
+    }
     expect(String(input)).toBe('/api/admin/signup-policy');
     if ((init?.method ?? 'GET') === 'GET') {
       return { ok: true, status: 200, json: async () => initial } as unknown as Response;
@@ -143,7 +177,9 @@ describe('SignupPolicyCard — saving', () => {
     fireEvent.click(card.getByRole('button', { name: 'Save' }));
 
     expect(await card.findByRole('status')).toHaveTextContent('Saved');
-    expect(putBodies(fetchImpl)).toEqual([{ mode: 'invite_only', allowed_email_domains: [] }]);
+    expect(putBodies(fetchImpl)).toEqual([
+      { mode: 'invite_only', allowed_email_domains: [], blocked_email_domains: [] },
+    ]);
     expect(card.queryByText('Env-derived')).not.toBeInTheDocument();
     expect(card.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
@@ -160,7 +196,11 @@ describe('SignupPolicyCard — saving', () => {
 
     await card.findByRole('status');
     expect(putBodies(fetchImpl)).toEqual([
-      { mode: 'open', allowed_email_domains: ['northwind.io', 'contoso.example'] },
+      {
+        mode: 'open',
+        allowed_email_domains: ['northwind.io', 'contoso.example'],
+        blocked_email_domains: [],
+      },
     ]);
   });
 
@@ -190,7 +230,9 @@ describe('SignupPolicyCard — saving', () => {
 
     fireEvent.click(card.getByRole('button', { name: 'Save' }));
     await card.findByRole('status');
-    expect(putBodies(fetchImpl)).toEqual([{ mode: 'closed', allowed_email_domains: [] }]);
+    expect(putBodies(fetchImpl)).toEqual([
+      { mode: 'closed', allowed_email_domains: [], blocked_email_domains: [] },
+    ]);
   });
 
   it('Use .env clears the stored policy', async () => {
@@ -201,9 +243,78 @@ describe('SignupPolicyCard — saving', () => {
     fireEvent.click(card.getByRole('button', { name: 'Use .env' }));
 
     expect(await card.findByText('Env-derived')).toBeInTheDocument();
-    expect(putBodies(fetchImpl)).toEqual([{ mode: null, allowed_email_domains: [] }]);
+    expect(putBodies(fetchImpl)).toEqual([
+      { mode: null, allowed_email_domains: [], blocked_email_domains: [] },
+    ]);
     expect(card.getByRole('radio', { name: /^Closed/ })).toBeChecked();
     expect(card.queryByRole('button', { name: 'Use .env' })).not.toBeInTheDocument();
+  });
+});
+
+describe('SignupPolicyCard — abuse protection (SGN-1.5)', () => {
+  it('saves normalized blocked domains in any mode', async () => {
+    const fetchImpl = mockFetch(makeView({ mode: 'closed', env_mode: 'closed' }));
+    render(<SignupPolicyCard />);
+    const card = await loadedCard();
+
+    const field = card.getByLabelText('Blocked email domains');
+    expect(field).toBeEnabled();
+    fireEvent.change(field, { target: { value: '@Throwaway.example\nthrowaway.example spam.example' } });
+    fireEvent.click(card.getByRole('button', { name: 'Save' }));
+
+    await card.findByRole('status');
+    expect(putBodies(fetchImpl)).toEqual([
+      {
+        mode: 'closed',
+        allowed_email_domains: [],
+        blocked_email_domains: ['throwaway.example', 'spam.example'],
+      },
+    ]);
+  });
+
+  it('shows the stored blocklist and the bundled count', async () => {
+    mockFetch({ ...STORED, blocked_email_domains: ['throwaway.example'] });
+    render(<SignupPolicyCard />);
+    const card = await loadedCard();
+
+    expect(card.getByLabelText('Blocked email domains')).toHaveValue('throwaway.example');
+    expect(card.getByText(/on top of the \d+ disposable-email domains Apiome always blocks/)).toBeInTheDocument();
+    expect(card.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('blocks saving an invalid blocked domain', async () => {
+    const fetchImpl = mockFetch(makeView());
+    render(<SignupPolicyCard />);
+    const card = await loadedCard();
+
+    fireEvent.change(card.getByLabelText('Blocked email domains'), { target: { value: '*.bad' } });
+    expect(card.getByRole('alert')).toHaveTextContent('Not a valid email domain: *.bad.');
+    expect(card.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(putBodies(fetchImpl)).toEqual([]);
+  });
+
+  it('lists recent blocked sign-ups with their reason and path', async () => {
+    mockFetch(makeView(), undefined, ATTEMPTS);
+    render(<SignupPolicyCard />);
+    await loadedCard();
+
+    const list = await screen.findByTestId('blocked-signups');
+    const rows = await within(list).findAllByTestId('blocked-signup-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('Disposable email address');
+    expect(rows[0]).toHaveTextContent('Email');
+    expect(rows[0]).toHaveTextContent('bot@mailinator.com');
+    expect(rows[1]).toHaveTextContent('Rate limit — too many attempts from one network');
+    expect(rows[1]).toHaveTextContent('Provider sign-up');
+  });
+
+  it('says when nothing has been blocked', async () => {
+    mockFetch(makeView());
+    render(<SignupPolicyCard />);
+    await loadedCard();
+    expect(await screen.findByTestId('blocked-signups-empty')).toHaveTextContent(
+      'No sign-ups have been blocked.'
+    );
   });
 });
 
@@ -299,10 +410,16 @@ describe('the docs fixtures', () => {
       status: 200,
       json: async () =>
         String(input) === '/api/admin/signup-policy'
-          ? { ...STORED, allowed_email_domains: ['northwind.io', 'contoso.example'] }
-          : String(input) === '/api/admin/sso/providers'
-            ? { providers: [] } // the Single sign-on card (EID-1.1), empty here
-            : DOCS_PROVIDERS,
+          ? {
+              ...STORED,
+              allowed_email_domains: ['northwind.io', 'contoso.example'],
+              blocked_email_domains: ['throwaway.example'],
+            }
+          : String(input) === BLOCKED_URL
+            ? { attempts: ATTEMPTS }
+            : String(input) === '/api/admin/sso/providers'
+              ? { providers: [] } // the Single sign-on card (EID-1.1), empty here
+              : DOCS_PROVIDERS,
     })) as unknown as typeof fetch;
 
     render(
@@ -316,6 +433,7 @@ describe('the docs fixtures', () => {
 
     const card = await loadedCard();
     expect(card.getByLabelText('Allowed email domains')).toHaveValue('northwind.io\ncontoso.example');
+    await card.findAllByTestId('blocked-signup-row');
     await screen.findByRole('region', { name: 'GitHub provider configuration' });
 
     writeA11yFixture(

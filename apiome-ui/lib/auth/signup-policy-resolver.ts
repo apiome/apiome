@@ -29,6 +29,7 @@ type EnvMap = Record<string, string | undefined>;
 export type SignupPolicyRowReader = () => Promise<{
   mode?: unknown;
   allowed_email_domains?: unknown;
+  blocked_email_domains?: unknown;
 } | null>;
 
 /** Default cache lifetime (ms): a change made on another instance lands within this. */
@@ -85,9 +86,9 @@ const readStoredRow: SignupPolicyRowReader = async () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const connectionPool = require('../db/db');
   try {
-    const result = await connectionPool.query(
-      'SELECT mode, allowed_email_domains FROM apiome.signup_policy WHERE singleton',
-    );
+    // `SELECT *` rather than a column list: `blocked_email_domains` arrives with V317, and a
+    // database still on V274 must read as "no blocklist", not fail sign-up closed.
+    const result = await connectionPool.query('SELECT * FROM apiome.signup_policy WHERE singleton');
     return result.rowCount > 0 ? result.rows[0] : null;
   } catch (error) {
     if ((error as { code?: string } | null)?.code === UNDEFINED_TABLE) return null;

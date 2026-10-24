@@ -21,6 +21,11 @@
  *
  * The policy only ever gates **creating** an account. It never stops an existing user signing in.
  *
+ * The stored row also carries `blockedEmailDomains` (V317, SGN-1.5 #5654): extra disposable domains
+ * refused for **email** sign-up, on top of the bundled list in `disposable-email-domains.ts`. It is
+ * not part of {@link signupRejectionCode} — only the email sign-up action applies it, because an
+ * OAuth provider has already verified the address it hands over.
+ *
  * This module is pure (no I/O, no imports) so the whole matrix is testable in isolation and it can
  * be imported from client components; the cached database read lives in
  * `signup-policy-resolver.ts`. It is the TypeScript mirror of
@@ -47,6 +52,11 @@ export interface SignupPolicy {
   allowedEmailDomains: readonly string[];
   /** `db` when the policy is stored, `env` when it is the `AUTH_SIGNUP_DISABLED` fallback. */
   source: SignupPolicySource;
+  /**
+   * Extra lower-case domains refused for email sign-up, on top of the bundled disposable list
+   * (SGN-1.5). Absent or empty ⇒ only the bundled list applies.
+   */
+  blockedEmailDomains?: readonly string[];
 }
 
 /**
@@ -68,6 +78,9 @@ export type SignupRejectionCode =
 
 /** Upper bound on the allowed-domain list (matches the V274 CHECK and the REST validation). */
 export const MAX_ALLOWED_EMAIL_DOMAINS = 200;
+
+/** Upper bound on the extra blocked-domain list (matches the V317 CHECK and the REST validation). */
+export const MAX_BLOCKED_EMAIL_DOMAINS = 1000;
 
 /**
  * A bare DNS domain: dot-separated labels of letters/digits/hyphens, no leading/trailing hyphen,
@@ -173,29 +186,48 @@ export function signupPolicyFromEnv(
     mode: isSignupDisabledByEnv(env) ? 'closed' : 'open',
     allowedEmailDomains: [],
     source: 'env',
+    blockedEmailDomains: [],
   };
+}
+
+/**
+ * Read a stored domain array: normalized, duplicates dropped, malformed entries dropped (a
+ * malformed stored domain can never match an address).
+ *
+ * @param stored The stored column value.
+ * @returns The usable domains, first occurrence first.
+ */
+function storedDomains(stored: unknown): string[] {
+  const domains: string[] = [];
+  for (const entry of Array.isArray(stored) ? stored : []) {
+    const domain = normalizeEmailDomain(entry);
+    if (domain && !domains.includes(domain)) domains.push(domain);
+  }
+  return domains;
 }
 
 /**
  * Build a policy from a stored `apiome.signup_policy` row.
  *
- * @param row The stored row (`mode`, `allowed_email_domains`), or null/undefined when none is
- *   stored.
+ * @param row The stored row (`mode`, `allowed_email_domains`, and since V317
+ *   `blocked_email_domains`), or null/undefined when none is stored.
  * @returns The stored policy with source `db`, or null when there is no usable row — the caller
  *   then falls back to env. A row whose mode is unrecognized is treated as unusable rather than
  *   guessed at; a malformed stored domain can never match an address, so it is dropped.
  */
 export function signupPolicyFromRow(
-  row: { mode?: unknown; allowed_email_domains?: unknown } | null | undefined,
+  row:
+    | { mode?: unknown; allowed_email_domains?: unknown; blocked_email_domains?: unknown }
+    | null
+    | undefined,
 ): SignupPolicy | null {
   if (!row || !isSignupMode(row.mode)) return null;
-  const domains: string[] = [];
-  const stored = Array.isArray(row.allowed_email_domains) ? row.allowed_email_domains : [];
-  for (const entry of stored) {
-    const domain = normalizeEmailDomain(entry);
-    if (domain && !domains.includes(domain)) domains.push(domain);
-  }
-  return { mode: row.mode, allowedEmailDomains: domains, source: 'db' };
+  return {
+    mode: row.mode,
+    allowedEmailDomains: storedDomains(row.allowed_email_domains),
+    source: 'db',
+    blockedEmailDomains: storedDomains(row.blocked_email_domains),
+  };
 }
 
 /**

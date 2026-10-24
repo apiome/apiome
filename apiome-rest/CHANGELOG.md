@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.447.0] - 2026-10-23
+
+### Added
+- **Sign-up abuse protection (SGN-1.5, #5654)** (apiome-db V317):
+  - `GET|PUT /v1/admin/signup-policy` gain `blocked_email_domains` — extra domains refused for **email** sign-up,
+    on top of the disposable-email list apiome-ui bundles (at most 1000; a listed domain also blocks its
+    subdomains). Stored on `apiome.signup_policy`, so clearing the policy clears them; recorded in
+    `signup_policy_audit` with the rest of the policy. Never applied to provider sign-up.
+  - `GET /v1/admin/signup-policy/blocked-attempts?limit=` (super-admin, 1–200, default 50) — the sign-up
+    attempts an abuse guard refused, newest first: failed `sign_up` rows of `auth_events` carrying
+    `detail.guard` (`rate_limit` · `disposable_domain` · `captcha`). Returns a 12-character prefix of the salted
+    IP digest as `client`, never an address.
+  - `get_signup_policy` reads a pre-V317 database without the new column.
+  - OpenAPI 1.311.0.
+
 ## [1.446.0] - 2026-10-23
 
 ### Added

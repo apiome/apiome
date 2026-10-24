@@ -86,6 +86,20 @@ still be mapped and documented.
 
 ## Rendering affordances (OLO-3.2, #4200)
 
+## Sign-up abuse-guard codes (SGN-1.5, #5654)
+
+Returned by the email sign-up actions (`lib/auth/email-signup-actions.ts`, `EMAIL_SIGNUP_CODES`)
+and the sign-up intent route. Each refusal is also written to `auth_events` as a failed `sign_up`
+row with `detail.guard` (`rate_limit` · `disposable_domain` · `captcha`); super-admins read them on
+the System settings Sign-up card. A rate-limit refusal is recorded once per budget window.
+
+| Code | Meaning | Emitted by |
+| --- | --- | --- |
+| `email-signup-rate-limited` | Too many sign-up or resend requests from this client (20 an hour) or emails to this address (3 an hour). | `startEmailSignup`, `resendSignupVerification` |
+| `email-signup-disposable-domain` | The address is at a disposable email provider: the bundled list or the admin's extra blocked domains. Email sign-up only. | `startEmailSignup` |
+| `email-signup-captcha-failed` | Turnstile is configured and the widget token was missing or Cloudflare did not confirm it (fails closed if Cloudflare cannot be reached). | `startEmailSignup` |
+| `auth-rate-limited` | HTTP 429 from `POST /api/auth/signup-intent`: too many provider sign-ups started from this client (10 a minute). The only guard provider sign-up shares. | `src/app/api/auth/signup-intent/route.ts` |
+
 Each copy entry may set `retry: true`, which renders a **"Try again"** link in the login banner
 pointing back to a clean `/login` (error cleared, validated `callbackUrl` preserved). It is set
 on codes the user can resolve outside Apiome and then retry (`unverified-email`,

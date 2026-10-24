@@ -7,6 +7,7 @@ import {
   AUTH_RATE_LIMITED_CODE,
   checkRequestBudget,
 } from '../../../../../lib/auth/login-rate-limit';
+import { recordSignupGuardEvent } from '../../../../../lib/auth/signup-guard-events';
 
 /**
  * Sets a short-lived cookie so the next OAuth callback is treated as self-signup (new account).
@@ -16,11 +17,22 @@ import {
  *
  * Signup completion is part of the auth surface, so the route carries a per-IP
  * request budget (OLO-7.1): over-budget calls get a structured 429
- * (`auth-rate-limited`) with `Retry-After` before any other work runs.
+ * (`auth-rate-limited`) with `Retry-After` before any other work runs. The first refusal of each
+ * window is recorded in `auth_events` (SGN-1.5, #5654) — the one abuse guard provider sign-up
+ * shares with the email form. The body is not read before the refusal, so the provider is unknown.
  */
 export async function POST(request: NextRequest) {
   const ipBudget = checkRequestBudget(`signup-intent:ip:${resolveClientIp(request.headers)}`);
   if (!ipBudget.allowed) {
+    if (ipBudget.firstRefusal) {
+      await recordSignupGuardEvent({
+        guard: 'rate_limit',
+        scope: 'ip',
+        code: AUTH_RATE_LIMITED_CODE,
+        provider: null,
+        headers: request.headers,
+      });
+    }
     return NextResponse.json(
       {
         error: 'Too many signup requests. Try again later.',
