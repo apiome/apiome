@@ -106,6 +106,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Create an account with your email address and a password: Apiome emails a confirmation link that works once and expires in 24 hours, then signs you in and starts setting up your first organization
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
   - The old sign-up request queue and the admin console's **Pending Signups** tab are retired: people still waiting are emailed a link to create their account themselves
+  - Sign-up is protected against scripted accounts: rate limits on sign-up and **Resend email**, disposable email addresses refused (administrators can add more domains under **Blocked email domains**), and an optional Cloudflare Turnstile check on the email form; each refusal says why, and administrators see them under **Recent blocked sign-ups** on **System settings**
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Design system:

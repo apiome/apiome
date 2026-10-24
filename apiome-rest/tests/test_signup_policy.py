@@ -247,6 +247,31 @@ def test_row_parsing():
     assert policy == SignupPolicy(MODE_OPEN, ("example.com",), SOURCE_DB)
 
 
+def test_row_parsing_reads_the_blocked_domains():
+    """SGN-1.5: the stored blocklist is read the same way, and never gates the shared policy."""
+    policy = signup_policy_from_row(
+        {
+            "mode": "open",
+            "allowed_email_domains": [],
+            "blocked_email_domains": ["Throwaway.example", "*bad", "throwaway.example"],
+        }
+    )
+    assert policy.blocked_email_domains == ("throwaway.example",)
+    # The blocklist is email-only, applied by apiome-ui; the shared gate ignores it.
+    assert sp.signup_rejection_code(policy, "ada@throwaway.example") is None
+    # A pre-V317 row has no column at all.
+    assert signup_policy_from_row({"mode": "open"}).blocked_email_domains == ()
+
+
+def test_normalize_domains_takes_a_limit():
+    domains = [f"d{i}.example" for i in range(sp.MAX_ALLOWED_EMAIL_DOMAINS + 1)]
+    assert len(
+        normalize_allowed_email_domains(domains, limit=sp.MAX_BLOCKED_EMAIL_DOMAINS)
+    ) == len(domains)
+    with pytest.raises(ValueError):
+        normalize_allowed_email_domains(domains[:3], limit=2)
+
+
 @pytest.mark.parametrize("env_value,mode", [("true", MODE_CLOSED), (None, MODE_OPEN)])
 def test_unset_in_db_leaves_env_behaviour_unchanged(env_value, mode):
     env = {} if env_value is None else {"AUTH_SIGNUP_DISABLED": env_value}
@@ -342,3 +367,29 @@ def test_unreadable_database_serves_the_last_known_policy():
 def test_cache_lifetime_is_configurable_and_bounded(raw, expected):
     env = {} if raw is None else {"SIGNUP_POLICY_CACHE_TTL_SECONDS": raw}
     assert signup_policy_cache_ttl_seconds(env) == expected
+
+
+# --- 6. Reading the stored row before V317 (SGN-1.5, #5654) --------------------
+
+
+def test_get_signup_policy_reads_without_the_blocklist_before_v317():
+    """A database without ``blocked_email_domains`` falls back to the pre-V317 column set."""
+    from unittest.mock import patch
+
+    from psycopg2 import errors as pg_errors
+
+    from app.database import Database
+
+    row = {"mode": "open", "allowed_email_domains": [], "updated_at": None, "updated_by": None}
+    calls = []
+
+    def fake_query(self, query, params=None):
+        calls.append(query)
+        if "blocked_email_domains" in query:
+            raise pg_errors.UndefinedColumn("column does not exist")
+        return [row]
+
+    with patch.object(Database, "execute_query", fake_query):
+        assert Database.get_signup_policy(Database.__new__(Database)) == row
+    assert len(calls) == 2
+    assert "blocked_email_domains" not in calls[1]

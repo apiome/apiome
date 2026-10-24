@@ -5,8 +5,12 @@ admin console's **Sign-up** card builds on:
 
 * ``GET /v1/admin/signup-policy`` — the effective policy, whether it is stored or the env
   fallback, and what the env fallback would be.
-* ``PUT /v1/admin/signup-policy`` — store the policy (``mode`` + ``allowed_email_domains``), or
-  clear the stored policy with ``mode: null`` so the installation reverts to env.
+* ``PUT /v1/admin/signup-policy`` — store the policy (``mode`` + ``allowed_email_domains`` +
+  ``blocked_email_domains``), or clear the stored policy with ``mode: null`` so the installation
+  reverts to env.
+* ``GET /v1/admin/signup-policy/blocked-attempts`` — the sign-up attempts an abuse guard refused
+  (SGN-1.5, #5654): rate limits, disposable email domains and failed CAPTCHAs, read from
+  ``apiome.auth_events``.
 
 Invariants:
 
@@ -26,13 +30,14 @@ import logging
 from datetime import datetime
 from typing import Any, List, Mapping, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from .auth_provider_config_routes import require_super_admin
 from .database import db
 from .signup_policy import (
     MAX_ALLOWED_EMAIL_DOMAINS,
+    MAX_BLOCKED_EMAIL_DOMAINS,
     SIGNUP_MODES,
     SOURCE_DB,
     SOURCE_ENV,
@@ -60,6 +65,13 @@ class SignupPolicyView(BaseModel):
         default_factory=list,
         description=(
             "Email domains allowed to sign up while the mode is 'open'. Empty means any domain."
+        ),
+    )
+    blocked_email_domains: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Extra email domains refused for email sign-up, on top of the disposable-email list "
+            "the UI bundles. Empty when none are stored. Never applied to provider sign-up."
         ),
     )
     source: str = Field(
@@ -105,6 +117,51 @@ class SignupPolicyUpdateRequest(BaseModel):
             "separately. Ignored when mode is null."
         ),
     )
+    blocked_email_domains: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Extra email domains refused for email sign-up (e.g. 'throwaway.example'), on top of "
+            f"the bundled disposable-email list. At most {MAX_BLOCKED_EMAIL_DOMAINS}; a listed "
+            "domain also blocks its subdomains. Omitted ⇒ none. Ignored when mode is null."
+        ),
+    )
+
+
+class BlockedSignupAttempt(BaseModel):
+    """One sign-up attempt an abuse guard refused (SGN-1.5)."""
+
+    id: str = Field(..., description="The auth_events row id.")
+    created_at: datetime = Field(..., description="When the attempt was refused.")
+    guard: str = Field(
+        ..., description="Which guard refused it: 'rate_limit', 'disposable_domain' or 'captcha'."
+    )
+    scope: Optional[str] = Field(
+        None,
+        description=(
+            "For rate limits: 'ip' (too many attempts from one client) or 'address' (too many "
+            "emails to one address). Null for the other guards."
+        ),
+    )
+    error_code: Optional[str] = Field(None, description="The stable code the person was shown.")
+    provider: Optional[str] = Field(
+        None, description="'email' for the email form, else the sign-in provider slug."
+    )
+    email: Optional[str] = Field(
+        None, description="The address the attempt carried; null when it was refused before one was read."
+    )
+    client: Optional[str] = Field(
+        None,
+        description=(
+            "The first 12 characters of the salted client-IP digest, to tell repeat clients apart. "
+            "Never a raw address."
+        ),
+    )
+
+
+class BlockedSignupAttemptList(BaseModel):
+    """Payload of ``GET /v1/admin/signup-policy/blocked-attempts``."""
+
+    attempts: List[BlockedSignupAttempt] = Field(default_factory=list)
 
 
 def _policy_view(row: Optional[Mapping[str, Any]]) -> SignupPolicyView:
@@ -122,12 +179,14 @@ def _policy_view(row: Optional[Mapping[str, Any]]) -> SignupPolicyView:
         return SignupPolicyView(
             mode=env_policy.mode,
             allowed_email_domains=[],
+            blocked_email_domains=[],
             source=SOURCE_ENV,
             env_mode=env_policy.mode,
         )
     return SignupPolicyView(
         mode=stored.mode,
         allowed_email_domains=list(stored.allowed_email_domains),
+        blocked_email_domains=list(stored.blocked_email_domains),
         source=SOURCE_DB,
         env_mode=env_policy.mode,
         updated_at=row.get("updated_at") if row else None,
@@ -200,17 +259,76 @@ async def update_signup_policy(
         )
     try:
         domains = normalize_allowed_email_domains(payload.allowed_email_domains)
+        blocked = normalize_allowed_email_domains(
+            payload.blocked_email_domains, limit=MAX_BLOCKED_EMAIL_DOMAINS
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=422,
             detail={"error": "invalid_email_domain", "message": str(exc)},
         ) from exc
 
-    row = db.set_signup_policy(payload.mode, list(domains), updated_by=_ACTOR)
+    row = db.set_signup_policy(
+        payload.mode, list(domains), updated_by=_ACTOR, blocked_email_domains=list(blocked)
+    )
     invalidate_signup_policy_cache()
     logger.info(
-        "super-admin set the sign-up policy: mode=%s allowed_email_domains=%d",
+        "super-admin set the sign-up policy: mode=%s allowed_email_domains=%d "
+        "blocked_email_domains=%d",
         payload.mode,
         len(domains),
+        len(blocked),
     )
     return _policy_view(row)
+
+
+#: Default and maximum number of blocked attempts one read returns.
+DEFAULT_BLOCKED_ATTEMPTS_LIMIT = 50
+MAX_BLOCKED_ATTEMPTS_LIMIT = 200
+
+
+@router.get(
+    "/blocked-attempts",
+    response_model=BlockedSignupAttemptList,
+    responses={
+        401: {"description": "No super-admin session presented."},
+        403: {"description": "Super-admin session invalid or expired."},
+    },
+)
+async def list_blocked_signup_attempts(
+    limit: int = Query(
+        DEFAULT_BLOCKED_ATTEMPTS_LIMIT,
+        ge=1,
+        le=MAX_BLOCKED_ATTEMPTS_LIMIT,
+        description="How many attempts to return, newest first.",
+    ),
+    _: None = Depends(require_super_admin),
+) -> BlockedSignupAttemptList:
+    """List the sign-up attempts an abuse guard refused, newest first (SGN-1.5, #5654).
+
+    Reads the failed ``sign_up`` rows of ``apiome.auth_events`` that carry a ``detail.guard``.
+    Sign-up happens before any workspace exists, so this is an installation view for super-admins,
+    not part of a workspace's access audit.
+
+    Args:
+        limit: How many attempts to return (1–200).
+
+    Returns:
+        The attempts, newest first.
+    """
+    rows = db.list_signup_guard_events(limit=limit)
+    return BlockedSignupAttemptList(
+        attempts=[
+            BlockedSignupAttempt(
+                id=row["id"],
+                created_at=row["created_at"],
+                guard=row.get("guard") or "unknown",
+                scope=row.get("scope"),
+                error_code=row.get("error_code"),
+                provider=row.get("provider"),
+                email=row.get("user_label"),
+                client=(row.get("ip_hash") or "")[:12] or None,
+            )
+            for row in rows
+        ]
+    )

@@ -34,7 +34,10 @@ asks you to **finish setting up your account**:
 1. On **Create your account**, under **or use your email**, fill in **Full name**, **Email
    address** and **Password**. The password needs at least 8 characters, an uppercase and a
    lowercase letter, and a number or special character — the hint under the field lists them.
-2. **Click “Create account”.**
+   Use a permanent address: addresses from disposable email services are refused.
+2. If your installation shows a **security check** above the button, complete it — **Create
+   account** stays switched off until it passes.
+3. **Click “Create account”.**
 
 <Screenshot id="signup-form" alt="Create your account: the Full name, Email address and Password fields filled in for Ada Lovelace, with the password rules under the password field and the Create account button" />
 
@@ -42,13 +45,13 @@ Apiome shows **Check your email** and sends a message to the address you entered
 
 <Screenshot id="signup-check-email" alt="Check your email: we sent a link to ada@example.com, with Resend email and Use a different email buttons" />
 
-3. Open the email **Confirm your email for Apiome** and **click “Confirm email”**.
+4. Open the email **Confirm your email for Apiome** and **click “Confirm email”**.
 
 The page says **Email confirmed** and signs you in.
 
 <Screenshot id="signup-verified" alt="Email confirmed: your account is ready, signing you in" />
 
-4. Apiome then walks you through [setting up your first organization](./onboarding.mdx).
+5. Apiome then walks you through [setting up your first organization](./onboarding.mdx).
 
 You cannot sign in with the new account until you confirm the email address.
 
@@ -108,9 +111,13 @@ creating an account:
 | *New accounts on this server are by invitation only.* | Only invited people get in | Ask a workspace administrator to set up your account and invite you |
 | *New accounts on this server are limited to approved email domains…* | Your email domain is not on the list | Sign up with your work email address |
 | *Too many sign-up attempts.* | Too many tries from your network or for your address in the last hour | Wait an hour, then try again |
+| *Too many sign-up attempts from your network.* | Too many provider sign-ups started from your network in the last minute | Wait a minute, then try again |
+| *Addresses from disposable email services cannot be used to sign up.* | Your address is at a throwaway email service | Sign up with a permanent address, such as your work email |
+| *We could not confirm the security check.* | The security check above **Create account** did not pass or expired | Complete the check again, then **click “Create account”** |
 
 None of this affects an account you already have — sign in as usual. Administrators set this on
-[System settings](../admin/auth-providers.mdx#sign-up-policy).
+[System settings](../admin/auth-providers.mdx#sign-up-policy), and see refused attempts there under
+[**Recent blocked sign-ups**](../admin/auth-providers.mdx#abuse-protection).
 
 ## Where next
 

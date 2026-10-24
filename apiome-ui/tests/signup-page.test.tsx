@@ -23,7 +23,10 @@ jest.mock('@lib/auth/session-client', () => ({
 }));
 jest.mock('@/app/hooks/useDarkMode', () => ({ useDarkMode: () => false }));
 
-import SignupClient, { PROVIDER_START_FAILED } from '../src/app/signup/SignupClient';
+import SignupClient, {
+  PROVIDER_START_FAILED,
+  PROVIDER_START_RATE_LIMITED,
+} from '../src/app/signup/SignupClient';
 import {
   SIGNUP_CLOSED_NOTICE,
   SIGNUP_INVITE_ONLY_NOTICE,
@@ -107,6 +110,16 @@ describe('/signup — an open installation', () => {
     expect(screen.getByTestId('signup-error')).toHaveTextContent(PROVIDER_START_FAILED);
     expect(mockSignIn).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Sign up with Google' })).toBeInTheDocument();
+  });
+
+  it('names the rate limit when this network has started too many sign-ups (SGN-1.5)', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 429, json: async () => ({ code: 'auth-rate-limited' }) });
+    renderPage();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Sign up with GitHub' }));
+    });
+    expect(screen.getByTestId('signup-error')).toHaveTextContent(PROVIDER_START_RATE_LIMITED);
+    expect(mockSignIn).not.toHaveBeenCalled();
   });
 
   it('names the allowed email domains when the policy restricts them', () => {

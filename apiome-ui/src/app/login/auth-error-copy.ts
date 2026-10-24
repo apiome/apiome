@@ -84,6 +84,15 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'error',
     text: 'We could not send the confirmation email. Try again in a few minutes.',
   },
+  // --- Sign-up abuse guards (SGN-1.5, #5654) ---
+  'email-signup-disposable-domain': {
+    type: 'error',
+    text: 'Addresses from disposable email services cannot be used to sign up. Use a permanent email address, such as your work email.',
+  },
+  'email-signup-captcha-failed': {
+    type: 'error',
+    text: 'We could not confirm the security check. Complete the check below, then select Create account again.',
+  },
   'sign-in-failed': {
     type: 'error',
     text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',

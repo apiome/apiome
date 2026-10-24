@@ -1,6 +1,8 @@
 /**
  * Email sign-up server actions (SGN-1.1, #5650): the policy gate, no enumeration, canonicalization,
- * the no-sender path, per-address budgets, resend and link redemption.
+ * the no-sender path, per-address budgets, resend and link redemption — and the SGN-1.5 (#5654)
+ * abuse guards: the disposable-email blocklist, the optional Turnstile CAPTCHA, and the
+ * `auth_events` row each refusal leaves.
  */
 
 const mockFindSignupAccount = jest.fn();
@@ -10,6 +12,8 @@ const mockCreateUser = jest.fn();
 const mockInsertAuthOneTimeCode = jest.fn();
 const mockSendSignupEmail = jest.fn();
 const mockResolveSignupPolicy = jest.fn();
+const mockRecordSignupGuardEvent = jest.fn();
+const mockVerifyTurnstileToken = jest.fn();
 
 jest.mock('next/headers', () => ({
   headers: async () => new Headers({ 'x-forwarded-for': '203.0.113.7' }),
@@ -31,6 +35,14 @@ jest.mock('../lib/auth/send-signup-email', () => ({
 jest.mock('../lib/auth/signup-policy-resolver', () => ({
   resolveSignupPolicy: (...args: unknown[]) => mockResolveSignupPolicy(...args),
 }));
+jest.mock('../lib/auth/signup-guard-events', () => ({
+  ...jest.requireActual('../lib/auth/signup-guard-events'),
+  recordSignupGuardEvent: (...args: unknown[]) => mockRecordSignupGuardEvent(...args),
+}));
+jest.mock('../lib/auth/turnstile', () => ({
+  ...jest.requireActual('../lib/auth/turnstile'),
+  verifyTurnstileToken: (...args: unknown[]) => mockVerifyTurnstileToken(...args),
+}));
 
 import {
   resendSignupVerification,
@@ -39,7 +51,13 @@ import {
 } from '../lib/auth/email-signup-actions';
 import { _resetLoginRateLimit } from '../lib/auth/login-rate-limit';
 
-const ENV_KEYS = ['SENDGRID_API_KEY', 'EMAIL_FROM', 'BETTER_AUTH_URL'] as const;
+const ENV_KEYS = [
+  'SENDGRID_API_KEY',
+  'EMAIL_FROM',
+  'BETTER_AUTH_URL',
+  'TURNSTILE_SITE_KEY',
+  'TURNSTILE_SECRET_KEY',
+] as const;
 const saved: Record<string, string | undefined> = {};
 
 const OPEN = { mode: 'open', allowedEmailDomains: [], source: 'db' };
@@ -62,6 +80,9 @@ beforeEach(() => {
   process.env.SENDGRID_API_KEY = 'SG.key';
   process.env.EMAIL_FROM = 'no-reply@apiome.dev';
   process.env.BETTER_AUTH_URL = 'https://app.apiome.dev';
+  delete process.env.TURNSTILE_SITE_KEY;
+  delete process.env.TURNSTILE_SECRET_KEY;
+  mockRecordSignupGuardEvent.mockResolvedValue(undefined);
   mockResolveSignupPolicy.mockResolvedValue(OPEN);
   mockSendSignupEmail.mockResolvedValue(true);
   mockIssueVerificationToken.mockResolvedValue(undefined);
@@ -167,6 +188,133 @@ describe('startEmailSignup', () => {
   });
 });
 
+describe('startEmailSignup — abuse guards (SGN-1.5)', () => {
+  /** The guard events recorded so far, without the request headers. */
+  const events = () =>
+    mockRecordSignupGuardEvent.mock.calls.map(([event]) => {
+      const rest = { ...(event as Record<string, unknown>) };
+      delete rest.headers;
+      return rest;
+    });
+
+  it.each(['bot@mailinator.com', 'bot@inbox.mailinator.com', 'BOT@YopMail.com'])(
+    'refuses the disposable address %s before looking it up, and records it',
+    async (email) => {
+      await expect(startEmailSignup({ ...GOOD, email })).resolves.toEqual({
+        ok: false,
+        code: 'email-signup-disposable-domain',
+      });
+      expect(mockFindSignupAccount).not.toHaveBeenCalled();
+      expect(mockSendSignupEmail).not.toHaveBeenCalled();
+      expect(events()).toEqual([
+        {
+          guard: 'disposable_domain',
+          code: 'email-signup-disposable-domain',
+          scope: undefined,
+          email: email.toLowerCase(),
+          provider: 'email',
+        },
+      ]);
+    }
+  );
+
+  it('refuses a domain the admin added to the blocklist', async () => {
+    mockResolveSignupPolicy.mockResolvedValue({ ...OPEN, blockedEmailDomains: ['example.com'] });
+    await expect(startEmailSignup(GOOD)).resolves.toEqual({
+      ok: false,
+      code: 'email-signup-disposable-domain',
+    });
+  });
+
+  it('lets an ordinary address through and records nothing', async () => {
+    mockFindSignupAccount.mockResolvedValueOnce(null).mockResolvedValueOnce(NEW_ACCOUNT);
+    await expect(startEmailSignup(GOOD)).resolves.toEqual({ ok: true });
+    expect(mockRecordSignupGuardEvent).not.toHaveBeenCalled();
+    // CAPTCHA is off by default: Cloudflare is never asked.
+    expect(mockVerifyTurnstileToken).not.toHaveBeenCalled();
+  });
+
+  it('records an address rate limit once per window', async () => {
+    mockFindSignupAccount.mockResolvedValue({ ...NEW_ACCOUNT, verified: true });
+    for (let i = 0; i < 3; i += 1) await startEmailSignup(GOOD);
+    for (let i = 0; i < 2; i += 1) {
+      await expect(startEmailSignup(GOOD)).resolves.toEqual({ ok: false, code: 'email-signup-rate-limited' });
+    }
+    expect(events()).toEqual([
+      {
+        guard: 'rate_limit',
+        code: 'email-signup-rate-limited',
+        scope: 'address',
+        email: 'ada@example.com',
+        provider: 'email',
+      },
+    ]);
+  });
+
+  it('records an IP rate limit once per window, before reading the fields', async () => {
+    // Different addresses, so only the per-IP budget (20 an hour) runs out.
+    for (let i = 0; i < 20; i += 1) await startEmailSignup({ ...GOOD, name: '' });
+    await expect(startEmailSignup({ ...GOOD, name: '' })).resolves.toEqual({
+      ok: false,
+      code: 'email-signup-rate-limited',
+    });
+    await startEmailSignup({ ...GOOD, name: '' });
+    expect(events()).toEqual([
+      expect.objectContaining({ guard: 'rate_limit', scope: 'ip', email: 'ada@example.com' }),
+    ]);
+  });
+
+  describe('with Turnstile configured', () => {
+    beforeEach(() => {
+      process.env.TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+      process.env.TURNSTILE_SECRET_KEY = '1x0000000000000000000000000000000AA';
+    });
+
+    it('refuses a token Cloudflare does not confirm, and records it', async () => {
+      mockVerifyTurnstileToken.mockResolvedValue(false);
+      await expect(startEmailSignup({ ...GOOD, captchaToken: 'bad' })).resolves.toEqual({
+        ok: false,
+        code: 'email-signup-captcha-failed',
+      });
+      expect(mockVerifyTurnstileToken).toHaveBeenCalledWith(
+        'bad',
+        '1x0000000000000000000000000000000AA',
+        '203.0.113.7'
+      );
+      expect(mockFindSignupAccount).not.toHaveBeenCalled();
+      expect(events()).toEqual([
+        expect.objectContaining({ guard: 'captcha', code: 'email-signup-captcha-failed' }),
+      ]);
+    });
+
+    it('accepts a confirmed token', async () => {
+      mockVerifyTurnstileToken.mockResolvedValue(true);
+      mockFindSignupAccount.mockResolvedValueOnce(null).mockResolvedValueOnce(NEW_ACCOUNT);
+      await expect(startEmailSignup({ ...GOOD, captchaToken: 'good' })).resolves.toEqual({ ok: true });
+    });
+
+    it('checks the fields first, so a typo does not spend the token', async () => {
+      await expect(startEmailSignup({ ...GOOD, name: '', captchaToken: 'good' })).resolves.toMatchObject({
+        code: 'email-signup-invalid',
+      });
+      expect(mockVerifyTurnstileToken).not.toHaveBeenCalled();
+    });
+
+    it('is off again when only one key is set', async () => {
+      delete process.env.TURNSTILE_SECRET_KEY;
+      mockFindSignupAccount.mockResolvedValueOnce(null).mockResolvedValueOnce(NEW_ACCOUNT);
+      await expect(startEmailSignup(GOOD)).resolves.toEqual({ ok: true });
+      expect(mockVerifyTurnstileToken).not.toHaveBeenCalled();
+    });
+
+    it('never asks for a CAPTCHA on Resend email', async () => {
+      mockFindSignupAccount.mockResolvedValue(NEW_ACCOUNT);
+      await expect(resendSignupVerification('ada@example.com')).resolves.toEqual({ ok: true });
+      expect(mockVerifyTurnstileToken).not.toHaveBeenCalled();
+    });
+  });
+});
+
 describe('resendSignupVerification', () => {
   it('sends a fresh link to an unconfirmed account', async () => {
     mockFindSignupAccount.mockResolvedValue(NEW_ACCOUNT);
@@ -186,7 +334,7 @@ describe('resendSignupVerification', () => {
     expect(mockSendSignupEmail).not.toHaveBeenCalled();
   });
 
-  it('is rate-limited per address', async () => {
+  it('is rate-limited per address, and records the refusal', async () => {
     mockFindSignupAccount.mockResolvedValue(NEW_ACCOUNT);
     for (let i = 0; i < 3; i += 1) await resendSignupVerification('ada@example.com');
     await expect(resendSignupVerification('ada@example.com')).resolves.toEqual({
@@ -194,6 +342,12 @@ describe('resendSignupVerification', () => {
       code: 'email-signup-rate-limited',
     });
     expect(mockSendSignupEmail).toHaveBeenCalledTimes(3);
+    expect(mockRecordSignupGuardEvent).toHaveBeenCalledTimes(1);
+    expect(mockRecordSignupGuardEvent.mock.calls[0][0]).toMatchObject({
+      guard: 'rate_limit',
+      scope: 'address',
+      email: 'ada@example.com',
+    });
   });
 
   it('refuses a malformed address and is unavailable without a sender', async () => {

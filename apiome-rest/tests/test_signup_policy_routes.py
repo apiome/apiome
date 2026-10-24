@@ -99,6 +99,7 @@ def test_get_reports_env_fallback_when_nothing_is_stored(admin_headers):
     assert resp.json() == {
         "mode": "open",
         "allowed_email_domains": [],
+        "blocked_email_domains": [],
         "source": "env",
         "env_mode": "open",
         "updated_at": None,
@@ -147,7 +148,7 @@ def test_put_stores_a_normalized_policy_and_invalidates_the_cache(admin_headers)
         )
     assert resp.status_code == 200
     db.set_signup_policy.assert_called_once_with(
-        "open", ["example.com", "corp.example"], updated_by="admin"
+        "open", ["example.com", "corp.example"], updated_by="admin", blocked_email_domains=[]
     )
     invalidate.assert_called_once_with()
     assert resp.json()["source"] == "db"
@@ -161,7 +162,9 @@ def test_put_accepts_every_mode(admin_headers, mode):
         resp = client.put(URL, headers=admin_headers, json={"mode": mode})
     assert resp.status_code == 200
     assert resp.json()["mode"] == mode
-    db.set_signup_policy.assert_called_once_with(mode, [], updated_by="admin")
+    db.set_signup_policy.assert_called_once_with(
+        mode, [], updated_by="admin", blocked_email_domains=[]
+    )
 
 
 def test_put_null_mode_clears_the_stored_policy(admin_headers, monkeypatch):
@@ -203,3 +206,105 @@ def test_put_requires_the_mode_field(admin_headers):
         resp = client.put(URL, headers=admin_headers, json={"allowed_email_domains": []})
     assert resp.status_code == 422
     db.set_signup_policy.assert_not_called()
+
+
+# --- Blocked email domains (SGN-1.5, #5654) ------------------------------------
+
+
+def test_put_stores_normalized_blocked_domains(admin_headers):
+    with patch("app.signup_policy_routes.db") as db:
+        db.set_signup_policy.return_value = _row(
+            mode="open", blocked_email_domains=["throwaway.example"]
+        )
+        resp = client.put(
+            URL,
+            headers=admin_headers,
+            json={
+                "mode": "open",
+                "blocked_email_domains": ["@Throwaway.example", "throwaway.example"],
+            },
+        )
+    assert resp.status_code == 200
+    db.set_signup_policy.assert_called_once_with(
+        "open", [], updated_by="admin", blocked_email_domains=["throwaway.example"]
+    )
+    assert resp.json()["blocked_email_domains"] == ["throwaway.example"]
+
+
+def test_put_rejects_an_invalid_blocked_domain(admin_headers):
+    with patch("app.signup_policy_routes.db") as db:
+        resp = client.put(
+            URL, headers=admin_headers, json={"mode": "open", "blocked_email_domains": ["*.bad"]}
+        )
+    assert resp.status_code == 422
+    assert resp.json()["detail"]["error"] == "invalid_email_domain"
+    db.set_signup_policy.assert_not_called()
+
+
+def test_put_rejects_an_over_long_blocked_list(admin_headers):
+    domains = [f"d{i}.example" for i in range(sp.MAX_BLOCKED_EMAIL_DOMAINS + 1)]
+    with patch("app.signup_policy_routes.db") as db:
+        resp = client.put(
+            URL, headers=admin_headers, json={"mode": "open", "blocked_email_domains": domains}
+        )
+    assert resp.status_code == 422
+    db.set_signup_policy.assert_not_called()
+
+
+def test_get_env_fallback_has_no_blocked_domains(admin_headers):
+    with patch("app.signup_policy_routes.db") as db:
+        db.get_signup_policy.return_value = None
+        resp = client.get(URL, headers=admin_headers)
+    assert resp.json()["blocked_email_domains"] == []
+
+
+# --- Blocked attempts (SGN-1.5, #5654) -----------------------------------------
+
+ATTEMPTS_URL = f"{URL}/blocked-attempts"
+
+
+def test_blocked_attempts_requires_session():
+    assert client.get(ATTEMPTS_URL).status_code == 401
+
+
+def test_blocked_attempts_lists_guard_refusals(admin_headers):
+    with patch("app.signup_policy_routes.db") as db:
+        db.list_signup_guard_events.return_value = [
+            {
+                "id": "6f1c1f0e-1111-4c4c-8888-000000000001",
+                "provider": "email",
+                "error_code": "email-signup-disposable-domain",
+                "user_label": "x@mailinator.com",
+                "guard": "disposable_domain",
+                "scope": None,
+                "ip_hash": "a" * 64,
+                "created_at": datetime(2026, 10, 23, tzinfo=timezone.utc),
+            },
+            {
+                "id": "6f1c1f0e-1111-4c4c-8888-000000000002",
+                "provider": "github",
+                "error_code": "auth-rate-limited",
+                "user_label": None,
+                "guard": "rate_limit",
+                "scope": "ip",
+                "ip_hash": None,
+                "created_at": datetime(2026, 10, 22, tzinfo=timezone.utc),
+            },
+        ]
+        resp = client.get(ATTEMPTS_URL, headers=admin_headers, params={"limit": 10})
+    assert resp.status_code == 200
+    db.list_signup_guard_events.assert_called_once_with(limit=10)
+    first, second = resp.json()["attempts"]
+    assert first["guard"] == "disposable_domain"
+    assert first["email"] == "x@mailinator.com"
+    # Only a prefix of the salted digest leaves the server.
+    assert first["client"] == "a" * 12
+    assert (second["scope"], second["client"], second["email"]) == ("ip", None, None)
+
+
+@pytest.mark.parametrize("limit", [0, 201])
+def test_blocked_attempts_bounds_the_limit(admin_headers, limit):
+    with patch("app.signup_policy_routes.db") as db:
+        resp = client.get(ATTEMPTS_URL, headers=admin_headers, params={"limit": limit})
+    assert resp.status_code == 422
+    db.list_signup_guard_events.assert_not_called()

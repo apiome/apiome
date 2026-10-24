@@ -38,7 +38,7 @@ The **Sign-up** card decides who can create an account. One policy covers every 
 form and each sign-in provider — so a mode can never apply to one and not another. It only gates
 **new** accounts: people who already have an account sign in under every mode.
 
-<Screenshot id="admin-signup-policy" alt="System settings: the Sign-up card with Open chosen and northwind.io and contoso.example as allowed email domains, above the GitHub provider card" />
+<Screenshot id="admin-signup-policy" alt="System settings: the Sign-up card with Open chosen, northwind.io and contoso.example as allowed email domains, throwaway.example as a blocked email domain, and Recent blocked sign-ups listing a disposable address and a rate-limited provider sign-up" />
 
 | Mode | Who can create an account | What a refused person sees |
 | --- | --- | --- |
@@ -76,6 +76,32 @@ policy before and after it.
 If the database cannot be read, Apiome keeps using the last policy it read; with none to fall back
 on, it refuses new accounts until the database is back.
 
+### Abuse protection
+
+A public sign-up page invites scripted accounts and email bombing, so sign-up carries guards. Each
+refuses with its own message, and each refusal is recorded:
+
+| Guard | Applies to | What the person sees |
+| --- | --- | --- |
+| **Rate limits** — 20 sign-up or **Resend email** requests an hour per network, 3 sign-up emails an hour per address | Email sign-up | *Too many sign-up attempts. Wait an hour, then try again.* |
+| **Rate limit** — 10 provider sign-ups a minute per network | Provider sign-up | *Too many sign-up attempts from your network…* |
+| **Disposable email addresses** — a list of throwaway email services Apiome ships, plus your **Blocked email domains** | Email sign-up | *Addresses from disposable email services cannot be used to sign up…* |
+| **Security check** — Cloudflare Turnstile, when [configured](./operating-apiome.mdx#sign-up-security-check) | Email sign-up form | *We could not confirm the security check…* |
+
+Provider sign-up meets only its rate limit: the provider has already confirmed the address.
+
+To block more domains, fill in **Blocked email domains** on the **Sign-up** card — one domain per
+line, for example `throwaway.example` — and **click “Save”**. A listed domain also blocks its
+subdomains. The field works in every mode and adds to the bundled list, which always applies. The
+domains are stored with the policy, so **Use .env** removes them too.
+
+**Recent blocked sign-ups**, at the foot of the card, lists the latest refusals: when, the
+**Reason**, the **Path** (*Email*, or *Provider sign-up*), the **Address** when one was entered, and
+a **Client** code. Equal client codes mean the same network; the code is a cut of a salted hash, so
+no IP address is ever shown. **Click “Refresh”** to reload it. A rate limit is listed once per
+window, however many requests were refused. Sign-up happens before any workspace exists, so these
+refusals appear here, never in a workspace's [access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get).
+
 ## Email sign-up
 
 People can create an account with an email address and a password
@@ -100,6 +126,8 @@ The sign-up policy above applies to email sign-up exactly as it does to provider
   an email saying the account exists, with a sign-in link.
 - **Email is rate-limited.** One address gets at most 3 sign-up emails an hour, and one network at
   most 20 sign-up requests an hour.
+- **Disposable addresses are refused**, and an optional security check can sit on the form — see
+  [Abuse protection](#abuse-protection).
 
 Confirmation links are stored only as a hash, in the `apiome.email_verification_token` table.
 
@@ -267,8 +295,10 @@ The console calls the REST API's super-admin endpoints:
 - `DELETE /v1/admin/auth-providers/{provider_id}` — remove the stored row;
 - `GET /v1/admin/signup-policy` — the sign-up policy in effect, and whether it is stored or
   comes from `.env`;
-- `PUT /v1/admin/signup-policy` — store the policy, or send `"mode": null` to remove the stored
-  one.
+- `PUT /v1/admin/signup-policy` — store the policy (with `blocked_email_domains`), or send
+  `"mode": null` to remove the stored one;
+- `GET /v1/admin/signup-policy/blocked-attempts` — the sign-up attempts an abuse guard refused,
+  newest first (`limit`, 1–200).
 
 See the [API reference](../reference/api-reference.md). There is no CLI command for the sign-up
 policy or sign-in providers.

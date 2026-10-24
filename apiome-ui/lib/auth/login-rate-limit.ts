@@ -212,6 +212,11 @@ export interface RequestBudgetStatus {
   remaining: number;
   /** Milliseconds until the window rolls over (0 when allowed). */
   retryAfterMs: number;
+  /**
+   * True only for the first refused request of a window (SGN-1.5). Callers that audit a refusal
+   * record it once per window, so a flood past the budget cannot flood the audit ledger too.
+   */
+  firstRefusal: boolean;
 }
 
 /**
@@ -246,6 +251,7 @@ export function checkRequestBudget(
     allowed,
     remaining: Math.max(0, effectiveLimit - window.count),
     retryAfterMs: allowed ? 0 : Math.max(0, window.resetAt - now),
+    firstRefusal: window.count === effectiveLimit + 1,
   };
 }
 

@@ -97,6 +97,24 @@ People stay signed in, but pages that need a workspace cannot load until the dat
 again. Nothing has to be reset afterwards: the next request restores the workspace. The web app's
 log records each failed check as `[post-login-routing] membership lookup failed`.
 
+### Sign-up security check
+
+The email sign-up form can carry a [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+check, so scripts cannot create accounts in bulk. It is off by default. To turn it on, add a
+Turnstile widget for your Apiome domain in the Cloudflare dashboard, then set both keys in
+`apiome-ui/.env` and restart apiome-ui:
+
+| Variable | What it is |
+| --- | --- |
+| `TURNSTILE_SITE_KEY` | The widget's public site key; the browser draws the check with it |
+| `TURNSTILE_SECRET_KEY` | The widget's secret key; apiome-ui checks each answer with Cloudflare |
+
+With only one of them set, the check stays off. While it is on, **Create account** waits for the
+check, and the form is refused if Cloudflare does not confirm the answer — or cannot be reached.
+Provider sign-up and **Resend email** never show it. Refusals are listed under
+[Recent blocked sign-ups](./auth-providers.mdx#abuse-protection); they reach it only when
+`INTERNAL_SERVICE_TOKEN` is set on apiome-ui and apiome-rest, like every sign-in event.
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a

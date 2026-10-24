@@ -528,6 +528,98 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 </div>
 `;
 
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for email-signup-captcha-failed 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    We could not confirm the security check. Complete the check below, then select Create account again.
+  </div>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for email-signup-disposable-domain 1`] = `
+<div
+  aria-live="assertive"
+  class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-danger-soft text-danger-fg mt-4"
+  data-testid="login-banner"
+  role="alert"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-alert mt-px size-4 shrink-0"
+    fill="none"
+    height="24"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+    width="24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+    />
+    <line
+      x1="12"
+      x2="12"
+      y1="8"
+      y2="12"
+    />
+    <line
+      x1="12"
+      x2="12.01"
+      y1="16"
+      y2="16"
+    />
+  </svg>
+  <div
+    class="min-w-0 flex-1"
+  >
+    Addresses from disposable email services cannot be used to sign up. Use a permanent email address, such as your work email.
+  </div>
+</div>
+`;
+
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for email-signup-rate-limited 1`] = `
 <div
   aria-live="assertive"

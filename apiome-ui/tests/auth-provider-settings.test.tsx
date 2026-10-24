@@ -169,6 +169,10 @@ function mockFetch(
     if (url === '/api/admin/signup-policy' && method === 'GET') {
       return { ok: true, status: 200, json: async () => signupPolicyBody } as unknown as Response;
     }
+    // Its Recent blocked sign-ups list (SGN-1.5) — empty here.
+    if (url.startsWith('/api/admin/signup-policy/blocked-attempts') && method === 'GET') {
+      return { ok: true, status: 200, json: async () => ({ attempts: [] }) } as unknown as Response;
+    }
     // So does the Single sign-on card (EID-1.1) — no providers, unless a docs fixture sets some.
     if (url === '/api/admin/sso/providers' && method === 'GET') {
       return { ok: true, status: 200, json: async () => ssoListBody } as unknown as Response;

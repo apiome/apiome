@@ -8,6 +8,10 @@
  * success the parent swaps in {@link SignupCheckEmail}. A refusal from the sign-up policy, the
  * rate limit or the mail sender renders the login page's copy for its code.
  *
+ * When the installation configures Cloudflare Turnstile (SGN-1.5, #5654), a security check sits
+ * above **Create account**; the button waits for its token, and every submission resets it, because
+ * a token works once.
+ *
  * SGN-1.2 mounts this same form on the `/signup` page; until then it is the login page's
  * **Create one** mode.
  */
@@ -19,6 +23,7 @@ import { startEmailSignup } from '@lib/auth/email-signup-actions';
 import { EMAIL_SIGNUP_CODES } from '@lib/auth/email-signup-codes';
 import { PASSWORD_REQUIREMENTS } from '@/app/components/ade/account/passwordStrength';
 import { AuthField } from '../components/auth/AuthField';
+import { TurnstileWidget } from '../components/auth/TurnstileWidget';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
@@ -34,6 +39,8 @@ export interface EmailSignupFormProps {
   id?: string;
   /** Hides the form (collapsed beneath the provider buttons). */
   hidden?: boolean;
+  /** The public Turnstile site key when CAPTCHA is on; null or absent draws no check. */
+  turnstileSiteKey?: string | null;
 }
 
 /** The password hint: the server's three rules, in the order the profile dialog lists them. */
@@ -45,19 +52,35 @@ const PASSWORD_HINT = PASSWORD_REQUIREMENTS.map((requirement) => requirement.lab
  * @param props See {@link EmailSignupFormProps}.
  * @returns The form, with its own error banner.
  */
-export function EmailSignupForm({ onSubmitted, disabled = false, id, hidden }: EmailSignupFormProps) {
+export function EmailSignupForm({
+  onSubmitted,
+  disabled = false,
+  id,
+  hidden,
+  turnstileSiteKey = null,
+}: EmailSignupFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+
+  const waitingForCaptcha = Boolean(turnstileSiteKey) && !captchaToken;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const result = await startEmailSignup({ name, email, password });
+      const result = await startEmailSignup({
+        name,
+        email,
+        password,
+        ...(turnstileSiteKey ? { captchaToken } : {}),
+      });
+      if (turnstileSiteKey) setCaptchaReset((count) => count + 1);
       if (result.ok) {
         onSubmitted(email.trim());
         return;
@@ -69,6 +92,7 @@ export function EmailSignupForm({ onSubmitted, disabled = false, id, hidden }: E
       );
     } catch (caught) {
       console.error('[EmailSignupForm] sign-up failed', caught);
+      if (turnstileSiteKey) setCaptchaReset((count) => count + 1);
       setError('Something went wrong. Try again.');
     } finally {
       setBusy(false);
@@ -122,12 +146,15 @@ export function EmailSignupForm({ onSubmitted, disabled = false, id, hidden }: E
         placeholder="••••••••"
         hint={PASSWORD_HINT}
       />
+      {turnstileSiteKey ? (
+        <TurnstileWidget siteKey={turnstileSiteKey} onToken={setCaptchaToken} resetKey={captchaReset} />
+      ) : null}
       <Button
         type="submit"
         variant="primary"
         size="lg"
         className="w-full"
-        disabled={busy || disabled}
+        disabled={busy || disabled || waitingForCaptcha}
         data-testid="email-signup-submit"
       >
         {busy ? 'Creating account…' : 'Create account'}

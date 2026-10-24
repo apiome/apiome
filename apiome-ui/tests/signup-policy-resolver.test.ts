@@ -36,7 +36,7 @@ describe('resolveSignupPolicy', () => {
       readRow: async () => null,
       env: { AUTH_SIGNUP_DISABLED: value },
     });
-    expect(resolved).toEqual({ mode, allowedEmailDomains: [], source: 'env' });
+    expect(resolved).toEqual({ mode, allowedEmailDomains: [], source: 'env', blockedEmailDomains: [] });
   });
 
   test('a stored policy wins over env', async () => {
@@ -44,7 +44,12 @@ describe('resolveSignupPolicy', () => {
       readRow: async () => ({ mode: 'invite_only', allowed_email_domains: [] }),
       env: { AUTH_SIGNUP_DISABLED: 'true' },
     });
-    expect(resolved).toEqual({ mode: 'invite_only', allowedEmailDomains: [], source: 'db' });
+    expect(resolved).toEqual({
+      mode: 'invite_only',
+      allowedEmailDomains: [],
+      source: 'db',
+      blockedEmailDomains: [],
+    });
   });
 
   test('a change takes effect after the cache lifetime, without a restart', async () => {
@@ -110,12 +115,20 @@ describe('the default database read', () => {
     expect(mockQuery.mock.calls[0][0]).toContain('FROM apiome.signup_policy');
   });
 
+  test('reads the blocklist once V317 is applied, and none before it (SGN-1.5)', async () => {
+    // `SELECT *`: a pre-V317 row simply has no blocked_email_domains column.
+    mockQuery.mockResolvedValue({ rowCount: 1, rows: [{ mode: 'open', allowed_email_domains: [] }] });
+    expect((await resolveSignupPolicy({ env: {} })).blockedEmailDomains).toEqual([]);
+    expect(mockQuery.mock.calls[0][0]).toContain('SELECT *');
+  });
+
   test('no row falls back to env', async () => {
     mockQuery.mockResolvedValue({ rowCount: 0, rows: [] });
     expect(await resolveSignupPolicy({ env: {} })).toEqual({
       mode: 'open',
       allowedEmailDomains: [],
       source: 'env',
+      blockedEmailDomains: [],
     });
   });
 

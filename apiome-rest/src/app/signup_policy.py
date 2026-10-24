@@ -10,6 +10,11 @@ fallback (the OLO-8 DB-first pattern):
 * **Stored policy** (``apiome.signup_policy``, V274) ⇒ its ``mode`` and
   ``allowed_email_domains`` win over env.
 
+The stored row also carries ``blocked_email_domains`` (V317, SGN-1.5 #5654): extra disposable
+domains a super-admin refuses for **email** sign-up, on top of the list apiome-ui bundles. It is not
+part of :func:`signup_rejection_code` — the email sign-up action in apiome-ui applies it, because an
+OAuth provider has already verified the address it hands over.
+
 Modes:
 
 * ``open`` — anyone may create an account; when ``allowed_email_domains`` is non-empty, only an
@@ -74,6 +79,9 @@ SIGNUP_DOMAIN_NOT_ALLOWED = "signup-domain-not-allowed"
 #: Upper bound on the allowed-domain list (matches the V274 CHECK).
 MAX_ALLOWED_EMAIL_DOMAINS = 200
 
+#: Upper bound on the extra blocked-domain list (matches the V317 CHECK).
+MAX_BLOCKED_EMAIL_DOMAINS = 1000
+
 #: A bare DNS domain: dot-separated labels of letters/digits/hyphens, no leading/trailing hyphen,
 #: at least two labels, at most 253 characters overall.
 _DOMAIN_SHAPE = re.compile(
@@ -91,11 +99,14 @@ class SignupPolicy:
             ``open``; empty means any domain. Ignored by the other modes.
         source: :data:`SOURCE_DB` when the policy is stored, :data:`SOURCE_ENV` when it is the
             env fallback.
+        blocked_email_domains: Extra lower-case domains refused for email sign-up, on top of
+            apiome-ui's bundled disposable list (SGN-1.5). Empty for the env fallback.
     """
 
     mode: str = MODE_OPEN
     allowed_email_domains: Tuple[str, ...] = ()
     source: str = SOURCE_ENV
+    blocked_email_domains: Tuple[str, ...] = ()
 
 
 def normalize_email_domain(raw: Any) -> str:
@@ -125,31 +136,58 @@ def normalize_email_domain(raw: Any) -> str:
     return domain
 
 
-def normalize_allowed_email_domains(raw: Optional[Iterable[Any]]) -> Tuple[str, ...]:
-    """Normalize an allowed-domain list: each entry normalized, duplicates dropped, order kept.
+def normalize_allowed_email_domains(
+    raw: Optional[Iterable[Any]], *, limit: int = MAX_ALLOWED_EMAIL_DOMAINS
+) -> Tuple[str, ...]:
+    """Normalize a domain list: each entry normalized, duplicates dropped, order kept.
+
+    Used for both the allowed list and the blocked list (pass
+    ``limit=MAX_BLOCKED_EMAIL_DOMAINS``).
 
     Args:
-        raw: The entries as supplied, or None for "no restriction".
+        raw: The entries as supplied, or None for an empty list.
+        limit: The most domains the list may hold.
 
     Returns:
         The normalized domains, first occurrence first.
 
     Raises:
         ValueError: When any entry is invalid (see :func:`normalize_email_domain`) or the list
-            exceeds :data:`MAX_ALLOWED_EMAIL_DOMAINS`.
+            exceeds ``limit``.
     """
     if raw is None:
         return ()
     if isinstance(raw, (str, bytes)):
-        raise ValueError("allowed email domains must be a list")
+        raise ValueError("email domains must be a list")
     seen = []
     for entry in raw:
         domain = normalize_email_domain(entry)
         if domain not in seen:
             seen.append(domain)
-    if len(seen) > MAX_ALLOWED_EMAIL_DOMAINS:
-        raise ValueError(f"at most {MAX_ALLOWED_EMAIL_DOMAINS} email domains may be listed")
+    if len(seen) > limit:
+        raise ValueError(f"at most {limit} email domains may be listed")
     return tuple(seen)
+
+
+def _stored_domains(entries: Any) -> Tuple[str, ...]:
+    """Read a stored domain array, dropping malformed entries and duplicates.
+
+    Args:
+        entries: The stored array (or None).
+
+    Returns:
+        The usable domains, first occurrence first. A malformed stored entry can never match an
+        address, so it is dropped rather than failing the read.
+    """
+    domains = []
+    for entry in entries or ():
+        try:
+            domain = normalize_email_domain(entry)
+        except ValueError:
+            continue
+        if domain not in domains:
+            domains.append(domain)
+    return tuple(domains)
 
 
 def email_domain(email: Optional[str]) -> Optional[str]:
@@ -215,16 +253,12 @@ def signup_policy_from_row(row: Optional[Mapping[str, Any]]) -> Optional[SignupP
     mode = row.get("mode")
     if mode not in SIGNUP_MODES:
         return None
-    domains = []
-    for entry in row.get("allowed_email_domains") or ():
-        try:
-            domain = normalize_email_domain(entry)
-        except ValueError:
-            # A malformed stored entry can never match an address; drop it rather than fail.
-            continue
-        if domain not in domains:
-            domains.append(domain)
-    return SignupPolicy(mode=mode, allowed_email_domains=tuple(domains), source=SOURCE_DB)
+    return SignupPolicy(
+        mode=mode,
+        allowed_email_domains=_stored_domains(row.get("allowed_email_domains")),
+        source=SOURCE_DB,
+        blocked_email_domains=_stored_domains(row.get("blocked_email_domains")),
+    )
 
 
 def signup_rejection_code(policy: SignupPolicy, email: Optional[str]) -> Optional[str]:

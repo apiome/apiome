@@ -46,6 +46,10 @@ const AFTER_SIGNUP = '/ade';
 /** What the page says when a provider's sign-up could not be started. */
 export const PROVIDER_START_FAILED = 'Could not start sign-up. Please try again.';
 
+/** What the page says when this network has started too many sign-ups (SGN-1.5, HTTP 429). */
+export const PROVIDER_START_RATE_LIMITED =
+  'Too many sign-up attempts from your network. Wait a minute, then try again.';
+
 /** Props for {@link SignupClient}. */
 export interface SignupClientProps {
   /** The enabled sign-in providers — the same list the login page shows. */
@@ -54,6 +58,8 @@ export interface SignupClientProps {
   state: SignupPageState;
   /** The installation's Terms / Privacy pages. */
   legalLinks: LegalLinks;
+  /** The public Turnstile site key when the email form carries a CAPTCHA (SGN-1.5); else null. */
+  turnstileSiteKey?: string | null;
 }
 
 /**
@@ -62,7 +68,12 @@ export interface SignupClientProps {
  * @param props See {@link SignupClientProps}.
  * @returns The page body inside the auth shell.
  */
-export default function SignupClient({ providers, state, legalLinks }: SignupClientProps) {
+export default function SignupClient({
+  providers,
+  state,
+  legalLinks,
+  turnstileSiteKey = null,
+}: SignupClientProps) {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
@@ -86,7 +97,7 @@ export default function SignupClient({ providers, state, legalLinks }: SignupCli
         body: JSON.stringify({ provider: providerId }),
       });
       if (!response.ok) {
-        setError(PROVIDER_START_FAILED);
+        setError(response.status === 429 ? PROVIDER_START_RATE_LIMITED : PROVIDER_START_FAILED);
         setStarting(false);
         return;
       }
@@ -168,7 +179,11 @@ export default function SignupClient({ providers, state, legalLinks }: SignupCli
             ) : null}
 
             {state.showEmailForm ? (
-              <EmailSignupForm disabled={starting} onSubmitted={setCheckEmailFor} />
+              <EmailSignupForm
+                disabled={starting}
+                onSubmitted={setCheckEmailFor}
+                turnstileSiteKey={turnstileSiteKey}
+              />
             ) : null}
 
             {state.showEmailUnavailable ? (
