@@ -9,8 +9,10 @@ Syntax errors surface as :class:`ThriftParseError` with a human-readable message
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
+
+from .document_markers import looks_like_structured_document
 
 __all__ = [
     "ThriftParseError",
@@ -88,11 +90,21 @@ def is_thrift(content: str) -> bool:
     trimmed = content.strip()
     if not trimmed:
         return False
+    # A JSON or YAML document is never Thrift, whatever words its descriptions use.
+    if looks_like_structured_document(trimmed):
+        return False
     if re.search(r"""^\s*\$version\s*:\s*['"]""", trimmed, re.MULTILINE):
         return False
-    if re.search(r'\binclude\s+"', trimmed):
+    if re.search(r'^[ \t]*include\s+"', trimmed, re.MULTILINE):
         return True
-    if re.search(r"^\s*namespace\s+\w+\s+", trimmed, re.MULTILINE):
+    # `namespace <scope> <identifier>` is the whole line in Thrift (bar a trailing `;` or
+    # comment); prose that merely starts with "namespace" — "namespace to its primitives" —
+    # carries more words.
+    if re.search(
+        r"^[ \t]*namespace[ \t]+(?:\*|[A-Za-z_][\w.]*)[ \t]+[A-Za-z_][\w.]*[ \t]*;?[ \t]*(?://.*|#.*)?$",
+        trimmed,
+        re.MULTILINE,
+    ):
         return True
     for pattern in (
         r"\bstruct\s+\w+\s*\{",

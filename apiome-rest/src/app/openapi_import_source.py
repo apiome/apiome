@@ -57,6 +57,7 @@ from . import (
 from .aws_apigateway_extensions import has_aws_extensions
 from .azure_apim_arm import has_apim_markers
 from .canonical_model import ApiParadigm, CanonicalApi
+from .document_markers import top_level_api_marker
 from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
 from .import_source import (
@@ -68,6 +69,7 @@ from .import_source import (
     InputKind,
     LintReport,
 )
+from .intake_resource_guard import IntakeLimitError
 from .openapi_overlay import (
     OVERLAY_EXTRA_KEY,
     OverlayedOpenApiDocument,
@@ -130,8 +132,12 @@ class OpenApiImportSource(ImportSource, register=True):
         if document is None and payload.text:
             try:
                 document = parse_document(payload.text, source_label=payload.filename)
-            except IngestionError:
-                return NO_MATCH
+            except (IngestionError, IntakeLimitError):
+                # The document did not parse — a YAML slip, or a breach of an intake limit such
+                # as INPUT_ENTITY_LIMIT on a very large spec. Its top-level marker still says
+                # what it is: claim it, so the import reports the real parse error instead of
+                # detection falling through to an IDL sniffer that matched a word in its prose.
+                return self._detect_from_text_marker(payload.text)
         if not isinstance(document, dict):
             return NO_MATCH
 
@@ -203,6 +209,41 @@ class OpenApiImportSource(ImportSource, register=True):
                 confidence=0.9, reason=f"OpenAPI Overlay `overlay: {version}` marker"
             )
 
+        return NO_MATCH
+
+    @staticmethod
+    def _detect_from_text_marker(text: str) -> DetectionResult:
+        """Recognise an unparseable document by its top-level version marker alone.
+
+        Mirrors the parsed-document rules below — same format keys, same confidences — so a
+        document is classified the same way whether or not it parsed. Swagger 1.0/1.1 stay
+        unclaimed, as they are for a parsed document.
+        """
+        marker = top_level_api_marker(text)
+        if marker is None:
+            return NO_MATCH
+        key, version = marker
+        reason = f"`{key}: {version}` marker (the document did not fully parse)"
+        # As for a parsed document: a gateway export's own adapter reads its extensions, so
+        # step down below the ambiguity margin when the text carries them.
+        if "x-amazon-apigateway-" in text or "x-tyk-api-gateway" in text:
+            confidence = 0.8
+        elif "azure-api.net" in text or "Ocp-Apim" in text:
+            confidence = 0.7
+        else:
+            confidence = None
+        if key == "openapi" and version.startswith("3."):
+            return DetectionResult(
+                confidence=confidence or 0.99,
+                format=OpenApiImportSource._version_format({"openapi": version}),
+                reason=reason,
+            )
+        if key == "swagger" and version.startswith("2."):
+            return DetectionResult(
+                confidence=confidence or 0.95, format="swagger-2.0", reason=reason
+            )
+        if key == "swaggerVersion" and version.startswith("1.2"):
+            return DetectionResult(confidence=0.95, format="swagger-1.2", reason=reason)
         return NO_MATCH
 
     @staticmethod

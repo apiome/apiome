@@ -1,0 +1,24 @@
+---
+slug: import-detects-openapi
+title: "Import recognises OpenAPI files it used to call Thrift"
+description: An OpenAPI YAML file is detected as OpenAPI from its top-level openapi key, even when it is very large or does not fully parse, and words in its descriptions no longer make it look like Thrift.
+authors: [apiome]
+---
+
+Importing an OpenAPI YAML or JSON file now detects it as **OpenAPI** from its top-level `openapi`
+(or `swagger`) key, and detection of a large file takes seconds rather than minutes.
+
+{/* truncate */}
+
+- **What was wrong:** OpenAPI was only recognised once the whole file parsed. A file that didn't
+  — a YAML slip, or one too large for the import limits — dropped out of detection, and a format
+  that matches keywords anywhere in the text took its place. A description line starting
+  "namespace to its primitives…" made one OpenAPI spec look like **Thrift**.
+- **What changed:** the top-level `openapi` / `swagger` key identifies the file even when it does
+  not parse, so the import names the real problem (the YAML error, or the limit it exceeds). And a
+  JSON or YAML file is never offered as Thrift, WIT, FlatBuffers, Protobuf, GraphQL, TypeSpec or
+  another text format because of words in its descriptions.
+- The same rule applies in the **Import wizard**, which checks a file's format in the browser
+  before sending it: a JSON or YAML file is never treated as Thrift, Protobuf or GraphQL there
+  either.
+- Thrift, WIT, FlatBuffers, Protobuf and GraphQL sources are detected as before.

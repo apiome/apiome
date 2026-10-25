@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 from .canonical_model import CanonicalApi
+from .document_markers import top_level_api_marker
 from .fileset import IntakeFileset
 from .gateway_config_model import GatewayConfigDocument, GatewayConfigParseError
 from .gateway_config_normalizer import TYK_FORMAT_KEY
@@ -80,6 +81,14 @@ class TykImportSource(ProxyRouteImportSource, register=True):
             try:
                 document = OpenApiImportSource().parse(text, source_label=payload.filename)
             except ImportSourceError:
+                # Unparseable, but an OpenAPI document carrying the extension is still ours.
+                if top_level_api_marker(text) is not None:
+                    return DetectionResult(
+                        confidence=_OAS_CONFIDENCE,
+                        format=TYK_FORMAT_KEY,
+                        reason="OpenAPI document carrying `x-tyk-api-gateway` (Tyk OAS) "
+                        "(the document did not fully parse)",
+                    )
                 return NO_MATCH
             if has_tyk_extension(document):
                 return DetectionResult(

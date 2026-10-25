@@ -65,6 +65,7 @@ from .aws_apigateway_extensions import (
     validation_posture,
 )
 from .canonical_model import ApiParadigm, CanonicalApi, Operation, OperationKind, Service
+from .document_markers import top_level_api_marker
 from .fileset import IntakeFileset
 from .import_source import (
     NO_MATCH,
@@ -159,6 +160,15 @@ class AwsApiGatewayImportSource(ImportSource, register=True):
             try:
                 document = OpenApiImportSource().parse(payload.text, source_label=payload.filename)
             except ImportSourceError:
+                # Unparseable, but an OpenAPI document carrying the extensions is still ours:
+                # claim it so the import reports the parse error rather than another format.
+                if top_level_api_marker(payload.text) is not None:
+                    return DetectionResult(
+                        confidence=0.99,
+                        format=FORMAT_KEY,
+                        reason="OpenAPI document carrying `x-amazon-apigateway-*` extensions "
+                        "(the document did not fully parse)",
+                    )
                 return NO_MATCH
         if not has_aws_extensions(document):
             return NO_MATCH

@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
+
+from .document_markers import looks_like_structured_document
 
 __all__ = [
     "FlatBuffersParseError",
@@ -80,6 +82,9 @@ def is_flatbuffers(content: str) -> bool:
         return False
     trimmed = content.strip()
     if not trimmed:
+        return False
+    # A JSON or YAML document is never a FlatBuffers schema, whatever its prose says.
+    if looks_like_structured_document(trimmed):
         return False
     if re.search(r"\broot_type\s+\w+", trimmed):
         return True

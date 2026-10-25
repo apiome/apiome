@@ -37,6 +37,7 @@ import re
 from dataclasses import dataclass, replace
 from typing import Callable, List, Optional
 
+from .document_markers import looks_like_structured_document
 from .import_ingestion import IngestionError, parse_document
 from .import_source import (
     NO_MATCH,
@@ -689,6 +690,27 @@ def _dedupe_by_format(candidates: List[FormatCandidate]) -> List[FormatCandidate
     return list(best_by_format.values())
 
 
+#: Formats whose sources are always plain-text IDL, schema language, code or line-oriented
+#: records — never a JSON or YAML document. A candidate for one of these on a document that
+#: :func:`~app.document_markers.looks_like_structured_document` recognises came from a keyword
+#: in its prose and is discarded. JSON/YAML-based formats (OpenAPI, AsyncAPI, JSON Schema,
+#: Smithy's JSON AST, gateway configs, …) are deliberately absent, and so are API Blueprint
+#: (its ``FORMAT: 1A`` first line reads as a YAML key) and ISO 8583 (it has a JSON form).
+TEXT_IDL_FORMATS: frozenset[str] = frozenset(
+    {
+        "thrift", "wit", "flatbuffers", "fbs", "protobuf", "protobuf-editions", "graphql",
+        "typespec", "tsp", "cadl", "cddl", "capnp", "capnproto", "avro-idl", "asn", "asn1",
+        "corba", "corbaidl", "idl", "xdr", "oncrpc", "sunrpc", "rpcgen", "cobol", "cobol-copybook", "cobolcopybook",
+        "copybook", "pl/i", "pl1", "pli", "pli-include", "natural", "natural-ddm", "ddm",
+        "adabas", "idcams", "vsam", "vsam-idcams", "bms", "cics-bms", "cics-map", "ims",
+        "ims-dbd", "ims-psb", "dbd", "psb", "sql-ddl", "dhall", "pkl", "zod",
+        "typescript-types", "pydantic", "trpc", "ros2", "ros2-interface", "http", "http-file",
+        "nginx", "haproxy", "hl7v2", "hl7v2x", "x12", "edix12", "edifact", "un-edifact",
+        "tradacoms", "nacha", "mt", "swift-mt", "fix",
+    }
+)
+
+
 def detect_format(
     payload: DetectionInput,
     *,
@@ -754,6 +776,13 @@ def detect_format(
                     importable=False,
                 )
             )
+
+    # A JSON or YAML document cannot be a text IDL, whatever words its descriptions use: an
+    # OpenAPI spec whose prose says "namespace to its primitives" or "struct Order {" is not
+    # Thrift. Those keyword sniffers read raw text, so their matches on a data document are
+    # dropped here, in one place, rather than taught one sniffer at a time.
+    if looks_like_structured_document(enriched.text):
+        candidates = [c for c in candidates if c.format not in TEXT_IDL_FORMATS]
 
     ranked = _dedupe_by_format(candidates)
     ranked.sort(key=lambda c: (-c.confidence, c.format))

@@ -51,7 +51,7 @@ class WitImportSource(ImportSource, register=True):
     def detect(self, payload: DetectionInput) -> DetectionResult:
         text = payload.text
         if text is not None and is_wit(text):
-            if re.search(r"^\s*package\s+[a-z][\w-]*:[a-z]", text, re.MULTILINE):
+            if re.search(r"^[ \t]*package\s+[a-z][\w-]*:[a-z]", text, re.MULTILINE):
                 reason = "WIT `package ns:name` declaration"
                 confidence = 0.97
             elif re.search(r"\bworld\s+[a-z][a-z0-9-]*\s*\{", text):
