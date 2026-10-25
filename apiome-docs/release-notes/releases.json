@@ -8,6 +8,14 @@
       "restAfter": "1.212.0",
       "restThrough": "1.263.0",
       "whatsNewRef": "6d9f6679^"
+    },
+    {
+      "name": "RC6",
+      "milestone": 6,
+      "closed": "2026-10-25",
+      "restAfter": "1.263.0",
+      "restThrough": "1.449.3",
+      "whatsNewRef": "RC6"
     }
   ]
 }
