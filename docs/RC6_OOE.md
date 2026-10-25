@@ -235,7 +235,7 @@ description now points at this plan and `MVP_LAUNCH.md`. `RC6` has no open issue
 
 RC6 is ready to tag when every box below is ticked. The launch blockers **B1–B9** found on
 2026-10-24 are all resolved; owners and order are in [`MVP_LAUNCH.md`](MVP_LAUNCH.md). Open items
-are marked **⛔**. Checked 2026-10-24, 23:15 UTC.
+are marked **⛔**. Checked 2026-10-25, 16:30 UTC.
 
 - [ ] Lanes A, B, D, E and H are closed. *(All tickets closed. **B5 resolved 2026-10-24** — `https://get.apiome.dev`
       serves `install.sh` over a valid certificate. Lane E: **B8 resolved 2026-10-24** — criterion is "allow-lists only shrink",
@@ -244,17 +244,18 @@ are marked **⛔**. Checked 2026-10-24, 23:15 UTC.
 - [ ] **Every workflow on `main` is green.** *(✅ **B1** apiome-ui image builds (#6259); ✅ **B2**
       runner starts Chromium; ✅ **B3** RC6-H6 timing ceilings raised (#6259, #6261); ✅ **B4** format-count
       check passes on `main` (#6259), with the suite's 8 remaining failures (no database in CI, laptop timing
-      ceilings) fixed in #6270. Green on `main`: `apiome-ui`, `apiome-ui-visual-parity`, `apiome-ui-publish`,
-      `apiome-rest`, `apiome-docs`. Still open:*
-      - *⛔ **`apiome-ui-a11y`** (red on every `main` run on 2026-10-24; last at `13da6a2c1`): 7 failures out of
-        1,099 — `/design-system` axe (light, dark, high-contrast), the `teams` fixture `team-detail.html`
-        (a held-back feature) in all three themes, and `hive-profile.spec.ts:540` (Profile hero band and icon
-        tiles paint as transparent).*
+      ceilings) fixed in #6270. Green on `main`: `apiome-ui`, `apiome-ui-a11y` (green at `db5eeaeac`),
+      `apiome-ui-visual-parity`, `apiome-ui-publish`, `apiome-rest`, `apiome-docs`. Still open:*
       - *⛔ **`e2e-catalog-journey`** (RC6-H1) has not passed on any run: it runs on pull requests and
-        `workflow_dispatch`, not on pushes to `main`. The import step times out because **Import** on the
-        Catalog stays disabled with "Checking what your role can do…" (the permission read never settles in
-        the journey stack; `GET /v1/tenants/me` answers 401).*
-      - *`apiome-rest-test` (nightly): needs one run after #6270 to confirm.)*
+        `workflow_dispatch`, not on pushes to `main`. Since #6277 steps 1–8 pass (import, convert, edit, cut,
+        publish, unpublish); the export step looked for a target id `proto`, but the Protobuf target's id is
+        `protobuf`. Fixed in the RC6 release-prep PR; that PR's journey run is the one to watch.*
+      - *`apiome-rest-test` (nightly, 2026-10-25 at `db5eeaeac`): 1 failure in 33,771 —
+        `test_export_batch.py::test_non_owning_instance_serves_the_archive_from_the_shared_store` found the job
+        still `running`. It passes locally (3 of 3), so it is a timing race on the slow runner, not an RC6
+        defect.*
+      - *Not part of the gate: `apiome-rest-scale-benchmarks` has failed every run since 2026-10-19 (the runner is
+        2–3× over budgets set on a laptop), and `apiome-openapi` times out pushing the spec (see `MVP_LAUNCH.md`).)*
 - [x] A clean-stack journey passes: **sign up (email) → verify → onboard → enrol Authy → sign out →
       sign in with a code → `apiome login` → import a non-OpenAPI spec into the Catalog → convert it
       to a project → cut a version → publish → export through the Export dialog**. *(MVP_LAUNCH step 13,

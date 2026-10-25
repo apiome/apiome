@@ -55,8 +55,8 @@ const RAML = readCorpusFile(CORPUS_ENTRY).replace(/^title:.*$/m, `title: ${TITLE
 /** What the edit step writes into the project's description. */
 const EDITED_DESCRIPTION = `Edited by the catalog journey (${TITLE}).`;
 
-/** The export target: Protobuf, a different format family from the OpenAPI project. */
-const EXPORT_TARGET = 'proto';
+/** The export target: Protobuf (registry key `protobuf`), a different format family from the OpenAPI project. */
+const EXPORT_TARGET = 'protobuf';
 
 // Shared across the serial steps below.
 let itemId: string | null = null;

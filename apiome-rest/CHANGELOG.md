@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.449.3] - 2026-10-24
+
+### Fixed
+- **Import detects OpenAPI by its top-level key, not as Thrift (#6320)** — importing `apiome-rest/openapi.yaml`
+  was detected as Thrift: the document breaches `INPUT_ENTITY_LIMIT`, so the OpenAPI adapter (which needed a parse)
+  dropped out, and the Thrift sniffer matched the description line "namespace to its primitives".
+  - The OpenAPI, AWS API Gateway and Tyk adapters now claim a document that does not parse from its column-0
+    `openapi` / `swagger` / `swaggerVersion` key, so the import reports the real parse or limit error.
+  - Text IDL candidates (Thrift, WIT, FlatBuffers, Protobuf, GraphQL, TypeSpec, CDDL, …) are no longer offered for
+    a JSON or YAML document, and Thrift's `namespace` rule needs a whole namespace line.
+  - Detection on that file takes about 25 s instead of over five minutes: a failed parse and the YAML alias-cost
+    scan are memoised for the same text, and the WIT sniffer's `package` scan no longer goes quadratic.
+
+## [1.449.2] - 2026-10-24
+
+### Fixed
+- **Schema readers rebuild OpenAPI projects that keep no source (#6319)** — the Test bench schema picker listed
+  only registry primitives on OpenAPI projects, and validation, payload generation, schema suites and contract
+  suites failed with `422` "no captured source material". They and the public Browse export now share one loader
+  that rebuilds a decomposed OpenAPI revision's document from its classes and paths when no source was captured.
+
+## [1.449.1] - 2026-10-24
+
+### Fixed
+- **Export OpenAPI projects (#6277)** — the Export dialog (targets, preflight, fidelity, emit), SDK regeneration,
+  agent toolsets and gateway postures answered `422` "This catalog item has no captured source material…" for every
+  OpenAPI project, which keeps no copy of the imported document. The document is now rebuilt from the project's
+  classes and paths, as the spec viewer does. Non-OpenAPI revisions without source still answer `422`.
+
 ## [1.449.0] - 2026-10-24
 
 ### Changed
