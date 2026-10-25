@@ -1,3 +1,4 @@
+import { looksLikeStructuredDocument } from './document-markers';
 /**
  * Protobuf (.proto) to OpenAPI 3.1.x Converter (for Import) — #238
  *
@@ -41,6 +42,8 @@ const PROTO_SCALAR_TO_JSON: Record<string, { type: string; format?: string }> = 
 export function isProtobuf(content: string): boolean {
   if (!content || typeof content !== 'string') return false;
   const trimmed = content.trim();
+  // A JSON or YAML document is never Protobuf, whatever words its descriptions use.
+  if (looksLikeStructuredDocument(trimmed)) return false;
   // syntax = "proto2" or "proto3"
   if (/^\s*syntax\s*=\s*["']proto(2|3)["']\s*;/.test(trimmed)) return true;
   // Common .proto patterns: message X { or enum X {

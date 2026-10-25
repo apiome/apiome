@@ -18,4 +18,7 @@ Importing an OpenAPI YAML or JSON file now detects it as **OpenAPI** from its to
   not parse, so the import names the real problem (the YAML error, or the limit it exceeds). And a
   JSON or YAML file is never offered as Thrift, WIT, FlatBuffers, Protobuf, GraphQL, TypeSpec or
   another text format because of words in its descriptions.
-- Thrift, WIT, FlatBuffers and Protobuf sources are detected as before.
+- The same rule applies in the **Import wizard**, which checks a file's format in the browser
+  before sending it: a JSON or YAML file is never treated as Thrift, Protobuf or GraphQL there
+  either.
+- Thrift, WIT, FlatBuffers, Protobuf and GraphQL sources are detected as before.

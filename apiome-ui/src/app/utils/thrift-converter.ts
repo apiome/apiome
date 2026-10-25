@@ -1,3 +1,4 @@
+import { looksLikeStructuredDocument } from './document-markers';
 /**
  * Apache Thrift (.thrift IDL) to OpenAPI 3.1.x Converter (for Import) — #240
  *
@@ -37,10 +38,16 @@ const THRIFT_BASE_TO_JSON: Record<string, { type: string; format?: string }> = {
 export function isThrift(content: string): boolean {
   if (!content || typeof content !== 'string') return false;
   const trimmed = content.trim();
+  // A JSON or YAML document is never Thrift, whatever words its descriptions use — an OpenAPI
+  // spec whose prose says "namespace to its primitives" was imported as Thrift.
+  if (looksLikeStructuredDocument(trimmed)) return false;
   // Thrift `include` uses a quoted path; plain English ("include a link…") must not match.
-  if (/\binclude\s+"/.test(trimmed)) return true;
-  // Thrift `namespace <lang> <name>` — anchor to line start so keys like `x-namespace:` are not matched.
-  if (/^\s*namespace\s+\w+\s+/m.test(trimmed)) return true;
+  if (/^[ \t]*include\s+"/m.test(trimmed)) return true;
+  // Thrift `namespace <scope> <name>` is the whole line (bar a `;` or a comment); prose that
+  // merely starts with "namespace" carries more words.
+  if (/^[ \t]*namespace[ \t]+(?:\*|[A-Za-z_][\w.]*)[ \t]+[A-Za-z_][\w.]*[ \t]*;?[ \t]*(?:\/\/.*|#.*)?$/m.test(trimmed)) {
+    return true;
+  }
   if (/\bstruct\s+\w+\s*\{/.test(trimmed)) return true;
   if (/\benum\s+\w+\s*\{/.test(trimmed)) return true;
   if (/\bunion\s+\w+\s*\{/.test(trimmed)) return true;

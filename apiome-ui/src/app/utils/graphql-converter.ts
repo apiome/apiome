@@ -1,3 +1,4 @@
+import { looksLikeStructuredDocument } from './document-markers';
 /**
  * GraphQL Schema to OpenAPI 3.1.x Converter
  *
@@ -866,6 +867,9 @@ export function isGraphQL(content: string): boolean {
   }
 
   const trimmed = content.trim();
+
+  // A JSON or YAML document is never GraphQL SDL, whatever words its descriptions use.
+  if (looksLikeStructuredDocument(trimmed)) return false;
 
   // Check for common GraphQL keywords
   const graphqlPatterns = [
