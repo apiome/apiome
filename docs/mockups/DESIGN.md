@@ -420,3 +420,26 @@ measurements and four mockups are in **`PROPOSALS.md`** and `proposals/`:
 If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (default-collapsed
 groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
 and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.
+
+## 15. Round-3 proposals (2026-10-25) — *proposed, not yet adopted*
+
+A colour & accent review of the RC6 launch build (`apiome-ui` 0.480) found that the quiet pass left
+the app **calm to the point of plain**: the navy primary is the only saturated element on most pages,
+the rail is a grey list, headers are text, stats are a spreadsheet row, records are flat squares and
+nothing reacts to the pointer. The findings, the before/after pairs and the delta stylesheet are in
+**`PROPOSALS.md` §5**, `proposals/accent-pass.html` (hub) and `assets/hive-accent.css`:
+
+| Mockup | Proposes |
+| --- | --- |
+| `proposals/accent-pass.html` | the hub: findings, 1 : 1 rail comparison, a drag-to-compare pair per page, the live component delta, the production map |
+| `proposals/accent-home.html` | brand band behind the greeting; stat tone + delta + sparkline + count-up; hex record marks; quick-action tiles; toned attention rows; card format edges |
+| `proposals/accent-catalog.html` | Bring-in tile + hairline; hex record marks; chips select in azure; azure row hover |
+| `proposals/accent-projects.html` | Build tile; hex marks + format edge; card lift; target band + end value on the trend |
+| `proposals/accent-versions.html` | project hex mark in the title; azure tabs and chips; row tone rails (HEAD, deprecated); author avatars |
+| `proposals/accent-members.html` | Workspace tile; seat meter in the facts line; azure chips; row hover — deliberately the smallest delta |
+
+If adopted, they amend §2 (area hues; Home as a brand moment), §3.1 (`--area-*`, `--fmt-*`, identity
+hues on the fixed-hue allow-list), §5.2 (rail dot / tinted icons / soft active item), §5.3 (header
+tile), §7 (`Stat` tone, `Avatar` hex for records, `Card` edge, azure selection, pressed buttons), §8
+(“alive on touch”) and add **P9 — Colour & accent pass** (HIVE-14) to §12. Until then, the sections
+above stand as written.

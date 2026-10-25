@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Home — colour &amp; accent (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/hive-accent.css" />
+<script src="../assets/hive-accent.js" defer></script>
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .pinned .list-row { padding: 10px var(--card-pad); }
+  .pinned .lr-actions { opacity: 1; }
+  .pinned .lr-actions .btn { color: var(--fg-subtle); }
+  .pickup-card { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; }
+  .pickup-card .row-between { align-items: center; }
+  .pickup-card .proj-id { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .checklist-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 14px 0 0; }
+  .checklist-steps .t-600 { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); }
+  .checklist-steps [data-lucide] { width: 15px; height: 15px; flex-shrink: 0; }
+  .attn .lr-title { font-weight: 500; }
+  @media (max-width: 1100px) { .checklist-steps { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+</style>
+</head>
+<body data-shell="app" data-nav="home" data-page="proposals/accent-home" data-tenant="Acme Corp" data-before="home" data-before-label="apiome-ui 0.480 · Home">
+<main class="page">
+  <!-- ===== 1. Header: the one brand moment on the app shell ===== -->
+  <header class="page-header page-header--brand" id="annot-1">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><span>Acme Corp</span><i data-lucide="chevron-right"></i><span>Home</span></div>
+          <h1 class="page-title">Good afternoon, Ada</h1>
+          <p class="page-desc">Here’s what’s moving across <span class="t-accent t-600">Acme Corp</span>. <b>3</b> projects, <b>14</b> versions, <b>5</b> published.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn"><i data-lucide="upload"></i>Import a spec<span class="kbd">I</span></button>
+          <button class="btn btn--primary"><i data-lucide="plus"></i>New project<span class="kbd">N</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ===== First-run checklist: unchanged card, done steps take the ok tint ===== -->
+    <section class="card card--honey" style="padding:18px 22px">
+      <div class="row-between wrap gap-4">
+        <div class="row gap-4">
+          <span class="icon-tile icon-tile--lg icon-tile--honey icon-tile--hex"><i data-lucide="rocket"></i></span>
+          <div>
+            <div class="row gap-2"><h2 class="t-h3">You’re all set</h2><span class="badge badge--honey">5 / 5 done</span></div>
+            <div class="t-sm t-muted">You have published a browsable spec — explore Browse, or dismiss this.</div>
+          </div>
+        </div>
+        <div class="row gap-3">
+          <a class="btn btn--sm btn--honey" href="#">Open Browse <i data-lucide="arrow-up-right"></i></a>
+          <div class="hex-grid" title="5 of 5 steps"><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span><span class="is-on"></span></div>
+          <button class="btn btn--ghost btn--icon btn--sm" aria-label="Dismiss checklist"><i data-lucide="x"></i></button>
+        </div>
+      </div>
+      <ol class="checklist-steps" id="annot-7">
+        <li class="step-tile is-done"><div class="t-600"><i data-lucide="circle-check"></i><span class="t-strike">Create your first project</span></div><div class="t-xs t-subtle mt-1">Open the Designer to start a project.</div></li>
+        <li class="step-tile is-done"><div class="t-600"><i data-lucide="circle-check"></i><span class="t-strike">Add a class from a starter template</span></div><div class="t-xs t-subtle mt-1">Browse the built-in templates to add a class.</div></li>
+        <li class="step-tile is-done"><div class="t-600"><i data-lucide="circle-check"></i><span class="t-strike">Cut a version</span></div><div class="t-xs t-subtle mt-1">Snapshot your schema as a version.</div></li>
+        <li class="step-tile is-done"><div class="t-600"><i data-lucide="circle-check"></i><span class="t-strike">Publish it</span></div><div class="t-xs t-subtle mt-1">Publish the version so it becomes browsable.</div></li>
+        <li class="step-tile is-done"><div class="t-600"><i data-lucide="circle-check"></i><span class="t-strike">View it in Browse</span></div><div class="t-xs t-subtle mt-1">See your published spec render publicly.</div></li>
+      </ol>
+    </section>
+
+    <!-- ===== 2. Stats: same six numbers; tone in the tile, delta chip, sparkline ===== -->
+    <section class="stat-grid stat-grid--6" id="annot-2">
+      <a class="stat stat--link" href="../workspace/tenants.html" data-tone="neutral"><div class="stat__label"><span class="stat__icon"><i data-lucide="building-2"></i></span>Tenants</div><div class="stat__value" data-countup="3">3</div><div class="stat__foot"><span>2 admin</span></div></a>
+      <a class="stat stat--link" href="../build/projects.html" data-tone="ok"><div class="stat__label"><span class="stat__icon"><i data-lucide="folder-kanban"></i></span>Projects</div><div class="stat__value" data-countup="3">3</div><div class="stat__foot"><span>3 created</span><span class="stat__delta stat__delta--chip stat__delta--up"><i data-lucide="trending-up"></i>+1</span></div></a>
+      <a class="stat stat--link" href="accent-versions.html" data-tone="ok"><div class="stat__label"><span class="stat__icon"><i data-lucide="git-branch"></i></span>Versions</div><div class="stat__value" data-countup="14">14</div><div class="stat__foot"><span>9 created</span><span class="stat__delta stat__delta--chip stat__delta--up"><i data-lucide="trending-up"></i>+4</span></div><svg class="stat__spark" viewBox="0 0 64 26" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="M0 21 L10 18 L20 19 L30 12 L40 14 L50 7 L64 4 L64 26 L0 26 Z"/><path d="M0 21 L10 18 L20 19 L30 12 L40 14 L50 7 L64 4"/></svg></a>
+      <a class="stat stat--link" href="../ship/published.html" data-tone="accent"><div class="stat__label"><span class="stat__icon"><i data-lucide="globe"></i></span>Published</div><div class="stat__value"><span data-countup="5">5</span><small>of 14</small></div><div class="stat__foot"><span>9 drafts</span><span class="stat__delta stat__delta--chip stat__delta--up"><i data-lucide="trending-up"></i>+2</span></div><svg class="stat__spark" viewBox="0 0 64 26" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="M0 22 L12 22 L22 16 L34 16 L44 10 L54 10 L64 5 L64 26 L0 26 Z"/><path d="M0 22 L12 22 L22 16 L34 16 L44 10 L54 10 L64 5"/></svg></a>
+      <a class="stat stat--link" href="#" data-tone="violet"><div class="stat__label"><span class="stat__icon"><i data-lucide="box"></i></span>Classes</div><div class="stat__value" data-countup="128">128</div><div class="stat__foot"><span>schema definitions</span></div></a>
+      <a class="stat stat--link" href="#" data-tone="violet"><div class="stat__label"><span class="stat__icon"><i data-lucide="braces"></i></span>Properties</div><div class="stat__value" data-countup="1,042">1,042</div><div class="stat__foot"><span>962 in classes</span></div></a>
+    </section>
+
+    <div class="grid grid-main-aside">
+      <div class="col gap-6">
+        <!-- ===== 3. Pinned projects: hex record avatars in identity hues + format pill ===== -->
+        <section class="card pinned" id="annot-3">
+          <div class="card__header"><div class="card__title"><i data-lucide="pin"></i>Pinned projects<span class="t-xs t-subtle t-500">Your favorites</span></div></div>
+          <div>
+            <a class="list-row card--link" href="accent-versions.html"><span class="avatar avatar--sm avatar--record avatar--a">PA</span><div class="grow min-w-0"><div class="lr-title row gap-2">Payments API <span class="fmt fmt--openapi">OpenAPI</span></div><div class="lr-sub">v2.4.0 · Pinned 3 days ago</div></div><div class="lr-actions"><i data-lucide="chevron-right" class="t-faint"></i><button class="btn btn--ghost btn--sm btn--icon" aria-label="Unpin Payments API" data-tip="Unpin"><i data-lucide="pin-off"></i></button></div></a>
+            <a class="list-row card--link" href="accent-versions.html"><span class="avatar avatar--sm avatar--record avatar--c">SA</span><div class="grow min-w-0"><div class="lr-title row gap-2">Shipping API <span class="fmt fmt--openapi">OpenAPI</span></div><div class="lr-sub">No versions yet · Pinned 5 days ago</div></div><div class="lr-actions"><i data-lucide="chevron-right" class="t-faint"></i><button class="btn btn--ghost btn--sm btn--icon" aria-label="Unpin Shipping API" data-tip="Unpin"><i data-lucide="pin-off"></i></button></div></a>
+          </div>
+          <div class="card__footer"><span>2 of 8 pinned</span></div>
+        </section>
+
+        <!-- ===== 6. Pick up where you left off: edge in the format hue, lift on hover ===== -->
+        <section id="annot-6">
+          <div class="section-title"><h2>Pick up where you left off</h2><a href="accent-projects.html" class="t-sm">All projects <i data-lucide="arrow-right" style="display:inline-block;width:12px;height:12px;vertical-align:-1px"></i></a></div>
+          <div class="grid grid-2">
+            <a class="card card--hover card--link card--edge pickup-card" href="accent-versions.html" style="--edge:var(--fmt-openapi)">
+              <div class="row-between"><span class="badge badge--dot" data-status="draft">Draft</span><span class="t-xs t-subtle">Acme Corp</span></div>
+              <div class="row gap-3"><span class="avatar avatar--sm avatar--record avatar--a">PA</span><div class="t-h4">Payments API</div></div>
+              <div class="proj-id">v2.4.0 · 18 classes · 42 properties</div>
+              <div class="row-between"><div class="row gap-2"><span class="ring ring--sm" style="--p:88;--c:var(--ok)"><span>88</span></span><span class="t-xs t-muted">Quality</span></div><span class="t-xs t-subtle">Edited 2 hours ago</span></div>
+            </a>
+            <a class="card card--hover card--link card--edge pickup-card" href="accent-versions.html" style="--edge:var(--fmt-openapi)">
+              <div class="row-between"><span class="badge badge--dot" data-status="published">Published</span><span class="t-xs t-subtle">Globex Labs</span></div>
+              <div class="row gap-3"><span class="avatar avatar--sm avatar--record avatar--c">OS</span><div class="t-h4">Orders Service</div></div>
+              <div class="proj-id">v1.9.2 · 14 classes · 32 properties</div>
+              <div class="row-between"><div class="row gap-2"><span class="ring ring--sm" style="--p:94;--c:var(--ok)"><span>94</span></span><span class="t-xs t-muted">Quality</span></div><span class="t-xs t-subtle">Published 3 days ago</span></div>
+            </a>
+          </div>
+        </section>
+      </div>
+
+      <aside class="col gap-6">
+        <!-- ===== 4. Quick actions: four tiles, each in the hue of the area it opens ===== -->
+        <section class="card" id="annot-4">
+          <div class="card__header"><div class="card__title"><i data-lucide="zap"></i>Quick actions</div></div>
+          <div class="qa-grid">
+            <a class="qa-tile" href="../build/import-wizard.html" data-area="bring-in"><span class="icon-tile icon-tile--sm"><i data-lucide="upload"></i></span><div class="qa-title">Import a spec<span class="kbd">I</span></div></a>
+            <a class="qa-tile" href="accent-catalog.html" data-area="bring-in"><span class="icon-tile icon-tile--sm"><i data-lucide="library"></i></span><div class="qa-title">Browse the catalog</div></a>
+            <a class="qa-tile" href="../workspace/api-keys.html" data-area="workspace"><span class="icon-tile icon-tile--sm"><i data-lucide="key-round"></i></span><div class="qa-title">Create an API key</div></a>
+            <a class="qa-tile" href="accent-members.html" data-area="workspace"><span class="icon-tile icon-tile--sm"><i data-lucide="user-plus"></i></span><div class="qa-title">Invite a teammate</div></a>
+          </div>
+        </section>
+
+        <!-- ===== 5. Needs attention: a tone rail per row, icon tile, hover ===== -->
+        <section class="card attn" id="annot-5">
+          <div class="card__header"><div class="card__title"><i data-lucide="bell-ring"></i>Needs attention</div><span class="badge badge--warn">3</span></div>
+          <div>
+            <a class="list-row card--link" href="../ship/sunset-timeline.html" data-tone="warn"><span class="icon-tile icon-tile--sm"><i data-lucide="sunset"></i></span><div class="grow min-w-0"><div class="lr-title">Orders Service v1.4.0 sunsets in 12 days</div><div class="lr-sub">Still published — move consumers to a successor</div></div><i data-lucide="chevron-right" class="t-faint"></i></a>
+            <a class="list-row card--link" href="../govern/lint-posture.html" data-tone="danger"><span class="icon-tile icon-tile--sm"><i data-lucide="shield-alert"></i></span><div class="grow min-w-0"><div class="lr-title">4 blocking lint findings on Payments API v2.4.0</div><div class="lr-sub">The publish gate will fail until these are fixed</div></div><i data-lucide="chevron-right" class="t-faint"></i></a>
+            <a class="list-row card--link" href="../workspace/api-keys.html" data-tone="warn"><span class="icon-tile icon-tile--sm"><i data-lucide="key-round"></i></span><div class="grow min-w-0"><div class="lr-title">API key <span class="mono">ci-deploy</span> expires Friday</div><div class="lr-sub">Rotate before it breaks CI</div></div><i data-lucide="chevron-right" class="t-faint"></i></a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<script>
+  document.addEventListener('hive:mounted', () => {
+    HiveAccent.annot([['#annot-1', 1, 12, 12], ['#annot-2', 2], ['#annot-3', 3], ['#annot-4', 4], ['#annot-5', 5], ['#annot-6', 6, -10, 4], ['#annot-7', 7, -10, 2]]);
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade/dashboard — proposal, colour &amp; accent pass over the shipped Home (apiome-ui 0.480). Press <b>B</b> for the shipped page.</p>
+  <h4>Problem (observed 2026-10-25 on the shipped page)</h4>
+  <ul>
+    <li>The first page after sign-in is the greyest page in the app: a text header, six grey stats, two grey lists. The only saturated element is the navy primary; the checklist card is the one brand moment, and it disappears once dismissed.</li>
+    <li>The stat strip is a spreadsheet row: label, number, caption. No trend, no direction, nothing a glance can read.</li>
+    <li>Pinned projects and the pick-up cards use flat tinted squares for the record mark; the hexagon (DESIGN.md §2) only appears in the workspace switcher.</li>
+    <li>Hover does nothing on the cards; the rows tint by 2.5 %.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> <code>.page-header--brand</code>: the launcher’s hex pattern and honey/azure glows behind the greeting, at about half the launcher’s intensity. The workspace name takes the accent. Only Home gets this — every other page keeps the plain header.</li>
+    <li><b>2</b> <code>.stat[data-tone]</code>: a 24 px icon tile in the area hue (Projects/Versions → Build, Published → Ship, Classes/Properties → violet, Tenants → neutral), a delta chip (<code>+4</code>) where the number moved this week, a sparkline on the two counters that have a series. The figure itself stays ink and counts up on first paint (skipped under reduced motion).</li>
+    <li><b>3</b> Records get <code>.avatar--record</code>: the hexagon in one of five identity hues (hash of the id) — the same mark the workspace switcher uses — plus the format pill beside the name.</li>
+    <li><b>4</b> Quick actions become four tiles; each tile’s icon tile is in the hue of the area it opens (Import / Catalog → Bring in, API key / Invite → Workspace). Lift on hover.</li>
+    <li><b>5</b> Needs attention: a 3 px tone rail (<code>warn</code> / <code>danger</code>) and an icon tile per row instead of a 6 px dot; hover tints in the same tone.</li>
+    <li><b>6</b> Pick-up cards carry <code>.card--edge</code> — a 3 px gradient edge in the format hue, the same device the launcher tiles use — and lift 2 px with an azure hairline on hover.</li>
+    <li><b>7</b> Done checklist steps take the ok tint; the next step keeps the honey ring (honey stays a brand marker, §2).</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Every number, caption, card, row, link and action of the shipped Home; the checklist derivation and dismissal; the two header actions and their shortcuts; the main/aside layout and its breakpoints.</li></ul>
+  <h4>States</h4>
+  <ul><li>Loading: skeleton stats (no tone until data arrives) and skeleton rows. Empty pinned: <code>.empty--inline</code> “Pin a project from its header”. Zero attention items: the card hides. Dark theme: every tint is the theme’s own <code>-soft</code> token; glows use <code>color-mix</code> on the brand hues.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>Amends §2 (Home is a brand moment), §3.1 (area hues), §7 (<code>Stat</code> tone/delta/spark; <code>Avatar</code> shape=hex for records), §8 (card hover/edge). See <code>PROPOSALS.md</code> §5.</li></ul>
+</template>
+</body>
+</html>

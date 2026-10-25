@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Colour &amp; accent pass — before / after (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/hive-accent.css" />
+<script src="../assets/hive-accent.js" defer></script>
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .hero { padding: 48px var(--page-pad) 28px; position: relative; overflow: clip; }
+  .hero::before, .hero::after { z-index: 0; }
+  .hero__inner, .sec { max-width: 1180px; width: 100%; margin: 0 auto; padding: 0 var(--page-pad); position: relative; z-index: 1; }
+  .sec + .sec { margin-top: 40px; }
+  .sec__head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .sec__head h2 { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: var(--track-tight); }
+  .sec__head .t-muted { font-size: var(--fs-sm); }
+  .findings { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); background: var(--bg-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .findings th { text-align: left; padding: 10px 14px; font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--track-caps); color: var(--fg-subtle); border-bottom: 1px solid var(--border); }
+  .findings td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .findings tr:last-child td { border-bottom: 0; }
+  .findings td:first-child { width: 36px; font-weight: 700; color: var(--fg-subtle); }
+  .findings b { font-weight: 600; color: var(--fg); }
+  /* before / after slider */
+  .cmp { background: var(--bg-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .cmp__head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .cmp__head .t-h4 { margin-right: auto; display: flex; align-items: center; gap: 8px; }
+  .cmp__stage { position: relative; width: 100%; overflow: hidden; background: var(--bg-inset); user-select: none; }
+  .cmp__before { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+  .cmp__after { position: absolute; inset: 0; overflow: hidden; clip-path: inset(0 0 0 50%); }
+  .cmp__after iframe { width: 1440px; height: 900px; border: 0; transform-origin: top left; pointer-events: none; background: var(--bg-canvas); }
+  .cmp__handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--accent); transform: translateX(-1px); pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,.6); }
+  .cmp__handle::after { content: "⇔"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700; box-shadow: var(--shadow-md); }
+  .cmp__tag { position: absolute; bottom: 10px; padding: 4px 9px; border-radius: var(--r-full); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; pointer-events: none; box-shadow: var(--shadow-sm); }
+  .cmp__tag--before { left: 10px; background: var(--neutral-soft); color: var(--neutral-fg); }
+  .cmp__tag--after { right: 10px; background: var(--accent-soft); color: var(--accent-fg); }
+  .cmp__range { -webkit-appearance: none; appearance: none; position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: transparent; cursor: ew-resize; }
+  .cmp__range::-webkit-slider-thumb { -webkit-appearance: none; width: 40px; height: 100%; background: transparent; }
+  .cmp__range::-moz-range-thumb { width: 40px; height: 100%; background: transparent; border: 0; }
+  .cmp__range:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .cmp__foot { display: flex; align-items: center; gap: 12px; padding: 10px 16px; font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .cmp__foot .spacer { flex: 1; }
+  /* rail crop: two 264 px columns at 1:1 */
+  .railcmp { display: grid; grid-template-columns: 264px 264px; gap: 16px; align-items: start; }
+  .railcmp > div { position: relative; width: 264px; height: 520px; overflow: hidden; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--border); background: var(--bg-rail); }
+  .railcmp img { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; max-width: none; }
+  .railcmp iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; pointer-events: none; }
+  .railcmp .cmp__tag { z-index: 2; }
+  /* delta gallery */
+  .gal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+  .gal .card { padding: 16px 18px; }
+  .gal .t-caps { margin-bottom: 10px; display: block; }
+  .gal .stat-grid--2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .swatches { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
+  .sw { display: flex; flex-direction: column; gap: 6px; align-items: center; font-size: var(--fs-2xs); color: var(--fg-muted); text-align: center; }
+  .sw > span:first-child { width: 100%; height: 40px; border-radius: var(--r-md); background: var(--area-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 35%, transparent); display: grid; place-items: center; color: var(--area-fg); }
+  .sw [data-lucide] { width: 16px; height: 16px; color: var(--area); }
+  .minirail { width: 100%; padding: 8px; border-radius: var(--r-md); background: var(--bg-rail); box-shadow: inset 0 0 0 1px var(--border); }
+  .minirail .nav-group { margin-top: 6px; } .minirail .nav-group:first-child { margin-top: 0; }
+  .demo-table td { height: 40px; }
+  .port { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); background: var(--bg-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .port th { text-align: left; padding: 10px 14px; font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--track-caps); color: var(--fg-subtle); border-bottom: 1px solid var(--border); }
+  .port td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .port tr:last-child td { border-bottom: 0; }
+  .port code { background: var(--bg-inset); padding: 0 5px; border-radius: 3px; font-size: var(--fs-xs); }
+  @media (max-width: 1100px) { .gal { grid-template-columns: 1fr; } .swatches { grid-template-columns: repeat(3, minmax(0,1fr)); } .railcmp { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-shell="bare" data-page="proposals/accent-pass" data-root="../">
+<main class="page hex-bg">
+  <section class="hero glow-honey glow-azure">
+    <div class="hero__inner">
+      <div class="row gap-3"><span class="brand-mark brand-mark--lg"></span><div><div class="t-h3" style="letter-spacing:-0.02em">apiome</div><div class="t-caps" style="color:var(--honey-fg)">Hive · proposals · round 3</div></div></div>
+      <h1 class="t-display mt-6" style="max-width:22ch">Colour &amp; accent pass — <em style="font-style:normal;color:var(--accent)">before and after</em></h1>
+      <p class="t-body t-muted mt-4" style="max-width:68ch">The shipped redesign is calm, consistent and grey. This round spends colour where the eye needs an anchor — one hue per area in the rail and the page header, the hexagon on every record, azure for everything selected, tone on the numbers, and a lift on everything you can click — without changing a route, a token value, a theme or a line of copy. Drag the handle on each pair; press <span class="kbd">B</span> on any proposal page to see the shipped page it replaces.</p>
+      <div class="row gap-2 mt-6 wrap">
+        <a class="btn btn--primary" href="accent-home.html"><i data-lucide="play"></i>Open the Home proposal</a>
+        <a class="btn" href="../PROPOSALS.md#5-round-3--colour--accent-pass-2026-10-25"><i data-lucide="file-text"></i>PROPOSALS.md §5</a>
+        <a class="btn" href="../index.html"><i data-lucide="layout-grid"></i>Mockup index</a>
+        <button class="btn btn--ghost" data-action="theme"><i data-lucide="sun-moon"></i>Toggle theme — every pair follows</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Findings ===== -->
+  <section class="sec mt-6">
+    <div class="sec__head"><h2>What makes it look plain</h2><span class="t-muted">Observed 2026-10-25 on apiome-ui 0.480, from the documentation screenshots at 1440 × 900</span></div>
+    <table class="findings">
+      <thead><tr><th>#</th><th>Finding</th><th>Where it shows</th><th>Proposal</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>One hue does all the work.</b> The navy primary is the only saturated element on most pages; everything else is ink on paper. Colour exists only inside table cells (format pills, badges, grade glyphs).</td><td>Every app page</td><td>Area hues (§1), stat tone (§6), azure selection (§4)</td></tr>
+        <tr><td>2</td><td><b>The rail is a grey list.</b> With groups collapsed by default it is five uppercase labels and counts; every icon is the same grey. Nothing tells Bring in from Govern except the word.</td><td>Shell</td><td>Hue dot per group, tinted icons, soft active item with a bar (§2)</td></tr>
+        <tr><td>3</td><td><b>Headers are text only.</b> Breadcrumb, title, description. The mockup index gives every area an icon tile in its hue; the shipped headers dropped that identity.</td><td>Catalog, Projects, Versions, Members, Published…</td><td>Area icon tile, crumb dot, hairline (§3)</td></tr>
+        <tr><td>4</td><td><b>Stats are a spreadsheet row.</b> Label, number, caption — no direction, no trend. The mockup’s deltas did not ship.</td><td>Home</td><td><code>Stat</code> tone, delta chip, sparkline, count-up (§6)</td></tr>
+        <tr><td>5</td><td><b>Records are flat squares.</b> Projects and catalog items wear a tinted square with initials; the hexagon of DESIGN.md §2 appears only in the workspace switcher.</td><td>Projects, Catalog, Home, Versions, Published</td><td><code>.avatar--record</code> hex in five identity hues, format edge on cards (§7)</td></tr>
+        <tr><td>6</td><td><b>Hover does nothing.</b> Cards do not lift, rows tint by 2.5 %, the primary has no pressed state. The UI feels static.</td><td>Every list and card</td><td>Card lift, azure row hover, pressed buttons, primary top-light (§5)</td></tr>
+        <tr><td>7</td><td><b>Selected is black.</b> Active chips and the tab underline use ink, while §2 reserves azure for “selected states”. The heaviest element on a list page is a filter.</td><td>Catalog, Projects, Versions, Members</td><td>Chips and tabs select in azure (§4)</td></tr>
+        <tr><td>8</td><td><b>Home is not a landing.</b> The first page after sign-in has no brand moment once the checklist is dismissed; it looks like any list page.</td><td>Home</td><td>Hex pattern + glows behind the greeting, toned attention rows, action tiles (§8–9)</td></tr>
+      </tbody>
+    </table>
+    <p class="t-sm t-muted mt-3">Not on the list: <b>Login</b>, <b>Sign-up</b> and the <b>All-apps launcher</b> already carry the brand (hex pattern, glows, format pills, azure headline) and need nothing from this round. The Preferences pane, dialogs, drawers and empty states are unchanged.</p>
+  </section>
+
+  <!-- ===== Shell / rail ===== -->
+  <section class="sec" id="shell">
+    <div class="sec__head"><h2>Shell — the rail</h2><span class="t-muted">Left: shipped (from the Light theme screenshot). Right: proposal, live. Both at 1 : 1.</span></div>
+    <div class="railcmp">
+      <div><span class="cmp__tag cmp__tag--before">Before</span><img data-before-img="theme-light" alt="The shipped rail: grey icons, uppercase group labels, a white active chip" /></div>
+      <div><span class="cmp__tag cmp__tag--after">After</span><iframe title="After: the proposed rail (Home)" src="accent-home.html?shot" loading="lazy"></iframe></div>
+    </div>
+    <p class="t-sm t-muted mt-3" style="max-width:80ch">Each group gets a hue dot on its label and icons tinted toward its hue; the active item becomes a soft tint in the group’s hue with a 3 px bar instead of the raised white chip (Home keeps the chip). Collapsed groups — the default since HIVE-12.1 — keep the dot, so the hue survives the fold.</p>
+  </section>
+
+  <!-- ===== Page pairs ===== -->
+  <section class="sec" id="pages">
+    <div class="sec__head"><h2>Pages — drag to compare</h2><span class="t-muted">Before: the shipped page as captured for the docs (page-only, 1440 × 900). After: the proposal, live and page-only.</span></div>
+    <div class="col gap-6">
+      <div class="cmp" data-before="home" data-after="accent-home.html"><div class="cmp__head"><span class="t-h4"><i data-lucide="house"></i>Home</span><span class="t-xs t-subtle">/ade/dashboard</span><a class="btn btn--sm" href="accent-home.html">Open after<i data-lucide="arrow-up-right"></i></a></div><div class="cmp__stage"></div><div class="cmp__foot"><span>Brand band · stat tone · hex records · action tiles · attention rails · card edges</span><span class="spacer"></span><span>Numbers count up on the live page</span></div></div>
+      <div class="cmp" data-before="catalog" data-after="accent-catalog.html"><div class="cmp__head"><span class="t-h4"><i data-lucide="library"></i>Catalog</span><span class="t-xs t-subtle">/ade/dashboard/catalog</span><a class="btn btn--sm" href="accent-catalog.html">Open after<i data-lucide="arrow-up-right"></i></a></div><div class="cmp__stage"></div><div class="cmp__foot"><span>Bring-in tile and hairline · hex records · azure chips · row hover</span></div></div>
+      <div class="cmp" data-before="projects" data-after="accent-projects.html"><div class="cmp__head"><span class="t-h4"><i data-lucide="folder-kanban"></i>Projects</span><span class="t-xs t-subtle">/ade/dashboard/projects</span><a class="btn btn--sm" href="accent-projects.html">Open after<i data-lucide="arrow-up-right"></i></a></div><div class="cmp__stage"></div><div class="cmp__foot"><span>Build tile · hex records · format edge · card lift · target band + end value on the trend</span></div></div>
+      <div class="cmp" data-before="versions" data-after="accent-versions.html"><div class="cmp__head"><span class="t-h4"><i data-lucide="git-branch"></i>Versions</span><span class="t-xs t-subtle">/ade/dashboard/versions</span><a class="btn btn--sm" href="accent-versions.html">Open after<i data-lucide="arrow-up-right"></i></a></div><div class="cmp__stage"></div><div class="cmp__foot"><span>Project mark in the title · azure tabs and chips · row tone rails (HEAD, deprecated) · author avatars</span></div></div>
+      <div class="cmp" data-before="members" data-after="accent-members.html"><div class="cmp__head"><span class="t-h4"><i data-lucide="users"></i>Members</span><span class="t-xs t-subtle">/ade/dashboard/members</span><a class="btn btn--sm" href="accent-members.html">Open after<i data-lucide="arrow-up-right"></i></a></div><div class="cmp__stage"></div><div class="cmp__foot"><span>Workspace tile · seat meter in the facts line · azure chips · row hover — deliberately the smallest delta</span></div></div>
+    </div>
+  </section>
+
+  <!-- ===== Delta gallery ===== -->
+  <section class="sec" id="delta">
+    <div class="sec__head"><h2>The delta, component by component</h2><span class="t-muted">Everything below is live — hover, press, toggle. One stylesheet: <code class="mono">assets/hive-accent.css</code></span></div>
+    <div class="gal">
+      <div class="card">
+        <span class="t-caps">1 · Area hues — six new tokens, pointers at existing ones</span>
+        <div class="swatches">
+          <div class="sw" data-area="build"><span><i data-lucide="hammer"></i></span>Build<br><span class="mono">ok</span></div>
+          <div class="sw" data-area="bring-in"><span><i data-lucide="download"></i></span>Bring in<br><span class="mono">violet</span></div>
+          <div class="sw" data-area="ship"><span><i data-lucide="send"></i></span>Ship<br><span class="mono">accent</span></div>
+          <div class="sw" data-area="govern"><span><i data-lucide="shield-check"></i></span>Govern<br><span class="mono">warn</span></div>
+          <div class="sw" data-area="workspace"><span><i data-lucide="users"></i></span>Workspace<br><span class="mono">rose</span></div>
+          <div class="sw" data-area="tools"><span><i data-lucide="wrench"></i></span>Tools<br><span class="mono">neutral</span></div>
+        </div>
+        <p class="t-xs t-muted mt-3">The mapping the mockup index has used since round 1. Because each points at a semantic token, all nine themes get it for free and the contrast gate already covers the values.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">2 · Rail group, at rest and active</span>
+        <div class="minirail">
+          <div class="nav-group" data-group="Bring in"><div class="nav-group__label">Bring in</div><div class="nav-group__items">
+            <a class="nav-item" href="#"><i data-lucide="library"></i><span>Catalog</span></a>
+            <a class="nav-item is-active" href="#"><i data-lucide="git-branch"></i><span>Repositories</span></a>
+            <a class="nav-item" href="#"><i data-lucide="network"></i><span>MCP servers</span></a>
+          </div></div>
+          <div class="nav-group" data-group="Govern"><div class="nav-group__label">Govern</div><div class="nav-group__items">
+            <a class="nav-item" href="#"><i data-lucide="book-open-check"></i><span>Style guides</span></a>
+            <a class="nav-item" href="#"><i data-lucide="shield-check"></i><span>Lint posture</span></a>
+          </div></div>
+        </div>
+        <p class="t-xs t-muted mt-3">Dot on the label, icons tinted 72 % toward the hue, active = soft tint + 3 px bar. Text stays ink/muted, so the AA pairs are the existing <code class="mono">-soft / -fg</code> ones.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">3 · Page header</span>
+        <div data-area="ship" style="position:relative;padding-bottom:10px">
+          <div class="crumbs"><span>Acme Corp</span><i data-lucide="chevron-right"></i><span class="crumb-area">Ship</span><i data-lucide="chevron-right"></i><span>Published</span></div>
+          <div class="page-title" style="font-size:var(--fs-2xl)"><span class="icon-tile icon-tile--area"><i data-lucide="globe"></i></span>Published versions</div>
+          <div class="page-desc">4 published · 2 public · 1 with a hosted mock</div>
+          <div style="position:absolute;left:0;bottom:0;height:2px;width:60%;background:linear-gradient(90deg,var(--area),transparent)"></div>
+        </div>
+        <p class="t-xs t-muted mt-3">A 34 px icon tile before the title, a dot on the area crumb, and an optional 2 px hairline that fades out. Versions puts the project’s hex mark there instead.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">4 · Selected = azure</span>
+        <div class="tabs" data-tabs style="border-bottom:1px solid var(--border)"><button class="tab is-active" data-action="tab"><i data-lucide="scroll-text"></i>Timeline<span class="count">6</span></button><button class="tab" data-action="tab"><i data-lucide="git-compare-arrows"></i>Changes<span class="count">4</span></button><button class="tab" data-action="tab"><i data-lucide="flask-conical"></i>Test bench</button></div>
+        <div class="row gap-2 mt-3 wrap"><span class="chip is-active" data-action="chip">All <span class="t-faint">6</span></span><span class="chip" data-action="chip">Drafts <span class="t-faint">2</span></span><span class="chip" data-action="chip">Published <span class="t-faint">4</span></span><span class="chip" data-action="chip"><i data-lucide="triangle-alert"></i>Needs attention</span></div>
+        <p class="t-xs t-muted mt-3">DESIGN.md §2 already reserves azure for selected states. Tabs: underline, icon and count. Chips: <code class="mono">accent-soft</code> with a hairline instead of a black pill; hover previews the ring.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">5 · Alive on touch</span>
+        <div class="row gap-2 wrap"><button class="btn btn--primary"><i data-lucide="plus"></i>New project<span class="kbd">N</span></button><button class="btn"><i data-lucide="upload"></i>Import</button><button class="btn btn--ghost">Cancel</button><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Demo switch"></button></div>
+        <div class="grid grid-2 mt-3" style="gap:10px">
+          <a class="card card--hover card--link card--edge" href="#" style="--edge:var(--fmt-openapi);padding:12px 14px"><div class="row gap-2"><span class="avatar avatar--sm avatar--record avatar--a">PA</span><span class="t-sm t-600">Payments API</span></div><div class="t-xs t-subtle mt-1">hover me</div></a>
+          <a class="card card--hover card--link card--edge" href="#" style="--edge:var(--fmt-asyncapi);padding:12px 14px"><div class="row gap-2"><span class="avatar avatar--sm avatar--record avatar--d">IE</span><span class="t-sm t-600">Inventory Events</span></div><div class="t-xs t-subtle mt-1">hover me</div></a>
+        </div>
+        <p class="t-xs t-muted mt-3">Primary: top-light gradient, deeper shadow on hover, pressed scale. Cards: 2 px lift + azure hairline, 180 ms eased-out. Switch thumb overshoots. All of it is off under reduced motion.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">6 · Stat tone</span>
+        <div class="stat-grid stat-grid--2">
+          <div class="stat" data-tone="ok"><div class="stat__label"><span class="stat__icon"><i data-lucide="git-branch"></i></span>Versions</div><div class="stat__value">14</div><div class="stat__foot"><span>9 created</span><span class="stat__delta stat__delta--chip stat__delta--up"><i data-lucide="trending-up"></i>+4</span></div><svg class="stat__spark" viewBox="0 0 64 26" preserveAspectRatio="none" aria-hidden="true"><path class="fill" d="M0 21 L10 18 L20 19 L30 12 L40 14 L50 7 L64 4 L64 26 L0 26 Z"/><path d="M0 21 L10 18 L20 19 L30 12 L40 14 L50 7 L64 4"/></svg></div>
+          <div class="stat" data-tone="warn"><div class="stat__label"><span class="stat__icon"><i data-lucide="shield-alert"></i></span>Blocking</div><div class="stat__value">4</div><div class="stat__foot"><span>Payments v2.4.0</span><span class="stat__delta stat__delta--chip stat__delta--down"><i data-lucide="trending-down"></i>−2</span></div></div>
+        </div>
+        <p class="t-xs t-muted mt-3">The figure stays ink. A 24 px tile, a delta chip and an optional sparkline carry the tone. Home keeps its full strip; list pages keep the facts line.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">7 · Records: hexagon + identity hue + format edge</span>
+        <div class="row gap-3 wrap"><span class="avatar avatar--lg avatar--record avatar--a">PA</span><span class="avatar avatar--lg avatar--record avatar--b">EB</span><span class="avatar avatar--lg avatar--record avatar--c">OS</span><span class="avatar avatar--lg avatar--record avatar--d">IE</span><span class="avatar avatar--lg avatar--record avatar--e">LG</span><span class="avatar avatar--lg avatar--hex avatar--brand" title="Workspace (unchanged)">AC</span><span class="avatar avatar--lg avatar--a" title="Person (unchanged)">AL</span></div>
+        <div class="row gap-2 mt-3 wrap"><span class="fmt fmt--openapi">OpenAPI</span><span class="fmt fmt--asyncapi">AsyncAPI</span><span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--proto">Protobuf</span><span class="fmt fmt--jsonschema">JSON Schema</span></div>
+        <p class="t-xs t-muted mt-3">Hue = hash(id) mod 5, so a record keeps its colour across Home, Projects, Versions, Catalog and the switcher. People keep the circle; the workspace keeps the brand gradient. A card’s 3 px edge is the format’s fixed hue.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">8 · Row hover and tone rails</span>
+        <div class="table-wrap" style="box-shadow:inset 0 0 0 1px var(--border)">
+          <table class="table demo-table">
+            <thead><tr><th>Version</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody>
+              <tr style="box-shadow:inset 3px 0 0 var(--accent)"><td><a class="ver-link mono t-600" href="#" style="color:inherit">v2.4.0</a> <span class="badge badge--outline">HEAD</span></td><td><span class="badge badge--dot" data-status="draft">Draft</span></td><td class="t-muted">08/15/26</td></tr>
+              <tr><td><a class="ver-link mono t-600" href="#" style="color:inherit">v2.3.1</a></td><td><span class="badge badge--dot" data-status="published">Published</span></td><td class="t-muted">08/02/26</td></tr>
+              <tr style="box-shadow:inset 3px 0 0 var(--orange)"><td><a class="ver-link mono t-600" href="#" style="color:inherit">v2.2.0</a></td><td><span class="badge" data-status="deprecated">Deprecated</span></td><td class="t-muted">06/10/26</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="t-xs t-muted mt-3">Hover: azure at 5 % and the link underlines. A 3 px rail marks the rows the status strip talks about. Selection stays <code class="mono">accent-soft</code>.</p>
+      </div>
+      <div class="card">
+        <span class="t-caps">9 · Attention rows and action tiles</span>
+        <div style="box-shadow:inset 0 0 0 1px var(--border);border-radius:var(--r-md);overflow:hidden">
+          <a class="list-row card--link" href="#" data-tone="warn" style="padding:10px 12px"><span class="icon-tile icon-tile--sm"><i data-lucide="sunset"></i></span><div class="grow min-w-0"><div class="lr-title">Orders v1.4.0 sunsets in 12 days</div><div class="lr-sub">2 consumers still on it</div></div><i data-lucide="chevron-right" class="t-faint"></i></a>
+          <a class="list-row card--link" href="#" data-tone="danger" style="padding:10px 12px"><span class="icon-tile icon-tile--sm"><i data-lucide="shield-alert"></i></span><div class="grow min-w-0"><div class="lr-title">4 blocking lint findings</div><div class="lr-sub">Publish gate will fail</div></div><i data-lucide="chevron-right" class="t-faint"></i></a>
+        </div>
+        <div class="qa-grid" style="padding:10px 0 0"><a class="qa-tile" href="#" data-area="bring-in"><span class="icon-tile icon-tile--sm"><i data-lucide="upload"></i></span><div class="qa-title">Import a spec<span class="kbd">I</span></div></a><a class="qa-tile" href="#" data-area="workspace"><span class="icon-tile icon-tile--sm"><i data-lucide="user-plus"></i></span><div class="qa-title">Invite a teammate</div></a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Port ===== -->
+  <section class="sec" id="port" style="margin-bottom:72px">
+    <div class="sec__head"><h2>Where it lands in apiome-ui</h2><span class="t-muted">Everything maps onto the token layer and components that already exist</span></div>
+    <table class="port">
+      <thead><tr><th style="width:26%">Proposal</th><th>Production seam</th><th style="width:22%">Gate</th></tr></thead>
+      <tbody>
+        <tr><td>Area hues (§1)</td><td><code>globals.css</code> <code>:root</code> aliases <code>--area-*</code> pointing at <code>--color-ok/violet/accent/warn/rose/neutral</code>; <code>lib/platform-nav.ts</code> groups gain <code>area</code>; <code>PageHeader</code> gains an <code>area</code> prop (tile + crumb dot + hairline).</td><td><code>hive-design-tokens.test.ts</code> (every token resolves), <code>a11y-token-contrast.test.ts</code> (pairs unchanged)</td></tr>
+        <tr><td>Rail (§2)</td><td><code>RailNav.tsx</code> / <code>railChrome.tsx</code>: group <code>data-area</code>, active-item classes; the collapsed-rail tooltip is unchanged.</td><td><code>e2e/visual/parity.spec.ts</code> shell fixture re-dump; axe gate</td></tr>
+        <tr><td>Selected = azure (§4)</td><td><code>components/ui/Tabs.tsx</code>, <code>tabStyles.ts</code>, filter chips in <code>DataTable</code> toolbars.</td><td>axe gate (text on <code>accent-soft</code> is <code>accent-fg</code>, already AA)</td></tr>
+        <tr><td>Alive on touch (§5)</td><td><code>Button.tsx</code> primary variant, <code>Card.tsx</code> hover variant, <code>DataTable</code> row hover, <code>Switch.tsx</code> easing — all via <code>globals.css</code> rules that read <code>--dur-*</code> / <code>--ease-out</code>.</td><td><code>rem-audit.spec.ts</code>; reduced-motion branch in <code>theme-parity.spec.ts</code></td></tr>
+        <tr><td>Stat tone (§6)</td><td><code>.hive-stat</code> gains <code>data-tone</code>, <code>.hive-stat__icon</code>, delta chip; <code>.hive-sparkline</code> exists. Home’s six counters get tone + delta from <code>getDashboardStats</code> (needs a previous-period count).</td><td>first-row budget unaffected (Home is exempt); unit test for the delta formatter</td></tr>
+        <tr><td>Records (§7)</td><td><code>Avatar.tsx</code> gains <code>shape="hex"</code> + <code>hue</code> (hash of id → a–e); the five identity hues join the <code>hex-allow</code> fence as fixed identities like <code>.fmt--*</code>. <code>Card</code> gains <code>edge</code> (format token).</td><td><code>hive-design-tokens.test.ts</code> fence update; parity fixtures for Projects/Catalog/Home re-dumped</td></tr>
+        <tr><td>Home band (§8–9)</td><td><code>ade/dashboard/page.tsx</code>: <code>page-header--brand</code>, quick-action tiles, attention rows with <code>data-tone</code>.</td><td>axe gate on <code>/ade/dashboard</code>; screenshot <code>home</code> regenerated</td></tr>
+      </tbody>
+    </table>
+    <p class="t-sm t-muted mt-3" style="max-width:80ch">Suggested ticketing: one epic (<b>HIVE-14 — Colour &amp; accent pass</b>) with seven children in the order above; §1–§4 are the shell and can land first, §5–§9 are per-page and independent. Nothing here is in the RC6 scope — it is the first look-and-feel item for RC7. See <a href="../PROPOSALS.md">PROPOSALS.md §5</a> for the DESIGN.md amendments.</p>
+  </section>
+</main>
+
+<script>
+  (function () {
+    const SCREENS = '../../../apiome-docs/static/img/screens/';
+    const dark = () => ['dark', 'nord', 'darcula', 'solarized', 'blueprint', 'high-contrast'].includes(document.documentElement.getAttribute('data-theme') || '');
+    const before = (id) => SCREENS + id + '.' + (dark() ? 'dark' : 'light') + '.png';
+    function buildPair(cmp) {
+      const stage = cmp.querySelector('.cmp__stage');
+      stage.innerHTML = `<img class="cmp__before" alt="Before: the shipped page" /><div class="cmp__after"><iframe title="After: the proposal" loading="lazy"></iframe></div><div class="cmp__handle"></div><span class="cmp__tag cmp__tag--before">Before · shipped 0.480</span><span class="cmp__tag cmp__tag--after">After · proposal</span><input type="range" class="cmp__range" min="0" max="100" value="50" aria-label="Reveal: left is the shipped page, right is the proposal" />`;
+      const img = stage.querySelector('img'), after = stage.querySelector('.cmp__after'), frame = stage.querySelector('iframe'), handle = stage.querySelector('.cmp__handle'), range = stage.querySelector('input');
+      const src = () => { img.src = before(cmp.getAttribute('data-before')); frame.src = cmp.getAttribute('data-after') + '?page-only&shot'; };
+      const fit = () => { const s = stage.clientWidth / 1440; stage.style.height = Math.round(900 * s) + 'px'; frame.style.transform = `scale(${s})`; };
+      const set = (v) => { after.style.clipPath = `inset(0 0 0 ${v}%)`; handle.style.left = v + '%'; };
+      range.addEventListener('input', () => set(range.value));
+      window.addEventListener('resize', fit);
+      document.addEventListener('hive:prefs', src);
+      src(); fit(); set(50);
+    }
+    document.addEventListener('hive:mounted', () => {
+      document.querySelectorAll('.cmp[data-before]').forEach(buildPair);
+      const railImg = document.querySelector('[data-before-img]');
+      const railSrc = () => { railImg.src = before(railImg.getAttribute('data-before-img')); };
+      railSrc(); document.addEventListener('hive:prefs', () => { railSrc(); document.querySelectorAll('.railcmp iframe').forEach((f) => { f.src = f.src; }); });
+      if (window.Hive) Hive.icons();
+    });
+  })();
+</script>
+
+<template id="notes">
+  <p class="route">Hub for the round-3 proposals — not a product screen.</p>
+  <h4>How to read it</h4>
+  <ul>
+    <li>Each pair shows the shipped page (the screenshot the docs site uses, from <code>apiome-docs/static/img/screens/</code>) under the live proposal, rendered page-only at 1440 × 900 and scaled to fit. Drag the handle; the theme toggle (bottom-right ☼, or ⌘,) reloads every pair in the new theme.</li>
+    <li>The rail comparison is a 1 : 1 crop of the first 264 px of both.</li>
+    <li>Every proposal page has a <b>Show before</b> bar bottom-left (or press <b>B</b>) that overlays the same shipped screenshot at full size, and the usual Notes / Callouts.</li>
+  </ul>
+  <h4>Files</h4>
+  <ul><li><code>assets/hive-accent.css</code> (the delta), <code>assets/hive-accent.js</code> (capture switches, Before bar, count-up, callout helper), <code>proposals/accent-*.html</code>, <code>PROPOSALS.md</code> §5, <code>DESIGN.md</code> §15.</li></ul>
+</template>
+</body>
+</html>

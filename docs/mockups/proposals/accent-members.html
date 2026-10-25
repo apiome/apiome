@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Members — colour &amp; accent (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/hive-accent.css" />
+<script src="../assets/hive-accent.js" defer></script>
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .facts { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--fg); font-weight: 600; }
+  .facts .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-faint); }
+  .seats { display: flex; align-items: center; gap: 10px; }
+  .seats .progress { width: 256px; }
+  .role-select { width: 150px; }
+  .table .cell-actions { opacity: 1; }
+  .table .cell-actions--hover { opacity: 0; }
+  .table tbody tr:hover .cell-actions--hover, .table tbody tr:focus-within .cell-actions--hover { opacity: 1; }
+  .table tbody tr.is-pending td { background: color-mix(in srgb, var(--warn) 4%, transparent); }
+  .table tbody tr.is-pending:hover td { background: color-mix(in srgb, var(--warn) 8%, transparent); }
+  .you { font-size: var(--fs-xs); color: var(--fg-subtle); font-weight: 500; }
+</style>
+</head>
+<body data-shell="app" data-nav="members" data-page="proposals/accent-members" data-tenant="Northwind" data-before="members" data-before-label="apiome-ui 0.480 · Members">
+<main class="page" data-area="workspace">
+  <header class="page-header page-header--area">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="accent-home.html">Home</a><i data-lucide="chevron-right"></i><span class="crumb-area">Workspace</span><i data-lucide="chevron-right"></i><span>Members</span></div>
+          <h1 class="page-title" id="annot-1"><span class="icon-tile icon-tile--area"><i data-lucide="users"></i></span>Members</h1>
+          <p class="page-desc">Who can sign in to this workspace, and what they may do.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="../workspace/roles.html"><i data-lucide="shield"></i>Roles</a>
+          <button class="btn btn--primary"><i data-lucide="user-plus"></i>Invite member<span class="kbd">N</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body" style="gap:var(--space-4)">
+    <!-- Facts line + seat meter (HIVE-11.9); the meter takes its tone from the fill -->
+    <div class="facts" id="annot-2">
+      <span><b>9</b> members</span><span class="sep"></span>
+      <span><b>6</b> active</span><span class="sep"></span>
+      <span><b>2</b> pending</span><span class="sep"></span>
+      <span><b>1</b> suspended</span><span class="sep"></span>
+      <span class="seats"><span><b>9 of 10</b> seats used</span><span class="progress progress--warn" role="meter" aria-valuenow="9" aria-valuemin="0" aria-valuemax="10" aria-label="Member seats used"><span style="width:90%"></span></span></span><span class="sep"></span>
+      <span class="badge badge--outline">Team plan</span>
+    </div>
+
+    <section class="table-wrap">
+      <div class="table-toolbar" id="annot-3">
+        <div class="input-wrap" style="width:260px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Filter by name or email…" aria-label="Filter members" /></div>
+        <span class="chip is-active" data-action="chip">All <span class="t-faint">9</span></span>
+        <span class="chip" data-action="chip">Active <span class="t-faint">6</span></span>
+        <span class="chip" data-action="chip">Pending <span class="t-faint">2</span></span>
+        <span class="chip" data-action="chip">Suspended <span class="t-faint">1</span></span>
+        <span class="chip" data-action="chip"><i data-lucide="shield"></i>Admins <span class="t-faint">2</span></span>
+      </div>
+      <div class="scroll-x" id="annot-4">
+      <table class="table">
+        <thead><tr>
+          <th class="sortable is-sorted" aria-sort="ascending">User <span class="sort"><i data-lucide="arrow-up"></i></span></th>
+          <th>Role</th>
+          <th class="sortable">Status <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Last active <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Joined <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr></thead>
+        <tbody>
+          <tr class="is-pending" id="annot-5">
+            <td><div class="row gap-3"><span class="avatar avatar--sm" style="background:var(--warn-soft);color:var(--warn-fg)"><i data-lucide="mail" style="width:13px;height:13px"></i></span><div><div class="cell-primary">aiko.mori@northwind.io</div><div class="cell-sub mono">Invited Jun 13, 2026</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for aiko.mori@northwind.io"><option>Owner</option><option>Admin</option><option>Editor</option><option selected>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="pending">Pending</span></td>
+            <td class="t-muted"><span class="t-faint">—</span></td>
+            <td class="t-muted t-num">Jun 13, 2026</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm" data-tip="Resend the invitation email"><i data-lucide="send"></i>Resend</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Cancel invite" data-tip="Cancel invite"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-pending">
+            <td><div class="row gap-3"><span class="avatar avatar--sm" style="background:var(--warn-soft);color:var(--warn-fg)"><i data-lucide="mail" style="width:13px;height:13px"></i></span><div><div class="cell-primary">dmitri.ivanov@northwind.io</div><div class="cell-sub mono">Invited Jun 11, 2026</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for dmitri.ivanov@northwind.io"><option>Owner</option><option>Admin</option><option selected>Editor</option><option>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="pending">Pending</span></td>
+            <td class="t-muted"><span class="t-faint">—</span></td>
+            <td class="t-muted t-num">Jun 11, 2026</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm" data-tip="Resend the invitation email"><i data-lucide="send"></i>Resend</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Cancel invite" data-tip="Cancel invite"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--d">EV</span><div><div class="cell-primary"><a href="#">Elena Vasquez</a></div><div class="cell-sub mono">elena.vasquez@northwind.io</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Elena Vasquez"><option>Owner</option><option>Admin</option><option selected>Editor</option><option>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-muted t-num">2 days ago</td>
+            <td class="t-muted t-num">Jun 9, 2025</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Suspend" data-tip="Suspend"><i data-lucide="power"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a">HS</span><div><div class="cell-primary"><a href="#">Hana Sato</a></div><div class="cell-sub mono">hana.sato@northwind.io</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Hana Sato"><option>Owner</option><option>Admin</option><option>Editor</option><option selected>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-muted t-num">May 28, 2026</td>
+            <td class="t-muted t-num">Jan 20, 2026</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Suspend" data-tip="Suspend"><i data-lucide="power"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable" style="opacity:.85">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--b">JB</span><div><div class="cell-primary"><a href="#">Jordan Blake</a></div><div class="cell-sub mono">contractor.jb@partner.dev</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Jordan Blake"><option>Owner</option><option>Admin</option><option selected>Editor</option><option>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="suspended">Suspended</span></td>
+            <td class="t-muted t-num">May 22, 2026</td>
+            <td class="t-muted t-num">Nov 3, 2025</td>
+            <td><div class="cell-actions"><button class="btn btn--sm" data-tip="Reinstate"><i data-lucide="rotate-ccw"></i>Reinstate</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--c">ML</span><div><div class="cell-primary"><a href="#">Marcus Lee</a></div><div class="cell-sub mono">marcus.lee@northwind.io</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Marcus Lee"><option>Owner</option><option selected>Admin</option><option>Editor</option><option>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="row gap-1"><span class="badge badge--dot" data-status="active">Active</span><span class="badge badge--violet"><i data-lucide="shield"></i>Admin</span></span></td>
+            <td class="t-muted t-num">2 hours ago</td>
+            <td class="t-muted t-num">Feb 3, 2025</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Suspend" data-tip="Suspend"><i data-lucide="power"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--e">PR</span><div><div class="cell-primary"><a href="#">Priya Raman</a> <span class="you">(you)</span></div><div class="cell-sub mono">priya.raman@northwind.io</div></div></div></td>
+            <td><span class="badge badge--outline">Owner</span></td>
+            <td><span class="row gap-1"><span class="badge badge--dot" data-status="active">Active</span><span class="badge badge--violet"><i data-lucide="shield"></i>Admin</span></span></td>
+            <td class="t-muted t-num">18 minutes ago</td>
+            <td class="t-muted t-num">Jan 12, 2025</td>
+            <td></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a">SO</span><div><div class="cell-primary"><a href="#">Sam Okafor</a></div><div class="cell-sub mono">sam.okafor@northwind.io</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Sam Okafor"><option>Owner</option><option>Admin</option><option>Editor</option><option>Viewer</option><option selected>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-muted t-num">16 hours ago</td>
+            <td class="t-muted t-num">Apr 22, 2025</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Suspend" data-tip="Suspend"><i data-lucide="power"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <tr class="is-clickable">
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a">TB</span><div><div class="cell-primary"><a href="#">Tomas Berg</a></div><div class="cell-sub mono">tomas.berg@northwind.io</div></div></div></td>
+            <td><select class="select select--sm role-select" aria-label="Role for Tomas Berg"><option>Owner</option><option>Admin</option><option selected>Editor</option><option>Viewer</option><option>Release manager</option></select></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-muted t-num">Jun 3, 2026</td>
+            <td class="t-muted t-num">Sep 15, 2025</td>
+            <td><div class="cell-actions cell-actions--hover"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Suspend" data-tip="Suspend"><i data-lucide="power"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Offboard" data-tip="Offboard"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="table-foot"><span>9 people · 6 active · 2 pending · 1 suspended</span></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  document.addEventListener('hive:mounted', () => {
+    HiveAccent.annot([['#annot-1', 1, -22, -2], ['#annot-2', 2, -26, 0], ['#annot-3', 3, -6, 10], ['#annot-4', 4, 8, 44], ['#annot-5', 5, 4, 4]]);
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/members — proposal, colour &amp; accent pass over the shipped Members (apiome-ui 0.480, HIVE-11.9 layout). Press <b>B</b> for the shipped page.</p>
+  <h4>Problem (observed 2026-10-25 on the shipped page)</h4>
+  <ul>
+    <li>This page is already the most coloured list in the app — identity avatars, status badges, the violet Admin pill, warm pending rows — so the delta is small on purpose: the shared changes (area identity, azure selection, hover, primary) and nothing page-specific.</li>
+    <li>The seat meter sits alone under the facts line as a bare bar; its tone (warn at 90 %) is the one number an admin needs and it is easy to miss.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> Area identity: icon tile in the Workspace hue (rose), crumb dot, hairline. The rail’s Workspace group matches.</li>
+    <li><b>2</b> The seat meter joins the facts line beside its number (“9 of 10 seats used”), toned ok / warn / danger by fill, so the facts line reads as one sentence with one gauge.</li>
+    <li><b>3</b> Selected = azure: active chip in <code>accent-soft</code>.</li>
+    <li><b>4</b> Row hover tints azure and underlines the name; row actions appear on hover as today (Reinstate stays visible).</li>
+    <li><b>5</b> Pending rows keep their warm tint (HIVE-11.9) and deepen it on hover.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Everything HIVE-11.9 shipped: facts line, invite withheld at capacity, inline role selects with their aria labels, own-row gate, Suspend / Reinstate / Offboard, Resend / Cancel on pending rows, chips, sort, footer.</li></ul>
+  <h4>States</h4>
+  <ul><li>Unchanged. At capacity: meter turns danger and the invite button is disabled with its reason, as today.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>§3.1 area hues; §5.3 page header tile; §7 chips select in azure; §8 row hover. See <code>PROPOSALS.md</code> §5.</li></ul>
+</template>
+</body>
+</html>

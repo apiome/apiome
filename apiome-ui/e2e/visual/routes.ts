@@ -406,6 +406,16 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'govern/style-guides.html', reason: 'no-page-fixture' },
   { mockup: 'home/launcher.html', reason: 'other-shell' },
   { mockup: 'home/overview.html', reason: 'no-page-fixture' },
+  // Round-3 proposals (docs/mockups/PROPOSALS.md §5, 2026-10-25): the colour & accent pass. Each
+  // `accent-*` page is the shipped layout plus colour, mark and motion; it is compared once HIVE-14
+  // lands and the page fixture is re-dumped. `accent-pass.html` is the before/after hub on the bare
+  // shell, like the index, and is never a page to measure.
+  { mockup: 'proposals/accent-catalog.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/accent-home.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/accent-members.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/accent-pass.html', reason: 'other-shell' },
+  { mockup: 'proposals/accent-projects.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/accent-versions.html', reason: 'awaiting-redesign' },
   // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07): each supersedes part of a shipped
   // page and is compared once its ticket lands and the page fixture is re-dumped.
   { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },

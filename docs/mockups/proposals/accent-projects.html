@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Projects — colour &amp; accent (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/hive-accent.css" />
+<script src="../assets/hive-accent.js" defer></script>
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .proj-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); padding: var(--space-4); }
+  .proj-card { display: flex; flex-direction: column; box-shadow: inset 0 0 0 1px var(--border); }
+  .proj-card .proj-body { padding: 16px 18px 0; flex: 1; }
+  .proj-card .proj-scores { display: flex; gap: 14px; }
+  .proj-card .proj-score { display: flex; align-items: center; gap: 8px; }
+  .proj-card .proj-score .lbl { font-size: var(--fs-2xs); color: var(--fg-subtle); }
+  .proj-card .proj-id { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .proj-new { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; border: 1.5px dashed var(--border-strong); border-radius: var(--r-lg); color: var(--fg); text-decoration: none; padding: 24px; transition: border-color var(--dur-fast), background var(--dur-fast); }
+  .proj-new:hover { text-decoration: none; border-color: var(--honey); background: color-mix(in srgb, var(--honey) 5%, transparent); }
+  .proj-new .hex { width: 56px; height: 62px; display: grid; place-items: center; background: var(--honey-soft); color: var(--honey-fg); clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); margin-bottom: 6px; }
+  .proj-new .hex [data-lucide] { width: 18px; height: 18px; }
+  .trend { padding: 18px 20px 12px; }
+  .trend svg { width: 100%; height: 220px; overflow: visible; }
+  .trend .grid-line { stroke: var(--border-strong); stroke-dasharray: 3 4; }
+  .trend .axis { font-size: 12px; fill: var(--fg-muted); font-family: var(--font-sans); }
+  .trend .line { fill: none; stroke: var(--warn); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .trend .area { fill: url(#trendFill); }
+  .trend .pt { fill: var(--bg-surface); stroke: var(--warn); stroke-width: 2; }
+  .trend .pt--last { fill: var(--warn); }
+  .trend .band { fill: color-mix(in srgb, var(--ok) 7%, transparent); }
+  .trend .band-label { font-size: 11px; fill: var(--ok-fg); font-family: var(--font-sans); font-weight: 600; }
+  .trend .val { font-size: 12px; font-weight: 700; fill: var(--warn-fg); font-family: var(--font-sans); }
+  @media (max-width: 1100px) { .proj-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+</style>
+</head>
+<body data-shell="app" data-nav="projects" data-page="proposals/accent-projects" data-tenant="Acme Corp" data-before="projects" data-before-label="apiome-ui 0.480 · Projects">
+<main class="page" data-area="build">
+  <header class="page-header page-header--area">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="accent-home.html">Home</a><i data-lucide="chevron-right"></i><span class="crumb-area">Build</span><i data-lucide="chevron-right"></i><span>Projects</span></div>
+          <h1 class="page-title" id="annot-1"><span class="icon-tile icon-tile--area"><i data-lucide="folder-kanban"></i></span>Projects</h1>
+          <p class="page-desc"><b>2</b> projects · avg quality <b>83</b> · <b>2</b> active</p>
+        </div>
+        <div class="page-actions">
+          <label class="row gap-2 t-sm t-muted" style="margin-right:6px"><button class="switch switch--sm" role="switch" aria-checked="false" data-action="switch"></button>Show deleted</label>
+          <button class="btn"><i data-lucide="upload"></i>Import<span class="kbd">I</span></button>
+          <button class="btn btn--primary"><i data-lucide="plus"></i>New project<span class="kbd">N</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <!-- One card owns toolbar + cards (as shipped) -->
+    <section class="table-wrap">
+      <div class="table-toolbar" id="annot-4">
+        <div class="input-wrap" style="width:260px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Filter projects…  ( / )" aria-label="Filter projects" /></div>
+        <span class="chip is-active" data-action="chip">All <span class="t-faint">2</span></span>
+        <span class="chip" data-action="chip">Active <span class="t-faint">2</span></span>
+        <span class="chip" data-action="chip"><i data-lucide="triangle-alert"></i>Needs attention <span class="t-faint">0</span></span>
+        <span class="chip" data-action="chip">Deleted <span class="t-faint">0</span></span>
+        <span class="spacer"></span>
+        <button class="btn btn--sm btn--ghost"><i data-lucide="arrow-up-down"></i>Sorted by name ↑<i data-lucide="chevron-down"></i></button>
+        <div class="segmented segmented--sm" data-tabs="views" role="tablist" aria-label="View">
+          <button class="is-active" data-action="tab" data-target="cards" role="tab"><i data-lucide="layout-grid"></i>Cards</button>
+          <button data-action="tab" data-target="table" role="tab"><i data-lucide="rows-3"></i>Table</button>
+        </div>
+      </div>
+
+      <div class="proj-grid" id="annot-3">
+        <!-- Orders Service -->
+        <article class="card card--hover card--edge proj-card" role="link" tabindex="0" style="--edge:var(--fmt-openapi)" id="annot-2">
+          <div class="proj-body">
+            <div class="row-start gap-3">
+              <span class="avatar avatar--lg avatar--record avatar--c">OS</span>
+              <div class="grow min-w-0">
+                <div class="row gap-2"><span class="t-h4 t-truncate">Orders Service</span></div>
+                <div class="proj-id t-truncate">prj_3b91de · orders-service</div>
+              </div>
+              <span class="badge badge--dot" data-status="active">Active</span>
+            </div>
+            <p class="t-sm t-muted mt-3" style="min-height:40px">Order lifecycle: cart to fulfilment.</p>
+            <div class="row-between mt-4">
+              <div class="proj-scores">
+                <span class="proj-score"><span class="ring ring--sm" style="--p:94;--c:var(--ok)"><span>94</span></span><span class="lbl">Quality</span></span>
+                <span class="proj-score"><span class="ring ring--sm" style="--p:100;--c:var(--ok)"><span>A</span></span><span class="lbl">Lint</span></span>
+                <span class="proj-score"><span class="ring ring--sm" style="--p:0;--c:var(--fg-faint)"><span>—</span></span><span class="lbl">Debt</span></span>
+              </div>
+              <span class="t-xs mono t-muted">5 versions</span>
+            </div>
+          </div>
+          <div class="card__footer"><div class="row gap-2"><span class="avatar avatar--xs avatar--d">GH</span><span class="t-xs">Grace Hopper</span></div><span class="t-xs t-subtle">updated 2mo ago</span></div>
+        </article>
+        <!-- Payments API -->
+        <article class="card card--hover card--edge proj-card" role="link" tabindex="0" style="--edge:var(--fmt-openapi)">
+          <div class="proj-body">
+            <div class="row-start gap-3">
+              <span class="avatar avatar--lg avatar--record avatar--a">PA</span>
+              <div class="grow min-w-0">
+                <div class="row gap-2"><span class="t-h4 t-truncate">Payments API</span><span class="badge badge--violet">Finance</span></div>
+                <div class="proj-id t-truncate">prj_8f2a1c · payments-api</div>
+              </div>
+              <span class="badge badge--dot" data-status="active">Active</span>
+            </div>
+            <p class="t-sm t-muted mt-3" style="min-height:40px">Card, refund and payout endpoints for the merchant platform.</p>
+            <div class="row-between mt-4">
+              <div class="proj-scores">
+                <span class="proj-score"><span class="ring ring--sm" style="--p:72;--c:var(--warn)"><span>72</span></span><span class="lbl">Quality</span></span>
+                <span class="proj-score"><span class="ring ring--sm" style="--p:85;--c:var(--warn)"><span>B</span></span><span class="lbl">Lint</span></span>
+                <span class="proj-score"><span class="ring ring--sm" style="--p:0;--c:var(--fg-faint)"><span>—</span></span><span class="lbl">Debt</span></span>
+              </div>
+              <span class="t-xs mono t-muted">6 versions</span>
+            </div>
+          </div>
+          <div class="card__footer"><div class="row gap-2"><span class="avatar avatar--xs avatar--a">AL</span><span class="t-xs">Ada Lovelace</span></div><span class="t-xs t-subtle">updated 2mo ago</span></div>
+        </article>
+        <!-- New project (unchanged: honey hex is the brand marker) -->
+        <a class="proj-new" href="#" id="annot-6">
+          <span class="hex"><i data-lucide="plus"></i></span>
+          <span class="t-sm t-600">New project</span>
+          <span class="t-xs t-muted" style="max-width:24ch">Start blank, from a template, or design it with AI.</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- Portfolio quality trend: same series; the band and the end label are new -->
+    <section class="card">
+      <div class="card__header"><div class="card__title"><i data-lucide="trending-up"></i>Portfolio quality trend<span class="t-xs t-subtle t-500">Average quality across projects after each import (this browser)</span></div><span class="badge badge--warn">avg 72</span></div>
+      <div class="trend" id="annot-5">
+        <svg viewBox="0 0 1300 220" preserveAspectRatio="none" aria-label="Average quality: 78, 80, 82, 83, 85, 80, 76, 72">
+          <defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--warn)" stop-opacity=".22"/><stop offset="1" stop-color="var(--warn)" stop-opacity="0"/></linearGradient></defs>
+          <!-- target band: 85–100 -->
+          <rect class="band" x="60" y="0" width="1240" height="46" rx="4"/>
+          <text class="band-label" x="70" y="18">Target ≥ 85</text>
+          <line class="grid-line" x1="60" y1="0" x2="1300" y2="0"/><text class="axis" x="10" y="5">100</text>
+          <line class="grid-line" x1="60" y1="66" x2="1300" y2="66"/><text class="axis" x="18" y="71">85</text>
+          <line class="grid-line" x1="60" y1="132" x2="1300" y2="132"/><text class="axis" x="18" y="137">70</text>
+          <line class="grid-line" x1="60" y1="198" x2="1300" y2="198"/><text class="axis" x="18" y="203">55</text>
+          <path class="area" d="M60 97 L237 88 L414 79 L591 75 L768 66 L945 88 L1122 106 L1300 123 L1300 198 L60 198 Z"/>
+          <path class="line" d="M60 97 L237 88 L414 79 L591 75 L768 66 L945 88 L1122 106 L1300 123"/>
+          <circle class="pt" cx="60" cy="97" r="4"/><circle class="pt" cx="414" cy="79" r="4"/><circle class="pt" cx="768" cy="66" r="4"/><circle class="pt" cx="1122" cy="106" r="4"/>
+          <circle class="pt pt--last" cx="1300" cy="123" r="5"/><text class="val" x="1268" y="148">72</text>
+        </svg>
+        <div class="row-between t-xs t-subtle mt-1" style="padding-left:60px"><span>start</span><span>mid</span><span>now</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  document.addEventListener('hive:mounted', () => {
+    HiveAccent.annot([['#annot-1', 1, -22, -2], ['#annot-2', 2, -8, -8], ['#annot-3', 3, 520, -10], ['#annot-4', 4, -6, 10], ['#annot-5', 5, 8, 4], ['#annot-6', 6, -8, -8]]);
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/projects — proposal, colour &amp; accent pass over the shipped Projects (apiome-ui 0.480). Press <b>B</b> for the shipped page.</p>
+  <h4>Problem (observed 2026-10-25 on the shipped page)</h4>
+  <ul>
+    <li>Two white cards on paper with grey text; the quality rings are the only colour. The cards do not react to hover.</li>
+    <li>The record mark is a flat square (“OS”, “PA”) — the hexagon the mockups specified (<code>build/projects.html</code>, <code>.avatar--hex</code>) did not ship.</li>
+    <li>The trend chart has a line and nothing to read it against: no target, no end value.</li>
+    <li>The “New project” card is the best element on the page (honey hexagon, dashed frame) and is kept exactly.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> Area identity: icon tile in the Build hue (green), hue dot on the crumb, hairline under the header. The rail’s Build group matches.</li>
+    <li><b>2</b> <code>.avatar--record</code> hexagon in an identity hue, and <code>.card--edge</code>: a 3 px gradient edge in the project’s format hue (OpenAPI → green; AsyncAPI → violet; GraphQL → rose) so a wall of cards sorts itself by format at a glance.</li>
+    <li><b>3</b> Hover lifts the card 2 px, deepens the shadow and adds an azure hairline (<code>card--hover</code>, 180 ms eased-out). Press settles it back. Reduced motion: no transform.</li>
+    <li><b>4</b> Selected = azure: active chip in <code>accent-soft</code>; the Cards/Table thumb keeps the raised white but its icon turns azure.</li>
+    <li><b>5</b> Trend chart: a soft fill under the line, a faint <em>Target ≥ 85</em> band in the ok tint, and the last point carries its value. The line keeps the tone of the latest score (warn at 72), as today.</li>
+    <li><b>6</b> Unchanged — honey remains the brand marker for “new”.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Toolbar, chips, sort, Cards/Table, card content (id, slug, description, three rings, version count, owner, updated), Show deleted, Import / New project and their shortcuts, the trend series.</li></ul>
+  <h4>States</h4>
+  <ul><li>Unchanged. Loading: skeleton cards without an edge (the format is data). Empty: the honey “New project” card alone, centred.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>§3.1 area + format hue tokens; §7 <code>Avatar</code> shape=hex for records, <code>Card</code> edge; §8 hover/pressed rhythm. See <code>PROPOSALS.md</code> §5.</li></ul>
+</template>
+</body>
+</html>

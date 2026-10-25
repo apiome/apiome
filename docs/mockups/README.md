@@ -19,6 +19,13 @@ it is the top-level navigation page; every screen is one click away.
   review of the *shipped* redesign (density, header actions, rail fit, launcher focus, honey
   usage). Each proposal supersedes part of an existing mockup and says which; it does not
   replace the original until its ticket lands.
+* **`PROPOSALS.md` §5 + `proposals/accent-*.html` + `assets/hive-accent.css`** — round-3 proposals
+  from the 2026-10-25 colour & accent review of the RC6 launch build. `proposals/accent-pass.html` is
+  the hub: a 1 : 1 rail comparison and a drag-to-compare before/after pair per page (the “before” is
+  the shipped page’s screenshot from `apiome-docs/static/img/screens/`, the “after” is the live mockup
+  in an iframe). Each `accent-*.html` page has a **Show before** bar (press `B`). `hive-accent.css` is
+  the whole delta, loaded after `hive.css`; `hive-accent.js` adds the capture switches
+  (`?page-only`, `?shot`, `?theme=`), the Before bar, the stat count-up and the callout helper.
 * **Out of scope:** the commercial suite apps (designer / paths workspaces) are
   owned by their own repositories. This set never designs or links to them — it
   only reserves the entitlement-gated slots the host injects at runtime.
@@ -78,6 +85,7 @@ and what it ships, are in `DESIGN.md §12`.
 | `tools/database.html` · `migration.html` | `/ade/database` · `/ade/migration` | app |
 | `admin/login.html` · `overview.html` · `users.html` · `tenants.html` · `licenses.html` · `feature-flags.html` · `templates.html` · `settings.html` | `/admin/**` | admin |
 | `proposals/versions-status-strip.html` · `catalog-quiet.html` · `launcher-focused.html` · `rail-compact.html` | `/ade/dashboard/versions` · `/catalog` · `/ade` · shell (round-2 proposals, see `PROPOSALS.md`) | app · bare |
+| `proposals/accent-pass.html` (hub) · `accent-home.html` · `accent-catalog.html` · `accent-projects.html` · `accent-versions.html` · `accent-members.html` | — · `/ade/dashboard` · `/catalog` · `/projects` · `/versions` · `/members` (round-3 colour & accent proposals, see `PROPOSALS.md` §5) | bare · app |
 
 ## Extending the design system
 

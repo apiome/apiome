@@ -144,3 +144,135 @@ Each issue inherits its mockup’s **Notes → Keeps / Callouts / States** as ac
 exactly as the P0–P7 tickets did. The four proposal mockups are registered in
 `apiome-ui/e2e/visual/routes.ts` as `awaiting-redesign`; HIVE-13.4 moves them into
 `PARITY_ROUTES` with the re-dumped page fixtures.
+
+## 5. Round 3 — colour & accent pass (2026-10-25)
+
+> **Status:** proposal. Reviewed 2026-10-25 against `apiome-ui` 0.480 (the RC6 launch build) from the
+> documentation screenshots at 1440 × 900 (`apiome-docs/static/img/screens/*.light|dark.png`). The hub
+> with every before/after pair is **`proposals/accent-pass.html`**; each page has a live “after” under
+> `proposals/accent-*.html` with a **Show before** bar (press `B`) that overlays the shipped screenshot;
+> the whole delta is one stylesheet, `assets/hive-accent.css`, loaded after `hive.css`. Nothing here
+> changes a route, a permission, a token *value*, a theme, a layout or a line of copy.
+
+### 5.0 TL;DR
+
+Round 2 fixed density and attention; Epics 11–13 shipped it. What is left is that the app is **calm
+to the point of plain**: on most pages the navy primary is the only saturated element, the rail is a
+grey list, headers are text, stats are a spreadsheet row, records are flat squares, and nothing
+reacts to the pointer. This round spends colour where the eye needs an anchor and adds motion where
+the hand expects a response — inside the token discipline DESIGN.md already sets.
+
+| # | Finding | Where it shows | Proposal |
+| --- | --- | --- | --- |
+| 1 | **One hue does all the work.** Colour exists only inside table cells (format pills, badges, grade glyphs); the chrome around them is ink on paper. | every app page | area hues (5.2.1), stat tone (5.2.6), azure selection (5.2.4) |
+| 2 | **The rail is a grey list.** Groups are collapsed by default (HIVE-12.1), so the rail is five uppercase labels with counts; every icon is `--fg-subtle`. | shell | hue dot per group, tinted icons, soft active item with a bar (5.2.2) |
+| 3 | **Headers are text only.** The mockup index gives every area an icon tile in its hue; the shipped page headers dropped that identity. | Catalog, Projects, Versions, Members, Published, … | area icon tile, crumb dot, hairline (5.2.3) |
+| 4 | **Stats are a spreadsheet row.** Label, number, caption; the deltas in `home/overview.html` did not ship. | Home | `Stat` tone, delta chip, sparkline, count-up (5.2.6) |
+| 5 | **Records are flat squares.** The hexagon of §2 appears only in the workspace switcher; `build/projects.html` specified `.avatar--hex` for projects. | Projects, Catalog, Home, Versions, Published | `.avatar--record` hex in five identity hues; format edge on cards (5.2.7) |
+| 6 | **Hover does nothing.** Cards do not lift, rows tint 2.5 %, the primary has no pressed state. | every list and card | card lift, azure row hover, pressed buttons, primary top-light (5.2.5) |
+| 7 | **Selected is black.** Active chips and the tab underline use ink; §2 reserves azure for selected states. | list pages, Versions | chips and tabs select in azure (5.2.4) |
+| 8 | **Home is not a landing.** Once the checklist is dismissed the first page after sign-in looks like any list page. | Home | hex pattern + glows behind the greeting, toned attention rows, action tiles (5.2.8–9) |
+
+**Login, Sign-up and the All-apps launcher** already carry the brand (hex pattern, glows, format
+pills, azure headline) and are not touched. Dialogs, drawers, the Preferences pane, empty states and
+the status strip (HIVE-11.2) are unchanged.
+
+### 5.1 How this was reviewed
+
+* Every released RC6 page was read from the committed documentation screenshots (`yarn docs:screenshots`
+  output, 1440 × 900, light and dark, page-only except the theme gallery which shows the shell).
+* Five pages were rebuilt as live “after” mockups on the shipped layout — not on the older round-1
+  mockups — so each pair differs only in colour, mark and motion: Home, Catalog (HIVE-11.6 layout),
+  Projects, Versions (HIVE-11.2–11.4 layout), Members (HIVE-11.9 layout). The rail is compared 1 : 1.
+* Every tint uses an existing `-soft` / `-fg` pair, so the contrast gate
+  (`tests/a11y-token-contrast.test.ts`) already covers the text-on-tint combinations; the seven theme
+  blocks need no new values.
+
+### 5.2 Proposals (numbered as the sections of `assets/hive-accent.css`)
+
+1. **Area hues — six tokens, all pointers.** `--area-build` → `ok`, `--area-bring-in` → `violet`,
+   `--area-ship` → `accent`, `--area-govern` → `warn`, `--area-workspace` → `rose`, `--area-tools` →
+   `neutral`, each with `-soft` / `-fg`. This is the mapping `index.html` has used since round 1. A page
+   declares `data-area` once on `<main>`; the rail declares it per group. Home has no area (it is the
+   brand moment).
+2. **Rail.** A 6 px hue dot on each group label (it survives the default-collapsed fold); icons tinted
+   72 % toward the group hue; the active item becomes `--area-soft` with a 3 px `--area` bar instead of
+   the raised white chip. Home keeps the chip. Text stays ink/muted.
+3. **Page header.** A 34 px `.icon-tile--area` before the title (Versions puts the project’s hex mark
+   there instead); a hue dot on the area crumb; an optional 2 px hairline under the sticky header
+   fading out at 40 % width (`.page-header--area`).
+4. **Selected = azure.** Tabs: underline, icon and count pill in `accent` / `accent-soft`. Chips:
+   `accent-soft` + azure hairline instead of the black pill; hover previews the ring. Sorted column
+   header in `accent-fg`. (§2 already says azure is “selected states”; this moves the shipped tabs and
+   chips onto spec.)
+5. **Alive on touch.** Cards: `card--hover` lifts 2 px with `--shadow-md` and an azure hairline,
+   180 ms `--ease-out`; press settles. Rows: hover is azure at 5 % and the primary link underlines in
+   `accent-fg`. Buttons: `:active` scales 0.99; the primary gets a top-light gradient
+   (`color-mix(ink 86 %, white) → ink`) and a deeper hover shadow — same navy, same copy. Switch thumb
+   eases with a small overshoot. All transforms are off under reduced motion.
+6. **Stat tone.** `.stat[data-tone]` adds a 24 px icon tile in the tone, `.stat__delta--chip`
+   (`+4` in `ok-soft`, `−2` in `danger-soft`) and an optional `.stat__spark`. The figure stays ink and
+   counts up on first paint (skipped under reduced motion). Home keeps its full strip; list pages keep
+   the facts line.
+7. **Records.** `.avatar--record`: the hexagon in one of the five identity hues (`avatar--a…e`, hash of
+   the id), so a project keeps its colour across Home, Projects, Versions, Catalog and the switcher.
+   People keep the circle; the workspace keeps the brand gradient. `.card--edge` draws a 3 px gradient
+   edge in the record’s format hue (`--fmt-openapi` …), the device the launcher tiles already use.
+8. **Home band.** `.page-header--brand`: the launcher’s hex pattern plus a honey glow (top) and an azure
+   glow (left) at about half the launcher’s intensity, behind the greeting only; the workspace name in
+   the description takes the accent. Done checklist steps take the ok tint; the next step keeps the honey
+   ring.
+9. **Attention rows and action tiles.** `.list-row[data-tone]`: a 3 px tone rail and an icon tile per
+   row (warn / danger / ok) instead of a 6 px dot. Quick actions become four `.qa-tile`s, each icon tile
+   in the hue of the area it opens.
+
+Per page, the delta is listed in each mockup’s **Notes → Callouts**. Members is deliberately the
+smallest (it was already the most coloured list); Home is the largest.
+
+### 5.3 What does not change
+
+Routes, data, permissions, copy, layouts (every first-row budget in `e2e/visual/routes.ts` holds —
+the tile sits in the header row, not above it), token *values*, the nine themes, dialogs, drawers,
+wizards, the Preferences pane, empty states, the status strip, format pills and method chips, the
+honey rule (§2 — honey still marks only brand, new, starred and the next checklist step).
+
+### 5.4 DESIGN.md amendments these imply
+
+| Section | Amendment |
+| --- | --- |
+| §2 Brand & tone | Add **area hues**: each rail group owns one semantic hue (Build ok · Bring in violet · Ship accent · Govern warn · Workspace rose · Tools neutral), used for the group’s rail icons, the active item, the page-header tile and quick-action tiles — never for status. Home is a brand moment: hex pattern and glows behind the greeting. |
+| §3.1 Tokens | `--area-*` (+`-soft`, `-fg`) as pointers; `--fmt-*` hues as tokens so an edge, a chart line and a pill agree. The five identity hues (`avatar--a…e`) join the fixed-hue allow-list beside `.fmt--*`. |
+| §5.2 Rail | Group label carries the hue dot; active item = `--area-soft` + 3 px bar; icons tinted toward the hue. |
+| §5.3 Page header | The title row starts with the area icon tile (or the record’s hex mark on a record page); the area crumb carries the dot; the 2 px hairline is optional. |
+| §7 Components | `Stat` gains `tone`, `delta`, `spark`. `Avatar` gains `shape="hex"` + `hue` for records. `Card` gains `edge`. Tabs and chips select in azure. Buttons gain a pressed state; the primary gains the top-light. |
+| §8 Patterns | “Alive on touch”: every card that opens something lifts; every row that opens something tints azure; every button presses; durations and easing from §3.4; reduced motion removes transforms. |
+| §12 Roadmap | Add **P9 — Colour & accent pass** (HIVE-14): §5.2.1–4 are the shell and land first; 5–9 are per page and independent. Not RC6 — the first look-and-feel item for RC7. |
+
+### 5.5 Production port
+
+Every item maps onto what exists: `--area-*` aliases in the `:root` block of `globals.css` pointing at
+`--color-ok/violet/accent/warn/rose/neutral`; an `area` field on `lib/platform-nav.ts` groups and an
+`area` prop on `PageHeader`; the rail classes in `RailNav.tsx` / `railChrome.tsx`; `Tabs.tsx` /
+`tabStyles.ts` and the `DataTable` filter chips; `Button.tsx`, `Card.tsx`, `Switch.tsx` and the row
+hover rule; `.hive-stat` (`data-tone`, icon, delta chip) with the existing `.hive-sparkline`; `Avatar.tsx`
+(`shape="hex"`, `hue` from a hash of the id) and the `hex-allow` fence; Home’s page for the band, tiles
+and attention rows. Gates: `hive-design-tokens.test.ts`, `a11y-token-contrast.test.ts`, the axe gate, the
+parity harness (re-dump the shell, Home, Projects, Catalog, Versions, Members fixtures), and the
+`home` / `catalog` / `projects` / `versions` / `members` docs screenshots. The hub page carries the same
+table (`proposals/accent-pass.html` → “Where it lands in apiome-ui”).
+
+### 5.6 Tickets (proposed — not yet filed)
+
+| Child | Scope | Mockup |
+| --- | --- | --- |
+| HIVE-14.1 | Area-hue tokens + rail (5.2.1–2) | every `proposals/accent-*.html` rail |
+| HIVE-14.2 | Page-header tile, crumb dot, hairline (5.2.3) | `accent-catalog.html`, `accent-projects.html`, `accent-members.html`, `accent-versions.html` (title mark) |
+| HIVE-14.3 | Selected = azure: tabs, chips, sorted header (5.2.4) | `accent-versions.html`, `accent-catalog.html` |
+| HIVE-14.4 | Alive on touch: card lift, row hover, pressed buttons, primary top-light, switch easing (5.2.5) | `accent-pass.html` §5, `accent-projects.html` |
+| HIVE-14.5 | Stat tone, delta chip, sparkline, count-up on Home (5.2.6) | `accent-home.html` |
+| HIVE-14.6 | Record hex avatars with identity hues; card format edge (5.2.7) | `accent-home.html`, `accent-projects.html`, `accent-catalog.html`, `accent-versions.html` |
+| HIVE-14.7 | Home band, action tiles, attention rows (5.2.8–9) | `accent-home.html` |
+| HIVE-14.8 | Gates + docs: fence update, fixture re-dumps, screenshots, DESIGN.md §15 → body sections | — |
+
+Each child inherits its mockup’s **Notes → Keeps / Callouts / States** as acceptance criteria, as the
+round-2 tickets did.
