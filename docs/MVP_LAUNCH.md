@@ -1,6 +1,6 @@
 # MVP launch — the weekend plan
 
-> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-25 17:00 UTC (see the table below) ·
+> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-25 17:20 UTC (see the table below) ·
 > **Target:** launch the first MVP (RC6) by **Sunday 2026-10-25**.
 > **Scope:** RC6 as defined in [`RC6_OOE.md`](RC6_OOE.md) — Catalog, Projects (with Versions),
 > sign-in and sign-up. Nothing else ships; held-back features stay behind
@@ -14,7 +14,7 @@ Work top to bottom. A **gate** row must be green before the next phase starts. D
 step are under [Order of execution](#order-of-execution); blockers **B1–B9** are described under
 [Blockers](#blockers).
 
-**Last updated:** 2026-10-25, 17:00 UTC.
+**Last updated:** 2026-10-25, 17:20 UTC.
 
 **Status key:** ✅ Done · 🔄 In progress · ⏳ Waiting on you · ⬜ Not started
 
@@ -36,8 +36,8 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 14 | ✅ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-25 at 15:40 UTC; the only open bugs (#6274, #6278) are `sev:medium`, in RC7 and in `RC6_OOE.md` §7.2 |
 | 15 | ✅ | Sun | Tag `RC6`; merge the release-notes PR it opens; close the `RC6` milestone | — | You | RC6 post published | Tagged at `42453d627` on 2026-10-25 after #6324's catalog journey passed. The workflow pushed `release-notes/RC6` but could not open the PR (Actions may not create PRs here) and dropped the milestone link (no `gh` on the runner); the post was regenerated with `--milestone 6` and opened by hand. Milestone 6 closed after merge |
 | 16 | ✅ | Sun | First production deploy at `RC6` (migrate, bootstrap admin, backups) | — | You | `PRODUCTION_DEPLOY.md` §4–§6 done | Done by you, 2026-10-25: production deployed at `RC6`, migrations through **V318** |
-| 17 | ⬜ | Sun | **Gate 3:** production smoke test of the release journey | — | You | every step passes | |
-| 18 | ⬜ | Sun | Set the sign-up policy to **open** (or **invite-only** for a soft launch) | — | You | strangers can sign up | |
+| 17 | 🔄 | Sun | **Gate 3:** production smoke test of the release journey | — | You | every step passes | Anonymous checks passed 2026-10-25: REST `/livez` and `/readyz`, the RC6 What's new on `main.apiome.dev`, the sign-in and sign-up pages, valid certificates, and `get.apiome.dev` serving the repository's `install.sh`. **Open:** `POST /v1/cli/login/token` returns 500 for an unknown code instead of 400 `invalid_grant`, so `apiome login` fails (suspect `apiome.cli_login_requests`, V315, missing or not granted). `/openapi.json` also returns 500, though the schema builds from the `RC6` code. The signed-in journey has not been run on production yet |
+| 18 | ✅ | Sun | Set the sign-up policy to **open** (or **invite-only** for a soft launch) | — | You | strangers can sign up | Set and verified by you, 2026-10-25. Note: in this build **Invite only** admits no new accounts (invitations need an existing account), so a soft launch means **Open** with allowed email domains |
 | 19 | ⬜ | Sun onward | Triage new reports per `BETA_TRIAGE.md` | — | You | every report labelled the same day | |
 
 ## Where we are
@@ -196,4 +196,4 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] `RC6` tagged; release-notes PR merged
 - [x] Production deployed at `RC6` (2026-10-25)
 - [ ] Production smoke-tested (Gate 3)
-- [ ] Sign-up policy set
+- [x] Sign-up policy set (2026-10-25)
