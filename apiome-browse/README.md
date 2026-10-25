@@ -6,7 +6,7 @@ A public-facing enterprise web application for browsing and exploring published 
 
 ### Core Features
 - **Browse by Organization**: Navigate through tenants, projects, and versions
-- **Search**: Full-text search across organizations and projects  
+- **Search**: One query language over the normalized model — operations, parameters, bodies, responses, schemas, properties, version notes, tags, projects and organizations — with operators (`method:`, `path:`, `org:`, `type:`, `format:`, `after:`…), a faceted results page, a ⌘K palette and shareable URLs
 - **View Specifications**: Display OpenAPI, Arazzo, and JSON Schema formats
 - **Version Comparison**: Side-by-side and unified diff views between versions
 - **Public Access**: No authentication required - only displays published public versions
@@ -110,13 +110,15 @@ npm start
 ```
 apiome-browse/
 ├── lib/
-│   └── db/
-│       ├── db.ts           # Database connection pool
-│       └── helper.ts       # Database query functions
+│   ├── db/
+│   │   ├── db.ts           # Database connection pool
+│   │   ├── helper.ts       # Database query functions
+│   │   └── search.ts       # Runs the catalog search statement
+│   └── search/             # Query language, URL state, SQL builder, anchors, highlighting (pure, tested)
 ├── src/
 │   └── app/
 │       ├── components/
-│       │   ├── Search.tsx         # Search component
+│       │   ├── search/            # SearchBox, SearchPalette (⌘K), FacetRail, HitRow
 │       │   ├── SpecViewer.tsx     # Specification viewer
 │       │   └── CompareViewer.tsx  # Version comparison tool
 │       ├── search/
@@ -163,10 +165,19 @@ Compare two versions side-by-side or in unified diff mode:
 - **Unified Diff**: See additions and deletions inline
 
 ### 6. Search
-Full-text search across:
-- Organization names and slugs
-- Project names, slugs, and descriptions
-- Results grouped by organization
+`/search` runs one parameterized SQL statement (`lib/search/sql.ts`) built from the URL
+(`lib/search/params.ts`) and the query language (`lib/search/query.ts`):
+
+- Words, quoted phrases and `-exclusions`; filters `type:`, `method:`, `path:`, `org:`, `project:`,
+  `version:`, `format:`, `paradigm:`, `tag:`, `after:`, `before:` (rail filters in the URL merge with
+  operators typed in the box)
+- One union member per kind over each project's latest published public version (or every version
+  with `all=1`), ranked exact › prefix › contains plus a per-kind weight, with facet counts and a
+  page computed in the same round trip
+- Deep links into the version page at the operation (`#op-…`) or schema (`#schema-…`) anchor
+- `GET /api/search/suggest?q=` feeds the ⌘K palette with the same engine
+
+The pure modules under `lib/search/` are unit-tested; `lib/db/search.ts` runs the statement.
 
 ## Database Functions
 
@@ -176,7 +187,7 @@ The application uses the following database helper functions (internal only, not
 - `getPublicProjectsForTenant(tenantSlug)`: Get projects for a tenant
 - `getPublicVersionsForProject(tenantSlug, projectSlug)`: Get versions for a project
 - `getPublicVersionDetails(tenantSlug, projectSlug, versionSlug)`: Get version metadata
-- `searchPublicTenantsAndProjects(query)`: Full-text search
+- `runCatalogSearch(request)` (`lib/db/search.ts`): the catalog search
 - `getPublicTenantBySlug(tenantSlug)`: Get tenant details
 - `getPublicProjectBySlug(tenantSlug, projectSlug)`: Get project details
 

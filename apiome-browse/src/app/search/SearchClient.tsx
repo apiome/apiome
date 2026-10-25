@@ -1,18 +1,77 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { formatLabel, paradigmLabel } from '../../../lib/browseFacets';
+import { groupHitsByKind, hitHref, type CatalogSearchResponse } from '../../../lib/search/hits';
+import {
+  HIT_KIND_LABELS,
+  SCOPE_KINDS,
+  SEARCH_SCOPES,
+  SEARCH_SCOPE_LABELS,
+  type HitKind,
+  type SearchScope,
+} from '../../../lib/search/kinds';
+import {
+  SEARCH_SORTS,
+  SEARCH_SORT_LABELS,
+  patchSearchRequest,
+  toSearchParams,
+  toUrlState,
+  toggleUrlValue,
+  type SearchRequest,
+  type SearchSort,
+  type SearchUrlState,
+} from '../../../lib/search/params';
+import {
+  FILTER_KEY_LABELS,
+  stringifyQuery,
+  textNeedles,
+  withFilter,
+  type FilterKey,
+} from '../../../lib/search/query';
+import type { McpPublicSearchHit } from '../../../lib/types';
 import { AppShell } from '../components/AppShell';
-import { sanitizeSearchInput } from '../utils/searchValidation';
-import type { PublishedCatalogSearchHit } from '../../../lib/db/helper';
+import { GradeBadge } from '../mcp/McpShared';
+import { FacetRail, type FacetRailActions } from '../components/search/FacetRail';
+import { Highlight } from '../components/search/Highlight';
+import { HitRow } from '../components/search/HitRow';
+import { SearchBox } from '../components/search/SearchBox';
+import { OperatorChips, SyntaxHelpCard } from '../components/search/SyntaxHelp';
+import { RECENT_SEARCHES_KEY, clearRecentSearches, pushRecentSearch } from '../components/search/searchPaletteBus';
+import { useStoredPref } from '../components/search/useStoredPref';
 
-const SUGGESTED_QUERIES = ['payments', 'POST /', 'webhooks', 'schema', 'inventory'];
-const RECENT_KEY = 'apiome-browse-search-recent';
-const RECENT_MAX = 8;
+const GROUP_KEY = 'apiome-browse:search-grouped';
+const parseGrouped = (raw: string) => raw !== '0';
+const serializeGrouped = (value: boolean) => (value ? '1' : '0');
+const parseRecent = (raw: string): string[] => {
+  const parsed = JSON.parse(raw) as unknown;
+  return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+};
+const NO_RECENT: string[] = [];
 
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const EXAMPLE_QUERIES = [
+  { label: 'POST operations', q: 'method:POST' },
+  { label: 'Order schemas', q: 'type:schema order' },
+  { label: 'Anything about payments', q: 'payments' },
+  { label: '"webhook" phrases', q: '"webhook"' },
+  { label: 'Published this year', q: 'after:2026' },
+];
+
+const BROWSE_TILES: { title: string; hint: string; state: SearchUrlState }[] = [
+  { title: 'Operations', hint: 'Every operation in the latest versions', state: { type: 'operation' } },
+  { title: 'Schemas', hint: 'Every data model', state: { type: 'schema' } },
+  { title: 'Projects', hint: 'Every public project', state: { scope: 'catalog', type: 'project' } },
+  { title: 'Organizations', hint: 'Every publisher', state: { scope: 'catalog', type: 'organization' } },
+  { title: 'Recent versions', hint: 'Newest published first', state: { scope: 'catalog', type: 'version', all: '1' } },
+];
+
+interface ActiveChip {
+  key: string;
+  label: string;
+  value: string;
+  remove: () => SearchUrlState;
 }
 
 function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
@@ -24,560 +83,779 @@ function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
-function HighlightMatches({ text, query }: { text: string; query: string }) {
-  const q = query.trim();
-  if (!q || !text) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${escapeRegExp(q)})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === q.toLowerCase() ? (
-          <mark
-            key={i}
-            className="rounded-sm bg-sky-500/20 px-0.5 text-inherit dark:bg-sky-400/35"
-          >
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
-    </>
-  );
-}
-
-function readRecent(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_KEY);
-    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function pushRecent(q: string) {
-  if (typeof window === 'undefined' || !q.trim()) return;
-  const prev = readRecent().filter((x) => x.toLowerCase() !== q.trim().toLowerCase());
-  prev.unshift(q.trim());
-  window.localStorage.setItem(RECENT_KEY, JSON.stringify(prev.slice(0, RECENT_MAX)));
-}
-
-function hitIcon(hitType: string) {
-  const common = 'h-5 w-5';
-  switch (hitType) {
-    case 'path':
-      return (
-        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-        </svg>
-      );
-    case 'schema':
-      return (
-        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-        </svg>
-      );
-    case 'project':
-      return (
-        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      );
-    default:
-      return (
-        <svg className={common} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-        </svg>
-      );
-  }
-}
-
-function hitTone(hitType: string): string {
-  switch (hitType) {
-    case 'path':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
-    case 'schema':
-    case 'property':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
-    case 'project':
-      return 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300';
-    case 'request_body':
-    case 'response':
-      return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300';
-    default:
-      return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
-  }
-}
-
+/**
+ * The results page. The URL is the state: every control navigates, the server re-runs the
+ * engine, and this component renders what came back. Local state is limited to the text in the
+ * box, the keyboard cursor, the group toggle and the mobile filter drawer.
+ */
 export function SearchClient({
-  initialQuery,
-  initialResults,
+  request,
+  response,
+  mcpHits,
+  mcpQuery,
 }: {
-  initialQuery: string;
-  initialResults: PublishedCatalogSearchHit[];
+  request: SearchRequest;
+  response: CatalogSearchResponse;
+  mcpHits: McpPublicSearchHit[];
+  mcpQuery: string;
 }) {
   const router = useRouter();
-  // Search results are server-rendered, so submitting navigates and refetches. Wrapping the
-  // navigation in a transition lets us show a spinner while the new results compute, instead of
-  // leaving the user on stale/empty content with no feedback.
-  const [isSearching, startSearch] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  // The box's text follows the URL's `q` until the visitor types; keying the draft on the
+  // request's `q` resets it on navigation without an effect.
+  const [draft, setDraft] = useState<{ base: string; value: string }>({ base: request.q, value: request.q });
+  const query = draft.base === request.q ? draft.value : request.q;
+  const setQuery = useCallback((value: string) => setDraft({ base: request.q, value }), [request.q]);
+  const [grouped, setGrouped] = useStoredPref<boolean>(GROUP_KEY, true, parseGrouped, serializeGrouped);
+  const [recent] = useStoredPref<string[]>(RECENT_SEARCHES_KEY, NO_RECENT, parseRecent);
+  // The keyboard cursor belongs to one response; a new response starts with no row selected.
+  const [cursorState, setCursorState] = useState<{ response: CatalogSearchResponse; index: number } | null>(null);
+  const cursor = cursorState && cursorState.response === response ? cursorState.index : -1;
+  const setCursor = useCallback(
+    (update: number | ((current: number) => number)) =>
+      setCursorState((prev) => {
+        const current = prev && prev.response === response ? prev.index : -1;
+        return { response, index: typeof update === 'function' ? update(current) : update };
+      }),
+    [response]
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(initialQuery);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [recent, setRecent] = useState<string[]>([]);
-  const [sortKey, setSortKey] = useState<'relevance' | 'newest'>('relevance');
-  const [view, setView] = useState<'list' | 'grid'>('list');
-  const [allowedTenants, setAllowedTenants] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
+  const needles = useMemo(() => textNeedles(request.parsed), [request.parsed]);
+  const hasText = request.parsed.terms.length > 0 || request.parsed.phrases.length > 0;
+  const isLanding = response.total === 0 && response.totalAllKinds === 0 && !hasText && activeFilterCount(request) === 0;
 
-  useEffect(() => {
-    setRecent(readRecent());
-  }, []);
-
-  const tenantOptions = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const r of initialResults) {
-      if (!m.has(r.tenant_slug)) m.set(r.tenant_slug, r.tenant_name);
-    }
-    return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [initialResults]);
-
-  useEffect(() => {
-    setAllowedTenants(new Set(initialResults.map((r) => r.tenant_slug)));
-  }, [initialResults]);
-
-  const filtered = useMemo(() => {
-    let rows = initialResults.filter((r) => allowedTenants.has(r.tenant_slug));
-    if (sortKey === 'newest') {
-      rows = [...rows].sort((a, b) => {
-        const ta = a.published_at ? new Date(a.published_at).getTime() : 0;
-        const tb = b.published_at ? new Date(b.published_at).getTime() : 0;
-        return tb - ta;
-      });
-    }
-    return rows;
-  }, [initialResults, allowedTenants, sortKey]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
-    setPanelOpen(false);
-    if (q) {
-      pushRecent(q);
-      setRecent(readRecent());
-      startSearch(() => router.push(`/search?q=${encodeURIComponent(q)}`));
-    }
-  };
-
-  const applyQuery = useCallback(
-    (q: string) => {
-      const t = q.trim();
-      if (!t) return;
-      pushRecent(t);
-      setRecent(readRecent());
-      setPanelOpen(false);
-      setQuery(t);
-      startSearch(() => router.push(`/search?q=${encodeURIComponent(t)}`));
+  const go = useCallback(
+    (state: SearchUrlState) => {
+      const qs = toSearchParams(state);
+      startTransition(() => router.push(qs ? `/search?${qs}` : '/search'));
     },
     [router]
   );
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-        setPanelOpen(true);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  const submit = useCallback(() => {
+    const q = query.trim();
+    if (q) pushRecentSearch(q);
+    setFiltersOpen(false);
+    go(patchSearchRequest(request, { q: q || null }));
+  }, [go, query, request]);
 
-  const toggleTenant = (slug: string) => {
-    setAllowedTenants((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) {
-        if (next.size <= 1) return next;
-        next.delete(slug);
-      } else {
-        next.add(slug);
-      }
-      return next;
+  const insertOperator = (operator: string) => {
+    const base = query.trimEnd();
+    const next = operator === '"phrase"' ? `${base} ""`.trimStart() : operator === '-word' ? `${base} -`.trimStart() : `${base} ${operator}`.trimStart();
+    setQuery(next);
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      el.focus();
+      const pos = operator === '"phrase"' ? next.length - 1 : next.length;
+      el.setSelectionRange(pos, pos);
     });
   };
 
-  const resetTenants = () => {
-    setAllowedTenants(new Set(initialResults.map((r) => r.tenant_slug)));
+  // Rewrite q without one inline filter.
+  const removeInline = useCallback(
+    (key: FilterKey, value: string): SearchUrlState => {
+      const nextParsed = withFilter(request.parsed, key, value, 'remove');
+      return patchSearchRequest(request, { q: stringifyQuery(nextParsed) || null });
+    },
+    [request]
+  );
+
+  const rail: FacetRailActions = {
+    toggleOrg: (slug) => go(inlineHas(request, 'org', slug) ? removeInline('org', slug) : toggleUrlValue(request, 'org', slug)),
+    toggleMethod: (m) => go(inlineHas(request, 'method', m) ? removeInline('method', m) : toggleUrlValue(request, 'method', m)),
+    toggleType: (kind) => go(inlineHas(request, 'type', kind) ? removeInline('type', kind) : toggleUrlValue(request, 'type', kind)),
+    toggleFormat: (f) => go(inlineHas(request, 'format', f) ? removeInline('format', f) : toggleUrlValue(request, 'format', f)),
+    toggleParadigm: (p) => go(inlineHas(request, 'paradigm', p) ? removeInline('paradigm', p) : toggleUrlValue(request, 'paradigm', p)),
+    setDates: (after, before) => {
+      let parsed = request.parsed;
+      if (parsed.filters.after) parsed = { ...parsed, filters: { ...parsed.filters, after: undefined } };
+      if (parsed.filters.before) parsed = { ...parsed, filters: { ...parsed.filters, before: undefined } };
+      const q = stringifyQuery(parsed);
+      go({ ...patchSearchRequest(request, { q: q || null }), after: after ?? undefined, before: before ?? undefined });
+    },
+    setAllVersions: (all) => go(patchSearchRequest(request, { all: all ? '1' : null })),
+    clearAll: () => go({ q: stringifyQuery({ ...request.parsed, filters: {} }) || undefined, scope: request.scope === 'all' ? undefined : request.scope }),
   };
 
-  const formatPublished = (iso: string | null) => {
-    if (!iso) return null;
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return null;
-    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+  const chips = useMemo<ActiveChip[]>(() => activeChips(request, removeInline), [request, removeInline]);
 
-  const started = useRef<number | null>(null);
-  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  // Keyboard: j/k or arrows walk the results, Enter opens, `/` focuses the box.
+  const rows = response.rows;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+      if (typing) return;
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        if (rows.length === 0) return;
+        e.preventDefault();
+        setCursor((c) => Math.min(rows.length - 1, c + 1));
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        if (rows.length === 0) return;
+        e.preventDefault();
+        setCursor((c) => Math.max(0, c - 1));
+      } else if (e.key === 'Enter' && cursor >= 0 && rows[cursor]) {
+        e.preventDefault();
+        router.push(hitHref(rows[cursor]));
+      } else if (e.key === 'Escape') {
+        setCursor(-1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rows, cursor, router, setCursor]);
 
   useEffect(() => {
-    if (initialQuery) {
-      started.current = performance.now();
-      const id = requestAnimationFrame(() => {
-        if (started.current != null) setElapsedMs(Math.round(performance.now() - started.current));
-      });
-      return () => cancelAnimationFrame(id);
+    if (cursor < 0) return;
+    document.getElementById(`hit-${cursor}`)?.scrollIntoView({ block: 'nearest' });
+  }, [cursor]);
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
     }
-    setElapsedMs(null);
-    return undefined;
-  }, [initialQuery, initialResults]);
+  };
+
+  const scopeCounts = useMemo(() => {
+    const byKind = new Map(response.facets.kinds.map((k) => [k.value as HitKind, k.count]));
+    const sum = (kinds: readonly HitKind[]) => kinds.reduce((n, k) => n + (byKind.get(k) ?? 0), 0);
+    return {
+      all: response.totalAllKinds,
+      operations: sum(SCOPE_KINDS.operations),
+      schemas: sum(SCOPE_KINDS.schemas),
+      catalog: sum(SCOPE_KINDS.catalog),
+      mcp: mcpHits.length,
+    } satisfies Record<SearchScope, number>;
+  }, [response, mcpHits.length]);
+
+  const activeCount = activeFilterCount(request);
+  const groups = useMemo(() => (grouped ? groupHitsByKind(rows) : [{ kind: null, rows }]), [grouped, rows]);
+  const pageStart = response.total === 0 ? 0 : (response.page - 1) * response.perPage + 1;
+  const pageEnd = Math.min(response.page * response.perPage, response.total);
 
   return (
-    <AppShell containerSize="full">
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-          <p className="mb-3 text-[13px] text-zinc-500 dark:text-zinc-400">
-            Search published public specifications only — private projects never appear here.
-          </p>
-          <form onSubmit={handleSearch} className="relative">
-            <svg
-              className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
+    <>
+      {/* Search band */}
+      <section className="border-b border-zinc-200/80 bg-white dark:border-zinc-800/80 dark:bg-zinc-950">
+        <AppShell containerSize="wide">
+          <div className="space-y-3 py-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h1 className="text-[1.5rem]! font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                Search the public catalog
+              </h1>
+              <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
+                Published public specifications only — private projects never appear here.
+              </p>
+            </div>
+            <SearchBox
               ref={inputRef}
-              type="search"
-              name="q"
-              enterKeyHint="search"
+              id="catalog-search"
+              primary
               value={query}
-              onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
-              onFocus={() => setPanelOpen(true)}
-              onBlur={() => setTimeout(() => setPanelOpen(false), 120)}
-              placeholder="Search paths, schemas, parameters, and descriptions…"
-              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-3.5 pl-12 pr-36 text-[15px] text-zinc-900 placeholder-zinc-400 shadow-xs transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-500"
-              autoFocus
+              onChange={setQuery}
+              onSubmit={submit}
+              busy={isPending}
+              autoFocus={isLanding}
+              shortcutHint={false}
+              placeholder="Search operations, schemas, projects, organizations… try method:POST path:/orders"
             />
-            <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
-              <span className="hidden items-center gap-1 font-mono text-[11px] text-zinc-500 sm:flex">
-                <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 dark:border-zinc-600 dark:bg-zinc-800">
-                  ⌘K
-                </kbd>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <OperatorChips onInsert={insertOperator} compact />
+              <span className="hidden text-[11px] text-zinc-400 lg:inline">
+                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">/</kbd> focus ·{' '}
+                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">j</kbd>/<kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">k</kbd> move ·{' '}
+                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">↵</kbd> open
               </span>
-              <button
-                type="submit"
-                disabled={isSearching}
-                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--brand-hover)] disabled:opacity-80"
-              >
-                {isSearching && <Spinner className="h-3.5 w-3.5 text-white" />}
-                {isSearching ? 'Searching…' : 'Search'}
-              </button>
             </div>
 
-            {panelOpen && (
-              <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-                  Suggestions
-                  <span className="ml-auto font-normal normal-case text-[10px] text-zinc-400">
-                    Public catalog only
-                  </span>
-                </div>
-                <ul className="max-h-48 divide-y divide-zinc-100 overflow-y-auto text-sm dark:divide-zinc-800">
-                  {SUGGESTED_QUERIES.map((s) => (
-                    <li key={s}>
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/80"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyQuery(s)}
-                      >
-                        <span className="text-sky-500">↵</span>
-                        {s}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {recent.length > 0 && (
-                  <>
-                    <div className="flex items-center justify-between border-t border-zinc-200 bg-zinc-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-                      Recent
-                      <button
-                        type="button"
-                        className="normal-case font-normal text-sky-600 hover:underline dark:text-sky-400"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          localStorage.removeItem(RECENT_KEY);
-                          setRecent([]);
-                        }}
-                      >
-                        Clear
+            {chips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5" aria-label="Active filters">
+                {chips.map((chip) => (
+                  <button
+                    key={`${chip.key}:${chip.value}`}
+                    type="button"
+                    onClick={() => go(chip.remove())}
+                    className="inline-flex items-center gap-1 rounded-full border border-[var(--brand)]/40 bg-[var(--brand-soft)] py-0.5 pl-2.5 pr-1.5 text-[12px] font-medium text-[var(--brand-soft-text)] transition-colors hover:bg-[var(--brand-soft-hover)]"
+                    title={`Remove ${chip.label}: ${chip.value}`}
+                  >
+                    <span className="opacity-70">{chip.label}</span>
+                    <span>{chip.value}</span>
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ))}
+                <button type="button" onClick={rail.clearAll} className="ml-1 text-[12px] text-zinc-500 hover:underline dark:text-zinc-400">
+                  Clear all
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!isLanding && (
+            <nav aria-label="Result scope" className="-mb-px flex gap-1 overflow-x-auto">
+              {SEARCH_SCOPES.map((scope) => {
+                const active = request.scope === scope;
+                const count = scopeCounts[scope];
+                const disabled = scope === 'mcp' && !hasText;
+                return (
+                  <button
+                    key={scope}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    disabled={disabled}
+                    onClick={() => go(patchSearchRequest(request, { scope: scope === 'all' ? null : scope, type: null }))}
+                    className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium transition-colors ${
+                      active
+                        ? 'border-[var(--brand)] text-[var(--brand)]'
+                        : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-900 disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-100'
+                    }`}
+                    title={disabled ? 'Type a word to search MCP servers' : undefined}
+                  >
+                    {SEARCH_SCOPE_LABELS[scope]}
+                    <span className={`rounded-full px-1.5 text-[10.5px] tabular-nums ${active ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+                      {count.toLocaleString()}
+                      {scope === 'all' && response.truncated ? '+' : ''}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+        </AppShell>
+      </section>
+
+      <AppShell containerSize="wide">
+        {isLanding ? (
+          <Landing
+            recent={recent}
+            onClearRecent={clearRecentSearches}
+            onPick={(q) => {
+              setQuery(q);
+              pushRecentSearch(q);
+              go({ q });
+            }}
+            onBrowse={(state) => go(state)}
+          />
+        ) : (
+          <div className="grid gap-6 py-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_280px]">
+            {/* Filters: rail on desktop, drawer on mobile */}
+            <div className="lg:hidden">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
+                </svg>
+                Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              </button>
+              {filtersOpen && (
+                <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Filters">
+                  <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" onClick={() => setFiltersOpen(false)} />
+                  <div className="absolute inset-y-0 left-0 w-[320px] max-w-[90vw] overflow-y-auto bg-[var(--background)] p-4 shadow-lg">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-sm font-semibold">Filters</span>
+                      <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close filters" className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     </div>
-                    <ul className="max-h-40 divide-y divide-zinc-100 overflow-y-auto text-sm dark:divide-zinc-800">
-                      {recent.map((r) => (
-                        <li key={r}>
+                    <FacetRail request={request} response={response} actions={rail} activeCount={activeCount} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <aside className="hidden lg:block">
+              <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pb-6">
+                <FacetRail request={request} response={response} actions={rail} activeCount={activeCount} />
+              </div>
+            </aside>
+
+            {/* Results */}
+            <section className="min-w-0 space-y-3" aria-live="polite" aria-busy={isPending}>
+              {request.scope === 'mcp' ? (
+                <McpResults hits={mcpHits} query={mcpQuery} needles={needles} />
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
+                      {isPending ? (
+                        <span className="inline-flex items-center gap-2"><Spinner className="h-4 w-4" /> Searching…</span>
+                      ) : (
+                        <>
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                            {response.truncated && request.scope === 'all' ? 'More than ' : ''}
+                            {response.total.toLocaleString()} {response.total === 1 ? 'result' : 'results'}
+                          </span>
+                          {hasText && (
+                            <>
+                              <span className="text-zinc-400"> for </span>
+                              <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{needles.join(' ')}&rdquo;</span>
+                            </>
+                          )}
+                          {response.total > 0 && (
+                            <span className="text-zinc-400"> · {pageStart.toLocaleString()}–{pageEnd.toLocaleString()}</span>
+                          )}
+                          {response.tookMs > 0 && <span className="text-zinc-400"> · {response.tookMs} ms</span>}
+                          {!request.allVersions && <span className="text-zinc-400"> · latest versions</span>}
+                        </>
+                      )}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                        Sort
+                        <select
+                          value={request.sort}
+                          onChange={(e) => go(patchSearchRequest(request, { sort: e.target.value as SearchSort }))}
+                          className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-800 shadow-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                        >
+                          {SEARCH_SORTS.map((s) => (
+                            <option key={s} value={s} disabled={s === 'relevance' && !hasText}>
+                              {SEARCH_SORT_LABELS[s]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="inline-flex overflow-hidden rounded-md border border-zinc-200 text-[11px] font-medium dark:border-zinc-700" role="group" aria-label="Layout">
+                        {[
+                          { value: true, label: 'Grouped' },
+                          { value: false, label: 'Flat' },
+                        ].map((opt, i) => (
                           <button
+                            key={opt.label}
                             type="button"
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/80"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => applyQuery(r)}
+                            aria-pressed={grouped === opt.value}
+                            onClick={() => setGrouped(opt.value)}
+                            className={`px-2 py-1 ${i > 0 ? 'border-l border-zinc-200 dark:border-zinc-700' : ''} ${
+                              grouped === opt.value ? 'bg-[var(--brand)] text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                            }`}
                           >
-                            {r}
+                            {opt.label}
                           </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={copyLink}
+                        className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        title="Copy a link to this search"
+                      >
+                        {copied ? 'Copied' : 'Copy link'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {rows.length === 0 && !isPending ? (
+                    <NoResults request={request} chips={chips} mcpCount={mcpHits.length} onGo={go} />
+                  ) : (
+                    <div className={`space-y-5 ${isPending ? 'opacity-60 transition-opacity' : ''}`}>
+                      {groups.map((group) => {
+                        let offset = 0;
+                        for (const g of groups) {
+                          if (g === group) break;
+                          offset += g.rows.length;
+                        }
+                        return (
+                          <div key={group.kind ?? 'flat'}>
+                            {group.kind && (
+                              <div className="mb-2 flex items-center gap-2">
+                                <h2 className="text-[11px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                  {HIT_KIND_LABELS[group.kind].many}
+                                </h2>
+                                <span className="text-[11px] tabular-nums text-zinc-400">{group.rows.length} on this page</span>
+                                {!request.types.includes(group.kind) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => go(toggleUrlValue(request, 'type', group.kind as string))}
+                                    className="ml-auto text-[11px] font-medium text-[var(--brand)] hover:underline"
+                                  >
+                                    Only {HIT_KIND_LABELS[group.kind].many.toLowerCase()}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            <ul className="flex flex-col gap-2">
+                              {group.rows.map((hit, i) => (
+                                <HitRow key={hit.hit_id} id={`hit-${offset + i}`} hit={hit} needles={needles} active={cursor === offset + i} />
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {response.pageCount > 1 && (
+                    <Pagination page={response.page} pageCount={response.pageCount} onPage={(p) => go(patchSearchRequest(request, { page: p > 1 ? String(p) : null }))} />
+                  )}
+                </>
+              )}
+            </section>
+
+            {/* Right rail */}
+            <aside className="hidden xl:block">
+              <div className="sticky top-20 space-y-4">
+                {response.facets.projects.length > 0 && request.scope !== 'mcp' && (
+                  <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+                    <div className="border-b border-zinc-200 px-4 py-2.5 dark:border-zinc-800">
+                      <h3 className="text-[13px]! font-semibold text-zinc-900 dark:text-zinc-50">Top projects</h3>
+                      <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">Where the matches concentrate.</p>
+                    </div>
+                    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                      {response.facets.projects.map((p) => (
+                        <li key={`${p.tenant_slug}/${p.project_slug}`}>
+                          <Link
+                            href={`/tenant/${encodeURIComponent(p.tenant_slug)}/${encodeURIComponent(p.project_slug)}`}
+                            className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13px] font-medium text-zinc-900 dark:text-zinc-50">{p.project_name}</div>
+                              <div className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">{p.tenant_name}</div>
+                            </div>
+                            <span className="font-mono text-[11px] tabular-nums text-zinc-400">{p.count}</span>
+                          </Link>
                         </li>
                       ))}
                     </ul>
-                  </>
-                )}
-              </div>
-            )}
-          </form>
-        </div>
-      </header>
-
-      <div className="mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6 sm:px-6">
-        <aside className="col-span-12 lg:col-span-3">
-          <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center gap-2 rounded-t-lg border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-              <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-              <h3 className="flex-1 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Filters</h3>
-              <button
-                type="button"
-                onClick={resetTenants}
-                className="text-[11px] text-sky-600 hover:underline dark:text-sky-400"
-              >
-                Reset
-              </button>
-            </div>
-            <div className="space-y-5 p-4 text-xs text-zinc-700 dark:text-zinc-300">
-              <div>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                  Organization
-                </p>
-                {initialQuery && tenantOptions.length === 0 ? (
-                  <p className="text-zinc-500 dark:text-zinc-400">No facets for this query.</p>
-                ) : (
-                  <ul className="max-h-60 space-y-1.5 overflow-y-auto">
-                    {tenantOptions.map(([slug, name]) => (
-                      <li key={slug} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`t-${slug}`}
-                          checked={allowedTenants.has(slug)}
-                          onChange={() => toggleTenant(slug)}
-                          className="accent-sky-600"
-                        />
-                        <label htmlFor={`t-${slug}`} className="flex-1 cursor-pointer truncate">
-                          {name}
-                        </label>
-                        <span className="font-mono text-zinc-400">
-                          {initialResults.filter((r) => r.tenant_slug === slug).length}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <p className="border-t border-zinc-100 pt-3 text-[10px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                Results include operations, models, and docs from every published public version that matches
-                your terms.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        <section className="col-span-12 space-y-3 lg:col-span-9">
-          {isSearching && (
-            <div
-              className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900"
-              role="status"
-              aria-live="polite"
-            >
-              <Spinner className="h-7 w-7" />
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300">
-                Searching the catalog
-                {query.trim() && (
-                  <>
-                    {' for '}
-                    <span className="font-mono text-sky-600 dark:text-sky-400">&ldquo;{query.trim()}&rdquo;</span>
-                  </>
-                )}
-                …
-              </p>
-            </div>
-          )}
-
-          {!isSearching && !initialQuery && (
-            <div className="rounded-xl border border-dashed border-zinc-300 bg-white/50 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Search the public catalog</h2>
-              <p className="mx-auto mt-2 max-w-lg text-[14px] text-zinc-600 dark:text-zinc-400">
-                Enter plain text to match organization names, project slugs, OpenAPI paths, schemas, parameters,
-                and other published documentation.
-              </p>
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {SUGGESTED_QUERIES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => applyQuery(s)}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-medium text-zinc-700 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!isSearching && initialQuery && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">{filtered.length} results</span>
-                  <span className="text-zinc-400"> for </span>
-                  <span className="font-mono text-sky-600 dark:text-sky-400">&ldquo;{initialQuery}&rdquo;</span>
-                  {elapsedMs != null && (
-                    <span className="text-zinc-400">
-                      {' '}
-                      in {elapsedMs}ms
-                    </span>
-                  )}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] text-zinc-500">Sort</span>
-                  <select
-                    value={sortKey}
-                    onChange={(e) => setSortKey(e.target.value as 'relevance' | 'newest')}
-                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-800 shadow-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-                  >
-                    <option value="relevance">Relevance</option>
-                    <option value="newest">Newest published</option>
-                  </select>
-                  <span className="hidden h-5 w-px bg-zinc-200 sm:inline dark:bg-zinc-700" />
-                  <div className="inline-flex overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
-                    <button
-                      type="button"
-                      title="List view"
-                      onClick={() => setView('list')}
-                      className={`px-2 py-1 text-[11px] font-semibold ${
-                        view === 'list'
-                          ? 'bg-[var(--brand)] text-white'
-                          : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      List
-                    </button>
-                    <button
-                      type="button"
-                      title="Grid view"
-                      onClick={() => setView('grid')}
-                      className={`border-l border-zinc-200 px-2 py-1 text-[11px] font-medium dark:border-zinc-700 ${
-                        view === 'grid'
-                          ? 'bg-[var(--brand)] text-white'
-                          : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      Grid
-                    </button>
                   </div>
-                </div>
+                )}
+                <SyntaxHelpCard
+                  onTry={(example) => {
+                    setQuery(example);
+                    go({ q: example });
+                  }}
+                />
               </div>
-
-              {filtered.length === 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-10 text-center dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    No public published matches for{' '}
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">&ldquo;{initialQuery}&rdquo;</span>.
-                  </p>
-                  <Link href="/" className="mt-4 inline-block text-sm font-medium text-sky-600 dark:text-sky-400">
-                    Browse the directory
-                  </Link>
-                </div>
-              ) : (
-                <ul
-                  className={
-                    view === 'grid'
-                      ? 'grid gap-3 sm:grid-cols-2'
-                      : 'flex flex-col gap-3'
-                  }
-                >
-                  {filtered.map((hit) => {
-                    const href = `/tenant/${hit.tenant_slug}/${hit.project_slug}/${hit.version_slug}`;
-                    const pub = formatPublished(hit.published_at);
-                    return (
-                      <li key={hit.hit_id}>
-                        <Link
-                          href={href}
-                          className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-sky-700"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${hitTone(hit.hit_type)}`}
-                            >
-                              {hitIcon(hit.hit_type)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                <span>
-                                  {hit.tenant_slug} · {hit.project_slug}
-                                </span>
-                                <span className="rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[10px] text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
-                                  v{hit.version_slug}
-                                </span>
-                                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                  {hit.hit_type.replace(/_/g, ' ')}
-                                </span>
-                              </div>
-                              <h3 className="mt-1 text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                                <HighlightMatches text={hit.title} query={initialQuery} />
-                              </h3>
-                              {hit.snippet ? (
-                                <p className="mt-1 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-300">
-                                  <HighlightMatches text={hit.snippet} query={initialQuery} />
-                                </p>
-                              ) : null}
-                              <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-                                {hit.subtitle ? (
-                                  <span className="flex items-center gap-1">
-                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
-                                    {hit.subtitle}
-                                  </span>
-                                ) : null}
-                                {pub ? (
-                                  <span className="flex items-center gap-1">
-                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    {pub}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </>
-          )}
-        </section>
-      </div>
-    </AppShell>
+            </aside>
+          </div>
+        )}
+      </AppShell>
+    </>
   );
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+function inlineHas(request: SearchRequest, key: FilterKey, value: string): boolean {
+  const values = request.parsed.filters[key] ?? [];
+  return values.includes(key === 'method' ? value.toUpperCase() : value.toLowerCase());
+}
+
+/** How many filter dimensions are narrowing the request (for badges and "Clear all"). */
+function activeFilterCount(request: SearchRequest): number {
+  return (
+    request.types.length +
+    request.orgs.length +
+    request.projects.length +
+    request.versions.length +
+    request.methods.length +
+    request.paths.length +
+    request.formats.length +
+    request.paradigms.length +
+    request.tags.length +
+    (request.after ? 1 : 0) +
+    (request.before ? 1 : 0)
+  );
+}
+
+/** The removable chips for every active filter, inline or rail. */
+function activeChips(request: SearchRequest, removeInline: (key: FilterKey, value: string) => SearchUrlState): ActiveChip[] {
+  const chips: ActiveChip[] = [];
+  const add = (key: FilterKey, value: string, label: string, display: string, urlKey?: 'org' | 'method' | 'type' | 'format' | 'paradigm') => {
+    chips.push({
+      key,
+      label,
+      value: display,
+      remove: () => (inlineHas(request, key, value) ? removeInline(key, value) : urlKey ? toggleUrlValue(request, urlKey, value) : patchSearchRequest(request, {})),
+    });
+  };
+  for (const kind of request.types) add('type', kind, FILTER_KEY_LABELS.type, HIT_KIND_LABELS[kind].many, 'type');
+  for (const m of request.methods) add('method', m, FILTER_KEY_LABELS.method, m, 'method');
+  for (const p of request.paths) add('path', p, FILTER_KEY_LABELS.path, p);
+  for (const o of request.orgs) add('org', o, FILTER_KEY_LABELS.org, o, 'org');
+  for (const p of request.projects) add('project', p, FILTER_KEY_LABELS.project, p);
+  for (const v of request.versions) add('version', v, FILTER_KEY_LABELS.version, v);
+  for (const f of request.formats) add('format', f, FILTER_KEY_LABELS.format, formatLabel(f), 'format');
+  for (const p of request.paradigms) add('paradigm', p, FILTER_KEY_LABELS.paradigm, paradigmLabel(p), 'paradigm');
+  for (const t of request.tags) add('tag', t, FILTER_KEY_LABELS.tag, t);
+  if (request.after) {
+    chips.push({
+      key: 'after',
+      label: FILTER_KEY_LABELS.after,
+      value: request.after,
+      remove: () =>
+        request.parsed.filters.after
+          ? patchSearchRequest(request, { q: stringifyQuery({ ...request.parsed, filters: { ...request.parsed.filters, after: undefined } }) || null })
+          : patchSearchRequest(request, { after: null }),
+    });
+  }
+  if (request.before) {
+    chips.push({
+      key: 'before',
+      label: FILTER_KEY_LABELS.before,
+      value: request.before,
+      remove: () =>
+        request.parsed.filters.before
+          ? patchSearchRequest(request, { q: stringifyQuery({ ...request.parsed, filters: { ...request.parsed.filters, before: undefined } }) || null })
+          : patchSearchRequest(request, { before: null }),
+    });
+  }
+  return chips;
+}
+
+function Landing({
+  recent,
+  onClearRecent,
+  onPick,
+  onBrowse,
+}: {
+  recent: string[];
+  onClearRecent: () => void;
+  onPick: (q: string) => void;
+  onBrowse: (state: SearchUrlState) => void;
+}) {
+  return (
+    <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="space-y-8">
+        <section>
+          <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Try a search</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {EXAMPLE_QUERIES.map((ex) => (
+              <button
+                key={ex.q}
+                type="button"
+                onClick={() => onPick(ex.q)}
+                className="group rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12.5px] text-zinc-700 shadow-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+              >
+                {ex.label} <code className="ml-1 font-mono text-[11px] text-zinc-400 group-hover:text-[var(--brand)]">{ex.q}</code>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Browse everything</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {BROWSE_TILES.map((tile) => (
+              <button
+                key={tile.title}
+                type="button"
+                onClick={() => onBrowse(tile.state)}
+                className="group flex flex-col items-start gap-1 rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-800"
+              >
+                <span className="text-[14px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">{tile.title}</span>
+                <span className="text-[12px] text-zinc-500 dark:text-zinc-400">{tile.hint}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {recent.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between">
+              <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Recent searches</h2>
+              <button type="button" onClick={onClearRecent} className="text-[12px] text-[var(--brand)] hover:underline">
+                Clear
+              </button>
+            </div>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {recent.map((r) => (
+                <li key={r}>
+                  <button
+                    type="button"
+                    onClick={() => onPick(r)}
+                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 font-mono text-[12px] text-zinc-700 shadow-xs hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                  >
+                    {r}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+      <SyntaxHelpCard onTry={onPick} />
+    </div>
+  );
+}
+
+function NoResults({
+  request,
+  chips,
+  mcpCount,
+  onGo,
+}: {
+  request: SearchRequest;
+  chips: ActiveChip[];
+  mcpCount: number;
+  onGo: (state: SearchUrlState) => void;
+}) {
+  const needles = textNeedles(request.parsed);
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
+      <h2 className="text-[15px]! font-semibold text-zinc-900 dark:text-zinc-50">
+        No {request.scope === 'all' ? 'results' : SEARCH_SCOPE_LABELS[request.scope].toLowerCase()}
+        {needles.length > 0 && (
+          <>
+            {' '}for <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{needles.join(' ')}&rdquo;</span>
+          </>
+        )}
+        {!request.allVersions && ' in the latest versions'}
+      </h2>
+      <ul className="mt-4 space-y-2 text-[13px] text-zinc-600 dark:text-zinc-300">
+        {!request.allVersions && (
+          <li>
+            <button type="button" onClick={() => onGo(patchSearchRequest(request, { all: '1' }))} className="font-medium text-[var(--brand)] hover:underline">
+              Search every published version
+            </button>{' '}
+            — older versions may still mention it.
+          </li>
+        )}
+        {request.scope !== 'all' && response_hint(request, onGo)}
+        {chips.map((chip) => (
+          <li key={`${chip.key}:${chip.value}`}>
+            <button type="button" onClick={() => onGo(chip.remove())} className="font-medium text-[var(--brand)] hover:underline">
+              Drop {chip.label.toLowerCase()} {chip.value}
+            </button>
+          </li>
+        ))}
+        {needles.length > 1 && <li>Try fewer words — every word must match.</li>}
+        {needles.length > 0 && mcpCount > 0 && (
+          <li>
+            <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: 'mcp', type: null }))} className="font-medium text-[var(--brand)] hover:underline">
+              {mcpCount} MCP server {mcpCount === 1 ? 'capability matches' : 'capabilities match'}
+            </button>{' '}
+            in the MCP catalog.
+          </li>
+        )}
+        <li>
+          <Link href="/" className="font-medium text-[var(--brand)] hover:underline">
+            Browse the directory
+          </Link>{' '}
+          by organization instead.
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+function response_hint(request: SearchRequest, onGo: (state: SearchUrlState) => void) {
+  return (
+    <li>
+      <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: null, type: null }))} className="font-medium text-[var(--brand)] hover:underline">
+        Search all kinds
+      </button>{' '}
+      — the match may be a different kind of item.
+    </li>
+  );
+}
+
+function McpResults({ hits, query, needles }: { hits: McpPublicSearchHit[]; query: string; needles: string[] }) {
+  if (hits.length === 0) {
+    return (
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 text-[13px] text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+        No public MCP server capability matches <span className="font-mono">&ldquo;{query}&rdquo;</span>.{' '}
+        <Link href="/mcp" className="font-medium text-[var(--brand)] hover:underline">
+          Browse the MCP catalog
+        </Link>
+        .
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
+          <span className="font-semibold text-zinc-900 dark:text-zinc-50">{hits.length} {hits.length === 1 ? 'capability' : 'capabilities'}</span>
+          <span className="text-zinc-400"> across public MCP servers for </span>
+          <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{query}&rdquo;</span>
+        </p>
+        <Link href={`/mcp/search?q=${encodeURIComponent(query)}`} className="text-[12px] font-medium text-[var(--brand)] hover:underline">
+          Open in the MCP catalog →
+        </Link>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {hits.map((hit) => (
+          <li key={hit.item_id} className="list-none">
+            <Link
+              href={`/mcp/${hit.tenant_slug}/${hit.endpoint_slug}`}
+              className="group block rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-700"
+            >
+              <div className="flex items-start gap-3">
+                <GradeBadge grade={hit.grade} score={hit.score} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      {hit.item_type.replace(/_/g, ' ')}
+                    </span>
+                    <span className="truncate">{hit.endpoint_name}{hit.host ? ` · ${hit.host}` : ''}</span>
+                  </div>
+                  <h3 className="mt-1 truncate text-[15px]! font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">
+                    <Highlight text={hit.item_title || hit.item_name} needles={needles} />
+                  </h3>
+                  {hit.description && (
+                    <p className="mt-1 line-clamp-2 text-[13px] text-zinc-600 dark:text-zinc-400">
+                      <Highlight text={hit.description} needles={needles} />
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (p: number) => void }) {
+  const window = 2;
+  const pages: (number | '…')[] = [];
+  for (let p = 1; p <= pageCount; p++) {
+    if (p === 1 || p === pageCount || Math.abs(p - page) <= window) pages.push(p);
+    else if (pages[pages.length - 1] !== '…') pages.push('…');
+  }
+  const btn = 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-[12px] font-medium transition-colors';
+  return (
+    <nav className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800" aria-label="Pagination">
+      <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className={`${btn} border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`}>
+        ← Previous
+      </button>
+      <div className="flex items-center gap-1">
+        {pages.map((p, i) =>
+          p === '…' ? (
+            <span key={`gap-${i}`} className="px-1 text-zinc-400">…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              aria-current={p === page ? 'page' : undefined}
+              onClick={() => onPage(p)}
+              className={`${btn} ${p === page ? 'border-[var(--brand)] bg-[var(--brand)] text-white' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300'}`}
+            >
+              {p}
+            </button>
+          )
+        )}
+      </div>
+      <button type="button" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className={`${btn} border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`}>
+        Next →
+      </button>
+    </nav>
+  );
+}
+
+// `toUrlState` is re-exported for the landing tiles so a tile can describe itself as URL state.
+export { toUrlState };

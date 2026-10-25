@@ -1,0 +1,33 @@
+---
+slug: browse-catalog-search
+title: Browse searches the whole catalog
+description: One search box over operations, schemas, projects and organizations, with filters, operators, a ⌘K palette and shareable links.
+authors: [apiome]
+---
+
+The public browse app's search is no longer a name lookup. One box now searches the normalized
+model of every published public specification — operations, parameters, request bodies, responses,
+schemas, schema properties, version notes, tags, projects and organizations — and the results page
+is built to be narrowed, sorted, paged and shared.
+
+{/* truncate */}
+
+- **Operators in the box:** `method:POST`, `path:/orders`, `org:acme`, `project:payments`,
+  `type:schema`, `format:openapi`, `paradigm:rest`, `tag:stable`, `after:2026-01`, quoted phrases
+  and `-word` exclusions. Chips under the box insert them; unknown `key:value` text is searched as
+  words.
+- **A results page that narrows:** scope tabs (All · Operations · Schemas · Projects & orgs · MCP
+  servers) with counts; a filter rail for kind, HTTP method, organization, paradigm, format and
+  published date; latest-versions-only or every published version; relevance, newest, oldest or
+  name order; 25 results a page; grouped or flat.
+- **Results that land somewhere:** operation results show the method and path and open the version
+  page at that operation; schema and property results open at the schema; matched words are
+  highlighted; a *Top projects* card shows where the matches concentrate.
+- **⌘K everywhere:** <kbd>⌘</kbd><kbd>K</kbd> / <kbd>Ctrl</kbd><kbd>K</kbd> or <kbd>/</kbd> opens
+  a palette with live suggestions, recent searches and jump links on any page; on the results page
+  the same keys focus the box, and <kbd>j</kbd>/<kbd>k</kbd> walk the results.
+- **Shareable:** the URL carries the whole search, so **Copy link** gives a colleague the same view.
+- **Home:** the hero box, example searches and *Browse by* tiles (operations by method, schemas,
+  versions and release notes, and the paradigm and format chips) each start a search.
+
+The guide is on [Browse published specs](/ship/browse-published-specs#search-the-public-catalog).

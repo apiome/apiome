@@ -2,6 +2,7 @@
 
 import { Navbar } from './Navbar';
 import { ThemeProvider } from './ThemeProvider';
+import { SearchPalette } from './search/SearchPalette';
 import type { DirectoryStats } from './DirectoryStatPills';
 
 export function ClientLayout({
@@ -18,6 +19,7 @@ export function ClientLayout({
       </a>
       <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
         <Navbar stats={stats} />
+        <SearchPalette />
         <main id="main" className="flex-1">
           {children}
         </main>

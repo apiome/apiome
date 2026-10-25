@@ -14,7 +14,66 @@ browsable spec — the seeded, published `petstore-sample` project.
 ## In the UI
 
 - Open [Published](./published.mdx) at `/ade/dashboard/published` to see your tenant's published versions.
-- The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI.
+- The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI, and
+  searches across every published public specification (next section).
+
+## Search the public catalog
+
+The browse app's **Search** page (`/search`) searches the normalized model of every published public
+version, not only names and descriptions: organizations, projects, version notes, tags, operations,
+parameters, request bodies, responses, schemas and schema properties. Private and unpublished
+versions never appear.
+
+### Where to start a search
+
+| From | How |
+|---|---|
+| Any page | Press <kbd>⌘</kbd><kbd>K</kbd> (<kbd>Ctrl</kbd><kbd>K</kbd>) or <kbd>/</kbd>, or click the search field in the top bar. A palette shows the best matches as you type; <kbd>↑</kbd><kbd>↓</kbd> move, <kbd>↵</kbd> opens, and the first row runs the full search. |
+| Home | The hero search box, the **Try** examples, and the **Browse by** tiles — each tile is a search with a filter already applied. |
+| `/search` | The search box, the operator chips under it, and the **Browse everything** tiles. |
+
+### Query language
+
+Words, phrases and filters go in one box. Every word must match; filters narrow further.
+
+| Write | To get |
+|---|---|
+| `create order` | Items mentioning both words |
+| `"payment intent"` | Items containing that phrase |
+| `orders -deprecated` | Items about orders that do not mention *deprecated* |
+| `type:operation` | Only one kind — `organization`, `project`, `version`, `tag`, `operation`, `parameter`, `request_body`, `response`, `schema`, `property` (aliases such as `endpoint` and `model` work) |
+| `method:POST` | Operations with that HTTP method |
+| `path:/orders` | Operations and their parameters, bodies and responses on paths containing `/orders` |
+| `org:acme` · `project:payments` | Published by that organization, or in that project (slug or name) |
+| `version:2.1` | In versions whose label contains `2.1` |
+| `format:openapi` · `paradigm:rest` | Versions imported from that format or paradigm (the same vocabulary as the directory facets) |
+| `tag:stable` | Versions carrying that tag |
+| `after:2026-01` · `before:2026-07` | Published on or after, or before, a date (`YYYY`, `YYYY-MM` or `YYYY-MM-DD`) |
+
+Repeating a filter ORs its values (`method:GET method:POST`). An unknown `key:value` is searched as
+plain text.
+
+### Results page
+
+- **Scope tabs** — *All*, *Operations*, *Schemas*, *Projects & orgs* and *MCP servers* (the public
+  MCP catalog, searched with the same words), each with its count.
+- **Filters rail** — latest versions only or every published version, kind, HTTP method,
+  organization, paradigm, format and published-date range, with counts for the current results.
+  Active filters show as removable chips above the tabs, whether they came from the rail or were
+  typed as operators.
+- **Results** — grouped by kind or flat; sorted by relevance, newest, oldest or name; 25 a page.
+  Operation results show the method and path; operations and schemas open the version page at that
+  item. The matched words are highlighted.
+- **Top projects** — where the matches concentrate, with a link to each project.
+- **Keyboard** — <kbd>/</kbd> focuses the box, <kbd>j</kbd>/<kbd>k</kbd> (or the arrows) move
+  through the results, <kbd>↵</kbd> opens the selected one.
+- **Share** — the URL carries the whole search (`q`, `scope`, `type`, `org`, `method`, `format`,
+  `paradigm`, `after`, `before`, `sort`, `all`, `page`), so **Copy link** gives a colleague the same
+  view.
+
+By default a search covers each project's most recently published version. Choose **All published**
+in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
+per version.
 
 ## Interactive Swagger UI for a published spec
 

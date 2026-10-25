@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { HTTP_METHOD_TONE } from './search/httpMethodTone';
 import { useMemo, useState } from 'react';
 
 interface SidebarVersion {
@@ -36,37 +37,12 @@ interface SpecSidebarProps {
   onSelectAnchor?: (anchorId: string) => void;
 }
 
-const HTTP_METHOD_TONE: Record<string, string> = {
-  get: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
-  post: 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
-  put: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  patch: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
-  delete: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
-  options: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  head: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  trace: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  cls: 'bg-fuchsia-50 text-fuchsia-800 dark:bg-fuchsia-500/10 dark:text-fuchsia-300',
-  def: 'bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-300',
-  wf: 'bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-300',
-};
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
-export function operationAnchorId(method: string, path: string): string {
-  const slug = `${method.toLowerCase()}-${path}`
-    .replace(/[{}]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return `op-${slug}`;
-}
+import { operationAnchorId, schemaAnchorId } from '../../../lib/search/anchors';
 
-/** Anchor id for OpenAPI component schema / Swagger `definitions` entries (overview + sidebar TOC). */
-export function schemaAnchorId(schemaName: string): string {
-  const slug = schemaName
-    .replace(/[^a-z0-9]+/gi, '-')
-    .replace(/^-+|-+$/g, '');
-  return `schema-${slug || 'unnamed'}`;
-}
+export { operationAnchorId, schemaAnchorId };
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

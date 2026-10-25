@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import YAML from 'yaml';
 import { useTheme, specThemes, SpecTheme } from './ThemeProvider';
-import { operationAnchorId, schemaAnchorId } from './SpecSidebar';
+import { operationAnchorId, schemaAnchorId } from '../../../lib/search/anchors';
+import { HTTP_METHOD_TONE } from './search/httpMethodTone';
 import { TryItPanel } from './tryit/TryItPanel';
 import { OperationSnippetTabs } from './sdk/OperationSnippetTabs';
 
@@ -67,16 +68,6 @@ const monacoThemeMap: Record<SpecTheme, string> = {
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
-const HTTP_METHOD_TONE: Record<string, string> = {
-  get: 'bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30',
-  post: 'bg-sky-50 text-sky-700 ring-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30',
-  put: 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30',
-  patch: 'bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/30',
-  delete: 'bg-rose-50 text-rose-700 ring-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30',
-  options: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
-  head: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
-  trace: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
-};
 
 /**
  * One operation as the overview projects it out of the OpenAPI document.
