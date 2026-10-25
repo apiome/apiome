@@ -273,8 +273,10 @@ are marked **⛔**. Checked 2026-10-24, 23:15 UTC.
       is green on `main` at `ac3ae034c`; the post waits on the tag.)*
 - [x] The What's new feed (`apiome-ui/public/WHATS_NEW.md`) is bumped to RC6. *(B7: "Apiome 10-2026 RC6".)*
 - [x] The `RC6` milestone has no open issues. *(B9: the ten deferred issues moved to `RC7` on 2026-10-24.)*
-- [ ] **Bug bar (RC6-H8):** the two queries below return **zero issues** on the day of the tag. *(Both returned
-      0 on 2026-10-24 at 23:15 UTC; re-run on the day of the tag.)*
+- [x] **Bug bar (RC6-H8):** the two queries below return **zero issues** on the day of the tag. *(Both returned
+      0 on 2026-10-24 at 23:15 UTC and again on 2026-10-25 at 15:40 UTC. Open `bug` issues: #6274 and #6278,
+      both `sev:medium` and listed in §7.2. The three bugs found on 2026-10-25 were fixed before the tag:
+      #6319, #6320 and #6322.)*
 
 ### 7.1 The bug bar
 

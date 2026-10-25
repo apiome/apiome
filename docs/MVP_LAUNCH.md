@@ -33,7 +33,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 11 | ✅ | Sat night | Production host: DNS, firewall, secrets, **SendGrid email** | — | You | `PRODUCTION_DEPLOY.md` §2–§3 done | Done by you, 2026-10-25 |
 | 12 | ✅ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You | the install one-liner works on a clean machine | Done 2026-10-24: `https://get.apiome.dev` serves `install.sh` over a valid certificate; `deploy/get-apiome/get-apiome-installer.sh` (#6265) refreshes it from `main` |
 | 13 | ✅ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Passed 2026-10-25 on a clean staging stack built from `main`, including the sign-up confirmation step (password); recorded in `RC6_OOE.md` §7 |
-| 14 | ⬜ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-24 |
+| 14 | ✅ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-25 at 15:40 UTC; the only open bugs (#6274, #6278) are `sev:medium`, in RC7 and in `RC6_OOE.md` §7.2 |
 | 15 | ⬜ | Sun morning | Tag `RC6`; merge the release-notes PR it opens | — | You | RC6 post published | |
 | 16 | ⬜ | Sun | First production deploy at `RC6` (migrate, bootstrap admin, backups) | — | You | `PRODUCTION_DEPLOY.md` §4–§6 done | Migrations through **V318** |
 | 17 | ⬜ | Sun | **Gate 3:** production smoke test of the release journey | — | You | every step passes | |
@@ -181,6 +181,6 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] Production host, DNS, secrets and email ready
 - [x] B5 `get.apiome.dev` installs the CLI
 - [x] Staging release journey passes (2026-10-25)
-- [ ] Bug bar returns 0
+- [x] Bug bar returns 0 (2026-10-25)
 - [ ] `RC6` tagged; release-notes PR merged
 - [ ] Production deployed, smoke-tested, sign-up policy set
