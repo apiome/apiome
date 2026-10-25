@@ -1,0 +1,16 @@
+---
+slug: new-version-fixed
+title: New version creates the version again
+description: The New version dialog on Versions no longer fails with "Not found".
+authors: [apiome]
+---
+
+On **Versions**, **New version** creates the version again. Before this fix, clicking **Create
+version** left the dialog open with *Not found*, and no version was created.
+
+{/* truncate */}
+
+- **Why:** a guard for the held-back branch and merge features also blocked the request that creates
+  a version.
+- **What changes for you:** nothing to do. Versions you create from the dialog, or from **Commit
+  revision**, are saved as before. Branches, tags and merges stay held back.

@@ -24,12 +24,8 @@ const ALWAYS_BLOCKED_PATTERNS: RegExp[] = [
 
 /** Method-aware blocks: matcher → set of HTTP methods that are forbidden. */
 const METHOD_BLOCKS: Array<{ test: (pathname: string) => boolean; methods: Set<string> }> = [
-  /* `/api/versions` (collection): POST creates a new revision (commit). GET
-     stays so the version selector and dashboard list keep working. */
-  {
-    test: (p) => p === '/api/versions' || p === '/api/versions/',
-    methods: new Set(['POST']),
-  },
+  /* `/api/versions` (collection) is not blocked: POST is the New version dialog, core version
+     workflow the Versions page draws whatever the flag (RC6 "cut a version"). */
   /* `/api/versions/[id]`: DELETE hard-removes a revision. GET (read) and
      PUT (edit revision metadata via the still-enabled Edit dialog) remain. */
   {

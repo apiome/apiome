@@ -33,9 +33,9 @@ describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
   });
 
   describe('method-aware blocks', () => {
-    it('blocks POST /api/versions (commit)', () => {
-      expect(isGitlikePath('/api/versions', 'POST')).toBe(true);
-      expect(isGitlikePath('/api/versions/', 'POST')).toBe(true);
+    it('allows POST /api/versions (New version — core workflow, not git-like)', () => {
+      expect(isGitlikePath('/api/versions', 'POST')).toBe(false);
+      expect(isGitlikePath('/api/versions/', 'POST')).toBe(false);
     });
 
     it('allows GET /api/versions (list for selection)', () => {
