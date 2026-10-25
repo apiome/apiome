@@ -34,7 +34,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 12 | ✅ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You | the install one-liner works on a clean machine | Done 2026-10-24: `https://get.apiome.dev` serves `install.sh` over a valid certificate; `deploy/get-apiome/get-apiome-installer.sh` (#6265) refreshes it from `main` |
 | 13 | ✅ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Passed 2026-10-25 on a clean staging stack built from `main`, including the sign-up confirmation step (password); recorded in `RC6_OOE.md` §7 |
 | 14 | ✅ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-25 at 15:40 UTC; the only open bugs (#6274, #6278) are `sev:medium`, in RC7 and in `RC6_OOE.md` §7.2 |
-| 15 | ⬜ | Sun morning | Tag `RC6`; merge the release-notes PR it opens | — | You | RC6 post published | |
+| 15 | ⏳ | Sun morning | Tag `RC6`; merge the release-notes PR it opens; close the `RC6` milestone | — | You | RC6 post published | Ready to tag once the release-prep PR merges and its catalog journey passes; see step 15 below |
 | 16 | ⬜ | Sun | First production deploy at `RC6` (migrate, bootstrap admin, backups) | — | You | `PRODUCTION_DEPLOY.md` §4–§6 done | Migrations through **V318** |
 | 17 | ⬜ | Sun | **Gate 3:** production smoke test of the release journey | — | You | every step passes | |
 | 18 | ⬜ | Sun | Set the sign-up policy to **open** (or **invite-only** for a soft launch) | — | You | strangers can sign up | |
@@ -144,9 +144,17 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 14. **Bug bar** — both queries in [`RC6_OOE.md` §7.1](RC6_OOE.md#71-the-bug-bar) return 0
     (anything found in step 13 is filed, triaged, and fixed or downgraded with a reason).
 15. **Tag `RC6`.** *(You)* `git tag RC6 <sha> && git push origin RC6`. The
-    `apiome-release-notes` workflow opens a PR that closes the milestone, records the REST range
-    in `apiome-docs/release-notes/releases.json` (check that RC5 is recorded too) and publishes
-    the RC6 post. **Merge it.**
+    `apiome-release-notes` workflow opens a PR that records RC6's REST range in
+    `apiome-docs/release-notes/releases.json` and adds the RC6 post. **Merge it**, then close the
+    `RC6` milestone by hand (`gh api -X PATCH repos/apiome/apiome/milestones/6 -f state=closed`):
+    the workflow does not close it.
+    - **No RC5 entry.** RC5 is still an open milestone (due 2026-10-31) that ran alongside RC6, and
+      it was never tagged. So RC6's REST range starts after RC4 (1.263.0) and covers everything
+      shipped since. That is correct for the first production release.
+    - **Checked 2026-10-25** with a dry run of `scripts/gen-release-notes.ts --close RC6` on `main`:
+      the post reads "Apiome 10-2026 RC6" and links milestone 6. `apiome-rest/CHANGELOG.md` had
+      no entries for 1.449.1–1.449.3 (#6277, #6319, #6320), so the post would have stopped at
+      1.449.0. They are added in the RC6 release-prep PR.
 
 ### Phase 5 — Sunday: launch
 
