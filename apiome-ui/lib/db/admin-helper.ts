@@ -64,9 +64,10 @@ export async function createUser(
   enabled: boolean = true
 ) {
   try {
-    // Check if user already exists
+    // Check if a live user already has the address. A deleted account no longer holds it (V319
+    // moves it to `deleted_email`); the filter also covers a row deleted before that ran.
     const existingUser = await connectionPool.query(
-      'SELECT id FROM apiome.users WHERE email = $1',
+      'SELECT id FROM apiome.users WHERE lower(email) = lower($1) AND deleted_at IS NULL',
       [email]
     );
 
@@ -191,23 +192,42 @@ export async function updateUser(
  * Soft delete a user
  */
 export async function deleteUser(userId: string) {
+  // One transaction: the account is marked deleted and its email address and sign-in identities
+  // are released together (V319), so the person can sign up again with the same address or
+  // provider, and nothing that could still sign in survives.
+  const client = await connectionPool.connect();
   try {
-    const result = await connectionPool.query(
-      `UPDATE apiome.users 
-       SET deleted_at = CURRENT_TIMESTAMP, enabled = false, updated_at = CURRENT_TIMESTAMP
+    await client.query('BEGIN');
+    const result = await client.query(
+      `UPDATE apiome.users
+       SET deleted_at = CURRENT_TIMESTAMP,
+           enabled = false,
+           deleted_email = email,
+           email = 'deleted+' || id::text || '@deleted.invalid',
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $1 AND deleted_at IS NULL
        RETURNING id`,
       [userId]
     );
 
     if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
       return errorResponse('User not found or already deleted');
     }
 
+    await client.query('DELETE FROM apiome.session WHERE "userId" = $1', [userId]);
+    await client.query('DELETE FROM apiome.account WHERE "userId" = $1', [userId]);
+    await client.query('DELETE FROM apiome.external_auth_providers WHERE user_id = $1', [userId]);
+    await client.query('DELETE FROM apiome.email_verification_token WHERE user_id = $1', [userId]);
+    await client.query('COMMIT');
+
     return successResponse({ message: 'User deleted successfully' });
   } catch (error: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
     console.error('Error deleting user:', error);
     return errorResponse(error.message);
+  } finally {
+    client.release();
   }
 }
 

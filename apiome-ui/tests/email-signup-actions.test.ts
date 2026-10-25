@@ -154,6 +154,22 @@ describe('startEmailSignup', () => {
     expect(mockSendSignupEmail.mock.calls[0][1].subject).toBe('You already have an Apiome account');
   });
 
+  it('logs why the account could not be created, without the address', async () => {
+    // Before V319 a deleted account still held its address, so createUser refused and the log said
+    // only "Error".
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockFindSignupAccount.mockResolvedValue(null);
+    mockCreateUser.mockResolvedValue(
+      JSON.stringify({ success: false, error: 'User with this email already exists: ada@example.com' })
+    );
+    await expect(startEmailSignup(GOOD)).resolves.toEqual({ ok: false, code: 'email-signup-send-failed' });
+    expect(error).toHaveBeenCalledWith(
+      '[email-signup] sign-up failed:',
+      'Error: user insert failed: User with this email already exists: <email>'
+    );
+    error.mockRestore();
+  });
+
   it.each([
     ['closed', { mode: 'closed', allowedEmailDomains: [], source: 'db' }, 'signup-disabled'],
     ['invite-only', { mode: 'invite_only', allowedEmailDomains: [], source: 'db' }, 'signup-invite-only'],

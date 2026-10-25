@@ -157,6 +157,8 @@ We continue to improve the platform based on your feedback with improvements and
 ## Bug Fixes
 
 - Admin console:
+  - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged
+  - A disabled or deleted account can no longer sign in with its password
   - The **Users** list shows each account's **Created** date instead of *Invalid Date*, and a new **Last active** column shows its last sign-in or activity (*Never* for an unused account). Email and password sign-ins are now recorded too, not just provider sign-ins
 - Catalog, Projects and Versions:
   - **Home** no longer offers **Import a spec**, **New project** or **Create an API key** to a role that can't use them
