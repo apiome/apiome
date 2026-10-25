@@ -16,6 +16,7 @@ route maps straight through, so a caller never has to re-classify it.
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -142,6 +143,45 @@ def _resolve_revision_id(
 resolve_revision_id = _resolve_revision_id
 
 
+def _is_decomposed_openapi(source_format: Optional[str]) -> bool:
+    """Whether a revision with this ``source_format`` was imported as decomposed OpenAPI.
+
+    OpenAPI imports (and catalog conversions, which commit through the OpenAPI import) are
+    decomposed into classes and paths by the import worker and keep no ``sourceContent``; their
+    ``source_format`` is empty or an OpenAPI/Swagger key.
+    """
+    key = (source_format or "").strip().lower()
+    return not key or key.startswith(("openapi", "swagger"))
+
+
+def _reconstructed_openapi_item(
+    item: Dict[str, Any], tenant_id: str, revision_id: str
+) -> Optional[Dict[str, Any]]:
+    """The item row with its revision's OpenAPI document, rebuilt from the database, as its source.
+
+    Args:
+        item: The catalog-item-shaped projection row of the revision.
+        tenant_id: Owning tenant id.
+        revision_id: The revision (``versions.id``).
+
+    Returns:
+        A copy of ``item`` whose captured source is the rebuilt OpenAPI document, or ``None`` when
+        the revision cannot be found.
+    """
+    from .compatibility_engine import openapi_for_revision
+
+    version = db.get_version_by_id(revision_id, tenant_id)
+    if not version:
+        return None
+    # The generator only uses the tenant slug in per-class spec descriptions, not here.
+    spec = openapi_for_revision(version, "", tenant_id)
+    return {
+        **item,
+        "source_format": "openapi",
+        "format_metadata": {"sourceContent": json.dumps(spec)},
+    }
+
+
 def load_export_source(
     tenant_id: str, artifact_id: str, version: Optional[str] = None
 ) -> ExportSource:
@@ -188,9 +228,23 @@ def load_export_source(
     try:
         source = build_conversion_source(item, source_version_id=revision_id)
     except ConversionError as exc:
-        # No captured source / unresolvable adapter / unparseable text — nothing to compute
-        # fidelity against. Surface with the conversion path's status (422/400).
-        raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
+        # A decomposed OpenAPI revision keeps no captured text: rebuild its document from the
+        # database (the same generator the spec viewer and compatibility checks use) instead.
+        rebuilt = (
+            _reconstructed_openapi_item(item, tenant_id, revision_id)
+            if _is_decomposed_openapi(item.get("source_format"))
+            else None
+        )
+        if rebuilt is None:
+            # No captured source / unresolvable adapter / unparseable text — nothing to compute
+            # fidelity against. Surface with the conversion path's status (422/400).
+            raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
+        try:
+            source = build_conversion_source(rebuilt, source_version_id=revision_id)
+        except ConversionError as rebuilt_exc:
+            raise ExportSourceError(
+                str(rebuilt_exc), status_code=rebuilt_exc.status_code
+            ) from rebuilt_exc
 
     return ExportSource(
         api=source.api,

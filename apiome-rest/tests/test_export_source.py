@@ -13,6 +13,7 @@ their own logic is covered elsewhere — so these tests pin only the loader's re
 
 from __future__ import annotations
 
+import json
 from unittest.mock import patch
 
 import pytest
@@ -195,4 +196,61 @@ def test_public_load_422_when_source_cannot_be_reconstructed():
         db.get_public_version_source_projection.return_value = _public_projection()
         with pytest.raises(ExportSourceError) as exc:
             load_public_export_source("acme", "widgets", "1.0.0")
+    assert exc.value.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Decomposed OpenAPI revisions — rebuilt from the database (RC6 launch)
+# ---------------------------------------------------------------------------
+def _openapi_projection(source_format=None) -> dict:
+    return {**_projection(), "source_format": source_format, "format_metadata": {}}
+
+
+@pytest.mark.parametrize("source_format", [None, "", "openapi", "openapi-3.1", "swagger-2.0"])
+def test_decomposed_openapi_revision_is_rebuilt_from_the_database(source_format):
+    """An OpenAPI revision keeps no captured text; its document is regenerated and parsed instead."""
+    spec = {"openapi": "3.1.0", "info": {"title": "widgets", "version": "1.0.0"}, "paths": {}}
+    calls = []
+
+    def build(item, *, source_version_id=None):
+        calls.append(item)
+        if len(calls) == 1:
+            raise ConversionError("no captured source", status_code=422)
+        return _conversion_source()
+
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source", side_effect=build
+    ), patch("app.compatibility_engine.openapi_for_revision", return_value=spec) as rebuild:
+        db.get_version_source_projection.return_value = _openapi_projection(source_format)
+        db.get_version_by_id.return_value = {"id": _REV_UUID, "project_id": "artifact-1"}
+        source = load_export_source("tenant-1", "artifact-1", _REV_UUID)
+
+    assert source.version_record_id == _REV_UUID
+    rebuild.assert_called_once()
+    assert calls[1]["source_format"] == "openapi"
+    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)
+
+
+def test_a_non_openapi_revision_without_source_is_not_rebuilt():
+    """A GraphQL (or any non-OpenAPI) revision without captured text is still a 422."""
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source",
+        side_effect=ConversionError("no captured source", status_code=422),
+    ), patch("app.compatibility_engine.openapi_for_revision") as rebuild:
+        db.get_version_source_projection.return_value = _openapi_projection("graphql")
+        with pytest.raises(ExportSourceError) as exc:
+            load_export_source("tenant-1", "artifact-1", _REV_UUID)
+    assert exc.value.status_code == 422
+    rebuild.assert_not_called()
+
+
+def test_an_openapi_revision_that_cannot_be_found_keeps_the_422():
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source",
+        side_effect=ConversionError("no captured source", status_code=422),
+    ):
+        db.get_version_source_projection.return_value = _openapi_projection()
+        db.get_version_by_id.return_value = None
+        with pytest.raises(ExportSourceError) as exc:
+            load_export_source("tenant-1", "artifact-1", _REV_UUID)
     assert exc.value.status_code == 422
