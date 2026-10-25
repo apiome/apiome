@@ -39,6 +39,7 @@
 import { headers } from 'next/headers';
 
 import { createUser } from '../db/admin-helper';
+import { describeSignupError } from './signup-error-log';
 import {
   findPendingSignup,
   findSignupAccount,
@@ -279,7 +280,9 @@ export async function startEmailSignup(input: {
       const created = JSON.parse(await createUser(name, email, pending.passwordHash, false));
       // A concurrent sign-up for the same address may have won the unique index; read it back.
       account = await findSignupAccount(email);
-      if (!created.success && !account) throw new Error('user insert failed');
+      if (!created.success && !account) {
+        throw new Error(`user insert failed: ${created.error ?? 'no reason given'}`);
+      }
       if (created.success && account) {
         const sent = await sendVerification(account, baseUrl, pending);
         return sent ? { ok: true } : { ok: false, code: EMAIL_SIGNUP_CODES.SEND_FAILED };
@@ -295,7 +298,7 @@ export async function startEmailSignup(input: {
       : await sendVerification(account, baseUrl, pending);
     return sent ? { ok: true } : { ok: false, code: EMAIL_SIGNUP_CODES.SEND_FAILED };
   } catch (error) {
-    console.error('[email-signup] sign-up failed', error instanceof Error ? error.name : 'unknown');
+    console.error('[email-signup] sign-up failed:', describeSignupError(error));
     return { ok: false, code: EMAIL_SIGNUP_CODES.SEND_FAILED };
   }
 }

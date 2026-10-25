@@ -21,6 +21,7 @@ import {
 import { oauthResolutionHandler } from './better-auth-account-resolution';
 import { oneTimeCodePlugin } from './better-auth-one-time-code';
 import { lastSignInPlugin } from './last-sign-in';
+import { accountStateSessionCreateBefore } from './account-state-guard';
 import {
   applyOauthRedirectOverride,
   buildGenericOAuthConfigs,
@@ -335,8 +336,12 @@ function buildBetterAuthConfig(
     },
     session: {
       create: {
-        before: async (session: Record<string, unknown>, ctx?: unknown) =>
-          ssoSessionCreateBefore(session, ctx as never),
+        // A disabled or deleted account gets no session by any sign-in method, then the SSO engine
+        // runs for SSO callbacks (`account-state-guard.ts`).
+        before: async (session: Record<string, unknown>, ctx?: unknown) => {
+          await accountStateSessionCreateBefore(session);
+          return ssoSessionCreateBefore(session, ctx as never);
+        },
       },
     },
   },

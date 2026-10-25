@@ -35,6 +35,11 @@ const mockCreateAuthClient = jest.fn(() => ({
 }));
 
 jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
+// The disabled/deleted-account session guard; its own behaviour is in account-state-guard.test.ts.
+const mockAccountStateGuard = jest.fn();
+jest.mock('@lib/auth/account-state-guard', () => ({
+  accountStateSessionCreateBefore: (...args: unknown[]) => mockAccountStateGuard(...args),
+}));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/react', () => ({ createAuthClient: mockCreateAuthClient }));
 jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: mockTwoFactor }));
@@ -148,6 +153,12 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       expect.arrayContaining(['/sso/register', '/sso/update-provider', '/sso/delete-provider', '/sso/verify-domain'])
     );
     expect(Object.keys(config.databaseHooks).sort()).toEqual(['account', 'session', 'user']);
+    // Every new session passes the disabled/deleted-account guard first; a refusal stops it.
+    mockAccountStateGuard.mockRejectedValueOnce(new Error('account-disabled'));
+    await expect(config.databaseHooks.session.create.before({ userId: 'u-1' }, null)).rejects.toThrow(
+      'account-disabled'
+    );
+    expect(mockAccountStateGuard).toHaveBeenCalledWith({ userId: 'u-1' });
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
     expect(config.account.accountLinking.enabled).toBe(true);
