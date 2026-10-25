@@ -103,7 +103,6 @@ const PROJECT_PRELUDES = [
   '.prj-card__versions',
   '.prj-card__above',
   '.prj-card__actions',
-  '.prj-card:hover .prj-card__actions, .prj-card:focus-within .prj-card__actions',
   '.prj-card__footer',
   '.prj-card[data-lifecycle="deleted"] .prj-card__footer',
   '.prj-card__creator',
@@ -310,24 +309,18 @@ describe('the projects section of globals.css', () => {
     expect(findUnfencedHex(css).map((entry) => `${entry.line}: ${entry.text}`)).toEqual([]);
   });
 
-  it('fades a control that is revealed on hover, and never a word of text', () => {
+  it('fades no word of text, and keeps the card menu always visible', () => {
     // The screen this replaces put `opacity: .9` on a whole deleted card and `.75` on a whole
     // deleted row — which fades the amber warning along with everything else. The frame and
-    // the tinted footer carry that now, and the only `opacity` left is the row-actions
-    // reveal `DataTable` already uses, which never covers text a reader has to read.
+    // the tinted footer carry that now. The ⋯ menu used to fade in on hover as an overlay,
+    // which covered the "Active" pill; it is now in the header row and never faded.
     const faded = rules.filter(
       (rule) =>
         PROJECT_PRELUDES.includes(rule.prelude as (typeof PROJECT_PRELUDES)[number]) &&
         parseDeclarations(rule.body).has('opacity')
     );
-    expect(faded.map((rule) => rule.prelude)).toEqual([
-      '.prj-card__actions',
-      '.prj-card:hover .prj-card__actions, .prj-card:focus-within .prj-card__actions',
-    ]);
-    // And it is a full reveal, not a permanent dimming.
-    expect(
-      declaration('.prj-card:hover .prj-card__actions, .prj-card:focus-within .prj-card__actions', 'opacity')
-    ).toBe('1');
+    expect(faded.map((rule) => rule.prelude)).toEqual([]);
+    expect(parseDeclarations(projectRule('.prj-card__actions').body).has('position')).toBe(false);
   });
 });
 
@@ -434,7 +427,9 @@ describe('density and font-scale independence', () => {
 
   it('states the card grid’s breakpoint in rem, so it follows the font scale', () => {
     const media = SECTION.match(/@media \([^)]*\)/g) ?? [];
-    expect(media.length).toBeGreaterThanOrEqual(2);
+    // The card grid's width query (the `(hover: none)` menu reveal it once sat beside is gone:
+    // the card menu is always visible now).
+    expect(media.length).toBeGreaterThanOrEqual(1);
     for (const query of media) {
       // `(hover: none)` is a capability query, not a width — it has no unit to get wrong.
       if (query.includes('hover')) continue;
@@ -643,12 +638,11 @@ describe('the card’s stretched link', () => {
     );
   });
 
-  it('keeps the row menu reachable where there is no hover to reveal it', () => {
+  it('has no hover-only reveal for the card menu, so touch needs no special case', () => {
     const touch = rules.find(
       (rule) => rule.prelude === '@media (hover: none)' && rule.body.includes('.prj-card__actions')
     );
-    expect(touch).toBeDefined();
-    expect(touch!.body).toContain('opacity: 1');
+    expect(touch).toBeUndefined();
   });
 });
 

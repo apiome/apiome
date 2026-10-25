@@ -12576,26 +12576,16 @@ button.tfa-reset-notice__close > svg {
   z-index: 1;
 }
 
+/* The ⋯ menu: the last item of the header row, after the status pill, and always
+   visible. It used to be an absolutely positioned overlay revealed on hover, which
+   sat on top of the "Active" pill in the card's corner. In flow, the pill and the
+   menu share the row and can never overlap; the negative block margin lines the
+   small ghost button up with the pill instead of pushing the row taller. */
 .prj-card__actions {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-2);
+  flex: none;
   z-index: 1;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-
-.prj-card:hover .prj-card__actions,
-.prj-card:focus-within .prj-card__actions {
-  opacity: 1;
-}
-
-/* Never hidden from the keyboard: `opacity` keeps the button in the tab order
-   and its name in the accessibility tree, which `display:none` would not. */
-@media (hover: none) {
-  .prj-card__actions {
-    opacity: 1;
-  }
+  margin-block: calc(var(--space-1) * -1);
+  margin-inline-start: calc(var(--space-1) * -1);
 }
 
 .prj-card__footer {

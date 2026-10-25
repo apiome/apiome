@@ -168,6 +168,63 @@ export default function ProjectCard({
               data-testid="project-card-review"
             />
           </span>
+          {/* The ⋯ menu sits in the header row, after the status, and is always shown: as an
+              overlay revealed on hover it covered the "Active" pill in the card's corner. */}
+          {isDeleted ? null : (
+            <div className="prj-card__actions prj-card__above">
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-1.5"
+                    disabled={busy}
+                    aria-label={`Actions for ${project.name}`}
+                    data-testid={`project-card-menu-${project.id}`}
+                  >
+                    <Ellipsis aria-hidden />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
+                    {/* Consumer contracts are held back (lib/feature-release.ts). */}
+                    {isFeatureReleased('consumers') ? (
+                      <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
+                        <Link href={projectConsumersHref(project)}>
+                          <Users aria-hidden />
+                          Consumers
+                        </Link>
+                      </DropdownMenu.Item>
+                    ) : null}
+                    {actions.edit ? (
+                      <DropdownMenu.Item
+                        className={MENU_ITEM_CLASS}
+                        data-testid="project-card-action-edit"
+                        onSelect={() => onEdit(project)}
+                      >
+                        <Pencil aria-hidden />
+                        Edit project
+                      </DropdownMenu.Item>
+                    ) : null}
+                    {onTogglePin ? <PinMenuItem project={project} pinned={pinned} onTogglePin={onTogglePin} /> : null}
+                    {actions.delete ? (
+                      <>
+                        <DropdownMenu.Separator className="tnt-menu__sep" />
+                        <DropdownMenu.Item
+                          className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
+                          data-testid="project-card-action-delete"
+                          onSelect={() => onDelete(project)}
+                        >
+                          <Trash2 aria-hidden />
+                          Delete project
+                        </DropdownMenu.Item>
+                      </>
+                    ) : null}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
+          )}
         </div>
 
         <p className="prj-card__summary">{projectSummaryText(project)}</p>
@@ -265,61 +322,6 @@ export default function ProjectCard({
         </footer>
       )}
 
-      {isDeleted ? null : (
-        <div className="prj-card__actions prj-card__above">
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-1.5"
-                disabled={busy}
-                aria-label={`Actions for ${project.name}`}
-                data-testid={`project-card-menu-${project.id}`}
-              >
-                <Ellipsis aria-hidden />
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
-                {/* Consumer contracts are held back (lib/feature-release.ts). */}
-                {isFeatureReleased('consumers') ? (
-                  <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
-                    <Link href={projectConsumersHref(project)}>
-                      <Users aria-hidden />
-                      Consumers
-                    </Link>
-                  </DropdownMenu.Item>
-                ) : null}
-                {actions.edit ? (
-                  <DropdownMenu.Item
-                    className={MENU_ITEM_CLASS}
-                    data-testid="project-card-action-edit"
-                    onSelect={() => onEdit(project)}
-                  >
-                    <Pencil aria-hidden />
-                    Edit project
-                  </DropdownMenu.Item>
-                ) : null}
-                {onTogglePin ? <PinMenuItem project={project} pinned={pinned} onTogglePin={onTogglePin} /> : null}
-                {actions.delete ? (
-                  <>
-                    <DropdownMenu.Separator className="tnt-menu__sep" />
-                    <DropdownMenu.Item
-                      className={cn(MENU_ITEM_CLASS, 'prj-menu__item--danger')}
-                      data-testid="project-card-action-delete"
-                      onSelect={() => onDelete(project)}
-                    >
-                      <Trash2 aria-hidden />
-                      Delete project
-                    </DropdownMenu.Item>
-                  </>
-                ) : null}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        </div>
-      )}
     </article>
   );
 }
