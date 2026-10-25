@@ -20,6 +20,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
+import { VIDEO_WALKTHROUGHS_URL } from '@/app/components/ade/help/helpModel';
 
 /**
  * The sign-in / create-account page (HIVE-4.1, #5295 — re-skin of OLO-3.1's layout).
@@ -162,15 +163,16 @@ const LoginClient: React.FC<LoginClientProps> = ({
 
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-sub mt-1">Sign in to continue to your workspace</p>
+        {/* The channel, not one video: the old intro video's link stopped working. */}
         <p className="mt-2 text-xs text-fg-muted">
           New to Apiome?{' '}
           <a
-            href="https://youtu.be/GQBgza8eYoQ"
+            href={VIDEO_WALKTHROUGHS_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="auth-link font-medium"
           >
-            Watch our intro video →
+            Explore our YouTube →
           </a>
         </p>
 

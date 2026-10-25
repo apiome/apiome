@@ -51,6 +51,21 @@ export async function userHasFeatureFlag(
   return Boolean(record.license_grant);
 }
 
+/**
+ * Whether an administrator gave the user Suite Access (`users.suite_access`, V320), which shows the
+ * Designer and Developer suites. A missing or deleted user has none.
+ *
+ * @param userId The user's id.
+ * @returns True only when the switch is on for a live account.
+ */
+export async function userHasSuiteAccess(userId: string): Promise<boolean> {
+  const result = await connectionPool.query(
+    'SELECT suite_access FROM apiome.users WHERE id = $1 AND deleted_at IS NULL',
+    [userId]
+  );
+  return Boolean(result.rows[0]?.suite_access);
+}
+
 /** Feature flags the user may access (for commercial product gating). */
 export async function getEntitledFeatureFlagNames(
   userId: string,

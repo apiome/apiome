@@ -6,6 +6,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- Suite Access:
+  - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
 - Large lists:
   - **Catalog** and the **Versions** table show 50 rows at a time, with *Showing 1–50 of 1000 items* and page buttons in the foot. A catalog of a thousand items now opens and filters as quickly as one of fifty
 - API Formats:
@@ -156,6 +158,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Sign-in:
+  - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
 - Admin console:
   - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged
   - A disabled or deleted account can no longer sign in with its password
