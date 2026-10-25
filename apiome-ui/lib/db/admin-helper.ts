@@ -1278,6 +1278,13 @@ export async function getAllUsersWithLicenses() {
     const result = await connectionPool.query(
       `SELECT
          u.id, u.name, u.email, u.enabled, u.verified,
+         u.created_at, u.updated_at, u.last_login_at,
+         -- Last active: the later of the last completed sign-in and the newest session refresh
+         -- (Better Auth bumps "updatedAt" as a session is used). NULL for an account never used.
+         GREATEST(
+           u.last_login_at,
+           (SELECT MAX(s."updatedAt") FROM apiome.session s WHERE s."userId" = u.id)
+         ) AS last_active_at,
          COALESCE(u."twoFactorEnabled", false) AS two_factor_enabled,
          ue.license_id,
          l.name        AS license_name,

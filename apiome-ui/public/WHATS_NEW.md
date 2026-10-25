@@ -156,6 +156,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Admin console:
+  - The **Users** list shows each account's **Created** date instead of *Invalid Date*, and a new **Last active** column shows its last sign-in or activity (*Never* for an unused account). Email and password sign-ins are now recorded too, not just provider sign-ins
 - Catalog, Projects and Versions:
   - **Home** no longer offers **Import a spec**, **New project** or **Create an API key** to a role that can't use them
   - The Catalog's **Source** filter no longer offers **Catalog connector**, which can't apply until connectors ship

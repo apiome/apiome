@@ -61,12 +61,12 @@ const helper = adminHelper as unknown as Record<string, jest.Mock<(...args: unkn
 
 /** Five accounts, two licensed, one unverified and one disabled. */
 const DOCS_USERS = [
-  ['u-priya', 'Priya Raman', 'priya.raman@northwind.io', true, true, '2026-02-03T09:12:00Z', 'lic-team', 'Team', 'paid'],
-  ['u-marcus', 'Marcus Lee', 'marcus.lee@northwind.io', true, true, '2026-02-03T09:40:00Z', 'lic-team', 'Team', 'paid'],
-  ['u-sam', 'Sam Okafor', 'sam.okafor@northwind.io', true, true, '2026-03-17T14:05:00Z', null, null, null],
-  ['u-elena', 'Elena Vasquez', 'elena.vasquez@northwind.io', false, true, '2026-06-11T16:22:00Z', null, null, null],
-  ['u-jb', 'Jordan Blake', 'contractor.jb@partner.dev', true, false, '2026-04-29T08:51:00Z', 'lic-community', 'Community', 'free'],
-].map(([id, name, email, verified, enabled, created, licenseId, licenseName, licenseType]) => ({
+  ['u-priya', 'Priya Raman', 'priya.raman@northwind.io', true, true, '2026-02-03T09:12:00Z', '2026-10-24T16:40:00Z', 'lic-team', 'Team', 'paid'],
+  ['u-marcus', 'Marcus Lee', 'marcus.lee@northwind.io', true, true, '2026-02-03T09:40:00Z', '2026-10-22T08:15:00Z', 'lic-team', 'Team', 'paid'],
+  ['u-sam', 'Sam Okafor', 'sam.okafor@northwind.io', true, true, '2026-03-17T14:05:00Z', '2026-09-30T13:02:00Z', null, null, null],
+  ['u-elena', 'Elena Vasquez', 'elena.vasquez@northwind.io', false, true, '2026-06-11T16:22:00Z', null, null, null, null],
+  ['u-jb', 'Jordan Blake', 'contractor.jb@partner.dev', true, false, '2026-04-29T08:51:00Z', '2026-05-02T10:30:00Z', 'lic-community', 'Community', 'free'],
+].map(([id, name, email, verified, enabled, created, lastActive, licenseId, licenseName, licenseType]) => ({
   id,
   name,
   email,
@@ -74,6 +74,8 @@ const DOCS_USERS = [
   enabled,
   created_at: created,
   updated_at: created,
+  last_login_at: lastActive,
+  last_active_at: lastActive,
   license_id: licenseId,
   license_name: licenseName,
   license_type: licenseType,
@@ -206,7 +208,29 @@ describe('Users', () => {
     expect(within(table).getAllByText('No license')).toHaveLength(2);
     expect(within(table).getByText('Unverified')).toBeInTheDocument();
     expect(within(table).getByText('Disabled')).toBeInTheDocument();
+    // Created and Last active: real dates, and "Never" for an account no one has signed in to.
+    expect(within(table).getByRole('columnheader', { name: 'Last active' })).toBeInTheDocument();
+    expect(within(table).getAllByTestId('admin-user-last-active').map((cell) => cell.textContent)).toEqual(
+      expect.arrayContaining(['Never'])
+    );
+    expect(within(table).queryByText(/Invalid Date/)).not.toBeInTheDocument();
     writeA11yFixture('admin-users', bodyMarkup());
+  });
+
+  it('never shows "Invalid Date" when a row has no dates', async () => {
+    helper.getAllUsersWithLicenses.mockImplementation(async () =>
+      JSON.stringify({
+        success: true,
+        users: [{ ...DOCS_USERS[0], created_at: undefined, last_login_at: null, last_active_at: null }],
+      })
+    );
+    renderConsole('/admin/dashboard/users', <UserManagementClient />);
+    await screen.findByText('priya.raman@northwind.io');
+
+    const table = screen.getByRole('table');
+    expect(within(table).queryByText(/Invalid Date/)).not.toBeInTheDocument();
+    expect(within(table).getByText('—')).toBeInTheDocument();
+    expect(within(table).getByTestId('admin-user-last-active')).toHaveTextContent('Never');
   });
 
   it('opens a user’s actions, with the license list expanded', async () => {

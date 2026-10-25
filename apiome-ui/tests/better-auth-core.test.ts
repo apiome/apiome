@@ -125,8 +125,12 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(mockOneTimeCodePlugin).toHaveBeenCalledTimes(1);
     expect(mockCustomSession).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(6);
+    expect(config.plugins).toHaveLength(7);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
+    // The last-sign-in recorder must follow twoFactor: plugin after-hooks run in array order, and
+    // twoFactor clears the new session when it issues a challenge (`last-sign-in.ts`).
+    const pluginIds = config.plugins.map((plugin: { id?: string }) => plugin?.id);
+    expect(pluginIds.indexOf('apiome-last-sign-in')).toBeGreaterThan(pluginIds.indexOf('two-factor'));
     // Enterprise SSO (EID-1.1 #5011): providers only from `defaultSSO` (none without a service
     // token), the plugin's own model an always-empty view, no user-registered providers, strict SAML.
     const ssoPlugin = config.plugins.find((plugin: { id: string }) => plugin.id === 'sso');
