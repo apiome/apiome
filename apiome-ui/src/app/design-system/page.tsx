@@ -63,14 +63,20 @@ export default function DesignSystemPage() {
             {[...HIVE_GALLERY_SECTIONS, ...SUPPORTING_GALLERY_SECTIONS, MCP_GALLERY_SECTION].map(
               (section) => (
                 <li key={section.id}>
-                  <a className="text-accent-fg hover:underline" href={`#${section.id}`}>
+                  <a
+                    className="inline-flex min-h-6 items-center text-accent-fg hover:underline"
+                    href={`#${section.id}`}
+                  >
                     {section.label}
                   </a>
                 </li>
               )
             )}
             <li>
-              <a className="text-accent-fg hover:underline" href="#patterns">
+              <a
+                className="inline-flex min-h-6 items-center text-accent-fg hover:underline"
+                href="#patterns"
+              >
                 Patterns
               </a>
             </li>
@@ -106,7 +112,7 @@ export default function DesignSystemPage() {
         </h2>
         <p className="max-w-[72ch] text-sm text-fg-muted">
           The shared components every MCP catalog screen reuses. Also on its own page at{' '}
-          <Link className="text-accent-fg hover:underline" href="/design-system/mcp">
+          <Link className="text-accent-fg underline underline-offset-2" href="/design-system/mcp">
             /design-system/mcp
           </Link>
           .

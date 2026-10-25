@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { Share2, AlertCircle } from 'lucide-react';
 import { LoadingState } from '@/app/components/ui/LoadingState';
+import { readHiveEditorPalette, toMonacoColor } from '@/app/components/ui/code/monacoHiveTheme';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   GRAPH_KIND_STYLES,
@@ -104,6 +105,8 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
         mermaid.initialize({
           startOnLoad: false,
           theme: isDark ? 'dark' : 'default',
+          // Edge labels sit on the card surface, not mermaid's grey (#585858 in dark fails contrast).
+          themeVariables: { edgeLabelBackground: toMonacoColor(readHiveEditorPalette().surface) },
           securityLevel: 'strict',
           fontFamily: 'var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         });

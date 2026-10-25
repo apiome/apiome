@@ -149,7 +149,7 @@ function FeatureChip({
     <span
       className={
         muted
-          ? 'inline-flex items-center gap-1 rounded-full bg-inset px-2 py-0.5 text-xs text-fg-faint'
+          ? 'inline-flex items-center gap-1 rounded-full bg-inset px-2 py-0.5 text-xs text-fg-muted'
           : 'inline-flex items-center gap-1 rounded-full bg-inset px-2 py-0.5 text-xs font-medium text-fg'
       }
     >

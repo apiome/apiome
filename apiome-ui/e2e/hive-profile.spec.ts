@@ -540,10 +540,12 @@ test.describe('Profile layout', () => {
   test('paints the hero band and every icon tile rather than leaving them transparent', async ({
     page,
   }) => {
+    // HIVE-11.11 made the band a flat fill (it was the app's only gradient surface).
     const band = await page
       .locator('.acct-identity__band')
-      .evaluate((node) => getComputedStyle(node).backgroundImage);
-    expect(band).toContain('gradient');
+      .evaluate((node) => getComputedStyle(node).backgroundColor);
+    expect(band).not.toBe('rgba(0, 0, 0, 0)');
+    expect(band).not.toBe('transparent');
 
     const glyphs = await page
       .locator('.acct-glyph')
