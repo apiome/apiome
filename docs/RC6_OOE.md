@@ -240,7 +240,7 @@ are marked **⛔**. Checked 2026-10-24, 23:15 UTC.
 - [ ] Lanes A, B, D, E and H are closed. *(All tickets closed. **B5 resolved 2026-10-24** — `https://get.apiome.dev`
       serves `install.sh` over a valid certificate. Lane E: **B8 resolved 2026-10-24** — criterion is "allow-lists only shrink",
       follow-up #6263. ⛔ Lane H's exit ("every check in §2.3 is green") waits on the accessibility gate and the
-      Catalog → Project journey below. Lanes A, B and D are proven by the staging journey, MVP_LAUNCH step 13.)*
+      Catalog → Project journey below. Lanes A, B and D are proven by the staging journey, MVP_LAUNCH step 13, which passed on 2026-10-25.)*
 - [ ] **Every workflow on `main` is green.** *(✅ **B1** apiome-ui image builds (#6259); ✅ **B2**
       runner starts Chromium; ✅ **B3** RC6-H6 timing ceilings raised (#6259, #6261); ✅ **B4** format-count
       check passes on `main` (#6259), with the suite's 8 remaining failures (no database in CI, laptop timing
@@ -255,9 +255,11 @@ are marked **⛔**. Checked 2026-10-24, 23:15 UTC.
         Catalog stays disabled with "Checking what your role can do…" (the permission read never settles in
         the journey stack; `GET /v1/tenants/me` answers 401).*
       - *`apiome-rest-test` (nightly): needs one run after #6270 to confirm.)*
-- [ ] A clean-stack journey passes: **sign up (email) → verify → onboard → enrol Authy → sign out →
+- [x] A clean-stack journey passes: **sign up (email) → verify → onboard → enrol Authy → sign out →
       sign in with a code → `apiome login` → import a non-OpenAPI spec into the Catalog → convert it
-      to a project → cut a version → publish → export through the Export dialog**.
+      to a project → cut a version → publish → export through the Export dialog**. *(MVP_LAUNCH step 13,
+      2026-10-25: every step passed on a clean staging stack built from `main`, including the sign-up confirmation step (password). In the same run a held-back URL showed
+      *Not available yet* and a Viewer saw no write controls.)*
 - [ ] With no preview override, the rail, palette and `G` jumps list only released destinations;
       every held-back route shows *Not available yet*; no Catalog or Projects screen links to a
       held-back page.
