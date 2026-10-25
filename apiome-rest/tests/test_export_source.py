@@ -254,3 +254,41 @@ def test_an_openapi_revision_that_cannot_be_found_keeps_the_422():
         with pytest.raises(ExportSourceError) as exc:
             load_export_source("tenant-1", "artifact-1", _REV_UUID)
     assert exc.value.status_code == 422
+
+
+def test_public_load_rebuilds_a_decomposed_openapi_revision():
+    """Browse's public export reaches the same rebuild, scoped by the revision's owning tenant."""
+    spec = {"openapi": "3.1.0", "info": {"title": "widgets", "version": "1.0.0"}, "paths": {}}
+    calls = []
+
+    def build(item, *, source_version_id=None):
+        calls.append(item)
+        if len(calls) == 1:
+            raise ConversionError("no captured source", status_code=422)
+        return _conversion_source()
+
+    row = {**_openapi_projection("openapi"), "version_record_id": _REV_UUID, "tenant_id": "tenant-9"}
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source", side_effect=build
+    ), patch("app.compatibility_engine.openapi_for_revision", return_value=spec):
+        db.get_public_version_source_projection.return_value = row
+        db.get_version_by_id.return_value = {"id": _REV_UUID, "project_id": "artifact-1"}
+        source = load_public_export_source("acme", "widgets", "1.0.0")
+
+    assert source.version_record_id == _REV_UUID
+    db.get_version_by_id.assert_called_once_with(_REV_UUID, "tenant-9")
+    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)
+
+
+def test_the_shared_loader_never_rebuilds_without_a_tenant():
+    """With no tenant to scope the read by, a missing source stays a 422 — never an unscoped read."""
+    from app.export_source import build_revision_source
+
+    with patch("app.export_source.db") as db, patch(
+        "app.export_source.build_conversion_source",
+        side_effect=ConversionError("no captured source", status_code=422),
+    ):
+        with pytest.raises(ConversionError) as exc:
+            build_revision_source(_openapi_projection(), tenant_id=None, revision_id=_REV_UUID)
+    assert exc.value.status_code == 422
+    db.get_version_by_id.assert_not_called()

@@ -58,10 +58,9 @@ from .canonical_json_schema import (
     list_projectable_types,
 )
 from .canonical_model import CanonicalApi
-from .catalog_conversion import build_conversion_source
 from .conversion_job import ConversionError
 from .database import db
-from .export_source import ExportSourceError, resolve_revision_id
+from .export_source import ExportSourceError, build_revision_source, resolve_revision_id
 from .primitives_scope import resolve_registry_uri
 from .revision_deprecation import is_uuid_string
 from .schema_instance_validation import SchemaRetriever, ValidationDiagnostic
@@ -399,7 +398,10 @@ def resolve_revision_model(
         "metadata": projection.get("metadata"),
     }
     try:
-        source = build_conversion_source(item, source_version_id=revision_id)
+        # The shared revision loader: a decomposed OpenAPI project (no captured source) has its
+        # document rebuilt from the database, so the bench, validation, synthesis and suites see
+        # its classes rather than a 422.
+        source = build_revision_source(item, tenant_id=tenant_id, revision_id=revision_id)
     except ConversionError as exc:
         raise SchemaReferenceError(str(exc), status_code=exc.status_code) from exc
 

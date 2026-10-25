@@ -8,6 +8,7 @@ never reach), not what Postgres holds today.
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
@@ -257,7 +258,7 @@ def _resolve(
     with patch("app.schema_reference.db", db_mock), patch(
         "app.schema_reference.resolve_revision_id", return_value=_REVISION_ID
     ), patch(
-        "app.schema_reference.build_conversion_source",
+        "app.export_source.build_conversion_source",
         return_value=_conversion_source(_api(types), source_format, source_text),
     ):
         return resolve_schema_reference(parse_schema_reference(raw), tenant_id=_TENANT)
@@ -326,7 +327,7 @@ def test_latest_token_resolves_the_newest_revision() -> None:
     with patch("app.schema_reference.db", db_mock), patch(
         "app.schema_reference.resolve_revision_id", return_value=_REVISION_ID
     ) as resolver, patch(
-        "app.schema_reference.build_conversion_source",
+        "app.export_source.build_conversion_source",
         return_value=_conversion_source(_api([_PET])),
     ):
         resolve_schema_reference(
@@ -391,3 +392,44 @@ def test_unmapped_scalars_surface_as_a_diagnostic() -> None:
 
     assert [d.code for d in resolved.diagnostics] == ["INPUT_SEMANTIC_INVALID"]
     assert "Money" in resolved.diagnostics[0].message
+
+
+def test_a_decomposed_openapi_project_is_rebuilt_for_the_bench() -> None:
+    """An OpenAPI project keeps no captured source; its document is rebuilt, not refused with a 422.
+
+    The Schema Test Bench, validation, synthesis and suites all resolve through here, so before
+    the shared revision loader every OpenAPI project offered only registry primitives.
+    """
+    from app.conversion_job import ConversionError
+    from app.schema_reference import resolve_revision_model
+
+    spec = {"openapi": "3.1.0", "info": {"title": "petstore", "version": "1.0.0"}, "paths": {}}
+    calls = []
+
+    def build(item, *, source_version_id=None):
+        calls.append(item)
+        if len(calls) == 1:
+            raise ConversionError("no captured source", status_code=422)
+        return _conversion_source(_api([_PET, _OWNER]), "openapi", json.dumps(spec))
+
+    db_mock = MagicMock()
+    db_mock.get_project_by_slug.return_value = _artifact_row(True)
+    db_mock.get_version_source_projection.return_value = {
+        **_projection("openapi"),
+        "format_metadata": {},
+    }
+    export_db = MagicMock()
+    export_db.get_version_by_id.return_value = {"id": _REVISION_ID, "project_id": _ARTIFACT_ID}
+
+    with patch("app.schema_reference.db", db_mock), patch(
+        "app.schema_reference.resolve_revision_id", return_value=_REVISION_ID
+    ), patch("app.export_source.db", export_db), patch(
+        "app.export_source.build_conversion_source", side_effect=build
+    ), patch("app.compatibility_engine.openapi_for_revision", return_value=spec):
+        revision = resolve_revision_model(
+            parse_schema_reference("project/petstore/latest"), tenant_id=_TENANT
+        )
+
+    assert sorted(t.key for t in revision.api.types) == ["Owner", "Pet"]
+    export_db.get_version_by_id.assert_called_once_with(_REVISION_ID, _TENANT)
+    assert calls[1]["format_metadata"]["sourceContent"] == json.dumps(spec)

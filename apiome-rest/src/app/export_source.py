@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .canonical_model import CanonicalApi
 from .catalog_conversion import build_conversion_source
-from .conversion_job import ConversionError
+from .conversion_job import ConversionError, ConversionSource
 from .database import db
 from .revision_deprecation import is_uuid_string
 
@@ -182,6 +182,45 @@ def _reconstructed_openapi_item(
     }
 
 
+def build_revision_source(
+    item: Dict[str, Any], *, tenant_id: Optional[str], revision_id: str
+) -> ConversionSource:
+    """Rebuild a project or catalog revision's canonical model, whatever kind of import made it.
+
+    The one loader every *revision* reader shares: export (authenticated and public), the schema
+    test bench and validation/synthesis (``schema_reference``), schema and contract suites. It
+    tries the revision's captured source first — the same parse + normalize the import ran — and,
+    when there is none because the revision is a decomposed OpenAPI import (which keeps classes
+    and paths, never ``sourceContent``), rebuilds the OpenAPI document from the database with the
+    generator the spec viewer and compatibility checks use, then parses that instead.
+
+    Args:
+        item: The catalog-item-shaped projection row of the revision (``id``, ``source_format``,
+            ``format_metadata``, ``metadata``, …).
+        tenant_id: Owning tenant id. ``None`` disables the OpenAPI rebuild (nothing to scope the
+            database read by), leaving only the captured-source path.
+        revision_id: The revision (``versions.id``).
+
+    Returns:
+        The rebuilt :class:`~app.catalog_conversion.ConversionSource`.
+
+    Raises:
+        ConversionError: When the revision has neither a captured source nor a rebuildable OpenAPI
+            document (``422``), or its source has no adapter (``400``) or does not parse (``422``).
+    """
+    try:
+        return build_conversion_source(item, source_version_id=revision_id)
+    except ConversionError:
+        rebuilt = (
+            _reconstructed_openapi_item(item, tenant_id, revision_id)
+            if tenant_id and _is_decomposed_openapi(item.get("source_format"))
+            else None
+        )
+        if rebuilt is None:
+            raise
+    return build_conversion_source(rebuilt, source_version_id=revision_id)
+
+
 def load_export_source(
     tenant_id: str, artifact_id: str, version: Optional[str] = None
 ) -> ExportSource:
@@ -226,25 +265,11 @@ def load_export_source(
     }
 
     try:
-        source = build_conversion_source(item, source_version_id=revision_id)
+        source = build_revision_source(item, tenant_id=tenant_id, revision_id=revision_id)
     except ConversionError as exc:
-        # A decomposed OpenAPI revision keeps no captured text: rebuild its document from the
-        # database (the same generator the spec viewer and compatibility checks use) instead.
-        rebuilt = (
-            _reconstructed_openapi_item(item, tenant_id, revision_id)
-            if _is_decomposed_openapi(item.get("source_format"))
-            else None
-        )
-        if rebuilt is None:
-            # No captured source / unresolvable adapter / unparseable text — nothing to compute
-            # fidelity against. Surface with the conversion path's status (422/400).
-            raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
-        try:
-            source = build_conversion_source(rebuilt, source_version_id=revision_id)
-        except ConversionError as rebuilt_exc:
-            raise ExportSourceError(
-                str(rebuilt_exc), status_code=rebuilt_exc.status_code
-            ) from rebuilt_exc
+        # No captured source and no rebuildable OpenAPI document / unresolvable adapter /
+        # unparseable text — surface with the conversion path's status (422/400).
+        raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
 
     return ExportSource(
         api=source.api,
@@ -302,11 +327,13 @@ def load_public_export_source(
         "metadata": projection.get("metadata"),
     }
 
+    owner_tenant_id = str(projection["tenant_id"]) if projection.get("tenant_id") else None
     try:
-        source = build_conversion_source(item, source_version_id=revision_id)
+        # The owning tenant scopes the OpenAPI rebuild a decomposed import needs; the public
+        # slice gate above has already decided the revision may be read.
+        source = build_revision_source(item, tenant_id=owner_tenant_id, revision_id=revision_id)
     except ConversionError as exc:
-        # No captured source / unresolvable adapter / unparseable text — mirror the
-        # authenticated loader's classification (422/400) for the public path.
+        # Mirror the authenticated loader's classification (422/400) for the public path.
         raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
 
     return ExportSource(
