@@ -1,6 +1,6 @@
 # MVP launch — the weekend plan
 
-> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-24 20:30 UTC (see the table below) ·
+> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-24 23:15 UTC (see the table below) ·
 > **Target:** launch the first MVP (RC6) by **Sunday 2026-10-25**.
 > **Scope:** RC6 as defined in [`RC6_OOE.md`](RC6_OOE.md) — Catalog, Projects (with Versions),
 > sign-in and sign-up. Nothing else ships; held-back features stay behind
@@ -14,7 +14,7 @@ Work top to bottom. A **gate** row must be green before the next phase starts. D
 step are under [Order of execution](#order-of-execution); blockers **B1–B9** are described under
 [Blockers](#blockers).
 
-**Last updated:** Saturday 2026-10-24, 20:30 UTC.
+**Last updated:** Saturday 2026-10-24, 23:15 UTC.
 
 **Status key:** ✅ Done · 🔄 In progress · ⏳ Waiting on you · ⬜ Not started
 
@@ -29,7 +29,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 7 | ✅ | Sat evening | Decide lane E (recommended: "allow-lists only shrink" + a post-launch ticket) | B8 | You | decision recorded in `RC6_OOE.md` §4 | Accepted; §4 reworded; follow-up #6263 (RC7) |
 | 8 | ✅ | Sat evening | Run `/security-review` on the sign-up and two-factor changes | B6 | Claude runs, You accept | findings recorded in `RC6_OOE.md` §7 | One HIGH finding (sign-up pre-hijacking), fixed in #6260; deploy V318 with it |
 | 9 | ✅ | Sat evening | Bump What's new to RC6 | B7 | Claude (You pick the heading) | `WHATS_NEW.md` starts with RC6 | "Apiome 10-2026 RC6" |
-| 10 | 🔄 | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | §1, §4, §6 and §7 current; B6, B7, B9 ticked; B5 resolved; Gate 1 still open |
+| 10 | ✅ | Sat evening | Bring `RC6_OOE.md` up to date; tick gate boxes as they turn green | — | Claude | §7 matches reality | Current as of 23:15 UTC: B1–B9 all resolved; §7 lists what is still red — `apiome-ui-a11y` (7 failures) and `e2e-catalog-journey` (never passed; Import stuck on the permission check) — and the nightly REST re-run after #6270. Keep ticking §7 as items turn green |
 | 11 | ⬜ | Sat night | Production host: DNS, firewall, secrets, **SendGrid email** | — | You | `PRODUCTION_DEPLOY.md` §2–§3 done | |
 | 12 | ✅ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You | the install one-liner works on a clean machine | Done 2026-10-24: `https://get.apiome.dev` serves `install.sh` over a valid certificate; `deploy/get-apiome/get-apiome-installer.sh` (#6265) refreshes it from `main` |
 | 13 | ⬜ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Include the new sign-up confirmation step (password) |
