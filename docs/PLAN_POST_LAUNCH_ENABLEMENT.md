@@ -4,8 +4,28 @@ _Drafted 2026-10-23. Follows [`docs/RC6_OOE.md`](RC6_OOE.md), which launches Cat
 sign-in/sign-up and holds back thirteen features behind `UNRELEASED_FEATURE_IDS`
 (`apiome-ui/lib/feature-release.ts`)._
 
-**Status:** E1 is tracked in the [`E1 — Catalog Exporter`](https://github.com/apiome/apiome/milestone/7)
-milestone (§6). E2–E6 are a recommendation only.
+**Status:** RC7 (2026-10-25) is the next release: **every way into the Catalog** (§0.1). E1 is
+tracked in the [`E1 — Catalog Exporter`](https://github.com/apiome/apiome/milestone/7) milestone
+(§6). E2–E6 are a recommendation only.
+
+## 0.1 RC7 — Catalog import (decided 2026-10-25)
+
+RC7 makes the Catalog's import complete. It releases the three feature ids that bring APIs and
+entities into the Catalog, pulling them forward from E3/E4:
+
+| Feature id | What it brings in |
+| --- | --- |
+| `connectors` | Gateway and registry connectors (Kong, AWS API Gateway, Azure APIM, Apigee, schema, MCP and generic registries) syncing into the Catalog, gateway environments, the refresh ledger on Repositories, the Catalog's **Catalog connector** source filter |
+| `schema-registry` | The Schema registry page and the catalog **Subjects** tab |
+| `catalog-entities` | Agents, models and components; Backstage and Compass import with **Import reports**; the Compass source in **Import to catalog**; catalog facts and scorecards |
+
+What they embed from features that stay held back is hidden, as RC6 did inside Catalog and
+Projects: owner sections and the import report's **Teams** suggestions (`teams`), the **Graph** tab
+on agents and gateway configs (`dependency-graph`), the agent **Usage** link (`mcp`) and gateway
+push-back into Export studio (`export-studio`). The Shadow-API report (`shadow-apis`) stays held
+back with ownership in E3.
+
+The import adapters themselves (every importable format) were already live in RC6.
 
 ## 0. Decision
 

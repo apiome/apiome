@@ -157,28 +157,34 @@ export default function GatewayConfigClient({ slug }: GatewayConfigClientProps) 
             </dl>
 
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList aria-label="Gateway config">
-                <TabsTrigger value="overview" data-testid="gateway-config-tab-overview">
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="graph" data-testid="gateway-config-tab-graph">
-                  Graph
-                </TabsTrigger>
-              </TabsList>
+              {/* The Graph tab waits for the dependency graph's release (lib/feature-release.ts);
+                  until then Overview is the only tab, so no tab strip is drawn. */}
+              {isFeatureReleased('dependency-graph') ? (
+                <TabsList aria-label="Gateway config">
+                  <TabsTrigger value="overview" data-testid="gateway-config-tab-overview">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="graph" data-testid="gateway-config-tab-graph">
+                    Graph
+                  </TabsTrigger>
+                </TabsList>
+              ) : null}
               <TabsContent value="overview" className="gwc-page">
                 <ServedApis config={config} unavailable={unavailable} onPushBack={pushBack} />
                 <PostureSection config={config} />
                 <EntityOwnerSection kind="gateway_config" entityId={config.id} owner={config.owner} onChanged={() => void load()} />
                 <CatalogFactsPanel kind="gateway_config" id={config.id} active={tab === 'overview'} />
               </TabsContent>
-              <TabsContent value="graph">
-                <DependenciesPanel
-                  kind="gateway_config"
-                  id={config.id}
-                  active={tab === 'graph'}
-                  label={{ name: config.name, slug: config.slug, owner: null }}
-                />
-              </TabsContent>
+              {isFeatureReleased('dependency-graph') ? (
+                <TabsContent value="graph">
+                  <DependenciesPanel
+                    kind="gateway_config"
+                    id={config.id}
+                    active={tab === 'graph'}
+                    label={{ name: config.name, slug: config.slug, owner: null }}
+                  />
+                </TabsContent>
+              ) : null}
             </Tabs>
           </div>
         )}

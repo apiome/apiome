@@ -11,8 +11,10 @@ rail destinations out of the navigation and gates their routes (`apiome-ui/lib/f
 `UNRELEASED_FEATURE_IDS`). RC6 (`docs/RC6_OOE.md`) holds back more: the Catalog Discovery Graph
 surfaces — Connectors, Shadow APIs, the Dependency graph, Teams and ownership, the Schema registry,
 and the agent, model and component kinds with their Backstage/Compass import reports and scorecards
-— and a project's consumer contracts. Two of those ids have no rail item of their own:
-`catalog-entities` and `consumers`; they gate routes and panels inside Catalog and Projects. A guide page for a screen nobody can open would send readers to a dead
+— and a project's consumer contracts. RC7 released the Catalog's import paths again —
+`connectors`, `schema-registry` and `catalog-entities` — and their pages, fragments and screenshots
+went back (release-notes post `2026-10-25-rc7-catalog-import`). One id still held back has no rail
+item of its own: `consumers`; it gates a route and panels inside Projects. A guide page for a screen nobody can open would send readers to a dead
 end, and the docs gate rejects `draft: true` and `unlisted: true` (orphan-page rule), so the pages
 moved out of `docs/` instead.
 
@@ -34,14 +36,9 @@ do not point any of them at `unreleased/`.
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
 | Export studio | Export studio | `docs/ship/export-studio.mdx` | `export-studio` |
 | SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
-| Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
 | Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
 | Dependency graph | Dependency graph (and the Dependencies tabs) | `docs/govern/dependency-graph.mdx` | `dependency-graph` |
 | Teams | Teams and ownership | `docs/workspace/teams.mdx` | `teams` |
-| Schema registry | Schema registry (and the catalog Subjects tab) | `docs/ship/schema-registry.mdx` | `schema-registry` |
-| Agents and models | Catalog entity kinds | `docs/bring-in/agents-and-models.mdx` | `catalog-entities` (no rail item) |
-| Migrate from Backstage or Compass | Catalog entity kinds (import reports) | `docs/bring-in/migrate-from-backstage-or-compass.mdx` | `catalog-entities` (no rail item) |
-| Scorecards | Catalog entity kinds (catalog facts) | `docs/govern/scorecards.mdx` | `catalog-entities` (no rail item) |
 
 Each page sits at `unreleased/<original path>`.
 
@@ -55,9 +52,8 @@ goes back:
 | `fragments/getting-started/browse-and-export.export-another-format.mdx` | `docs/getting-started/browse-and-export.mdx` — replaces the **Export another format** section | `export-studio` |
 | `fragments/build/projects.consumers.mdx` | `docs/build/projects.mdx` — the **Consumers** menu row and section, the **Owner** section, and the `projects-table` alt text | `consumers`, `teams` |
 | `fragments/build/versions.dependencies.mdx` | `docs/build/versions.mdx` — the **Dependencies** section, before **Conversion** | `dependency-graph` |
-| `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams`, `connectors` |
-| `fragments/bring-in/import-wizard.compass-export.mdx` | `docs/bring-in/import-wizard.mdx` — the Compass source in the table and step 1, and the **Compass export** section | `catalog-entities` |
-| `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — **Recent runs**, the connector sentences, the **Backstage files** section and the `repositories` alt text | `connectors`, `dependency-graph`, `catalog-entities` |
+| `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — the Teams link, owner column and owner filter in **Kinds**, the **Opens** column of **Home callouts**, the **Dependencies** tab row and tab id, the **Owner** section and **Assign owner** in the bulk bar (RC7 put back the rest) | `dependency-graph`, `teams`, `shadow-apis` |
+| `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — the declared-dependency table and paragraph of **Backstage files** (RC7 put back the rest) | `dependency-graph` |
 | `fragments/ship/published.owner.mdx` | `docs/ship/published.mdx` — the **Owner** column row and the owner filter sentence | `teams` |
 | `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
 
@@ -72,12 +68,11 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
 | `export-studio` | `export-studio`, `export-studio-source`, `export-verify`, `export-studio-job`, `export-studio-failure`, `export-studio-gate`, `mock-test-drive` |
 | `sdk-settings` | `sdk-settings` |
-| `connectors` | `connectors`, `connector-add`, `connector-detail`, `connector-runs`, `gateway-config-entity`, `export-studio-gateway`, `connector-add-schema-registry`, `connector-add-mcp-registry`, `connector-add-registry` |
+| `connectors` + `export-studio` | `export-studio-gateway` (Push back opening the Export studio; RC7 released Connectors with the Export dialog instead) |
 | `shadow-apis` | `shadow-apis`, `shadow-apis-link` |
 | `dependency-graph` | `dependency-graph`, `dependencies-tab`, `dependencies-runtime`, `blast-radius` |
 | `teams` | `teams`, `team-detail`, `ownership-drift`, `catalog-owner-filter`, `tenant-ownership-policy` |
-| `schema-registry` | `catalog-item-subjects`, `registry-settings`, `schema-registry-subjects` |
-| `catalog-entities` | `agent-entity`, `model-entity`, `backstage-import-report`, `scorecard-kind`, `entity-facts`, `catalog-kinds`, `import-wizard-compass` |
+| `catalog-entities` + `mcp` | `scorecard-kind` (the Facts of an MCP server; RC7 released catalog facts, the Scorecards page uses `entity-facts`) |
 | `consumers` | `project-consumers-bindings` |
 
 **Not withdrawn**, on purpose: the MCP rule catalogs (`docs/govern/mcp-*-rules.md`, generated by
@@ -125,6 +120,14 @@ Do all of it in the pull request that releases the feature. `<id>` is its rail i
    `workspace/roles.mdx` and the 2026-10-17 … 2026-10-20 release-notes posts. Point them back at the
    guide page (and its anchor) that the restored feature brings back. `git log -p --follow` on any of them shows what changed;
    `grep -rn "not yet available" apiome-docs/docs` finds the placeholders.
+   RC7 (`connectors`, `schema-registry`, `catalog-entities`) restored its pages with the parts that
+   lean on still-gated features rewritten: `bring-in/connectors.mdx`, `bring-in/agents-and-models.mdx`,
+   `bring-in/migrate-from-backstage-or-compass.mdx` and `govern/scorecards.mdx` link to
+   `reference/rest/graph.md`, `owners.md`, `teams.md` and `connectors.md` (shadow report) instead
+   of the Dependency graph, Teams and Shadow APIs pages, and leave out the **Owner** and **Graph**
+   sections of entity pages, the agent page's **Usage** link and the component page's **Open the
+   dependency graph** link. `bring-in/catalog.mdx` **Home callouts** says the Unowned and Shadow
+   pages are not available yet. Put those back with `teams`, `dependency-graph` and `shadow-apis`.
    For `primitives` and `mcp`, also point the legacy-docs area rules back at the restored page:
    the `PRIMITIVE|…` and `MCP` entries of `AREA_PAGES` in `scripts/legacy_docs_inventory.py` (now
    `build/edit-classes-and-properties` and `getting-started/connect-an-mcp-host`), and the matching

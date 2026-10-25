@@ -26,7 +26,7 @@ jest.mock('next/link', () => ({
 }));
 
 import { CatalogFactsPanel } from '../src/app/components/ade/catalogFacts/CatalogFactsPanel';
-import { factsProxyPath, type CatalogFactsResponse } from '../lib/catalog-facts';
+import { releasedFacts, factsProxyPath, type CatalogFactsResponse } from '../lib/catalog-facts';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
@@ -93,6 +93,19 @@ describe('the rules', () => {
   });
 });
 
+// Facts about owners, consumers, dependencies, MCP servers and shadow APIs wait for those features
+// (lib/feature-release.ts). The checklist tests read every fact, so re-open them; the fixture
+// dumps clear the override so the docs show the released panel.
+const ALL_FACT_FEATURES = 'teams,consumers,dependency-graph,mcp,shadow-apis';
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ALL_FACT_FEATURES;
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 describe('the facts checklist', () => {
   it('shows each fact with its status in words, value, detail and evidence — and no score', async () => {
     const { container } = render(<CatalogFactsPanel kind="spec" id={ITEM} />);
@@ -134,14 +147,51 @@ describe('the facts checklist', () => {
   });
 
   it('passes axe and dumps the docs fixtures', async () => {
-    const spec = render(<CatalogFactsPanel kind="spec" id={ITEM} />);
-    await screen.findByTestId('catalog-fact-consumers.declared');
-    expect(await axe(spec.container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('entity-facts', spec.container.innerHTML);
-    spec.unmount();
+    // The released build: no owner, consumer or dependency facts, no Graph evidence link.
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      const spec = render(<CatalogFactsPanel kind="spec" id={ITEM} />);
+      await screen.findByTestId('catalog-fact-refresh.fresh');
+      expect(screen.queryByTestId('catalog-fact-consumers.declared')).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Graph' })).not.toBeInTheDocument();
+      expect(await axe(spec.container, AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture('entity-facts', spec.container.innerHTML);
+      spec.unmount();
+    } finally {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ALL_FACT_FEATURES;
+    }
+    // `scorecard-kind` shows an MCP server, which is still held back; its screenshot stays unreleased.
     const mcp = render(<CatalogFactsPanel kind="mcp_server" id={MCP} />);
     await screen.findByTestId('catalog-fact-mcp.baseline-approved');
     expect(await axe(mcp.container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('scorecard-kind', mcp.container.innerHTML);
+  });
+});
+
+describe('releasedFacts (RC7)', () => {
+  const fact = (key: string, href: string | null = null) => ({
+    key, label: key, status: 'met' as const, value: true, detail: null,
+    evidence: href ? [{ label: 'Evidence', href, api: null }] : [],
+  });
+  const FACTS = [
+    fact('owner.present'),
+    fact('consumers.declared'),
+    fact('dependencies.declared'),
+    fact('mcp.baseline-approved'),
+    fact('shadow.none', '/ade/dashboard/connectors/shadow?connector=c-1'),
+    fact('deployment.known', '/ade/dashboard/graph?entity=catalog_item%3Ax'),
+    fact('refresh.fresh', '/ade/dashboard/repositories/r-1'),
+    fact('registry.level-set', '/ade/dashboard/catalog/x?tab=subjects'),
+  ];
+
+  it('leaves out facts and evidence links that belong to held-back features', () => {
+    const shown = releasedFacts(FACTS, () => false);
+    expect(shown.map((entry) => entry.key)).toEqual(['deployment.known', 'refresh.fresh', 'registry.level-set']);
+    expect(shown.find((entry) => entry.key === 'deployment.known')!.evidence).toEqual([]);
+    expect(shown.find((entry) => entry.key === 'refresh.fresh')!.evidence).toHaveLength(1);
+  });
+
+  it('shows everything once every feature is released', () => {
+    expect(releasedFacts(FACTS, () => true)).toEqual(FACTS);
   });
 });

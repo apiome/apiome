@@ -301,6 +301,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 ## Related
 
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
+- [Push a catalog item back to the gateway](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway) — the same report, before exporting to a gateway's own format
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference
 - [`apiome-rest/docs/export_projection_author_guide.md`](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_projection_author_guide.md)

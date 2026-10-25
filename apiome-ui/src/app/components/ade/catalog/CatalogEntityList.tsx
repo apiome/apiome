@@ -18,11 +18,13 @@ import { DataTableSearch } from '@/app/components/ui/DataTable';
 import { OwnerCell } from '@/app/components/ade/owners/OwnerCell';
 import {
   ALL_CATALOG_KINDS,
+  isCatalogKindReleased,
   kindLabel,
   type CatalogEntity,
   type EntityKindSummary,
 } from '@lib/catalog-entities';
 import type { OwnerEntityKind } from '@lib/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import { fetchEntityPage } from './catalogEntitiesApi';
 
 /** Rows per page. */
@@ -95,7 +97,11 @@ export function CatalogEntityList({ kind, team, kinds, action }: CatalogEntityLi
     void load(null);
   }, [load]);
 
-  const { items, nextCursor, loading, error } = state;
+  // All kinds can include kinds whose pages are held back (lib/feature-release.ts); leave them out.
+  const items = state.items.filter((entity) => isCatalogKindReleased(entity.kind));
+  const { nextCursor, loading, error } = state;
+  // Owners wait for teams and ownership.
+  const showOwner = isFeatureReleased('teams');
 
   return (
     <section className="cat-entities" aria-labelledby="cat-entities-title" data-testid="catalog-entity-list">
@@ -144,7 +150,7 @@ export function CatalogEntityList({ kind, team, kinds, action }: CatalogEntityLi
                 <tr>
                   <th scope="col">Name</th>
                   <th scope="col">Kind</th>
-                  <th scope="col">Owner</th>
+                  {showOwner ? <th scope="col">Owner</th> : null}
                   <th scope="col">Updated</th>
                 </tr>
               </thead>
@@ -163,18 +169,20 @@ export function CatalogEntityList({ kind, team, kinds, action }: CatalogEntityLi
                         {kindLabel(kinds, entity.kind)}
                       </Badge>
                     </td>
-                    <td>
-                      {entity.owner && entity.graphNode ? (
-                        <OwnerCell
-                          owner={entity.owner}
-                          kind={entity.graphNode.kind as OwnerEntityKind}
-                          entityId={entity.id}
-                          readOnly
-                        />
-                      ) : (
-                        <span className="cat-entities__muted">—</span>
-                      )}
-                    </td>
+                    {showOwner ? (
+                      <td>
+                        {entity.owner && entity.graphNode ? (
+                          <OwnerCell
+                            owner={entity.owner}
+                            kind={entity.graphNode.kind as OwnerEntityKind}
+                            entityId={entity.id}
+                            readOnly
+                          />
+                        ) : (
+                          <span className="cat-entities__muted">—</span>
+                        )}
+                      </td>
+                    ) : null}
                     <td className="cat-entities__date">
                       {entity.updatedAt ? new Date(entity.updatedAt).toLocaleDateString() : '—'}
                     </td>

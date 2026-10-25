@@ -33,6 +33,10 @@ scanned or by name, and switch between **Grid** and **List**. A row's menu has *
 
 <Screenshot id="repositories-cards" alt="Repositories in Grid view, one card per repository with its health and scan state" />
 
+**Recent runs**, below the list, shows the latest Git refreshes and [connector](./connectors.mdx)
+runs together, newest first. A **Git** or **Connector** badge says which each one is, and a
+connector run links to its connector.
+
 ## Add a repository
 
 <Route path="/ade/dashboard/repositories/new" />
@@ -69,7 +73,9 @@ as cards. Five tabs follow:
   **Filters (2)**. The filters are kept in the page address, so a filtered list survives a reload
   and can be shared. A file's menu has **View details**, **Import…**, **Open on provider** and
   **Copy path**.
-- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
+- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
+  repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
+  are refreshed by the same engine on the same cadence vocabulary.
 - **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
   and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).
 - **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
@@ -220,6 +226,18 @@ write access to **Contents** and **Pull requests**. A repository registered from
 account, so it cannot receive pull requests. Every pull request PR-back opens is recorded in the
 audit log as `repository.pr_back_opened`, and every update as `repository.pr_back_updated`.
 
+### Backstage files
+
+Each scan also reads any Backstage `catalog-info.yaml` (or `catalog-info.yml`) in the branch, at any
+depth, and feeds a migration from Backstage:
+
+- `kind: API` entities with a `spec.definition` are **imported** as catalog items.
+- `Component`, `System`, `Domain` and `Group` entities, and `spec.owner`, are staged as component
+  and team **suggestions** on the branch's [import report](./migrate-from-backstage-or-compass.mdx#the-import-report).
+
+Every field Apiome cannot map is listed there. See
+[Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx).
+
 ## Discovered specs
 
 <Route path="/ade/dashboard/repositories/catalog" />
@@ -235,7 +253,8 @@ audit log as `repository.pr_back_opened`, and every update as `repository.pr_bac
 
 Repositories are polled within an hourly quota. **Quota & rate limits** shows how much of it this
 workspace uses — polls, repositories and files deferred, and content scanned — over **7d**, **30d**
-or **90d**.
+or **90d**. [Connectors](./connectors.mdx) share the same quota: every document a connector
+fetches counts as a poll, and connector syncs deferred by the quota count as deferrals.
 
 <Screenshot id="repositories-telemetry" alt="Quota & rate limits: polling quota, polls, deferrals and bytes scanned" />
 
@@ -275,4 +294,5 @@ change it.
 ## Where next
 
 - [Import wizard](./import-wizard.mdx)
+- [Connectors](./connectors.mdx)
 - [Versions](../build/versions.mdx)

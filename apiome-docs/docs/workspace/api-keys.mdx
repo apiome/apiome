@@ -41,7 +41,7 @@ A key carries one of seven presets, chosen when it is created:
 | **CI: lint** | `lint:read` | `GET …/lint` and `…/lint/gate` only (catalog and MCP) |
 | **CI: diff + lint** | `diff:read` `lint:read` | Both CI read scopes; still no write access |
 | **Usage source** | `usage:ingest` | `POST /v1/tenants/{tenant}/usage/ingest` only — for a traffic source feeding the [usage index](../govern/runtime-usage.mdx) |
-| **Schema registry: read** | `registry:read` | Reads of the [schema registry](../reference/rest/schema-registry.md) at `/registry/schema/{tenant}` only — for Kafka consumers and deserializers |
+| **Schema registry: read** | `registry:read` | Reads of the [schema registry](../ship/schema-registry.mdx) at `/registry/schema/{tenant}` only — for Kafka consumers and deserializers |
 | **Schema registry: read + write** | `registry:read` `registry:write` | Also registers schemas and changes registry settings — for Kafka producers that auto-register |
 
 Give pipelines the narrowest preset that works: a contract gate needs only `diff:read`. A key's
@@ -62,7 +62,7 @@ session — see [Runtime usage](../govern/runtime-usage.mdx#send-usage-events).
 
 ### A key for a Kafka serializer
 
-A Kafka producer or consumer reaches the [schema registry](../reference/rest/schema-registry.md) with an
+A Kafka producer or consumer reaches the [schema registry](../ship/schema-registry.mdx) with an
 ordinary workspace key. Choose **Schema registry: read** for a consumer (it only fetches schemas by
 id) and **Schema registry: read + write** for a producer that registers its schemas. Either key
 reaches `/registry/schema/{tenant}` and nothing else.
@@ -144,7 +144,7 @@ API keys are for REST. Keys for AI agents calling Apiome's MCP server are separa
   see [Per-key capabilities](./tenants.mdx#per-key-capabilities).
 
 To give the agents behind those keys a name, an owner and a page — and make each a consumer of the
-APIs its keys can call — register them in the catalog: see the [catalog agents API](../reference/rest/catalog-agents.md).
+APIs its keys can call — register them in the catalog: see [Agents and models](../bring-in/agents-and-models.mdx).
 
 ## With the API
 

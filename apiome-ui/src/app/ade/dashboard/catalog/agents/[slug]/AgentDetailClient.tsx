@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import { DependenciesPanel } from '@/app/components/ade/graph/DependenciesPanel';
+import { isFeatureReleased } from '@lib/feature-release';
 import { CatalogFactsPanel } from '@/app/components/ade/catalogFacts/CatalogFactsPanel';
 import { EntityOwnerSection } from '@/app/components/ade/catalogAgents/EntityOwnerSection';
 import {
@@ -199,23 +200,29 @@ export default function AgentDetailClient({ slug }: AgentDetailClientProps) {
             ) : null}
 
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList aria-label="Agent">
-                <TabsTrigger value="overview" data-testid="agent-tab-overview">
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="graph" data-testid="agent-tab-graph">
-                  Graph
-                </TabsTrigger>
-              </TabsList>
+              {/* The Graph tab waits for the dependency graph's release (lib/feature-release.ts);
+                  until then Overview is the only tab, so no tab strip is drawn. */}
+              {isFeatureReleased('dependency-graph') ? (
+                <TabsList aria-label="Agent">
+                  <TabsTrigger value="overview" data-testid="agent-tab-overview">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger value="graph" data-testid="agent-tab-graph">
+                    Graph
+                  </TabsTrigger>
+                </TabsList>
+              ) : null}
               <TabsContent value="overview" className="agt-page">
                 <EntityOwnerSection kind="agent" entityId={agent.id} owner={agent.owner} onChanged={() => void load()} />
                 <KeysSection agent={agent} busy={busy} onLink={() => setLinkOpen(true)} onUnlink={(keyId) => void act(() => unlinkAgentKey(agent.slug, keyId))} />
                 <ConsumersSection agent={agent} />
                 <CatalogFactsPanel kind="agent" id={agent.id} active={tab === 'overview'} />
               </TabsContent>
-              <TabsContent value="graph">
-                <AgentGraph agent={agent} active={tab === 'graph'} />
-              </TabsContent>
+              {isFeatureReleased('dependency-graph') ? (
+                <TabsContent value="graph">
+                  <AgentGraph agent={agent} active={tab === 'graph'} />
+                </TabsContent>
+              ) : null}
             </Tabs>
           </div>
         )}
@@ -309,10 +316,13 @@ function ConsumersSection({ agent }: { agent: CatalogAgent }) {
         <h2 id="agt-consumes" className="agt-section__title">
           Consumes
         </h2>
-        <Link className="agt-link agt-inline-icon" href={agent.usageHref} data-testid="agent-usage-link">
-          <Activity aria-hidden />
-          Usage
-        </Link>
+        {/* Usage lives on MCP servers' Agent access page, which waits for its release. */}
+        {isFeatureReleased('mcp') ? (
+          <Link className="agt-link agt-inline-icon" href={agent.usageHref} data-testid="agent-usage-link">
+            <Activity aria-hidden />
+            Usage
+          </Link>
+        ) : null}
       </div>
       {agent.consumers.length === 0 ? (
         <p className="agt-muted">Nothing yet: link a live key whose toolset enables operations.</p>

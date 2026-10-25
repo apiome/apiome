@@ -6,6 +6,10 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- Catalog import (RC7):
+  - **Connectors** are back: sync APIs into the Catalog from Kong, AWS API Gateway, Azure API Management, Apigee and schema, MCP and generic registries, with gateway environments and the refresh ledger on **Repositories**
+  - The **Schema registry** and the catalog **Subjects** tab are back
+  - **Agents**, **models** and **components** are back in the Catalog, with Backstage and Compass import, **Import reports**, the **Compass export** source in **Import to catalog**, and catalog facts and scorecards
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
 - Large lists:

@@ -42,10 +42,16 @@ jest.mock('@lib/auth/session-client', () => ({
   useAuthSession: () => ({ data: { user: { user_id: 'u-1', current_tenant_id: 't-1' } } }),
 }));
 
-jest.mock('@lib/feature-release', () => ({
-  ...jest.requireActual('@lib/feature-release'),
-  isFeatureReleased: (id: string) => (id === 'export-studio' ? mockReleased : true),
-}));
+// The real gate, with Export studio switched per test and the owner and Graph tab's features
+// (teams, dependency graph) previewed unless a test clears `mockPreview`.
+let mockPreview = 'teams,dependency-graph';
+jest.mock('@lib/feature-release', () => {
+  const actual = jest.requireActual('@lib/feature-release');
+  return {
+    ...actual,
+    isFeatureReleased: (id: string) => (id === 'export-studio' ? mockReleased : actual.isFeatureReleased(id, mockPreview)),
+  };
+});
 
 import GatewayConfigClient from '../src/app/ade/dashboard/connectors/environments/[slug]/GatewayConfigClient';
 import { ConnectorEnvironments } from '../src/app/components/ade/gatewayConfigs/ConnectorEnvironments';
@@ -168,6 +174,7 @@ beforeEach(() => {
   calls = [];
   mockPush.mockReset();
   mockReleased = false;
+  mockPreview = 'teams,dependency-graph';
   global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     calls.push(url);
@@ -176,6 +183,16 @@ beforeEach(() => {
     if (url === '/api/gateway-configs/plain-prod') return res(PLAIN);
     if (url.startsWith('/api/gateway-configs/')) return res(KONG);
     if (url === '/api/teams') return res({ teams: [{ id: 't-1', slug: 'platform', name: 'Platform' }] });
+    if (url.endsWith('/facts')) {
+      return res({
+        kind: 'gateway_config', id: 'g-prod', name: 'prod', score: null,
+        facts: [
+          { key: 'owner.present', label: 'Owner present', status: 'met', value: true, detail: null, evidence: [] },
+          { key: 'refresh.fresh', label: 'Refreshed within twice its cadence', status: 'met', value: true,
+            detail: 'Kong Konnect last refreshed 2026-06-15 03:00 UTC (cadence 1 h).', evidence: [] },
+        ],
+      });
+    }
     if (url.startsWith('/api/graph/edges')) return res({ edges: [], total: 0, truncated: false, limit: 500, offset: 0 });
     if (url.includes('/api/export/targets')) return res({ success: true, ...KONG_TARGETS });
     if (url.includes('/api/export/preflight')) return res({ success: true, targets: [] });
@@ -263,7 +280,16 @@ describe('the gateway config page', () => {
     await waitFor(() => expect(calls.some((url) => url.startsWith('/api/graph/edges/gateway_config/g-prod'))).toBe(true));
   });
 
-  it('passes axe and dumps the docs fixture', async () => {
+  it('leaves out the owner and the Graph tab while teams and the dependency graph are held back', async () => {
+    mockPreview = '';
+    await renderPage();
+    expect(screen.queryByTestId('entity-owner')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('gateway-config-tab-graph')).not.toBeInTheDocument();
+    expect(screen.getByTestId('gateway-config-apis')).toBeInTheDocument();
+  });
+
+  it('passes axe and dumps the docs fixture as the released build shows it', async () => {
+    mockPreview = '';
     const { container } = await renderPage();
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('gateway-config-entity', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));

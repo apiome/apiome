@@ -174,11 +174,24 @@ let calls: Array<{ url: string; method: string; body: unknown }> = [];
 let permissions: string[] = ['imports:create'];
 let report: MigrationRun = BACKSTAGE_RUN;
 
-// Backstage and Compass import is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+// Backstage and Compass import is released (RC7); its Teams suggestions wait for teams and ownership
+// (lib/feature-release.ts). These suites test those too, so re-open teams.
 const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
 beforeAll(() => {
-  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams,dependency-graph';
 });
+/** Run `fn` as the released build renders it (no preview override), for a docs fixture. */
+async function asReleased<T>(fn: () => Promise<T>): Promise<T> {
+  const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  try {
+    return await fn();
+  } finally {
+    if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
+  }
+}
+
 afterAll(() => {
   if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
@@ -256,10 +269,11 @@ describe('the rules', () => {
 });
 
 describe('the import report page', () => {
-  async function renderReport() {
+  /** Render the report; `actions` is how many accept buttons it shows (2 without the Teams table). */
+  async function renderReport(actions = 3) {
     const view = render(<ImportReportClient id={RUN_ID} />);
     await screen.findByTestId('migration-report');
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /Create team|Register component|Apply to/ }).length).toBe(3));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Create team|Register component|Apply to/ }).length).toBe(actions));
     return view;
   }
 
@@ -319,10 +333,14 @@ describe('the import report page', () => {
     expect(screen.queryByRole('button', { name: 'Create team' })).not.toBeInTheDocument();
   });
 
-  it('passes axe and dumps the docs fixture', async () => {
-    const { container } = await renderReport();
-    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('backstage-import-report', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+  it('leaves the Teams suggestions out while teams are held back, and dumps the docs fixture', async () => {
+    await asReleased(async () => {
+      const { container } = await renderReport(2);
+      expect(screen.queryByTestId('migration-teams')).not.toBeInTheDocument();
+      expect(screen.getByTestId('migration-unmapped')).toBeInTheDocument();
+      expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture('backstage-import-report', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+    });
   });
 });
 
@@ -341,7 +359,21 @@ describe('Import to catalog → Compass export', () => {
     expect(onSuccess).toHaveBeenCalled();
     expect(within(screen.getByTestId('migration-unmapped')).getByText('relationship CHILD_OF is not imported')).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByRole('button', { name: /Create team|Register component|Apply to/ }).length).toBe(3));
-    writeA11yFixture('import-wizard-compass', liveMarkup(document.querySelector('[role="dialog"]')!));
+  });
+
+  it('dumps the docs fixture as the released build shows it', async () => {
+    await asReleased(async () => {
+      report = COMPASS_RUN;
+      render(<CatalogImportDialog open onClose={jest.fn()} onSuccess={jest.fn()} />);
+      fireEvent.click(await screen.findByTestId('catalog-import-source-compass'));
+      const file = new File([JSON.stringify({ components: [] })], 'compass-export.json', { type: 'application/json' });
+      fireEvent.change(screen.getByTestId('compass-intake-file'), { target: { files: [file] } });
+      fireEvent.click(screen.getByTestId('compass-intake-import'));
+      await screen.findByTestId('migration-report');
+      expect(screen.queryByTestId('migration-teams')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getAllByRole('button', { name: /Register component|Apply to/ }).length).toBeGreaterThan(0));
+      writeA11yFixture('import-wizard-compass', liveMarkup(document.querySelector('[role="dialog"]')!));
+    });
   });
 
   it('refuses a file that is not JSON before uploading it', async () => {
@@ -369,6 +401,15 @@ describe('the import reports list', () => {
 });
 
 describe('the component page', () => {
+  it('leaves out the owner and the dependency graph while their features are held back', async () => {
+    await asReleased(async () => {
+      render(<ComponentDetailClient slug="payments-svc" />);
+      await screen.findByTestId('component-detail');
+      expect(screen.queryByTestId('entity-owner')).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Open the dependency graph' })).not.toBeInTheDocument();
+    });
+  });
+
   it('shows the imported fields, links, owner and facts', async () => {
     const { container } = render(<ComponentDetailClient slug="payments-svc" />);
     await screen.findByTestId('component-detail');

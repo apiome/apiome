@@ -95,11 +95,24 @@ let calls: Call[] = [];
 const res = (body: unknown, status = 200) =>
   ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
 
-// Agents and models is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+// Agents and models are released (RC7); their owner, Graph tab and Usage link wait for teams, the
+// dependency graph and MCP (lib/feature-release.ts). These suites test those too, so re-open them.
 const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
 beforeAll(() => {
-  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams,dependency-graph';
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams,dependency-graph,mcp';
 });
+/** Run `fn` as the released build renders it (no preview override), for a docs fixture. */
+async function asReleased<T>(fn: () => Promise<T>): Promise<T> {
+  const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  try {
+    return await fn();
+  } finally {
+    if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
+  }
+}
+
 afterAll(() => {
   if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
@@ -243,10 +256,22 @@ describe('the agent page', () => {
     await waitFor(() => expect(calls.some((call) => call.url.startsWith('/api/graph/edges/consumer/c-1'))).toBe(true));
   });
 
+  it('leaves out the owner, the Graph tab and the Usage link while their features are held back', async () => {
+    await asReleased(async () => {
+      await renderAgent();
+      expect(screen.queryByTestId('entity-owner')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('agent-tab-graph')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('agent-usage-link')).not.toBeInTheDocument();
+      expect(screen.getByTestId('agent-consumers')).toHaveTextContent('Orders API · 4 operations');
+    });
+  });
+
   it('passes axe and dumps the docs fixture', async () => {
-    const { container } = await renderAgent();
-    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('agent-entity', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+    await asReleased(async () => {
+      const { container } = await renderAgent();
+      expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture('agent-entity', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+    });
   });
 });
 
@@ -287,9 +312,12 @@ describe('the model page', () => {
   });
 
   it('passes axe and dumps the docs fixture', async () => {
-    const { container } = await renderModel();
-    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('model-entity', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+    await asReleased(async () => {
+      const { container } = await renderModel();
+      expect(screen.queryByTestId('entity-owner')).not.toBeInTheDocument();
+      expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture('model-entity', liveMarkup((document.querySelector('.page') ?? container.firstElementChild)!));
+    });
   });
 });
 

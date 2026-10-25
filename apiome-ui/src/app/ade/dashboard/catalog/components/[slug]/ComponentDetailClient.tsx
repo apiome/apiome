@@ -27,6 +27,7 @@ import {
   type CatalogComponent,
 } from '@lib/catalog-migrations';
 import { graphPageHref } from '@lib/graph';
+import { isFeatureReleased } from '@lib/feature-release';
 
 const HOME_ROUTE = '/ade/dashboard';
 const CATALOG_ROUTE = '/ade/dashboard/catalog';
@@ -149,17 +150,20 @@ export default function ComponentDetailClient({ slug }: ComponentDetailClientPro
             <EntityOwnerSection kind="component" entityId={component.id} owner={component.owner} onChanged={() => void load()} />
             <CatalogFactsPanel kind="component" id={component.id} />
 
-            <section className="agt-section" aria-labelledby="cmp-graph">
-              <h2 id="cmp-graph" className="agt-section__title">
-                Dependencies
-              </h2>
-              <p className="agt-muted">
-                What it depends on and consumes, as declared in {MIGRATION_SOURCE_LABELS[component.source]}.{' '}
-                <Link className="agt-link" href={graphPageHref('component', component.id)}>
-                  Open the dependency graph
-                </Link>
-              </p>
-            </section>
+            {/* Dependencies are drawn on the dependency graph, which waits for its release. */}
+            {isFeatureReleased('dependency-graph') ? (
+              <section className="agt-section" aria-labelledby="cmp-graph">
+                <h2 id="cmp-graph" className="agt-section__title">
+                  Dependencies
+                </h2>
+                <p className="agt-muted">
+                  What it depends on and consumes, as declared in {MIGRATION_SOURCE_LABELS[component.source]}.{' '}
+                  <Link className="agt-link" href={graphPageHref('component', component.id)}>
+                    Open the dependency graph
+                  </Link>
+                </p>
+              </section>
+            ) : null}
           </div>
         )}
       </PageBody>

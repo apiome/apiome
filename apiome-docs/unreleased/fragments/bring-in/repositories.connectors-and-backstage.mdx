@@ -1,26 +1,13 @@
-{/* Withdrawn from docs/bring-in/repositories.mdx for RC6 with Connectors (`connectors`), the dependency
-     graph (`dependency-graph`) and the catalog entity kinds (`catalog-entities`). Restore each piece to
-     where its comment says. */}
+{/* Withdrawn from docs/bring-in/repositories.mdx for RC6 with the dependency graph
+     (`dependency-graph`). RC7 put back the Connectors pieces (`connectors`) and the Backstage
+     migration bullets (`catalog-entities`); what is left here waits for `dependency-graph`. */}
 
-{/* 1. The paragraph after the "repositories-cards" screenshot (`connectors`): */}
-
-**Recent runs**, below the list, shows the latest Git refreshes and [connector](./connectors.mdx)
-runs together, newest first. A **Git** or **Connector** badge says which each one is, and a
-connector run links to its connector.
-
-{/* 2. The Specs tab bullet ended (`connectors`): */}
-
-- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
-  repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
-  are refreshed by the same engine on the same cadence vocabulary.
-
-{/* 3. This section, the last under "A repository's page", right before "Discovered specs" (`dependency-graph`, `catalog-entities`): */}
-
-### Backstage files
-
-Each scan also reads any Backstage `catalog-info.yaml` (or `catalog-info.yml`) in the branch, at any
-depth, and turns its relations into [declared dependencies](../govern/dependency-graph.mdx#declare-dependencies)
-of the APIs you imported from that branch:
+{/* 1. In "Backstage files", the section's opening sentence then reads: "Each scan also reads any
+     Backstage `catalog-info.yaml` (or `catalog-info.yml`) in the branch, at any depth, and turns its
+     relations into [declared dependencies](../govern/dependency-graph.mdx#declare-dependencies)
+     of the APIs you imported from that branch:", followed by this table and paragraph; the
+     migration bullets then follow, introduced by "The same files also feed a migration from
+     Backstage:". */}
 
 | Backstage field | Becomes |
 | --- | --- |
@@ -31,21 +18,3 @@ of the APIs you imported from that branch:
 A Backstage name (`api:default/payments`) matches the project or catalog item with that slug
 (`payments`). A name that matches nothing is still listed, as unresolved. The scan replaces what it
 recorded last time, so deleting the file or a line removes the dependency.
-
-The same files also feed a migration from Backstage:
-
-- `kind: API` entities with a `spec.definition` are **imported** as catalog items.
-- `Component`, `System`, `Domain` and `Group` entities, and `spec.owner`, are staged as component
-  and team **suggestions** on the branch's [import report](./migrate-from-backstage-or-compass.mdx#the-import-report).
-
-Every field Apiome cannot map is listed there. See
-[Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx).
-
-{/* 4. The Quota paragraph ended (`connectors`): */}
-
-or **90d**. [Connectors](./connectors.mdx) share the same quota: every document a connector
-fetches counts as a poll, and connector syncs deferred by the quota count as deferrals.
-
-{/* 5. The last link of "Where next" (`connectors`): */}
-
-- [Connectors](./connectors.mdx)

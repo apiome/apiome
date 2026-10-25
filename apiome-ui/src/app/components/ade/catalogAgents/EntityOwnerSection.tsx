@@ -12,6 +12,7 @@
 import * as React from 'react';
 import { Alert, Button, Label } from '@/app/components/ui';
 import { OwnerCell, assignOwner, useTeams } from '@/app/components/ade/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { EntityOwner, OwnerEntityKind } from '@lib/owners';
 
 /** Props for {@link EntityOwnerSection}. */
@@ -27,12 +28,19 @@ export interface EntityOwnerSectionProps {
 }
 
 /**
- * The owner and the assign control.
+ * The owner and the assign control. Absent while teams and ownership are held back
+ * (`lib/feature-release.ts`), like the other owners components.
  *
  * @param props - See {@link EntityOwnerSectionProps}.
- * @returns The section.
+ * @returns The section, or nothing while `teams` is unreleased.
  */
-export function EntityOwnerSection({ kind, entityId, owner, onChanged }: EntityOwnerSectionProps) {
+export function EntityOwnerSection(props: EntityOwnerSectionProps) {
+  if (!isFeatureReleased('teams')) return null;
+  return <EntityOwnerSectionBody {...props} />;
+}
+
+/** The section itself; split out so its hooks run only when it renders. */
+function EntityOwnerSectionBody({ kind, entityId, owner, onChanged }: EntityOwnerSectionProps) {
   const { teams } = useTeams();
   const [team, setTeam] = React.useState('');
   const [busy, setBusy] = React.useState(false);

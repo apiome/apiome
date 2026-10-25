@@ -235,12 +235,10 @@ describe('quick filters', () => {
     }
   });
 
-  it('offers Catalog connector as a source only once connectors are released (RC6-H8)', () => {
+  it('offers Catalog connector as a source now that connectors are released (RC7)', () => {
     const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     try {
       delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-      expect(catalogSourceOptions().map((option) => option.value)).not.toContain('connector');
-      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'connectors';
       expect(catalogSourceOptions().map((option) => option.value)).toContain('connector');
     } finally {
       if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;

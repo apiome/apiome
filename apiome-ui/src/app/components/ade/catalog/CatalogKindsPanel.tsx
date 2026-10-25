@@ -15,7 +15,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import {
   ALL_CATALOG_KINDS,
-  CATALOG_CALLOUTS,
+  isCatalogKindReleased,
+  releasedCatalogCallouts,
   type CatalogEntitySummary,
 } from '@lib/catalog-entities';
 
@@ -36,12 +37,14 @@ export interface CatalogKindsPanelProps {
  * @returns The panel.
  */
 export function CatalogKindsPanel({ summary, selected, onSelect }: CatalogKindsPanelProps) {
-  const total = summary.kinds.reduce((sum, entry) => sum + entry.count, 0);
+  // Kinds and callouts whose pages are held back (lib/feature-release.ts) are left out.
+  const kinds = summary.kinds.filter((entry) => isCatalogKindReleased(entry.kind));
+  const total = kinds.reduce((sum, entry) => sum + entry.count, 0);
   const tiles = [
     { kind: ALL_CATALOG_KINDS, label: 'All kinds', count: total },
-    ...summary.kinds.map((entry) => ({ kind: entry.kind, label: entry.pluralLabel, count: entry.count })),
+    ...kinds.map((entry) => ({ kind: entry.kind, label: entry.pluralLabel, count: entry.count })),
   ];
-  const callouts = CATALOG_CALLOUTS.filter((callout) => summary.callouts[callout.key] !== null);
+  const callouts = releasedCatalogCallouts().filter((callout) => summary.callouts[callout.key] !== null);
 
   return (
     <section className="cat-kinds" aria-label="Catalog kinds" data-testid="catalog-kinds">

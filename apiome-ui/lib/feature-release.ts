@@ -10,15 +10,19 @@
    The ids are `PlatformNavItem.id`s, so the navigation model, the route gate
    and the docs backup (`apiome-docs/unreleased/README.md`) all name a feature
    the same way. Releasing one is: delete its id here, restore its docs pages.
-   Two ids name features with no rail item of their own, embedded in Catalog
-   and Projects: `catalog-entities` (agents, models, components, the
-   Backstage/Compass import reports and scorecard facts, CDG-5) and `consumers` (a project's
-   consumer contract registry, CTG-4.1).
+   One id names a feature with no rail item of its own, embedded in Projects:
+   `consumers` (a project's consumer contract registry, CTG-4.1).
 
    A gated feature is hidden where it is embedded too: `teams` takes the owner
    column, filter and bulk action off Projects, Catalog and Published;
-   `dependency-graph` the Dependencies tabs; `schema-registry` the catalog
-   Subjects tab; `connectors` the refresh ledger on Repositories.
+   `dependency-graph` the Dependencies tabs.
+
+   RC7 released every way into the Catalog: `connectors` (gateways and
+   registries, with the refresh ledger on Repositories), `schema-registry`
+   (the catalog Subjects tab) and `catalog-entities` (agents, models,
+   components, the Backstage/Compass import reports and scorecard facts, CDG-5).
+   They are still checked with `isFeatureReleased()` where they are embedded,
+   which now always answers true for them.
 
    `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` re-opens gated features for a build —
    a comma-separated list of ids, or `all` — so developers, the docs screenshot
@@ -35,13 +39,11 @@ export const UNRELEASED_FEATURE_IDS = [
   'style-guides',
   'audit',
   // RC6 scope (docs/RC6_OOE.md): Catalog Discovery Graph and contract-testing
-  // surfaces wait for the next release.
-  'connectors',
+  // surfaces wait for a later release. RC7 released the Catalog's import paths:
+  // `connectors`, `schema-registry` and `catalog-entities`.
   'shadow-apis',
   'dependency-graph',
   'teams',
-  'schema-registry',
-  'catalog-entities',
   'consumers',
 ] as const;
 
@@ -53,7 +55,6 @@ export type UnreleasedFeatureId = (typeof UNRELEASED_FEATURE_IDS)[number];
  * gated route shows for them (a rail item's own label and group are used otherwise).
  */
 export const EMBEDDED_FEATURES: Readonly<Record<string, { label: string; section: string }>> = {
-  'catalog-entities': { label: 'Catalog entity kinds', section: 'Catalog' },
   consumers: { label: 'Consumer contracts', section: 'Projects' },
 };
 

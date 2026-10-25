@@ -18,7 +18,7 @@ CloudEvents.
 | --- | --- |
 | An xRegistry document (a saved `.json`, often `.xreg.json`) | One catalog item with every schema, message and endpoint in it |
 | A document that holds only `schemagroups` | A catalog item of types, with no services |
-| A running xRegistry (`https://<host>/reg`) | A [registry crawl](../reference/rest/connectors.md): each schema, message group and endpoint becomes its own catalog item, re-crawled on a schedule |
+| A running xRegistry (`https://<host>/reg`) | A [registry crawl](./connectors.mdx#registry-crawl): each schema, message group and endpoint becomes its own catalog item, re-crawled on a schedule |
 | The JSON on your clipboard | A paste |
 
 A single CloudEvent — `specversion`, `type`, `source` and `data` — is not an xRegistry document; it
@@ -47,7 +47,7 @@ apiome import xregistry --url https://example.com/registry.json --dry-run
 `--dry-run` previews the import without saving. See [`apiome import`](../reference/cli/import.md).
 
 **From a live registry:** add a **Registry crawl** connector with the protocol **CNCF xRegistry
-(schemas, messages, endpoints)** — see [Registry crawl](../reference/rest/connectors.md).
+(schemas, messages, endpoints)** — see [Registry crawl](./connectors.mdx#registry-crawl).
 
 ## What Apiome reads
 
@@ -107,7 +107,7 @@ Give each schema a `description` (Apiome uses it for the type when the schema do
 
 ## Related
 
-- [Registry crawl](../reference/rest/connectors.md): import a live xRegistry, one item per schema,
+- [Registry crawl](./connectors.mdx#registry-crawl): import a live xRegistry, one item per schema,
   message group and endpoint.
 - [Supported formats](./supported-formats.md): the versions this importer reads.
 - [Import a spec](./import-a-spec.md): every way to bring a document in.

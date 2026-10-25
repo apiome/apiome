@@ -1,0 +1,29 @@
+---
+slug: rc7-catalog-import
+title: RC7 brings every way into the Catalog
+description: Connectors, the Schema registry, and agents, models and components with Backstage and Compass import are back.
+authors: [apiome]
+---
+
+RC7 releases every way of bringing APIs into the [Catalog](/bring-in/catalog). Three features RC6
+held back are back in the navigation, with their guides: [Connectors](/bring-in/connectors), the
+[Schema registry](/ship/schema-registry), and the agent, model and component kinds with
+[Backstage and Compass import](/bring-in/migrate-from-backstage-or-compass) and
+[catalog facts](/govern/scorecards).
+
+{/* truncate */}
+
+- **Connectors** (**Bring in → Connectors**) sync the APIs in Kong, AWS API Gateway, Azure API
+  Management and Apigee, mirror a schema registry, and crawl A2A, xRegistry and
+  FHIR registries. Each gateway environment has its own page, with **Push back** to export a catalog
+  item to the gateway's format. **Recent runs** is back on Repositories.
+- **Schema registry** (**Workspace → Schema registry**) serves the Confluent Schema Registry API to
+  Kafka serializers. Avro, JSON Schema and Protobuf items get their **Subjects** tab and **Registry**
+  chip back.
+- **Kinds** on the catalog home count and list everything in the catalog. Register
+  [agents and models](/bring-in/agents-and-models), review the **Import reports** that Backstage
+  `catalog-info.yaml` files and **Compass export** uploads stage, and read each entity's **Facts**.
+- **Still held back:** Shadow APIs, the Dependency graph, Teams and ownership, and a project's
+  Consumers. Their APIs are unchanged and documented in the REST reference. Until they ship, the
+  pages above leave out owners, the **Graph** tabs, an import report's **Teams** suggestions (they
+  stay staged) and the facts about owners, consumers, dependencies and shadow APIs.

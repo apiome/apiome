@@ -1,46 +1,19 @@
-{/* Withdrawn from docs/bring-in/catalog.mdx for RC6: the catalog entity kinds (`catalog-entities`),
-     the Registry chip and Subjects tab (`schema-registry`), the Dependencies tab (`dependency-graph`)
-     and ownership (`teams`). Restore each piece to where its comment says. */}
+{/* Withdrawn from docs/bring-in/catalog.mdx for RC6: the Dependencies tab (`dependency-graph`) and
+     ownership (`teams`). RC7 put back the parts for the catalog entity kinds (`catalog-entities`),
+     the Registry chip and Subjects tab (`schema-registry`) and connectors (`connectors`); what is
+     left here waits for `dependency-graph` and `teams`. Restore each piece to where its comment
+     says. */}
 
-{/* 1. This section, right before "How the catalog works" (`catalog-entities`): */}
+{/* 1. In "Kinds" (`teams`): the Teams row of the kinds table read "| **Teams** | The
+     [teams](../workspace/teams.mdx) that own the rest | `team` |"; step 2 of the tile list read
+     "Each row shows the **name** (click it to open its page), the **kind**, the **owner team** and
+     when it was last **updated**. **Type in the filter box** to narrow by name, slug or description;
+     the **owner** filter applies too (teams have no owner, so they drop out while it is set)." */}
 
-## Kinds
-
-Above the list, the catalog home counts **everything** in the catalog by **kind**, not only
-catalog items:
-
-| Kind | What it is | Key in the API |
-| --- | --- | --- |
-| **Projects** | Publishable OpenAPI projects | `api` |
-| **Catalog items** | Imported specs in other formats (this page's list) | `spec` |
-| **MCP servers** | MCP endpoints Apiome discovers and grades (**Bring in → MCP servers**) | `mcp_server` |
-| **Consumers** | Applications registered as consumers of a project | `consumer` |
-| **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
-| **Agents** | AI agents and the keys they call with — see [Agents and models](./agents-and-models.mdx) | `agent` |
-| **Models** | The models agents run on | `model` |
-| **Gateway configs** | One per connector environment — see [Environments](./connectors.mdx#environments-gateway-configs) | `gateway_config` |
-| **Components** | Backstage or Compass components, systems and domains you accepted — see [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx) | `component` |
-| **Teams** | The [teams](../workspace/teams.mdx) that own the rest | `team` |
-
-The tiles are the **Kind** filter:
-
-1. **Click a tile** — for example **MCP servers** — to list that kind. **All kinds** lists
-   everything, in name order.
-2. Each row shows the **name** (click it to open its page), the **kind**, the **owner team** and
-   when it was last **updated**. **Type in the filter box** to narrow by name, slug or description;
-   the **owner** filter applies too (teams have no owner, so they drop out while it is set).
-3. **Click “Load more”** for the next page.
-4. **Click “Catalog items”** to go back to the catalog-item cards and table described below.
-
-The address names the kind (`?kind=mcp_server`, `?kind=all`), so you can share the view. You see
-only the kinds your role may view.
-
-<Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
-
-### Home callouts
-
-Under the tiles, three counts point at what needs attention. **Click one** to open the page that
-deals with it:
+{/* 2. "Home callouts" (`teams`, and `shadow-apis` for the Shadow row): the table had a third
+     column, and its intro read "Under the tiles, three counts point at what needs attention.
+     **Click one** to open the page that deals with it:". Replace the paragraph after the table
+     ("**Click “Stale”** … are not available yet.") once both features ship: */}
 
 | Callout | Counts | Opens |
 | --- | --- | --- |
@@ -48,31 +21,21 @@ deals with it:
 | **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence | **Connectors** |
 | **Shadow** | APIs a gateway serves that have no catalog entry | [Shadow APIs](../govern/shadow-apis.mdx) |
 
-A callout you may not see — for example **Shadow** without permission to view imports — is left out.
+{/* 3. The sentence before the tab table (`dependency-graph`) then reads: "Nine tabs follow — ten on
+     an Avro, JSON Schema or Protobuf item, which also has **Subjects**:" */}
 
-{/* 2. A bullet of "Find an item", after "Chips" (`schema-registry`): */}
-
-- **Registry** — an Avro, JSON Schema or Protobuf item that backs a
-  [schema registry subject](../ship/schema-registry.mdx) carries a **Registry** chip on its card
-  and table row. Hover it to see the subject names; **click it** to open the item's **Subjects** tab.
-
-{/* 3. The sentence before the tab table read (`schema-registry`): "Nine tabs follow — ten on an Avro, JSON Schema or Protobuf item, which also has **Subjects**:" */}
-
-{/* 4. The last two rows of the tab table (`dependency-graph`, `schema-registry`): */}
+{/* 4. This row of the tab table, between **Versions** and **Subjects** (`dependency-graph`): */}
 
 | Tab | Shows |
 | --- | --- |
 | **Dependencies** | What the item depends on and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
-| **Subjects** | Avro, JSON Schema and Protobuf items only: the schema registry subjects the item backs, with their versions and schema ids — see [The Subjects tab](../ship/schema-registry.mdx#the-subjects-tab) |
 
-
-{/* 5. The tab ids sentence ended: "`conversions`, `lint`, `test-bench`, `versions`, `dependencies` and `subjects`; an unknown id opens **Overview**, and so does `subjects` on an item that has no **Subjects** tab." */}
+{/* 5. The tab ids sentence (`dependency-graph`) adds `dependencies` before `subjects`: "…
+     `test-bench`, `versions`, `dependencies` and `subjects`; …" */}
 
 {/* 6. Step 2 of "Act on several items at once" ended: "   items; Undelete reaches deleted ones), and **Assign owner**: choose a team, then **click “Assign owner”** to make it the owner of every selected item." (`teams`) */}
 
-{/* 7. "Facts" linked to the Scorecards page: "the [catalog facts](../govern/scorecards.mdx) scorecards will read" (`catalog-entities`); "Provenance" linked [connector](./connectors.mdx) (`connectors`) */}
-
-{/* 8. This section, right before "Delete and restore" (`teams`): */}
+{/* 7. This section, right before "Delete and restore" (`teams`): */}
 
 ## Owner
 
@@ -92,33 +55,3 @@ choice is kept in the address as `?team=`.
 
 To give several items an owner at once, tick them and use **Assign owner** in the bulk bar (below).
 See [Teams → Ownership](../workspace/teams.mdx#ownership).
-
-{/* 9. This subsection, at the end of "An item's page", right before "View an item in Designer" (`catalog-entities`, the scorecard facts of CDG-5.4): */}
-
-### Facts
-
-The **Overview** tab ends with the item's **Facts**: the
-[catalog facts](../reference/rest/catalog-entities.md) maturity scorecards will read — owner team, consumers, declared dependencies, whether its source refreshed
-within twice its cadence, where it is deployed and, for a schema item, whether its registry subjects
-set a compatibility level. Each shows **Met**, **Not met**, **Not applicable** or **Not assessed**
-with what it is based on and a link to check it. There is no score until maturity ladders are
-available.
-
-<Screenshot id="entity-facts" alt="A catalog item's Facts: owner present but not contactable, three consumers, no declared dependencies, refreshed within cadence, deployed on two environments, compatibility level not set" />
-
-{/* RC6-H7 (#6214): the connector provenance paragraph (`connectors`), back on "An item's page" right
-     after "On **Provenance**, an item imported before the import recorded its fingerprint …": */}
-
-An item synced by a connector shows **Synced by a connector** on the
-**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
-**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
-connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
-
-{/* RC6-H7 (#6214): the entities bullet (`catalog-entities`, `teams`), back at the top of
-     "With the CLI or the API": */}
-
-- REST: `GET /v1/catalog/{tenant}/entities` lists every kind in one shape (`kind`, `id`, `slug`,
-  `name`, `description`, `owner`, `updatedAt`, `href`, `graphNode`), filtered by repeatable `kind`,
-  `team` and `q` and paged with `cursor` (`pagination.nextCursor`);
-  `GET /v1/catalog/{tenant}/entities/summary` returns the count of each kind and the three callouts
-  — see [Catalog entities](../reference/rest/catalog-entities.md).

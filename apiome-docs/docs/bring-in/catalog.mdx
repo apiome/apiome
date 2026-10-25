@@ -22,6 +22,52 @@ average quality, how many were converted to OpenAPI, and how many are active or 
 deleted, when **Show deleted** is on). **Click “Show stats”** to open the full statistics in
 place; Apiome remembers the choice in this browser.
 
+## Kinds
+
+Above the list, the catalog home counts **everything** in the catalog by **kind**, not only
+catalog items:
+
+| Kind | What it is | Key in the API |
+| --- | --- | --- |
+| **Projects** | Publishable OpenAPI projects | `api` |
+| **Catalog items** | Imported specs in other formats (this page's list) | `spec` |
+| **MCP servers** | MCP endpoints Apiome discovers and grades | `mcp_server` |
+| **Consumers** | Applications registered as consumers of a project | `consumer` |
+| **Connectors** | Gateway and registry [connectors](./connectors.mdx) | `connector` |
+| **Agents** | AI agents and the keys they call with — see [Agents and models](./agents-and-models.mdx) | `agent` |
+| **Models** | The models agents run on | `model` |
+| **Gateway configs** | One per connector environment — see [Environments](./connectors.mdx#environments-gateway-configs) | `gateway_config` |
+| **Components** | Backstage or Compass components, systems and domains you accepted — see [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx) | `component` |
+| **Teams** | The teams that own the rest | `team` |
+
+The tiles are the **Kind** filter:
+
+1. **Click a tile** — for example **Connectors** — to list that kind. **All kinds** lists
+   everything, in name order.
+2. Each row shows the **name** (click it to open its page), the **kind** and when it was last
+   **updated**. **Type in the filter box** to narrow by name, slug or description.
+3. **Click “Load more”** for the next page.
+4. **Click “Catalog items”** to go back to the catalog-item cards and table described below.
+
+The address names the kind (`?kind=connector`, `?kind=all`), so you can share the view. You see
+only the kinds your role may view.
+
+<Screenshot id="catalog-kinds" alt="The catalog home with kind tiles (All kinds, Projects, Catalog items, MCP servers, Consumers, Connectors, Teams), the Unowned, Stale and Shadow callouts, and All kinds listed in one table" />
+
+### Home callouts
+
+Under the tiles, three counts point at what needs attention:
+
+| Callout | Counts |
+| --- | --- |
+| **Unowned** | Projects, catalog items, MCP servers, consumers, connectors, agents and models with no confirmed owner team |
+| **Stale** | Connectors (not paused) and MCP servers whose last successful refresh is older than **twice** their refresh or discovery cadence |
+| **Shadow** | APIs a gateway serves that have no catalog entry |
+
+**Click “Stale”** to open [Connectors](./connectors.mdx) and refresh what is behind. The pages that
+act on **Unowned** (ownership drift) and **Shadow** (the shadow-API report) are not available yet.
+A callout you may not see — for example **Shadow** without permission to view imports — is left out.
+
 ## How the catalog works
 
 On your first visit a note above the list explains what catalog items are. **Click “Learn more”**
@@ -45,6 +91,9 @@ list on [Supported formats](./supported-formats.md).
   **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
   **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
+- **Registry** — an Avro, JSON Schema or Protobuf item that backs a
+  [schema registry subject](../ship/schema-registry.mdx) carries a **Registry** chip on its card
+  and table row. Hover it to see the subject names; **click it** to open the item's **Subjects** tab.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
 - **Cards** or **Table**, at the end of the filter row; cards can be grouped by protocol. Your
@@ -92,7 +141,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 **“Convert to OpenAPI Project”** (**“Convert to Project”** for an OpenAPI or Arazzo item,
 **“Re-convert…”** once it has been converted), **“Export”** and **“View code”** — plus **“Open in Designer”**
 when you have [Suite Access](../admin/users.mdx#give-a-user-suite-access) (see [View an item in Designer](#view-an-item-in-designer)).
-Eight tabs follow:
+Eight tabs follow — nine on an Avro, JSON Schema or Protobuf item, which also has **Subjects**:
 
 | Tab | Shows |
 | --- | --- |
@@ -104,12 +153,14 @@ Eight tabs follow:
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
 | **Versions** | The item's revisions |
+| **Subjects** | Avro, JSON Schema and Protobuf items only: the schema registry subjects the item backs, with their versions and schema ids — see [The Subjects tab](../ship/schema-registry.mdx#the-subjects-tab) |
 
 The page address names the open tab — `?tab=lint`, `?tab=versions` and so on, with no `?tab=`
 for **Overview** — so you can **copy the address and send it** to land a teammate on the same tab.
 Switching tabs updates the address without reloading the page, and does not add a step to the
 browser's **Back** button. The tab ids are `overview`, `format`, `source`, `provenance`,
-`conversions`, `lint`, `test-bench` and `versions`; an unknown id opens **Overview**.
+`conversions`, `lint`, `test-bench`, `versions` and `subjects`; an unknown id opens **Overview**,
+and so does `subjects` on an item that has no **Subjects** tab.
 
 While the page or a tab is loading, it shows grey placeholders in the shape of what is coming —
 the header, the tabs and the tiles — so nothing moves when the content arrives. The list does the
@@ -127,6 +178,11 @@ On **Provenance**, an item imported before the import recorded its fingerprint a
 shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
 marked *Derived from the format*.
 
+An item synced by a [connector](./connectors.mdx) shows **Synced by a connector** on the
+**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
+**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
+connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
+
 <Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
 
 <Screenshot id="catalog-item-lint" alt="The Lint & score tab: requirement counts, the lint score and findings" />
@@ -136,6 +192,16 @@ marked *Derived from the format*.
 <Screenshot id="catalog-item-test-bench" alt="The Test bench tab: a schema picker, a payload editor and test suites" />
 
 <Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
+
+### Facts
+
+The **Overview** tab ends with the item's **Facts**: the [catalog facts](../govern/scorecards.mdx)
+scorecards will read — whether its source refreshed within twice its cadence, where it is deployed
+and, for a schema item, whether its registry subjects set a compatibility level. Each shows **Met**, **Not met**, **Not applicable** or **Not assessed**
+with what it is based on and a link to check it. There is no score until maturity ladders are
+available.
+
+<Screenshot id="entity-facts" alt="A catalog item's Facts: refreshed within cadence, deployed on two environments, compatibility level not set" />
 
 ## View an item in Designer
 
@@ -231,6 +297,11 @@ Every control on the list and on an item's page works from the keyboard.
 
 ## With the CLI or the API
 
+- REST: `GET /v1/catalog/{tenant}/entities` lists every kind in one shape (`kind`, `id`, `slug`,
+  `name`, `description`, `owner`, `updatedAt`, `href`, `graphNode`), filtered by repeatable `kind`,
+  `team` and `q` and paged with `cursor` (`pagination.nextCursor`);
+  `GET /v1/catalog/{tenant}/entities/summary` returns the count of each kind and the three callouts
+  — see [Catalog entities](../reference/rest/catalog-entities.md).
 - CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
   --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain` and

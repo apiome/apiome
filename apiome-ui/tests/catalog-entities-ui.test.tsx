@@ -111,10 +111,12 @@ const res = (body: unknown, status = 200) =>
 let calls: string[] = [];
 let summaryFails = false;
 
-// The catalog entity kinds is held back in RC6 (lib/feature-release.ts); these suites test it, so re-open it.
+// The catalog entity kinds are released (RC7). Owners, the Unowned and Shadow callouts and the MCP
+// server, consumer and team kinds wait for their features (lib/feature-release.ts); these suites
+// test them too, so re-open those. The "released build" describe checks what is left out.
 const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
 beforeAll(() => {
-  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams,mcp,consumers,shadow-apis';
 });
 afterAll(() => {
   if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
@@ -270,6 +272,39 @@ describe('the entity list', () => {
   });
 });
 
+describe('the released build (RC7)', () => {
+  let preview: string | undefined;
+  beforeEach(() => {
+    preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
+  });
+
+  it('leaves out the kinds and callouts whose pages are held back', () => {
+    render(<CatalogKindsPanel summary={SUMMARY} selected="spec" onSelect={jest.fn()} />);
+    const tiles = within(screen.getByRole('group', { name: 'Kind' })).getAllByRole('button');
+    expect(tiles.map((tile) => tile.textContent)).toEqual(['63All kinds', '12Projects', '48Catalog items', '3Connectors']);
+    expect(screen.queryByTestId('catalog-callout-unowned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-callout-shadow')).not.toBeInTheDocument();
+    expect(screen.getByTestId('catalog-callout-stale')).toHaveAttribute('href', '/ade/dashboard/connectors');
+  });
+
+  it('treats ?kind= for a held-back kind as the default', () => {
+    expect(catalogKindParam('mcp_server')).toBe('spec');
+    expect(catalogKindParam('team')).toBe('spec');
+    expect(catalogKindParam('connector')).toBe('connector');
+  });
+
+  it('lists no held-back kinds and no Owner column', async () => {
+    render(<CatalogEntityList kind="all" team={null} kinds={SUMMARY.kinds} />);
+    await screen.findByTestId('catalog-entity-table');
+    expect(screen.queryByText('Docs MCP')).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Owner' })).not.toBeInTheDocument();
+  });
+});
+
 describe('the catalog home', () => {
   it('shows the kinds panel once the summary loads, on catalog items by default', async () => {
     render(<CatalogClient />);
@@ -299,18 +334,15 @@ describe('the catalog home', () => {
     expect(screen.queryByTestId('catalog-register-agent')).not.toBeInTheDocument();
   });
 
-  it('while the other kinds are held back (RC6), reads no summary and stays the catalog-items list', async () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams';
+  it('shows the other kinds and Import reports without a preview override (released in RC7)', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     try {
       searchParams = new URLSearchParams('kind=all');
       render(<CatalogClient />);
-      await waitFor(() => expect(calls.some((url) => url.startsWith('/api/catalog?') || url === '/api/catalog')).toBe(true));
-      expect(calls.some((url) => url.startsWith('/api/catalog/entities/summary'))).toBe(false);
-      expect(screen.queryByTestId('catalog-kinds')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('catalog-entity-list')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('catalog-import-reports')).not.toBeInTheDocument();
+      await waitFor(() => expect(calls.some((url) => url.startsWith('/api/catalog/entities/summary'))).toBe(true));
+      expect(await screen.findByTestId('catalog-import-reports')).toBeInTheDocument();
     } finally {
-      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'catalog-entities,teams';
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams,mcp,consumers,shadow-apis';
     }
   });
 
@@ -324,11 +356,16 @@ describe('the catalog home', () => {
     expect(screen.queryByTestId('catalog-entity-list')).not.toBeInTheDocument();
   });
 
-  it('passes axe and dumps the docs fixture', async () => {
-    searchParams = new URLSearchParams('kind=all');
-    const { container } = render(<CatalogClient />);
-    await screen.findByTestId('catalog-entity-table');
-    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('catalog-kinds', (document.querySelector('.page') ?? container.firstElementChild)!.outerHTML);
+  it('passes axe and dumps the docs fixture as the released build shows it', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      searchParams = new URLSearchParams('kind=all');
+      const { container } = render(<CatalogClient />);
+      await screen.findByTestId('catalog-entity-table');
+      expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture('catalog-kinds', (document.querySelector('.page') ?? container.firstElementChild)!.outerHTML);
+    } finally {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'teams,mcp,consumers,shadow-apis';
+    }
   });
 });

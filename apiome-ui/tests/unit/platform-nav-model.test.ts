@@ -471,14 +471,11 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
       'audit',
-      'catalog-entities',
-      'connectors',
       'consumers',
       'dependency-graph',
       'export-studio',
       'mcp',
       'primitives',
-      'schema-registry',
       'sdk-settings',
       'shadow-apis',
       'style-guides',
@@ -541,9 +538,10 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 10 released destinations in the rail, 20 with every feature previewed', () => {
+  it('leaves 12 released destinations in the rail, 20 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(10);
+    // RC7 released Connectors and the Schema registry (catalog-entities has no rail item).
+    expect(releasedRailCount()).toBe(12);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(20);
   });

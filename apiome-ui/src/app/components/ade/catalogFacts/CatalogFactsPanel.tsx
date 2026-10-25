@@ -15,7 +15,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { CircleCheck, CircleDashed, CircleMinus, CircleX, RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
-import { FACT_STATUS_LABELS, type CatalogFactsResponse, type FactStatus } from '@lib/catalog-facts';
+import { FACT_STATUS_LABELS, releasedFacts, type CatalogFactsResponse, type FactStatus } from '@lib/catalog-facts';
 import { fetchCatalogFacts } from './catalogFactsApi';
 
 /** Props for {@link CatalogFactsPanel}. */
@@ -59,6 +59,9 @@ export function CatalogFactsPanel({ kind, id, active = true }: CatalogFactsPanel
     if (active && facts === null && error === null) void load();
   }, [active, facts, error, load]);
 
+  // Facts about held-back features, and evidence links into their pages, wait for their release.
+  const shown = facts ? releasedFacts(facts.facts) : [];
+
   return (
     <section className="cfx" aria-labelledby={`cfx-title-${id}`} data-testid="catalog-facts">
       <div className="cfx__head">
@@ -83,11 +86,11 @@ export function CatalogFactsPanel({ kind, id, active = true }: CatalogFactsPanel
         />
       ) : !facts ? (
         <LoadingState message="Reading the facts…" minHeightClassName="min-h-[6rem]" />
-      ) : facts.facts.length === 0 ? (
+      ) : shown.length === 0 ? (
         <p className="cfx__note">No facts apply to this kind of entity.</p>
       ) : (
         <ul className="cfx__list">
-          {facts.facts.map((fact) => {
+          {shown.map((fact) => {
             const Icon = STATUS_ICONS[fact.status];
             return (
               <li key={fact.key} className="cfx__item" data-status={fact.status} data-testid={`catalog-fact-${fact.key}`}>

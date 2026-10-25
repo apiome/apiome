@@ -41,6 +41,7 @@ import {
   type MigrationSuggestion,
 } from '@lib/catalog-migrations';
 import { acceptSuggestion, dismissSuggestion } from './catalogMigrationsApi';
+import { isFeatureReleased } from '@lib/feature-release';
 
 /** Props for {@link MigrationReport}. */
 export interface MigrationReportProps {
@@ -304,15 +305,18 @@ export function MigrationReport({ run, canDecide, onChanged }: MigrationReportPr
         </div>
       </dl>
       {error ? <Alert variant="danger">{error}</Alert> : null}
-      <SuggestionTable
-        title="Teams"
-        id="migration-teams"
-        suggestions={teams}
-        canDecide={canDecide}
-        busyId={busyId}
-        onAccept={setAccepting}
-        onDismiss={(suggestion) => void dismiss(suggestion)}
-      />
+      {/* Team suggestions wait for teams and ownership (lib/feature-release.ts); they stay staged. */}
+      {isFeatureReleased('teams') ? (
+        <SuggestionTable
+          title="Teams"
+          id="migration-teams"
+          suggestions={teams}
+          canDecide={canDecide}
+          busyId={busyId}
+          onAccept={setAccepting}
+          onDismiss={(suggestion) => void dismiss(suggestion)}
+        />
+      ) : null}
       <SuggestionTable
         title="Components"
         id="migration-components"

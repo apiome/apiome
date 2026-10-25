@@ -1,0 +1,80 @@
+---
+title: Scorecards
+description: Catalog facts each entity carries for maturity scorecards, shown as a checklist.
+sidebar_position: 1.6
+tags: [governance, catalog]
+---
+
+Scorecards will grade each catalog entity against a maturity ladder for its kind. The ladders are
+still to come; what is here today are the **catalog facts** they will read — and every entity page
+already shows them as a checklist.
+
+## Catalog facts
+
+A **fact** is one typed, evidence-backed statement about one entity: *its source refreshed within
+twice its cadence*, *it is deployed on a gateway*, *its registry subjects set their own
+compatibility level*. Each entity page lists the facts that apply to its kind in a **Facts**
+section:
+
+<Screenshot id="entity-facts" alt="A catalog item's Facts: refreshed within cadence, deployed on two environments, compatibility level not set" />
+
+Every fact shows its **status** as an icon and a word, what it is based on, and links to the
+evidence:
+
+| Status | Means |
+| --- | --- |
+| **Met** | The fact holds. |
+| **Not met** | It does not. |
+| **Not applicable** | It cannot apply to this entity — a catalog item with no schema-registry subject has no compatibility level to set. |
+| **Not assessed** | Apiome cannot establish it right now — a paused source, a stale gateway inventory, agent readiness. It is **never** treated as met. |
+
+**There is no score yet.** The checklist has no grade or percentage, and the API returns
+`score: null`: a grade computed from partial facts would mislead, so none is shown until maturity
+ladders are available.
+
+### The facts
+
+| Fact | Met when | Evidence |
+| --- | --- | --- |
+| `refresh.fresh` | The entity's source last refreshed successfully within **twice** its cadence: the repository or connector it was imported from, a connector's syncs, a gateway environment's sync. Not applicable when nothing refreshes it; not assessed when the source is paused. The detail also gives the last revision's date. | The repository or connector |
+| `deployment.known` | The API is deployed on at least one gateway environment — for a gateway environment, it serves at least one API | — |
+| `registry.level-set` | Every [schema-registry subject](../ship/schema-registry.mdx) the catalog item backs has its own compatibility level | The item's **Subjects** tab |
+| `agent.readiness` | Not assessed yet — agent readiness scoring is still to come | — |
+
+The API also returns facts about owners (`owner.present`, `owner.contactable`), consumers
+(`consumers.declared`), declared dependencies (`dependencies.declared`), shadow APIs
+(`shadow.none`) and MCP trust baselines (`mcp.baseline-approved`). The pages leave those out until
+teams, consumer contracts, the dependency graph, the shadow-API report and MCP servers are
+available; read them with the API below.
+
+### Which facts each kind shows
+
+| Kind | Facts |
+| --- | --- |
+| Catalog item | freshness, deployment, registry level |
+| Connector | freshness |
+| Gateway config | freshness, deployment |
+| Agent | agent readiness |
+| Model, component | none yet |
+
+### Where the checklist is
+
+| Entity | Where |
+| --- | --- |
+| Catalog item | **Overview** tab — see [An item's page](../bring-in/catalog.mdx#facts) |
+| Connector | **Facts** tab — see [A connector's page](../bring-in/connectors.mdx#a-connectors-page) |
+| Gateway config, agent, model, component | On the page |
+
+## With the API
+
+`GET /v1/catalog/{tenant}/entities/{kind}/{id}/facts` returns `{kind, id, name, facts: [{key, label,
+status, value, detail, evidence: [{label, href, api}]}], score: null}`. `kind` is a catalog kind —
+`api`, `spec`, `mcp_server`, `connector`, `gateway_config`, `agent`, `model`, `consumer`. You need
+permission to view that kind; an unknown kind is a `422` and an unknown entity a `404`. See
+[Catalog entities](../reference/rest/catalog-entities.md).
+
+## Where next
+
+- [Catalog](../bring-in/catalog.mdx) — the kinds and an item's page
+- [Connectors](../bring-in/connectors.mdx) — where freshness and deployment facts come from
+- [Lint posture](./lint-posture.mdx)

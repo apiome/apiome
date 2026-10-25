@@ -9,6 +9,7 @@
  */
 
 import type { EntityOwner } from '@lib/owners';
+import { isFeatureReleased } from '@lib/feature-release';
 
 /** The kind the catalog home shows by default: catalog items, in today's cards and table. */
 export const DEFAULT_CATALOG_KIND = 'spec';
@@ -73,6 +74,8 @@ export interface CalloutDefinition {
   /** What the count means, for the tooltip and screen readers. */
   description: string;
   href: string;
+  /** The feature the report it opens belongs to; the callout is left out until it is released. */
+  feature?: string;
 }
 
 /** The three callouts, in order. Unowned and Stale open the existing pages that act on them. */
@@ -82,6 +85,7 @@ export const CATALOG_CALLOUTS: readonly CalloutDefinition[] = [
     label: 'Unowned',
     description: 'Entities with no confirmed owner team',
     href: '/ade/dashboard/teams#tm-drift',
+    feature: 'teams',
   },
   {
     key: 'stale',
@@ -94,8 +98,39 @@ export const CATALOG_CALLOUTS: readonly CalloutDefinition[] = [
     label: 'Shadow',
     description: 'Gateway APIs with no catalog entry',
     href: '/ade/dashboard/connectors/shadow',
+    feature: 'shadow-apis',
   },
 ];
+
+/**
+ * Entity kinds whose pages belong to a feature that is not released everywhere yet
+ * (`lib/feature-release.ts`). Their tiles and rows stay out of the Catalog until it is.
+ */
+const KIND_FEATURES: Readonly<Record<string, string>> = {
+  mcp_server: 'mcp',
+  consumer: 'consumers',
+  team: 'teams',
+};
+
+/**
+ * Is this entity kind shown in the Catalog?
+ *
+ * @param kind - A kind key from the registry.
+ * @returns False while the feature its pages belong to is held back.
+ */
+export function isCatalogKindReleased(kind: string): boolean {
+  const feature = KIND_FEATURES[kind];
+  return !feature || isFeatureReleased(feature);
+}
+
+/**
+ * The callouts whose reports can be opened in this build.
+ *
+ * @returns {@link CATALOG_CALLOUTS} without those whose feature is held back.
+ */
+export function releasedCatalogCallouts(): CalloutDefinition[] {
+  return CATALOG_CALLOUTS.filter((callout) => !callout.feature || isFeatureReleased(callout.feature));
+}
 
 /** A kind key as the registry spells one. */
 const KIND_KEY = /^[a-z][a-z0-9_]{0,39}$/;
@@ -109,7 +144,7 @@ const KIND_KEY = /^[a-z][a-z0-9_]{0,39}$/;
 export function catalogKindParam(value: string | null | undefined): string {
   const raw = (value ?? '').trim();
   if (raw === ALL_CATALOG_KINDS) return raw;
-  return KIND_KEY.test(raw) ? raw : DEFAULT_CATALOG_KIND;
+  return KIND_KEY.test(raw) && isCatalogKindReleased(raw) ? raw : DEFAULT_CATALOG_KIND;
 }
 
 /**
