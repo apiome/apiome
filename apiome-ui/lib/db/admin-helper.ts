@@ -142,6 +142,8 @@ export async function updateUser(
     name?: string;
     verified?: boolean;
     enabled?: boolean;
+    /** Suite Access (V320): shows the Designer and Developer suites. Set only here, per user. */
+    suite_access?: boolean;
   }
 ) {
   try {
@@ -161,6 +163,10 @@ export async function updateUser(
       updateFields.push(`enabled = $${paramIndex++}`);
       values.push(updates.enabled);
     }
+    if (updates.suite_access !== undefined) {
+      updateFields.push(`suite_access = $${paramIndex++}`);
+      values.push(updates.suite_access);
+    }
 
     if (updateFields.length === 0) {
       return errorResponse('No updates provided');
@@ -173,7 +179,7 @@ export async function updateUser(
       `UPDATE apiome.users 
        SET ${updateFields.join(', ')}
        WHERE id = $${paramIndex} AND deleted_at IS NULL
-       RETURNING id, name, email, verified, enabled, updated_at`,
+       RETURNING id, name, email, verified, enabled, suite_access, updated_at`,
       values
     );
 
@@ -1297,7 +1303,7 @@ export async function getAllUsersWithLicenses() {
   try {
     const result = await connectionPool.query(
       `SELECT
-         u.id, u.name, u.email, u.enabled, u.verified,
+         u.id, u.name, u.email, u.enabled, u.verified, u.suite_access,
          u.created_at, u.updated_at, u.last_login_at,
          -- Last active: the later of the last completed sign-in and the newest session refresh
          -- (Better Auth bumps "updatedAt" as a session is used). NULL for an account never used.

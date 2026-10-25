@@ -8,7 +8,8 @@ import {
   type ExternalNavItem,
 } from '../external-links';
 import { getCommercialProductFlagNames } from '../commercial-products';
-import { getEntitledFeatureFlagNames } from './feature-entitlements';
+import { applySuiteAccessToFlags, filterSuiteAccessEntries } from '../suite-access';
+import { getEntitledFeatureFlagNames, userHasSuiteAccess } from './feature-entitlements';
 
 export type CommercialAccessSnapshot = {
   entitledFlags: string[];
@@ -16,7 +17,12 @@ export type CommercialAccessSnapshot = {
   navItems: ExternalNavItem[];
 };
 
-/** Licensed commercial products for the signed-in user (home grid + top nav). */
+/**
+ * Licensed commercial products for the signed-in user (home grid + top nav).
+ *
+ * The Designer and Developer suites also need the user's Suite Access (`users.suite_access`,
+ * see `lib/suite-access.ts`); a license alone no longer shows them.
+ */
 export async function getCommercialAccessForSession(): Promise<CommercialAccessSnapshot> {
   const session = await getAuthSession();
   const user = session?.user as { user_id?: string; current_tenant_id?: string } | undefined;
@@ -27,16 +33,16 @@ export async function getCommercialAccessForSession(): Promise<CommercialAccessS
     return { entitledFlags: [], homeCards: [], navItems: [] };
   }
 
-  const entitledFlags = await getEntitledFeatureFlagNames(
-    userId,
-    tenantId,
-    getCommercialProductFlagNames()
-  );
+  const [licensedFlags, suiteAccess] = await Promise.all([
+    getEntitledFeatureFlagNames(userId, tenantId, getCommercialProductFlagNames()),
+    userHasSuiteAccess(userId),
+  ]);
+  const entitledFlags = applySuiteAccessToFlags(licensedFlags, suiteAccess);
   const flagSet = new Set(entitledFlags);
 
   return {
     entitledFlags,
-    homeCards: getCommercialHomeCards(flagSet),
-    navItems: getCommercialNavItems(flagSet),
+    homeCards: filterSuiteAccessEntries(getCommercialHomeCards(flagSet), suiteAccess),
+    navItems: filterSuiteAccessEntries(getCommercialNavItems(flagSet), suiteAccess),
   };
 }

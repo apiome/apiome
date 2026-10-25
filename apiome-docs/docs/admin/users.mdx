@@ -35,7 +35,8 @@ approve.
 ## Find and manage an account
 
 The list shows every account with its **License**, **Status**, **Created** date and **Last active**
-time. **Status** shows two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
+time. **Status** shows two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**,
+plus a **Suite** badge for an account with [Suite Access](#give-a-user-suite-access).
 
 **Last active** is the later of two times: the account's last completed sign-in, by any method, and
 the last time one of its sessions was refreshed while in use. A sign-in that is still waiting for its
@@ -44,16 +45,31 @@ Hover over a **Created** date to see the time.
 
 **Click the ⋮ button** on a row for its actions:
 
-<Screenshot id="admin-users-menu" alt="A user's actions: Mark Unverified, Disable User, the license list, Manage Feature Flags and Delete User" />
+<Screenshot id="admin-users-menu" alt="A user's actions: Mark Unverified, Disable User, Grant Suite Access, the license list, Manage Feature Flags and Delete User" />
 
 | Action | Effect |
 | --- | --- |
 | **Mark Verified** / **Mark Unverified** | Sets whether the email counts as verified. An unverified account cannot sign in. |
 | **Disable User** / **Enable User** | A disabled account cannot sign in. Nothing is deleted. |
+| **Grant Suite Access** / **Remove Suite Access** | Shows or hides the **Designer** and **Developer** suites for this user — see [Give a user Suite Access](#give-a-user-suite-access). |
 | **Assign License…** | Opens the list of enabled licenses; **click one** to assign it, replacing any license the user had. **Remove License** appears when the user has one. See [Licenses](./licenses.mdx). |
 | **Manage Feature Flags…** | Opens **Feature Flags** for this user — the flags their license grants, and per-user overrides. **Click “Done”** to close it. See [Feature flags](./feature-flags.mdx). |
 | **Reset two-factor…** | Shown for a user who has two-factor on. Clears it so they can sign in again — see [Reset a user's two-factor](#reset-a-users-two-factor). |
 | **Delete User** | Deletes the account — see below. |
+
+## Give a user Suite Access
+
+**Designer** and **Developer** are beta, commercial suites. Nobody sees them — in the **Build**
+section of the sidebar, on the launcher, or as the catalog's **“Open in Designer”** button — until
+you give them **Suite Access**. A new account starts without it, whatever its license.
+
+1. **Click the ⋮ button** on the user's row.
+2. **Click “Grant Suite Access”.** A **Suite** badge appears under **Status**.
+
+The user sees the suites the next time a page loads. To take it away, **click “Remove Suite Access”**.
+
+Suite Access is set only here, one user at a time. A license, a workspace's feature flags or a
+per-user `designer` or `paths` override doesn't grant it, so don't give it to free accounts.
 
 ## Create an account
 

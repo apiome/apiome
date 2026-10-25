@@ -17,6 +17,7 @@ import {
   Flag,
   Plus,
   ShieldOff,
+  Layers,
   X,
 } from 'lucide-react';
 import {
@@ -41,6 +42,8 @@ interface User {
   email: string;
   verified: boolean;
   enabled: boolean;
+  /** Suite Access (`users.suite_access`): shows the Designer and Developer suites. */
+  suite_access?: boolean | null;
   created_at: string;
   updated_at: string;
   /** Last completed sign-in (`users.last_login_at`); null when never recorded. */
@@ -259,6 +262,23 @@ export default function UserManagementClient() {
     } catch (error) {
       console.error('Error updating user:', error);
       showMessage('error', 'Failed to update user');
+    }
+  };
+
+  const handleToggleSuiteAccess = async (user: User) => {
+    try {
+      const result = await updateUser(user.id, { suite_access: !user.suite_access });
+      const data = JSON.parse(result);
+
+      if (data.success) {
+        showMessage('success', `Suite Access ${user.suite_access ? 'removed' : 'granted'}`);
+        await loadData();
+      } else {
+        showMessage('error', data.error || 'Failed to update Suite Access');
+      }
+    } catch (error) {
+      console.error('Error updating Suite Access:', error);
+      showMessage('error', 'Failed to update Suite Access');
     }
   };
 
@@ -502,6 +522,15 @@ export default function UserManagementClient() {
                               Disabled
                             </span>
                           )}
+                          {user.suite_access && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-violet-600/20 text-violet-400 text-xs rounded"
+                              data-testid="admin-user-suite-access"
+                            >
+                              <Layers className="w-3 h-3" />
+                              Suite
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
@@ -587,6 +616,17 @@ export default function UserManagementClient() {
                                         Enable User
                                       </>
                                     )}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setOpenUserDropdown(null);
+                                      handleToggleSuiteAccess(user);
+                                    }}
+                                    data-testid={`admin-toggle-suite-access-${user.id}`}
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                  >
+                                    <Layers className="w-4 h-4 text-violet-400" />
+                                    {user.suite_access ? 'Remove Suite Access' : 'Grant Suite Access'}
                                   </button>
 
                                   <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">

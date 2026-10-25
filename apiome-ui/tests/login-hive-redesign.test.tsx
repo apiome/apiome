@@ -165,12 +165,13 @@ describe('login page — the auth card', () => {
     expect(screen.getByTestId('login-card')).toHaveClass('auth-card');
   });
 
-  it('leads with the mode heading, its sub, and the intro-video link', () => {
+  it('leads with the mode heading, its sub, and the YouTube channel link', () => {
     render(<LoginClient ssoProviders={PROVIDERS} />);
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Welcome back');
     expect(screen.getByText('Sign in to continue to your workspace')).toBeInTheDocument();
-    const video = screen.getByRole('link', { name: /Watch our intro video/ });
+    const video = screen.getByRole('link', { name: /Explore our YouTube/ });
+    expect(video).toHaveAttribute('href', 'https://www.youtube.com/@apiomedev');
     expect(video).toHaveAttribute('target', '_blank');
     expect(video).toHaveAttribute('rel', expect.stringContaining('noopener'));
   });

@@ -37,8 +37,9 @@ answer:
 | **Repositories** | `repositories` | yes | Paid, Sponsor |
 | **Primitives Type Registry** | `primitives-registry` | yes | Paid, Sponsor |
 
-`designer` and `paths` are **commercial applications**: they decide which apps a person sees on the
-home page and in the top navigation. The type registry is only enforced when the REST API runs with
+`designer` and `paths` belong to the **Designer** suite, a commercial application. They no longer
+decide whether a person sees it: the user's [Suite Access](./users.mdx#give-a-user-suite-access)
+does, and gives them both flags for the suite. The type registry is only enforced when the REST API runs with
 `APIOME_PRIMITIVES_REGISTRY_GATING=true`; by default every tenant reaches it.
 
 ## Create or edit a flag

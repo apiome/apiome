@@ -91,7 +91,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 **Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
 **“Convert to OpenAPI Project”** (**“Convert to Project”** for an OpenAPI or Arazzo item,
 **“Re-convert…”** once it has been converted), **“Export”** and **“View code”** — plus **“Open in Designer”**
-when your workspace has the Designer suite (see [View an item in Designer](#view-an-item-in-designer)).
+when you have [Suite Access](../admin/users.mdx#give-a-user-suite-access) (see [View an item in Designer](#view-an-item-in-designer)).
 Eight tabs follow:
 
 | Tab | Shows |
@@ -139,7 +139,7 @@ marked *Derived from the format*.
 
 ## View an item in Designer
 
-When your workspace has the **Designer** suite, **click “Open in Designer”** on an item's page to
+When you have [Suite Access](../admin/users.mdx#give-a-user-suite-access), **click “Open in Designer”** on an item's page to
 open it in [Studio](../build/studio.mdx) — **read-only**. A catalog item is incomplete and cannot
 be published, so Designer shows it without any way to change it:
 
@@ -151,7 +151,7 @@ be published, so Designer shows it without any way to change it:
 To edit the item, convert it: **click “Open in Catalog”** in Designer to come back here, then
 **“Convert to OpenAPI Project”**. The converted project opens in Designer like any other project.
 
-The button is hidden for a deleted item, and for a workspace without Designer. Designer's address
+The button is hidden for a deleted item, and for anyone without Suite Access. Designer's address
 is `/catalog/{id}`; `?tab=source` opens it on **Raw source**.
 
 ## Convert to OpenAPI
