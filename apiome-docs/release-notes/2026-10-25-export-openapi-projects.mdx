@@ -1,0 +1,19 @@
+---
+slug: export-openapi-projects
+title: Export works for OpenAPI projects
+description: The Export dialog no longer fails for projects imported from OpenAPI or converted from the Catalog.
+authors: [apiome]
+---
+
+**Export to another format…** on **Versions** now works for every project. Before this fix, it
+failed for projects imported from OpenAPI or Swagger, and for projects converted from a catalog item.
+Those projects showed *Couldn't load the export targets* with a message about re-importing.
+
+{/* truncate */}
+
+- **Why:** export read the document captured at import. An OpenAPI import is split into classes and
+  paths and doesn't keep that text, so there was nothing to read.
+- **What changes:** for those versions, Apiome rebuilds the version's OpenAPI document (the one the
+  spec viewer shows) and exports from it.
+- **Unchanged:** versions imported from other formats, such as GraphQL, Protobuf and RAML, still
+  export from their original document.

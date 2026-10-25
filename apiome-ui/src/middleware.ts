@@ -11,7 +11,7 @@
  * - When `FEATURE_GITLIKE === false`: respond `404 Not Found` for any
  *   git-like API path. Read-only and non-git-like routes (auth, classes,
  *   properties, paths, primitives, snapshot, sso, projects, migrations,
- *   `GET /api/versions`, `GET|PUT /api/versions/[id]`, sunset-timeline,
+ *   `GET|POST /api/versions`, `GET|PUT /api/versions/[id]`, sunset-timeline,
  *   etc.) are passed through unchanged.
  *
  * To re-enable git-like APIs, flip `FEATURE_GITLIKE` in `lib/feature-flags.ts`.
