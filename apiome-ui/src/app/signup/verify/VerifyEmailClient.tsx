@@ -93,12 +93,14 @@ export default function VerifyEmailClient({ token, initialResult }: VerifyEmailC
     setBusy(false);
     setResult(redeemed);
     if (redeemed.state === 'valid') {
-      const outcome = await signIn('credentials', {
+      // `signIn` resolves with nothing and navigates itself: to AFTER_VERIFY on success, to the login
+      // error page on a refused code. Only a thrown error leaves the person here to sign in by hand.
+      // (Treating the empty result as a failure flashed "We could not sign you in" on every sign-up.)
+      await signIn('credentials', {
         payload: JSON.stringify({ oneTimeCode: redeemed.oneTimeCode }),
         callbackUrl: AFTER_VERIFY,
         redirect: true,
-      }).catch(() => null);
-      if (!outcome || (outcome as { error?: unknown }).error) setSignInFailed(true);
+      }).catch(() => setSignInFailed(true));
     }
   };
 
