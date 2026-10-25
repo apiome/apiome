@@ -43,6 +43,10 @@ interface User {
   enabled: boolean;
   created_at: string;
   updated_at: string;
+  /** Last completed sign-in (`users.last_login_at`); null when never recorded. */
+  last_login_at?: string | null;
+  /** The later of the last sign-in and the newest session refresh; null for an unused account. */
+  last_active_at?: string | null;
   license_id: string | null;
   license_name: string | null;
   license_type: string | null;
@@ -290,14 +294,17 @@ export default function UserManagementClient() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  /** A row's date, or `fallback` when it is missing or unparseable (never "Invalid Date"). */
+  const formatDate = (dateString: string | null | undefined, fallback = '—', withTime = true) => {
+    if (!dateString) return fallback;
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+      ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+    } as Intl.DateTimeFormatOptions);
   };
 
   return (
@@ -421,22 +428,25 @@ export default function UserManagementClient() {
               <table className="w-full">
                 <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       License
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Last active
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -444,7 +454,7 @@ export default function UserManagementClient() {
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {users.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center">
                             <span className="text-red-400 text-sm font-medium">
@@ -454,13 +464,13 @@ export default function UserManagementClient() {
                           <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {user.license_name && user.license_type ? (
                           <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide ${LICENSE_TYPE_COLORS[user.license_type] ?? 'bg-gray-700 text-gray-200'}`}>
                             <Award className="w-3 h-3" />
@@ -470,7 +480,7 @@ export default function UserManagementClient() {
                           <span className="text-xs text-gray-400 dark:text-gray-600 italic">No license</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {user.verified ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded">
@@ -494,12 +504,23 @@ export default function UserManagementClient() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(user.created_at)}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span
+                          className="text-sm text-gray-500 dark:text-gray-400"
+                          title={formatDate(user.created_at, '')}
+                        >
+                          {formatDate(user.created_at, '—', false)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span
+                          className="text-sm text-gray-500 dark:text-gray-400"
+                          data-testid="admin-user-last-active"
+                        >
+                          {formatDate(user.last_active_at ?? user.last_login_at, 'Never')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="relative inline-block">
                           <button
                             onClick={(e) => {

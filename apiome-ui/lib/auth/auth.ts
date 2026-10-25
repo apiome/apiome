@@ -20,6 +20,7 @@ import {
 } from './better-auth-credentials';
 import { oauthResolutionHandler } from './better-auth-account-resolution';
 import { oneTimeCodePlugin } from './better-auth-one-time-code';
+import { lastSignInPlugin } from './last-sign-in';
 import {
   applyOauthRedirectOverride,
   buildGenericOAuthConfigs,
@@ -254,6 +255,9 @@ function buildBetterAuthConfig(
         : {}),
     }),
     oneTimeCodePlugin(),
+    // Records each completed sign-in on `users.last_login_at`. It must stay after `twoFactor`, so a
+    // sign-in waiting on its second factor is not counted (`last-sign-in.ts`).
+    lastSignInPlugin(),
     // Enterprise SSO (EID-1.1 #5011): a workspace's own SAML 2.0 / OIDC IdP. Providers come only from
     // `defaultSSO` — apiome's enabled providers × verified domains (`sso-provider-resolver.ts`) — so
     // `domainVerification` marks each verified, the plugin's own model is an empty view, and its

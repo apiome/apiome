@@ -15,7 +15,7 @@ tags: [admin, legacy, users]
 This is the installation-wide account list. To manage who belongs to *one* workspace and with which
 role, use [Members & seats](../workspace/members.mdx) in the app, or [Tenants](./admin-tenants.mdx) here.
 
-<Screenshot id="admin-users" alt="Users: three cards, then five accounts with license, verified and enabled badges, and creation date" />
+<Screenshot id="admin-users" alt="Users: three cards, then five accounts with license, verified and enabled badges, creation date and last active time, one of them Never" />
 
 The three cards at the top are live:
 
@@ -34,8 +34,13 @@ approve.
 
 ## Find and manage an account
 
-The list shows every account with its **License**, **Status** and **Created** date. **Status** shows
-two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
+The list shows every account with its **License**, **Status**, **Created** date and **Last active**
+time. **Status** shows two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
+
+**Last active** is the later of two times: the account's last completed sign-in, by any method, and
+the last time one of its sessions was refreshed while in use. A sign-in that is still waiting for its
+second factor doesn't count. An account no one has signed in to reads **Never**.
+Hover over a **Created** date to see the time.
 
 **Click the ⋮ button** on a row for its actions:
 
