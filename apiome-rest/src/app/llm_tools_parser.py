@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
+from .document_markers import top_level_api_marker
 from .intake_resource_guard import IntakeLimitError, guard_document_text, guard_parsed_document
 
 __all__ = [
@@ -176,6 +177,10 @@ def is_llm_tools(content: str) -> bool:
     if not content or not isinstance(content, str) or not content.strip():
         return False
     if "\x00" in content[:256]:
+        return False
+    # An OpenAPI / Swagger document is never a tool bundle, and parsing a large one in full
+    # just to find that out cost tens of seconds per detection pass.
+    if top_level_api_marker(content) is not None:
         return False
     try:
         document = _loads_document(content)

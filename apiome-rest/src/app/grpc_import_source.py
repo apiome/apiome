@@ -62,6 +62,7 @@ from typing import Any, Mapping, Optional, Sequence, Tuple
 # :meth:`GrpcImportSource.normalize` resolves through the normalizer registry.
 from . import proto_normalizer  # noqa: F401
 from .canonical_model import ApiParadigm, CanonicalApi
+from .document_markers import looks_like_structured_document
 from .fileset import IntakeFileset
 from .import_source import (
     NO_MATCH,
@@ -287,16 +288,19 @@ class GrpcImportSource(ImportSource, register=True):
                 return DetectionResult(
                     confidence=0.97, format="protobuf", reason="`syntax` proto marker"
                 )
-            if "edition = " in text and ("message " in text or "service " in text):
-                return DetectionResult(
-                    confidence=0.95,
-                    format=EDITIONS_FORMAT_KEY,
-                    reason="Protobuf Editions marker",
-                )
-            if any(marker in text for marker in _PROTO_MARKERS):
-                return DetectionResult(
-                    confidence=0.7, format="protobuf", reason="Protobuf definition keyword"
-                )
+            # Past the explicit `syntax` marker, the rules below are bare keywords. A JSON or
+            # YAML document mentioning a "service" or a "message" in its prose is not Protobuf.
+            if not looks_like_structured_document(text):
+                if "edition = " in text and ("message " in text or "service " in text):
+                    return DetectionResult(
+                        confidence=0.95,
+                        format=EDITIONS_FORMAT_KEY,
+                        reason="Protobuf Editions marker",
+                    )
+                if any(marker in text for marker in _PROTO_MARKERS):
+                    return DetectionResult(
+                        confidence=0.7, format="protobuf", reason="Protobuf definition keyword"
+                    )
 
         filename = (payload.filename or "").lower()
         if filename.endswith(".proto"):

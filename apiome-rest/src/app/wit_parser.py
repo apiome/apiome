@@ -31,6 +31,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
+from .document_markers import looks_like_structured_document
+
 __all__ = [
     "WitParseError",
     "WitUse",
@@ -245,10 +247,17 @@ def is_wit(content: str) -> bool:
     """
     if not content or not isinstance(content, str):
         return False
+    # A JSON or YAML document is never WIT. Checked before stripping comments: a data
+    # document's `std/*` or `*/*` opens a "block comment" that never closes, blanking the rest
+    # of the text into whitespace.
+    if looks_like_structured_document(content):
+        return False
     cleaned = _strip_comments(content)
     if not cleaned.strip():
         return False
-    if re.search(rf"^\s*package\s+{_ID}:{_ID}", cleaned, re.MULTILINE):
+    # `[ \t]*`, not `\s*`: under MULTILINE a `\s*` after `^` crosses newlines, so every line of
+    # a long whitespace run rescans the rest of it — quadratic on a large input.
+    if re.search(rf"^[ \t]*package\s+{_ID}:{_ID}", cleaned, re.MULTILINE):
         return True
     has_block = re.search(rf"\b(world|interface)\s+{_ID}\s*\{{", cleaned)
     if not has_block:

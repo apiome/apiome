@@ -12,8 +12,9 @@ git fetchers so a caller (or a test) can mock a single, well-defined boundary.
 """
 
 import json
+import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlparse
 
 import httpx
@@ -96,6 +97,41 @@ def parse_document(text: str, *, source_label: Optional[str] = None) -> Dict[str
     if text is None or not text.strip():
         raise IngestionError("Source document is empty")
 
+    # Format detection hands the same text to every adapter, and each one that reads a parsed
+    # document calls here. A document that fails — over an intake limit, or malformed — fails
+    # the same way every time, and on a multi-megabyte spec each attempt costs seconds, so the
+    # last failure is remembered briefly for the same text. Successes are not cached: callers
+    # may mutate the mapping.
+    cached = _LAST_FAILURE
+    if (
+        cached is not None
+        and time.monotonic() - cached[1] < _FAILURE_MEMO_SECONDS
+        and len(cached[0]) == len(text)
+        and cached[0] == text
+    ):
+        raise cached[2].with_traceback(None)
+    try:
+        return _parse_document_uncached(text, source_label=source_label)
+    except (IngestionError, IntakeLimitError) as exc:
+        _remember_failure(text, exc)
+        raise
+
+
+#: How long a failed parse is remembered. Long enough to cover one detection pass over every
+#: adapter; short enough that a change to the intake limits is seen on the next request.
+_FAILURE_MEMO_SECONDS = 30.0
+
+#: ``(text, monotonic time, error)`` of the most recent failed parse; see :func:`parse_document`.
+_LAST_FAILURE: Optional[Tuple[str, float, Exception]] = None
+
+
+def _remember_failure(text: str, exc: Exception) -> None:
+    global _LAST_FAILURE
+    _LAST_FAILURE = (text, time.monotonic(), exc)
+
+
+def _parse_document_uncached(text: str, *, source_label: Optional[str]) -> Dict[str, Any]:
+    """:func:`parse_document`'s body, without the failure memo."""
     guard_document_text(text, source_label=source_label)
 
     parsed: Any

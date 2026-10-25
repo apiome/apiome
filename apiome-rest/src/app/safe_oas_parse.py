@@ -332,8 +332,20 @@ def yaml_alias_expansion_cost(text: str, max_alias_count: int) -> Tuple[int, int
         when the stream is not valid YAML, in which case the counts are partial
         and the caller should fall through to its own syntax handling.
     """
+    # A pure function of its inputs, and format detection runs it once per adapter on the same
+    # text — about ten seconds a time on a multi-megabyte spec. The last answer is kept.
+    global _LAST_ALIAS_SCAN
+    cached = _LAST_ALIAS_SCAN
+    if cached is not None and cached[1] == max_alias_count and cached[0] == text:
+        return cached[2]
     document_count, alias_cost, diagnostic = _count_yaml_stream(text, max_alias_count)
-    return document_count, alias_cost, diagnostic is not None
+    result = (document_count, alias_cost, diagnostic is not None)
+    _LAST_ALIAS_SCAN = (text, max_alias_count, result)
+    return result
+
+
+#: ``(text, max_alias_count, result)`` of the last :func:`yaml_alias_expansion_cost` call.
+_LAST_ALIAS_SCAN: Optional[Tuple[str, int, Tuple[int, int, bool]]] = None
 
 
 def analyze_nesting(root: Any) -> Tuple[int, bool]:
