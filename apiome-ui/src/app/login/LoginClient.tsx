@@ -107,11 +107,17 @@ const LoginClient: React.FC<LoginClientProps> = ({
     e.preventDefault();
     setSignInEnabled(false);
     // Sign-up has its own page (`/signup`, SGN-1.2); this form only signs in.
+    // `signIn` navigates on every outcome (the destination, the second-factor step, or this page
+    // with `?error=`), so the button stays off while the browser leaves. Re-enabling it when the
+    // promise settled let a second click land mid-navigation. Only a thrown error keeps us here.
     signIn('credentials', {
       payload: JSON.stringify(payload),
       callbackUrl,
       redirect: true,
-    }).finally(() => setSignInEnabled(true));
+    }).catch((error: unknown) => {
+      console.error('Sign-in error:', error);
+      setSignInEnabled(true);
+    });
   };
 
   const handleSSOLogin = async (provider: string) => {
