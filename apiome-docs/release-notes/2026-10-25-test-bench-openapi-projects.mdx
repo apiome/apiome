@@ -1,0 +1,20 @@
+---
+slug: test-bench-openapi-projects
+title: "Test bench and schema validation work on OpenAPI projects"
+description: The Test bench schema picker lists an OpenAPI project's own schemas again, and validation, payload generation and schema suites reach them.
+authors: [apiome]
+---
+
+On a version of an OpenAPI project, the **Test bench** schema picker now lists the project's own
+schemas instead of only the registry primitives.
+
+{/* truncate */}
+
+- **What was wrong:** OpenAPI imports are split into classes and paths and keep no copy of the
+  original document. Every schema reader asked for that copy, got none, and failed with *no
+  captured source material* — so the picker showed only primitives, and validating, generating a
+  payload, schema suites and contract suites failed for any OpenAPI project.
+- **What changed:** when an OpenAPI revision has no stored document, it is rebuilt from the
+  project's classes and paths, the way the spec viewer and Export already do. The published Browse
+  export of a public OpenAPI version uses the same rebuild.
+- Catalog items and projects imported from other formats are unchanged.
