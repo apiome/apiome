@@ -1,6 +1,6 @@
 # MVP launch — the weekend plan
 
-> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-25 15:35 UTC (see the table below) ·
+> **Written:** Saturday 2026-10-24 · **Status updated:** 2026-10-25 16:40 UTC (see the table below) ·
 > **Target:** launch the first MVP (RC6) by **Sunday 2026-10-25**.
 > **Scope:** RC6 as defined in [`RC6_OOE.md`](RC6_OOE.md) — Catalog, Projects (with Versions),
 > sign-in and sign-up. Nothing else ships; held-back features stay behind
@@ -14,7 +14,7 @@ Work top to bottom. A **gate** row must be green before the next phase starts. D
 step are under [Order of execution](#order-of-execution); blockers **B1–B9** are described under
 [Blockers](#blockers).
 
-**Last updated:** 2026-10-25, 15:35 UTC.
+**Last updated:** 2026-10-25, 16:40 UTC.
 
 **Status key:** ✅ Done · 🔄 In progress · ⏳ Waiting on you · ⬜ Not started
 
@@ -34,7 +34,7 @@ step are under [Order of execution](#order-of-execution); blockers **B1–B9** a
 | 12 | ✅ | Sat night | Serve the CLI installer at `get.apiome.dev` with a valid certificate | B5 | You | the install one-liner works on a clean machine | Done 2026-10-24: `https://get.apiome.dev` serves `install.sh` over a valid certificate; `deploy/get-apiome/get-apiome-installer.sh` (#6265) refreshes it from `main` |
 | 13 | ✅ | Sun morning | **Gate 2:** staging run of the full release journey | — | You | every step passes, recorded in `RC6_OOE.md` §7 | Passed 2026-10-25 on a clean staging stack built from `main`, including the sign-up confirmation step (password); recorded in `RC6_OOE.md` §7 |
 | 14 | ✅ | Sun morning | Bug bar: both §7.1 queries return 0 | — | You | 0 and 0 | Both returned 0 on 2026-10-25 at 15:40 UTC; the only open bugs (#6274, #6278) are `sev:medium`, in RC7 and in `RC6_OOE.md` §7.2 |
-| 15 | ⏳ | Sun morning | Tag `RC6`; merge the release-notes PR it opens; close the `RC6` milestone | — | You | RC6 post published | Ready to tag once the release-prep PR merges and its catalog journey passes; see step 15 below |
+| 15 | ✅ | Sun | Tag `RC6`; merge the release-notes PR it opens; close the `RC6` milestone | — | You | RC6 post published | Tagged at `42453d627` on 2026-10-25 after #6324's catalog journey passed. The workflow pushed `release-notes/RC6` but could not open the PR (Actions may not create PRs here) and dropped the milestone link (no `gh` on the runner); the post was regenerated with `--milestone 6` and opened by hand. Milestone 6 closed after merge |
 | 16 | ⬜ | Sun | First production deploy at `RC6` (migrate, bootstrap admin, backups) | — | You | `PRODUCTION_DEPLOY.md` §4–§6 done | Migrations through **V318** |
 | 17 | ⬜ | Sun | **Gate 3:** production smoke test of the release journey | — | You | every step passes | |
 | 18 | ⬜ | Sun | Set the sign-up policy to **open** (or **invite-only** for a soft launch) | — | You | strangers can sign up | |
@@ -155,6 +155,9 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
       the post reads "Apiome 10-2026 RC6" and links milestone 6. `apiome-rest/CHANGELOG.md` had
       no entries for 1.449.1–1.449.3 (#6277, #6319, #6320), so the post would have stopped at
       1.449.0. They are added in the RC6 release-prep PR.
+    - **Done 2026-10-25.** Two workflow gaps surfaced and are worth fixing before RC7: the
+      repository setting blocks GitHub Actions from creating pull requests, and the self-hosted
+      runner has no `gh`, so the milestone lookup silently returns nothing.
 
 ### Phase 5 — Sunday: launch
 
@@ -190,5 +193,5 @@ Each step lists what "done" looks like. Do not start a phase until the previous 
 - [x] B5 `get.apiome.dev` installs the CLI
 - [x] Staging release journey passes (2026-10-25)
 - [x] Bug bar returns 0 (2026-10-25)
-- [ ] `RC6` tagged; release-notes PR merged
+- [x] `RC6` tagged; release-notes PR merged
 - [ ] Production deployed, smoke-tested, sign-up policy set
