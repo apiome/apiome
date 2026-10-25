@@ -43,20 +43,22 @@ This document outlines the planned features, improvements, and enhancements for 
 - [ ] Jump to error location in editor
 
 ### 1.3 Enhanced Search
-**Status:** Planned  
+**Status:** Shipped (browse retail search, October 2026) — further work is tracked in
+`docs/ROADMAP_BROWSE_RETAIL_SEARCH.md`  
 **Description:** Improve search capabilities with advanced filtering and better results.
 
-- [ ] Full-text search within specification content
-- [ ] Filter by date range (published date)
-- [ ] Search suggestions/autocomplete
-- [ ] Search history (recent searches)
-- [ ] Highlight search terms in results
+- ✅ Search within specification content (operations, parameters, bodies, responses, schemas, properties)
+- ✅ Filter by date range (published date) — `after:` / `before:` and the rail
+- ✅ Search suggestions/autocomplete — the ⌘K palette
+- ✅ Search history (recent searches)
+- ✅ Highlight search terms in results
+- ✅ Query operators (`method:`, `path:`, `org:`, `type:`, …), facets, scope tabs, sort, paging, shareable URLs
 
 ### 1.4 Keyboard Shortcuts
 **Status:** Planned  
 **Description:** Add keyboard navigation and shortcuts for power users.
 
-- [ ] `⌘/Ctrl + K` - Quick search (global)
+- ✅ `⌘/Ctrl + K` and `/` - Quick search palette (global)
 - [ ] `⌘/Ctrl + F` - Search within specification
 - [ ] `⌘/Ctrl + G` - Go to line
 - [ ] `⌘/Ctrl + D` - Download specification

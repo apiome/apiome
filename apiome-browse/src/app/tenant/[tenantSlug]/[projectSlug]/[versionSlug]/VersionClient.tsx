@@ -107,6 +107,21 @@ export function VersionClient({
     setFormat(nextFormat);
   }, []);
 
+  // A deep link (a search result, a shared URL) names an anchor the spec has not rendered when the
+  // page loads, so the browser's own hash jump finds nothing. Re-run it once the spec is in.
+  useEffect(() => {
+    if (!spec) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const id = requestAnimationFrame(() => {
+      const el = document.getElementById(hash);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setActiveAnchor(hash);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [spec]);
+
   const onSelectAnchor = useCallback((anchorId: string) => {
     setActiveAnchor(anchorId);
     const el = document.getElementById(anchorId);

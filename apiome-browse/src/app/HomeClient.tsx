@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import type { BrowseFacetAxis, BrowseFacetSelection } from '../../lib/browseFacets';
@@ -21,7 +22,25 @@ import { DataTable } from './components/DataTable';
 import { DiscoveryRail } from './components/DiscoveryRail';
 import { FacetFilter, FacetValueChips } from './components/FacetFilter';
 import { SpecCard } from './components/SpecCard';
-import { sanitizeSearchInput } from './utils/searchValidation';
+import { SearchBox } from './components/search/SearchBox';
+import { OperatorChips } from './components/search/SyntaxHelp';
+import { MethodBadge } from './components/search/httpMethodTone';
+import { pushRecentSearch } from './components/search/searchPaletteBus';
+import { toSearchParams, type SearchUrlState } from '../../lib/search/params';
+
+const HERO_EXAMPLES: { label: string; q: string }[] = [
+  { label: 'POST operations', q: 'method:POST' },
+  { label: 'Order schemas', q: 'type:schema order' },
+  { label: 'Payments', q: 'payments' },
+  { label: 'Webhooks', q: '"webhook"' },
+];
+
+const HERO_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+function searchUrl(state: SearchUrlState): string {
+  const qs = toSearchParams(state);
+  return qs ? `/search?${qs}` : '/search';
+}
 
 interface Tenant {
   id: string;
@@ -112,11 +131,15 @@ export function HomeClient({
   const filteredTenants = useMemo(() => filterByFacets(tenants, facets), [tenants, facets]);
   const facetsActive = hasFacetSelection(facets);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = () => {
     const q = query.trim();
-    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
-    else router.push('/search');
+    if (q) pushRecentSearch(q);
+    router.push(searchUrl(q ? { q } : {}));
+  };
+
+  const insertOperator = (operator: string) => {
+    const base = query.trimEnd();
+    setQuery(operator === '"phrase"' ? `${base} ""`.trimStart() : operator === '-word' ? `${base} -`.trimStart() : `${base} ${operator}`.trimStart());
   };
 
   return (
@@ -164,32 +187,35 @@ export function HomeClient({
               .
             </p>
 
-            <form onSubmit={onSubmit} className="mx-auto mt-7 flex max-w-2xl items-center gap-2">
-              <div className="relative flex-1">
-                <svg
-                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.75}
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
-                  placeholder="Search paths, schemas, projects, organizations…"
-              className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-12 pr-4 text-[15px] text-zinc-900 placeholder-zinc-400 shadow-sm transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
-                />
+            <div className="mx-auto mt-7 max-w-2xl space-y-3 text-left">
+              <SearchBox
+                value={query}
+                onChange={setQuery}
+                onSubmit={onSubmit}
+                placeholder="Search operations, schemas, projects, organizations…"
+                label="Search the public catalog"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Try</span>
+                  {HERO_EXAMPLES.map((ex) => (
+                    <button
+                      key={ex.q}
+                      type="button"
+                      onClick={() => {
+                        pushRecentSearch(ex.q);
+                        router.push(searchUrl({ q: ex.q }));
+                      }}
+                      className="rounded-full border border-zinc-200 bg-white/80 px-2.5 py-0.5 text-[12px] text-zinc-600 shadow-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300"
+                      title={ex.q}
+                    >
+                      {ex.label}
+                    </button>
+                  ))}
+                </div>
+                <OperatorChips onInsert={insertOperator} compact />
               </div>
-              <button
-                type="submit"
-                className="h-12 shrink-0 rounded-xl bg-[var(--brand)] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[var(--brand-hover)]"
-              >
-                Search
-              </button>
-            </form>
+            </div>
           </div>
         </AppShell>
       </section>
@@ -197,10 +223,88 @@ export function HomeClient({
       {/* Discovery rails */}
       <AppShell containerSize="wide">
         <div className="space-y-10 py-10">
+          {/* Browse by: one click into a filter-only search */}
+          <section aria-labelledby="browse-by-heading" className="space-y-3">
+            <div>
+              <h2 id="browse-by-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                Browse by
+              </h2>
+              <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+                Every tile is a search — add words or filters once you are there.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Link
+                href={searchUrl({ type: 'operation' })}
+                className="group flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-800"
+              >
+                <div className="hex flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 text-emerald-700 dark:text-emerald-300">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[15px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">Operations</div>
+                  <p className="mt-0.5 text-[13px] text-zinc-600 dark:text-zinc-400">Every endpoint across the latest published versions, by method and path.</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5" aria-label="By HTTP method">
+                    {HERO_METHODS.map((m) => (
+                      <span key={m} className="pointer-events-none">
+                        <MethodBadge method={m} size="sm" />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href={searchUrl({ type: 'schema' })}
+                className="group flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-800"
+              >
+                <div className="hex flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-violet-500/25 to-violet-500/5 text-violet-700 dark:text-violet-300">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[15px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">Schemas &amp; models</div>
+                  <p className="mt-0.5 text-[13px] text-zinc-600 dark:text-zinc-400">Data models and their properties, searchable by name, description and field.</p>
+                </div>
+              </Link>
+              <Link
+                href={searchUrl({ scope: 'catalog', type: 'version', all: '1' })}
+                className="group flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-800"
+              >
+                <div className="hex flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a3 3 0 11-6 0 3 3 0 016 0zM6 21l5-5m0 0l5 5m-5-5V3" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[15px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">Versions &amp; release notes</div>
+                  <p className="mt-0.5 text-[13px] text-zinc-600 dark:text-zinc-400">Every published version, newest first, with its notes and changelog.</p>
+                </div>
+              </Link>
+            </div>
+            {(paradigmOptions.length > 0 || formatOptions.length > 0) && (
+              <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+                <span className="mr-1 font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Or by</span>
+                {paradigmOptions.map((o) => (
+                  <Link key={`p-${o.value}`} href={searchUrl({ paradigm: o.value })} className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-600 shadow-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    {o.label} <span className="tabular-nums text-zinc-400">{o.count}</span>
+                  </Link>
+                ))}
+                {formatOptions.slice(0, 8).map((o) => (
+                  <Link key={`f-${o.value}`} href={searchUrl({ format: o.value })} className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-600 shadow-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    {o.label} <span className="tabular-nums text-zinc-400">{o.count}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
           <DiscoveryRail
             title="Recently published"
             description="Latest version updates across the directory."
-            seeAllHref="/search"
+            seeAllHref={searchUrl({ scope: 'catalog', type: 'version', all: '1' })}
             itemCount={recentVersions.length}
             emptyMessage="No versions have been published yet."
           >

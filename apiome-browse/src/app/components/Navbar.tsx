@@ -3,25 +3,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme, specThemes, SpecTheme, Theme } from './ThemeProvider';
 import { DirectoryStatPills, type DirectoryStats } from './DirectoryStatPills';
+import { openSearchPalette } from './search/searchPaletteBus';
 
 export function Navbar({ stats }: { stats: DirectoryStats }) {
   const pathname = usePathname();
   const { theme, specTheme, setTheme, setSpecTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        window.location.href = '/search';
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
 
   const navItems = [
     { href: '/', label: 'Discover', exact: true },
@@ -80,17 +70,30 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
 
         {/* Right: Search trigger + Tutorials + Login + Settings */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {/* Search trigger (cmd+k) */}
-          <Link
-            href="/search"
-            className="hidden items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:border-sky-300 hover:bg-sky-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-800 dark:hover:bg-zinc-800 lg:flex"
+          {/* Search trigger (⌘K palette) */}
+          <button
+            type="button"
+            onClick={() => openSearchPalette()}
+            className="hidden h-9 w-72 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 text-sm text-zinc-500 transition-colors hover:border-sky-300 hover:bg-sky-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-800 dark:hover:bg-zinc-800 lg:flex xl:w-80"
+            aria-label="Search the catalog"
+            aria-keyshortcuts="Meta+K Control+K /"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span className="text-xs">Search specifications</span>
-            <kbd className="ml-6 rounded border border-zinc-300 bg-white px-1.5 text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">⌘K</kbd>
-          </Link>
+            <span className="min-w-0 flex-1 truncate text-left text-[13px]">Search operations, schemas, projects…</span>
+            <kbd className="rounded border border-zinc-300 bg-white px-1.5 text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">⌘K</kbd>
+          </button>
+          <button
+            type="button"
+            onClick={() => openSearchPalette()}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 lg:hidden"
+            aria-label="Search the catalog"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
 
           {/* Tutorials */}
           <a
