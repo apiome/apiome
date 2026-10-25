@@ -662,7 +662,11 @@ function DataTable<Row>({
                           'group transition-colors duration-[var(--dur-fast)]',
                           // The last row's hairline is the card's own bottom edge.
                           '[&:last-child>td]:border-b-0',
-                          'hover:bg-subtle data-[selected]:bg-accent-soft',
+                          // Hover is azure at 5 % (HIVE-14) — a row that goes somewhere
+                          // answers in the colour of selection; selection itself stays the
+                          // full `accent-soft`. The row's primary link underlines through
+                          // the `tr[data-row-id]:hover .hive-cell-primary a` rule.
+                          'hover:bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] data-[selected]:bg-accent-soft',
                           // The focus ring is the app-wide `*:focus-visible` rule in
                           // globals.css, which is unlayered and beats any utility here.
                           'focus-visible:outline-none',
@@ -789,7 +793,8 @@ function DataTableHeaderCell({
       className={cn(
         TH_CLASS,
         column.align === 'end' && 'text-right',
-        isSorted && 'text-fg',
+        // The sorted column reads in the azure ink: it is a selected state (HIVE-14).
+        isSorted && 'text-accent-fg',
         column.headerClassName
       )}
     >
@@ -913,9 +918,12 @@ const DataTableFilterChip = React.forwardRef<HTMLButtonElement, DataTableFilterC
         'text-xs font-medium whitespace-nowrap',
         'transition-[background-color,box-shadow,color] duration-[var(--dur-fast)]',
         'focus-visible:outline-none',
+        // Selected = azure (HIVE-14, DESIGN.md §2): `accent-soft` with an azure hairline rather
+        // than a black pill — a filter should never be the heaviest thing on a list page. An
+        // idle chip previews the ring under the pointer.
         active
-          ? 'bg-fg text-surface'
-          : 'bg-surface text-fg-muted shadow-[inset_0_0_0_1px_var(--border-strong)] hover:bg-subtle hover:text-fg',
+          ? 'bg-accent-soft text-accent-fg shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent)_45%,transparent)]'
+          : 'bg-surface text-fg-muted shadow-[inset_0_0_0_1px_var(--border-strong)] hover:text-accent-fg hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent)_50%,transparent)]',
         className
       )}
       {...props}
@@ -984,7 +992,7 @@ const DataTableCellPrimary = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('font-medium whitespace-nowrap text-fg', className)} {...props} />
+  <div ref={ref} className={cn('hive-cell-primary font-medium whitespace-nowrap text-fg', className)} {...props} />
 ));
 DataTableCellPrimary.displayName = 'DataTableCellPrimary';
 

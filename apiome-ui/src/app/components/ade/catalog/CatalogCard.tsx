@@ -56,6 +56,7 @@ import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history
 import { CATALOG_EXPORT_VS_CONVERT_COPY, convertActionLabel } from '@/app/utils/catalog-conversion';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 import { cn } from '@lib/utils';
+import { catalogFormatEdgeClass } from '@/app/utils/catalog-format-registry';
 
 import { CatalogFormatRow, ConvertedBadge, RegistryBadge } from './CatalogBadges';
 import {
@@ -153,7 +154,8 @@ export default function CatalogCard({
 
   return (
     <article
-      className="cat-card"
+      // `.card-edge` (HIVE-14): a 3 px edge along the top in the item's format hue.
+      className={cn('cat-card', 'card-edge', catalogFormatEdgeClass(item.sourceFormat))}
       data-lifecycle={lifecycle}
       data-selected={selected ? 'true' : undefined}
       data-testid="catalog-card"

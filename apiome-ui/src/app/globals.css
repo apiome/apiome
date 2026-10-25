@@ -231,6 +231,8 @@
   /* A *filled* control (primary, accent, danger…) has no hairline: it reads as a solid
      object, so it gets a drop shadow and a top highlight instead. */
   --shadow-control-solid: 0 1px 2px rgba(20, 18, 14, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* The same control under the pointer (HIVE-14): the drop deepens, the top light brightens. */
+  --shadow-control-solid-hover: 0 2px 6px -1px rgba(20, 18, 14, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
   /* ---- Motion (DESIGN.md §3.4) ---------------------------------------- */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -368,6 +370,50 @@
   --rose: var(--color-rose);
   --rose-soft: var(--color-rose-soft);
   --rose-fg: var(--color-rose-fg);
+
+  /* ======================================================================
+     Area hues (HIVE-14; docs/mockups/PROPOSALS.md §5.2.1, DESIGN.md §2).
+
+     Each rail group owns one hue — the mapping the mockup index has used
+     since round 1 — and the hue is spent on *wayfinding*: the group's rail
+     icons and active item, the page header's tile, a quick-action tile. Never
+     on status. Every one is a pointer at a semantic family, so the nine
+     theme blocks need nothing new and the contrast gate already covers the
+     `-fg` on `-soft` pair each hue is drawn with. Home has no area: it is the
+     brand moment (`.page-header--brand`). A page declares its area once with
+     `data-area` on the header; the rail declares it per group, and the
+     `[data-area]` rules in the shell section turn the name into `--area`,
+     `--area-soft` and `--area-fg` for everything inside.
+     ====================================================================== */
+  --area-build: var(--ok);
+  --area-build-soft: var(--ok-soft);
+  --area-build-fg: var(--ok-fg);
+  --area-bring-in: var(--violet);
+  --area-bring-in-soft: var(--violet-soft);
+  --area-bring-in-fg: var(--violet-fg);
+  --area-ship: var(--accent);
+  --area-ship-soft: var(--accent-soft);
+  --area-ship-fg: var(--accent-fg);
+  --area-govern: var(--warn);
+  --area-govern-soft: var(--warn-soft);
+  --area-govern-fg: var(--warn-fg);
+  --area-workspace: var(--rose);
+  --area-workspace-soft: var(--rose-soft);
+  --area-workspace-fg: var(--rose-fg);
+
+  /* The primary button's top-light (HIVE-14, §5.2.5): the same ink, lit from
+     above so it reads as a solid object. Mixed from `--ink` at run time, as the
+     brand gradients above are, so a theme that swaps the ink swaps the light. */
+  --gradient-primary: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ink) 86%, white),
+    var(--ink)
+  );
+  --gradient-primary-hover: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ink-hover) 84%, white),
+    var(--ink-hover)
+  );
 
   /* The hexagon of DESIGN.md §2, as one silhouette the whole interface shares.
      A workspace avatar (`.avatar-hex`, HIVE-2.2) and the stacked hex of an
@@ -1132,6 +1178,99 @@ html[data-rail="collapsed"] {
   opacity: 1;
 }
 
+/* ---- Area hues (HIVE-14; docs/mockups/PROPOSALS.md §5.2.1–2) -------------
+   `data-area` names a rail group; these rules turn the name into the three
+   custom properties everything inside paints from. The same attribute works
+   on a rail group, a page header and a quick-action tile, so one vocabulary
+   serves the shell and the page. An element with no area (Home, a page the
+   nav model does not know) inherits nothing and every consumer below falls
+   back to the colour it had before this ticket. */
+[data-area="build"] {
+  --area: var(--area-build);
+  --area-soft: var(--area-build-soft);
+  --area-fg: var(--area-build-fg);
+}
+
+[data-area="bring-in"] {
+  --area: var(--area-bring-in);
+  --area-soft: var(--area-bring-in-soft);
+  --area-fg: var(--area-bring-in-fg);
+}
+
+[data-area="ship"] {
+  --area: var(--area-ship);
+  --area-soft: var(--area-ship-soft);
+  --area-fg: var(--area-ship-fg);
+}
+
+[data-area="govern"] {
+  --area: var(--area-govern);
+  --area-soft: var(--area-govern-soft);
+  --area-fg: var(--area-govern-fg);
+}
+
+[data-area="workspace"] {
+  --area: var(--area-workspace);
+  --area-soft: var(--area-workspace-soft);
+  --area-fg: var(--area-workspace-fg);
+}
+
+/* The group heading's 6 px dot: wayfinding that survives the default-collapsed
+   groups of HIVE-12.1, where the heading is all a reader sees of the group. */
+.rail-group__dot {
+  flex: none;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--area, var(--fg-faint));
+}
+
+/* Icons rest in their group's hue, softened toward the subtle ink so the column
+   still reads as one list; full hue under the pointer and on the current page.
+   Text stays ink/muted: the hue is on the glyph, never on words. */
+.rail-item__icon {
+  color: color-mix(in srgb, var(--area, var(--fg-subtle)) 72%, var(--fg-subtle));
+}
+
+.rail-item:hover .rail-item__icon,
+.rail-item:focus-visible .rail-item__icon {
+  color: var(--area, var(--fg));
+}
+
+/* The current page: a soft tint in the group's hue with a 3 px bar, instead of
+   the raised white pill. `--area-fg` on `--area-soft` is a pair the contrast
+   gate already checks for every family. The bar needs the row to be a
+   containing block, hence `position: relative` here rather than in the row's
+   utility classes. */
+.rail-item--active {
+  position: relative;
+  background: var(--area-soft, var(--bg-surface));
+  color: var(--area-fg, var(--fg));
+}
+
+.rail-item--active .rail-item__icon {
+  color: var(--area, var(--accent));
+}
+
+.rail-item--active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.4375rem;
+  bottom: 0.4375rem;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--area, var(--accent));
+}
+
+/* Home has no hue: it keeps the raised white pill of DESIGN.md §5.2 and gets
+   the bar in azure. */
+[data-area="home"] .rail-item--active {
+  background: var(--bg-surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-raised);
+}
+
 /* ---- Page chrome (HIVE-3.5, #5291; DESIGN.md §5.3) ----------------------
    The shell above draws the rail; this draws what sits beside it. A page is
    three elements — a scroll container, a sticky header and a body — and the
@@ -1268,6 +1407,174 @@ html[data-rail="collapsed"] {
    row would have used, rather than adding to it. */
 .page-header--with-tabs .page-header__row {
   padding-bottom: var(--space-2);
+}
+
+/* ---- Area identity on the header (HIVE-14; PROPOSALS.md §5.2.3) ----------
+   A 34 px icon tile before the title in the page's area hue, a dot on the
+   area crumb, and a 2 px hairline under the sticky header that fades out at
+   40 % width. The tile is drawn *inside* the `h1` so the title's left edge —
+   the gutter the visual-parity harness measures — is where the mockups put
+   it; it is placed first by `order`, not by DOM position, so the title's
+   text stays the heading's first child for assistive technology and for the
+   tests that read it. A caller-supplied mark (a record's hex avatar) keeps
+   its own chrome: no tile behind it. */
+.page-header__mark {
+  order: -1;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius-md);
+  background: var(--area-soft, var(--bg-subtle));
+  color: var(--area-fg, var(--fg-muted));
+}
+
+.page-header__mark > svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
+.page-header__mark--custom {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+}
+
+.page-header--area::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -1px;
+  width: 40%;
+  max-width: 32.5rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--area, var(--accent)), transparent);
+  pointer-events: none;
+}
+
+.page-header__crumb--area {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.page-header__crumb--area::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--area, var(--fg-faint));
+}
+
+/* ---- The brand band (HIVE-14; PROPOSALS.md §5.2.8) -----------------------
+   Home is the one page after sign-in that is a brand moment (DESIGN.md §2):
+   the launcher's hex pattern (`.hex-bg`, set beside this class) and its two
+   glows at about half the launcher's intensity, behind the greeting only.
+   The header is already the containing block (it is sticky), so the glows
+   are its own pseudo-elements; the inner block rises above them. */
+.page-header--brand {
+  overflow: clip;
+}
+
+.page-header--brand::before,
+.page-header--brand::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.page-header--brand::before {
+  width: 32.5rem;
+  height: 20rem;
+  inset-inline-end: 7.5rem;
+  top: -12.5rem;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--honey) 22%, transparent), transparent);
+}
+
+.page-header--brand::after {
+  width: 26.25rem;
+  height: 17.5rem;
+  inset-inline-start: -10rem;
+  bottom: -12.5rem;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-azure) 16%, transparent), transparent);
+}
+
+.page-header--brand .page-header__inner {
+  position: relative;
+  z-index: 1;
+}
+
+.page-header__desc b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* ---- Alive on touch (HIVE-14; PROPOSALS.md §5.2.4–5) ---------------------
+   What the pointer gets back. A clickable card lifts 2 px with the deeper
+   shadow and an azure hairline; a row's primary link underlines; the
+   selected tab's count and glyph take the accent. Everything that moves is
+   stilled by the reduced-motion blocks. */
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.card-lift:active {
+  transform: none;
+  transition-duration: var(--dur-fast);
+}
+
+html[data-motion="reduce"] .card-lift:hover {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-lift:hover {
+    transform: none;
+  }
+}
+
+/* A 3 px gradient edge along a card's top in the record's format hue — the
+   device the launcher tiles already use. `--edge` comes from a `.fmt-edge--*`
+   class (the pill's own ink) or from the caller. Rounded to the card's radius
+   so it follows the corners rather than cutting across them. */
+.card-edge {
+  position: relative;
+}
+
+.card-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: linear-gradient(
+    90deg,
+    var(--edge, var(--accent)),
+    color-mix(in srgb, var(--edge, var(--accent)) 25%, transparent)
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+tr[data-row-id]:hover .hive-cell-primary a {
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+[role="tab"][aria-selected="true"] > .tab-count {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+[role="tab"][aria-selected="true"] > svg {
+  color: var(--accent);
 }
 
 .page-body {
@@ -2439,6 +2746,60 @@ html[data-kbd-hints="off"] .kbd-group {
   flex: none;
 }
 
+/* ---- Stat tone (HIVE-14; PROPOSALS.md §5.2.6) ---------------------------
+   The figure stays ink. Colour sits in a 24 px icon tile and in the delta,
+   which becomes a chip on its tone's soft fill. A stat with no `tone` draws
+   its glyph exactly as before — the wrapper is always there, the tile only
+   with a tone — so the strips on other pages do not change. */
+.hive-stat[data-tone="ok"]      { --stat-tone-soft: var(--ok-soft);      --stat-tone-fg: var(--ok-fg); }
+.hive-stat[data-tone="warn"]    { --stat-tone-soft: var(--warn-soft);    --stat-tone-fg: var(--warn-fg); }
+.hive-stat[data-tone="danger"]  { --stat-tone-soft: var(--danger-soft);  --stat-tone-fg: var(--danger-fg); }
+.hive-stat[data-tone="accent"]  { --stat-tone-soft: var(--accent-soft);  --stat-tone-fg: var(--accent-fg); }
+.hive-stat[data-tone="honey"]   { --stat-tone-soft: var(--honey-soft);   --stat-tone-fg: var(--honey-fg); }
+.hive-stat[data-tone="violet"]  { --stat-tone-soft: var(--violet-soft);  --stat-tone-fg: var(--violet-fg); }
+.hive-stat[data-tone="neutral"] { --stat-tone-soft: var(--neutral-soft); --stat-tone-fg: var(--neutral-fg); }
+
+.hive-stat__icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+}
+
+.hive-stat__icon > svg {
+  width: var(--icon-dense);
+  height: var(--icon-dense);
+  flex: none;
+  color: var(--fg-subtle);
+}
+
+.hive-stat[data-tone] .hive-stat__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--stat-tone-soft);
+  color: var(--stat-tone-fg);
+}
+
+.hive-stat[data-tone] .hive-stat__icon > svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: inherit;
+}
+
+.hive-stat__delta {
+  height: 1.125rem;
+  padding-inline: 0.375rem;
+  border-radius: var(--r-full);
+  background: var(--neutral-soft);
+}
+
+.hive-stat__delta[data-tone="ok"]     { background: var(--ok-soft); }
+.hive-stat__delta[data-tone="warn"]   { background: var(--warn-soft); }
+.hive-stat__delta[data-tone="danger"] { background: var(--danger-soft); }
+.hive-stat__delta[data-tone="accent"] { background: var(--accent-soft); }
+.hive-stat__delta[data-tone="honey"]  { background: var(--honey-soft); }
+.hive-stat__delta[data-tone="violet"] { background: var(--violet-soft); }
+
 .hive-stat__foot {
   display: flex;
   align-items: center;
@@ -2574,6 +2935,23 @@ html[data-kbd-hints="off"] .kbd-group {
 .fmt--lime { background: #ECFCCB; color: #3F6212; }
 .fmt--stone { background: #F5F5F4; color: #292524; }
 .fmt--neutral { background: #F3F4F6; color: #374151; }
+/* A card's 3 px edge in a format's hue (HIVE-14, `.card-edge`): the pill's own ink, so an edge
+   and the pill beside it agree. Fixed identities like the pills — they never tint. */
+.fmt-edge--sky { --edge: #075985; }
+.fmt-edge--emerald { --edge: #065F46; }
+.fmt-edge--violet { --edge: #5B21B6; }
+.fmt-edge--pink { --edge: #9D174D; }
+.fmt-edge--orange { --edge: #9A3412; }
+.fmt-edge--slate { --edge: #1E293B; }
+.fmt-edge--amber { --edge: #92400E; }
+.fmt-edge--red { --edge: #991B1B; }
+.fmt-edge--blue { --edge: #1E40AF; }
+.fmt-edge--cyan { --edge: #155E75; }
+.fmt-edge--indigo { --edge: #3730A3; }
+.fmt-edge--teal { --edge: #115E59; }
+.fmt-edge--lime { --edge: #3F6212; }
+.fmt-edge--stone { --edge: #292524; }
+.fmt-edge--neutral { --edge: #374151; }
 /* hex-allow-end */
 
 /* A pale pill on a dark canvas glares. `hive.css` §11's answer — take the
@@ -5475,6 +5853,93 @@ button.tfa-reset-notice__close > svg {
   white-space: nowrap;
 }
 
+/* ---- Quick-action tiles (HIVE-14; PROPOSALS.md §5.2.9) -------------------
+   The panel's four doors, two by two. Each tile names the rail group its
+   action opens (`data-area`) and draws its glyph in that hue — the same
+   `[data-area]` vocabulary the rail and the page header use — so a reader
+   learns that violet is Bring in from three places that agree. Lift and an
+   azure-less hairline in the tile's own hue on hover; still under reduced
+   motion. */
+.home-qa {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  list-style: none;
+}
+
+.home-qa__tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg);
+  text-decoration: none;
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.home-qa__tile:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--area, var(--accent)) 40%, transparent);
+}
+
+html[data-motion="reduce"] .home-qa__tile:hover {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-qa__tile:hover {
+    transform: none;
+  }
+}
+
+.home-qa__icon {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--area-soft, var(--bg-subtle));
+  color: var(--area-fg, var(--fg-muted));
+}
+
+.home-qa__icon > svg {
+  width: var(--icon-dense);
+  height: var(--icon-dense);
+}
+
+.home-qa__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+}
+
+.home-qa__kbd {
+  margin-inline-start: auto;
+}
+
+/* ---- Attention rows (HIVE-14) --------------------------------------------
+   A 3 px rail in the row's tone along its leading edge, and a hover in the
+   same tone at 6 % — the tone is the message, so the row answers in it. */
+.home-row--rail {
+  box-shadow: inset 3px 0 0 var(--home-tone);
+}
+
+.home-row--rail:hover {
+  background: color-mix(in srgb, var(--home-tone) 6%, transparent);
+}
+
 /* ---- Publishing pulse --------------------------------------------------
    Twelve bars over a baseline, `align-items: flex-end` so a bar grows upward
    from it. Heights are set inline as a percentage of the track, which is the
@@ -5785,13 +6250,20 @@ button.tfa-reset-notice__close > svg {
      4.35:1 in *Solarized*, just under AA, while on the inset fill the worst of
      the nine themes is 5.0:1. `dashboard-home-css.test.ts` walks every theme. */
 .home-step--done {
-  background: var(--bg-inset);
+  background: var(--ok-soft);
   box-shadow: none;
 }
 
+/* HIVE-14: a done step sits on the ok tint, so its text takes the ok ink — the
+   `ok-fg` on `ok-soft` pair the token contrast gate checks in every theme —
+   rather than the muted ink the inset fill used to carry. */
 .home-step--done .home-step__label {
   text-decoration: line-through;
-  color: var(--fg-muted);
+  color: var(--ok-fg);
+}
+
+.home-step--done .home-step__hint {
+  color: var(--ok-fg);
 }
 
 /* The one step with a button. A honey ring rather than a fill: the card is

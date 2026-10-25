@@ -740,6 +740,57 @@ export function findPlatformNavItem(id: string): PlatformNavItem | undefined {
   return ALL_MODEL_ITEMS.find((item) => item.id === id);
 }
 
+/** Where a pathname sits in the model: the rail group that owns it, and the destination. */
+export interface PlatformNavPlace {
+  /** The group — the page's *area*, whose hue the shell and the header paint with (HIVE-14). */
+  group: PlatformNavGroupId;
+  /** The destination the pathname belongs to; its icon is the header's default mark. */
+  item: PlatformNavItem;
+}
+
+/**
+ * The rail group and destination a pathname belongs to (HIVE-14).
+ *
+ * The same answer the rail gives when it lights an item, read from the page's side: the
+ * active-state rules in {@link isPlatformNavItemActive} decide, so a page and the rail beside
+ * it cannot disagree about which group it is in. Account pages (the user menu) and the
+ * off-rail workspace chores count as Workspace, which is where the mockup index files them.
+ *
+ * @param pathname - Current `usePathname()` value; `null` before hydration.
+ * @returns The place, or `undefined` for a route the model does not know.
+ */
+export function platformNavPlaceForPathname(
+  pathname: string | null | undefined
+): PlatformNavPlace | undefined {
+  if (!pathname) return undefined;
+
+  for (const group of PLATFORM_NAV_GROUPS) {
+    const item = group.items.find((candidate) => isPlatformNavItemActive(candidate, pathname));
+    if (item) return { group: group.id, item };
+  }
+
+  const account = PLATFORM_USER_MENU_ITEMS.find((item) => isPlatformNavItemActive(item, pathname));
+  if (account) return { group: 'workspace', item: account };
+
+  const offRail = PLATFORM_OFF_RAIL_ITEMS.find((item) => isPlatformNavItemActive(item, pathname));
+  if (offRail) {
+    const group = PLATFORM_NAV_GROUPS.find((candidate) => candidate.label === offRail.section);
+    if (group) return { group: group.id, item: offRail };
+  }
+
+  return undefined;
+}
+
+/**
+ * A group's heading, by id — the crumb a page header marks with the area's dot.
+ *
+ * @param id - A rail group id.
+ * @returns The heading, or `undefined` for the unlabelled Home group.
+ */
+export function platformNavGroupLabel(id: PlatformNavGroupId): string | undefined {
+  return PLATFORM_NAV_GROUPS.find((group) => group.id === id)?.label;
+}
+
 /**
  * Reserve rail slots for destinations a commercial host contributes.
  *

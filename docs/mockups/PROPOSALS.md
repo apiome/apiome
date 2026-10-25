@@ -147,7 +147,15 @@ exactly as the P0–P7 tickets did. The four proposal mockups are registered in
 
 ## 5. Round 3 — colour & accent pass (2026-10-25)
 
-> **Status:** proposal. Reviewed 2026-10-25 against `apiome-ui` 0.480 (the RC6 launch build) from the
+> **Status:** **adopted** — implemented as HIVE-14 in `apiome-ui` 0.481.0 on 2026-10-25, the same day
+> it was reviewed (the user’s call: “go ahead and implement those changes”). Every item in §5.2 shipped
+> except the two that needed data the app does not have (a delta and a sparkline per Home counter,
+> which need a previous-period count). One finding was corrected on the way: #5 — project and catalog
+> records already drew the hexagon in an identity hue; what shipped from §5.2.7 is the format edge
+> on cards and the project’s hex mark in the Versions title. The adopted rules are `assets/hive.css`
+> §23; `DESIGN.md` §2, §3.1, §7, §8 and §12 (P9) carry the amendments.
+>
+> Reviewed 2026-10-25 against `apiome-ui` 0.480 (the RC6 launch build) from the
 > documentation screenshots at 1440 × 900 (`apiome-docs/static/img/screens/*.light|dark.png`). The hub
 > with every before/after pair is **`proposals/accent-pass.html`**; each page has a live “after” under
 > `proposals/accent-*.html` with a **Show before** bar (press `B`) that overlays the shipped screenshot;

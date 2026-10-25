@@ -299,8 +299,10 @@ describe('AppShell — navigation from the model', () => {
     const current = screen.getAllByRole('link').filter((link) => link.getAttribute('aria-current'));
     expect(current).toHaveLength(1);
     expect(current[0]).toHaveAttribute('data-testid', 'rail-nav-catalog');
-    // The raised white pill of DESIGN.md §5.2, spelled as its elevation token.
-    expect(current[0].className).toContain('shadow-raised');
+    // The soft tint in the group's hue with its 3 px bar (HIVE-14, `.rail-item--active`); the
+    // group it sits in names the hue.
+    expect(current[0].className).toContain('rail-item--active');
+    expect(current[0].closest('.rail-group')).toHaveAttribute('data-area', 'bring-in');
   });
 
   it('places a commercial destination the host contributes in its reserved slot', async () => {

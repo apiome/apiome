@@ -96,10 +96,10 @@ function RailNavItem({
     size: ICON_SIZE.rail,
     strokeWidth: ICON_STROKE_WIDTH,
     'aria-hidden': true,
-    className: cn(
-      'shrink-0 transition-colors duration-[var(--dur-fast)]',
-      active ? 'text-accent' : 'text-fg-subtle group-hover/item:text-fg'
-    ),
+    // `.rail-item__icon` (HIVE-14, `globals.css`) tints the glyph toward its group's hue, full
+    // hue under the pointer and on the current page — read from the `data-area` the group
+    // carries, so this row needs no colour of its own.
+    className: 'rail-item__icon shrink-0 transition-colors duration-[var(--dur-fast)]',
   });
 
   const row = item.disabled ? (
@@ -131,7 +131,9 @@ function RailNavItem({
       className={cn(
         RAIL_ITEM_CLASS,
         RAIL_ITEM_HOVER_CLASS,
-        active ? 'bg-surface text-fg shadow-raised' : 'text-fg-muted'
+        // The current page (HIVE-14): `.rail-item--active` is the soft tint in the group's
+        // hue with a 3 px bar; Home, which has no hue, keeps the raised white pill.
+        active ? 'rail-item--active text-fg' : 'text-fg-muted'
       )}
     >
       {icon}
@@ -209,7 +211,9 @@ export default function RailNav({ groups, pathname, iconRail }: RailNavProps) {
         const isFolded = !iconRail && folded.includes(group.id);
 
         return (
-          <div key={group.id} className="rail-group pt-1">
+          // `data-area` is the group's hue (HIVE-14): the `[data-area]` rules in `globals.css`
+          // set `--area` for the dot, the icons and the active row inside.
+          <div key={group.id} className="rail-group pt-1" data-area={group.id}>
             {group.label ? (
               <button
                 type="button"
@@ -218,11 +222,12 @@ export default function RailNav({ groups, pathname, iconRail }: RailNavProps) {
                 aria-controls={listId}
                 data-testid={`rail-group-toggle-${group.id}`}
                 className={cn(
-                  'rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5',
+                  'rail-label group/heading h-6 w-full select-none items-center gap-1.5 rounded-sm px-2.5',
                   'text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle',
                   'transition-colors duration-[var(--dur-fast)] hover:text-fg-muted'
                 )}
               >
+                <span className="rail-group__dot" aria-hidden />
                 {group.label}
                 {/* Folded only: an open group shows its rows, so a count would repeat them.
                     The heading is a `.rail-label`, so the icon rail hides it with the rest. */}

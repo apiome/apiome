@@ -57,6 +57,7 @@ import { LoadingState } from '../../../components/ui/LoadingState';
 import { ErrorBanner, ErrorState } from '../../../components/ui/ErrorState';
 import { EmptyState, GatedState } from '../../../components/ui/EmptyState';
 import { Textarea } from '../../../components/ui/Textarea';
+import { Avatar } from '../../../components/ui/Avatar';
 import { Badge } from '../../../components/ui/Badge';
 import { Card } from '../../../components/ui/Card';
 import {
@@ -3778,6 +3779,14 @@ const Versions = () => {
       <PageHeader
         className="ver-header"
         breadcrumb={breadcrumb}
+        area="build"
+        // The project's own hex mark leads the title (HIVE-14): the same mark, in the same
+        // identity hue, as on Projects, Home and the breadcrumb switcher.
+        mark={
+          selectedProject ? (
+            <Avatar shape="hex" name={selectedProject.name} seed={selectedProject.id} />
+          ) : undefined
+        }
         title={selectedProject?.name ?? 'Versions'}
         badge={headerBadges}
         description={pageDescription}

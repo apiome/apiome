@@ -20,8 +20,24 @@
 import * as React from 'react';
 
 import { Stat, StatGrid } from '@/app/components/ui/metrics';
+import type { MetricTone } from '@/app/components/ui/metrics/metricTiers';
 import { Skeleton } from '@/app/components/ui/Skeleton';
+import { CountUp } from './CountUp';
 import { STAT_COUNT, resolveStats, type DashboardStats } from './homeModel';
+
+/**
+ * Each stat's hue (HIVE-14, PROPOSALS.md §5.2.6): the area the figure belongs to — Projects and
+ * Versions are Build, Published is Ship — with the two schema counters in violet and the tenant
+ * count neutral. The tile carries the hue; the figure stays ink.
+ */
+const STAT_TONE: Readonly<Record<string, MetricTone>> = {
+  tenants: 'neutral',
+  projects: 'ok',
+  versions: 'ok',
+  published: 'accent',
+  classes: 'violet',
+  properties: 'violet',
+};
 
 /** Props for {@link HomeStatStrip}. */
 export interface HomeStatStripProps {
@@ -69,7 +85,8 @@ export function HomeStatStrip({ stats, loading }: HomeStatStripProps) {
             data-stat={stat.id}
             label={stat.label}
             icon={<Icon aria-hidden />}
-            value={stat.value}
+            tone={STAT_TONE[stat.id]}
+            value={typeof stat.value === 'number' ? <CountUp value={stat.value} /> : stat.value}
             unit={stat.unit}
             footnote={stat.subtitle}
           />

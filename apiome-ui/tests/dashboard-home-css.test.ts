@@ -494,7 +494,11 @@ describe('the first-run checklist', () => {
     // `--fg-muted` towards the backdrop, and at 0.75 the 12 px line measures 3.6:1 — a serious
     // axe finding that `e2e/hive-home.spec.ts` caught in the light theme.
     expect(parseDeclarations(homeRule('.home-step--done').body).has('opacity')).toBe(false);
-    expect(declaration('.home-step--done', 'background')).toBe('var(--bg-inset)');
+    // HIVE-14: the done step sits on the ok tint, and both its lines take the ok ink — the
+    // `ok-fg` on `ok-soft` pair the token contrast gate checks in every theme.
+    expect(declaration('.home-step--done', 'background')).toBe('var(--ok-soft)');
+    expect(declaration('.home-step--done .home-step__label', 'color')).toBe('var(--ok-fg)');
+    expect(declaration('.home-step--done .home-step__hint', 'color')).toBe('var(--ok-fg)');
     expect(declaration('.home-step--done .home-step__label', 'text-decoration')).toBe('line-through');
   });
 

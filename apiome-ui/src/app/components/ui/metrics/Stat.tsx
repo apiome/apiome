@@ -27,6 +27,7 @@ import {
   formatDelta,
   METRIC_TONE_INK_CLASS,
   type DeltaPolarity,
+  type MetricTone,
 } from './metricTiers';
 
 /** The glyph for each direction. Decorative — the sign is already in the chip's text. */
@@ -67,6 +68,12 @@ export interface StatProps extends React.HTMLAttributes<HTMLElement> {
   footnote?: React.ReactNode;
   /** A second footnote pushed to the opposite end, as `.stat__foot`'s space-between implies. */
   footnoteEnd?: React.ReactNode;
+  /**
+   * The stat's hue (HIVE-14, docs/mockups/PROPOSALS.md §5.2.6): a 24 px tile behind the glyph
+   * in the tone's soft fill. The figure itself stays ink. Omit it and the glyph draws bare, as
+   * every strip did before this ticket.
+   */
+  tone?: MetricTone;
 }
 
 /**
@@ -88,6 +95,7 @@ export const Stat = React.forwardRef<HTMLElement, StatProps>(function Stat(
     deltaLabel,
     footnote,
     footnoteEnd,
+    tone: statTone,
     className,
     ...props
   },
@@ -103,11 +111,12 @@ export const Stat = React.forwardRef<HTMLElement, StatProps>(function Stat(
       ref={ref as React.Ref<never>}
       // A `button` with no explicit type submits the form it happens to be inside.
       type={Tag === 'button' ? 'button' : undefined}
+      data-tone={statTone}
       className={cn('hive-stat', className)}
       {...props}
     >
       <span className="hive-stat__label">
-        {icon}
+        {icon ? <span className="hive-stat__icon">{icon}</span> : null}
         {label}
       </span>
       <span className="hive-stat__value">

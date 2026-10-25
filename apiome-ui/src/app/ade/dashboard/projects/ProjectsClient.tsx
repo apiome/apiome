@@ -838,6 +838,7 @@ export default function ProjectsClient() {
     <Page>
       <PageHeader
         breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Build' }, { label: 'Projects' }]}
+        area="build"
         title="Projects"
         description={summary}
         actions={

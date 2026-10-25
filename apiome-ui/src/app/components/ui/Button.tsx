@@ -30,7 +30,9 @@ const BUTTON_BASE = [
   // The 3 px azure focus ring is the app-wide `*:focus-visible` rule in globals.css, which
   // is unlayered and so cannot be expressed here; all this has to do is drop the outline.
   'focus-visible:outline-none',
-  'active:translate-y-px',
+  // Pressed: a 1 px settle plus a 1 % shrink (HIVE-14), so a click is felt as well as seen.
+  // `active:translate-y-px` is also the mark `tests/helpers/page-gates.ts` knows a Button by.
+  'active:translate-y-px active:scale-[0.99]',
   'disabled:pointer-events-none disabled:opacity-50',
   'aria-disabled:pointer-events-none aria-disabled:opacity-50',
   // DESIGN.md §3.5: a glyph inside a button is 15 px — subordinate to its label — and in
@@ -38,8 +40,17 @@ const BUTTON_BASE = [
   '[&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0',
 ].join(' ');
 
-/** Ink fill — the one primary action on a screen. */
-const VARIANT_PRIMARY = 'bg-ink text-ink-fg shadow-control-solid hover:bg-ink-hover';
+/**
+ * Ink fill — the one primary action on a screen.
+ *
+ * HIVE-14 (docs/mockups/PROPOSALS.md §5.2.5): the fill is lit from above by `--gradient-primary`
+ * (the same ink, mixed toward white at the top) and the drop deepens under the pointer. `bg-ink`
+ * stays underneath the gradient — it is the fill a browser without `color-mix` paints, and the
+ * mark `tests/helpers/page-gates.ts` recognises a primary by.
+ */
+const VARIANT_PRIMARY =
+  'bg-ink bg-[image:var(--gradient-primary)] text-ink-fg shadow-control-solid ' +
+  'hover:bg-ink-hover hover:bg-[image:var(--gradient-primary-hover)] hover:shadow-control-solid-hover';
 /** Azure fill — a second action that still has to be seen (publish, connect). */
 const VARIANT_ACCENT = 'bg-accent text-fg-on-accent shadow-control-solid hover:bg-accent-hover';
 /** Surface + inset hairline — the default secondary control. */

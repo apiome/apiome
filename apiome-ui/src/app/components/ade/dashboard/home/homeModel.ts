@@ -42,6 +42,7 @@ import {
 import { OPEN_ACTIONS, openActionHref } from '@/app/components/shell/openActions';
 import type { AttentionKind, PulseWeek } from '@lib/db/dashboard-home-model';
 import { isFeatureReleased } from '@lib/feature-release';
+import type { PlatformNavGroupId } from '@lib/platform-nav';
 
 /* -------------------------------------------------------------------------
    The six stats
@@ -341,6 +342,8 @@ export interface QuickAction {
   feature?: string;
   /** The `resource:action` the action's write needs; a role without it is not offered it (RC6-H8). */
   permission?: string;
+  /** The rail group the action opens into — the hue its tile is drawn in (HIVE-14). */
+  area: PlatformNavGroupId;
 }
 
 /**
@@ -360,6 +363,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     kbd: 'I',
     requiresTenant: true,
     permission: 'imports:create',
+    area: 'build',
   },
   {
     id: 'browse-catalog',
@@ -367,6 +371,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     icon: Library,
     href: '/ade/dashboard/catalog',
     requiresTenant: false,
+    area: 'bring-in',
   },
   {
     id: 'new-api-key',
@@ -375,6 +380,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     href: openActionHref('/ade/dashboard/api-keys', OPEN_ACTIONS.newApiKey),
     requiresTenant: true,
     permission: 'api_keys:create',
+    area: 'workspace',
   },
   {
     id: 'invite-teammate',
@@ -382,6 +388,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     icon: UserPlus,
     href: '/ade/dashboard/members',
     requiresTenant: true,
+    area: 'workspace',
   },
   {
     id: 'register-mcp',
@@ -390,6 +397,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     href: '/ade/dashboard/mcp',
     requiresTenant: true,
     feature: 'mcp',
+    area: 'bring-in',
   },
 ];
 

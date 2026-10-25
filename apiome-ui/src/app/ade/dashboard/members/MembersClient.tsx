@@ -386,6 +386,7 @@ export default function MembersClient() {
           { label: 'Workspace' },
           { label: 'Members' },
         ]}
+        area="workspace"
         title="Members"
         description="Who can sign in to this workspace, and what they may do."
         actions={

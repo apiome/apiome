@@ -45,6 +45,7 @@ import { ReviewStatusPill } from '@/app/components/ade/reviews/ReviewStatusPill'
 import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history-dag';
 import type { ProjectReviewSummary } from '@lib/review-status';
 import { cn } from '@lib/utils';
+import { catalogFormatEdgeClass } from '@/app/utils/catalog-format-registry';
 
 import {
   PROJECT_LIFECYCLE_LABEL,
@@ -128,7 +129,9 @@ export default function ProjectCard({
 
   return (
     <article
-      className="prj-card"
+      // `.card-edge` (HIVE-14): a 3 px edge along the top in the project's format hue —
+      // every project is an OpenAPI document, so it is the OpenAPI pill's ink.
+      className={cn('prj-card', 'card-edge', catalogFormatEdgeClass('openapi'))}
       data-lifecycle={lifecycle}
       data-testid="project-card"
       data-project-id={project.id}

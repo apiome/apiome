@@ -87,18 +87,22 @@ export function NeedsAttention({ items, loading }: NeedsAttentionProps) {
           const KindIcon = ATTENTION_ICON[item.kind];
           return (
             <li key={item.id}>
+              {/* HIVE-14: the source glyph moves into a leading tile in the row's tone, and the
+                  row carries a 3 px tone rail — colour is still never the only signal, the
+                  title states the deadline in words. */}
               <Link
                 href={item.href}
-                className="home-row home-row--link home-tone"
+                className="home-row home-row--link home-row--rail home-tone"
                 data-tone={item.tone}
                 data-attention={item.kind}
               >
-                <span className="home-dot" aria-hidden />
+                <span className="home-tile" aria-hidden>
+                  <KindIcon />
+                </span>
                 <span className="home-row__body">
                   <span className="home-row__title">{item.title}</span>
                   <span className="home-row__sub">{item.detail}</span>
                 </span>
-                <KindIcon className="home-row__kind" aria-hidden />
                 <ChevronRight className="home-row__go" aria-hidden />
               </Link>
             </li>

@@ -20,7 +20,9 @@ it is the top-level navigation page; every screen is one click away.
   usage). Each proposal supersedes part of an existing mockup and says which; it does not
   replace the original until its ticket lands.
 * **`PROPOSALS.md` §5 + `proposals/accent-*.html` + `assets/hive-accent.css`** — round-3 proposals
-  from the 2026-10-25 colour & accent review of the RC6 launch build. `proposals/accent-pass.html` is
+  from the 2026-10-25 colour & accent review of the RC6 launch build, **adopted the same day as
+  HIVE-14** (the rules now live in `hive.css` §23; `hive-accent.css` keeps only the proposal pages’
+  compare chrome). `proposals/accent-pass.html` is
   the hub: a 1 : 1 rail comparison and a drag-to-compare before/after pair per page (the “before” is
   the shipped page’s screenshot from `apiome-docs/static/img/screens/`, the “after” is the live mockup
   in an iframe). Each `accent-*.html` page has a **Show before** bar (press `B`). `hive-accent.css` is

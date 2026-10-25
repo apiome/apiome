@@ -56,15 +56,27 @@ export function QuickActions({ hasTenant, can }: QuickActionsProps) {
           <h2 id="home-quick-actions-title">{PANEL.quickActions.title}</h2>
         </span>
       </CardHeader>
-      <ul className="home-menu">
+      {/* HIVE-14 (PROPOSALS.md §5.2.9): a grid of tiles rather than a menu, each tile's glyph
+          in the hue of the area the action opens, so the panel reads as four doors into the
+          workspace rather than a list. */}
+      <ul className="home-qa">
         {actions.map((action) => {
           const ActionIcon = action.icon;
           return (
             <li key={action.id}>
-              <Link href={action.href} className="home-menu__item" data-action={action.id}>
-                <ActionIcon aria-hidden />
-                <span className="home-menu__label">{action.label}</span>
-                {action.kbd ? <Kbd>{action.kbd}</Kbd> : null}
+              <Link
+                href={action.href}
+                className="home-qa__tile"
+                data-action={action.id}
+                data-area={action.area}
+              >
+                <span className="home-qa__icon" aria-hidden>
+                  <ActionIcon />
+                </span>
+                <span className="home-qa__label">
+                  {action.label}
+                  {action.kbd ? <Kbd className="home-qa__kbd">{action.kbd}</Kbd> : null}
+                </span>
               </Link>
             </li>
           );

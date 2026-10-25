@@ -447,17 +447,20 @@ describe('Dialog', () => {
 });
 
 describe('Tabs', () => {
-  it('inks the selected underline tab in --fg, not in a brand palette colour', () => {
-    expect(tabTriggerClass({ active: true })).toContain('border-fg');
-    expect(tabTriggerClass({ active: true })).toContain('text-fg');
-    expect(tabTriggerRadixClass()).toContain('data-[state=active]:border-fg');
+  it('inks the selected underline tab in azure — the selected state of DESIGN.md §2 (HIVE-14)', () => {
+    expect(tabTriggerClass({ active: true })).toContain('border-accent');
+    // `--accent-fg`, not `--accent`: a tab label is small text and needs 4.5:1 on the canvas.
+    expect(tabTriggerClass({ active: true })).toContain('text-accent-fg');
+    expect(tabTriggerClass({ active: true })).not.toContain('border-fg');
+    expect(tabTriggerRadixClass()).toContain('data-[state=active]:border-accent');
+    expect(tabTriggerRadixClass()).toContain('data-[state=active]:text-accent-fg');
   });
 
-  it('offers the pills and vertical shapes the mockups use', () => {
+  it('offers the pills and vertical shapes the mockups use, selecting in azure too', () => {
     expect(tabListClass('pills')).not.toContain('border-b');
-    expect(tabTriggerClass({ active: true, variant: 'pills' })).toContain('bg-fg');
+    expect(tabTriggerClass({ active: true, variant: 'pills' })).toContain('bg-accent-soft');
     expect(tabListClass('vertical')).toContain('flex-col');
-    expect(tabTriggerClass({ active: true, variant: 'vertical' })).toContain('bg-subtle');
+    expect(tabTriggerClass({ active: true, variant: 'vertical' })).toContain('bg-accent-soft');
   });
 
   it('grows rather than clips a long label at the largest font scale', () => {

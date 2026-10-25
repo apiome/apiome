@@ -176,6 +176,11 @@ const Dashboard = () => {
         }
         title={`${greetingFor()}, ${firstName}`}
         description={workspaceSummarySentence(stats)}
+        // The brand band (HIVE-14, PROPOSALS.md §5.2.8): the launcher's hex pattern and glows
+        // behind the greeting. Home is the one app page that is a brand moment, so it draws
+        // no area hue of its own.
+        className="page-header--brand hex-bg"
+        area={null}
         actions={
           hasTenant ? (
             <>

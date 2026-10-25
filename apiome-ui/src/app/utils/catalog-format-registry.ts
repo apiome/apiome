@@ -105,6 +105,18 @@ export function catalogFormatHueClass(tone: CatalogPillTone | undefined): string
   return `fmt--${tone ?? 'neutral'}`;
 }
 
+/**
+ * The `.fmt-edge--*` class that sets a card's `--edge` to a format's hue (HIVE-14,
+ * `.card-edge` in `globals.css`) — the same ink the format's pill draws with, so the edge
+ * along the top of a project or catalog card agrees with the pill inside it.
+ *
+ * @param format The raw `sourceFormat` string, or a format id such as `openapi`.
+ * @returns The edge class; the neutral edge for a format the registry does not know.
+ */
+export function catalogFormatEdgeClass(format: string | null | undefined): string {
+  return `fmt-edge--${resolveCatalogFormat(format)?.tone ?? 'neutral'}`;
+}
+
 /** Light+dark pill classes per tone. The neutral tone is the unknown-format fallback. */
 export const CATALOG_PILL_TONE_CLASS: Readonly<Record<CatalogPillTone, string>> = {
   sky: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',

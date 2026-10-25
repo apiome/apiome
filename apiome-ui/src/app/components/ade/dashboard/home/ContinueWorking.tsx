@@ -32,6 +32,7 @@ import { EmptyState } from '@/app/components/ui/EmptyState';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Ring } from '@/app/components/ui/metrics';
 import { cn } from '@lib/utils';
+import { catalogFormatEdgeClass } from '@/app/utils/catalog-format-registry';
 import { CONTINUE_PROJECT_LIMIT, type ContinueProject } from '@lib/db/dashboard-home-model';
 import { PANEL, revisionMetaLine, statusWord, touchedPhrase } from './homeModel';
 
@@ -72,7 +73,12 @@ function ContinueCard({ project }: ContinueCardProps) {
     <Link
       href={continueCardHref(project.projectId)}
       data-project={project.projectId}
-      className={cn(cardVariants({ hover: true, link: true }), 'home-continue__card')}
+      // `.card-edge` (HIVE-14): the format hue along the top — a project is an OpenAPI document.
+      className={cn(
+        cardVariants({ hover: true, link: true }),
+        'home-continue__card card-edge',
+        catalogFormatEdgeClass('openapi')
+      )}
     >
       <span className="home-continue__top">
         <Badge status={project.status}>{statusWord(project.status)}</Badge>

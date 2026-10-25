@@ -77,8 +77,16 @@ export const TAB_TRIGGER_SIZE_CLASS: Record<TabSize, string> = {
   sm: 'min-h-[var(--control-h-sm)] px-2.5 py-1 text-xs',
 };
 
-/** Selected: the underline and label inked in `--fg`, the strongest ink the theme has. */
-export const TAB_TRIGGER_ACTIVE_CLASS = 'border-fg text-fg';
+/**
+ * Selected: the underline in azure and the label in the azure ink.
+ *
+ * HIVE-14 (docs/mockups/PROPOSALS.md §5.2.4): DESIGN.md §2 gives azure to "selected states",
+ * and the shipped strip had been inking its selection in `--fg` instead. `--accent-fg`, not
+ * `--accent`, for the label — a tab's label is small text and needs 4.5:1 on the canvas, which
+ * is what the `-fg` step is calibrated for. The count pill and the glyph follow through the
+ * `[aria-selected="true"]` rules in `globals.css`.
+ */
+export const TAB_TRIGGER_ACTIVE_CLASS = 'border-accent text-accent-fg';
 
 /** Unselected: muted label, and the underline previews on hover. */
 export const TAB_TRIGGER_IDLE_CLASS =
@@ -101,15 +109,18 @@ export const TAB_PANEL_CLASS = 'mt-4 focus-visible:rounded-md focus-visible:outl
  */
 export const TAB_GLYPH_CLASS = 'size-[var(--fs-md)] shrink-0';
 
-/** A count beside a tab's label — inset pill when idle, inverted when the tab is selected. */
+/**
+ * A count beside a tab's label — inset pill when idle; `accent-soft` with the azure ink when
+ * the tab is selected (the `.tab-count` marker is what the `[aria-selected]` rule keys on).
+ */
 export const TAB_COUNT_CLASS =
-  'ml-0.5 inline-flex items-center rounded-full bg-inset px-1.5 text-2xs font-semibold text-fg-muted';
+  'tab-count ml-0.5 inline-flex items-center rounded-full bg-inset px-1.5 text-2xs font-semibold text-fg-muted';
 
-/** `pills`: a chip that fills with ink when selected. There is no underline to show. */
+/** `pills`: a chip that tints azure when selected. There is no underline to show. */
 const PILL_BASE_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border-0 ' +
   'font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none';
-const PILL_ACTIVE_CLASS = 'bg-fg text-surface';
+const PILL_ACTIVE_CLASS = 'bg-accent-soft text-accent-fg';
 const PILL_IDLE_CLASS = 'text-fg-muted hover:bg-subtle hover:text-fg';
 const PILL_DISABLED_CLASS = 'cursor-not-allowed text-fg-faint opacity-50';
 
@@ -117,7 +128,7 @@ const PILL_DISABLED_CLASS = 'cursor-not-allowed text-fg-faint opacity-50';
 const VERTICAL_BASE_CLASS =
   'flex w-full shrink-0 items-center gap-2 whitespace-nowrap rounded-md border-0 text-left ' +
   'font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none';
-const VERTICAL_ACTIVE_CLASS = 'bg-subtle text-fg';
+const VERTICAL_ACTIVE_CLASS = 'bg-accent-soft text-accent-fg';
 const VERTICAL_IDLE_CLASS = 'text-fg-muted hover:bg-subtle hover:text-fg';
 const VERTICAL_DISABLED_CLASS = 'cursor-not-allowed text-fg-faint opacity-50';
 
@@ -200,7 +211,7 @@ export function tabTriggerClass({
 
 /** The same look expressed as Radix `data-[state=…]` variants, for Radix-driven strips. */
 export const TAB_TRIGGER_RADIX_STATE_CLASS =
-  'data-[state=active]:border-fg data-[state=active]:text-fg ' +
+  'data-[state=active]:border-accent data-[state=active]:text-accent-fg ' +
   'data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:border-border-strong ' +
   'data-[state=inactive]:hover:text-fg ' +
   'disabled:cursor-not-allowed disabled:border-transparent disabled:text-fg-faint ' +
@@ -208,14 +219,14 @@ export const TAB_TRIGGER_RADIX_STATE_CLASS =
 
 /** `pills`, as Radix state variants. */
 const PILL_RADIX_STATE_CLASS =
-  'data-[state=active]:bg-fg data-[state=active]:text-surface ' +
+  'data-[state=active]:bg-accent-soft data-[state=active]:text-accent-fg ' +
   'data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:bg-subtle ' +
   'data-[state=inactive]:hover:text-fg ' +
   'disabled:cursor-not-allowed disabled:text-fg-faint disabled:opacity-50';
 
 /** `vertical`, as Radix state variants. */
 const VERTICAL_RADIX_STATE_CLASS =
-  'data-[state=active]:bg-subtle data-[state=active]:text-fg ' +
+  'data-[state=active]:bg-accent-soft data-[state=active]:text-accent-fg ' +
   'data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:bg-subtle ' +
   'data-[state=inactive]:hover:text-fg ' +
   'disabled:cursor-not-allowed disabled:text-fg-faint disabled:opacity-50';

@@ -29,9 +29,15 @@ const cardVariants = cva('rounded-lg bg-surface text-fg transition-[box-shadow,t
       /** Brand moment: honey wash into the surface (checklists, tips, onboarding). */
       honey: 'bg-[linear-gradient(135deg,var(--honey-soft),var(--bg-surface)_70%)] shadow-sm',
     },
-    /** Lifts on hover — only for a card that is itself clickable. */
+    /**
+     * Lifts on hover — only for a card that is itself clickable.
+     *
+     * `.card-lift` (HIVE-14, `globals.css`) is the rule that draws it: 2 px up, the deeper
+     * shadow and an azure hairline, stilled under reduced motion. The two utilities beside it
+     * are the pre-HIVE-14 lift, kept so a fixture dumped before this ticket still moves.
+     */
     hover: {
-      true: 'hover:-translate-y-px hover:shadow-md',
+      true: 'card-lift hover:-translate-y-px hover:shadow-md',
       false: '',
     },
     /** The whole card is a link: inherit ink, never underline. */

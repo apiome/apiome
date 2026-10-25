@@ -2,8 +2,15 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
+import {
+  platformNavGroupLabel,
+  platformNavPlaceForPathname,
+  type PlatformNavGroupId,
+} from '@lib/platform-nav';
+import { resolvePlatformNavIcon } from '@lib/platform-nav-icons';
 import { cn } from '@lib/utils';
 import { PageHeaderOverflowMenu, type PageHeaderOverflow } from './PageHeaderOverflow';
 
@@ -155,10 +162,44 @@ export interface PageHeaderProps {
   titleId?: string;
   /** Extra classes on the `<header>`. */
   className?: string;
+  /**
+   * The page's area — the rail group it belongs to — whose hue the header paints with
+   * (HIVE-14, docs/mockups/PROPOSALS.md §5.2.3): the icon tile before the title, the dot on
+   * the area's crumb and the hairline under the header. Resolved from the pathname through
+   * the nav model when omitted, so a page under Bring in is violet without saying so; pass
+   * it to be explicit, or `null` to draw no area at all (Home, which is a brand moment).
+   */
+  area?: PlatformNavGroupId | null;
+  /**
+   * What leads the title: the area's glyph by default (the page's own rail icon, or its
+   * group's), or a record's mark on a page about one thing — the Versions page passes the
+   * project's hex avatar. `null` draws nothing. Decorative: the `h1`'s text is the name.
+   */
+  mark?: React.ReactNode | null;
 }
 
 /** Accessible name of the breadcrumb landmark, which the acceptance criteria fix. */
 const BREADCRUMB_LABEL = 'Breadcrumb';
+
+/**
+ * `usePathname`, where there is one.
+ *
+ * A suite that mocks `next/navigation` for a router and forgets the pathname hook would
+ * otherwise crash every page header it renders; outside the app router the real hook returns
+ * `null`, and that is the answer here too.
+ */
+const usePathnameOrNull: () => string | null =
+  typeof usePathname === 'function' ? usePathname : () => null;
+
+/** The glyph an area draws when the pathname names no destination of its own. */
+const AREA_DEFAULT_ICON: Readonly<Record<PlatformNavGroupId, string>> = {
+  home: 'house',
+  build: 'folder-kanban',
+  'bring-in': 'library',
+  ship: 'globe',
+  govern: 'shield-check',
+  workspace: 'users',
+};
 
 /** The `Button` variants that draw the ink fill — i.e. that read as *the* primary action. */
 const PRIMARY_VARIANTS: ReadonlySet<string> = new Set(['primary', 'default']);
@@ -212,9 +253,12 @@ function countPrimaryActions(node: React.ReactNode): number {
 function PageBreadcrumb({
   items,
   switcher,
+  areaLabel,
 }: {
   items: readonly PageBreadcrumbItem[];
   switcher?: React.ReactNode;
+  /** The area's heading; the step with this label carries the area's dot (HIVE-14). */
+  areaLabel?: string;
 }) {
   if (items.length === 0) return null;
 
@@ -244,7 +288,14 @@ function PageBreadcrumb({
                   {item.label}
                 </Link>
               ) : (
-                <span aria-current={isLast ? 'page' : undefined}>{item.label}</span>
+                <span
+                  aria-current={isLast ? 'page' : undefined}
+                  className={
+                    areaLabel && item.label === areaLabel ? 'page-header__crumb--area' : undefined
+                  }
+                >
+                  {item.label}
+                </span>
               )}
             </li>
           );
@@ -275,9 +326,34 @@ export default function PageHeader({
   truncateTitle = false,
   titleId,
   className,
+  area,
+  mark,
 }: PageHeaderProps) {
   const generatedId = React.useId();
   const headingId = titleId ?? generatedId;
+
+  // Where this page sits in the nav model (HIVE-14). The rail lights the same destination
+  // from the same rule, so header and rail cannot disagree about the hue. Home is the brand
+  // moment rather than an area: it paints no hue unless a caller insists.
+  const pathname = usePathnameOrNull();
+  const place = React.useMemo(() => platformNavPlaceForPathname(pathname), [pathname]);
+  const resolvedArea: PlatformNavGroupId | undefined =
+    area === undefined ? (place?.group === 'home' ? undefined : place?.group) : (area ?? undefined);
+  const areaLabel = resolvedArea ? platformNavGroupLabel(resolvedArea) : undefined;
+  const markIsCustom = mark !== undefined && mark !== null;
+  const resolvedMark: React.ReactNode =
+    mark !== undefined
+      ? mark
+      : resolvedArea
+        ? React.createElement(
+            resolvePlatformNavIcon(
+              place && place.group === resolvedArea
+                ? place.item.icon
+                : AREA_DEFAULT_ICON[resolvedArea]
+            ),
+            { 'aria-hidden': true }
+          )
+        : null;
 
   // In an effect rather than in render: a warning emitted while rendering fires again on
   // every re-render and once more during server rendering, which turns one composition
@@ -301,7 +377,13 @@ export default function PageHeader({
   return (
     <header
       data-testid="page-header"
-      className={cn('page-header', tabs && 'page-header--with-tabs', className)}
+      data-area={resolvedArea}
+      className={cn(
+        'page-header',
+        tabs && 'page-header--with-tabs',
+        resolvedArea && 'page-header--area',
+        className
+      )}
     >
       <div className="page-header__inner">
         <div className="page-header__row">
@@ -311,10 +393,15 @@ export default function PageHeader({
           <div className={cn('flex items-start', leading ? 'gap-4' : undefined)}>
             {leading}
             <div className="min-w-0">
-              {breadcrumb && <PageBreadcrumb items={breadcrumb} switcher={crumbSwitcher} />}
+              {breadcrumb && (
+                <PageBreadcrumb items={breadcrumb} switcher={crumbSwitcher} areaLabel={areaLabel} />
+              )}
 
               {/* `.page-header__title` carries the type, not a `text-3xl`: the unlayered
-                  `h1` rule at the foot of `globals.css` would outrank a utility class. */}
+                  `h1` rule at the foot of `globals.css` would outrank a utility class. The
+                  mark follows the title in the DOM and precedes it on screen (`order: -1`):
+                  the name stays the heading's first child for assistive technology, and the
+                  title's left edge stays at the gutter the parity harness measures. */}
               <h1 id={headingId} className="page-header__title">
                 <span
                   className={cn('min-w-0', truncateTitle ? 'truncate' : 'break-words')}
@@ -322,6 +409,15 @@ export default function PageHeader({
                 >
                   {title}
                 </span>
+                {resolvedMark ? (
+                  <span
+                    className={cn('page-header__mark', markIsCustom && 'page-header__mark--custom')}
+                    data-testid="page-header-mark"
+                    aria-hidden
+                  >
+                    {resolvedMark}
+                  </span>
+                ) : null}
                 {badge}
               </h1>
 

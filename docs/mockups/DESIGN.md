@@ -55,6 +55,7 @@ The mark is a bee on a honeycomb (navy `#16265C`, azure `#1E90E8`, honey
 | **Azure accent** | links, focus rings, selected states, info, charts |
 | **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight. Never used to mean *warning* (warnings are amber with an icon). |
 | **Hexagon** | workspace avatars (`.avatar--hex`), empty-state art, the faint canvas pattern on auth/launcher pages (`.hex-bg`). |
+| **Area hues** (HIVE-14) | each rail group owns one semantic hue — Build `ok` · Bring in `violet` · Ship `accent` · Govern `warn` · Workspace `rose` — spent on *wayfinding* only: the group's rail dot, icons and active item, the page header's icon tile and crumb dot, a quick-action tile. Never on status. Home is the brand moment: the hex pattern and glows behind its greeting (`.page-header--brand`). |
 
 Voice: confident, brief, kind. “Nothing published yet — publish a version to see it
 here.” not “No records found.”
@@ -82,6 +83,9 @@ All values live in `assets/hive.css :root`. Production maps them to Tailwind v4
 | `--honey` / `--honey-soft` / `--honey-fg` | `#F5B301` / `#FFF3C4` / `#6B4E00` | brand ornament |
 | `--ok` `--warn` `--danger` (+ `-soft`, `-fg`) | `#0E8A5F` `#C77700` `#D43F3A` | semantic |
 | `--violet` `--orange` `--rose` `--neutral` (+ `-soft`, `-fg`) | | extended status vocab |
+| `--area-build` `--area-bring-in` `--area-ship` `--area-govern` `--area-workspace` (+ `-soft`, `-fg`) | pointers at `ok` / `violet` / `accent` / `warn` / `rose` | area hues (§2, HIVE-14); `[data-area]` turns one into `--area`, `--area-soft`, `--area-fg` |
+| `--gradient-primary` (+ `-hover`) | `--ink` lit from above | the primary button’s top-light (HIVE-14) |
+| `.fmt-edge--*` → `--edge` | the format pill’s ink | a card’s 3 px format edge (`.card-edge`, HIVE-14) |
 
 **Status vocabulary → color** (used by `.badge[data-status]`, must match the app’s
 enum strings):
@@ -198,15 +202,24 @@ tenant pill + version badge + theme + profile) is **retired**. Its jobs move to:
 264 px expanded / 64 px collapsed (`⌘\`, chevron on hover, or Preferences).
 Top-to-bottom: brand (mark + “apiome / Platform”), workspace switcher, search
 trigger (`⌘K`), grouped nav, footer (Help & docs · Preferences · user).
-Nav item: 34 px, icon 18 px + 13 px label; hover = 5 % ink tint; **active = white
-raised pill** (`--shadow-raised`) with an azure icon. Group labels are 11 px caps.
-Gated items (no current tenant) render at 45 % with a tooltip. Collapsed rail shows
-tooltips on hover and hairlines between groups.
+Nav item: 34 px, icon 18 px + 13 px label; hover = 5 % ink tint; **active = a soft
+tint in the group’s area hue with a 3 px bar** (`.rail-item--active`, HIVE-14) —
+Home, which has no hue, keeps the white raised pill (`--shadow-raised`) with an
+azure icon. Icons rest tinted toward their group’s hue (`.rail-item__icon`) and take
+the full hue on hover. Group labels are 11 px caps and carry a 6 px dot of the hue
+(`.rail-group__dot`), which survives a folded group. Gated items (no current tenant)
+render at 45 % with a tooltip. Collapsed rail shows tooltips on hover and hairlines
+between groups.
 
 ### 5.3 Page header (`.page-header`)
 Sticky, translucent (backdrop blur), 1 px hairline. Contains breadcrumb (12 px),
 title (24 px/600/-0.02em, optional badge), one-line description, right-aligned
 actions (**one** primary + secondaries + overflow), optional underline tab row.
+The page’s area (§2, HIVE-14) leads the title with a 34 px icon tile in its hue
+(`.page-header__mark` — the page’s rail glyph, or a record’s hex mark on a page
+about one record), dots the area’s crumb, and ends the header with a 2 px hairline
+that fades out at 40 % width (`.page-header--area`). Home draws the brand band
+instead (`.page-header--brand`: the hex pattern plus honey and azure glows).
 Content fills the space beside the rail: the side gutter is `--page-pad` or 2.5 % of that
 space, whichever is larger, so content spans at least 95 % of it, up to a 2400 px safety cap
 (`--page-max`). Reading/forms pages use `.page-body--narrow` (920 px).
@@ -263,7 +276,7 @@ stand-in for `lib/platform-nav.ts`).
 | `.btn` `--primary --accent --ghost --soft --danger --danger-soft --link --sm --lg --icon --pill` | buttons; primary = ink | `components/ui/Button` variants |
 | `.input .select .textarea .input-wrap .field .hint .error` | forms; 36 px controls, inset hairline, azure focus | `Input`, `Select`, `Textarea`, `FormField` |
 | `.check .radio .switch .switch-row .slider .segmented` | choice controls | `Checkbox`, `RadioGroup`, `Switch`, `Segmented` |
-| `.tabs .tab .count` `--pills` `.vtabs` | underline tabs with counts | `Tabs` + `tabStyles` |
+| `.tabs .tab .count` `--pills` `.vtabs` | underline tabs with counts; the selected tab, its count and glyph, the active `.chip` and the sorted `th` all select in azure (HIVE-14) | `Tabs` + `tabStyles`, `DataTableFilterChip` |
 | `.badge[data-status] .badge--*` `.fmt--*` `.method--*` `.chip` `.tag` `.dot` | status vocab, format & method pills, filter chips | `Badge`, `ui/catalog/FormatPill`, `ui/mcp/*Pill` |
 | `.card .card__header/body/footer` `--hover --flat --soft --honey --link --selected` | panels | `Card` |
 | `.stat` `.stat-grid` `.ring` `.sparkline` `.bars` `.meter` `.progress` | metrics | new `Stat`, `Ring`, `Sparkline` |
@@ -278,6 +291,7 @@ stand-in for `lib/platform-nav.ts`).
 | `.kbd` `.kbd-group` | shortcut chips | `Kbd` |
 | `.hex-bg .glow-honey` | brand ornament | new |
 | `.brand-mark` `.brand-word` `.brand-sub` | the mark itself: bee glyph, wordmark artwork, rail lock-up | `components/brand/BrandMark` (`.bee-glyph`, `.brand-wordmark`, `.brand-lockup`) |
+| `[data-area]` `.rail-group__dot .rail-item__icon .rail-item--active` `.page-header__mark .page-header--area .page-header--brand` `.card-lift .card-edge` `.stat[data-tone] .stat__icon .stat__delta--chip` `.qa-tile` `.list-row[data-tone]` | colour & accent pass (§23, HIVE-14): area hues on the rail and the header, lift and format edge on cards, stat tone, action tiles, toned attention rows | `RailNav`, `PageHeader` (`area`, `mark`), `Card` (`hover`), `Stat` (`tone`), Home's `QuickActions` / `NeedsAttention` |
 
 Every component in that column is drawn live at **`/design-system`** (HIVE-10.5), with the
 theme, density and font-scale switchers on the page. The MCP primitives are a section there and
@@ -308,6 +322,12 @@ fails CI when a `components/ui` component ships without a specimen on the route.
   tables) · **Error** = inline banner with retry.
 * **Copy** = sentence case; buttons are verbs (“Create key”, not “OK”); numbers
   are tabular; relative times with absolute tooltip.
+* **Alive on touch** (HIVE-14) = every card that opens something lifts 2 px with
+  `--shadow-md` and an azure hairline (`.card-lift`); every row that opens
+  something tints azure at 5 % and underlines its primary link; every button
+  settles 1 px and shrinks 1 % when pressed; the primary is lit from above
+  (`--gradient-primary`) and its drop deepens under the pointer. Durations and
+  easing come from §3.4; reduced motion removes every transform.
 
 ---
 
@@ -390,6 +410,8 @@ mockup’s **Notes → Keeps (1:1) / Adds / States** as its acceptance criteria.
 | **P5** | Workspace + account | `workspace/*.html`, `account/*.html`, `auth/*.html` | Tenants (drawer-based admin), members, roles, API keys, audit; profile, linked accounts; login, 2FA, OAuth sign-up, onboarding. Replaces every `window.confirm`/`prompt`. |
 | **P6** | Admin + tools | `admin/*.html`, `tools/*.html` | Admin console on the same shell (rose variant), users/tenants/licenses/flags/templates/auth providers; data browser, migrations. Removes the three dead nav links. |
 | **P7** | Polish | all | Empty-state art pass, motion + reduced-motion, a11y sweep (focus, live regions, AAA in High contrast), density audit, copy pass. |
+| **P8** | Quiet pass (§14, Epics 11–13) | `proposals/versions-status-strip.html`, `proposals/catalog-quiet.html`, `proposals/launcher-focused.html`, `proposals/rail-compact.html` | Status strip, facts line, dismissible explainers, default-collapsed groups, focused launcher, page gates and first-row budget. Shipped in RC6. |
+| **P9** | Colour & accent pass (§15, HIVE-14) | `proposals/accent-pass.html` + `proposals/accent-*.html` | Area hues on the rail and page header, selection in azure, alive-on-touch, stat tone, card format edges, the Home brand band, action tiles and toned attention rows. Shipped 2026-10-25 (apiome-ui 0.481.0). |
 
 Ordering rule: **P0 → P1 first and in order** (everything else depends on tokens
 and the shell). P2 must precede P3–P5, which are otherwise independent of each
@@ -421,7 +443,12 @@ If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (de
 groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
 and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.
 
-## 15. Round-3 proposals (2026-10-25) — *proposed, not yet adopted*
+## 15. Round-3 proposals (2026-10-25) — *adopted the same day as HIVE-14*
+
+> **Status:** adopted. HIVE-14 (apiome-ui 0.481.0, 2026-10-25) implemented every item below;
+> the amendments are folded into §2, §3.1, §7, §8 and §12 (P9), and the adopted rules are
+> `assets/hive.css` §23, so every mockup draws them. The pages under `proposals/accent-*.html`
+> remain as the before/after record.
 
 A colour & accent review of the RC6 launch build (`apiome-ui` 0.480) found that the quiet pass left
 the app **calm to the point of plain**: the navy primary is the only saturated element on most pages,

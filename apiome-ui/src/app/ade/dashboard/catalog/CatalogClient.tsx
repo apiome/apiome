@@ -1068,6 +1068,7 @@ export default function CatalogClient() {
           { label: 'Bring in' },
           { label: 'Catalog' },
         ]}
+        area="bring-in"
         title="Catalog"
         description={
           <>
