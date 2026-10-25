@@ -36,7 +36,8 @@ const TOKEN = 'a'.repeat(43);
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockSignIn.mockResolvedValue({ ok: true });
+  // The real `signIn` resolves with nothing and navigates itself.
+  mockSignIn.mockResolvedValue(undefined);
 });
 
 const OPEN = { mode: 'open' as const, allowedEmailDomains: [], source: 'db' as const };
@@ -248,6 +249,9 @@ describe('/signup/verify', () => {
         redirect: true,
       })
     );
+    // While the browser moves on to onboarding, no failure message flashes up.
+    expect(screen.queryByTestId('signup-verified-sign-in')).not.toBeInTheDocument();
+    expect(screen.getByText('Signing you in…')).toBeInTheDocument();
   });
 
   it('keeps the form and says why when the password belongs to a different sign-up', async () => {
@@ -266,7 +270,7 @@ describe('/signup/verify', () => {
 
   it('offers the sign-in page when the session exchange fails', async () => {
     mockVerify.mockResolvedValue({ state: 'valid', oneTimeCode: 'code-1' });
-    mockSignIn.mockResolvedValue({ error: 'CredentialsSignin' });
+    mockSignIn.mockRejectedValue(new Error('network'));
     render(<VerifyEmailClient token={TOKEN} />);
     await confirmWith('Analytical1');
     expect(await screen.findByTestId('signup-verified-sign-in')).toBeInTheDocument();
