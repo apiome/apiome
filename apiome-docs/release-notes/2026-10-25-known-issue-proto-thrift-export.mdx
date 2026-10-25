@@ -1,0 +1,19 @@
+---
+slug: known-issue-proto-thrift-export
+title: "Known issue: Protobuf and Thrift export from OpenAPI projects"
+description: Protobuf and Thrift files exported from an OpenAPI project need integer, number and boolean types fixed by hand.
+authors: [apiome]
+---
+
+If you export a version of an OpenAPI project to **Protobuf** or **Thrift**, the file won't compile
+as it is. Integer, number and boolean fields come out with type names those formats don't use.
+
+{/* truncate */}
+
+- **What you'll see:** lines such as `.integer id = 1;` in a `.proto` file, or
+  `1: optional integer id` in a `.thrift` file. Thrift also numbers every field `1`.
+- **Workaround:** change the types by hand. In Protobuf, use `int64` (or `int32`), `double` and
+  `bool`. In Thrift, use `i64` (or `i32`), `double` and `bool`, and give each field its own id.
+  Strings and every other export format are not affected.
+- **Fix:** tracked in [#6278](https://github.com/apiome/apiome/issues/6278). See
+  [Export a spec](/ship/export-a-spec#formats-the-export-dialog-offers).
