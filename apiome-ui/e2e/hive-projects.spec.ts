@@ -237,7 +237,14 @@ function projectCard(card: CardFixture): string {
           </div>
           <p class="prj-card__id mono">${card.identity}</p>
         </div>
-        <span class="${BADGE} ${statusTone}">${card.lifecycle === 'active' ? 'Active' : card.lifecycle === 'deleted' ? 'Deleted' : 'Disabled'}</span>
+        <span class="${BADGE} ${statusTone}" id="${card.id}-status">${card.lifecycle === 'active' ? 'Active' : card.lifecycle === 'deleted' ? 'Deleted' : 'Disabled'}</span>
+        ${
+          deleted
+            ? ''
+            : `<div class="prj-card__actions prj-card__above">
+                 <button type="button" class="${BUTTON_GHOST} px-1.5" id="${card.id}-menu" aria-label="Actions for ${card.name}">${GLYPH}</button>
+               </div>`
+        }
       </div>
       <p class="prj-card__summary">${card.summary}</p>
       <div class="prj-card__meter">
@@ -246,13 +253,6 @@ function projectCard(card: CardFixture): string {
       </div>
     </div>
     ${footer}
-    ${
-      deleted
-        ? ''
-        : `<div class="prj-card__actions prj-card__above">
-             <button type="button" class="${BUTTON_GHOST} px-1.5" id="${card.id}-menu" aria-label="Actions for ${card.name}">${GLYPH}</button>
-           </div>`
-    }
   </article>`;
 }
 
@@ -714,6 +714,27 @@ test.describe('the card’s stretched link', () => {
     });
     expect(reached.orb).toBe('prj-card-orders-quality');
     expect(reached.menu).toBe('prj-card-orders-menu');
+  });
+
+  test('shows the row menu beside the status pill, never on top of it', async ({ page }) => {
+    // The ⋯ menu used to be an overlay in the card's corner that faded in on hover and sat on
+    // the "Active" pill. It is now the last item of the header row, always visible.
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, CARDS_MARKUP);
+
+    const layout = await page.evaluate(() => {
+      const box = (id: string) => document.getElementById(id)!.getBoundingClientRect();
+      const pill = box('prj-card-orders-status');
+      const menu = box('prj-card-orders-menu');
+      return {
+        overlaps: !(menu.left >= pill.right || menu.right <= pill.left || menu.top >= pill.bottom || menu.bottom <= pill.top),
+        menuAfterPill: menu.left >= pill.right,
+        opacity: getComputedStyle(document.getElementById('prj-card-orders-menu')!.parentElement!).opacity,
+      };
+    });
+    expect(layout.overlaps).toBe(false);
+    expect(layout.menuAfterPill).toBe(true);
+    expect(layout.opacity).toBe('1');
   });
 
   test('is one tab stop, not a card full of them', async ({ page }) => {
