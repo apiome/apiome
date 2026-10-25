@@ -307,3 +307,14 @@ fixed in #6215, so nothing is left to file. The fifth is not a defect:
 | The Catalog's **Source** filter offered **Catalog connector** while connectors are held back | Fixed: offered only once `connectors` is released |
 | The Catalog import guide said Arazzo creates Project versions; Arazzo lands in the Catalog | Fixed: "OpenAPI and Swagger create publishable Project versions" |
 | The Publish dialog shows a **Style guide** gate while the Style guides screen is held back | Not a defect: the gate only appears when a style guide is configured (still possible over the REST API) and apiome-rest enforces it, so hiding it would hide a real refusal |
+
+### 7.2 Known bugs at launch
+
+Bugs found before the tag that ship in RC6 on purpose, each with its RC7 issue. Remove a row when
+its fix merges.
+
+| Issue | Severity | Bug | Where users see it |
+| --- | --- | --- | --- |
+| [#6278](https://github.com/apiome/apiome/issues/6278) | `sev:medium` | Exporting an OpenAPI project to **Protobuf** or **Thrift** writes `integer`/`number`/`boolean` fields as unknown type names (`.integer id = 1;`), so the file doesn't compile; Thrift also numbers every field `1` | Export dialog, `apiome export`, REST export. Noted on *Export a spec* |
+| [#6274](https://github.com/apiome/apiome/issues/6274) | `sev:medium` | The Hive editor theme's light syntax colours and line numbers fall below 4.5:1 contrast | Versions spec viewer |
+

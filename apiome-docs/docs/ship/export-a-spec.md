@@ -51,6 +51,15 @@ a source imported in that format: an EDI X12 interchange in the catalog exports 
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
 and an export request is refused with `422`.
 
+:::caution Known issue: Protobuf and Thrift from an OpenAPI project
+Exporting a version of an OpenAPI project (imported from OpenAPI or Swagger, or converted from the
+Catalog) to **Protobuf** or **Thrift** writes integer, number and boolean fields with names those
+formats don't recognise. For example, `.integer id = 1;` in a `.proto` file. The file won't compile
+until you change those types by hand: `int64`, `double` and `bool` in Protobuf, or `i64`, `double`
+and `bool` in Thrift. Thrift output also gives every field the id `1`, so give each its own. String fields and the other formats are not affected. A fix is tracked in
+[#6278](https://github.com/apiome/apiome/issues/6278).
+:::
+
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | Apache Avro | Data schema | Any source |
