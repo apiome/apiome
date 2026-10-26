@@ -69,6 +69,8 @@ _ROOT_CANDIDATE_SUFFIXES: Tuple[str, ...] = (
     ".smithy",
     ".thrift",
     ".tsp",
+    # MFI-13.3: a WSDL split across files (`wsdl:import`, `xs:import`).
+    ".wsdl",
 )
 
 
@@ -624,9 +626,10 @@ _PROTO_IMPORT_RE = re.compile(r"""import\s+"(.+?)"\s*;""")
 
 #: A reference to another file by a path relative to the referencing file: a TypeSpec
 #: ``import "./models.tsp"``, a Thrift ``include "shared.thrift"``, a RAML ``!include x.raml`` or
-#: library ``uses`` value.
+#: library ``uses`` value, a WSDL ``<wsdl:import location="…">`` or XSD ``schemaLocation="…"``.
 _RELATIVE_REFERENCE_RE = re.compile(
-    r"""(?:\bimport\s+"(\.{1,2}/[^"]+)"|\binclude\s+"([^"]+)"|!include\s+(\S+)|^\s+\w+:\s+(\S+\.raml)\s*$)""",
+    r"""(?:\bimport\s+"(\.{1,2}/[^"]+)"|\binclude\s+"([^"]+)"|!include\s+(\S+)|^\s+\w+:\s+(\S+\.raml)\s*$"""
+    r"""|\b(?:schemaLocation|location)="([^"#]+)")""",
     re.MULTILINE,
 )
 

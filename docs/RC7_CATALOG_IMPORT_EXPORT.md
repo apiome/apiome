@@ -171,12 +171,15 @@ v4 document (`app.odata_csdl_schema`; violations recorded and linted as `odata.c
 
 | Ticket | Work |
 | --- | --- |
-| [#3790](https://github.com/apiome/apiome/issues/3790) MFI-13.3 | WSDL `?singleWsdl` and inlining of remote imports |
 | [#3979](https://github.com/apiome/apiome/issues/3979) MFI-19.1 | OpenRPC `rpc.discover` |
 
 MFI-11.3 (#3778) is built: `ODataImportSource.discover` fetches `$metadata` and the service document
 (`app.odata_discovery`, SSRF-guarded) and records the service document and unlisted entity sets; the CLI has
 `apiome import odata --discover`.
+
+MFI-13.3 (#3790) is built: `WsdlImportSource.discover` fetches `?singleWsdl` (else `?wsdl`) and inlines every
+remote `wsdl:import` / `xs:import` / `xs:include` (`app.wsdl_fetch`); the parser follows `wsdl:import` in filesets;
+`.wsdl` archives resolve their root; the CLI has `apiome import wsdl --discover`.
 
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
 OData [#3779](https://github.com/apiome/apiome/issues/3779), Avro [#3786](https://github.com/apiome/apiome/issues/3786),

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- `?xsd=xsd0`: the operation elements; it includes `?xsd=xsd1` by a relative location. -->
+<xs:schema elementFormDefault="qualified" targetNamespace="http://example.com/calculator"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://example.com/calculator">
+  <xs:include schemaLocation="Calc.svc?xsd=xsd1"/>
+  <xs:element name="Add">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="a" type="tns:Operand"/>
+        <xs:element name="b" type="tns:Operand"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AddResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="AddResult" type="xs:double"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

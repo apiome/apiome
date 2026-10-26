@@ -13,7 +13,7 @@ canonical paradigms — REST, RPC, event-driven, graph, data schema and agent:
 - Exports 53<!--format-count:exportable--> formats.
 - Round-trips 53<!--format-count:round_trip--> of them — import *and* export.
 - Introspects a live endpoint, rather than reading a file, for
-  9<!--format-count:live_discovery--> of them.
+  10<!--format-count:live_discovery--> of them.
 
 Those numbers are measured from the adapter registries rather than maintained by hand, and so is the
 full list:

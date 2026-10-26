@@ -831,6 +831,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['tsp', 'compile', 'cadl', 'multi-file', 'archive', 'openapi3', 'emitter', 'microsoft', 'tspconfig', 'cli', 'folder'],
   },
   {
+    id: 'wsdl-import',
+    title: 'Import a SOAP / WSDL service',
+    summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',
+    page: 'apiome-docs/docs/bring-in/wsdl-import.md',
+    section: 'reference',
+    keywords: ['xsd', 'singlewsdl', 'wcf', 'discover', 'endpoint', 'xml schema'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

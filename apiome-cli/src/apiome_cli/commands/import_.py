@@ -88,6 +88,7 @@ from apiome_cli.import_.sources import (
 from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
 from apiome_cli.import_.odata import odata_metadata_url
+from apiome_cli.import_.wsdl import discover_wsdl_url
 from apiome_cli.import_.agents_manifest import discover_site_manifest_url
 from apiome_cli.import_.project_dir import ProjectDirectoryError, pack_project_directory
 from apiome_cli.import_.json_schema import (
@@ -2072,6 +2073,88 @@ def import_odata(
     _run_generic_adapter_import(
         ctx,
         source_format="odata",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=archive_root,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
+
+
+@app.command("wsdl")
+def import_wsdl(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="WSDL 1.1 / 2.0 document: path, ``http``/``https`` URL, ``-``, or an archive.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="SERVICE_URL",
+        help=(
+            "SOAP service endpoint (for example ``https://host/Calculator.svc``) whose WSDL is "
+            "imported: ``?singleWsdl`` (every import inlined) when the service offers it, "
+            "else ``?wsdl``."
+        ),
+    ),
+    archive_root: str | None = typer.Option(
+        None,
+        "--root",
+        metavar="PATH",
+        help="Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1).",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import a SOAP service's WSDL from a file, URL, stdin, archive, or a live service.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With
+    ``--discover`` the service's ``?singleWsdl`` (else ``?wsdl``) URL is found and imported
+    through the registered ``wsdl`` adapter like any other source (MFI-13.3).
+    """
+    if discover is not None:
+        url = _resolve_discover_url(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            resolve=lambda base: discover_wsdl_url(
+                base,
+                timeout=_resolve_import_timeout(ctx, import_timeout),
+                verify=not insecure_from_context(ctx),
+            ),
+            found_label="WSDL",
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="wsdl",
         source=source,
         file_path=file_path,
         url=url,

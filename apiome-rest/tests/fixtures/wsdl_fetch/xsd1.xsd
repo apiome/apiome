@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- `?xsd=xsd1`: a shared type, reached only through xsd0's relative include. -->
+<xs:schema elementFormDefault="qualified" targetNamespace="http://example.com/calculator"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="Operand">
+    <xs:sequence>
+      <xs:element name="value" type="xs:double"/>
+      <xs:element name="unit" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

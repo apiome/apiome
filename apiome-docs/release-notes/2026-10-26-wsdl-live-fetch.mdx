@@ -1,0 +1,19 @@
+---
+slug: wsdl-live-fetch
+title: WSDL from a live SOAP service, and split WSDLs read whole
+description: Import a live SOAP service's WSDL; split WSDL descriptions now import whole.
+authors: [apiome]
+---
+
+Import a running SOAP service with `apiome import wsdl --discover https://host/Service.svc`, and a
+WSDL split across files now imports as one API. [Import a SOAP / WSDL service](/bring-in/wsdl-import).
+
+{/* truncate */}
+
+- **`?singleWsdl` first.** `--discover` asks the service for `?singleWsdl`, where WCF returns the
+  whole description with every import inlined, and falls back to `?wsdl`.
+- **`wsdl:import` resolved.** A WSDL 1.1 description that pulls in another WSDL with
+  `<wsdl:import>` (as WCF's contract files do) imports with that file's messages, operations and
+  services, alongside the schemas it already resolved through `xs:import` / `xs:include`.
+- **WSDL archives import.** A `.zip` of `.wsdl` and `.xsd` files is no longer refused for having no
+  recognisable document: the WSDL that imports the others becomes the root.

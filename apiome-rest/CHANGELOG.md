@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.464.0] - 2026-10-26
+
+### Changed
+- **WSDL live fetch (MFI-13.3, #3790)** — the `wsdl` import source now advertises live discovery
+  (`supports_live_discovery`, input kind `discovery`) and gains `discover()` (new `app.wsdl_fetch`): from a service
+  endpoint or its `?wsdl` / `?singleWsdl` / `.wsdl` URL it fetches `?singleWsdl` first (WCF's fully inlined
+  description), else `?wsdl`, then follows every `wsdl:import location` and `xs:import` / `xs:include`
+  `schemaLocation` transitively (relative locations against the naming document) over the SSRF-guarded client —
+  each referenced URL is validated, at most 50 referenced documents and 32 MiB in all; a document that cannot be
+  fetched is noted and skipped. The description is parsed with those documents as members, and the model's extras
+  gain `wsdl_source_url`, `wsdl_single_wsdl`, `wsdl_fetched_documents` and `wsdl_fetch_notes`. The WSDL 1.1 parser
+  now follows `wsdl:import` against fileset members too, merging the imported documents' schemas, messages, port
+  types and services (single documents are unchanged). Archive intake gains `.wsdl` as a root candidate and boosts a
+  member that names siblings by `location` / `schemaLocation`. Shared SSRF-guarded fetch helpers moved to
+  `app.live_fetch` (used by OData discovery too). The CLI gains `apiome import wsdl --discover`. Format counts (live
+  discovery 9 → 10) and the supported-formats page regenerated. OpenAPI 1.328.0.
+
 ## [1.463.0] - 2026-10-26
 
 ### Changed

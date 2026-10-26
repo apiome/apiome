@@ -7,7 +7,7 @@
   "round_trip": 53,
   "import_only": 47,
   "export_only": 0,
-  "live_discovery": 9,
+  "live_discovery": 10,
   "publishable": 1,
   "catalog": 99,
   "toolchain_gated": 9,

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- `?wsdl=wsdl0`: the contract — messages, the port type, and the schema import. -->
+<wsdl:definitions targetNamespace="http://example.com/calculator" xmlns:tns="http://example.com/calculator"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://example.com/calculator/Imports">
+      <xsd:import schemaLocation="https://svc.example.com/Calc.svc?xsd=xsd0" namespace="http://example.com/calculator"/>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ICalculator_Add_InputMessage">
+    <wsdl:part name="parameters" element="tns:Add"/>
+  </wsdl:message>
+  <wsdl:message name="ICalculator_Add_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="ICalculator">
+    <wsdl:operation name="Add">
+      <wsdl:input message="tns:ICalculator_Add_InputMessage"/>
+      <wsdl:output message="tns:ICalculator_Add_OutputMessage"/>
+    </wsdl:operation>
+  </wsdl:portType>
+</wsdl:definitions>

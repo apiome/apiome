@@ -64,3 +64,25 @@ def test_a_reference_outside_the_archive_earns_no_boost():
     }
     ranked = {candidate.path: candidate.score for candidate in rank_root_candidates(members)}
     assert ranked["a.thrift"] == ranked["b.thrift"]
+
+
+def test_a_split_wsdl_archive_resolves_to_the_document_that_imports_the_others():
+    # MFI-13.3: `.wsdl` is a root candidate, and a `wsdl:import location` / `schemaLocation`
+    # naming a sibling makes the importing document the root.
+    fixtures = _REST / "tests/fixtures/wsdl_fetch"
+    members = {
+        "service.wsdl": (fixtures / "service.wsdl")
+        .read_text(encoding="utf-8")
+        .replace("https://svc.example.com/Calc.svc?wsdl=wsdl0", "wsdl0.wsdl"),
+        "wsdl0.wsdl": (fixtures / "wsdl0.wsdl")
+        .read_text(encoding="utf-8")
+        .replace("https://svc.example.com/Calc.svc?xsd=xsd0", "xsd0.xsd"),
+        "xsd0.xsd": (fixtures / "xsd0.xsd").read_text(encoding="utf-8").replace("Calc.svc?xsd=xsd1", "xsd1.xsd"),
+        "xsd1.xsd": (fixtures / "xsd1.xsd").read_text(encoding="utf-8"),
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, text in members.items():
+            archive.writestr(name, text)
+    unpacked = unpack_archive(buffer.getvalue(), source_label="calculator.zip")
+    assert unpacked.root_path == "service.wsdl"
