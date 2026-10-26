@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Set, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
 from .wsdl_versions import (
@@ -166,6 +166,12 @@ class WsdlDocument:
             (:data:`~app.wsdl_versions.VERSION_1_1` or
             :data:`~app.wsdl_versions.VERSION_2_0`).
         raw: The original document text.
+        source_url: The live description URL it was fetched from (MFI-13.3,
+            :mod:`app.wsdl_fetch`); ``None`` for an uploaded document.
+        single_wsdl: Whether the live description was ``?singleWsdl`` (already inlined).
+        fetched_documents: The documents the live description referenced and that were
+            fetched, as ``{"location", "url"}`` dicts.
+        fetch_notes: Referenced documents that were skipped, and why.
     """
 
     name: Optional[str]
@@ -177,6 +183,10 @@ class WsdlDocument:
     services: Tuple[WsdlService, ...]
     raw: str
     version: str = VERSION_1_1
+    source_url: Optional[str] = None
+    single_wsdl: bool = False
+    fetched_documents: Tuple[Dict[str, str], ...] = ()
+    fetch_notes: Tuple[str, ...] = ()
 
 
 def is_wsdl(content: str) -> bool:
@@ -448,7 +458,7 @@ def _resolve_member(location: str, members: Mapping[str, str]) -> Optional[str]:
 
 
 def _collect_schemas(
-    types_el: Optional[ET.Element],
+    types_el: Optional[ET.Element] | Sequence[ET.Element],
     *,
     members: Optional[Mapping[str, str]],
     source_label: Optional[str],
@@ -463,7 +473,8 @@ def _collect_schemas(
     references, which lint reports, not an unparseable document.
 
     Args:
-        types_el: The ``types`` element, or ``None`` when the document declares none.
+        types_el: The ``types`` element (or, for a document merged from ``wsdl:import``,
+            every ``types`` element), or ``None`` when the document declares none.
         members: Fileset member name -> text, or ``None`` for a single-document parse.
         source_label: Label used in XML error messages.
 
@@ -472,7 +483,8 @@ def _collect_schemas(
     """
     if types_el is None:
         return []
-    schemas = _find_descendants(types_el, "schema")
+    types_elements = [types_el] if isinstance(types_el, ET.Element) else list(types_el)
+    schemas = [schema for element in types_elements for schema in _find_descendants(element, "schema")]
     if not members:
         return schemas
 
@@ -503,6 +515,54 @@ def _collect_schemas(
             resolved.extend(member_schemas)
             queue.extend(member_schemas)
     return resolved
+
+
+def _imported_definitions(
+    root: ET.Element,
+    *,
+    members: Optional[Mapping[str, str]],
+    source_label: Optional[str],
+) -> List[ET.Element]:
+    """The WSDL 1.1 documents ``root`` pulls in with ``wsdl:import``, transitively (MFI-13.3).
+
+    A service can split its description across WSDL files — WCF's ``?wsdl`` names
+    ``?wsdl=wsdl0`` this way — and each ``<wsdl:import location=…>`` names one. Their messages,
+    port types, bindings, services and schemas belong to the same API. Only reachable when the
+    document is parsed with ``members`` (a fileset or a live fetch); an import nothing answers
+    is skipped, like an unresolved schema.
+
+    Args:
+        root: The root ``definitions`` element.
+        members: Member name -> text, or ``None`` for a single-document parse.
+        source_label: Label used in XML error messages.
+
+    Returns:
+        The imported ``definitions`` roots, in discovery order (``root`` itself excluded).
+    """
+    if not members:
+        return []
+    imported: List[ET.Element] = []
+    seen: Set[str] = set()
+    queue = [root]
+    while queue:
+        current = queue.pop(0)
+        for ref in _children(current, "import"):
+            location = (ref.get("location") or "").strip()
+            if not location or location in seen:
+                continue
+            seen.add(location)
+            text = _resolve_member(location, members)
+            if text is None:
+                continue
+            try:
+                member_root = parse_xml(text, source_label=location or source_label)
+            except SecureXmlError:
+                continue
+            if _local(member_root.tag) != "definitions":
+                continue
+            imported.append(member_root)
+            queue.append(member_root)
+    return imported
 
 
 # ---------------------------------------------------------------------------
@@ -805,9 +865,13 @@ def parse_wsdl(
             f"WSDL {version} root element must be `{expected_root}`, found `{root_name}`"
         )
 
-    types_el = next(iter(_children(root, "types")), None)
+    # MFI-13.3: a WSDL 1.1 description split across files with `wsdl:import` is read as one.
+    roots = [root]
+    if version != VERSION_2_0:
+        roots += _imported_definitions(root, members=members, source_label=source_label)
+    types_elements = [types for definition in roots for types in _children(definition, "types")]
     complex_types, elements = _read_schemas(
-        _collect_schemas(types_el, members=members, source_label=source_label)
+        _collect_schemas(types_elements, members=members, source_label=source_label)
     )
 
     if version == VERSION_2_0:
@@ -837,9 +901,9 @@ def parse_wsdl(
         target_namespace=root.get("targetNamespace"),
         complex_types=complex_types,
         elements=elements,
-        messages=_parse_messages(root),
-        port_types=_parse_port_types(root),
-        services=_parse_services(root),
+        messages=tuple(m for definition in roots for m in _parse_messages(definition)),
+        port_types=tuple(p for definition in roots for p in _parse_port_types(definition)),
+        services=tuple(s for definition in roots for s in _parse_services(definition)),
         raw=content,
         version=VERSION_1_1,
     )

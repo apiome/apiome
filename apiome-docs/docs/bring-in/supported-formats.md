@@ -13,7 +13,7 @@ Every format Apiome reads or writes, generated from the running registries — t
 - **100 formats can be imported.**
 - **53 formats can be exported.**
 - **53 round-trip** — import *and* export.
-- **9** can introspect a live endpoint rather than reading a file.
+- **10** can introspect a live endpoint rather than reading a file.
 
 The same answer is machine-readable at `GET /v1/formats/matrix` and printed by `apiome formats` (`--json`, `--paradigm`, `--direction`). This page is *rendered from that response*, so the documentation, the API and the CLI cannot disagree: there is one traversal of the registries behind all three.
 
@@ -73,7 +73,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | Tyk API definition | `tyk` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `tyk` | `.json`, `.yaml`, `.yml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-tyk) | Ready |
 | TypeSpec | `typespec` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `typespec`, `tsp`, `cadl` | `.tsp`, `.cadl`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | WADL | `wadl` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `wadl`, `restdescription` | `.wadl`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
-| WSDL | `wsdl` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `wsdl`, `wsdl-2.0`, `soap` | `.wsdl`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| WSDL | `wsdl` | Import + export | Catalog | `file`, `url`, `paste`, `discovery`, `fileset` | Yes | `wsdl`, `wsdl-2.0`, `soap` | `.wsdl`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | z/OS Connect | `zosconnect` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `zosconnect`, `zos`, `zos-connect` | `.zosconnect.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 
 ## RPC

@@ -27,9 +27,8 @@ from urllib.parse import urlsplit, urlunsplit
 import httpx
 
 from .import_source import ImportSourceError
-from .mcp_auth import AUTH_TYPE_NONE, CredentialPayloadError, build_auth_headers
+from .live_fetch import auth_headers, check_public_url, guarded_client, guarded_get
 from .secure_xml import SecureXmlError, parse_xml
-from .ssrf_guard import SSRFError, build_guarded_client, validate_url
 
 __all__ = [
     "MAX_DISCOVERY_BYTES",
@@ -43,8 +42,6 @@ __all__ = [
 #: Largest ``$metadata`` or service document read (bytes).
 MAX_DISCOVERY_BYTES = 16 * 1024 * 1024
 
-_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
-_UA = "apiome-odata-discovery/1.0"
 _METADATA_SEGMENT = "$metadata"
 
 
@@ -191,49 +188,6 @@ def parse_service_document(text: str) -> Tuple[Tuple[ODataServiceEntry, ...], Op
 # ===========================================================================
 
 
-def _get(client: httpx.Client, url: str, *, accept: str, headers: Mapping[str, str], what: str) -> str:
-    """GET ``url`` and return its body, mapping failures to intake codes.
-
-    Raises:
-        ImportSourceError: ``SOURCE_NOT_FOUND`` (404), ``SOURCE_AUTH_REQUIRED`` (401/403),
-            ``SOURCE_UNREACHABLE`` (network error, other status), ``INPUT_TOO_LARGE``.
-    """
-    try:
-        response = client.get(url, headers={"User-Agent": _UA, "Accept": accept, **dict(headers)})
-    except SSRFError as exc:
-        raise ImportSourceError(f"The OData {what} URL is not allowed: {exc}") from exc
-    except httpx.HTTPError as exc:
-        raise ImportSourceError(f"Could not reach the OData {what} at {url}: {exc}", code="SOURCE_UNREACHABLE") from exc
-    if response.status_code == 404:
-        raise ImportSourceError(f"The OData {what} was not found at {url} (HTTP 404).", code="SOURCE_NOT_FOUND")
-    if response.status_code in (401, 403):
-        raise ImportSourceError(
-            f"The OData {what} at {url} needs credentials (HTTP {response.status_code}).",
-            code="SOURCE_AUTH_REQUIRED",
-        )
-    if response.status_code >= 400:
-        raise ImportSourceError(
-            f"The OData {what} at {url} returned HTTP {response.status_code}.", code="SOURCE_UNREACHABLE"
-        )
-    if len(response.content) > MAX_DISCOVERY_BYTES:
-        raise ImportSourceError(
-            f"The OData {what} exceeds the {MAX_DISCOVERY_BYTES}-byte limit.", code="INPUT_TOO_LARGE"
-        )
-    return response.content.decode("utf-8", errors="replace")
-
-
-def _auth_headers(auth_type: Optional[str], auth_payload: Optional[Mapping[str, Any]]) -> Dict[str, str]:
-    """Request headers for a credential-vault entry (``{}`` for none)."""
-    if not auth_type or auth_type == AUTH_TYPE_NONE:
-        return {}
-    if auth_payload is None:
-        raise ImportSourceError(f"auth_type={auth_type!r} requires a credential payload")
-    try:
-        return build_auth_headers(auth_type, dict(auth_payload))
-    except CredentialPayloadError as exc:
-        raise ImportSourceError(str(exc)) from exc
-
-
 def discover_odata_service(
     url: str,
     *,
@@ -256,35 +210,34 @@ def discover_odata_service(
 
     Raises:
         ImportSourceError: When the URL is unsafe or not http(s), the credential is malformed, or
-            the ``$metadata`` document cannot be fetched (see :func:`_get` for the codes).
+            the ``$metadata`` document cannot be fetched (see :func:`app.live_fetch.guarded_get` for the codes).
     """
     service_root, metadata_url = service_urls(url)
-    try:
-        validate_url(metadata_url)
-    except SSRFError as exc:
-        raise ImportSourceError(f"The OData service URL is not allowed: {exc}") from exc
-    request_headers = {**_auth_headers(auth_type, auth_payload), **dict(headers or {})}
+    check_public_url(metadata_url, what="OData service")
+    request_headers = {**auth_headers(auth_type, auth_payload), **dict(headers or {})}
 
     owns_client = client is None
-    http = client if client is not None else build_guarded_client(timeout=_TIMEOUT, follow_redirects=True)
+    http = client if client is not None else guarded_client()
     try:
-        metadata = _get(
+        metadata = guarded_get(
             http,
             metadata_url,
             accept="application/xml, application/json;q=0.9",
             headers=request_headers,
-            what="$metadata document",
+            what="OData $metadata document",
+            max_bytes=MAX_DISCOVERY_BYTES,
         )
         notes: List[str] = []
         entries: Tuple[ODataServiceEntry, ...] = ()
         document_format: Optional[str] = None
         try:
-            body = _get(
+            body = guarded_get(
                 http,
                 service_root + "/",
                 accept="application/json, application/atomsvc+xml;q=0.9",
                 headers=request_headers,
-                what="service document",
+                what="OData service document",
+                max_bytes=MAX_DISCOVERY_BYTES,
             )
             entries, document_format = parse_service_document(body)
             if document_format is None:

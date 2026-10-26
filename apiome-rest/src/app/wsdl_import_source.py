@@ -15,6 +15,7 @@ generated supported-formats page renders. WSDL 2.0 **output** is a separate tick
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Mapping, Optional
 
 from . import wsdl_normalizer  # noqa: F401 — self-registers the normalizer
@@ -29,6 +30,7 @@ from .import_source import (
     InputKind,
 )
 from .secure_xml import SecureXmlError
+from .wsdl_fetch import fetch_wsdl_service
 from .wsdl_parser import WsdlDocument, WsdlParseError, is_wsdl, parse_wsdl
 from .wsdl_versions import VERSION_2_0, detect_wsdl_version, format_key_for_version
 
@@ -45,8 +47,10 @@ class WsdlImportSource(ImportSource, register=True):
     )
     icon = "file-code"
     paradigm = ApiParadigm.REST
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
-    supports_live_discovery = False
+    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.DISCOVERY, InputKind.FILESET)
+    #: A live service is fetched from its endpoint: ``?singleWsdl`` (else ``?wsdl``) with every
+    #: imported document inlined (MFI-13.3, :meth:`discover`).
+    supports_live_discovery = True
     #: Declared version coverage. ``wsdl`` stays first because it is the registry key every
     #: existing caller sends and the key a 1.1 document still detects as; ``wsdl-2.0`` names
     #: the grammar FMT-3.3 added, and ``soap`` is the long-standing protocol-shaped alias.
@@ -146,6 +150,48 @@ class WsdlImportSource(ImportSource, register=True):
             fileset.members[root],
             source_label=root or source_label,
             members=fileset.members,
+        )
+
+    def discover(
+        self,
+        url: str,
+        *,
+        auth_type: Optional[str] = None,
+        auth_payload: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+        client: Optional[Any] = None,
+    ) -> WsdlDocument:
+        """Fetch a live SOAP service's description and everything it imports (MFI-13.3).
+
+        The live counterpart to :meth:`parse_fileset`: :func:`app.wsdl_fetch.fetch_wsdl_service`
+        fetches ``?singleWsdl`` (else ``?wsdl``) and every ``wsdl:import`` / ``xs:import`` /
+        ``xs:include`` it names, over the SSRF-guarded client; the description is then parsed with
+        those documents as its members, exactly as an uploaded file set is.
+
+        Args:
+            url: The service endpoint, or its ``?wsdl`` / ``?singleWsdl`` / ``.wsdl`` URL.
+            auth_type: Credential-vault auth type.
+            auth_payload: The decrypted credential for ``auth_type``.
+            headers: Extra request headers.
+            client: An httpx client to inject (tests).
+
+        Returns:
+            The parsed document, with ``source_url``, ``single_wsdl``, ``fetched_documents`` and
+            ``fetch_notes`` set.
+
+        Raises:
+            ImportSourceError: When the service cannot be reached or its description does not parse.
+        """
+        fetched = fetch_wsdl_service(
+            url, auth_type=auth_type, auth_payload=auth_payload, headers=headers, client=client
+        )
+        document = self.parse(fetched.wsdl, source_label=fetched.url, members=fetched.members or None)
+        return replace(
+            document,
+            source_url=fetched.url,
+            single_wsdl=fetched.single_wsdl,
+            fetched_documents=tuple({"location": loc, "url": absolute} for loc, absolute in fetched.fetched),
+            fetch_notes=fetched.notes,
         )
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:

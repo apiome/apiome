@@ -70,7 +70,7 @@ export const FORMAT_COUNTS: FormatCounts = {
   roundTrip: 53,
   importOnly: 47,
   exportOnly: 0,
-  liveDiscovery: 9,
+  liveDiscovery: 10,
   publishable: 1,
   catalog: 99,
   toolchainGated: 9,

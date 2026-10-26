@@ -18,7 +18,7 @@ Import OpenAPI, Swagger, Arazzo, JSON Schema, and JSON Schema type documents int
 apiome import [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`agents-manifest`](#import-agents-manifest), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`odata`](#import-odata), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger).
+Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`agents-manifest`](#import-agents-manifest), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`odata`](#import-odata), [`openapi`](#import-openapi), [`preflight`](#import-preflight), [`swagger`](#import-swagger), [`wsdl`](#import-wsdl).
 
 **Options**
 
@@ -393,5 +393,36 @@ apiome import swagger [OPTIONS] PATH
 | `--poll-interval` | float range | `1.0` |  | Seconds between ``GET /imports/{job_id}`` polls when waiting. |
 | `--force` | flag |  |  | With --publish, bypass publish gates (e.g. classes missing required descriptions, breaking changes) so the version still publishes. |
 | `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
+| `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
+| `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome import wsdl {#import-wsdl}
+
+Import a SOAP service's WSDL from a file, URL, stdin, archive, or a live service.
+
+Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With ``--discover`` the service's ``?singleWsdl`` (else ``?wsdl``) URL is found and imported through the registered ``wsdl`` adapter like any other source (MFI-13.3).
+
+```text
+apiome import wsdl [OPTIONS] [INPUT]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SOURCE` | text |  | WSDL 1.1 / 2.0 document: path, ``http``/``https`` URL, ``-``, or an archive. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--file` | text |  |  | Local document path to import (alternative to the INPUT argument). |
+| `--url` | text |  |  | http/https document URL to import (alternative to the INPUT argument). |
+| `--discover` | text |  |  | SOAP service endpoint (for example ``https://host/Calculator.svc``) whose WSDL is imported: ``?singleWsdl`` (every import inlined) when the service offers it, else ``?wsdl``. |
+| `--root` | text |  |  | Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1). |
+| `--dry-run` | flag |  |  | Validate and preview the import without persisting changes. |
+| `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
+| `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
+| `--poll-interval` | float range | `1.0` |  | Seconds between import job-status polls when waiting. |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |

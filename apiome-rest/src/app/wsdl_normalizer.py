@@ -197,6 +197,20 @@ def _identity_name(source: WsdlDocument, service_names: List[str]) -> str:
     return service_names[0] if service_names else "WSDL service"
 
 
+def _live_fetch_extras(source: WsdlDocument) -> Dict[str, Any]:
+    """Where a live description came from (MFI-13.3); empty for an uploaded document."""
+    if not source.source_url:
+        return {}
+    extras: Dict[str, Any] = {
+        "wsdl_source_url": source.source_url,
+        "wsdl_single_wsdl": source.single_wsdl,
+        "wsdl_fetched_documents": [dict(document) for document in source.fetched_documents],
+    }
+    if source.fetch_notes:
+        extras["wsdl_fetch_notes"] = list(source.fetch_notes)
+    return extras
+
+
 def _version_extras(source: WsdlDocument) -> Dict[str, Any]:
     """Provenance keys recording which WSDL grammar the document was written in.
 
@@ -330,6 +344,7 @@ class WsdlNormalizer(Normalizer, register=True):
             extras={
                 "wsdl_target_namespace": source.target_namespace,
                 **_version_extras(source),
+                **_live_fetch_extras(source),
             },
         )
         return normalize_ordering(api)
