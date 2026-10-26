@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.459.0] - 2026-10-26
+
+### Changed
+- **TypeSpec compile via runner (MFI-14.1, #3794)** — a `typespec` file set with more than one `.tsp` file is
+  compiled by the bundled TypeSpec compiler (`tsp compile <root> --output-dir <out>`, new `app.typespec_compile`)
+  and the emitted OpenAPI — the epic's integration surface — is normalized by the OpenAPI normalizer; the item
+  stays `format: typespec` with `extras.typespec_compiled_via`, `typespec_openapi_format`, `typespec_source_files`,
+  `typespec_namespaces` and `typespec_openapi_sha256`, and `raw` keeps the root text plus the emitted document.
+  Only `.tsp` members are staged (never an uploaded `tspconfig.yaml`, `package.json` or `node_modules`) with
+  Apiome's own `tspconfig.yaml`; the bundled TypeSpec libraries are linked in as `node_modules` (found beside the
+  `tsp` wrapper, or from the new `APIOME_TSP_NODE_MODULES`). File imports outside the set or missing from it are
+  `INPUT_REFERENCE_UNRESOLVED`; compile diagnostics are `INPUT_SEMANTIC_INVALID` (`file:line:col - error code:
+  message`, staging path scrubbed); no compiler for a multi-file set is `ADAPTER_UNAVAILABLE` (previously only the
+  root was parsed). A single `.tsp` still uses the built-in reader. Convert-to-OpenAPI (`typespec-native`) reuses a
+  compiled set's emitted document and otherwise links the libraries too. Fixes: the `tsp` tool was registered with
+  `parses_json=True`, so the runner rejected every `tsp compile` (text output) — now `False`; the image installed
+  only `@typespec/compiler` — `@typespec/http`, `rest`, `openapi3` and `versioning` (same version) are added;
+  archive intake had no root candidate for `.raml`, `.smithy`, `.thrift` or `.tsp`, so archives of those sets were
+  refused — added, with a boost for a member that references siblings by relative path. Fixtures recorded from
+  the real `@typespec/compiler` 0.65.0. OpenAPI 1.323.0.
+
 ## [1.458.0] - 2026-10-26
 
 ### Changed

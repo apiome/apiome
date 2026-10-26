@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import json
 import logging
 import re
 import threading
@@ -37,6 +36,7 @@ from .toolchain_runner import (
     ToolNotAvailableError,
     default_runner,
 )
+from .typespec_compile import OPENAPI_TSPCONFIG, link_typespec_libraries, read_typespec_openapi_output
 
 
 def _conversion_error(message: str, *, status_code: int = 422) -> Exception:
@@ -727,19 +727,9 @@ async def _emit_typespec_async(
     with TemporaryDirectory(prefix="apiome-tsp-") as tmp:
         root = Path(tmp)
         (root / "main.tsp").write_text(source_text, encoding="utf-8")
-        (root / "tspconfig.yaml").write_text(
-            "\n".join(
-                [
-                    'emit:',
-                    '  - "@typespec/openapi3"',
-                    "options:",
-                    '  "@typespec/openapi3":',
-                    '    output-file: openapi.json',
-                    "",
-                ]
-            ),
-            encoding="utf-8",
-        )
+        (root / "tspconfig.yaml").write_text(OPENAPI_TSPCONFIG, encoding="utf-8")
+        # MFI-14.1: the emitter and `@typespec/http` resolve from the bundled libraries.
+        link_typespec_libraries(root)
         try:
             await active.run(
                 TYPESPEC_TOOL_KEY,
@@ -758,46 +748,13 @@ async def _emit_typespec_async(
                 status_code=422,
             ) from exc
 
-        document = _read_typespec_openapi_output(root / "tsp-output")
+        document = read_typespec_openapi_output(root / "tsp-output")
         if document is None:
             raise _conversion_error(
                 f"TypeSpec `tsp compile` produced no OpenAPI output{where}.",
                 status_code=422,
             )
         return document
-
-
-def _read_typespec_openapi_output(output_dir: Path) -> Optional[Dict[str, Any]]:
-    """Find and parse the OpenAPI JSON/YAML emitted under ``tsp-output``."""
-    if not output_dir.is_dir():
-        return None
-    candidates: List[Path] = []
-    for pattern in ("**/openapi.json", "**/*.openapi.json", "**/openapi.yaml", "**/openapi.yml"):
-        candidates.extend(sorted(output_dir.glob(pattern)))
-    # Also accept any json/yaml under the openapi3 emitter folder.
-    for path in sorted(output_dir.rglob("*")):
-        if path.is_file() and path.suffix.lower() in {".json", ".yaml", ".yml"}:
-            if path not in candidates:
-                candidates.append(path)
-
-    for path in candidates:
-        try:
-            text = path.read_text(encoding="utf-8")
-        except OSError:
-            continue
-        if path.suffix.lower() == ".json":
-            try:
-                data = json.loads(text)
-            except json.JSONDecodeError:
-                continue
-        else:
-            try:
-                data = parse_document(text, source_label=str(path))
-            except IngestionError:
-                continue
-        if isinstance(data, dict) and _is_openapi3(data):
-            return data
-    return None
 
 
 # ===========================================================================
@@ -831,6 +788,11 @@ def resolve_passthrough_preview(
         return document, high_fidelity_report(note=note)
 
     if mode is ConversionMode.TYPESPEC_NATIVE:
+        # A compiled multi-file set (MFI-14.1) already carries the OpenAPI `tsp` emitted; its
+        # root text alone would not compile again.
+        compiled = api.raw.get("openapi") if isinstance(api.raw, dict) else None
+        if isinstance(compiled, dict) and _is_openapi3(compiled):
+            return copy.deepcopy(compiled), high_fidelity_report()
         document = emit_typespec_openapi(source_text or "", source_label=api.format)
         return document, high_fidelity_report()
 

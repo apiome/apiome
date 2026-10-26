@@ -18,6 +18,7 @@ from pathlib import PurePosixPath
 from typing import Dict, List, Mapping, Optional, Tuple
 
 from .config import settings
+from .fileset import resolve_relative_reference
 from .format_detection import FormatDetection, detect_format
 from .import_source import DetectionInput
 from .intake_paths import IntakePathError, normalised_member_name, validated_intake_path
@@ -62,6 +63,12 @@ _ROOT_CANDIDATE_SUFFIXES: Tuple[str, ...] = (
     ".xml",
     # FMT-9.2: a set of binary Sparkplug B payloads (a BIRTH and the DATA payloads after it).
     ".bin",
+    # Multi-file IDL sets whose adapters resolve the set (MFI-15.1 RAML, MFI-17.1 Smithy,
+    # MFI-19.3 Thrift, MFI-14.1 TypeSpec): without these an archive of them had no root.
+    ".raml",
+    ".smithy",
+    ".thrift",
+    ".tsp",
 )
 
 
@@ -615,15 +622,29 @@ def unpack_archive(
 
 _PROTO_IMPORT_RE = re.compile(r"""import\s+"(.+?)"\s*;""")
 
+#: A reference to another file by a path relative to the referencing file: a TypeSpec
+#: ``import "./models.tsp"``, a Thrift ``include "shared.thrift"``, a RAML ``!include x.raml`` or
+#: library ``uses`` value.
+_RELATIVE_REFERENCE_RE = re.compile(
+    r"""(?:\bimport\s+"(\.{1,2}/[^"]+)"|\binclude\s+"([^"]+)"|!include\s+(\S+)|^\s+\w+:\s+(\S+\.raml)\s*$)""",
+    re.MULTILINE,
+)
+
 
 def _member_import_boost(path: str, text: str, members: Mapping[str, str]) -> float:
-    """Prefer proto entrypoints that define services and import sibling modules."""
+    """Prefer entrypoints: proto files that define services and import siblings, and any file
+    that references sibling files by relative path (a TypeSpec, Thrift or RAML root)."""
     boost = 0.0
     if "service " in text:
         boost += 0.25
     for match in _PROTO_IMPORT_RE.finditer(text):
         imported = match.group(1).replace("\\", "/")
         if imported in members and imported != path:
+            boost += 0.05
+    for match in _RELATIVE_REFERENCE_RE.finditer(text):
+        target = next(group for group in match.groups() if group)
+        resolved = resolve_relative_reference(path, target)
+        if resolved is not None and resolved in members and resolved != path:
             boost += 0.05
     return boost
 

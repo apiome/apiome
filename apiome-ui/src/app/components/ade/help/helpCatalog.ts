@@ -815,6 +815,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['json ast', 'namespace', 'aws', 'idl', 'multi-file', 'archive', 'smithy ast', 'resource'],
   },
   {
+    id: 'typespec-import',
+    title: 'Import a TypeSpec API',
+    summary: 'Catalog TypeSpec: one .tsp file, or a multi-file project compiled to OpenAPI.',
+    page: 'apiome-docs/docs/bring-in/typespec-import.md',
+    section: 'reference',
+    keywords: ['tsp', 'compile', 'cadl', 'multi-file', 'archive', 'openapi3', 'emitter', 'microsoft'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',
