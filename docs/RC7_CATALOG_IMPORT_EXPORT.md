@@ -159,11 +159,10 @@ MFI-14.1 (#3794) is built: a TypeSpec set with several `.tsp` files compiles thr
 safe settings (`app.typespec_config`), and `apiome import typespec <dir>` packs a project folder.
 Archive intake now has root candidates for `.raml`, `.smithy`, `.thrift` and `.tsp`.
 
-**Input variants:**
+**Input variants:** both tickets are built.
 
-| Ticket | Work |
-| --- | --- |
-| [#3812](https://github.com/apiome/apiome/issues/3812) MFI-17.5 | Smithy JSON AST input (with #3808) |
+MFI-17.5 (#3812) is built: Smithy JSON AST input (from #3808) has a corpus fixture (`smithy/07-json-ast-weather.json`),
+and `apiome import smithy` takes a model file, JSON AST, archive or directory.
 
 MFI-11.1 (#3776) is built: OData CSDL JSON input (`app.odata_csdl_json`) and OASIS CSDL schema validation of every
 v4 document (`app.odata_csdl_schema`; violations recorded and linted as `odata.csdl-schema`, not refused).

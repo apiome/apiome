@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -569,5 +569,47 @@ describe('TypeSpec source card (MFI-14.5)', () => {
   it('adds .tsp and the archive suffixes to the file picker', () => {
     const accept = mergeImportFileExtensions([TYPESPEC_DESCRIPTOR]);
     expect(accept).toEqual(['.tsp', '.cadl', '.zip', '.tar.gz', '.tgz', '.tar']);
+  });
+});
+
+/**
+ * The Smithy source as the REST registry advertises it (MFI-17.5, #3812). A Smithy model arrives as
+ * a `.smithy` file, a JSON AST `.json`, or an archive of model files the server assembles into one
+ * JSON AST (MFI-17.1), so the card opens the file panel and the picker offers all of them.
+ */
+const SMITHY_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'smithy',
+  label: 'Smithy',
+  description: 'Import a Smithy IDL model (structures, enums, services, operations).',
+  icon: 'hammer',
+  paradigm: 'rpc',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['smithy'],
+  file_extensions: ['.smithy', '.json', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('Smithy source card (MFI-17.5)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([SMITHY_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'smithy');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('Smithy');
+    expect(card?.icon).toBe(Hammer);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('smithy');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('smithy');
+  });
+
+  it('offers .smithy, JSON AST and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([SMITHY_DESCRIPTOR])).toEqual([
+      '.smithy',
+      '.json',
+      '.zip',
+      '.tar.gz',
+      '.tgz',
+      '.tar',
+    ]);
   });
 });

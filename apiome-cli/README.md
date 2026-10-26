@@ -317,6 +317,8 @@ apiome import insomnia ./collection.yaml      # Insomnia v4 (JSON) / v5 (YAML) e
 apiome import bruno ./my-collection.zip       # zipped Bruno folder (bruno.json + .bru files)
 apiome import typespec ./shop-api/            # TypeSpec project directory (.tsp + tspconfig.yaml)
 apiome import typespec ./shop-api.zip --root main.tsp
+apiome import smithy ./weather.smithy           # Smithy IDL, a JSON AST (.json), an archive, or a model directory
+apiome import smithy ./weather-model/
 apiome import sample - < ./payload.json     # read from stdin
 
 # Shared flags: --dry-run previews without persisting; --import-timeout bounds

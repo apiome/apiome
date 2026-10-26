@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.462.0] - 2026-10-26
+
+### Changed
+- **Smithy source card + CLI + fixtures (MFI-17.5, #3812)** — no REST code change: the Smithy card and
+  `apiome import smithy` come from the import-source registry, JSON AST input shipped with MFI-17.1 (#3808) and
+  directory packing with MFI-14.5 (#3798). New corpus entry `smithy/07-json-ast-weather.json` (a two-namespace
+  model in the JSON AST representation; its fingerprint is registered as order-sensitive because the Smithy
+  normalizer numbers enum values by declaration order); goldens, parity report and examples README regenerated.
+  OpenAPI 1.326.0.
+
 ## [1.461.0] - 2026-10-26
 
 ### Changed

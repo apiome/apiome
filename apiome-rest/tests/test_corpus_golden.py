@@ -82,6 +82,11 @@ _ODATA_CSDL_JSON_REASON = (
     "permuting a CSDL JSON document's object keys moves the fingerprint (MFI-11.1)."
 )
 
+_SMITHY_JSON_AST_REASON = (
+    "smithy_normalizer numbers enum values by declaration order (as for .smithy IDL), so "
+    "permuting a JSON AST's enum members moves the fingerprint (MFI-17.5)."
+)
+
 #: Corpus entries whose canonical output still depends on the *source's* declaration
 #: order, so their version fingerprint moves when a semantically identical document
 #: is reordered. Surfaced by this suite (IXH-1.6): in every case a ``Type``'s
@@ -120,6 +125,7 @@ KNOWN_ORDER_SENSITIVE_FINGERPRINTS: Dict[str, str] = {
     "jtd/06-github-push-event.jtd.json": _JTD_REASON,
     "odata/07-csdl-json-trippin.json": _ODATA_CSDL_JSON_REASON,
     "raml/01-simple-api.raml": _RAML_REASON,
+    "smithy/07-json-ast-weather.json": _SMITHY_JSON_AST_REASON,
     "raml/03-orders-service.raml": _RAML_REASON,
     "raml/04-resource-types-and-traits.raml": _RAML_REASON,
     "raml/05-grammar-corners.raml": _RAML_REASON,
