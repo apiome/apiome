@@ -1,0 +1,280 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (GetProjectResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cookie": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cookie"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_projects",
+      "operation": "GET /v3/projects",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "next": {
+              "type": "null"
+            },
+            "projects": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "required": [
+            "next",
+            "projects"
+          ],
+          "type": "object"
+        },
+        "shape": "GetProjectResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetPrj_alphaResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cookie": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cookie"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_projects_prj_alpha",
+      "operation": "GET /v3/projects/prj_alpha",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "members": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "id",
+            "members",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "GetPrj_alphaResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetMetricResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cookie": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          },
+          "x-client-version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "window",
+          "cookie",
+          "x-client-version"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_projects_prj_alpha_metrics",
+      "operation": "GET /v3/projects/prj_alpha/metrics",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "metric": {
+              "type": "string"
+            },
+            "points": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "required": [
+            "metric",
+            "points"
+          ],
+          "type": "object"
+        },
+        "shape": "GetMetricResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetPrj_betaResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cookie": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cookie"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_projects_prj_beta",
+      "operation": "GET /v3/projects/prj_beta",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "members": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "id",
+            "members",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "GetPrj_betaResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetMetricResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cookie": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          },
+          "x-client-version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "window",
+          "cookie",
+          "x-client-version"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_projects_prj_beta_metrics",
+      "operation": "GET /v3/projects/prj_beta/metrics",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "metric": {
+              "type": "string"
+            },
+            "points": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "required": [
+            "metric",
+            "points"
+          ],
+          "type": "object"
+        },
+        "shape": "GetMetricResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PutAl_9Response200).",
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "cookie": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "threshold": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "content-type",
+          "cookie",
+          "enabled",
+          "threshold"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_v3_projects_prj_alpha_alerts_al_9",
+      "operation": "PUT /v3/projects/prj_alpha/alerts/al_9",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "string"
+            },
+            "threshold": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "enabled",
+            "id",
+            "threshold"
+          ],
+          "type": "object"
+        },
+        "shape": "PutAl_9Response200",
+        "status": "200"
+      }
+    }
+  ]
+}

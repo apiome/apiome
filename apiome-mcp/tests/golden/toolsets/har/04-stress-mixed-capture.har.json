@@ -1,0 +1,291 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (GetBlobResponse200).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_blobs_id",
+      "operation": "GET /v1/blobs/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "digest": {
+              "type": "string"
+            },
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "digest",
+            "ok"
+          ],
+          "type": "object"
+        },
+        "shape": "GetBlobResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v1_events_stream",
+      "operation": "GET /v1/events/stream",
+      "output": {
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetFileResponse200).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_files_id",
+      "operation": "GET /v1/files/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "number"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "size"
+          ],
+          "type": "object"
+        },
+        "shape": "GetFileResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_items_id",
+      "operation": "GET /v1/items/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v1_notifications",
+      "operation": "GET /v1/notifications"
+    },
+    {
+      "description": "Returns HTTP 200 with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v1_ping",
+      "operation": "GET /v1/ping",
+      "output": {
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v1_report_csv",
+      "operation": "GET /v1/report.csv",
+      "output": {
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetSearchResponse200).",
+      "inputSchema": {
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_search",
+      "operation": "GET /v1/search",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "hits": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "required": [
+            "hits"
+          ],
+          "type": "object"
+        },
+        "shape": "GetSearchResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetOrderResponse200).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "id2": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "id2"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_users_id_orders_id2",
+      "operation": "GET /v1/users/{id}/orders/{id2}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "number"
+            },
+            "user_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "total",
+            "user_id"
+          ],
+          "type": "object"
+        },
+        "shape": "GetOrderResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PostContactResponse200).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v1_forms_contact",
+      "operation": "POST /v1/forms/contact",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "received": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "received"
+          ],
+          "type": "object"
+        },
+        "shape": "PostContactResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_items",
+      "operation": "POST /v1/items"
+    },
+    {
+      "description": "Returns HTTP 201 application/json (PostUploadResponse201).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v1_uploads",
+      "operation": "POST /v1/uploads",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "upload_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "upload_id"
+          ],
+          "type": "object"
+        },
+        "shape": "PostUploadResponse201",
+        "status": "201"
+      }
+    }
+  ]
+}

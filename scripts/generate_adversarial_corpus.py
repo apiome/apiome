@@ -311,6 +311,9 @@ SYNTHETIC_SECRETS: Dict[str, str] = {
     "basic_auth_password": "S3cr3t-Staging-Pass",
     "db_password": "Tr0ub4dor&3",
     "session_cookie": "s%3AaBcDeFgHiJkLmNoPqRsTuVwXyZ012345.7Kd0pQmZnRt2VwXyAbCd",
+    # Short, low-entropy and stored under an innocuous cookie name (``sid``): no named pattern and
+    # no entropy check can see it, so only the gate's cookie-jar rule (MFI-32.2) redacts it.
+    "har_jar_cookie": "demo" + "-sid-" + "4f1c2b9a",
 }
 
 
@@ -479,6 +482,79 @@ def _kong_with_secrets() -> bytes:
         f"        secret: {secrets['aws_secret_access_key']}\n"
     )
     return config.encode("utf-8")
+
+
+def _har_with_secrets() -> bytes:
+    """A devtools HAR capture carrying synthetic credentials where real captures leak them.
+
+    A bearer token and an API key in request headers, a session cookie in both the ``Cookie``
+    header and the request's ``cookies`` jar, a ``Set-Cookie`` and its ``cookies`` jar entry on the
+    response, and a token in the query string — the material MFI-32.2 says must never reach
+    storage.
+    """
+    secrets = SYNTHETIC_SECRETS
+
+    def entry(method: str, url: str, query: list, body: str, status: int) -> dict:
+        return {
+            "startedDateTime": "2026-10-25T10:00:00.000Z",
+            "time": 42.5,
+            "_resourceType": "fetch",
+            "request": {
+                "method": method,
+                "url": url,
+                "httpVersion": "HTTP/2",
+                "headers": [
+                    {"name": ":authority", "value": "api.example.com"},
+                    {"name": "authorization", "value": f"Bearer {secrets['jwt']}"},
+                    {"name": "x-api-key", "value": secrets["google_api_key"]},
+                    {"name": "cookie", "value": f"sid={secrets['har_jar_cookie']}; theme=dark"},
+                ],
+                "queryString": query,
+                "cookies": [
+                    {"name": "sid", "value": secrets["har_jar_cookie"]},
+                    {"name": "theme", "value": "dark"},
+                ],
+                "headersSize": -1,
+                "bodySize": 0,
+            },
+            "response": {
+                "status": status,
+                "statusText": "OK",
+                "httpVersion": "HTTP/2",
+                "headers": [
+                    {"name": "content-type", "value": "application/json"},
+                    {"name": "set-cookie", "value": f"sid={secrets['har_jar_cookie']}; Path=/; HttpOnly"},
+                ],
+                "cookies": [{"name": "sid", "value": secrets["har_jar_cookie"], "path": "/", "httpOnly": True}],
+                "content": {"size": len(body), "mimeType": "application/json", "text": body},
+                "redirectURL": "",
+                "headersSize": -1,
+                "bodySize": len(body),
+            },
+            "cache": {},
+            "timings": {"send": 0.1, "wait": 40.0, "receive": 2.4},
+        }
+
+    capture = {
+        "log": {
+            "version": "1.2",
+            "creator": {"name": "WebInspector", "version": "537.36"},
+            "pages": [],
+            "entries": [
+                entry(
+                    "GET",
+                    f"https://api.example.com/v1/accounts?access_token={secrets['github_token']}",
+                    [{"name": "access_token", "value": secrets["github_token"]}],
+                    '{"accounts": [{"id": "acc_1", "name": "Primary"}]}',
+                    200,
+                ),
+                entry(
+                    "GET", "https://api.example.com/v1/accounts/acc_1", [], '{"id": "acc_1", "name": "Primary"}', 200
+                ),
+            ],
+        }
+    }
+    return json.dumps(capture, indent=2).encode("utf-8")
 
 
 def _http_file_with_secrets() -> bytes:
@@ -662,6 +738,19 @@ GENERATED_FIXTURES: List[GeneratedFixture] = [
         builder=_postman_with_secrets,
         approx_bytes=1_600,
         features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "session-cookie"],
+    ),
+    GeneratedFixture(
+        name="secrets-har.har",
+        guard="secret-scrubbing",
+        adapter_key="har",
+        expected_error_code=None,
+        description=(
+            "Devtools HAR capture carrying a bearer JWT, an API key header, a query-string token, "
+            "and a session cookie in the Cookie header, both cookie jars and Set-Cookie."
+        ),
+        builder=_har_with_secrets,
+        approx_bytes=4_000,
+        features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "session-cookie", "cookie-jar"],
     ),
     GeneratedFixture(
         name="secrets-http-file.http",

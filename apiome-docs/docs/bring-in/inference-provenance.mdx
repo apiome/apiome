@@ -29,6 +29,7 @@ it, such as *Schema inferred from the example request body of POST /orders.*
 | HTTP request files (`.http`, cURL) | Everything is inferred from the requests in the file. |
 | Hoppscotch collections | Everything is inferred from the saved requests in the collection: path templates, parameters and body schemas. |
 | Thunder Client collections | Everything is inferred from the saved requests in the collection: path templates, parameters and body schemas. |
+| HAR captures | Everything is inferred from the captured traffic: path templates, parameters, and request and response schemas merged across samples. |
 | SoapUI / ReadyAPI projects | A REST interface is inferred from its saved requests and mock responses. A WSDL interface is declared by its WSDL; when the WSDL is not uploaded, its operations are declared from the project. |
 | Postman collections | Request and response schemas are inferred from example bodies. A raw body that is not JSON is synthesized as a string. Requests, paths and parameters are declared. |
 | Envoy, Istio, Traefik, NGINX, HAProxy, Consul, Tyk Classic | Every route is inferred from the gateway configuration. A Tyk OAS document is declared. |

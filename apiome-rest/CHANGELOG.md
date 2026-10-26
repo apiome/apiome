@@ -5,6 +5,38 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.450.0] - 2026-10-25
+
+### Added
+- **HAR capture import (MFI-32.2, #4404)** — a `har` import source (file, URL, paste, fileset; label
+  `HAR (inferred)`) reads HAR 1.2 / 1.1 captures from browser devtools and debugging proxies through the shared
+  MFI-32.1 inferred-spec engine: calls cluster into parameterized operations and bodies into schemas widened across
+  samples. New modules `har_filters`, `har_parser`, `har_normalizer`, `har_import_source`.
+  - Noise filter: page assets (resource type, extension, response media type), analytics / monitoring hosts, CORS
+    preflights and non-HTTP entries are left out and counted; browser-set request headers never become parameters.
+  - One host per import: the host with the most API calls, or the hosts named in `har_hosts`; the other hosts are
+    listed in `extras.har.hosts` and the coverage ledger.
+  - New `SpecImportOptions` fields `har_hosts`, `har_include`, `har_exclude` (`host/path` globs) and
+    `har_keep_noise`; a wrong-typed value is refused with `INPUT_SEMANTIC_INVALID`.
+  - Credentials: `cookies` lists are never read, `Authorization` keeps only its scheme word, every other value
+    passes the scrub gate. Declared limits `har.static_asset`, `har.analytics`, `har.cors_preflight`,
+    `har.non_http`, `har.excluded_by_pattern`, `har.unselected_host`, `har.auth_credential`, `har.cookie`.
+  - `inferred_spec.auth_scheme_from_headers` is now public.
+  - Corpus `apiome-ui/examples/har/` (7 valid across all six rungs, 6 negative), goldens, round-trip matrix row,
+    MCP toolset goldens, version coverage, inference-provenance entry, and a generated `secrets-har.har`
+    adversarial fixture.
+
+### Fixed
+- **Secret scrub gate: HAR cookie jars and JSON-escaped bodies** — every `value` in a `"cookies": [...]` list is
+  now redacted (`cookie-jar-value`; cookie names like `sid` never said they were secret), and the secret-named
+  assignment rule matches JSON-escaped quotes (`\"password\": \"…\"`), so request and response bodies that HAR
+  and Postman store as strings no longer persist their credentials. The redaction keeps the string valid JSON.
+- **Secret scrub gate is linear in the number of findings** — each finding's line number was counted from the top
+  of the document, so a large capture with thousands of cookie values took minutes; a 12 MB HAR with 120,000
+  findings now scrubs in a few seconds.
+- **Coverage ledger detail for client-collection limits** — rows built from `declared_limit` records (Hoppscotch,
+  Thunder Client, HAR) printed `None` as their detail; they now print the limit's note.
+
 ## [1.449.3] - 2026-10-24
 
 ### Fixed

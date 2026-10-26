@@ -1260,6 +1260,11 @@ def load_builtin_import_sources() -> None:
     # Thunder Client collection exports and their environments, through the same engine.
     from . import thunder_client_import_source as _thunder_client  # noqa: F401
 
+    # ``har_import_source`` (MFI-32.2) self-registers the ``har`` adapter — HAR captures from
+    # browser devtools and debugging proxies, noise-filtered, one host per import, through the
+    # same engine.
+    from . import har_import_source as _har  # noqa: F401
+
     # ``soapui_import_source`` (FMT-10.3) self-registers the ``soapui`` adapter — SoapUI / ReadyAPI
     # project XML: WSDL interfaces through the WSDL adapter, REST interfaces through the same engine.
     from . import soapui_import_source as _soapui  # noqa: F401

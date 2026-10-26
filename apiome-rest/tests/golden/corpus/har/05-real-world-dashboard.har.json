@@ -1,0 +1,1561 @@
+{
+  "adapter": "har",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "har": {
+        "api_calls": 10,
+        "capability_limits": [
+          {
+            "construct": "har.analytics",
+            "count": 3,
+            "locations": [
+              "api-js.mixpanel.com/track/",
+              "browser-intake-datadoghq.com/api/v2/rum",
+              "www.googletagmanager.com/gtag/js"
+            ],
+            "note": "Calls to analytics, tag-manager, error-reporting and session-replay vendors were left out. Keep them with a `har_include` pattern."
+          },
+          {
+            "construct": "har.static_asset",
+            "count": 5,
+            "locations": [
+              "cdn.example-static.net/logo.svg",
+              "cdn.example-static.net/main.8f3a.js",
+              "cdn.example-static.net/styles.77aa.css",
+              "cdn.example-static.net/vendor.1c2d.js",
+              "dashboard.example.io/"
+            ],
+            "note": "Page assets (documents, scripts, stylesheets, images, fonts, media) are not API calls and were left out. Keep them with the `har_keep_noise` option or a `har_include` pattern."
+          },
+          {
+            "construct": "har.unselected_host",
+            "count": 2,
+            "locations": [
+              "auth.example.io/oauth/token",
+              "auth.example.io/userinfo"
+            ],
+            "note": "API calls to another host were left out: each host becomes its own catalog item. Import the same capture again with the `har_hosts` option to catalog another host."
+          },
+          {
+            "construct": "har.auth_credential",
+            "count": 10,
+            "locations": [
+              "log.entries[10]",
+              "log.entries[11]",
+              "log.entries[12]",
+              "log.entries[13]",
+              "log.entries[14]",
+              "log.entries[15]",
+              "log.entries[16]",
+              "log.entries[17]",
+              "log.entries[8]",
+              "log.entries[9]"
+            ],
+            "note": "The `Authorization` scheme is kept; the captured credential is never stored."
+          },
+          {
+            "construct": "har.cookie",
+            "count": 10,
+            "locations": [
+              "log.entries[10]",
+              "log.entries[11]",
+              "log.entries[12]",
+              "log.entries[13]",
+              "log.entries[14]",
+              "log.entries[15]",
+              "log.entries[16]",
+              "log.entries[17]",
+              "log.entries[8]",
+              "log.entries[9]"
+            ],
+            "note": "Cookies are never read: a `Cookie` header is kept by name only (as cookie auth) and the `cookies` lists are skipped."
+          }
+        ],
+        "creators": [
+          "WebInspector 537.36"
+        ],
+        "entries": 20,
+        "excluded": {
+          "analytics": 3,
+          "static-asset": 5,
+          "unselected-host": 2
+        },
+        "hosts": [
+          {
+            "api_calls": 10,
+            "host": "api.example.io",
+            "selected": true
+          },
+          {
+            "api_calls": 2,
+            "host": "auth.example.io",
+            "selected": false
+          }
+        ],
+        "options": {
+          "exclude": [],
+          "hosts": [],
+          "include": [],
+          "keep_noise": false
+        },
+        "versions": [
+          "1.2"
+        ]
+      },
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v3"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "projects"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "prj_alpha"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "metrics"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.io/v3/projects/prj_alpha/metrics?name=cpu&window=1h",
+            "https://api.example.io/v3/projects/prj_alpha/metrics?name=latency&window=1h",
+            "https://api.example.io/v3/projects/prj_alpha/metrics?name=memory&window=1h"
+          ],
+          "template": "/v3/projects/prj_alpha/metrics"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v3"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "projects"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "prj_beta"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "metrics"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.io/v3/projects/prj_beta/metrics?name=cpu&window=1h",
+            "https://api.example.io/v3/projects/prj_beta/metrics?name=latency&window=1h",
+            "https://api.example.io/v3/projects/prj_beta/metrics?name=memory&window=1h"
+          ],
+          "template": "/v3/projects/prj_beta/metrics"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v3/projects": 1,
+        "GET /v3/projects/prj_alpha": 1,
+        "GET /v3/projects/prj_alpha/metrics": 3,
+        "GET /v3/projects/prj_beta": 1,
+        "GET /v3/projects/prj_beta/metrics": 3,
+        "PUT /v3/projects/prj_alpha/alerts/al_9": 1
+      }
+    },
+    "format": "har",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "api.example.io",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": null
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.io",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.io",
+        "name": "api.example.io",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects"
+                ],
+                "template": "/v3/projects"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[16]"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/projects",
+            "key": "GET /v3/projects",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v3/projects#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetProjectResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v3/projects",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "prj_alpha"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects/prj_alpha"
+                ],
+                "template": "/v3/projects/prj_alpha"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[8]"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/projects/prj_alpha",
+            "key": "GET /v3/projects/prj_alpha",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v3/projects/prj_alpha#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetPrj_alphaResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v3/projects/prj_alpha",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects/prj_alpha#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects/prj_alpha#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "prj_alpha"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "metrics"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects/prj_alpha/metrics?name=cpu&window=1h",
+                  "https://api.example.io/v3/projects/prj_alpha/metrics?name=latency&window=1h",
+                  "https://api.example.io/v3/projects/prj_alpha/metrics?name=memory&window=1h"
+                ],
+                "template": "/v3/projects/prj_alpha/metrics"
+              },
+              "provenance": "inferred",
+              "sample_count": 3,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[9]"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/projects/prj_alpha/metrics",
+            "key": "GET /v3/projects/prj_alpha/metrics",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "headers": [],
+                "key": "GET /v3/projects/prj_alpha/metrics#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetMetricResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v3/projects/prj_alpha/metrics",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_alpha/metrics#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_alpha/metrics#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_alpha/metrics#header.x-client-version",
+                "location": "header",
+                "name": "x-client-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3,
+                  "samples": [
+                    "cpu",
+                    "latency",
+                    "memory"
+                  ]
+                },
+                "key": "GET /v3/projects/prj_alpha/metrics#query.name",
+                "location": "query",
+                "name": "name",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3,
+                  "samples": [
+                    "1h",
+                    "1h",
+                    "1h"
+                  ]
+                },
+                "key": "GET /v3/projects/prj_alpha/metrics#query.window",
+                "location": "query",
+                "name": "window",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "prj_beta"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects/prj_beta"
+                ],
+                "template": "/v3/projects/prj_beta"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[12]"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/projects/prj_beta",
+            "key": "GET /v3/projects/prj_beta",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v3/projects/prj_beta#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetPrj_betaResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v3/projects/prj_beta",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects/prj_beta#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/projects/prj_beta#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "prj_beta"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "metrics"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects/prj_beta/metrics?name=cpu&window=1h",
+                  "https://api.example.io/v3/projects/prj_beta/metrics?name=latency&window=1h",
+                  "https://api.example.io/v3/projects/prj_beta/metrics?name=memory&window=1h"
+                ],
+                "template": "/v3/projects/prj_beta/metrics"
+              },
+              "provenance": "inferred",
+              "sample_count": 3,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[13]"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/projects/prj_beta/metrics",
+            "key": "GET /v3/projects/prj_beta/metrics",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "headers": [],
+                "key": "GET /v3/projects/prj_beta/metrics#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetMetricResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v3/projects/prj_beta/metrics",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_beta/metrics#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_beta/metrics#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v3/projects/prj_beta/metrics#header.x-client-version",
+                "location": "header",
+                "name": "x-client-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3,
+                  "samples": [
+                    "cpu",
+                    "latency",
+                    "memory"
+                  ]
+                },
+                "key": "GET /v3/projects/prj_beta/metrics#query.name",
+                "location": "query",
+                "name": "name",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3,
+                  "samples": [
+                    "1h",
+                    "1h",
+                    "1h"
+                  ]
+                },
+                "key": "GET /v3/projects/prj_beta/metrics#query.window",
+                "location": "query",
+                "name": "window",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "har_auth": [
+                {
+                  "scheme": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "projects"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "prj_alpha"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "alerts"
+                  },
+                  {
+                    "index": 4,
+                    "kind": "literal",
+                    "value": "al_9"
+                  }
+                ],
+                "method": "PUT",
+                "sample_urls": [
+                  "https://api.example.io/v3/projects/prj_alpha/alerts/al_9"
+                ],
+                "template": "/v3/projects/prj_alpha/alerts/al_9"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [],
+              "source_label": "har/05-real-world-dashboard.har",
+              "source_location": "log.entries[17]"
+            },
+            "http_method": "PUT",
+            "http_path": "/v3/projects/prj_alpha/alerts/al_9",
+            "key": "PUT /v3/projects/prj_alpha/alerts/al_9",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "PUT /v3/projects/prj_alpha/alerts/al_9#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PutAl_9Request",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "PUT /v3/projects/prj_alpha/alerts/al_9#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PutAl_9Response200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "PUT /v3/projects/prj_alpha/alerts/al_9",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PUT /v3/projects/prj_alpha/alerts/al_9#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PUT /v3/projects/prj_alpha/alerts/al_9#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PUT /v3/projects/prj_alpha/alerts/al_9#header.cookie",
+                "location": "header",
+                "name": "cookie",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "api.example.io",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetMetricResponse200.metric",
+            "name": "metric",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetMetricResponse200.points",
+            "name": "points",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetMetricResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetMetricResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_alphaResponse200.created_at",
+            "name": "created_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_alphaResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_alphaResponse200.members",
+            "name": "members",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_alphaResponse200.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetPrj_alphaResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetPrj_alphaResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_betaResponse200.created_at",
+            "name": "created_at",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_betaResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_betaResponse200.members",
+            "name": "members",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetPrj_betaResponse200.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetPrj_betaResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetPrj_betaResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetProjectResponse200.next",
+            "name": "next",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "null",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetProjectResponse200.projects",
+            "name": "projects",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetProjectResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetProjectResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PutAl_9Request.enabled",
+            "name": "enabled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PutAl_9Request.threshold",
+            "name": "threshold",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PutAl_9Request",
+        "key_type": null,
+        "kind": "record",
+        "name": "PutAl_9Request",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PutAl_9Response200.enabled",
+            "name": "enabled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PutAl_9Response200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PutAl_9Response200.threshold",
+            "name": "threshold",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PutAl_9Response200",
+        "key_type": null,
+        "kind": "record",
+        "name": "PutAl_9Response200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "har/05-real-world-dashboard.har",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 1,
+    "types": 6
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "har"
+  },
+  "fingerprint": "sha256:cc84eb9ade99dc12fc5d59b90d7592f13280206ce6349e37a76a087032bc50da",
+  "lint": {
+    "findings": 38,
+    "grade": "F",
+    "report_fingerprint": "dea5412d2d4f555dc8d2e708cca40f460633e0185a1121de7980d099690ca48d",
+    "score": 34,
+    "severity_counts": {
+      "error": 0,
+      "info": 26,
+      "warning": 12
+    }
+  },
+  "snapshot_version": 1
+}

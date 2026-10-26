@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1468 files** across **107 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1482 files** across **108 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -31,6 +31,7 @@ The corpus holds **1468 files** across **107 format directories**. Every file ha
 | `envoy-xds/` | Envoy xDS routes | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
 | `gateway-api/` | Gateway API HTTPRoute | rest | `apiVersion: gateway.networking.k8s.io/*` + `kind: HTTPRoute` | 13 |
 | `haproxy/` | HAProxy configuration | rest | `frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend` | 16 |
+| `har/` | HAR captures | rest | `{"log": {"version": "1.2", … "entries": […]}}` — a JSON object whose `log` holds an `entries` list | 14 |
 | `hoppscotch/` | Hoppscotch collections | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
 | `http-file/` | HTTP Request File | rest | HTTP request line / `###` separators / `curl` / `.http` `.rest` | 15 |
 | `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
@@ -1055,6 +1056,29 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`08-map-file-set/hosts.map`** — Fileset member: a one-column map used as a Host allowlist.
 
 > ⚠ **`08-map-file-set/tenants.map`** — Fileset member: tenant header value to backend name, read by map_str at request time.
+
+### `har/` — HAR captures
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-single-call.har` | minimal | `har` ≥ 0.9 | valid | `capture`, `single-entry`, `har-1.2` |
+| `02-typical-devtools-crud.har` | typical | `har` ≥ 0.9 | valid | `chrome-devtools`, `crud`, `path-params`, `static-assets`, `analytics`, `cors-preflight`, `bearer-auth`, `pseudo-headers` |
+| `03-multi-session/session-1-browse.har` | multi-file (root) | `har` ≥ 0.9 | valid | `multi-file`, `capture`, `recording-session` |
+| `03-multi-session/session-2-checkout.har` | multi-file (member) | `har` ≥ 0.9 | valid | `multi-file`, `capture`, `recording-session` |
+| `04-stress-mixed-capture.har` | stress | `har` ≥ 0.9 | valid | `uuid-segments`, `hash-segments`, `base64-body`, `form-body`, `multipart-body`, `non-json-body`, `blocked-request`, `not-modified`, `data-url`, `websocket`, `eventsource`, `extension-url`, `source-map`, `analytics` |
+| `05-real-world-dashboard.har` ⚠ | real-world | `har` ≥ 0.9 | valid | `multi-host`, `host-selection`, `cdn-assets`, `tag-manager`, `cookie-auth`, `bearer-auth`, `oauth-token-call` |
+| `06-composition-sample-widening.har` | composition | `har` ≥ 0.9 | valid | `sample-clustering`, `schema-widening`, `nested-objects`, `nullable-fields`, `optional-query` |
+| `07-firefox-har-1.1-todos.har` | real-world | `har` ≥ 0.9 | valid | `firefox`, `har-1.1`, `no-resource-type`, `api-key-auth`, `custom-port` |
+| `negative/01-syntactic-missing-comma.har` | — | `har` (no guarantee) | invalid | `negative`, `syntactic`, `missing-comma` |
+| `negative/02-semantic-no-entries.har` | — | `har` (no guarantee) | invalid | `negative`, `semantic`, `no-entries` |
+| `negative/03-truncated-mid-entry.har` | — | `har` (no guarantee) | invalid | `negative`, `truncated`, `mid-entry` |
+| `negative/04-wrong-format-postman.json` | — | `har` (no guarantee) | invalid | `negative`, `wrong-format`, `postman` |
+| `negative/05-encoding-utf16.har` | — | `har` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-assets-only.har` ⚠ | — | `har` (no guarantee) | invalid | `negative`, `semantic`, `assets-only`, `analytics` |
+
+> ⚠ **`05-real-world-dashboard.har`** — Three API hosts: the dashboard API (most calls) is imported by default; the auth service is left out as an unselected host (import it with `har_hosts`). Prefixed ids (`prj_alpha`) are not generalized into path parameters by the inferred-spec engine, which templates numeric, UUID and hash segments only.
+
+> ⚠ **`negative/06-semantic-assets-only.har`** — A capture of a page load with no API calls: every entry is a page asset or an analytics beacon, so nothing is left to infer and the import is refused with a hint to use `har_keep_noise` / `har_include`.
 
 ### `hl7v2/` — HL7 v2.x
 
@@ -2735,7 +2759,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1468 | `Apache-2.0` |
+| `hand-authored` | 1482 | `Apache-2.0` |
 
 ## Trying an import
 

@@ -1,0 +1,26 @@
+---
+slug: har-import
+title: Import a HAR capture
+description: Record traffic in devtools or a proxy and catalog the inferred REST API.
+authors: [apiome]
+---
+
+Record a session in your browser's devtools or a debugging proxy, save it as HAR, and Apiome now
+imports the traffic into the catalog as a REST API.
+[How to record and import a capture](/bring-in/har-import).
+
+{/* truncate */}
+
+- **Calls become operations.** Repeated calls cluster into parameterized operations
+  (`GET /v1/users/{id}`), and request and response bodies become schemas merged across every
+  sample, from the same engine as the Hoppscotch, Thunder Client, cURL and `.http` imports.
+- **Noise is left out.** Page assets, analytics and monitoring calls, CORS preflights and non-HTTP
+  entries are filtered and counted in the coverage ledger. The `har_keep_noise`, `har_include` and
+  `har_exclude` import options tune the filter.
+- **One catalog item per host.** The host with the most API calls is imported by default; name
+  another with the `har_hosts` option.
+- **Credentials are never kept.** Cookies are not read, `Authorization` keeps only its scheme, and
+  every other value is scrubbed. The secret scrubber now also redacts every value in a HAR
+  `cookies` list and secret-named fields inside JSON bodies stored as strings, so the stored copy of
+  the capture is clean too.
+- The format shows as **HAR (inferred)**.

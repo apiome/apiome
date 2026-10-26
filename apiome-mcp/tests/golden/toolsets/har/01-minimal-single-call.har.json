@@ -1,0 +1,30 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (GetHealthResponse200).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_v1_health",
+      "operation": "GET /v1/health",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "GetHealthResponse200",
+        "status": "200"
+      }
+    }
+  ]
+}

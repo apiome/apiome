@@ -230,6 +230,12 @@
       "paradigm": "rest",
       "marker": "`frontend`/`backend`/`listen` sections with `bind`, `acl`, `use_backend`"
     },
+    "har": {
+      "label": "HAR captures",
+      "category": "rest-http",
+      "paradigm": "rest",
+      "marker": "`{\"log\": {\"version\": \"1.2\", \u2026 \"entries\": [\u2026]}}` \u2014 a JSON object whose `log` holds an `entries` list"
+    },
     "hl7v2": {
       "label": "HL7 v2.x",
       "category": "industry-messaging",
@@ -11721,6 +11727,321 @@
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "failure_class": "unresolvable-ref",
       "expected_error_code": "INPUT_REFERENCE_UNRESOLVED"
+    },
+    {
+      "path": "har/01-minimal-single-call.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "capture",
+        "single-entry",
+        "har-1.2"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "har/02-typical-devtools-crud.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "chrome-devtools",
+        "crud",
+        "path-params",
+        "static-assets",
+        "analytics",
+        "cors-preflight",
+        "bearer-auth",
+        "pseudo-headers"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "har/03-multi-session/session-1-browse.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "capture",
+        "recording-session"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "har/03-multi-session/session-2-checkout.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "capture",
+        "recording-session"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "har/04-stress-mixed-capture.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "uuid-segments",
+        "hash-segments",
+        "base64-body",
+        "form-body",
+        "multipart-body",
+        "non-json-body",
+        "blocked-request",
+        "not-modified",
+        "data-url",
+        "websocket",
+        "eventsource",
+        "extension-url",
+        "source-map",
+        "analytics"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "har/05-real-world-dashboard.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-host",
+        "host-selection",
+        "cdn-assets",
+        "tag-manager",
+        "cookie-auth",
+        "bearer-auth",
+        "oauth-token-call"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Reconstructed in-repo from the shape of a single-page dashboard's devtools capture; no upstream capture copied.",
+      "rung": "real-world",
+      "notes": "Three API hosts: the dashboard API (most calls) is imported by default; the auth service is left out as an unselected host (import it with `har_hosts`). Prefixed ids (`prj_alpha`) are not generalized into path parameters by the inferred-spec engine, which templates numeric, UUID and hash segments only."
+    },
+    {
+      "path": "har/06-composition-sample-widening.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "sample-clustering",
+        "schema-widening",
+        "nested-objects",
+        "nullable-fields",
+        "optional-query"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "har/07-firefox-har-1.1-todos.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "firefox",
+        "har-1.1",
+        "no-resource-type",
+        "api-key-auth",
+        "custom-port"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "real-world"
+    },
+    {
+      "path": "har/negative/01-syntactic-missing-comma.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "missing-comma"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "har/negative/02-semantic-no-entries.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "no-entries"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "har/negative/03-truncated-mid-entry.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated",
+        "mid-entry"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "har/negative/04-wrong-format-postman.json",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "postman"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "har/negative/05-encoding-utf16.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
+      "path": "har/negative/06-semantic-assets-only.har",
+      "format": "har",
+      "adapter_key": "har",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "har",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "assets-only",
+        "analytics"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "A capture of a page load with no API calls: every entry is a page asset or an analytics beacon, so nothing is left to infer and the import is refused with a hint to use `har_keep_noise` / `har_include`.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
     },
     {
       "path": "hl7v2/01-adt-a01.hl7",

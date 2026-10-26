@@ -97,7 +97,6 @@ first follow-up. Status is from the 2026-10-25 audit.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#4404](https://github.com/apiome/apiome/issues/4404) MFI-32.2 | HAR adapter (reuse the request→operation inference in `inferred_spec.py`) | Not built |
 | [#4405](https://github.com/apiome/apiome/issues/4405) MFI-32.3 | Insomnia collection adapter | Not built |
 | [#4406](https://github.com/apiome/apiome/issues/4406) MFI-32.4 | Bruno collection adapter | Not built |
 | [#4407](https://github.com/apiome/apiome/issues/4407) MFI-32.5 | Secret scrubbing and environment mapping gate — scrubbing is built and forced on for these formats; environment → server-variable mapping unverified | Partly built |

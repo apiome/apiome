@@ -759,6 +759,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['vs code', 'vscode', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
   },
   {
+    id: 'har-import',
+    title: 'Import a HAR capture',
+    summary: 'Record traffic in devtools or a proxy and catalog the inferred REST API.',
+    page: 'apiome-docs/docs/bring-in/har-import.md',
+    section: 'reference',
+    keywords: ['http archive', 'devtools', 'network', 'traffic', 'proxy', 'recording', 'inferred', 'browser'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

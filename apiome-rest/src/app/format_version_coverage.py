@@ -1106,6 +1106,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         default_write="`.http` / `.rest` request file and cURL snippet",
     ),
+    "har": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="HAR 1.2 (and 1.1)",
+                format_key="har",
+                support=VersionSupport.UNGATED,
+                note="Every current browser and proxy writes HAR 1.2; 1.1 differs only in fields the reader "
+                "does not use, so both — and a `log.entries` capture with no version — are read by one reader "
+                "that never branches on `log.version`. Every construct is recorded as inferred.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "hoppscotch": VersionCoverage(
         reads=[
             FormatVersion(
