@@ -17,7 +17,8 @@
  *  2. **Preserve (lossless, already valid in 3.1)** — constructs that are valid in
  *     3.1 and simply carried through:
  *       - `summary` / `description` siblings on a `$ref` (Reference Object metadata,
- *         added in 3.1). Recorded for OA6 so it can attach them to resolved nodes.
+ *         added in 3.1). Applied as local overrides by OA6
+ *         ({@link ./openapi-self-references.ts}).
  *
  *  3. **Stash (owned by OA3–OA6)** — 3.2-only constructs that the importer does not
  *     understand yet. Instead of being silently dropped they are carried forward on
@@ -281,7 +282,7 @@ function convertSchema(schema: any, ctx: ConversionContext, path: string): any {
         id: 'ref-sibling-metadata',
         label: '$ref sibling metadata (summary/description)',
         description:
-          'summary/description siblings on a $ref are preserved and carried forward to be attached to the resolved node (OA6).',
+          'summary/description siblings on a $ref are preserved and imported as local overrides on the referencing property or class (OA6).',
         ownedBy: 'OA6',
         severity: 'info'
       });

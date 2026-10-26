@@ -105,9 +105,8 @@ handle these.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#3503](https://github.com/apiome/apiome/issues/3503) OA6 | `$self` and `$ref` sibling summary/description | Not built |
 | [#3505](https://github.com/apiome/apiome/issues/3505) AZ2 | Arazzo `sourceDescriptions` resolution | Catalog done; the Projects importer (`lib/importers/arazzo.ts`) ignores them |
-| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | Close when the two are done |
+| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | Close when AZ2 is done |
 
 OA3 (#3500) is built on the Projects path: `itemSchema` elements of JSON Lines, JSON text
 sequences and SSE import as classes tagged `x-apiome-stream-kind`, and **Analyze** lists the
@@ -120,6 +119,11 @@ export writes them to `x-apiome-query-operation` / `x-apiome-additional-operatio
 OA5 (#3502) is built on the Projects path: tags keep summary / parent / kind / externalDocs on
 the project (`x-apiome-tag-taxonomy`), the parent tree is cycle-checked, and classes list their
 declared tags. The Catalog side still has no tree or cycle check; that was outside the issue's scope.
+
+OA6 (#3503) is built on the Projects path: `$ref`s resolve against a declared `$self`
+(same-document references import as local, others are kept and warned about), and `$ref` sibling
+summary/description are kept as local overrides. The Catalog (REST normalizer) side was outside
+that issue's scope.
 
 ### 3.3 Format depth (P2 unless noted)
 

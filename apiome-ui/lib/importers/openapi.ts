@@ -3,6 +3,7 @@ import { applyNamingConventionToClasses } from '../../src/app/utils/naming-conve
 import { extractDirectProperties } from '../../src/app/utils/openapi-schema-direct-properties';
 import { applyStreamItemSchemas } from '../../src/app/utils/openapi-stream-media-types';
 import { buildTagTaxonomy, CLASS_TAGS_EXTENSION } from '../../src/app/utils/openapi-tag-taxonomy';
+import { describeExternalSelfReferences, resolveSelfReferences } from '../../src/app/utils/openapi-self-references';
 import { getSchemaTags } from '../../src/app/utils/schema-tree-utils';
 import { getSmartClassName } from '../schema-context-naming';
 import { collectReservedNameWarnings } from './reserved-names';
@@ -199,9 +200,15 @@ const convertProperty = (propName: string, propSchema: any, required: string[] =
 
 export const openApiImporter: Importer = {
   kind: 'openapi' as ImportSourceKind,
-  normalize({ document, options }: { document: any; options: NormalizeOptions }): NormalizeResult {
+  normalize({ document: sourceDocument, options }: { document: any; options: NormalizeOptions }): NormalizeResult {
     const classes: NormalizedClass[] = [];
     const warnings: string[] = [];
+
+    // $refs are resolved against a declared $self; same-document refs become local (OA6, #3503).
+    const selfResolution = resolveSelfReferences(sourceDocument);
+    const document = selfResolution.document;
+    const externalSelfRefs = describeExternalSelfReferences(selfResolution);
+    if (externalSelfRefs) warnings.push(externalSelfRefs);
 
     // Stream element schemas (3.2 itemSchema) become classes tagged x-apiome-stream-kind (OA3, #3500).
     const schemas = applyStreamItemSchemas(document)?.components?.schemas || {};
