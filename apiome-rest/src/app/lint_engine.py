@@ -413,6 +413,9 @@ def load_format_rule_packs() -> None:
     # Apache Thrift lint pack (MFI-19.3): registers under ``thrift``.
     from . import thrift_lint as _thrift_lint  # noqa: F401
 
+    # OpenRPC lint pack (MFI-19.1): registers under ``openrpc``.
+    from . import openrpc_lint as _openrpc_lint  # noqa: F401
+
     # OData lint pack (MFI-11.1): registers under ``odata`` (the OASIS CSDL schema rule).
     from . import odata_lint as _odata_lint  # noqa: F401
 

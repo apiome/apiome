@@ -1,0 +1,41 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/openrpc-unique-param-names",
+  "source_format": "openrpc",
+  "description": "OpenRPC document with exactly one blocking defect: a method with two parameters named account.",
+  "document": {
+    "openrpc": "1.2.6",
+    "info": {
+      "title": "Wallet",
+      "version": "1.0.0"
+    },
+    "methods": [
+      {
+        "name": "transfer",
+        "summary": "Move funds.",
+        "params": [
+          {
+            "name": "account",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "account",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "result": {
+          "name": "txHash",
+          "schema": {
+            "type": "string"
+          }
+        }
+      }
+    ]
+  }
+}

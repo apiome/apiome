@@ -206,6 +206,9 @@ class _OpenRpcWriter:
                 params = self._params(operation)
                 if params:
                     method["params"] = params
+                param_structure = operation.extras.get("openrpc_param_structure")
+                if isinstance(param_structure, str) and param_structure:
+                    method["paramStructure"] = param_structure
                 result = self._result(operation)
                 if result:
                     method["result"] = result

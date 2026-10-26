@@ -1,0 +1,53 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/openrpc-unique-method-names",
+  "source_format": "openrpc",
+  "description": "OpenRPC document with exactly one blocking defect: two methods named getBalance.",
+  "document": {
+    "openrpc": "1.2.6",
+    "info": {
+      "title": "Wallet",
+      "version": "1.0.0"
+    },
+    "methods": [
+      {
+        "name": "getBalance",
+        "summary": "Balance of an account.",
+        "params": [
+          {
+            "name": "account",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "result": {
+          "name": "balance",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "name": "getBalance",
+        "summary": "Balance at a block.",
+        "params": [
+          {
+            "name": "block",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "result": {
+          "name": "balance",
+          "schema": {
+            "type": "string"
+          }
+        }
+      }
+    ]
+  }
+}

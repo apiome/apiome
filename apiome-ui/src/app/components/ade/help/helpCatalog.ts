@@ -831,6 +831,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['tsp', 'compile', 'cadl', 'multi-file', 'archive', 'openapi3', 'emitter', 'microsoft', 'tspconfig', 'cli', 'folder'],
   },
   {
+    id: 'openrpc-import',
+    title: 'Import an OpenRPC / JSON-RPC API',
+    summary: 'Catalog an OpenRPC document or a live JSON-RPC service via rpc.discover.',
+    page: 'apiome-docs/docs/bring-in/openrpc-import.md',
+    section: 'reference',
+    keywords: ['jsonrpc', 'rpc.discover', 'web3', 'ethereum', 'discover', 'endpoint', 'paramStructure'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

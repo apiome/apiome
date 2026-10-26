@@ -1,12 +1,15 @@
-"""OpenRPC import source — MFI-18.6.
+"""OpenRPC import source — MFI-18.6, MFI-19.1 (#3979).
 
 The :class:`~app.import_source.ImportSource` adapter that makes OpenRPC JSON-RPC
-service descriptions importable into the catalog (store-raw, MFI-23.7).
+service descriptions importable into the catalog (store-raw, MFI-23.7). A running service
+is read live through the reserved ``rpc.discover`` method (:meth:`OpenRpcImportSource.discover`,
+:mod:`app.openrpc_discovery`).
 """
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from dataclasses import replace
+from typing import Any, Mapping, Optional
 
 from . import openrpc_normalizer  # noqa: F401 — self-registers the normalizer
 from .canonical_model import ApiParadigm, CanonicalApi
@@ -19,6 +22,7 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
+from .openrpc_discovery import discover_openrpc_service
 from .openrpc_parser import (
     OpenRpcDocument,
     OpenRpcParseError,
@@ -31,15 +35,17 @@ __all__ = ["OpenRpcImportSource"]
 
 
 class OpenRpcImportSource(ImportSource, register=True):
-    """Adapter for OpenRPC JSON-RPC service descriptions (``.json`` file / url / paste)."""
+    """Adapter for OpenRPC JSON-RPC service descriptions (file / url / paste / live ``rpc.discover``)."""
 
     key = "openrpc"
     label = "OpenRPC"
     description = "Import an OpenRPC JSON-RPC 2.0 service description with methods and schemas."
     icon = "workflow"
     paradigm = ApiParadigm.RPC
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
-    supports_live_discovery = False
+    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.DISCOVERY, InputKind.FILESET)
+    #: A live JSON-RPC service is read by calling its ``rpc.discover`` method (MFI-19.1,
+    #: :meth:`discover`).
+    supports_live_discovery = True
     formats = ("openrpc", "jsonrpc")
     file_extensions = (".openrpc.json", ".openrpc", ".json")
 
@@ -81,6 +87,41 @@ class OpenRpcImportSource(ImportSource, register=True):
         if root not in fileset.members:
             raise ImportSourceError("OpenRPC fileset is missing its root document")
         return self.parse(fileset.members[root], source_label=root or source_label)
+
+    def discover(
+        self,
+        url: str,
+        *,
+        auth_type: Optional[str] = None,
+        auth_payload: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+        client: Optional[Any] = None,
+    ) -> OpenRpcDocument:
+        """Read a live JSON-RPC service's OpenRPC document through ``rpc.discover`` (MFI-19.1).
+
+        The live counterpart to :meth:`parse`: :func:`app.openrpc_discovery.discover_openrpc_service`
+        calls ``rpc.discover`` on the endpoint over the SSRF-guarded client, and the document it
+        returns is parsed exactly as an upload is.
+
+        Args:
+            url: The JSON-RPC endpoint.
+            auth_type: Credential-vault auth type.
+            auth_payload: The decrypted credential for ``auth_type``.
+            headers: Extra request headers.
+            client: An httpx client to inject (tests).
+
+        Returns:
+            The parsed document, with ``discovery_url`` set to the endpoint.
+
+        Raises:
+            ImportSourceError: When the service cannot be reached, does not implement
+                ``rpc.discover``, or its document does not parse.
+        """
+        discovery = discover_openrpc_service(
+            url, auth_type=auth_type, auth_payload=auth_payload, headers=headers, client=client
+        )
+        document = self.parse(discovery.document, source_label=discovery.endpoint_url)
+        return replace(document, discovery_url=discovery.endpoint_url)
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, OpenRpcDocument):

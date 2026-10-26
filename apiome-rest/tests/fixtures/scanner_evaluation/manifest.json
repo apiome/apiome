@@ -462,6 +462,27 @@
       "expected_blocking_rule_ids": [
         "thrift.oneway-void"
       ]
+    },
+    {
+      "id": "catalog/openrpc-unique-method-names",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "openrpc.unique-method-names"
+      ]
+    },
+    {
+      "id": "catalog/openrpc-unique-param-names",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "openrpc.unique-param-names"
+      ]
+    },
+    {
+      "id": "catalog/openrpc-required-params-first",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "openrpc.required-params-first"
+      ]
     }
   ]
 }

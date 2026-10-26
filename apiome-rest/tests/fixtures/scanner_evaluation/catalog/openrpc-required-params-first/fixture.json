@@ -1,0 +1,41 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/openrpc-required-params-first",
+  "source_format": "openrpc",
+  "description": "OpenRPC document with exactly one blocking defect: a required parameter after an optional one.",
+  "document": {
+    "openrpc": "1.2.6",
+    "info": {
+      "title": "Wallet",
+      "version": "1.0.0"
+    },
+    "methods": [
+      {
+        "name": "getBalance",
+        "summary": "Balance of an account.",
+        "params": [
+          {
+            "name": "block",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "account",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "result": {
+          "name": "balance",
+          "schema": {
+            "type": "string"
+          }
+        }
+      }
+    ]
+  }
+}

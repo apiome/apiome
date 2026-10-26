@@ -89,6 +89,7 @@ from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
 from apiome_cli.import_.odata import odata_metadata_url
 from apiome_cli.import_.wsdl import discover_wsdl_url
+from apiome_cli.import_.openrpc import discover_openrpc_document
 from apiome_cli.import_.agents_manifest import discover_site_manifest_url
 from apiome_cli.import_.project_dir import ProjectDirectoryError, pack_project_directory
 from apiome_cli.import_.json_schema import (
@@ -2168,6 +2169,125 @@ def import_wsdl(
     )
 
 
+@app.command("openrpc")
+def import_openrpc(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="OpenRPC document: path, ``http``/``https`` URL, ``-``, or an archive.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="ENDPOINT",
+        help=(
+            "JSON-RPC 2.0 endpoint (for example ``https://rpc.example.com/``) whose OpenRPC "
+            "document is read by calling its ``rpc.discover`` method."
+        ),
+    ),
+    archive_root: str | None = typer.Option(
+        None,
+        "--root",
+        metavar="PATH",
+        help="Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1).",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import an OpenRPC document from a file, URL, stdin, archive, or a live JSON-RPC service.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With
+    ``--discover`` the CLI calls the endpoint's ``rpc.discover`` method and imports the document
+    it returns through the registered ``openrpc`` adapter like any other source (MFI-19.1).
+    """
+    preloaded: tuple[str, bytes] | None = None
+    if discover is not None:
+        preloaded = _discover_openrpc(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            timeout=_resolve_import_timeout(ctx, import_timeout),
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="openrpc",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=archive_root,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+        preloaded=preloaded,
+    )
+
+
+def _discover_openrpc(
+    ctx: typer.Context,
+    endpoint: str,
+    *,
+    other_inputs: tuple[str | None, ...],
+    timeout: float,
+) -> tuple[str, bytes]:
+    """Call ``rpc.discover`` for ``import openrpc --discover`` (MFI-19.1).
+
+    Args:
+        ctx: The Click/Typer context.
+        endpoint: The ``--discover`` value.
+        other_inputs: INPUT / ``--file`` / ``--url``, which must all be empty.
+        timeout: HTTP timeout, in seconds.
+
+    Returns:
+        ``(endpoint URL, document bytes)``.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` for a second input or a bad URL, ``EXIT_ERROR`` when the
+            call fails or returns no document.
+    """
+    if any(value for value in other_inputs):
+        typer.echo(
+            "Provide only one input: --discover, or INPUT / --file / --url (not more than one).",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+    try:
+        found = discover_openrpc_document(endpoint, timeout=timeout, verify=not insecure_from_context(ctx))
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    except OSError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_ERROR) from exc
+    if not no_progress_from_context(ctx):
+        typer.echo(f"Discovered OpenRPC document at {found[0]} (rpc.discover)", err=True)
+    return found
+
+
 @app.command("agents-manifest")
 def import_agents_manifest(
     ctx: typer.Context,
@@ -2482,6 +2602,10 @@ def _run_git_adapter_import(
     emit_import_job_accepted(resolution.payload, json_mode=json_mode)
 
 
+#: Upload name for a document the CLI fetched itself (``import openrpc --discover``).
+_PRELOADED_FILENAME = "discovered.openrpc.json"
+
+
 def _run_generic_adapter_import(
     ctx: click.Context,
     *,
@@ -2496,17 +2620,23 @@ def _run_generic_adapter_import(
     poll_interval: float,
     min_grade: str | None = None,
     fail_on: str | None = None,
+    preloaded: tuple[str, bytes] | None = None,
 ) -> None:
     """Resolve ``source_format`` against the registry and run the adapter import.
 
     Reuses the existing async spec-import path — submit, poll, emit — so polling and
     output stay consistent with the dedicated import verbs. The document bytes are
     sent verbatim so any format the adapter accepts survives the upload.
+
+    ``preloaded`` is ``(source URL, document bytes)`` for a document the verb already fetched
+    (``import openrpc --discover``, MFI-19.1); it is uploaded as ``_PRELOADED_FILENAME`` instead
+    of reading INPUT / ``--file`` / ``--url`` — never named after the URL, whose path may carry a
+    provider API key.
     """
     settings = settings_from_context(ctx)
     require_api_key(settings)
     min_grade, fail_on = coerce_gate_flags(min_grade, fail_on)
-    resolved_source = _resolve_generic_source(source, file_path, url)
+    resolved_source = preloaded[0] if preloaded is not None else _resolve_generic_source(source, file_path, url)
     import_timeout = _resolve_import_timeout(ctx, import_timeout_override)
     no_progress = no_progress_from_context(ctx)
     verify = not insecure_from_context(ctx)
@@ -2520,7 +2650,9 @@ def _run_generic_adapter_import(
         typer.echo(unknown_format_message(source_format, descriptors), err=True)
         raise typer.Exit(EXIT_USAGE)
 
-    if is_local_file_source(resolved_source) and Path(resolved_source).is_dir():
+    if preloaded is not None:
+        raw_bytes, filename = preloaded[1], _PRELOADED_FILENAME
+    elif is_local_file_source(resolved_source) and Path(resolved_source).is_dir():
         # MFI-14.5: a project directory is sent as the archive an upload would be.
         try:
             packed = pack_project_directory(Path(resolved_source), source_format)

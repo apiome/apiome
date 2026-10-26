@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -88,3 +89,60 @@ def test_catalog_conversion_resolves_openrpc_adapter():
     from app.catalog_conversion import resolve_conversion_adapter
 
     assert resolve_conversion_adapter("openrpc", _WALLET_OPENRPC).key == "openrpc"
+
+
+# ===========================================================================
+# MFI-19.1 (#3979): content-descriptor references and paramStructure
+# ===========================================================================
+
+_COMPONENTS_REFS = (
+    Path(__file__).resolve().parents[2] / "apiome-ui/examples/openrpc/03-components-refs.json"
+).read_text(encoding="utf-8")
+
+
+def test_param_refs_to_content_descriptors_are_resolved():
+    doc = parse_openrpc(_COMPONENTS_REFS)
+    for method in doc.methods:
+        if method.name in ("createOrder", "listOrders"):
+            assert "customerId" in [param.name for param in method.params], method.name
+
+
+def test_a_result_ref_to_a_content_descriptor_is_resolved():
+    raw = {
+        "openrpc": "1.2.6",
+        "info": {"title": "T", "version": "1"},
+        "methods": [{"name": "get", "params": [], "result": {"$ref": "#/components/contentDescriptors/Out"}}],
+        "components": {"contentDescriptors": {"Out": {"name": "out", "schema": {"type": "string"}}}},
+    }
+    method = parse_openrpc(json.dumps(raw)).methods[0]
+    assert method.result_name == "out"
+    assert method.result_schema == {"type": "string"}
+
+
+def test_an_unresolvable_param_ref_is_skipped():
+    raw = {
+        "openrpc": "1.2.6",
+        "info": {"title": "T", "version": "1"},
+        "methods": [{"name": "get", "params": [{"$ref": "#/components/contentDescriptors/Nope"}]}],
+    }
+    assert parse_openrpc(json.dumps(raw)).methods[0].params == ()
+
+
+def test_param_structure_is_kept_and_round_trips():
+    raw = {
+        "openrpc": "1.2.6",
+        "info": {"title": "T", "version": "1"},
+        "methods": [
+            {
+                "name": "get",
+                "paramStructure": "by-name",
+                "params": [{"name": "id", "required": True, "schema": {"type": "string"}}],
+                "result": {"name": "r", "schema": {"type": "string"}},
+            }
+        ],
+    }
+    api = OpenRpcNormalizer().normalize(parse_openrpc(json.dumps(raw)))
+    operation = api.services[0].operations[0]
+    assert operation.extras["openrpc_param_structure"] == "by-name"
+    emitted = json.loads(get_emitter("openrpc")().emit(api).files[0].content)
+    assert emitted["methods"][0]["paramStructure"] == "by-name"

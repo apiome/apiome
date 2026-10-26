@@ -167,11 +167,12 @@ and `apiome import smithy` takes a model file, JSON AST, archive or directory.
 MFI-11.1 (#3776) is built: OData CSDL JSON input (`app.odata_csdl_json`) and OASIS CSDL schema validation of every
 v4 document (`app.odata_csdl_schema`; violations recorded and linted as `odata.csdl-schema`, not refused).
 
-**Live discovery:**
+**Live discovery:** all three tickets are built.
 
-| Ticket | Work |
-| --- | --- |
-| [#3979](https://github.com/apiome/apiome/issues/3979) MFI-19.1 | OpenRPC `rpc.discover` |
+MFI-19.1 (#3979) is built: `OpenRpcImportSource.discover` calls `rpc.discover` on a JSON-RPC endpoint
+(`app.openrpc_discovery`, SSRF-guarded POST via `app.live_fetch.guarded_post_json`); content-descriptor `$ref`s
+resolve; an `openrpc` breaking-change classifier (`app.openrpc_breaking`, parameter position / name / requiredness
+against `paramStructure`) and lint pack (`app.openrpc_lint`, V323); the CLI has `apiome import openrpc --discover`.
 
 MFI-11.3 (#3778) is built: `ODataImportSource.discover` fetches `$metadata` and the service document
 (`app.odata_discovery`, SSRF-guarded) and records the service document and unlisted entity sets; the CLI has

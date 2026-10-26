@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.465.0] - 2026-10-26
+
+### Added
+- **OpenRPC live discovery, breaking-change rules and lint pack (MFI-19.1, #3979)** — the `openrpc` import source now
+  advertises live discovery (`supports_live_discovery`, input kind `discovery`) and gains `discover()` (new
+  `app.openrpc_discovery`): it POSTs the JSON-RPC 2.0 call `rpc.discover` to the endpoint over the SSRF-guarded client
+  (credential-vault auth in headers, 16 MiB cap) and parses the reply's `result` like an upload; `Method not found`
+  (`-32601`) → `SOURCE_NOT_FOUND`, any other JSON-RPC error → `SOURCE_UNREACHABLE`, a reply without an object
+  `result` → `INPUT_MALFORMED`. The model's extras gain `openrpc_discovery_url`. `app.live_fetch` gains
+  `guarded_post_json` (shared failure mapping with `guarded_get`). The parser now resolves parameter and result
+  `$ref`s into `components.contentDescriptors` (such parameters were dropped before) and keeps `paramStructure`
+  (`extras.openrpc_param_structure`, re-emitted by the OpenRPC emitter). New `app.openrpc_breaking` classifier
+  (`openrpc`): param-removed, required-param-added, optional-param-added, param-moved (safe when `by-name`),
+  param-renamed (safe when `by-position`), made-required, made-optional, param-schema-changed,
+  param-structure-narrowed / -widened. New `app.openrpc_lint` pack (`openrpc`): unique-method-names,
+  unique-param-names, required-params-first (errors, with blocking-rule transparency entries and evaluation
+  fixtures), reserved-method-name, method-described; seeded into the built-in style guide by V323. The CLI gains
+  `apiome import openrpc` with `--discover`. Format counts (live discovery 10 → 11), the supported-formats page, the
+  lint-rule docs and the corpus goldens for `openrpc/03` and `openrpc/04` regenerated. OpenAPI 1.329.0.
+
 ## [1.464.0] - 2026-10-26
 
 ### Changed
