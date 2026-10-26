@@ -15,6 +15,23 @@ function getRefSchemaName(ref: string | undefined): string | null {
 }
 
 /**
+ * Build the `path_operation.metadata` for an imported operation.
+ *
+ * @param op - the parsed operation.
+ * @returns `deprecated`, plus the original method token and where it was declared for an
+ *   OpenAPI 3.2 `query` / `additionalOperations` operation (OA4, #3501); null when empty.
+ */
+export function buildPathOperationMetadata(
+  op: Pick<ParsedOperation, 'deprecated' | 'httpMethod' | 'methodSource'>
+): Record<string, unknown> | null {
+  const metadata: Record<string, unknown> = {};
+  if (op.deprecated) metadata.deprecated = true;
+  if (op.httpMethod) metadata.httpMethod = op.httpMethod;
+  if (op.methodSource) metadata.methodSource = op.methodSource;
+  return Object.keys(metadata).length > 0 ? metadata : null;
+}
+
+/**
  * Import security schemes into version_security_scheme for the given version.
  */
 async function importSecuritySchemes(
@@ -108,11 +125,12 @@ export async function importOpenAPIPathsAndSecurity(
       }
 
       for (const op of pathItem.operations) {
+        const opMetadata = buildPathOperationMetadata(op);
         const opRes = await client.query(
           `INSERT INTO apiome.path_operation (version_path_id, operation, metadata)
            VALUES ($1, $2, $3)
            RETURNING id`,
-          [versionPathId, op.method, op.deprecated ? JSON.stringify({ deprecated: true }) : null]
+          [versionPathId, op.method, opMetadata ? JSON.stringify(opMetadata) : null]
         );
         const pathOperationId = opRes.rows[0].id;
 

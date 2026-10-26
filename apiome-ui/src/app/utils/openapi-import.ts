@@ -12,6 +12,7 @@ import { convertJsonSchemaToOpenAPI, isJsonSchema } from './jsonschema-converter
 import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGraphQLIntrospectionToOpenAPI } from './graphql-converter';
 import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter';
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32 } from './openapi32-converter';
+import { listPathItemOperations } from './openapi-path-operations';
 import { applyStreamItemSchemas, getMediaTypeItemSchema, getStreamKind, type StreamKind } from './openapi-stream-media-types';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -42,6 +43,8 @@ export interface ParsedPath {
   description?: string;
   parameters?: Array<{ name: string; in: string; required?: boolean; description?: string; schema?: Record<string, unknown> }>;
   operations: ParsedOperation[];
+  /** Method tokens declared more than once on the path item; only the first was imported (OA4). */
+  duplicateMethods?: string[];
 }
 
 /**
@@ -57,7 +60,15 @@ export interface ParsedMediaTypeContent {
 
 /** Parsed OpenAPI operation (get, post, etc.) */
 export interface ParsedOperation {
+  /** Upper-cased HTTP method (`GET`, `QUERY`, `REPORT`). */
   method: string;
+  /**
+   * Original method token, set only for an OpenAPI 3.2 `query` / `additionalOperations`
+   * operation (e.g. `QUERY`, `Report`), preserved for round-trip/export (OA4, #3501).
+   */
+  httpMethod?: string;
+  /** Where a 3.2 operation was declared; unset for the fixed verbs (OA4, #3501). */
+  methodSource?: 'query' | 'additionalOperations';
   operationId?: string;
   summary?: string;
   description?: string;
@@ -657,7 +668,6 @@ export function extractPaths(spec: any): ParsedPath[] {
   const pathObj = spec?.paths;
   if (!pathObj || typeof pathObj !== 'object') return [];
 
-  const methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'];
   const result: ParsedPath[] = [];
 
   for (const path of Object.keys(pathObj)) {
@@ -676,10 +686,10 @@ export function extractPaths(spec: any): ParsedPath[] {
       : [];
 
     const operations: ParsedOperation[] = [];
+    // Fixed verbs plus the 3.2 `query` and `additionalOperations`, raw or stashed by OA2 (OA4, #3501).
+    const walk = listPathItemOperations(pathItem);
 
-    for (const method of methods) {
-      const op = pathItem[method];
-      if (!op || typeof op !== 'object') continue;
+    for (const { method, normalizedMethod, source, operation: op } of walk.operations) {
 
       const opParams = Array.isArray(op.parameters)
         ? op.parameters.map((p: any) => ({
@@ -739,7 +749,8 @@ export function extractPaths(spec: any): ParsedPath[] {
       }
 
       operations.push({
-        method: method.toUpperCase(),
+        method: normalizedMethod,
+        ...(source === 'fixed' ? {} : { httpMethod: method, methodSource: source }),
         operationId: op.operationId,
         summary: op.summary,
         description: op.description,
@@ -759,6 +770,7 @@ export function extractPaths(spec: any): ParsedPath[] {
         description: pathItem.description,
         parameters: pathParams.length > 0 ? pathParams : undefined,
         operations,
+        ...(walk.duplicates.length > 0 ? { duplicateMethods: walk.duplicates } : {}),
       });
     }
   }
@@ -889,6 +901,14 @@ function parseOpenAPISpecInternal(spec: any, initialWarnings: string[]): OpenAPI
   const supportedClasses = classes.filter(c => c.isSupported);
   const hasPaths = spec.paths && typeof spec.paths === 'object' && Object.keys(spec.paths).length > 0;
   const paths = hasPaths ? extractPaths(spec) : [];
+  for (const p of paths) {
+    if (p.duplicateMethods?.length) {
+      globalWarnings.push(
+        `${p.path}: method${p.duplicateMethods.length === 1 ? '' : 's'} ${p.duplicateMethods.join(', ')} ` +
+        'declared more than once; only the first declaration was imported.'
+      );
+    }
+  }
   const securitySchemes = extractSecuritySchemes(spec);
   const hasSecuritySchemes = securitySchemes.length > 0;
 

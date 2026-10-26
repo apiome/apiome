@@ -206,7 +206,18 @@ export async function loadPathsForOpenAPIExport(versionId: string): Promise<stri
           }),
         }));
 
-        operations.push({ id: opRow.id, operation: opRow.operation, description: opDescription, parameters, requestBody, responses });
+        // Original method token of an imported OpenAPI 3.2 query / additionalOperations entry (OA4, #3501).
+        const opMetadata = typeof opRow.metadata === 'string' ? JSON.parse(opRow.metadata) : opRow.metadata;
+        const httpMethod = typeof opMetadata?.httpMethod === 'string' ? opMetadata.httpMethod : undefined;
+        operations.push({
+          id: opRow.id,
+          operation: opRow.operation,
+          ...(httpMethod ? { httpMethod } : {}),
+          description: opDescription,
+          parameters,
+          requestBody,
+          responses,
+        });
       }
       paths.push({ id: pathRow.id, pathname: pathRow.pathname, summary: pathRow.summary, description: pathRow.description, operations });
     }
