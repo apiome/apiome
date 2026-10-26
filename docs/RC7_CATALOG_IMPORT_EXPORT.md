@@ -95,9 +95,8 @@ first follow-up. Status is from the 2026-10-25 audit.
 
 ### 3.1 Formats not yet coded (P1)
 
-| Ticket | Work | Status |
-| --- | --- | --- |
-| [#4408](https://github.com/apiome/apiome/issues/4408) MFI-32.6 | Source cards, CLI, fixtures for the three (cards and CLI come from the registry once the adapters exist) | Ready — the HAR, Insomnia and Bruno adapters are built (#4404, #4405, #4406) |
+None outstanding. HAR, Insomnia and Bruno import (#4404, #4405, #4406), the secret-scrub gate (#4407)
+and their source cards, CLI verbs and fixtures (#4408) are built.
 
 ### 3.2 OpenAPI 3.2 and Arazzo import gaps (P1)
 

@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.454.0] - 2026-10-25
+
+### Changed
+- **Collection source cards + CLI + fixtures (MFI-32.6, #4408)** — the `har` import source's card icon is now
+  `activity` (was `radio`); `insomnia` and `bruno` keep the neutral `send` icon (their marks are trademarked).
+  All three advertise `file`/`url`/`paste`/`fileset` input kinds and archive suffixes, so the UI source card and
+  `apiome import har|insomnia|bruno` come straight from `GET /v1/import/sources` with no new UI or CLI command code.
+  OpenAPI 1.318.0.
+
+### Fixed
+- `POST /v1/import/detect` no longer reports a Bruno `.bru` request as ambiguous with `http-file`: the `.http`
+  request-line pattern (`http_file_parser._REQUEST_LINE_RE`) no longer accepts a lone `{` as a URL, so `get {` (a
+  Bruno method block) is not a request line. `GET {{baseUrl}}/…` still is.
+- New `tests/test_collection_import_surfacing.py`: the three descriptors, and every committed HAR / Insomnia / Bruno
+  example (zipped Bruno collection included) detected as its own adapter with no ambiguity.
+
 ## [1.453.0] - 2026-10-25
 
 ### Changed

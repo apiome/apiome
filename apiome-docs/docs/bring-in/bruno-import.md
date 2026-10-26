@@ -35,6 +35,10 @@ or `folder.bru` file on its own, is refused, because it has no requests to impor
   top level or the files directly.
 - **From git:** in **Import to catalog**, choose the **Git repository** source and select the collection
   folder (for example `api/bruno/**`). See the [import wizard](./import-wizard.mdx).
+- **From the CLI:** `apiome import bruno ./my-collection.zip`. A single request imports the same way
+  (`apiome import bruno ./get-order.bru`). Add `--dry-run` to preview without saving.
+
+In **Import to catalog**, the **Bruno collection** card takes the archive or a single `.bru` file.
 
 Apiome picks **Bruno collection** (`bruno`). Paths inside the collection are read relative to
 `bruno.json`, which is why an archive and a git selection import the same API. Files `bruno.json`

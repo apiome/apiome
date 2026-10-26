@@ -38,6 +38,11 @@ Import the file or the archive like any other specification: in the
 [import wizard](./import-wizard.mdx), with `apiome import`, or through the REST API (see
 [Import a specification](./import-a-spec.md)). Apiome picks **Insomnia collection** (`insomnia`).
 
+- **In the app:** in **Import to catalog**, choose the **Insomnia collection** card, or upload the
+  file on **File Upload** and let Apiome detect it.
+- **From the CLI:** `apiome import insomnia ./collection.yaml` (or the `.json` v4 export, or an
+  archive that holds the export and its environments). Add `--dry-run` to preview without saving.
+
 ## What each part becomes
 
 | Insomnia | In the catalog item |

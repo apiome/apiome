@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Radio, Share2, Waypoints } from 'lucide-react';
+import { Activity, Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
@@ -457,5 +457,80 @@ describe('CNCF xRegistry source card (MFI-19.2)', () => {
     expect(card?.scope).toBe('alternative');
     expect(card?.label).toBe('CNCF xRegistry');
     expect(resolveLucideIcon(XREGISTRY_DESCRIPTOR.icon)).toBe(Cloud);
+  });
+});
+
+/**
+ * The collection and captured-traffic sources as the REST registry advertises them (MFI-32.6,
+ * #4408): HAR (32.2), Insomnia (32.3) and Bruno (32.4). Insomnia and Bruno marks are trademarked,
+ * so both use Lucide's neutral `send` icon rather than a brand logo.
+ */
+const COLLECTION_DESCRIPTORS: ImportSourceDescriptor[] = [
+  {
+    key: 'har',
+    label: 'HAR (inferred)',
+    description: 'Import a HAR capture saved from browser devtools or a debugging proxy.',
+    icon: 'activity',
+    paradigm: 'rest',
+    input_kinds: ['file', 'url', 'paste', 'fileset'],
+    supports_live_discovery: false,
+    formats: ['har'],
+    file_extensions: ['.har', '.zip', '.tar.gz', '.tgz', '.tar'],
+  },
+  {
+    key: 'insomnia',
+    label: 'Insomnia collection',
+    description: 'Import an Insomnia export — v4 JSON or v5 YAML, optionally with its environment files.',
+    icon: 'send',
+    paradigm: 'rest',
+    input_kinds: ['file', 'url', 'paste', 'fileset'],
+    supports_live_discovery: false,
+    formats: ['insomnia'],
+    file_extensions: ['.json', '.yaml', '.yml', '.zip', '.tar.gz', '.tgz', '.tar'],
+  },
+  {
+    key: 'bruno',
+    label: 'Bruno collection',
+    description: 'Import a Bruno collection folder as an archive or from git.',
+    icon: 'send',
+    paradigm: 'rest',
+    input_kinds: ['file', 'url', 'paste', 'fileset'],
+    supports_live_discovery: false,
+    formats: ['bruno'],
+    file_extensions: ['.bru', '.json', '.zip', '.tar.gz', '.tgz', '.tar'],
+  },
+];
+
+describe('Collection source cards (MFI-32.6)', () => {
+  it('appear from the registry alone, after the built-ins, sorted by key', () => {
+    const cards = mergeImportSourceCards(COLLECTION_DESCRIPTORS);
+    expect(cards.map((c) => c.key)).toEqual([...BUILTIN_KEYS, 'bruno', 'har', 'insomnia']);
+  });
+
+  it('are usable Catalog file cards with neutral icons', () => {
+    const cards = mergeImportSourceCards(COLLECTION_DESCRIPTORS);
+    const expected: Record<string, { label: string; icon: unknown }> = {
+      har: { label: 'HAR (inferred)', icon: Activity },
+      insomnia: { label: 'Insomnia collection', icon: Send },
+      bruno: { label: 'Bruno collection', icon: Send },
+    };
+    for (const [key, want] of Object.entries(expected)) {
+      const card = cards.find((c) => c.key === key);
+      expect(card?.builtin).toBe(false);
+      expect(card?.label).toBe(want.label);
+      expect(card?.icon).toBe(want.icon);
+      expect(card?.panel).toBe('file');
+      expect(card?.scope).toBe('alternative');
+    }
+  });
+
+  it('show on the Catalog importer and not on the Projects importer', () => {
+    const cards = mergeImportSourceCards(COLLECTION_DESCRIPTORS);
+    const catalog = filterCardsForVariant(cards, 'catalog').map((c) => c.key);
+    const projects = filterCardsForVariant(cards, 'projects').map((c) => c.key);
+    for (const key of ['har', 'insomnia', 'bruno']) {
+      expect(catalog).toContain(key);
+      expect(projects).not.toContain(key);
+    }
   });
 });
