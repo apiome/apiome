@@ -385,6 +385,57 @@ the references that point back into the document and names any that point to ano
 The entry is a warning when some do. Same-document references written as full URLs no longer
 count as **External references**.
 
+## Arazzo sources in a Projects import
+
+An Arazzo workflow lists the API descriptions its steps call in `sourceDescriptions`. Each step
+names its target with `operationId` or `operationPath`:
+
+```yaml
+sourceDescriptions:
+  - name: petstore
+    type: openapi
+    url: ../specs/petstore.yaml
+workflows:
+  - workflowId: adopt
+    steps:
+      - stepId: pet
+        operationId: petstore.getPet
+      - stepId: byPath
+        operationPath: '{$sourceDescriptions.petstore.url}#/paths/~1pets~1{petId}/get'
+```
+
+When an Arazzo document goes through the Projects importer (an Arazzo file in the **Import**
+dialog, or an Arazzo file imported from a repository), the import checks every source and step:
+
+- **Each source is validated.** Its `type` must be `openapi` or `arazzo`. Its `url` must match a
+  document supplied with the import, either relative to the workflow's folder or to the root of
+  the set. Every source that fails one of these checks is reported with a code.
+- **Each step is resolved.** An `operationId` can be bare (`getPet`), name its source
+  (`petstore.getPet`) or use the Arazzo expression (`$sourceDescriptions.petstore.getPet`). An
+  `operationPath` names a path and method in a source. A resolved step records the operation's
+  path, method and `operationId`. A bare id found in more than one source does not resolve; name
+  the source instead.
+- **Nothing is dropped.** A step that does not resolve keeps its reference as written, and the
+  import shows a warning with the reason. A step that calls another workflow (`workflowId`) is
+  recorded and not resolved.
+
+The **Import** dialog and repository-file imports send only the workflow document today. Until
+they send the source documents too, every source is reported as **not in the import bundle**,
+and steps keep their raw references with a warning.
+
+| Code | Meaning |
+| --- | --- |
+| `SOURCE_INVALID` | A `sourceDescriptions` entry has no `name` or no `url`. |
+| `SOURCE_DUPLICATE` | Two entries share a name; the first is kept. |
+| `SOURCE_TYPE_UNSUPPORTED` | The `type` is not `openapi` or `arazzo`. |
+| `SOURCE_NOT_IN_BUNDLE` | No document supplied with the import matches the `url`. |
+| `SOURCE_TYPE_MISMATCH` | The matched document is not the declared type. |
+| `STEP_REFERENCE_UNRESOLVED` | A step's `operationId` or `operationPath` did not resolve. |
+
+The full result (every source, every step's resolution and every issue) is returned on the
+import job's summary as `arazzoResolution`. Workflows and their steps are not stored as their own
+records yet.
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

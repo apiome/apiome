@@ -1,3 +1,5 @@
+import type { ArazzoResolution } from './arazzo-sources';
+
 export type ImportSourceKind = 'openapi' | 'arazzo' | 'unknown';
 
 export interface NormalizedProperty {
@@ -58,11 +60,20 @@ export interface NormalizeOptions {
    * When true, auto-generate example values for properties that do not have an example (#761).
    */
   generateExamples?: boolean;
+  /**
+   * Documents supplied with the import, keyed by member path (Arazzo AZ2, #3505). An Arazzo
+   * import resolves its `sourceDescriptions[].url` against these; other importers ignore them.
+   */
+  sourceDocuments?: Record<string, unknown>;
+  /** The imported document's own member path, used to resolve relative source urls (AZ2). */
+  documentPath?: string;
 }
 
 export interface NormalizeResult {
   classes: NormalizedClass[];
   warnings: string[];
+  /** Arazzo only: sources and step references resolved against the bundle (AZ2, #3505; feeds #2773). */
+  arazzoResolution?: ArazzoResolution;
 }
 
 export interface Importer {
