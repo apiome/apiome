@@ -557,6 +557,62 @@ def _har_with_secrets() -> bytes:
     return json.dumps(capture, indent=2).encode("utf-8")
 
 
+def _insomnia_with_secrets() -> bytes:
+    """An Insomnia v5 YAML export carrying synthetic credentials where real exports leak them.
+
+    An unquoted bearer ``token:``, an API-key auth ``value``, a password form field, a
+    ``secret``-typed environment variable with an innocuous name, a secret-named environment
+    variable, and a cookie-jar cookie — the YAML spellings MFI-32.3 taught the gate.
+    """
+    secrets = SYNTHETIC_SECRETS
+    return (
+        "type: collection.insomnia.rest/5.0\n"
+        "name: Billing (exported with credentials)\n"
+        "collection:\n"
+        "  - name: Invoices\n"
+        "    authentication:\n"
+        "      type: bearer\n"
+        f"      token: {secrets['jwt']}\n"
+        "    children:\n"
+        "      - url: \"{{ _.baseUrl }}/invoices\"\n"
+        "        name: List invoices\n"
+        "        method: GET\n"
+        "      - url: \"{{ _.baseUrl }}/keyed\"\n"
+        "        name: Keyed\n"
+        "        method: GET\n"
+        "        authentication:\n"
+        "          type: apikey\n"
+        "          key: X-API-Key\n"
+        f"          value: {secrets['google_api_key']}\n"
+        "          addTo: header\n"
+        "      - url: \"{{ _.baseUrl }}/login\"\n"
+        "        name: Login\n"
+        "        method: POST\n"
+        "        body:\n"
+        "          mimeType: application/x-www-form-urlencoded\n"
+        "          params:\n"
+        "            - name: username\n"
+        "              value: billing-bot\n"
+        "            - name: password\n"
+        f"              value: {secrets['basic_auth_password']}\n"
+        "cookieJar:\n"
+        "  name: Default Jar\n"
+        "  cookies:\n"
+        "    - key: sid\n"
+        f"      value: {secrets['har_jar_cookie']}\n"
+        "      domain: billing.example.com\n"
+        "environments:\n"
+        "  name: Base Environment\n"
+        "  data:\n"
+        "    baseUrl: https://billing.example.com/api\n"
+        f"    stripeSecret: {secrets['stripe_key']}\n"
+        "  kvPairData:\n"
+        "    - name: ledger\n"
+        f"      value: {secrets['db_password']}\n"
+        "      type: secret\n"
+    ).encode("utf-8")
+
+
 def _http_file_with_secrets() -> bytes:
     """An ``.http`` request file carrying synthetic credentials in headers and URLs."""
     secrets = SYNTHETIC_SECRETS
@@ -751,6 +807,19 @@ GENERATED_FIXTURES: List[GeneratedFixture] = [
         builder=_har_with_secrets,
         approx_bytes=4_000,
         features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "session-cookie", "cookie-jar"],
+    ),
+    GeneratedFixture(
+        name="secrets-insomnia.yaml",
+        guard="secret-scrubbing",
+        adapter_key="insomnia",
+        expected_error_code=None,
+        description=(
+            "Insomnia v5 export carrying an unquoted bearer token, an API-key auth value, a password form "
+            "field, a secret-typed and a secret-named environment variable, and a cookie-jar cookie."
+        ),
+        builder=_insomnia_with_secrets,
+        approx_bytes=1_400,
+        features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "yaml", "cookie-jar", "kv-secret"],
     ),
     GeneratedFixture(
         name="secrets-http-file.http",

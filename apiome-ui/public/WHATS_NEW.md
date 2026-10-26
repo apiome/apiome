@@ -12,6 +12,7 @@ We continue to improve the platform based on your feedback with improvements and
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - API Formats:
   - Adds formats:
+    - Insomnia collection import — an Insomnia v4 (JSON) or v5 (YAML) export and its environment files become one REST API: folders as operation groups, requests as operations with inferred body schemas, `{{ _.baseUrl }}` as a server variable and whole-variable parameters with their environment value as default; saved credentials, secret variables and cookie jars are never kept, and scripts, template tags, gRPC and WebSocket requests are listed in the coverage ledger
     - HAR capture import — save your browser's devtools Network log (or a proxy capture) as HAR and catalog the API it called: repeated calls become parameterized operations with request and response schemas inferred from the traffic, page assets and analytics are left out, each host becomes its own catalog item, and cookies and credentials are never kept
 
 ## Bug Fixes

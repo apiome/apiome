@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1482 files** across **108 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1498 files** across **109 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -34,6 +34,7 @@ The corpus holds **1482 files** across **108 format directories**. Every file ha
 | `har/` | HAR captures | rest | `{"log": {"version": "1.2", … "entries": […]}}` — a JSON object whose `log` holds an `entries` list | 14 |
 | `hoppscotch/` | Hoppscotch collections | rest | top-level `v` + `folders[]`/`requests[]` with `endpoint` and `auth.authType` | 14 |
 | `http-file/` | HTTP Request File | rest | HTTP request line / `###` separators / `curl` / `.http` `.rest` | 15 |
+| `insomnia/` | Insomnia exports | rest | v4 JSON `{"_type": "export", "__export_format": 4, "resources": […]}`, or v5 YAML `type: collection.insomnia.rest/5.0` | 16 |
 | `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
 | `kong/` | Kong Declarative Config | rest | `_format_version` + `services:`/`routes:` declarative sections | 12 |
 | `nginx/` | nginx configuration | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
@@ -1215,6 +1216,33 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`03-dbd-psb-set/CUSTINQ.psb`** — Fileset member: the program view. PROCOPT is the access contract FMT-11.2 carries in extras, and it only makes sense against the DBD in the same set.
 
 > ⚠ **`negative/06-unresolvable-parent-reference.dbd`** — The FMT-11.2 acceptance case: a DBD with a dangling PARENT.
+
+### `insomnia/` — Insomnia exports
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-v5-single-request.yaml` | minimal | `insomnia` ≥ 0.9 | valid | `v5`, `yaml`, `single-request` |
+| `02-typical-v5-users-collection.yaml` ⚠ | typical | `insomnia` ≥ 0.9 | valid | `v5`, `yaml`, `folders`, `folder-auth`, `folder-headers`, `sub-environments`, `path-params`, `disabled-entries` |
+| `03-environment-set/orders.insomnia.yaml` | multi-file (root) | `insomnia` ≥ 0.9 | valid | `multi-file`, `v5`, `collection` |
+| `03-environment-set/staging.environment.yaml` | multi-file (member) | `insomnia` (no guarantee) | valid | `multi-file`, `v5`, `global-environment` |
+| `04-stress-v4-all-shapes.json` | stress | `insomnia` ≥ 0.9 | valid | `v4`, `json-body`, `bare-variable`, `form-body`, `multipart-body`, `graphql-body`, `xml-body`, `binary-body`, `basic-auth`, `oauth2-auth`, `apikey-auth`, `digest-auth`, `iam-auth`, `auth-inheritance`, `disabled-auth`, `nested-folders`, `folder-environment`, `nested-env-data`, `template-tag`, `pre-request-script`, `grpc-request`, `websocket-request`, `unit-tests`, `cookie-jar`, `kv-secret` |
+| `05-real-world-v4-payments-export.json` | real-world | `insomnia` ≥ 0.9 | valid | `v4`, `token-exchange`, `after-response-script`, `idempotency-key`, `uuid-template-tag`, `folder-auth` |
+| `06-composition-v4-users-export.json` ⚠ | composition | `insomnia` ≥ 0.9 | valid | `v4`, `parentId-tree`, `folder-auth-inheritance`, `folder-header-inheritance`, `sub-environments` |
+| `07-real-world-v5-design-document.yaml` | real-world | `insomnia` ≥ 0.9 | valid | `v5`, `design-document`, `api-spec`, `unit-tests`, `after-response-script` |
+| `negative/01-syntactic-bad-indentation.yaml` | — | `insomnia` (no guarantee) | invalid | `negative`, `syntactic`, `yaml`, `bad-mapping` |
+| `negative/02-semantic-no-requests.yaml` | — | `insomnia` (no guarantee) | invalid | `negative`, `semantic`, `empty-folder` |
+| `negative/03-truncated-v4-mid-resource.json` | — | `insomnia` (no guarantee) | invalid | `negative`, `truncated`, `v4`, `mid-resource` |
+| `negative/04-wrong-format-postman.json` | — | `insomnia` (no guarantee) | invalid | `negative`, `wrong-format`, `postman` |
+| `negative/05-encoding-utf16.json` | — | `insomnia` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-version-out-of-range-format-3.json` | — | `insomnia` (no guarantee) | invalid | `negative`, `version-out-of-range`, `export-format-3` |
+| `negative/07-semantic-orphan-parent.json` | — | `insomnia` (no guarantee) | invalid | `negative`, `semantic`, `orphan-parentId` |
+| `negative/08-semantic-environment-alone.yaml` ⚠ | — | `insomnia` (no guarantee) | invalid | `negative`, `semantic`, `environment-alone` |
+
+> ⚠ **`02-typical-v5-users-collection.yaml`** — The same collection as 06-composition-v4-users-export.json, exported as v5 YAML: both must import to the same operations, tags and servers.
+
+> ⚠ **`06-composition-v4-users-export.json`** — The v4 JSON export of the collection in 02-typical-v5-users-collection.yaml; the two import identically (structural stability across export formats).
+
+> ⚠ **`negative/08-semantic-environment-alone.yaml`** — A global environment exported on its own defines variables but no requests; it imports only beside the collection that uses it (see 03-environment-set/).
 
 ### `iso20022/` — ISO 20022
 
@@ -2759,7 +2787,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1482 | `Apache-2.0` |
+| `hand-authored` | 1498 | `Apache-2.0` |
 
 ## Trying an import
 

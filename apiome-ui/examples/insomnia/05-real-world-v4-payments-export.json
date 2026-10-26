@@ -1,0 +1,300 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-25T09:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "parentId": null,
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Payments Sandbox",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Auth",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0002",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/oauth/token",
+      "name": "Create token",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "name": "grant_type",
+            "value": "client_credentials"
+          },
+          {
+            "name": "client_id",
+            "value": "{{ _.client_id }}"
+          },
+          {
+            "name": "client_secret",
+            "value": "{{ _.client_secret }}"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -2,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request",
+      "afterResponseScript": "insomnia.environment.set('access_token', insomnia.response.json().access_token);"
+    },
+    {
+      "_id": "fld_0003",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Payments",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -3,
+      "_type": "request_group",
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "headers": [
+        {
+          "name": "Idempotency-Key",
+          "value": "{% uuid 'v4' %}"
+        },
+        {
+          "name": "X-Api-Version",
+          "value": "{{ _.api_version }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_0004",
+      "parentId": "fld_0003",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/payments",
+      "name": "Create payment",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"amount\": 1999,\n  \"currency\": \"EUR\",\n  \"source\": {\n    \"type\": \"card\",\n    \"token\": \"tok_visa\"\n  },\n  \"capture\": true\n}"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -4,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0005",
+      "parentId": "fld_0003",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/payments/:paymentId",
+      "name": "Get payment",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -5,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0006",
+      "parentId": "fld_0003",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/payments/:paymentId/capture",
+      "name": "Capture payment",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"amount\": 1999}"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -6,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0007",
+      "parentId": "fld_0003",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/payments",
+      "name": "List payments",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "limit",
+          "value": "25"
+        },
+        {
+          "name": "starting_after",
+          "value": ""
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -7,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0008",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Refunds",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -8,
+      "_type": "request_group",
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      }
+    },
+    {
+      "_id": "req_0009",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.base_url }}/v1/payments/:paymentId/refunds",
+      "name": "Refund",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"amount\": 500, \"reason\": \"requested_by_customer\"}"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -9,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "env_base_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "https://sandbox.payments.example.com",
+        "api_version": "2026-10-01",
+        "client_id": "demo-client",
+        "client_secret": "",
+        "access_token": ""
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "api_version",
+          "client_id",
+          "client_secret",
+          "access_token"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800000,
+      "_type": "environment"
+    },
+    {
+      "_id": "env_sub_0001",
+      "parentId": "env_base_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Live",
+      "data": {
+        "base_url": "https://payments.example.com"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800001,
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Default Jar",
+      "cookies": [],
+      "_type": "cookie_jar"
+    }
+  ]
+}

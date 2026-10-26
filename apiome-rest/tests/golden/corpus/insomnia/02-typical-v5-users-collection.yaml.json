@@ -1,0 +1,781 @@
+{
+  "adapter": "insomnia",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
+      "insomnia": {
+        "capability_limits": [
+          {
+            "construct": "insomnia.auth_credential",
+            "count": 4,
+            "locations": [
+              "Create user",
+              "Delete user",
+              "Get user",
+              "List users"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's grant type, URL and scopes, or an API key's name) is kept; saved credentials are never read."
+          },
+          {
+            "construct": "insomnia.secret_variable",
+            "count": 2,
+            "locations": [
+              "accessToken"
+            ],
+            "note": "A secret variable (by its name, or Insomnia's `secret` type) is listed by name; its value is withheld."
+          }
+        ],
+        "environments": [
+          "Base Environment",
+          "Staging",
+          "Production"
+        ],
+        "export_formats": [
+          "v5"
+        ],
+        "folders": [
+          "Users",
+          "Users / Admin"
+        ],
+        "requests": 5,
+        "variables": [
+          {
+            "name": "accessToken",
+            "secret": true,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "accessToken",
+            "secret": true,
+            "source": "environment:Production"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:Staging"
+          },
+          {
+            "name": "pageSize",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "tenant",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "userId",
+            "secret": false,
+            "source": "environment:Staging"
+          }
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "userId"
+            }
+          ],
+          "method": "DELETE",
+          "sample_urls": [
+            "/v1/users/{userId}"
+          ],
+          "template": "/v1/users/{userId}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "userId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v1/users/{userId}"
+          ],
+          "template": "/v1/users/{userId}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "DELETE /v1/users/{userId}": 1,
+        "GET /health": 1,
+        "GET /v1/users": 1,
+        "GET /v1/users/{userId}": 1,
+        "POST /v1/users": 1
+      }
+    },
+    "format": "insomnia",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Users API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": "https://api.example.com",
+            "description": "Insomnia environment variable `{{ _.baseUrl }}`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Users API",
+        "name": "Users API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "userId"
+                  }
+                ],
+                "method": "DELETE",
+                "sample_urls": [
+                  "/v1/users/{userId}"
+                ],
+                "template": "/v1/users/{userId}"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Users",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/02-typical-v5-users-collection.yaml"
+              ],
+              "source_label": "Delete user",
+              "source_location": "collection/1/children/3/children/0"
+            },
+            "http_method": "DELETE",
+            "http_path": "/v1/users/{userId}",
+            "key": "DELETE /v1/users/{userId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "DELETE /v1/users/{userId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v1/users/{userId}#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v1/users/{userId}#path.userId",
+                "location": "path",
+                "name": "userId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users / Admin"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "health"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/health"
+                ],
+                "template": "/health"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/02-typical-v5-users-collection.yaml"
+              ],
+              "source_label": "Health",
+              "source_location": "collection/0"
+            },
+            "http_method": "GET",
+            "http_path": "/health",
+            "key": "GET /health",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /health",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/users"
+                ],
+                "template": "/v1/users"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Users",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/02-typical-v5-users-collection.yaml"
+              ],
+              "source_label": "List users",
+              "source_location": "collection/1/children/0"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/users",
+            "key": "GET /v1/users",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/users",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "20",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "{{ _.pageSize }}"
+                  ]
+                },
+                "key": "GET /v1/users#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "1"
+                  ]
+                },
+                "key": "GET /v1/users#query.page",
+                "location": "query",
+                "name": "page",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "userId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/users/{userId}"
+                ],
+                "template": "/v1/users/{userId}"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Users",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/02-typical-v5-users-collection.yaml"
+              ],
+              "source_label": "Get user",
+              "source_location": "collection/1/children/1"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/users/{userId}",
+            "key": "GET /v1/users/{userId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/users/{userId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users/{userId}#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users/{userId}#path.userId",
+                "location": "path",
+                "name": "userId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/users"
+                ],
+                "template": "/v1/users"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Users",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/02-typical-v5-users-collection.yaml"
+              ],
+              "source_label": "Create user",
+              "source_location": "collection/1/children/2"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/users",
+            "key": "POST /v1/users",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/users#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostUserRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/users",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Users API",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.roles",
+            "name": "roles",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostUserRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostUserRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "insomnia/02-typical-v5-users-collection.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 5,
+    "servers": 1,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "insomnia"
+  },
+  "fingerprint": "sha256:82a37e27bb3402bdc7bed945eccb1903f50e915c4ce17be803bed93e96a8f4b4",
+  "lint": {
+    "findings": 12,
+    "grade": "C",
+    "report_fingerprint": "3cb5c07c2714a438bbd36173229c2ad3710e0cc64bdea8e3948578be547f0ff4",
+    "score": 70,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 6
+    }
+  },
+  "snapshot_version": 1
+}

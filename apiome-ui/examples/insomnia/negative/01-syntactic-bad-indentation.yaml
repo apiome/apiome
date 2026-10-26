@@ -1,0 +1,32 @@
+type: collection.insomnia.rest/5.0
+name: Ping
+meta:
+  id: wrk_5f0c2a6b8d1e4f3a9b7c6d5e4f3a2b1c
+  created: 1761382800000
+  modified: 1761382800000
+  description: ''
+collection:
+- url: https://api.example.com/ping
+  name: Ping
+  meta:
+    id: req_00000000000000000000000000000001
+    created: 1761382800000
+    modified: 1761382800000
+    isPrivate: false
+    sortKey: -1
+  method: GET
+    headers: oops: [
+  settings:
+    renderRequestBody: true
+    encodeUrl: true
+    followRedirects: global
+    cookies:
+      send: true
+      store: true
+    rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c
+    created: 1761382800000
+    modified: 1761382800000

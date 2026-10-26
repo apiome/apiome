@@ -1,0 +1,23 @@
+---
+slug: insomnia-import
+title: Import an Insomnia collection
+description: Catalog an Insomnia v4 or v5 export and its environments as one inferred REST API.
+authors: [apiome]
+---
+
+Apiome now imports an Insomnia export — v5 YAML or v4 JSON — with the environments its variables
+come from, into the catalog as one REST API.
+[What gets imported](/bring-in/insomnia-import).
+
+{/* truncate */}
+
+- **Folders become operation groups.** v5 folders are read as they nest; a v4 export's flat
+  `parentId` list is rebuilt into the tree. Each operation is tagged with its folder path.
+- **Requests become operations.** `:name` and `{{ _.variables }}` in a path become path parameters,
+  folder headers and auth are inherited, and JSON, GraphQL and form bodies get inferred schemas.
+- **Environments become server variables and defaults.** `{{ _.baseUrl }}` becomes a server variable
+  with the base environment's value, and a parameter written as a variable gets its value as default.
+- **The same collection imports the same way** from a v4 and a v5 export.
+- **Credentials are never kept.** Auth is read as a scheme only, secret variables and cookie jars are
+  never read, and the secret scrubber now also redacts YAML name/value pairs, `token:` values, YAML
+  cookie jars and Insomnia's secret-typed variables in the stored copy of the upload.

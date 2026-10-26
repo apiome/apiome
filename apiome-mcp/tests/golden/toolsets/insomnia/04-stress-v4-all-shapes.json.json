@@ -1,0 +1,243 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_api_status",
+      "operation": "GET /api/status"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-session": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-session"
+        ],
+        "type": "object"
+      },
+      "name": "GET_chained",
+      "operation": "GET /chained"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_digest",
+      "operation": "GET /digest"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_keyed",
+      "operation": "GET /keyed"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_keyed-query",
+      "operation": "GET /keyed-query"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_me",
+      "operation": "GET /me"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_oauth_me",
+      "operation": "GET /oauth/me"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_off",
+      "operation": "GET /off"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_public",
+      "operation": "GET /public"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_signed",
+      "operation": "GET /signed"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "region": {
+            "type": "string"
+          },
+          "x-region": {
+            "default": "eu",
+            "type": "string"
+          }
+        },
+        "required": [
+          "region",
+          "x-region"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v3_regions_region_zones",
+      "operation": "GET /v3/regions/{region}/zones"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "file",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "POST_files",
+      "operation": "POST /files"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "variables": {}
+        },
+        "required": [
+          "content-type",
+          "query",
+          "variables"
+        ],
+        "type": "object"
+      },
+      "name": "POST_graphql",
+      "operation": "POST /graphql"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "content-type",
+          "name",
+          "qty",
+          "tags"
+        ],
+        "type": "object"
+      },
+      "name": "POST_items",
+      "operation": "POST /items"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type"
+        ],
+        "type": "object"
+      },
+      "name": "POST_legacy",
+      "operation": "POST /legacy"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "password",
+          "username"
+        ],
+        "type": "object"
+      },
+      "name": "POST_login",
+      "operation": "POST /login"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "blobId": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "blobId",
+          "content-type"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_blobs_blobId",
+      "operation": "PUT /blobs/{blobId}"
+    }
+  ]
+}

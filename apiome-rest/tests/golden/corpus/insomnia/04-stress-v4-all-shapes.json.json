@@ -1,0 +1,1597 @@
+{
+  "adapter": "insomnia",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "inferred_auth_schemes": [
+        "apiKey",
+        "authorization",
+        "basic",
+        "digest",
+        "oauth2"
+      ],
+      "insomnia": {
+        "capability_limits": [
+          {
+            "construct": "insomnia.script",
+            "count": 1,
+            "locations": [
+              "Nested env value"
+            ],
+            "note": "Pre-request and after-response scripts are run by Insomnia; they are not modelled."
+          },
+          {
+            "construct": "insomnia.template_tag",
+            "count": 1,
+            "locations": [
+              "Chained token"
+            ],
+            "note": "Template tags (`{% response %}`, `{% uuid %}` …) are evaluated by Insomnia at send time; the request is kept and a tag in its path becomes a path parameter."
+          },
+          {
+            "construct": "insomnia.auth_credential",
+            "count": 6,
+            "locations": [
+              "API key header",
+              "API key query",
+              "AWS IAM",
+              "Digest",
+              "Inherits basic",
+              "OAuth 2"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's grant type, URL and scopes, or an API key's name) is kept; saved credentials are never read."
+          },
+          {
+            "construct": "insomnia.secret_variable",
+            "count": 2,
+            "locations": [
+              "clientSecret",
+              "stripeKey"
+            ],
+            "note": "A secret variable (by its name, or Insomnia's `secret` type) is listed by name; its value is withheld."
+          },
+          {
+            "construct": "insomnia.cookie_jar",
+            "count": 1,
+            "locations": [
+              "Default Jar"
+            ],
+            "note": "Cookie jars hold session state, not API description; they are never read."
+          },
+          {
+            "construct": "insomnia.grpc_request",
+            "count": 1,
+            "locations": [
+              "Say hello (gRPC)"
+            ],
+            "note": "gRPC requests are not HTTP calls; they are not modelled. Import the `.proto` files instead."
+          },
+          {
+            "construct": "insomnia.unit_test",
+            "count": 2,
+            "locations": [
+              "Returns 200",
+              "Smoke tests"
+            ],
+            "note": "Unit test suites are run by Insomnia; they are not modelled."
+          },
+          {
+            "construct": "insomnia.websocket_request",
+            "count": 1,
+            "locations": [
+              "Live feed"
+            ],
+            "note": "WebSocket requests are not modelled."
+          }
+        ],
+        "environments": [
+          "Base Environment",
+          "Vault"
+        ],
+        "export_formats": [
+          "v4"
+        ],
+        "folders": [
+          "Auth",
+          "Bodies",
+          "Deep",
+          "Deep / Deeper",
+          "Deep / Deeper / Deepest"
+        ],
+        "requests": 17,
+        "variables": [
+          {
+            "name": "api.host",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "clientSecret",
+            "secret": true,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "qty",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "region",
+            "secret": false,
+            "source": "environment:Vault"
+          },
+          {
+            "name": "region",
+            "secret": false,
+            "source": "folder:Deep"
+          },
+          {
+            "name": "stripeKey",
+            "secret": true,
+            "source": "environment:Vault"
+          }
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v3"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "regions"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "region"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "zones"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v3/regions/{region}/zones"
+          ],
+          "template": "/v3/regions/{region}/zones"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "blobs"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "blobId"
+            }
+          ],
+          "method": "PUT",
+          "sample_urls": [
+            "/blobs/{blobId}"
+          ],
+          "template": "/blobs/{blobId}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /api/status": 1,
+        "GET /chained": 1,
+        "GET /digest": 1,
+        "GET /keyed": 1,
+        "GET /keyed-query": 1,
+        "GET /me": 1,
+        "GET /oauth/me": 1,
+        "GET /off": 1,
+        "GET /public": 1,
+        "GET /signed": 1,
+        "GET /v3/regions/{region}/zones": 1,
+        "POST /files": 1,
+        "POST /graphql": 1,
+        "POST /items": 1,
+        "POST /legacy": 1,
+        "POST /login": 1,
+        "PUT /blobs/{blobId}": 1
+      }
+    },
+    "format": "insomnia",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Stress",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "insomnia/04-stress-v4-all-shapes.json"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "http://localhost:3000",
+        "variables": []
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": "api_host",
+        "protocol": null,
+        "url": "{api_host}",
+        "variables": [
+          {
+            "default": "https://geo.example.com",
+            "description": "Insomnia environment variable `{{ _.api_host }}`.",
+            "enum": null,
+            "extras": {},
+            "name": "api_host"
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": "https://stress.example.com",
+            "description": "Insomnia environment variable `{{ _.baseUrl }}`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Stress",
+        "name": "Stress",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "api"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "status"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "http://localhost:3000/api/status"
+                ],
+                "template": "/api/status"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Scheme-less",
+              "source_location": "resources/22"
+            },
+            "http_method": "GET",
+            "http_path": "/api/status",
+            "key": "GET /api/status",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /api/status",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "chained"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/chained"
+                ],
+                "template": "/chained"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Chained token",
+              "source_location": "resources/21"
+            },
+            "http_method": "GET",
+            "http_path": "/chained",
+            "key": "GET /chained",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /chained",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /chained#header.x-session",
+                "location": "header",
+                "name": "x-session",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "digest"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/digest"
+                ],
+                "template": "/digest"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "request",
+                  "scheme": "digest",
+                  "type": "digest"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "digest"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Digest",
+              "source_location": "resources/13"
+            },
+            "http_method": "GET",
+            "http_path": "/digest",
+            "key": "GET /digest",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /digest",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "keyed"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/keyed"
+                ],
+                "template": "/keyed"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "request",
+                  "key_location": "header",
+                  "key_name": "X-API-Key",
+                  "scheme": "apiKey",
+                  "type": "apikey"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "apiKey"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "API key header",
+              "source_location": "resources/11"
+            },
+            "http_method": "GET",
+            "http_path": "/keyed",
+            "key": "GET /keyed",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /keyed",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "keyed-query"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/keyed-query"
+                ],
+                "template": "/keyed-query"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "request",
+                  "key_location": "queryParams",
+                  "key_name": "api_key",
+                  "scheme": "apiKey",
+                  "type": "apikey"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "apiKey"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "API key query",
+              "source_location": "resources/12"
+            },
+            "http_method": "GET",
+            "http_path": "/keyed-query",
+            "key": "GET /keyed-query",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /keyed-query",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "me"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/me"
+                ],
+                "template": "/me"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Auth",
+                  "scheme": "basic",
+                  "type": "basic"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "basic"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Inherits basic",
+              "source_location": "resources/9"
+            },
+            "http_method": "GET",
+            "http_path": "/me",
+            "key": "GET /me",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /me",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "oauth"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "me"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/oauth/me"
+                ],
+                "template": "/oauth/me"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "request",
+                  "grant_type": "authorization_code",
+                  "scheme": "oauth2",
+                  "scopes": [
+                    "read:items",
+                    "write:items"
+                  ],
+                  "token_url": "https://auth.example.com/oauth/token",
+                  "type": "oauth2"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "oauth2"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "OAuth 2",
+              "source_location": "resources/10"
+            },
+            "http_method": "GET",
+            "http_path": "/oauth/me",
+            "key": "GET /oauth/me",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /oauth/me",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "off"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/off"
+                ],
+                "template": "/off"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Disabled bearer",
+              "source_location": "resources/16"
+            },
+            "http_method": "GET",
+            "http_path": "/off",
+            "key": "GET /off",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /off",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "public"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/public"
+                ],
+                "template": "/public"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Explicit none",
+              "source_location": "resources/15"
+            },
+            "http_method": "GET",
+            "http_path": "/public",
+            "key": "GET /public",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /public",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "signed"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/signed"
+                ],
+                "template": "/signed"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "request",
+                  "scheme": "authorization",
+                  "type": "iam"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "authorization"
+              ],
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "AWS IAM",
+              "source_location": "resources/14"
+            },
+            "http_method": "GET",
+            "http_path": "/signed",
+            "key": "GET /signed",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /signed",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v3"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "regions"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "region"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "zones"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v3/regions/{region}/zones"
+                ],
+                "template": "/v3/regions/{region}/zones"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Nested env value",
+              "source_location": "resources/20"
+            },
+            "http_method": "GET",
+            "http_path": "/v3/regions/{region}/zones",
+            "key": "GET /v3/regions/{region}/zones",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v3/regions/{region}/zones",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": "eu",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/regions/{region}/zones#header.x-region",
+                "location": "header",
+                "name": "x-region",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v3/regions/{region}/zones#path.region",
+                "location": "path",
+                "name": "region",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Deep / Deeper / Deepest"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "files"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/files"
+                ],
+                "template": "/files"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Multipart upload",
+              "source_location": "resources/4"
+            },
+            "http_method": "POST",
+            "http_path": "/files",
+            "key": "POST /files",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "multipart/form-data"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /files#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostFileRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /files",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /files#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "graphql"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/graphql"
+                ],
+                "template": "/graphql"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "GraphQL",
+              "source_location": "resources/5"
+            },
+            "http_method": "POST",
+            "http_path": "/graphql",
+            "key": "POST /graphql",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /graphql#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostGraphqlRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /graphql",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /graphql#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "items"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/items"
+                ],
+                "template": "/items"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "JSON with bare variable",
+              "source_location": "resources/2"
+            },
+            "http_method": "POST",
+            "http_path": "/items",
+            "key": "POST /items",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /items#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostItemRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /items",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /items#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "legacy"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/legacy"
+                ],
+                "template": "/legacy"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "XML",
+              "source_location": "resources/6"
+            },
+            "http_method": "POST",
+            "http_path": "/legacy",
+            "key": "POST /legacy",
+            "kind": "request_response",
+            "messages": [],
+            "name": "POST /legacy",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /legacy#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "login"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/login"
+                ],
+                "template": "/login"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Form urlencoded",
+              "source_location": "resources/3"
+            },
+            "http_method": "POST",
+            "http_path": "/login",
+            "key": "POST /login",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/x-www-form-urlencoded"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /login#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostLoginRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /login",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /login#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "blobs"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "blobId"
+                  }
+                ],
+                "method": "PUT",
+                "sample_urls": [
+                  "/blobs/{blobId}"
+                ],
+                "template": "/blobs/{blobId}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/04-stress-v4-all-shapes.json"
+              ],
+              "source_label": "Binary",
+              "source_location": "resources/7"
+            },
+            "http_method": "PUT",
+            "http_path": "/blobs/{blobId}",
+            "key": "PUT /blobs/{blobId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "PUT /blobs/{blobId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PUT /blobs/{blobId}#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PUT /blobs/{blobId}#path.blobId",
+                "location": "path",
+                "name": "blobId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Bodies"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Stress",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostFileRequest.file",
+            "name": "file",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostFileRequest.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostFileRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostFileRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostGraphqlRequest.query",
+            "name": "query",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostGraphqlRequest.variables",
+            "name": "variables",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostGraphqlRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostGraphqlRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostItemRequest.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostItemRequest.qty",
+            "name": "qty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostItemRequest.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostItemRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostItemRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostLoginRequest.password",
+            "name": "password",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostLoginRequest.username",
+            "name": "username",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostLoginRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostLoginRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "insomnia/04-stress-v4-all-shapes.json",
+  "counts": {
+    "channels": 0,
+    "operations": 17,
+    "servers": 3,
+    "services": 1,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "insomnia"
+  },
+  "fingerprint": "sha256:9d5291ac2a30dab836712b0b8cee93a2e251532241b11129c5721e6dfdd88b95",
+  "lint": {
+    "findings": 36,
+    "grade": "F",
+    "report_fingerprint": "9b6a8e733fdd72b7323c2c79b8bda61740a7aa442e40bdfe340eb1cc8e0d936d",
+    "score": 49,
+    "severity_counts": {
+      "error": 0,
+      "info": 15,
+      "warning": 21
+    }
+  },
+  "snapshot_version": 1
+}

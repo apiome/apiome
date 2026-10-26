@@ -1,0 +1,10 @@
+type: environment.insomnia.rest/5.0
+name: Production
+meta:
+  id: env_p
+  created: 1761382800000
+  modified: 1761382800000
+  isPrivate: false
+data:
+  baseUrl: https://api.example.com
+  token: ''

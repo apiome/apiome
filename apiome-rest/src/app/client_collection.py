@@ -21,6 +21,8 @@ import re
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Mapping, Optional, Pattern, Protocol, Sequence, Set, Tuple
 
+import yaml
+
 from .canonical_model import CanonicalApi, MessageRole, Server, ServerVariable
 from .intake_resource_guard import IntakeLimitError, guard_document_text, guard_parsed_document
 from .intake_secret_scrub import REDACTION_MARKER, scrub_document_text
@@ -32,6 +34,7 @@ __all__ = [
     "declared_limit",
     "folder_paths",
     "load_client_json",
+    "load_client_yaml",
     "scrub_named",
     "scrub_value",
     "template_servers",
@@ -75,18 +78,7 @@ def load_client_json(text: str, label: Optional[str], *, product: str, error: Er
             ends while a value is open), ``INPUT_MALFORMED`` (any other syntax error, an empty
             upload) or a resource-guard code.
     """
-    if text.startswith("﻿") or any(marker in text for marker in _ENCODING_FAULT_MARKERS):
-        raise error(
-            f"The upload{_where(label)} is not UTF-8 text (NULs, replacement characters or a "
-            f"byte-order mark); {product} exports are UTF-8 JSON",
-            "INPUT_ENCODING_INVALID",
-        )
-    if not text.strip():
-        raise error(f"The upload{_where(label)} is empty", "INPUT_MALFORMED")
-    try:
-        guard_document_text(text, source_label=label)
-    except IntakeLimitError as exc:
-        raise error(str(exc), exc.code) from exc
+    _check_text(text, label, product=product, syntax="JSON", error=error)
     try:
         document = json.loads(text)
     except json.JSONDecodeError as exc:
@@ -98,6 +90,60 @@ def load_client_json(text: str, label: Optional[str], *, product: str, error: Er
                 "INPUT_TRUNCATED",
             ) from exc
         raise error(f"Invalid JSON{_where(label)}: {exc}", "INPUT_MALFORMED") from exc
+    try:
+        guard_parsed_document(document, source_label=label)
+    except IntakeLimitError as exc:
+        raise error(str(exc), exc.code) from exc
+    return document
+
+
+def _check_text(text: str, label: Optional[str], *, product: str, syntax: str, error: ErrorFactory) -> None:
+    """The checks every client export gets before it is parsed: encoding, emptiness, intake guards."""
+    if text.startswith("\ufeff") or any(marker in text for marker in _ENCODING_FAULT_MARKERS):
+        raise error(
+            f"The upload{_where(label)} is not UTF-8 text (NULs, replacement characters or a "
+            f"byte-order mark); {product} exports are UTF-8 {syntax}",
+            "INPUT_ENCODING_INVALID",
+        )
+    if not text.strip():
+        raise error(f"The upload{_where(label)} is empty", "INPUT_MALFORMED")
+    try:
+        guard_document_text(text, source_label=label)
+    except IntakeLimitError as exc:
+        raise error(str(exc), exc.code) from exc
+
+
+def load_client_yaml(text: str, label: Optional[str], *, product: str, error: ErrorFactory) -> Any:
+    """Load one YAML client export (Insomnia v5), with the same checks as :func:`load_client_json`.
+
+    ``yaml.safe_load`` builds plain data only (no Python objects); the intake guards bound its alias
+    expansion, depth and size before it runs and the parsed tree after.
+
+    Args:
+        text: The decoded upload.
+        label: The member path or filename, for messages.
+        product: The client's name, for messages.
+        error: Builds the reader's error from ``(message, code)``.
+
+    Returns:
+        The loaded YAML value.
+
+    Raises:
+        Exception: The reader's error, with ``INPUT_ENCODING_INVALID``, ``INPUT_TRUNCATED`` (the
+            stream ends inside a quoted scalar or flow collection), ``INPUT_MALFORMED`` or a
+            resource-guard code.
+    """
+    _check_text(text, label, product=product, syntax="YAML", error=error)
+    try:
+        document = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        message = str(exc)
+        if "end of stream" in message or "<stream end>" in message:
+            raise error(
+                f"The export{_where(label)} ends while a value is still open — the upload is truncated: {message}",
+                "INPUT_TRUNCATED",
+            ) from exc
+        raise error(f"Invalid YAML{_where(label)}: {message}", "INPUT_MALFORMED") from exc
     try:
         guard_parsed_document(document, source_label=label)
     except IntakeLimitError as exc:

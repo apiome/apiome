@@ -1,0 +1,181 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "idempotency-key": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "starting_after": {
+            "type": "string"
+          },
+          "x-api-version": {
+            "default": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "starting_after",
+          "idempotency-key",
+          "x-api-version"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_payments",
+      "operation": "GET /v1/payments"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "idempotency-key": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "x-api-version": {
+            "default": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId",
+          "idempotency-key",
+          "x-api-version"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_payments_paymentId",
+      "operation": "GET /v1/payments/{paymentId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "grant_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "client_id",
+          "client_secret",
+          "grant_type"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_oauth_token",
+      "operation": "POST /v1/oauth/token"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "type": "integer"
+          },
+          "capture": {
+            "type": "boolean"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "idempotency-key": {
+            "type": "string"
+          },
+          "source": {},
+          "x-api-version": {
+            "default": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "idempotency-key",
+          "x-api-version",
+          "amount",
+          "capture",
+          "currency",
+          "source"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_payments",
+      "operation": "POST /v1/payments"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "type": "integer"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "idempotency-key": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "x-api-version": {
+            "default": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId",
+          "content-type",
+          "idempotency-key",
+          "x-api-version",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_payments_paymentId_capture",
+      "operation": "POST /v1/payments/{paymentId}/capture"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "type": "integer"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId",
+          "content-type",
+          "amount",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_payments_paymentId_refunds",
+      "operation": "POST /v1/payments/{paymentId}/refunds"
+    }
+  ]
+}
