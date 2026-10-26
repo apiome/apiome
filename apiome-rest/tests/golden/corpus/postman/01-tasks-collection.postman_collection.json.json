@@ -9,6 +9,7 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://api.example.com"
         }
       ]
@@ -248,7 +249,7 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:5e0dc9adf2fbbdc691d962a9ea746c2d1a40d09311189f28bbd26f70f8f06d3a",
+  "fingerprint": "sha256:95b0331eb89fef3db2159c7f32c886d92d12830dd41a825229edddf65146d0e3",
   "lint": {
     "findings": 9,
     "grade": "C",

@@ -35,6 +35,7 @@ from .client_collection import (
 from .inferred_spec import infer_canonical_api
 from .insomnia_parser import FORMAT_KEY, InsomniaDocument
 from .normalizer import Normalizer, normalize_ordering
+from .security_scheme_stubs import apply_security_scheme_stubs
 
 __all__ = ["AUTH_EXTRAS_KEY", "INSOMNIA_EXTRAS_KEY", "PARTIAL_LIMITS", "InsomniaNormalizer"]
 
@@ -155,4 +156,5 @@ class InsomniaNormalizer(Normalizer, register=True):
             "capability_limits": _capability_limits(source),
         }
         api.extras = extras
+        apply_security_scheme_stubs(api, auth_extras_key=AUTH_EXTRAS_KEY)
         return normalize_ordering(api)

@@ -4,6 +4,9 @@
     "channels": [],
     "description": "Every v2.0 body mode and the v2.0 auth shape, which differs from v2.1's array form.",
     "extras": {
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
       "postman_auth": {
         "parameters": [
           "token"
@@ -15,13 +18,26 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://api.example.com/lab"
         },
         {
           "key": "accessToken",
-          "value": ""
+          "secret": true
         }
-      ]
+      ],
+      "security_schemes": {
+        "basic": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "basic",
+          "type": "http"
+        },
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
+      }
     },
     "format": "postman",
     "identity": {
@@ -63,7 +79,10 @@
                 "type": "basic"
               },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "security": [
+                "basic"
+              ]
             },
             "http_method": "GET",
             "http_path": "/samples/legacy",
@@ -378,7 +397,7 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:ec82148ec01f7d0c678619b6cc9c6261af1cd41d9200d91588012df890dea1f4",
+  "fingerprint": "sha256:8d99867c9915dccc93c678975b15d7556f97e32d41a6ed252a916fe6a4843396",
   "lint": {
     "findings": 14,
     "grade": "D",

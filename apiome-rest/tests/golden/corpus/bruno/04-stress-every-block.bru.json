@@ -99,6 +99,19 @@
       "provenance": "inferred",
       "sample_counts": {
         "PUT /v3/tenants/{tenantId}/items/{itemId}": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-API-Key",
+          "type": "apiKey"
+        },
+        "oauth2": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "flows": {},
+          "type": "oauth2"
+        }
       }
     },
     "format": "bruno",
@@ -473,7 +486,7 @@
     "confidence": 0.96,
     "format": "bruno"
   },
-  "fingerprint": "sha256:3c373807f93e4dd417db2d56b8374045f1aa350296be742d1d86bd68899672d5",
+  "fingerprint": "sha256:a674650d5870f3e2d6973509b79edef6ace279d2f28cffd170a0dbce09615a1d",
   "lint": {
     "findings": 7,
     "grade": "B",

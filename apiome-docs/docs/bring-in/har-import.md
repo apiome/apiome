@@ -106,8 +106,8 @@ A capture carries live session cookies, bearer tokens and API keys. Apiome keeps
   and request and response bodies. A header or parameter whose name says it holds a secret
   (`X-Api-Key`, `access_token`, `password` …) is redacted whatever its value looks like.
 - **The stored copy of your upload is scrubbed too.** Apiome keeps the uploaded file so it can be
-  converted later. HAR is one of the formats the secret scrubber always enforces, whatever your
-  workspace's scrub mode. It replaces every cookie value in a `cookies` list, the `Cookie`,
+  converted later. For HAR, secret scrubbing is always on, whatever your workspace's scrub mode, and
+  cannot be switched off ([Secrets in collections and captures](./collection-secret-scrubbing.md)). It replaces every cookie value in a `cookies` list, the `Cookie`,
   `Set-Cookie` and `Authorization` header values, and secret-named fields inside the JSON bodies
   with `«redacted»`.
 

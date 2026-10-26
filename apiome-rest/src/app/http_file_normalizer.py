@@ -10,9 +10,11 @@ from __future__ import annotations
 from typing import Any
 
 from .canonical_model import ApiParadigm, CanonicalApi
+from .client_collection import scrub_value, variable_record
 from .http_file_parser import HttpFileDocument
 from .inferred_spec import infer_canonical_api
 from .normalizer import Normalizer
+from .security_scheme_stubs import apply_security_scheme_stubs
 
 __all__ = ["HttpFileNormalizer"]
 
@@ -41,13 +43,14 @@ class HttpFileNormalizer(Normalizer, register=True):
         if source.variables:
             api.extras = {
                 **api.extras,
+                # MFI-32.5: names always; a value only when it is not a credential.
                 "http_file_variables": [
-                    {"key": key, "value": value}
-                    for key, value in sorted(source.variables.items())
+                    variable_record(key, value) for key, value in sorted(source.variables.items())
                 ],
             }
         if include_raw and source.raw is not None:
             raw = dict(api.raw or {})
-            raw["http_file"] = source.raw
+            raw["http_file"] = scrub_value(source.raw)
             api.raw = raw
+        apply_security_scheme_stubs(api)
         return api

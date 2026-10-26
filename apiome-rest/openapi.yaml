@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.316.0
+  version: 1.317.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -23850,7 +23850,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-25T04:30:11Z'
+                        example: '2026-10-26T03:24:47Z'
                       method:
                         type: string
                         example: GET
@@ -85470,7 +85470,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         completed_at:
           anyOf:
           - type: string
@@ -86688,7 +86688,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
       type: object
       required:
       - api_key
@@ -86731,7 +86731,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -87192,7 +87192,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87365,7 +87365,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -87970,13 +87970,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -90495,7 +90495,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 52294d16-699f-44d7-ac41-8961307a2470
+          example: 0d71fd6b-928f-4d76-b258-316dcf90cab8
         method:
           type: string
           title: Method
@@ -92638,7 +92638,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         envelope:
           additionalProperties: true
           type: object
@@ -94129,7 +94129,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         browse_url:
           anyOf:
           - type: string
@@ -130481,7 +130481,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
       additionalProperties: false
       type: object
       required:
@@ -133619,8 +133619,18 @@ components:
           type: array
           title: Alwaysenforcedformats
           description: Adapter keys that resolve to 'enforce' regardless of the tenant
-            mode — the collection and captured-traffic formats. A per-format override
-            still wins.
+            mode. A per-format override still wins, except for the lockedFormats.
+          maxItems: 1000
+        lockedFormats:
+          items:
+            type: string
+          type: array
+          title: Lockedformats
+          description: 'Collection and captured-traffic formats (HAR, Insomnia, Bruno,
+            Postman, .http request files — MFI-32.5) for which scrubbing is unskippable:
+            always ''enforce'' with entropy detection on, whatever the tenant mode
+            or entropy setting says. A formatOverrides entry naming one is refused
+            with 422.'
           maxItems: 1000
         actorLabel:
           anyOf:
@@ -140065,12 +140075,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
       additionalProperties: false
       type: object
       required:
@@ -141199,7 +141209,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         detected_by:
           anyOf:
           - type: string
@@ -147576,13 +147586,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-25T04:30:11Z'
+          example: '2026-10-26T03:24:47Z'
         outcome:
           anyOf:
           - type: string

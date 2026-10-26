@@ -26,8 +26,10 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .intake_scrub_policy import (
     ALWAYS_ENFORCED_FORMATS,
+    LOCKED_FORMATS,
     ScrubPolicy,
     load_tenant_scrub_policy,
+    locked_override_formats,
     scrub_policy_content_fingerprint,
     scrub_policy_from_row,
 )
@@ -84,6 +86,7 @@ def _policy_out(
         entropy_detection=policy.entropy_detection,
         format_overrides=dict(policy.format_overrides or {}),
         always_enforced_formats=sorted(ALWAYS_ENFORCED_FORMATS),
+        locked_formats=sorted(LOCKED_FORMATS),
         actor_label=(row or {}).get("actor_label"),
         created_at=(row or {}).get("created_at"),
     )
@@ -134,6 +137,15 @@ def _validate_format_overrides(overrides: Dict[str, Any]) -> Dict[str, Any]:
     Raises:
         HTTPException: 422 when the map is not the documented shape.
     """
+    locked = locked_override_formats(overrides)
+    if locked:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"formatOverrides cannot name {', '.join(locked)}: secret scrubbing is unskippable for the "
+                "collection and captured-traffic formats (always enforced, with entropy detection)"
+            ),
+        )
     normalized: Dict[str, Any] = {}
     for key, block in (overrides or {}).items():
         if not isinstance(block, dict):

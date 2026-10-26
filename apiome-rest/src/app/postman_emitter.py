@@ -143,7 +143,14 @@ class _PostmanWriter:
         }
         variables = self._api.extras.get("postman_variables")
         if isinstance(variables, list) and variables:
-            document["variable"] = variables
+            # MFI-32.5: an imported secret variable keeps its name only, so it is exported as an empty
+            # placeholder for the user to fill in — never a value, and never Apiome's `secret` flag.
+            document["variable"] = [
+                {"key": record.get("key"), "value": "" if record.get("secret") else record.get("value", "")}
+                if isinstance(record, dict)
+                else record
+                for record in variables
+            ]
         elif self._api.servers:
             document["variable"] = [{"key": "baseUrl", "value": self._api.servers[0].url}]
         if self._api.channels:

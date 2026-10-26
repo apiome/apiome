@@ -77,6 +77,13 @@
       "provenance": "inferred",
       "sample_counts": {
         "POST /v1/payment_intents/{intentId}/capture": 1
+      },
+      "security_schemes": {
+        "basic": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "basic",
+          "type": "http"
+        }
       }
     },
     "format": "bruno",
@@ -318,7 +325,7 @@
     "confidence": 0.96,
     "format": "bruno"
   },
-  "fingerprint": "sha256:bee38c8d2db719cc297930001c71ece5c5633e79ad0593bc469b173a4a4d92be",
+  "fingerprint": "sha256:35cc646a70bdc70ee5a0e9215de231167a61ecd730f7c0bd74d9b4ce6f83614b",
   "lint": {
     "findings": 6,
     "grade": "B",

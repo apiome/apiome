@@ -786,12 +786,94 @@ export const PROVENANCE_ABSENT = {
   normalization: 'Tool versions were not recorded for this import.',
   record: 'Not recorded',
   fingerprint: 'Not recorded',
+  secretScrub: 'Not recorded',
   remoteRevision: 'Not reported by the remote',
 } as const;
 
 // ---------------------------------------------------------------------------------------
 // Toolchain & routing (MFI-25.8)
 // ---------------------------------------------------------------------------------------
+
+/** One redaction the intake secret scrub made: where and what kind — never the value. */
+export interface CatalogScrubSite {
+  /** The archive or git member the line is in; absent for a single uploaded file. */
+  member?: string;
+  /** The 1-based line of the stored source. */
+  line: number;
+  /** The credential type the scrubber recognised (`bearer-token`, `cookie-jar-value` …). */
+  type: string;
+  /** How many values of that type were redacted on the line. */
+  occurrences: number;
+}
+
+/** The secret-scrub report an import stored on the revision (MFI-32.5). */
+export interface CatalogSecretScrub {
+  /** Total values redacted (or, under warn-only, found). */
+  redactions: number;
+  /** The distinct credential types, sorted. */
+  types: string[];
+  /** Every redaction site, in report order. */
+  sites: CatalogScrubSite[];
+  /** `true` when the stored source was actually redacted (enforce); `false` under warn-only. */
+  applied: boolean;
+  /** `true` when the format's scrubbing is unskippable (the `format_locked` policy tier). */
+  locked: boolean;
+  /** `true` when an archive's verbatim bytes were withheld because a member held a credential. */
+  withheld: boolean;
+}
+
+/**
+ * The secret-scrub report of the Provenance tab (MFI-32.5).
+ *
+ * The import stores the report it wrote on the job summary as `formatMetadata.secretScrub`:
+ * credential *types* and *sites* (member and line), never a value. An item imported before that
+ * was recorded returns `null`.
+ *
+ * @param bag The revision's `formatMetadata`.
+ * @returns The report, or `null` when none was recorded.
+ */
+export function catalogSecretScrub(bag: Record<string, unknown> | null | undefined): CatalogSecretScrub | null {
+  const raw = bag?.secretScrub;
+  if (!raw || typeof raw !== 'object') return null;
+  const report = raw as Record<string, unknown>;
+  const findings = Array.isArray(report.findings) ? report.findings : [];
+  const sites: CatalogScrubSite[] = [];
+  for (const finding of findings) {
+    if (!finding || typeof finding !== 'object') continue;
+    const record = finding as Record<string, unknown>;
+    const line = typeof record.line === 'number' ? record.line : null;
+    const type = typeof record.secret_type === 'string' ? record.secret_type : null;
+    if (line === null || type === null) continue;
+    sites.push({
+      ...(typeof record.member === 'string' ? { member: record.member } : {}),
+      line,
+      type,
+      occurrences: typeof record.occurrences === 'number' ? record.occurrences : 1,
+    });
+  }
+  const types = Array.isArray(report.secret_types)
+    ? report.secret_types.filter((value): value is string => typeof value === 'string')
+    : [...new Set(sites.map((site) => site.type))].sort();
+  return {
+    redactions: typeof report.redactions === 'number' ? report.redactions : sites.reduce((n, s) => n + s.occurrences, 0),
+    types,
+    sites,
+    applied: report.applied !== false,
+    locked: report.policy_tier === 'format_locked',
+    withheld: report.source_withheld === true,
+  };
+}
+
+/**
+ * One redaction site as the Provenance tab lists it: `member:line · type`, with `×n` for several.
+ *
+ * @param site The site.
+ * @returns The display line.
+ */
+export function catalogScrubSiteLabel(site: CatalogScrubSite): string {
+  const where = site.member ? `${site.member}:${site.line}` : `line ${site.line}`;
+  return `${where} · ${site.type}${site.occurrences > 1 ? ` ×${site.occurrences}` : ''}`;
+}
 
 /** The keys a revision fingerprint may travel under on `formatMetadata`, in priority order. */
 const FINGERPRINT_KEYS = ['fingerprint', 'sourceFingerprint', 'source_fingerprint'] as const;

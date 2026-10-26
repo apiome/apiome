@@ -190,11 +190,31 @@ def test_put_normalizes_override_format_keys():
         "app.scrub_policy_routes.db.insert_intake_secret_scrub_policy", return_value=_row()
     ) as insert:
         response = client.put(
-            POLICY_URL, json={"formatOverrides": {"  Postman ": {"mode": "warn_only"}}}
+            POLICY_URL, json={"formatOverrides": {"  Kong ": {"mode": "warn_only"}}}
         )
 
     assert response.status_code == 200
-    assert insert.call_args.kwargs["format_overrides"] == {"postman": {"mode": "warn_only"}}
+    assert insert.call_args.kwargs["format_overrides"] == {"kong": {"mode": "warn_only"}}
+
+
+@pytest.mark.parametrize("key", ["postman", "  HAR ", "insomnia", "bruno", "http-file"])
+def test_put_refuses_an_override_for_a_locked_format(key):
+    """MFI-32.5: scrubbing is unskippable for the collection and capture formats."""
+    with patch(
+        "app.intake_scrub_policy.db.get_latest_intake_secret_scrub_policy", return_value=None
+    ), patch("app.scrub_policy_routes.db.insert_intake_secret_scrub_policy") as insert:
+        response = client.put(POLICY_URL, json={"formatOverrides": {key: {"mode": "warn_only"}}})
+
+    assert response.status_code == 422
+    assert "unskippable" in response.json()["detail"]
+    insert.assert_not_called()
+
+
+def test_get_lists_the_locked_formats():
+    with patch("app.intake_scrub_policy.db.get_latest_intake_secret_scrub_policy", return_value=None):
+        response = client.get(POLICY_URL)
+    assert response.status_code == 200
+    assert response.json()["lockedFormats"] == ["bruno", "har", "http-file", "insomnia", "postman"]
 
 
 @pytest.mark.parametrize(

@@ -33,6 +33,7 @@ from .har_filters import (
 from .har_parser import FORMAT_KEY, HarDocument
 from .inferred_spec import infer_canonical_api
 from .normalizer import Normalizer, normalize_ordering
+from .security_scheme_stubs import apply_security_scheme_stubs
 
 __all__ = ["AUTH_EXTRAS_KEY", "HAR_EXTRAS_KEY", "LIMIT_LOCATION_CAP", "PARTIAL_LIMITS", "HarNormalizer"]
 
@@ -162,4 +163,5 @@ class HarNormalizer(Normalizer, register=True):
             "capability_limits": _capability_limits(source),
         }
         api.extras = extras
+        apply_security_scheme_stubs(api, auth_extras_key=AUTH_EXTRAS_KEY)
         return normalize_ordering(api)

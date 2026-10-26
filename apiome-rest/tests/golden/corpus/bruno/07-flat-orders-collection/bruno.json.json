@@ -61,6 +61,14 @@
       "sample_counts": {
         "GET /v2/orders": 1,
         "GET /v2/orders/{orderId}": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-Orders-Key",
+          "type": "apiKey"
+        }
       }
     },
     "format": "bruno",
@@ -317,7 +325,7 @@
     "confidence": 0.98,
     "format": "bruno"
   },
-  "fingerprint": "sha256:d807787a70879defd064699ce0eb4cb893078ac5900029251d279f613d88b85e",
+  "fingerprint": "sha256:fdd0aef46216b45abb7238a871338186aaf973f0a258dfc59d067ac9cfd09a86",
   "lint": {
     "findings": 4,
     "grade": "A",

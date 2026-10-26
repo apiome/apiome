@@ -185,6 +185,13 @@
         "GET /v1/users/{id}": 4,
         "PATCH /v1/users/{id}": 1,
         "POST /v1/users": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "har",
@@ -1378,7 +1385,7 @@
     "confidence": 0.97,
     "format": "har"
   },
-  "fingerprint": "sha256:423e02603f75122dc3e700975b6f7b98e936fb1f2e793a8aa24f490ab1173cde",
+  "fingerprint": "sha256:2c8c331e2da39d00095b335afbda8b202f01d2af9dfda1270e9402d01ff7aa20",
   "lint": {
     "findings": 41,
     "grade": "F",

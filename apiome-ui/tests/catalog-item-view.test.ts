@@ -22,6 +22,8 @@ import {
   CONVERTED_PROJECT_DELETED_HINT,
   PROVENANCE_ABSENT,
   catalogConvertedStrip,
+  catalogScrubSiteLabel,
+  catalogSecretScrub,
   catalogDetailActions,
   catalogDetailBreadcrumb,
   catalogDetailDescription,
@@ -501,6 +503,60 @@ describe('the Provenance pane', () => {
     expect(catalogDetailTimestamp(undefined)).toBe('—');
     expect(catalogDetailTimestamp('not a date')).toBe('not a date');
     expect(catalogDetailTimestamp('2026-08-15T09:41:00Z')).not.toBe('—');
+  });
+});
+
+describe('the secret-scrub report (MFI-32.5)', () => {
+  const report = {
+    scrubbed: true,
+    redactions: 3,
+    secret_types: ['bearer-token', 'cookie-header'],
+    findings: [
+      { secret_type: 'bearer-token', line: 4, occurrences: 1 },
+      { secret_type: 'cookie-header', line: 9, occurrences: 2, member: 'orders/list.bru' },
+      { line: 'not a number', secret_type: 'jwt' },
+    ],
+    applied: true,
+    source_withheld: false,
+    policy_tier: 'format_locked',
+  };
+
+  it('reads the stored report: types and sites, never a value', () => {
+    const scrub = catalogSecretScrub({ secretScrub: report });
+    expect(scrub).toEqual({
+      redactions: 3,
+      types: ['bearer-token', 'cookie-header'],
+      sites: [
+        { line: 4, type: 'bearer-token', occurrences: 1 },
+        { member: 'orders/list.bru', line: 9, type: 'cookie-header', occurrences: 2 },
+      ],
+      applied: true,
+      locked: true,
+      withheld: false,
+    });
+  });
+
+  it('is null for an item imported before the report was recorded', () => {
+    expect(catalogSecretScrub({})).toBeNull();
+    expect(catalogSecretScrub(null)).toBeNull();
+    expect(catalogSecretScrub({ secretScrub: 'yes' })).toBeNull();
+  });
+
+  it('derives types and totals when the report omits them, and reads warn-only', () => {
+    const scrub = catalogSecretScrub({
+      secretScrub: { findings: report.findings, applied: false, policy_tier: 'tenant' },
+    });
+    expect(scrub?.types).toEqual(['bearer-token', 'cookie-header']);
+    expect(scrub?.redactions).toBe(3);
+    expect(scrub?.applied).toBe(false);
+    expect(scrub?.locked).toBe(false);
+  });
+
+  it('labels a site by member and line, with a count when there are several', () => {
+    expect(catalogScrubSiteLabel({ line: 4, type: 'jwt', occurrences: 1 })).toBe('line 4 · jwt');
+    expect(
+      catalogScrubSiteLabel({ member: 'a/b.bru', line: 9, type: 'cookie-header', occurrences: 2 }),
+    ).toBe('a/b.bru:9 · cookie-header ×2');
   });
 });
 

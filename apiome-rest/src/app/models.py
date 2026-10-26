@@ -7737,8 +7737,18 @@ class SecretScrubPolicyOut(BaseModel):
         default_factory=list,
         serialization_alias="alwaysEnforcedFormats",
         description=(
-            "Adapter keys that resolve to 'enforce' regardless of the tenant mode — the "
-            "collection and captured-traffic formats. A per-format override still wins."
+            "Adapter keys that resolve to 'enforce' regardless of the tenant mode. A per-format "
+            "override still wins, except for the lockedFormats."
+        ),
+    )
+    locked_formats: List[str] = Field(
+        default_factory=list,
+        serialization_alias="lockedFormats",
+        description=(
+            "Collection and captured-traffic formats (HAR, Insomnia, Bruno, Postman, .http request "
+            "files — MFI-32.5) for which scrubbing is unskippable: always 'enforce' with entropy "
+            "detection on, whatever the tenant mode or entropy setting says. A formatOverrides entry "
+            "naming one is refused with 422."
         ),
     )
     actor_label: Optional[str] = Field(

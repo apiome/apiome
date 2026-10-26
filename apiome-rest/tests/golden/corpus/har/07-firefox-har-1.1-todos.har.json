@@ -100,6 +100,14 @@
         "GET /api/todos": 1,
         "POST /api/todos": 1,
         "PUT /api/todos/{id}": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-API-Key",
+          "type": "apiKey"
+        }
       }
     },
     "format": "har",
@@ -907,7 +915,7 @@
     "confidence": 0.97,
     "format": "har"
   },
-  "fingerprint": "sha256:2262be071d998c3fca028a882c051da80f15bc140062dc0b895c0aab0c567bf1",
+  "fingerprint": "sha256:aa7c2214292cdfc67a7024c0aac1dfb6c295f4d30073b8905635fae4f4fe40ad",
   "lint": {
     "findings": 26,
     "grade": "F",

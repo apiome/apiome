@@ -29,6 +29,7 @@ from .intake_secret_scrub import REDACTION_MARKER, scrub_document_text
 
 __all__ = [
     "FOLDER_SEPARATOR",
+    "MUSTACHE_REFERENCE_RE",
     "SECRET_NAME_RE",
     "annotate_operations",
     "apply_parameter_defaults",
@@ -37,8 +38,10 @@ __all__ = [
     "folder_paths",
     "load_client_json",
     "load_client_yaml",
+    "safe_named_value",
     "scrub_named",
     "scrub_value",
+    "variable_record",
     "template_servers",
 ]
 
@@ -190,6 +193,64 @@ def scrub_named(name: str, value: str, *, reference: Pattern[str]) -> str:
     if SECRET_NAME_RE.search(name or ""):
         return REDACTION_MARKER
     return scrub_value(value)
+
+
+#: A value written entirely as a ``{{variable}}`` reference (Postman, ``.http``, Bruno spelling).
+MUSTACHE_REFERENCE_RE = re.compile(r"^\s*\{\{[^{}]+\}\}\s*$")
+
+
+def safe_named_value(
+    name: Optional[str], value: Optional[str], *, reference: Pattern[str] = MUSTACHE_REFERENCE_RE
+) -> Optional[str]:
+    """A header / parameter / variable value safe to keep in a model (MFI-32.5).
+
+    A whole variable reference is kept; an ``Authorization`` value keeps its scheme word (and a
+    reference after it); a value whose *name* says it is a secret is redacted outright; anything
+    else passes the shared secret-scrub gate.
+
+    Args:
+        name: The header, parameter or variable name.
+        value: Its saved value (``None`` stays ``None``).
+        reference: Matches a value that is a whole variable reference.
+
+    Returns:
+        The value with credentials removed.
+    """
+    if value is None:
+        return None
+    text = str(value)
+    if str(name or "").strip().lower() == "authorization" and text.strip():
+        scheme, _, rest = text.strip().partition(" ")
+        if rest and reference.match(rest):
+            return f"{scheme} {rest.strip()}"
+        if rest and scheme.isalpha():
+            return f"{scheme} {REDACTION_MARKER}"
+    return scrub_named(str(name or ""), text, reference=reference)
+
+
+def variable_record(
+    key: str, value: Optional[str], *, reference: Pattern[str] = MUSTACHE_REFERENCE_RE
+) -> Dict[str, Any]:
+    """A collection / file variable as a model keeps it: its name, and its value only when not secret.
+
+    MFI-32.5: a variable's *name* is the placeholder requests are written against; a secret
+    variable's *value* never reaches the model. A variable is secret when its name says so or when
+    the scrub gate finds a credential in its value; ``secret: true`` says a value was withheld.
+
+    Args:
+        key: The variable name.
+        value: Its value.
+        reference: Matches a value that is a whole variable reference.
+
+    Returns:
+        ``{"key", "secret"}`` plus ``"value"`` when the variable is not secret.
+    """
+    safe = safe_named_value(key, value, reference=reference)
+    secret = bool(SECRET_NAME_RE.search(key or "")) or (value is not None and safe != value)
+    record: Dict[str, Any] = {"key": key, "secret": secret}
+    if not secret:
+        record["value"] = value
+    return record
 
 
 def declared_limit(construct: str, locations: List[str], note: str) -> Dict[str, Any]:

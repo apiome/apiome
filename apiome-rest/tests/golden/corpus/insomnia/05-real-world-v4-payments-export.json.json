@@ -177,6 +177,13 @@
         "POST /v1/payments": 1,
         "POST /v1/payments/{paymentId}/capture": 1,
         "POST /v1/payments/{paymentId}/refunds": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "insomnia",
@@ -1264,7 +1271,7 @@
     "confidence": 0.97,
     "format": "insomnia"
   },
-  "fingerprint": "sha256:cdfce175459201ae3602ded443cd943c2b2cab8a82fcd67340155c2fb8eb5701",
+  "fingerprint": "sha256:7da3f1919870ef46b0f1395117bedc95f23b783c8bea49c6bcd4dc55d10e0a57",
   "lint": {
     "findings": 26,
     "grade": "F",

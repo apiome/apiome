@@ -9,6 +9,7 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://gateway.example.com"
         }
       ]
@@ -280,7 +281,7 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:d6839f065d358ebbc80f016e47fb820c871310be5ea95e18df1e1adf792847c8",
+  "fingerprint": "sha256:e82de1dcc5fa065023a62940e251996e24ad5efc937ba5fda4c4514948bbd1f6",
   "lint": {
     "findings": 4,
     "grade": "A",

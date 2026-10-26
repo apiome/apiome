@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.453.0] - 2026-10-25
+
+### Changed
+- **Secret scrubbing & environment mapping gate (MFI-32.5, #4407)** — scrubbing is **on and unskippable** for the
+  MFI-EPIC-32 formats (`postman`, `insomnia`, `bruno`, `har`, `http-file`): a new first resolution tier,
+  `format_locked` (`intake_scrub_policy.LOCKED_FORMATS`), always resolves them to `enforce` with entropy detection on,
+  whatever the tenant mode, entropy setting or per-format override says. The gateway formats (`kong`, `traefik`,
+  `tyk`) keep the overridable `format_default` tier.
+  - `PUT /v1/tenants/{tenant_slug}/governance/secret-scrub-policy` refuses a `formatOverrides` entry naming a locked
+    format with `422`; the policy response gains `lockedFormats`. OpenAPI 1.317.0.
+  - **Environment mapping:** variable *names* are kept and secret *values* withheld —
+    `client_collection.variable_record` (`{"key", "secret"}` plus `"value"` only when not secret) for
+    `postman_variables` and `http_file_variables`; `client_collection.safe_named_value` scrubs Postman header, query
+    and path samples (an `Authorization` keeps its scheme word). A Postman `baseUrl` with no safe value becomes a
+    `{baseUrl}` server variable; the Postman emitter writes a secret variable as an empty placeholder.
+  - **Security-scheme stubs:** new `security_scheme_stubs` module writes `extras["security_schemes"]` (type and
+    placement only, no material) for every collection/capture importer; the OpenAPI emitter writes them as
+    `components.securitySchemes` and an operation's own declared auth (`extras["security"]`, now set by Postman
+    request auth) as its `security` requirement. Postman `apikey` auth records its header / query name (never its
+    value). Swagger 2.0 downgrade drops the stubs with a `security-scheme-stubs-dropped` loss.
+  - **Scrub report on the catalog item:** the import's scrub report is stored as `formatMetadata.secretScrub` for the
+    Provenance pane; an archive finding now names its fileset `member`.
+  - `.http` request files are scrubbed at parse time (URLs, query pairs, headers, bodies after variable
+    substitution), and the Postman / `.http` normalizers scrub `api.raw`.
+  - New `tests/test_collection_secret_scrub_gate.py`: one seeded fixture per locked format persists zero secret bytes
+    in the stored source, the canonical model and the converted OpenAPI document; corpus goldens regenerated.
+
 ## [1.452.0] - 2026-10-25
 
 ### Added
