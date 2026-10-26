@@ -14,7 +14,7 @@ catalog item.
 
 Import the model like any other catalog format: in the [import wizard](./import-wizard.mdx)
 (**Import to catalog** → **Smithy**), over the REST API (see
-[Import a specification](./import-a-spec.md)), or from the CLI with `apiome import smithy <file>`.
+[Import a specification](./import-a-spec.md)), or [from the CLI](#from-the-cli).
 
 You can bring the model in three ways:
 
@@ -65,6 +65,21 @@ The catalog item records the model's identity:
 | `smithy_source_files` | The model files it was assembled from |
 
 A set that holds a single model file is read like that one file.
+
+## From the CLI
+
+Point `apiome import smithy` at a model file, a JSON AST, an archive or a model directory:
+
+```bash
+apiome import smithy ./weather.smithy
+apiome import smithy ./weather-ast.json
+apiome import smithy ./weather-model.zip
+apiome import smithy ./weather-model/
+```
+
+A directory is packed into an archive and sent as one upload. `build`, `dist` and hidden folders are
+left out. Apiome then assembles the model files the same way as an uploaded archive. Pass `--root`
+to choose the file kept as the item's source text; otherwise the server picks one.
 
 ## When the import refuses a model
 

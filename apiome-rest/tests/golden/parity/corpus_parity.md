@@ -91,7 +91,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `relaxng` | RELAX NG | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `ros2` | ROS 2 interfaces | rpc | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
 | `shacl` | SHACL shapes | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
-| `smithy` | Smithy | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `smithy` |
+| `smithy` | Smithy | rpc | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `smithy` |
 | `soapui` | SoapUI / ReadyAPI project | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `sparkplug` | MQTT Sparkplug B | event | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `sql-ddl` | SQL DDL | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |

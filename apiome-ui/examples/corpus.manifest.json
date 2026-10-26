@@ -26604,6 +26604,32 @@
       "rung": "typical"
     },
     {
+      "path": "smithy/07-json-ast-weather.json",
+      "format": "smithy",
+      "adapter_key": "smithy",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "smithy",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "json-ast",
+        "service",
+        "resource",
+        "operation",
+        "structure",
+        "enum",
+        "list",
+        "map",
+        "multi-namespace"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "A weather service across two namespaces in the Smithy 2.0 JSON AST representation, authored from the JSON AST specification (MFI-17.5).",
+      "rung": "composition"
+    },
+    {
       "path": "smithy/negative/01-syntactic-unclosed-brace.smithy",
       "format": "smithy",
       "adapter_key": "smithy",

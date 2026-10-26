@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1518 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1519 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -69,7 +69,7 @@ The corpus holds **1518 files** across **110 format directories**. Every file ha
 | `protobuf/` | Protobuf / gRPC | rpc | `syntax = "proto3"` | 17 |
 | `protobuf-editions/` | Protobuf editions (2023/2024) | rpc | `edition = "2023"` / `"2024"` in place of `syntax` | 14 |
 | `ros2/` | ROS 2 interfaces | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
-| `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 11 |
+| `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 12 |
 | `thrift/` | Apache Thrift | rpc | `service` / `struct` shapes | 14 |
 | `trpc/` | tRPC routers | rpc | `initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures | 16 |
 | `wit/` | WIT (WebAssembly Component Model) | rpc | `package ns:name` + `interface`/`world` blocks | 16 |
@@ -2213,6 +2213,7 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-grammar-corners.smithy` ⚠ | stress | `smithy` ≥ 0.9 | valid | `union`, `map`, `enum`, `error`, `traits`, `operations` |
 | `05-dynamodb-style.smithy` ⚠ | real-world | `smithy` ≥ 0.9 | valid | `service`, `operations`, `union`, `map`, `list` |
 | `06-orders-service.smithy` | typical | `smithy` ≥ 0.9 | valid | `service`, `operations`, `structure`, `list`, `enum` |
+| `07-json-ast-weather.json` | composition | `smithy` ≥ 0.95 | valid | `json-ast`, `service`, `resource`, `operation`, `structure`, `enum`, `list`, `map`, `multi-namespace` |
 | `negative/01-syntactic-unclosed-brace.smithy` | — | `smithy` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-brace` |
 | `negative/02-semantic-no-shapes.smithy` | — | `smithy` (no guarantee) | invalid | `negative`, `semantic`, `no-shapes` |
 | `negative/03-truncated-mid-token.smithy` | — | `smithy` (no guarantee) | invalid | `negative`, `truncated`, `mid-token-cut` |
@@ -2822,7 +2823,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1518 | `Apache-2.0` |
+| `hand-authored` | 1519 | `Apache-2.0` |
 
 ## Trying an import
 

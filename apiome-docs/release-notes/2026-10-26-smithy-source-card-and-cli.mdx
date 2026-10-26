@@ -1,0 +1,17 @@
+---
+slug: smithy-source-card-and-cli
+title: Smithy from the CLI, including model folders and JSON AST
+description: Import Smithy models, JSON ASTs and model folders from the CLI.
+authors: [apiome]
+---
+
+`apiome import smithy` now takes every Smithy input the server reads: a `.smithy` file, a JSON AST,
+an archive, or a model folder. [Import a Smithy model](/bring-in/smithy-import#from-the-cli).
+
+{/* truncate */}
+
+- **Model folders.** `apiome import smithy ./weather-model/` packs the folder's files, leaving out
+  build output, and the server assembles them into one model.
+- **JSON AST.** A Smithy JSON AST imports directly, with no Smithy CLI needed on the server; the
+  example corpus now includes one.
+- **The Smithy card** in **Import to catalog** accepts `.smithy`, `.json` and archives.
