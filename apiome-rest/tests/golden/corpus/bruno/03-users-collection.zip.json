@@ -1,0 +1,1180 @@
+{
+  "adapter": "bruno",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "bruno": {
+        "bruno_version": "1",
+        "capability_limits": [
+          {
+            "construct": "bruno.script",
+            "count": 6,
+            "locations": [
+              "Create user",
+              "Delete user",
+              "Get user",
+              "Health",
+              "List users",
+              "Upload avatar"
+            ],
+            "note": "Pre-request and post-response scripts and `vars:post-response` captures are run by Bruno; they are not modelled."
+          },
+          {
+            "construct": "bruno.test",
+            "count": 2,
+            "locations": [
+              "Get user",
+              "List users"
+            ],
+            "note": "`tests` scripts and `assert` rules are run by Bruno; they are not modelled."
+          },
+          {
+            "construct": "bruno.auth_credential",
+            "count": 5,
+            "locations": [
+              "Create user",
+              "Delete user",
+              "Get user",
+              "List users",
+              "Upload avatar"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's grant type, URL and scopes, or an API key's name) is kept; saved credentials are never read."
+          },
+          {
+            "construct": "bruno.secret_variable",
+            "count": 3,
+            "locations": [
+              "accessToken",
+              "adminPassword"
+            ],
+            "note": "A secret variable (`vars:secret`, or by its name) is listed by name; its value is withheld."
+          }
+        ],
+        "environments": [
+          "local",
+          "staging"
+        ],
+        "folders": [
+          "Users",
+          "Users / Admin"
+        ],
+        "requests": 6,
+        "variables": [
+          {
+            "name": "accessToken",
+            "secret": true,
+            "source": "environment:local"
+          },
+          {
+            "name": "accessToken",
+            "secret": true,
+            "source": "environment:staging"
+          },
+          {
+            "name": "adminPassword",
+            "secret": true,
+            "source": "environment:staging"
+          },
+          {
+            "name": "apiVersion",
+            "secret": false,
+            "source": "collection"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:local"
+          },
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "environment:staging"
+          },
+          {
+            "name": "pageSize",
+            "secret": false,
+            "source": "environment:local"
+          },
+          {
+            "name": "tenant",
+            "secret": false,
+            "source": "environment:local"
+          },
+          {
+            "name": "tenant",
+            "secret": false,
+            "source": "environment:staging"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "basic",
+        "bearer"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "DELETE",
+          "sample_urls": [
+            "/v1/users/{id}"
+          ],
+          "template": "/v1/users/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v1/users/{id}"
+          ],
+          "template": "/v1/users/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "avatar"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/v1/users/{id}/avatar"
+          ],
+          "template": "/v1/users/{id}/avatar"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "DELETE /v1/users/{id}": 1,
+        "GET /health": 1,
+        "GET /v1/users": 1,
+        "GET /v1/users/{id}": 1,
+        "POST /v1/users": 1,
+        "POST /v1/users/{id}/avatar": 1
+      }
+    },
+    "format": "bruno",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Users API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": "http://localhost:3000",
+            "description": "Bruno variable `{{baseUrl}}`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Users API",
+        "name": "Users API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "Users / Admin",
+                  "scheme": "basic",
+                  "type": "basic"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "DELETE",
+                "sample_urls": [
+                  "/v1/users/{id}"
+                ],
+                "template": "/v1/users/{id}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "basic"
+              ],
+              "source_files": [
+                "users/admin/delete-user.bru"
+              ],
+              "source_label": "Delete user",
+              "source_location": "users/admin/delete-user.bru"
+            },
+            "http_method": "DELETE",
+            "http_path": "/v1/users/{id}",
+            "key": "DELETE /v1/users/{id}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "DELETE /v1/users/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v1/users/{id}#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v1/users/{id}#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "DELETE /v1/users/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users / Admin"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "health"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/health"
+                ],
+                "template": "/health"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "health.bru"
+              ],
+              "source_label": "Health",
+              "source_location": "health.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/health",
+            "key": "GET /health",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /health",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /health#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/users"
+                ],
+                "template": "/v1/users"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "users/list-users.bru"
+              ],
+              "source_label": "List users",
+              "source_location": "users/list-users.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/users",
+            "key": "GET /v1/users",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/users",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "20",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "{{pageSize}}"
+                  ]
+                },
+                "key": "GET /v1/users#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "1"
+                  ]
+                },
+                "key": "GET /v1/users#query.page",
+                "location": "query",
+                "name": "page",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/users/{id}"
+                ],
+                "template": "/v1/users/{id}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "users/get-user.bru"
+              ],
+              "source_label": "Get user",
+              "source_location": "users/get-user.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/users/{id}",
+            "key": "GET /v1/users/{id}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/users/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users/{id}#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users/{id}#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/users/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/users"
+                ],
+                "template": "/v1/users"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "users/create-user.bru"
+              ],
+              "source_label": "Create user",
+              "source_location": "users/create-user.bru"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/users",
+            "key": "POST /v1/users",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/users#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostUserRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/users",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "avatar"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/users/{id}/avatar"
+                ],
+                "template": "/v1/users/{id}/avatar"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "users/upload-avatar.bru"
+              ],
+              "source_label": "Upload avatar",
+              "source_location": "users/upload-avatar.bru"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/users/{id}/avatar",
+            "key": "POST /v1/users/{id}/avatar",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "multipart/form-data"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/users/{id}/avatar#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostAvatarRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/users/{id}/avatar",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users/{id}/avatar#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users/{id}/avatar#header.x-client",
+                "location": "header",
+                "name": "x-client",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "acme",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users/{id}/avatar#header.x-tenant",
+                "location": "header",
+                "name": "x-tenant",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/users/{id}/avatar#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Users"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Users API",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAvatarRequest.caption",
+            "name": "caption",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostAvatarRequest.file",
+            "name": "file",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostAvatarRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostAvatarRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.active",
+            "name": "active",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUserRequest.roles",
+            "name": "roles",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostUserRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostUserRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "bruno/03-users-collection.zip",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "bruno"
+  },
+  "fingerprint": "sha256:11ef9aa483546742c0250fda26cf8acc4f5ee347c105cd63eab53ce0360c1b2a",
+  "lint": {
+    "findings": 18,
+    "grade": "D",
+    "report_fingerprint": "11448527b9ed7426c0480325bfe239e290354d9b6ba69bb62026b412f5643d1c",
+    "score": 62,
+    "severity_counts": {
+      "error": 0,
+      "info": 10,
+      "warning": 8
+    }
+  },
+  "snapshot_version": 1
+}

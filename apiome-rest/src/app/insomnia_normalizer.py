@@ -22,13 +22,18 @@ and Thunder Client:
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, List
 
-from .canonical_model import ApiParadigm, CanonicalApi, ParameterLocation
-from .client_collection import annotate_operations, declared_limit, folder_paths, template_servers
+from .canonical_model import ApiParadigm, CanonicalApi
+from .client_collection import (
+    annotate_operations,
+    apply_parameter_defaults,
+    declared_limit,
+    folder_paths,
+    template_servers,
+)
 from .inferred_spec import infer_canonical_api
-from .insomnia_parser import FORMAT_KEY, InsomniaDocument, InsomniaRequest
+from .insomnia_parser import FORMAT_KEY, InsomniaDocument
 from .normalizer import Normalizer, normalize_ordering
 
 __all__ = ["AUTH_EXTRAS_KEY", "INSOMNIA_EXTRAS_KEY", "PARTIAL_LIMITS", "InsomniaNormalizer"]
@@ -54,8 +59,6 @@ _SKIPPED_NOTES: Dict[str, str] = {
     "insomnia.mock_route": "Mock servers and routes are not modelled.",
     "insomnia.cookie_jar": "Cookie jars hold session state, not API description; they are never read.",
 }
-
-_LOCATIONS = {"query": ParameterLocation.QUERY, "header": ParameterLocation.HEADER}
 
 
 def _capability_limits(source: InsomniaDocument) -> List[Dict[str, Any]]:
@@ -105,30 +108,6 @@ def _capability_limits(source: InsomniaDocument) -> List[Dict[str, Any]]:
     return limits
 
 
-def _apply_defaults(api: CanonicalApi, requests: Sequence[InsomniaRequest]) -> None:
-    """Set query / header parameter defaults from the environments, where every sample agrees."""
-    index: Dict[Tuple[str, str], List[InsomniaRequest]] = defaultdict(list)
-    for request in requests:
-        index[(request.method, request.url)].append(request)
-    for service in api.services:
-        for operation in service.operations:
-            evidence = operation.extras.get("inference_evidence") or {}
-            matched = [
-                request
-                for url in dict.fromkeys(evidence.get("sample_urls") or [])
-                for request in index.get((operation.http_method or "", url), [])
-            ]
-            values: Dict[Tuple[str, str], Set[str]] = defaultdict(set)
-            for request in matched:
-                for location, name, value in request.defaults:
-                    values[(location, name)].add(value)
-            for parameter in operation.parameters:
-                for location, enum in _LOCATIONS.items():
-                    found = values.get((location, parameter.name))
-                    if parameter.location is enum and found and len(found) == 1:
-                        parameter.default = next(iter(found))
-
-
 class InsomniaNormalizer(Normalizer, register=True):
     """Normalize a parsed Insomnia upload via the shared inferred-spec engine."""
 
@@ -159,7 +138,7 @@ class InsomniaNormalizer(Normalizer, register=True):
             include_raw=include_raw,
         ).api
         schemes = annotate_operations(api, source.requests, auth_extras_key=AUTH_EXTRAS_KEY)
-        _apply_defaults(api, source.requests)
+        apply_parameter_defaults(api, source.requests)
         servers = template_servers(
             source.server_variables, describe=lambda name: f"Insomnia environment variable `{{{{ _.{name} }}}}`."
         )

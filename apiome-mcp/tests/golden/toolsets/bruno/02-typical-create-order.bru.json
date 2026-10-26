@@ -1,0 +1,42 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "gift": {
+            "type": "boolean"
+          },
+          "idempotency-key": {
+            "default": "order-0001",
+            "type": "string"
+          },
+          "lines": {
+            "items": {},
+            "type": "array"
+          },
+          "notify": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notify",
+          "content-type",
+          "idempotency-key",
+          "customer_id",
+          "gift",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v2_orders",
+      "operation": "POST /v2/orders"
+    }
+  ]
+}

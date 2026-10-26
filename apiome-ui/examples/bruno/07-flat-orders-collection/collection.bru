@@ -1,0 +1,17 @@
+headers {
+  Accept: application/json
+}
+
+auth {
+  mode: apikey
+}
+
+auth:apikey {
+  key: X-Orders-Key
+  value: {{ordersKey}}
+  placement: header
+}
+
+vars:pre-request {
+  baseUrl: https://orders.example.com
+}

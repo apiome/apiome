@@ -613,6 +613,25 @@ def _insomnia_with_secrets() -> bytes:
     ).encode("utf-8")
 
 
+def _bruno_with_secrets() -> bytes:
+    """A Bruno ``.bru`` request carrying synthetic credentials where real ``.bru`` files leak them.
+
+    A literal bearer token, an API-key header, a basic-auth password, an OAuth 2 client secret and
+    a password form field — the Bru-lang ``key: value`` spellings MFI-32.4 relies on the gate for.
+    """
+    secrets = SYNTHETIC_SECRETS
+    return (
+        "meta {\n  name: Create charge\n  type: http\n  seq: 1\n}\n\n"
+        "post {\n  url: https://billing.example.com/v1/charges\n  body: formUrlEncoded\n  auth: bearer\n}\n\n"
+        f"headers {{\n  X-Api-Key: {secrets['google_api_key']}\n}}\n\n"
+        f"auth:bearer {{\n  token: {secrets['github_token']}\n}}\n\n"
+        f"auth:basic {{\n  username: billing-bot\n  password: {secrets['basic_auth_password']}\n}}\n\n"
+        "auth:oauth2 {\n  grant_type: client_credentials\n"
+        f"  client_secret: {secrets['stripe_key']}\n}}\n\n"
+        f"body:form-urlencoded {{\n  amount: 4200\n  password: {secrets['db_password']}\n}}\n"
+    ).encode("utf-8")
+
+
 def _http_file_with_secrets() -> bytes:
     """An ``.http`` request file carrying synthetic credentials in headers and URLs."""
     secrets = SYNTHETIC_SECRETS
@@ -820,6 +839,19 @@ GENERATED_FIXTURES: List[GeneratedFixture] = [
         builder=_insomnia_with_secrets,
         approx_bytes=1_400,
         features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "yaml", "cookie-jar", "kv-secret"],
+    ),
+    GeneratedFixture(
+        name="secrets-bruno.bru",
+        guard="secret-scrubbing",
+        adapter_key="bruno",
+        expected_error_code=None,
+        description=(
+            "Bruno .bru request carrying a bearer token, an API-key header, a basic-auth password, an OAuth 2 "
+            "client secret and a password form field."
+        ),
+        builder=_bruno_with_secrets,
+        approx_bytes=700,
+        features=["adversarial", "secret-scrubbing", "bearer-token", "api-key", "bru-lang"],
     ),
     GeneratedFixture(
         name="secrets-http-file.http",

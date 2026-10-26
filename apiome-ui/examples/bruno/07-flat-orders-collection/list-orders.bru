@@ -1,0 +1,15 @@
+meta {
+  name: List orders
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v2/orders
+  body: none
+  auth: inherit
+}
+
+params:query {
+  status: open
+}

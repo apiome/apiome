@@ -1,0 +1,30 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "variables": {}
+        },
+        "required": [
+          "accept",
+          "content-type",
+          "query",
+          "variables"
+        ],
+        "type": "object"
+      },
+      "name": "POST_graphql",
+      "operation": "POST /graphql"
+    }
+  ]
+}

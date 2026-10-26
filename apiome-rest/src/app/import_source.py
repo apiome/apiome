@@ -1269,6 +1269,10 @@ def load_builtin_import_sources() -> None:
     # JSON and v5 YAML exports and their environments, through the same engine.
     from . import insomnia_import_source as _insomnia  # noqa: F401
 
+    # ``bruno_import_source`` (MFI-32.4) self-registers the ``bruno`` adapter — Bruno collection
+    # folders (bruno.json + .bru files) from an archive or a git selection, through the same engine.
+    from . import bruno_import_source as _bruno  # noqa: F401
+
     # ``soapui_import_source`` (FMT-10.3) self-registers the ``soapui`` adapter — SoapUI / ReadyAPI
     # project XML: WSDL interfaces through the WSDL adapter, REST interfaces through the same engine.
     from . import soapui_import_source as _soapui  # noqa: F401

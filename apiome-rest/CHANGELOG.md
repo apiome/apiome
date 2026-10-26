@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.452.0] - 2026-10-25
+
+### Added
+- **Bruno collection import (MFI-32.4, #4406)** — a `bruno` import source (file, URL, paste, fileset; label
+  `Bruno collection`) reads a Bruno collection folder — `bruno.json`, request `.bru` files, `collection.bru` /
+  `folder.bru` settings and `environments/*.bru` — from an archive (MFI-29.1) or a git selection (MFI-29.3), plus a
+  single `.bru` request on its own, through the shared MFI-32.1 inferred-spec engine. New modules `bru_lang` (the
+  `.bru` block lexer: dictionary / text / list blocks, `~` disabled entries, quoted keys, `'''` multi-line values,
+  unknown blocks kept as text), `bruno_parser`, `bruno_normalizer`, `bruno_import_source` (with `parse_bytes` for a
+  zipped folder).
+  - **Archive and git intake fingerprint identically:** every recorded path is relative to the directory holding
+    `bruno.json`, so an archive's wrapping folder and a git selection prefix never reach the model.
+  - Folder tree → tags (`folder.bru` `meta.name`); auth and headers inherit request → folder → collection; the
+    method block's `body:` mode picks the body (JSON, form, multipart, GraphQL; XML / text keep their media type).
+  - Variables → server variables and query / header parameter defaults, in Bruno's precedence (request > folder >
+    environment > collection); `vars:secret` and secret-named variables never become defaults; `{{process.env.*}}`
+    stays unresolved (`.env` files are never read).
+  - Scripts, `vars:post-response`, tests and assertions are ignored with a note (declared limits `bruno.script`,
+    `bruno.test`), as are `{{process.env.*}}`, non-HTTP requests, withheld credentials and secret variables.
+  - Corpus `apiome-ui/examples/bruno/` (6 single-file and zipped valid entries plus a flat fileset across all six
+    rungs, 6 negative), goldens, round-trip matrix row, MCP toolset goldens, version coverage, inference-provenance
+    entry, generated `secrets-bruno.bru` fixture.
+  - `client_collection.check_client_text` (public) and `client_collection.apply_parameter_defaults` (shared with the
+    Insomnia normalizer, output unchanged).
+
 ## [1.451.0] - 2026-10-25
 
 ### Added

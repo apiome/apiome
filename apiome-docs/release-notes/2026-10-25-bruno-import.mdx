@@ -1,0 +1,23 @@
+---
+slug: bruno-import
+title: Import a Bruno collection
+description: Catalog a Bruno collection folder, from an archive or git, as one REST API.
+authors: [apiome]
+---
+
+Bruno keeps API collections as plain files in git. Apiome now imports a Bruno collection folder into
+the catalog as one REST API — as an archive, or straight from a repository.
+[What gets imported](/bring-in/bruno-import).
+
+{/* truncate */}
+
+- **Archive or git, same result.** Paths are read relative to `bruno.json`, so a zipped folder and a
+  git selection of the same collection import to the same API, with the same fingerprint.
+- **Folders become operation groups**, named from `folder.bru` when it has a name.
+- **Requests become operations.** `:name` and `{{variables}}` in a path become path parameters, headers
+  and auth inherit from folders and `collection.bru`, and JSON, form, multipart and GraphQL bodies get
+  inferred schemas.
+- **Variables become server variables and defaults**, following Bruno's precedence; `vars:secret`
+  variables never do.
+- **Scripts, tests and assertions are listed in the coverage ledger**, not run. Credentials are never
+  kept, and `.env` files are never read.

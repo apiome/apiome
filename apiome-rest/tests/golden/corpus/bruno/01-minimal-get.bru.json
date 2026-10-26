@@ -1,0 +1,122 @@
+{
+  "adapter": "bruno",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "bruno": {
+        "bruno_version": null,
+        "capability_limits": [],
+        "environments": [],
+        "folders": [],
+        "requests": 1,
+        "variables": []
+      },
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /ping": 1
+      }
+    },
+    "format": "bruno",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Bruno collection",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "01-minimal-get.bru"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Bruno collection",
+        "name": "Bruno collection",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/ping"
+                ],
+                "template": "/ping"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "01-minimal-get.bru"
+              ],
+              "source_label": "Ping",
+              "source_location": "01-minimal-get.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/ping",
+            "key": "GET /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Bruno collection",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "bruno/01-minimal-get.bru",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.96,
+    "format": "bruno"
+  },
+  "fingerprint": "sha256:11ee76d4c872f66edf86aa5f03deff770070b82760ecece7f51275cb921bd078",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "09a6ef3d83c8d467f1681965591985f1ffe3ec294391ca620e54cd1b9e38aba8",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

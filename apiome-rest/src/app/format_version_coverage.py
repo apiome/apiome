@@ -1120,6 +1120,20 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "bruno": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Bruno collection (`bruno.json` `version` 1) with Bru-lang `.bru` files",
+                format_key="bruno",
+                support=VersionSupport.UNGATED,
+                note="`bruno.json` has carried `version: \"1\"` since Bruno's first release and the `.bru` block "
+                "grammar has grown only additively (new block names), so one reader reads every collection without "
+                "branching on the version; unknown blocks are skipped.",
+            )
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "insomnia": VersionCoverage(
         reads=[
             FormatVersion(

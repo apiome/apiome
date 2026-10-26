@@ -1,0 +1,52 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "quoted key": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "x-trace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "tenantId",
+          "dry_run",
+          "quoted key",
+          "accept",
+          "content-type",
+          "x-trace",
+          "name",
+          "password"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_v3_tenants_tenantId_items_itemId",
+      "operation": "PUT /v3/tenants/{tenantId}/items/{itemId}"
+    }
+  ]
+}
