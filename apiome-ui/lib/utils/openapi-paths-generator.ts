@@ -7,6 +7,11 @@
  */
 
 import {
+  FIXED_HTTP_METHODS,
+  STASHED_ADDITIONAL_OPERATIONS_EXTENSION,
+  STASHED_QUERY_OPERATION_EXTENSION,
+} from '../../src/app/utils/openapi-path-operations';
+import {
   buildSchemaFromInlineProperties,
   buildRequestBodyForOpenAPI,
   type InlineSchema,
@@ -80,6 +85,8 @@ export interface ResponseInfo {
 export interface OperationInfo {
   id: string;
   operation: string; // GET, POST, PUT, PATCH, DELETE, etc.
+  /** Original method token of an imported OpenAPI 3.2 `query` / `additionalOperations` entry (OA4). */
+  httpMethod?: string;
   description?: PathOperationDescription;
   parameters: PathParameter[];
   requestBody?: RequestBodyInfo | null;
@@ -518,10 +525,39 @@ export function buildPathItemForOpenAPI(
   // Add operations
   for (const operation of path.operations) {
     const method = operation.operation.toLowerCase();
-    result[method] = buildOperationForOpenAPI(operation, options);
+    const built = buildOperationForOpenAPI(operation, options);
+    if ((FIXED_HTTP_METHODS as readonly string[]).includes(method)) {
+      result[method] = built;
+    } else {
+      addNonFixedOperation(result, operation.httpMethod ?? operation.operation, built);
+    }
   }
 
   return result;
+}
+
+/**
+ * Place an operation whose method is outside the OpenAPI 3.1 fixed verbs (an imported
+ * OpenAPI 3.2 `QUERY` or `additionalOperations` method, OA4 #3501) on a 3.1 path item.
+ *
+ * A 3.1 Path Item allows only the fixed verbs and `x-` extensions, so the operation is
+ * written to the same extensions the OA2 normalization layer reads back:
+ * `x-apiome-query-operation` for QUERY, else `x-apiome-additional-operations[token]`.
+ * The importer walks both, so the operation and its method token round-trip.
+ *
+ * @param pathItem - the path item being built (mutated).
+ * @param token - the method token, as originally declared where known.
+ * @param operation - the built Operation Object.
+ */
+function addNonFixedOperation(pathItem: Record<string, unknown>, token: string, operation: Record<string, unknown>): void {
+  if (token.toUpperCase() === 'QUERY') {
+    pathItem[STASHED_QUERY_OPERATION_EXTENSION] = operation;
+    return;
+  }
+  const existing = pathItem[STASHED_ADDITIONAL_OPERATIONS_EXTENSION];
+  const map = (existing && typeof existing === 'object' ? existing : {}) as Record<string, unknown>;
+  map[token] = operation;
+  pathItem[STASHED_ADDITIONAL_OPERATIONS_EXTENSION] = map;
 }
 
 /**

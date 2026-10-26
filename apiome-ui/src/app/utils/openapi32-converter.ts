@@ -24,7 +24,8 @@
  *     `x-apiome-*` extensions (or left in place where harmless) and reported in
  *     {@link OpenAPI32ConversionResult.unsupportedConstructs} so the downstream
  *     issues can light them up incrementally without re-parsing:
- *       - `additionalOperations` and the `QUERY` HTTP method (OA4).
+ *       - `additionalOperations` and the `QUERY` HTTP method (OA4 — consumed by
+         {@link ./openapi-path-operations.ts}).
  *       - sequential media types / `itemSchema` (OA3 — consumed by
          {@link ./openapi-stream-media-types.ts}).
  *       - `tags[].summary` / `parent` / `kind` (OA5).
@@ -567,9 +568,9 @@ function convertPathItem(pathItem: any, ctx: ConversionContext, path: string): a
       id: 'query-method',
       label: 'QUERY HTTP method',
       description:
-        'The OpenAPI 3.2 QUERY operation is stashed on x-apiome-query-operation and carried forward (OA4).',
+        'The OpenAPI 3.2 QUERY operation is stashed on x-apiome-query-operation and imported as a QUERY path operation with its schemas (OA4).',
       ownedBy: 'OA4',
-      severity: 'warning'
+      severity: 'info'
     });
   }
 
@@ -585,10 +586,10 @@ function convertPathItem(pathItem: any, ctx: ConversionContext, path: string): a
       id: 'additional-operations',
       label: 'additionalOperations (custom HTTP methods)',
       description:
-        'The OpenAPI 3.2 additionalOperations map is stashed on x-apiome-additional-operations and carried forward (OA4).',
+        'The OpenAPI 3.2 additionalOperations map is stashed on x-apiome-additional-operations; each entry is imported as a path operation that keeps its method token (OA4).',
       ownedBy: 'OA4',
       count: Object.keys(converted['x-apiome-additional-operations']).length,
-      severity: 'warning'
+      severity: 'info'
     });
   }
 

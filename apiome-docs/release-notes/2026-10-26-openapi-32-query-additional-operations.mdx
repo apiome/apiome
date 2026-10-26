@@ -1,0 +1,21 @@
+---
+slug: openapi-32-query-additional-operations
+title: OpenAPI 3.2 QUERY and custom methods import
+description: QUERY and additionalOperations import as path operations with their schemas.
+authors: [apiome]
+---
+
+OpenAPI 3.2 operations declared outside the fixed verbs now import. A path's `query` operation and
+every `additionalOperations` entry, such as `REPORT`, become path operations, and their request
+and response schemas link to their classes.
+[QUERY and custom methods (OpenAPI 3.2)](/bring-in/import-a-spec#query-and-custom-methods-openapi-32).
+
+{/* truncate */}
+
+- **Method tokens.** Each operation keeps its method token as written, such as `QUERY`, `REPORT`
+  or `Purge`.
+- **Export.** OpenAPI 3.1 export writes these operations to `x-apiome-query-operation` and
+  `x-apiome-additional-operations`, so importing the document again restores them.
+- **Duplicates.** A method declared twice on one path imports once, with a warning.
+- **Analyze.** **Feature compatibility** lists **QUERY HTTP method** and
+  **additionalOperations (custom HTTP methods)** as information instead of warnings.

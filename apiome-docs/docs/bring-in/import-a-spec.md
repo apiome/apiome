@@ -262,6 +262,42 @@ On the **Analyze** step, **Feature compatibility** lists **Sequential / streamin
 The entry names each streaming media type with its kind and counts its uses. A stream media type
 that has only a `schema` and no `itemSchema` is listed too, and imports as a regular body.
 
+## QUERY and custom methods (OpenAPI 3.2)
+
+OpenAPI 3.2 declares operations outside the fixed verbs (`get`, `put`, `post`, `delete`,
+`options`, `head`, `patch`, `trace`) in two places on a path:
+
+```yaml
+paths:
+  /search:
+    query:                 # the HTTP QUERY method
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SearchFilter' }
+    additionalOperations:  # any other method, keyed by its token
+      REPORT:
+        responses: { "207": { description: Report } }
+```
+
+The Projects importer walks both, the same way it walks the fixed verbs:
+
+- **Every operation imports.** A `query` operation imports as **QUERY**. Each
+  `additionalOperations` entry imports under its method, such as **REPORT**. Their parameters,
+  request bodies and responses link to their classes like any other operation's.
+- **The method token is kept.** The token as written (`QUERY`, `REPORT`, or a mixed-case
+  `Purge`) is stored on the operation.
+- **A method declared twice imports once.** If a path declares a method in two places, such as
+  `get` and `additionalOperations.GET`, the first declaration imports and the import shows a
+  warning naming the method.
+
+An OpenAPI 3.1 document has no field for these methods, so export writes them to extensions on
+the path: QUERY to `x-apiome-query-operation`, others to `x-apiome-additional-operations` under
+their token. Importing that document again restores the same operations.
+
+On the **Analyze** step, **Feature compatibility** lists **QUERY HTTP method** and
+**additionalOperations (custom HTTP methods)** as information, with a use count for each.
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

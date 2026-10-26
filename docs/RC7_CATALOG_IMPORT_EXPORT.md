@@ -105,15 +105,18 @@ handle these.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#3501](https://github.com/apiome/apiome/issues/3501) OA4 | `additionalOperations` and the HTTP `QUERY` method | Catalog done; Projects only stores them as extensions |
 | [#3502](https://github.com/apiome/apiome/issues/3502) OA5 | Hierarchical tag taxonomy (parent / kind / summary) | Catalog keeps them, with no tree or cycle check; Projects only stores them |
 | [#3503](https://github.com/apiome/apiome/issues/3503) OA6 | `$self` and `$ref` sibling summary/description | Not built |
 | [#3505](https://github.com/apiome/apiome/issues/3505) AZ2 | Arazzo `sourceDescriptions` resolution | Catalog done; the Projects importer (`lib/importers/arazzo.ts`) ignores them |
-| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | Close when the four are done |
+| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | Close when the three are done |
 
 OA3 (#3500) is built on the Projects path: `itemSchema` elements of JSON Lines, JSON text
 sequences and SSE import as classes tagged `x-apiome-stream-kind`, and **Analyze** lists the
 streaming media types. The Catalog (REST normalizer) side was outside that issue's scope.
+
+OA4 (#3501) is done on both paths: the Projects importer now walks `query` and
+`additionalOperations`, imports their schemas and keeps each method token, and OpenAPI 3.1
+export writes them to `x-apiome-query-operation` / `x-apiome-additional-operations`.
 
 ### 3.3 Format depth (P2 unless noted)
 

@@ -20,6 +20,8 @@
 /** OpenAPI documents are walked untyped, like the other OpenAPI import utilities. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { listPathItemOperations } from './openapi-path-operations';
+
 /**
  * Stream family of a sequential media type.
  *
@@ -57,9 +59,6 @@ export interface StreamMediaTypeOccurrence {
   /** Whether the Media Type Object declares an element schema (`itemSchema`). */
   hasItemSchema: boolean;
 }
-
-/** HTTP methods the 3.1 importer recognizes as operations, plus the 3.2 `query`. */
-const OPERATION_KEYS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
 
 const COMPONENT_SCHEMA_REF = /^#\/components\/schemas\/(.+)$/;
 
@@ -160,21 +159,11 @@ function forEachMediaType(doc: any, visit: (v: MediaTypeVisit) => void): void {
   if (paths && typeof paths === 'object') {
     for (const [pathName, pathItem] of Object.entries<any>(paths)) {
       if (!pathItem || typeof pathItem !== 'object') continue;
-      const operations: Array<[string, any]> = [];
-      for (const method of OPERATION_KEYS) {
-        if (pathItem[method]) operations.push([method, pathItem[method]]);
-      }
-      if (pathItem['x-apiome-query-operation']) operations.push(['query', pathItem['x-apiome-query-operation']]);
-      for (const key of ['additionalOperations', 'x-apiome-additional-operations']) {
-        const extra = pathItem[key];
-        if (!extra || typeof extra !== 'object') continue;
-        for (const [method, op] of Object.entries<any>(extra)) operations.push([method, op]);
-      }
-      for (const [method, op] of operations) {
+      for (const { key, operation: op } of listPathItemOperations(pathItem).operations) {
         const nameBase =
-          (op && typeof op.operationId === 'string' && toPascalCase(op.operationId)) ||
-          toPascalCase(`${method} ${pathName}`);
-        visitOperation(op, `paths.${pathName}.${method}`, nameBase, visit);
+          (typeof op.operationId === 'string' && toPascalCase(op.operationId)) ||
+          toPascalCase(`${key} ${pathName}`);
+        visitOperation(op, `paths.${pathName}.${key}`, nameBase, visit);
       }
     }
   }
