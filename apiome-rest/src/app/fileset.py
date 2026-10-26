@@ -7,10 +7,40 @@ consume via :meth:`~app.import_source.ImportSource.parse_fileset`.
 
 from __future__ import annotations
 
+import posixpath
+import re
 from dataclasses import dataclass, field
 from typing import Dict, Mapping, Optional
 
-__all__ = ["IntakeFileset", "Fileset"]
+__all__ = ["IntakeFileset", "Fileset", "resolve_relative_reference"]
+
+_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def resolve_relative_reference(member: str, target: str) -> Optional[str]:
+    """Resolve a reference one member makes to another, refusing anything outside the set.
+
+    Used by the adapters that follow cross-file references (RAML ``!include`` / ``uses``,
+    Thrift ``include``): a target that is absolute, a URL, or climbs out of the set with
+    ``..`` must never be read.
+
+    Args:
+        member: The referencing member's path inside the set (POSIX).
+        target: The reference as written; a ``#fragment`` is ignored.
+
+    Returns:
+        The target's normalized path inside the set (``member`` itself for a bare
+        fragment), or ``None`` when it would leave the set.
+    """
+    location = target.split("#", 1)[0]
+    if not location:
+        return member
+    if _SCHEME_RE.match(location) or location.startswith(("/", "\\")):
+        return None
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(member), location))
+    if joined == ".." or joined.startswith("../") or posixpath.isabs(joined):
+        return None
+    return joined
 
 
 @dataclass(frozen=True)

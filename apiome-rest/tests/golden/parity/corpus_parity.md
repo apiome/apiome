@@ -96,7 +96,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `sparkplug` | MQTT Sparkplug B | event | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `sql-ddl` | SQL DDL | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `swift-mt` | SWIFT MT | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
-| `thrift` | Thrift | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `thrift` |
+| `thrift` | Thrift | rpc | 9 | 5 | 0 | 0 | 14 | 6/6 | 7 | `thrift` |
 | `thunder-client` | Thunder Client collection | rest | 7 | 7 | 0 | 0 | 14 | 6/6 | 6 | `thunder-client` |
 | `tradacoms` | TRADACOMS | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `traefik` | Traefik dynamic config | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `traefik` |

@@ -410,6 +410,9 @@ def load_format_rule_packs() -> None:
     # Protobuf lint pack (MFI-9.4): registers under ``protobuf``.
     from . import proto_lint as _proto_lint  # noqa: F401
 
+    # Apache Thrift lint pack (MFI-19.3): registers under ``thrift``.
+    from . import thrift_lint as _thrift_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.

@@ -28416,6 +28416,74 @@
       "rung": "typical"
     },
     {
+      "path": "thrift/07-orders-set/api.thrift",
+      "format": "thrift",
+      "adapter_key": "thrift",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "thrift",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "include",
+        "service-extends",
+        "typedef",
+        "exception",
+        "oneway"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "thrift/07-orders-set/errors.thrift",
+      "format": "thrift",
+      "adapter_key": "thrift",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "thrift",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "exception"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "Fileset member: the exceptions the root's services throw, referenced as `errors.NotFound`.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "thrift/07-orders-set/shared.thrift",
+      "format": "thrift",
+      "adapter_key": "thrift",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "thrift",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "typedef",
+        "enum",
+        "service"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "Fileset member: money types and the BaseService the root's OrderService extends.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
       "path": "thrift/negative/01-syntactic-unclosed-brace.thrift",
       "format": "thrift",
       "adapter_key": "thrift",
@@ -33591,9 +33659,6 @@
     },
     "smithy": {
       "multi-file": "The smithy adapter's parse_fileset parses only the root member and never resolves shapes defined in other members, so a multi-file set demonstrates nothing."
-    },
-    "thrift": {
-      "multi-file": "ThriftImportSource.parse_fileset only parses the fileset root and never resolves included members, so a multi-file set demonstrates nothing beyond a single file."
     },
     "typespec": {
       "multi-file": "The typespec adapter's parse_fileset parses only the root member and does not resolve relative import statements across members, so a multi-file set demonstrates nothing."

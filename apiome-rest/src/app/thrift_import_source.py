@@ -3,7 +3,9 @@
 The :class:`~app.import_source.ImportSource` adapter that makes Thrift IDL importable into
 the catalog (store-raw, MFI-23.7). It wraps the MFI-11.1 parser and MFI-11.2 normalizer:
 
-* **parse** turns ``.thrift`` text into a :class:`~app.thrift_parser.ThriftDocument`;
+* **parse** turns ``.thrift`` text into a :class:`~app.thrift_parser.ThriftDocument`; a file
+  set (``.zip`` / ``.tar.gz``) parses the root and every file it includes
+  (MFI-19.3, :mod:`app.thrift_fileset`);
 * **normalize** delegates to :class:`~app.thrift_normalizer.ThriftNormalizer`;
 * **fingerprint** / **diff** / **lint** use the canonical-model defaults from
   :mod:`app.import_source`.
@@ -25,6 +27,7 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
+from .thrift_fileset import parse_thrift_set
 from .thrift_parser import ThriftDocument, ThriftParseError, is_thrift, parse_thrift
 
 __all__ = ["ThriftImportSource"]
@@ -77,10 +80,12 @@ class ThriftImportSource(ImportSource, register=True):
         *,
         source_label: Optional[str] = None,
     ) -> ThriftDocument:
-        root = fileset.root
-        if root not in fileset.members:
-            raise ImportSourceError("Thrift fileset is missing its root document")
-        return self.parse(fileset.members[root], source_label=root or source_label)
+        """Parse a Thrift set: the root document plus every file it includes (MFI-19.3).
+
+        Raises:
+            ImportSourceError: See :func:`app.thrift_fileset.parse_thrift_set`.
+        """
+        return parse_thrift_set(dict(fileset.members), fileset.root, source_label=source_label)
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, ThriftDocument):

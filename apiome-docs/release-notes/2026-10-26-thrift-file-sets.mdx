@@ -1,0 +1,23 @@
+---
+slug: thrift-file-sets
+title: Thrift file sets, field-id breaking rules and lint
+description: Thrift imports resolve includes, grade changes by field id, and lint.
+authors: [apiome]
+---
+
+An Apache Thrift API split across files now imports whole. Upload the root `.thrift` file with the
+files it includes as an archive, and every file's types and services join one catalog item.
+[Import an Apache Thrift API](/bring-in/thrift-import).
+
+{/* truncate */}
+
+- **Includes resolve.** `shared.Money` links to the `Money` that `shared.thrift` defines, and a
+  service that `extends shared.BaseService` records its base.
+- **Safer references.** An include that is absolute, a URL or a `../` path out of the upload is
+  refused and never read.
+- **Field-id-aware diffs.** A renamed field that keeps its id is dangerous rather than breaking, a
+  reused id is breaking, and `required` fields follow Thrift's rules.
+- **Thrift lint pack.** Five rules: a declared namespace, no `required` fields, unique ids,
+  explicit enum values, and `oneway` methods that return `void`.
+- **Sturdier parsing.** Methods with several parameters, typedefs and last fields without a
+  trailing separator, and `//` or `#` inside quoted strings are now read correctly.

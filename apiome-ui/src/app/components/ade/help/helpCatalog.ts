@@ -799,6 +799,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive', 'trait', 'resource type', 'resourceTypes'],
   },
   {
+    id: 'thrift-import',
+    title: 'Import an Apache Thrift API',
+    summary: 'Catalog Thrift IDL, including multi-file sets joined by include.',
+    page: 'apiome-docs/docs/bring-in/thrift-import.md',
+    section: 'reference',
+    keywords: ['idl', 'include', 'rpc', 'field id', 'breaking change', 'lint', 'file set', 'archive'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

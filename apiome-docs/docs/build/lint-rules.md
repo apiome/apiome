@@ -746,3 +746,46 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** provenance
 - **Default severity:** info
 - **Rationale:** Reports the share of constructs Apiome inferred rather than read from a declaration; raise it to error in a style guide to keep inferred APIs from being published.
+
+
+## Pack: `thrift`
+
+### `thrift.enum-explicit-values` {#thrift-enum-explicit-values}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Enum values should have explicit numbers.
+
+### `thrift.field-no-required` {#thrift-field-no-required}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Fields should not be 'required'.
+
+### `thrift.namespace-declared` {#thrift-namespace-declared}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** A Thrift document should declare a namespace.
+
+### `thrift.oneway-void` {#thrift-oneway-void}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A oneway method must return void and declare no throws.
+- **Reference:** https://thrift.apache.org/docs/idl#service
+- **Remediation:** Make the method return `void` and drop its `throws`, or remove `oneway` so the caller waits for the reply.
+- **False-positive guidance:** Not a false positive: the Thrift compiler rejects a oneway method with a return value or exceptions.
+- **Fixture:** `catalog/thrift-oneway-void`
+- **Scan modes:** `lint`
+
+### `thrift.unique-field-ids` {#thrift-unique-field-ids}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Field, parameter and exception ids must be unique.
+- **Reference:** https://thrift.apache.org/docs/idl#field
+- **Remediation:** Give each field, parameter or exception of the struct or method its own id; never reuse the id of a removed field.
+- **False-positive guidance:** Not a false positive: the Thrift compiler rejects duplicate ids, so the document cannot be compiled as written.
+- **Fixture:** `catalog/thrift-unique-field-ids`
+- **Scan modes:** `lint`

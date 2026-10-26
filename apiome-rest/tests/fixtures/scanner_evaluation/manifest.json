@@ -448,6 +448,20 @@
         "readiness.tool-parameter-missing-description",
         "readiness.tool-parameter-unconstrained"
       ]
+    },
+    {
+      "id": "catalog/thrift-unique-field-ids",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "thrift.unique-field-ids"
+      ]
+    },
+    {
+      "id": "catalog/thrift-oneway-void",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "thrift.oneway-void"
+      ]
     }
   ]
 }

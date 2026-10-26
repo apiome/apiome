@@ -35,6 +35,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import yaml
 
+from .fileset import resolve_relative_reference
 from .import_source import ImportSourceError
 from .raml_parser import RamlDocument
 from .raml_traits import IncludeAsText
@@ -64,7 +65,6 @@ AMF_TIMEOUT_SECONDS = 120.0
 _RAML_HEADER_RE = re.compile(r"^\s*#%RAML\s+(\d+\.\d+)", re.IGNORECASE)
 _INCLUDE_RE = re.compile(r"!include\s+([^\s#]+)")
 _JSON_REF_RE = re.compile(r'"\$ref"\s*:\s*"([^"]+)"')
-_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 _FILE_URI_RE = re.compile(r"file:/+[^\s\"'#]*")
 
 
@@ -128,19 +128,6 @@ def references_other_files(members: Mapping[str, str]) -> bool:
     return any(find_reference_targets(path, text) for path, text in members.items())
 
 
-def _resolve_target(member: str, target: str) -> Optional[str]:
-    """Resolve ``target`` relative to ``member``'s folder, or ``None`` when it leaves the set."""
-    location = target.split("#", 1)[0]
-    if not location:
-        return member
-    if _SCHEME_RE.match(location) or location.startswith(("/", "\\")):
-        return None
-    joined = posixpath.normpath(posixpath.join(posixpath.dirname(member), location))
-    if joined == ".." or joined.startswith("../") or posixpath.isabs(joined):
-        return None
-    return joined
-
-
 def check_reference_targets(members: Mapping[str, str]) -> None:
     """Refuse a set whose references could read outside it.
 
@@ -158,7 +145,7 @@ def check_reference_targets(members: Mapping[str, str]) -> None:
     refused: List[str] = []
     for path, text in members.items():
         for target in find_reference_targets(path, text):
-            if _resolve_target(path, target) is None:
+            if resolve_relative_reference(path, target) is None:
                 refused.append(f"{path} → {target}")
     if refused:
         raise ImportSourceError(

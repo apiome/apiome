@@ -219,7 +219,9 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
 
         load_builtin_import_sources()
         adapter = get_import_source(str(data.get("source_format") or "odcs"))
-        document = json.dumps(data.get("document") or {})
+        # A text format (Thrift IDL, MFI-19.3) carries its document as a string, kept as written.
+        raw_document = data.get("document")
+        document = raw_document if isinstance(raw_document, str) else json.dumps(raw_document or {})
         model = adapter.normalize(adapter.parse(document, source_label=str(data.get("id") or "fixture")))
         findings = [f.as_dict() for f in lint_canonical_model(model).findings]
         return _blocking_rule_ids(findings), findings

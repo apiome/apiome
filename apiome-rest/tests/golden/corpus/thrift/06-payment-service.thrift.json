@@ -514,14 +514,14 @@
   },
   "fingerprint": "sha256:da65b7e03263221202e58f0459bda276e942b44938d9c7acd1a80e8987e74527",
   "lint": {
-    "findings": 25,
+    "findings": 29,
     "grade": "F",
-    "report_fingerprint": "d4ae8518444124586007fa8f9f4c8dec89fa8cc937bca67f2801ba4aebcf9a02",
-    "score": 54,
+    "report_fingerprint": "152c52f775d639c5563e4630e13e00b0ad104aa1eb9f82d907cea2cbbe4c5796",
+    "score": 38,
     "severity_counts": {
       "error": 0,
       "info": 18,
-      "warning": 7
+      "warning": 11
     }
   },
   "snapshot_version": 1
