@@ -1,0 +1,228 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 204 with no body.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v1_users_id",
+      "operation": "DELETE /v1/users/{id}",
+      "output": {
+        "status": "204"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetUserResponse200).",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "page"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_users",
+      "operation": "GET /v1/users",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "data": {
+              "items": {},
+              "type": "array"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "GetUserResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetUserResponse200).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_users_id",
+      "operation": "GET /v1/users/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "data": {
+              "items": {},
+              "type": "array"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "page": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "GetUserResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PatchUserResponse200).",
+      "inputSchema": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content-type",
+          "active"
+        ],
+        "type": "object"
+      },
+      "name": "PATCH_v1_users_id",
+      "operation": "PATCH /v1/users/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "active",
+            "email",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "PatchUserResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (PostUserResponse201).",
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "email",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_users",
+      "operation": "POST /v1/users",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "active",
+            "email",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "PostUserResponse201",
+        "status": "201"
+      }
+    }
+  ]
+}

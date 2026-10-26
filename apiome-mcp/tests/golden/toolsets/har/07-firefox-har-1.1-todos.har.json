@@ -1,0 +1,138 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 204 with no body.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_api_todos_id",
+      "operation": "DELETE /api/todos/{id}",
+      "output": {
+        "status": "204"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetTodoResponse200).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_api_todos",
+      "operation": "GET /api/todos",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "GetTodoResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (PostTodoResponse201).",
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "POST_api_todos",
+      "operation": "POST /api/todos",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "done": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "done",
+            "id",
+            "text"
+          ],
+          "type": "object"
+        },
+        "shape": "PostTodoResponse201",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PutTodoResponse200).",
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content-type",
+          "done",
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_api_todos_id",
+      "operation": "PUT /api/todos/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "done": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "done",
+            "id",
+            "text"
+          ],
+          "type": "object"
+        },
+        "shape": "PutTodoResponse200",
+        "status": "200"
+      }
+    }
+  ]
+}

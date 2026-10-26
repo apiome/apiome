@@ -138,6 +138,8 @@ from .export_projection import (
 )
 from .format_lint_capabilities import FormatLintCapability, capability_for_format
 from .gateway_family import flavor_for
+from .har_normalizer import HAR_EXTRAS_KEY
+from .har_normalizer import PARTIAL_LIMITS as HAR_PARTIAL_LIMITS
 from .hoppscotch_normalizer import HOPPSCOTCH_EXTRAS_KEY
 from .hoppscotch_normalizer import PARTIAL_LIMITS as HOPPSCOTCH_PARTIAL_LIMITS
 from .import_preflight import run_import_preflight
@@ -319,6 +321,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # FMT-10.2: the Thunder Client projection record (same shape as Hoppscotch's). Our own
         # bookkeeping — never a credential.
         THUNDER_CLIENT_EXTRAS_KEY,
+        # MFI-32.2: the HAR capture record (versions, hosts, options, exclusion counts, declared
+        # limits). Our own bookkeeping — never a credential.
+        HAR_EXTRAS_KEY,
         # FMT-10.3: the SoapUI projection record (interfaces and where each WSDL came from, saved
         # request names, environments, property names, mock services, declared limits). Our own
         # bookkeeping — never a credential.
@@ -1290,6 +1295,7 @@ def _document_scope_rows(
     ledger.extend(_natural_ddm_capability_rows(api))
     ledger.extend(_hoppscotch_capability_rows(api))
     ledger.extend(_thunder_client_capability_rows(api))
+    ledger.extend(_har_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
     ledger.extend(_device_model_capability_rows(api))
     ledger.extend(_linked_data_capability_rows(api))
@@ -2036,7 +2042,8 @@ def _graded_limit_rows(
                 coverage=coverage,
                 status=status,
                 reason=reason,
-                detail=f"{limit.get('detail')} ({count} occurrence(s); {consequence}.){where}",
+                # Code-first readers write ``detail``; the client-collection readers write ``note``.
+                detail=f"{limit.get('detail') or limit.get('note')} ({count} occurrence(s); {consequence}.){where}",
                 document_scoped=True,
             )
         )
@@ -2197,6 +2204,22 @@ def _soapui_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
         One ledger row per declared limit (see :func:`_graded_limit_rows`).
     """
     return _graded_limit_rows(api, format_key="soapui", extras_key=SOAPUI_EXTRAS_KEY, partial=SOAPUI_PARTIAL_LIMITS)
+
+
+def _har_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the MFI-32.2 HAR declared limits as document-scoped ledger rows.
+
+    A withheld ``Authorization`` credential keeps its scheme and a cookie-carrying request keeps
+    its ``Cookie`` header by name, so those are ``partially-mapped``; entries left out as noise or
+    for another host are not modelled at all.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="har", extras_key=HAR_EXTRAS_KEY, partial=HAR_PARTIAL_LIMITS)
 
 
 def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

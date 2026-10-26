@@ -460,3 +460,54 @@ def test_a_non_secret_name_value_pair_is_kept():
     text = json.dumps({"data": [{"name": "baseUrl", "value": "https://api.example.com"}]})
     outcome = scrub_document_text(text)
     assert outcome.text == text and not outcome.scrubbed
+
+
+# --- MFI-32.2: HAR shapes ------------------------------------------------------
+
+
+def test_every_cookie_jar_value_is_redacted_whatever_the_cookie_is_called():
+    """A HAR ``cookies`` list holds session material under names like ``sid``."""
+    document = {
+        "request": {"cookies": [{"name": "sid", "value": "jar-value-0001"}, {"name": "theme", "value": "dark"}]},
+        "response": {"cookies": [{"name": "connect.sid", "value": "jar-value-0002", "httpOnly": True}]},
+    }
+    outcome = scrub_document_text(json.dumps(document, indent=2), entropy_detection=False)
+    scrubbed = json.loads(outcome.text)
+    assert [c["value"] for c in scrubbed["request"]["cookies"]] == [REDACTION_MARKER, REDACTION_MARKER]
+    assert scrubbed["response"]["cookies"][0] == {"name": "connect.sid", "value": REDACTION_MARKER, "httpOnly": True}
+
+
+def test_a_value_outside_a_cookie_jar_is_kept():
+    text = json.dumps({"headers": [{"name": "accept", "value": "application/json"}], "cookies": []})
+    assert scrub_document_text(text, entropy_detection=False).text == text
+
+
+def test_a_secret_in_a_json_escaped_body_is_redacted_and_the_string_stays_valid():
+    """HAR and Postman keep bodies as JSON *strings*, so their quotes arrive escaped."""
+    body = json.dumps({"user": "ada", "password": "escaped-pass-0042", "path": "C:\\dir"})
+    text = json.dumps({"postData": {"text": body}})
+    outcome = scrub_document_text(text, entropy_detection=False)
+    inner = json.loads(json.loads(outcome.text)["postData"]["text"])
+    assert inner == {"user": "ada", "password": REDACTION_MARKER, "path": "C:\\dir"}
+
+
+def test_a_capture_with_thousands_of_cookie_values_scrubs_in_linear_time():
+    """Line numbers are counted incrementally; counting from the top per span was quadratic."""
+    import time
+
+    entry = {"request": {"cookies": [{"name": "sid", "value": f"jar-{n:05d}"} for n in range(4)]}}
+    text = json.dumps({"log": {"entries": [entry] * 10_000}}, indent=2)
+    started = time.perf_counter()
+    outcome = scrub_document_text(text, entropy_detection=False)
+    assert time.perf_counter() - started < 10
+    assert sum(finding.occurrences for finding in outcome.findings) == 40_000
+    assert outcome.findings[-1].line == text.count("\n", 0, text.rindex("jar-00003")) + 1
+
+
+def test_many_unterminated_cookie_jars_do_not_rescan_the_tail():
+    import time
+
+    text = '"cookies": [ {"value": "x" ' * 50_000
+    started = time.perf_counter()
+    scrub_document_text(text, entropy_detection=False)
+    assert time.perf_counter() - started < 10

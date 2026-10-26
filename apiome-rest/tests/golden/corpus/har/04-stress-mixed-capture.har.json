@@ -1,0 +1,1611 @@
+{
+  "adapter": "har",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "har": {
+        "api_calls": 15,
+        "capability_limits": [
+          {
+            "construct": "har.analytics",
+            "count": 2,
+            "locations": [
+              "api.segment.io/v1/t",
+              "o0.ingest.sentry.io/api/1/envelope/"
+            ],
+            "note": "Calls to analytics, tag-manager, error-reporting and session-replay vendors were left out. Keep them with a `har_include` pattern."
+          },
+          {
+            "construct": "har.non_http",
+            "count": 3,
+            "locations": [
+              "chrome-extension:",
+              "data:",
+              "wss:"
+            ],
+            "note": "Entries that are not HTTP(S) requests (`data:`, `blob:`, WebSocket, extension URLs) were left out."
+          },
+          {
+            "construct": "har.static_asset",
+            "count": 1,
+            "locations": [
+              "api.example.com/v1/app.js.map"
+            ],
+            "note": "Page assets (documents, scripts, stylesheets, images, fonts, media) are not API calls and were left out. Keep them with the `har_keep_noise` option or a `har_include` pattern."
+          }
+        ],
+        "creators": [
+          "WebInspector 537.36"
+        ],
+        "entries": 21,
+        "excluded": {
+          "analytics": 2,
+          "non-http": 3,
+          "static-asset": 1
+        },
+        "hosts": [
+          {
+            "api_calls": 15,
+            "host": "api.example.com",
+            "selected": true
+          }
+        ],
+        "options": {
+          "exclude": [],
+          "hosts": [],
+          "include": [],
+          "keep_noise": false
+        },
+        "versions": [
+          "1.2"
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "blobs"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/blobs/9f86d081884c7d659a2feaa0c55ad015"
+          ],
+          "template": "/v1/blobs/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "files"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/files/3f2b8c1e-9d4a-4b7e-8f21-6a5c0d9e1b23",
+            "https://api.example.com/v1/files/7c9e4a12-1b3d-4e5f-9a8b-2c4d6e8f0a1b"
+          ],
+          "template": "/v1/files/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "items"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/items/42"
+          ],
+          "template": "/v1/items/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "search"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/search?q=hats",
+            "https://api.example.com/v1/search?q=shoes&sort=price"
+          ],
+          "template": "/v1/search"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "users"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 4,
+              "kind": "param",
+              "value": "id2"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/users/7/orders/8812",
+            "https://api.example.com/v1/users/9/orders/8813"
+          ],
+          "template": "/v1/users/{id}/orders/{id2}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v1/blobs/{id}": 1,
+        "GET /v1/events/stream": 1,
+        "GET /v1/files/{id}": 2,
+        "GET /v1/items/{id}": 1,
+        "GET /v1/notifications": 1,
+        "GET /v1/ping": 1,
+        "GET /v1/report.csv": 1,
+        "GET /v1/search": 2,
+        "GET /v1/users/{id}/orders/{id2}": 2,
+        "POST /v1/forms/contact": 1,
+        "POST /v1/items": 1,
+        "POST /v1/uploads": 1
+      }
+    },
+    "format": "har",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "api.example.com",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": null
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com",
+        "name": "api.example.com",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "blobs"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/blobs/9f86d081884c7d659a2feaa0c55ad015"
+                ],
+                "template": "/v1/blobs/{id}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[2]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/blobs/{id}",
+            "key": "GET /v1/blobs/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v1/blobs/{id}#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetBlobResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/blobs/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/blobs/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "events"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "stream"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/events/stream"
+                ],
+                "template": "/v1/events/stream"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[14]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/events/stream",
+            "key": "GET /v1/events/stream",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v1/events/stream#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/events/stream",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "files"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/files/3f2b8c1e-9d4a-4b7e-8f21-6a5c0d9e1b23",
+                  "https://api.example.com/v1/files/7c9e4a12-1b3d-4e5f-9a8b-2c4d6e8f0a1b"
+                ],
+                "template": "/v1/files/{id}"
+              },
+              "provenance": "inferred",
+              "sample_count": 2,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[0]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/files/{id}",
+            "key": "GET /v1/files/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "headers": [],
+                "key": "GET /v1/files/{id}#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetFileResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/files/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "key": "GET /v1/files/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "items"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/items/42"
+                ],
+                "template": "/v1/items/{id}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[10]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/items/{id}",
+            "key": "GET /v1/items/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "304",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v1/items/{id}#response.304",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "304"
+              }
+            ],
+            "name": "GET /v1/items/{id}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/items/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "notifications"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/notifications"
+                ],
+                "template": "/v1/notifications"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[9]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/notifications",
+            "key": "GET /v1/notifications",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/notifications",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/ping"
+                ],
+                "template": "/v1/ping"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[8]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/ping",
+            "key": "GET /v1/ping",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v1/ping#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "report.csv"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/report.csv"
+                ],
+                "template": "/v1/report.csv"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[7]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/report.csv",
+            "key": "GET /v1/report.csv",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "GET /v1/report.csv#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/report.csv",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "search"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/search?q=hats",
+                  "https://api.example.com/v1/search?q=shoes&sort=price"
+                ],
+                "template": "/v1/search"
+              },
+              "provenance": "inferred",
+              "sample_count": 2,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[4]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/search",
+            "key": "GET /v1/search",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "headers": [],
+                "key": "GET /v1/search#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetSearchResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/search",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2,
+                  "samples": [
+                    "hats",
+                    "shoes"
+                  ]
+                },
+                "key": "GET /v1/search#query.q",
+                "location": "query",
+                "name": "q",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "price"
+                  ]
+                },
+                "key": "GET /v1/search#query.sort",
+                "location": "query",
+                "name": "sort",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 4,
+                    "kind": "param",
+                    "value": "id2"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/users/7/orders/8812",
+                  "https://api.example.com/v1/users/9/orders/8813"
+                ],
+                "template": "/v1/users/{id}/orders/{id2}"
+              },
+              "provenance": "inferred",
+              "sample_count": 2,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[19]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/users/{id}/orders/{id2}",
+            "key": "GET /v1/users/{id}/orders/{id2}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "headers": [],
+                "key": "GET /v1/users/{id}/orders/{id2}#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetOrderResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/users/{id}/orders/{id2}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "key": "GET /v1/users/{id}/orders/{id2}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "key": "GET /v1/users/{id}/orders/{id2}#path.id2",
+                "location": "path",
+                "name": "id2",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "forms"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "contact"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://api.example.com/v1/forms/contact"
+                ],
+                "template": "/v1/forms/contact"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[5]"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/forms/contact",
+            "key": "POST /v1/forms/contact",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/forms/contact#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostContactResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "POST /v1/forms/contact",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "items"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://api.example.com/v1/items"
+                ],
+                "template": "/v1/items"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[11]"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/items",
+            "key": "POST /v1/items",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/items#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostItemRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "422",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/items#response.422",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostItemResponse422",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "422"
+              }
+            ],
+            "name": "POST /v1/items",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "uploads"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "https://api.example.com/v1/uploads"
+                ],
+                "template": "/v1/uploads"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "har/04-stress-mixed-capture.har",
+              "source_location": "log.entries[6]"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/uploads",
+            "key": "POST /v1/uploads",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "201",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/uploads#response.201",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostUploadResponse201",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              }
+            ],
+            "name": "POST /v1/uploads",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "api.example.com",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetBlobResponse200.digest",
+            "name": "digest",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetBlobResponse200.ok",
+            "name": "ok",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetBlobResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetBlobResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetFileResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetFileResponse200.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetFileResponse200.size",
+            "name": "size",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetFileResponse200.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": true
+            }
+          }
+        ],
+        "key": "GetFileResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetFileResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetOrderResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetOrderResponse200.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetOrderResponse200.user_id",
+            "name": "user_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetOrderResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetOrderResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetSearchResponse200.hits",
+            "name": "hits",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetSearchResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetSearchResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostContactResponse200.received",
+            "name": "received",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostContactResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostContactResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostItemRequest.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostItemRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostItemRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostItemResponse422.errors",
+            "name": "errors",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostItemResponse422",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostItemResponse422",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostUploadResponse201.upload_id",
+            "name": "upload_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostUploadResponse201",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostUploadResponse201",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "har/04-stress-mixed-capture.har",
+  "counts": {
+    "channels": 0,
+    "operations": 12,
+    "servers": 1,
+    "services": 1,
+    "types": 8
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "har"
+  },
+  "fingerprint": "sha256:b2f5771b69371815b56f64f94762ed6ab898b043bad7f0619625eb1c83badde0",
+  "lint": {
+    "findings": 48,
+    "grade": "F",
+    "report_fingerprint": "2b0e4192e98692e8c45a15acbbfdf01da2153fd96d1d7f38bef3a9dcee801981",
+    "score": 32,
+    "severity_counts": {
+      "error": 0,
+      "info": 28,
+      "warning": 20
+    }
+  },
+  "snapshot_version": 1
+}

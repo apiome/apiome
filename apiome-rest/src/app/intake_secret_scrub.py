@@ -52,6 +52,7 @@ __all__ = [
     "ENTROPY_MAX_LENGTH",
     "ENTROPY_MIN_BITS_PER_CHAR",
     "ENTROPY_MIN_LENGTH",
+    "COOKIE_JAR_SECRET_TYPE",
     "ENTROPY_SECRET_TYPE",
     "REDACTION_MARKER",
     "ScrubFinding",
@@ -123,12 +124,16 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
     # match always started there anyway (the leading class covers the same characters), but
     # without it the engine retried every position inside a long run — quadratic on a long
     # token-shaped string, which the usage ingest edge (RDG-1.2) scrubs on every event.
+    # The quotes may be JSON-escaped (``\"password\": \"…\"``): a HAR capture (MFI-32.2) and a
+    # Postman raw body keep request and response bodies as JSON *strings*. A backslash that escapes
+    # the closing quote is never part of the value, so redacting the value keeps the string valid.
     ("secret-assignment", _p(
-        r"(?:\"|')?(?<![A-Za-z0-9_\-])[A-Za-z0-9_\-]*"
+        r"(?:\\?\"|')?(?<![A-Za-z0-9_\-])[A-Za-z0-9_\-]*"
         r"(?:password|passwd|secret|api[-_]?key|apikey|access[-_]?token|refresh[-_]?token"
         r"|auth[-_]?token|client[-_]?secret|private[-_]?key|credential|passphrase"
         r"|session[-_]?id|sessionid|session)"
-        r"[A-Za-z0-9_\-]*(?:\"|')?\s*[:=]\s*(?:\"|')?([^\"'\s,}\]&]{4,})",
+        r"[A-Za-z0-9_\-]*(?:\\?\"|')?\s*[:=]\s*(?:\\?\"|')?"
+        r"((?:[^\"'\s,}\]&\\]|\\(?![\"'])){4,})",
         re.IGNORECASE,
     )),
     # A key named exactly ``token`` — where a Hoppscotch bearer / OAuth 2 auth block keeps its
@@ -195,6 +200,69 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
         re.IGNORECASE,
     )),
 )
+
+
+#: Secret type reported for a member of a ``"cookies": [...]`` jar (see :func:`_cookie_jar_spans`).
+COOKIE_JAR_SECRET_TYPE = "cookie-jar-value"
+
+#: Where a cookie jar starts: a HAR request/response ``cookies`` list (MFI-32.2), or a Postman
+#: cookie export.
+_COOKIE_JAR_START: Pattern[str] = _p(r"\"cookies\"\s*:\s*\[")
+
+#: A ``"value": "<text>"`` member inside a jar.
+_COOKIE_JAR_VALUE: Pattern[str] = _p(r"\"value\"\s*:\s*\"((?:[^\"\\\n]|\\.)+)\"")
+
+
+def _json_array_end(text: str, start: int) -> int:
+    """Offset just past the ``]`` closing the JSON array whose body begins at ``start``.
+
+    String-aware, so a ``]`` inside a cookie value does not end the array early. An unterminated
+    array runs to the end of the text.
+    """
+    depth = 1
+    in_string = False
+    index = start
+    length = len(text)
+    while index < length:
+        char = text[index]
+        if in_string:
+            if char == "\\":
+                index += 1
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+        index += 1
+    return length
+
+
+def _cookie_jar_spans(text: str) -> List[Tuple[int, int]]:
+    """Every ``value`` span inside a ``"cookies": [...]`` array.
+
+    A HAR capture keeps each request's and response's cookies as ``{"name": …, "value": …}``
+    objects, and a cookie's *name* (``sid``, ``connect.sid``, ``_gh_sess``) rarely says it is a
+    credential, so the name/value-pair patterns cannot see them. Every cookie value in a jar is
+    session material, so all of them are redacted, whatever they are called.
+    """
+    spans: List[Tuple[int, int]] = []
+    scanned_to = 0
+    for start in _COOKIE_JAR_START.finditer(text):
+        # A jar opener inside a jar already scanned adds nothing, and skipping it keeps a document of
+        # many unterminated openers linear rather than rescanning the tail once per opener.
+        if start.start() < scanned_to:
+            continue
+        scanned_to = _json_array_end(text, start.end())
+        for value in _COOKIE_JAR_VALUE.finditer(text, start.end(), scanned_to):
+            spans.append(value.span(1))
+        if scanned_to >= len(text):
+            break
+    return spans
 
 
 #: Secret type reported for a value the named patterns could not identify but whose
@@ -354,11 +422,6 @@ class ScrubOutcome:
         }
 
 
-def _line_of(text: str, index: int) -> int:
-    """Return the 1-based line number containing ``index``."""
-    return text.count("\n", 0, index) + 1
-
-
 #: Unquoted JSON/YAML scalars that can never hold a credential.
 _NON_SECRET_LITERALS = frozenset({"true", "false", "null", "~"})
 
@@ -436,6 +499,9 @@ def _collect_secret_spans(
             if start >= 0 and not _is_unquoted_literal(text, start, end, secret_type):
                 _claim(start, end, secret_type)
 
+    for start, end in _cookie_jar_spans(text):
+        _claim(start, end, COOKIE_JAR_SECRET_TYPE)
+
     if entropy_detection:
         for match in _ENTROPY_CANDIDATE.finditer(text):
             if _looks_like_secret_entropy(match.group()):
@@ -477,11 +543,16 @@ def scrub_document_text(text: str, *, entropy_detection: bool = True) -> ScrubOu
     tally: Dict[Tuple[str, int], int] = {}
     pieces: List[str] = []
     cursor = 0
+    # Spans are sorted, so the line number is advanced incrementally: counting from the start of the
+    # text for every span is quadratic on a capture carrying thousands of cookie values.
+    line, counted_to = 1, 0
     for start, end, secret_type in spans:
         pieces.append(text[cursor:start])
         pieces.append(REDACTION_MARKER)
         cursor = end
-        key = (secret_type, _line_of(text, start))
+        line += text.count("\n", counted_to, start)
+        counted_to = start
+        key = (secret_type, line)
         tally[key] = tally.get(key, 0) + 1
     pieces.append(text[cursor:])
 

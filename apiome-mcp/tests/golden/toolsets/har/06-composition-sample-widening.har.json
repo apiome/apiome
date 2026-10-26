@@ -1,0 +1,101 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (GetCommentResponse200).",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_articles_id_comments",
+      "operation": "GET /v1/articles/{id}/comments",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "next_cursor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items",
+            "next_cursor"
+          ],
+          "type": "object"
+        },
+        "shape": "GetCommentResponse200",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GetRevisionResponse200).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "id2": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "id2"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_articles_id_revisions_id2",
+      "operation": "GET /v1/articles/{id}/revisions/{id2}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "author": {},
+            "draft": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "rating": {
+              "type": "number"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "rating",
+            "tags",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "GetRevisionResponse200",
+        "status": "200"
+      }
+    }
+  ]
+}

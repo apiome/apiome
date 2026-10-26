@@ -44,6 +44,7 @@ __all__ = [
     "InferredSpecResult",
     "infer_canonical_api",
     "PARAM_SEGMENT",
+    "auth_scheme_from_headers",
     "template_path",
 ]
 
@@ -410,6 +411,23 @@ def _auth_scheme_from_headers(headers: Iterable[Tuple[str, str]]) -> Optional[st
         if lower == "cookie":
             return "cookie"
     return None
+
+
+def auth_scheme_from_headers(headers: Iterable[Tuple[str, str]]) -> Optional[str]:
+    """The canonical auth scheme a request's headers carry, as the engine records it.
+
+    The public face of the rule the engine applies to every observation, for an adapter that also
+    records auth per operation (HAR, MFI-32.2): ``Authorization: Bearer …`` → ``bearer`` (likewise
+    ``basic`` / ``digest``; any other scheme → ``authorization``), ``X-API-Key`` → ``apiKey``,
+    ``Cookie`` → ``cookie``.
+
+    Args:
+        headers: ``(name, value)`` pairs; only the scheme word of an ``Authorization`` value is read.
+
+    Returns:
+        The scheme of the first auth-bearing header, or ``None``.
+    """
+    return _auth_scheme_from_headers(headers)
 
 
 @dataclass

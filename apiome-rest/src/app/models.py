@@ -1453,6 +1453,38 @@ class SpecImportOptions(BaseModel):
             "intake kind as 'git' rather than 'archive'."
         ),
     )
+    har_hosts: Optional[List[str]] = Field(
+        None,
+        description=(
+            "HAR imports only (MFI-32.2): the host(s) to import from a capture that called several "
+            "(`api.example.com`, or `host:port`). Each host is normally its own catalog item, so "
+            "import the same capture once per host. Omitted, the host with the most API calls is "
+            "imported; a host the capture has no API calls to is refused with the list of hosts it has."
+        ),
+    )
+    har_include: Optional[List[str]] = Field(
+        None,
+        description=(
+            "HAR imports only (MFI-32.2): `host/path` glob patterns (`api.example.com/v1/*`, "
+            "`*/config.js`) kept even when the noise filter would leave them out as a page asset, "
+            "analytics call or CORS preflight."
+        ),
+    )
+    har_exclude: Optional[List[str]] = Field(
+        None,
+        description=(
+            "HAR imports only (MFI-32.2): `host/path` glob patterns always left out. An exclude "
+            "pattern wins over an include pattern."
+        ),
+    )
+    har_keep_noise: bool = Field(
+        False,
+        description=(
+            "HAR imports only (MFI-32.2): turn the built-in noise filter off, so page assets, "
+            "analytics calls and CORS preflights are imported too. Non-HTTP entries (`data:`, "
+            "WebSocket) are always left out; host selection and patterns still apply."
+        ),
+    )
 
 
 # Current envelope version for a persisted repository import spec. Bumped by

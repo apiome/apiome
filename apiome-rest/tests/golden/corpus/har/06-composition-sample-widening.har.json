@@ -1,0 +1,593 @@
+{
+  "adapter": "har",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "har": {
+        "api_calls": 6,
+        "capability_limits": [],
+        "creators": [
+          "WebInspector 537.36"
+        ],
+        "entries": 6,
+        "excluded": {},
+        "hosts": [
+          {
+            "api_calls": 6,
+            "host": "api.example.com",
+            "selected": true
+          }
+        ],
+        "options": {
+          "exclude": [],
+          "hosts": [],
+          "include": [],
+          "keep_noise": false
+        },
+        "versions": [
+          "1.2"
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "articles"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "comments"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/articles/1/comments",
+            "https://api.example.com/v1/articles/2/comments?cursor=c1",
+            "https://api.example.com/v1/articles/3/comments?cursor=c2"
+          ],
+          "template": "/v1/articles/{id}/comments"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "articles"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "revisions"
+            },
+            {
+              "index": 4,
+              "kind": "param",
+              "value": "id2"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "https://api.example.com/v1/articles/1/revisions/10",
+            "https://api.example.com/v1/articles/2/revisions/11",
+            "https://api.example.com/v1/articles/3/revisions/12"
+          ],
+          "template": "/v1/articles/{id}/revisions/{id2}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v1/articles/{id}/comments": 3,
+        "GET /v1/articles/{id}/revisions/{id2}": 3
+      }
+    },
+    "format": "har",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "api.example.com",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": null
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "api.example.com",
+        "name": "api.example.com",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "articles"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "comments"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/articles/1/comments",
+                  "https://api.example.com/v1/articles/2/comments?cursor=c1",
+                  "https://api.example.com/v1/articles/3/comments?cursor=c2"
+                ],
+                "template": "/v1/articles/{id}/comments"
+              },
+              "provenance": "inferred",
+              "sample_count": 3,
+              "source_files": [],
+              "source_label": "har/06-composition-sample-widening.har",
+              "source_location": "log.entries[1]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/articles/{id}/comments",
+            "key": "GET /v1/articles/{id}/comments",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "headers": [],
+                "key": "GET /v1/articles/{id}/comments#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetCommentResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/articles/{id}/comments",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v1/articles/{id}/comments#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2,
+                  "samples": [
+                    "c1",
+                    "c2"
+                  ]
+                },
+                "key": "GET /v1/articles/{id}/comments#query.cursor",
+                "location": "query",
+                "name": "cursor",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "articles"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "revisions"
+                  },
+                  {
+                    "index": 4,
+                    "kind": "param",
+                    "value": "id2"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/v1/articles/1/revisions/10",
+                  "https://api.example.com/v1/articles/2/revisions/11",
+                  "https://api.example.com/v1/articles/3/revisions/12"
+                ],
+                "template": "/v1/articles/{id}/revisions/{id2}"
+              },
+              "provenance": "inferred",
+              "sample_count": 3,
+              "source_files": [],
+              "source_label": "har/06-composition-sample-widening.har",
+              "source_location": "log.entries[0]"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/articles/{id}/revisions/{id2}",
+            "key": "GET /v1/articles/{id}/revisions/{id2}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "http_status": "200",
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "headers": [],
+                "key": "GET /v1/articles/{id}/revisions/{id2}#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "GetRevisionResponse200",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "GET /v1/articles/{id}/revisions/{id2}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v1/articles/{id}/revisions/{id2}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 3
+                },
+                "key": "GET /v1/articles/{id}/revisions/{id2}#path.id2",
+                "location": "path",
+                "name": "id2",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "api.example.com",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetCommentResponse200.items",
+            "name": "items",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetCommentResponse200.next_cursor",
+            "name": "next_cursor",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetCommentResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetCommentResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.author",
+            "name": "author",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.draft",
+            "name": "draft",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.rating",
+            "name": "rating",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "number",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetRevisionResponse200.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetRevisionResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetRevisionResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "har/06-composition-sample-widening.har",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 2
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "har"
+  },
+  "fingerprint": "sha256:66d95b054378d1f912efe0486826c5bc15681a26404eca655b1b3598d52d5d63",
+  "lint": {
+    "findings": 16,
+    "grade": "C",
+    "report_fingerprint": "faaa5fdae9a308fdfcd3d30fa48ce72c82e3a8d134abf15be47789e3eab7bcc0",
+    "score": 72,
+    "severity_counts": {
+      "error": 0,
+      "info": 12,
+      "warning": 4
+    }
+  },
+  "snapshot_version": 1
+}
