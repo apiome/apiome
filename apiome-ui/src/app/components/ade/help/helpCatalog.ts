@@ -793,10 +793,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'raml-import',
     title: 'Import a RAML API',
-    summary: 'Catalog a RAML 1.0 API, with its includes and libraries resolved.',
+    summary: 'Catalog a RAML 1.0 API with includes, libraries, resource types and traits resolved.',
     page: 'apiome-docs/docs/bring-in/raml-import.md',
     section: 'reference',
-    keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive'],
+    keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive', 'trait', 'resource type', 'resourceTypes'],
   },
   {
     id: 'soapui-import',

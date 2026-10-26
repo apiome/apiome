@@ -5,6 +5,12 @@
     "description": null,
     "extras": {
       "raml_media_type": "application/json",
+      "raml_resource_types": [
+        "collection"
+      ],
+      "raml_traits": [
+        "paged"
+      ],
       "raml_version": "1.0"
     },
     "format": "raml",
@@ -38,7 +44,12 @@
             "channel_ref": null,
             "deprecated": false,
             "description": "List registered devices page by page.",
-            "extras": {},
+            "extras": {
+              "raml_resource_type": "collection",
+              "raml_traits": [
+                "paged"
+              ]
+            },
             "http_method": "GET",
             "http_path": "/devices",
             "key": "GET /devices",
@@ -62,11 +73,50 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /devices",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Zero-based page index.",
+                "extras": {
+                  "raml_type": "integer"
+                },
+                "key": "GET /devices#query.page",
+                "location": "query",
+                "name": "page",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Number of entries per page.",
+                "extras": {
+                  "raml_type": "integer"
+                },
+                "key": "GET /devices#query.pageSize",
+                "location": "query",
+                "name": "pageSize",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           },
@@ -98,7 +148,22 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "404"
+                },
+                "headers": [],
+                "key": "GET /devices/{deviceId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "404"
               }
             ],
             "name": "GET /devices/{deviceId}",
@@ -130,7 +195,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": "Register a device.",
-            "extras": {},
+            "extras": {
+              "raml_resource_type": "collection"
+            },
             "http_method": "POST",
             "http_path": "/devices",
             "key": "POST /devices",
@@ -172,7 +239,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "POST /devices",
@@ -426,15 +493,15 @@
     "confidence": 0.99,
     "format": "raml"
   },
-  "fingerprint": "sha256:ffe78fe90f64952e2000fc82b91270188d261755e3fd1f406ac04d43c9487bcc",
+  "fingerprint": "sha256:60942f749d27c1a5053b9076f3a4969291edf28b5b959463c083615d1e764d32",
   "lint": {
-    "findings": 5,
+    "findings": 6,
     "grade": "A",
-    "report_fingerprint": "2293566f31f09a5e74bde4f8e02f032f21a6acbb260f0f9e506d00fa331008eb",
-    "score": 95,
+    "report_fingerprint": "3896a1e51ff7c2e573c61f9f7370b9b815e7833267b55a9e1ba941fc1aaf8387",
+    "score": 94,
     "severity_counts": {
       "error": 0,
-      "info": 5,
+      "info": 6,
       "warning": 0
     }
   },

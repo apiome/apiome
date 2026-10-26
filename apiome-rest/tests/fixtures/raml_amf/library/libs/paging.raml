@@ -1,0 +1,10 @@
+#%RAML 1.0 Library
+# Shared traits.
+traits:
+  pageable:
+    description: Paged list.
+    queryParameters:
+      page:
+        type: integer
+        required: false
+        description: Page number, from 1.

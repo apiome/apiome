@@ -1,0 +1,73 @@
+#%RAML 1.0
+# MFI-15.2 (#3800) fixture: resource types and traits (one from a library) applied to resources.
+title: Library
+description: Books, shaped by resource types and traits.
+version: v2
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+uses:
+  paging: libs/paging.raml
+types:
+  Book:
+    type: object
+    properties:
+      isbn: string
+      title: string
+  Error:
+    type: object
+    properties:
+      message: string
+traits:
+  secured:
+    description: Needs a bearer token.
+    headers:
+      Authorization:
+        type: string
+        description: Bearer token.
+    responses:
+      401:
+        body:
+          type: Error
+resourceTypes:
+  collection:
+    description: The <<resourcePathName>> collection.
+    get:
+      description: List <<resourcePathName>>.
+      is: [paging.pageable]
+      responses:
+        200:
+          body:
+            type: <<item>>[]
+    post:
+      description: Add one of the <<resourcePathName>>.
+      body:
+        type: <<item>>
+      responses:
+        201:
+          body:
+            type: <<item>>
+  member:
+    get:
+      description: Get one of the <<item | !pluralize>>.
+      responses:
+        200:
+          body:
+            type: <<item>>
+        404:
+          body:
+            type: Error
+/books:
+  displayName: Books
+  type: { collection: { item: Book } }
+  is: [secured]
+  /{isbn}:
+    type: { member: { item: Book } }
+    uriParameters:
+      isbn:
+        type: string
+        description: The book's ISBN.
+    delete:
+      description: Remove a book.
+      is: [secured]
+      responses:
+        204:

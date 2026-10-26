@@ -1,6 +1,6 @@
 ---
 title: "Import a RAML API"
-description: "Catalog a RAML 1.0 API, with its includes and libraries resolved."
+description: "Catalog a RAML 1.0 API with includes, libraries, resource types and traits resolved."
 sidebar_position: 39
 tags: [import, raml, amf, includes, libraries]
 ---
@@ -47,6 +47,51 @@ Import the RAML like any other catalog format: in the [import wizard](./import-w
 - **Inherited properties.** A type that extends another (`type: Auditable`) imports with the
   properties it inherits.
 - **Arrays.** A field typed `Pet[]` or `string[]` keeps its item type.
+- **Resource types and traits.** A resource's `type:` and the `is:` traits on a resource or method
+  are applied before the API is cataloged, with their `<<parameters>>` filled in. Each operation
+  carries the headers, query parameters, bodies and responses they add, as if the method had
+  declared them itself. A value the method declares wins over one it inherits.
+- **Headers and every response.** Request headers import as header parameters. A response with no
+  body, such as `204`, still imports under its status code.
+
+For example, with a `secured` trait and a `collection` resource type:
+
+```yaml
+traits:
+  secured:
+    headers:
+      Authorization: string
+    responses:
+      401:
+        body:
+          type: Error
+resourceTypes:
+  collection:
+    get:
+      description: List <<resourcePathName>>.
+      responses:
+        200:
+          body:
+            type: <<item>>[]
+/books:
+  type: { collection: { item: Book } }
+  is: [secured]
+```
+
+`GET /books` imports as **List books.**, with an `Authorization` header and both a `200` response
+(`Book[]`) and a `401` response (`Error`).
+
+The catalog item also records where the shape came from:
+
+| Field | Where | What it holds |
+| --- | --- | --- |
+| `raml_resource_type` | Operation `extras` | The resource type applied to the operation's resource, such as `collection` |
+| `raml_traits` | Operation `extras` | The traits applied to the operation, the method's own first, such as `["secured", "paging.pageable"]` |
+| `raml_traits` | API `extras` | Every trait the API declares, library ones as `alias.name` |
+| `raml_resource_types` | API `extras` | Every resource type the API declares, library ones as `alias.name` |
+
+Resource types and traits from a `uses` library are applied too; they need AMF, like every set that
+uses a library.
 
 The catalog item records which files it was built from (`raml_source_files`) and a hash of the
 resolved model (`raml_amf_model_sha256`). The hash comes from the resolved model, not the raw
@@ -63,7 +108,14 @@ again gives the same hash.
 | `ADAPTER_UNAVAILABLE` | The document includes or uses other files, and this server has no AMF. | Ask your administrator to deploy the standard image, which ships AMF. |
 
 On a server without AMF, a self-contained RAML document (no `!include`, no `uses`) still imports
-with the built-in reader.
+with the built-in reader, which applies the document's own resource types and traits the same way.
+
+## Move to OpenAPI
+
+RAML is no longer actively developed. Once the API is in the catalog, export it as **OpenAPI 3.1**
+(see [Export a specification](../ship/export-a-spec.md)). Because resource types and traits are
+already applied, every operation in the export lists its own headers, parameters and responses,
+each under its status code.
 
 ## Related
 

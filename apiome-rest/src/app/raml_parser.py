@@ -2,7 +2,9 @@
 
 Parses RAML REST API definitions into a typed :class:`RamlDocument` AST using
 :mod:`yaml` (RAML is a YAML dialect with a mandatory ``#%RAML`` header). Syntax
-errors surface as :class:`RamlParseError`.
+errors surface as :class:`RamlParseError`. Resource types and traits are merged into
+the resources and methods they apply to before operations are collected (MFI-15.2,
+:mod:`app.raml_traits`).
 """
 
 from __future__ import annotations
@@ -12,6 +14,13 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import yaml
+
+from .raml_traits import (
+    AppliedReuse,
+    RamlReuseTooLargeError,
+    declared_names,
+    resolve_resource_types_and_traits,
+)
 
 __all__ = [
     "RamlParseError",
@@ -95,6 +104,13 @@ class RamlOperation:
     parameters: Tuple[RamlParameter, ...]
     request_type: Optional[str]
     response_types: Tuple[Tuple[str, str], ...]
+    #: Statuses the method declares without a typed body (``204``, a ``404`` with only a
+    #: description), in declaration order (MFI-15.2).
+    untyped_response_statuses: Tuple[str, ...] = ()
+    #: The resource type applied to the operation's resource (``type:``), as written.
+    resource_type: Optional[str] = None
+    #: The traits applied to the operation (``is:``), method's own first.
+    traits: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -113,6 +129,10 @@ class RamlDocument:
     model_sha256: Optional[str] = None
     #: Every file of the set the document was resolved from (root, includes, libraries).
     source_files: Tuple[str, ...] = ()
+    #: The traits the document declares (library ones as ``alias.name``), MFI-15.2.
+    traits: Tuple[str, ...] = ()
+    #: The resource types the document declares (library ones as ``alias.name``), MFI-15.2.
+    resource_types: Tuple[str, ...] = ()
 
 
 def is_raml(content: str) -> bool:
@@ -257,13 +277,28 @@ def _extract_response_types(method_spec: Mapping[str, Any]) -> Tuple[Tuple[str, 
     return tuple(pairs)
 
 
+def _extract_untyped_response_statuses(method_spec: Mapping[str, Any]) -> Tuple[str, ...]:
+    """The statuses a method declares whose response has no typed body."""
+    responses = method_spec.get("responses")
+    if not isinstance(responses, Mapping):
+        return ()
+    typed = {status for status, _type in _extract_response_types(method_spec)}
+    return tuple(str(status) for status in responses if str(status) not in typed)
+
+
 def _parse_parameters(
     resource_spec: Mapping[str, Any],
     method_spec: Mapping[str, Any],
 ) -> Tuple[RamlParameter, ...]:
     params: List[RamlParameter] = []
-    for location_key, location in (("uriParameters", "path"), ("queryParameters", "query")):
-        block = resource_spec.get(location_key) or method_spec.get(location_key)
+    for location_key, location in (
+        ("uriParameters", "path"),
+        ("queryParameters", "query"),
+        ("headers", "header"),
+    ):
+        block = method_spec.get(location_key) if location == "header" else (
+            resource_spec.get(location_key) or method_spec.get(location_key)
+        )
         if not isinstance(block, Mapping):
             continue
         for name, spec in block.items():
@@ -294,6 +329,7 @@ def _collect_operations(
     node: Mapping[str, Any],
     *,
     parent_path: str = "",
+    applied: Optional[Mapping[Tuple[str, str], AppliedReuse]] = None,
 ) -> List[RamlOperation]:
     operations: List[RamlOperation] = []
     for key, value in node.items():
@@ -307,6 +343,7 @@ def _collect_operations(
             if not isinstance(method_spec, Mapping):
                 continue
             description = method_spec.get("description")
+            reuse = (applied or {}).get((full_path, method), AppliedReuse())
             operations.append(
                 RamlOperation(
                     path=full_path,
@@ -315,6 +352,9 @@ def _collect_operations(
                     parameters=_parse_parameters(value, method_spec),
                     request_type=_extract_body_type(method_spec),
                     response_types=_extract_response_types(method_spec),
+                    untyped_response_statuses=_extract_untyped_response_statuses(method_spec),
+                    resource_type=reuse.resource_type,
+                    traits=reuse.traits,
                 )
             )
         nested = {
@@ -323,7 +363,7 @@ def _collect_operations(
             if isinstance(nested_key, str) and nested_key.startswith("/")
         }
         if nested:
-            operations.extend(_collect_operations(nested, parent_path=full_path))
+            operations.extend(_collect_operations(nested, parent_path=full_path, applied=applied))
     return operations
 
 
@@ -354,7 +394,11 @@ def parse_raml(content: str, *, source_label: Optional[str] = None) -> RamlDocum
         raise RamlParseError("RAML document is missing a `title`")
 
     types = _parse_types(root)
-    operations = tuple(_collect_operations(root))
+    try:
+        resolved, applied = resolve_resource_types_and_traits(root)
+    except RamlReuseTooLargeError as exc:
+        raise RamlParseError(str(exc)) from exc
+    operations = tuple(_collect_operations(resolved, applied=applied))
     if not types and not operations:
         label = f" ({source_label})" if source_label else ""
         raise RamlParseError(f"No RAML types or resources found{label}")
@@ -369,4 +413,6 @@ def parse_raml(content: str, *, source_label: Optional[str] = None) -> RamlDocum
         types=types,
         operations=operations,
         raw=content,
+        traits=declared_names(root, "traits"),
+        resource_types=declared_names(root, "resourceTypes"),
     )

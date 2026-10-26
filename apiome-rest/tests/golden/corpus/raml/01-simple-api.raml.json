@@ -62,7 +62,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /books",
@@ -98,7 +98,22 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "404"
+                },
+                "headers": [],
+                "key": "GET /books/{bookId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "404"
               }
             ],
             "name": "GET /books/{bookId}",
@@ -172,7 +187,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "POST /books",
@@ -382,15 +397,15 @@
     "confidence": 0.99,
     "format": "raml"
   },
-  "fingerprint": "sha256:0af8e23a4b3a039f794eda43f82efb55a92e13b4a4ee1524c859c8c2ee873138",
+  "fingerprint": "sha256:c4049dda7829ee382cbc492dc375c8e523db191d1388a8b95e3c07cc6fa40d32",
   "lint": {
-    "findings": 8,
+    "findings": 9,
     "grade": "A",
-    "report_fingerprint": "220663b8ed4059a8c7d62df05d7f106230cb592d3487ebf9274260fcdb7ec6b5",
-    "score": 92,
+    "report_fingerprint": "4208804d6539632c4820b19731bc29d6b049b1b5fb0db91d77975ad5bff1adc8",
+    "score": 91,
     "severity_counts": {
       "error": 0,
-      "info": 8,
+      "info": 9,
       "warning": 0
     }
   },

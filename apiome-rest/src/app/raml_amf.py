@@ -37,6 +37,7 @@ import yaml
 
 from .import_source import ImportSourceError
 from .raml_parser import RamlDocument
+from .raml_traits import IncludeAsText
 from .toolchain_runner import ToolchainError, ToolNotAvailableError, ToolTimeoutError, run_tool_blocking
 
 __all__ = [
@@ -65,13 +66,6 @@ _INCLUDE_RE = re.compile(r"!include\s+([^\s#]+)")
 _JSON_REF_RE = re.compile(r'"\$ref"\s*:\s*"([^"]+)"')
 _SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 _FILE_URI_RE = re.compile(r"file:/+[^\s\"'#]*")
-
-
-class _IncludeAsText(yaml.SafeLoader):
-    """A YAML loader that reads ``!include x`` as the plain string ``x`` (for scanning only)."""
-
-
-_IncludeAsText.add_constructor("!include", lambda loader, node: loader.construct_scalar(node))
 
 
 def amf_available() -> bool:
@@ -109,7 +103,7 @@ def find_reference_targets(path: str, text: str) -> List[str]:
         targets.extend(ref for ref in _JSON_REF_RE.findall(text) if not ref.startswith("#"))
         return targets
     try:
-        document = yaml.load(text, Loader=_IncludeAsText)  # noqa: S506 - SafeLoader subclass
+        document = yaml.load(text, Loader=IncludeAsText)  # noqa: S506 - SafeLoader subclass
     except yaml.YAMLError:
         return targets
     if isinstance(document, Mapping):
