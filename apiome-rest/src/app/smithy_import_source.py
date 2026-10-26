@@ -1,7 +1,14 @@
 """Smithy import source.
 
 The :class:`~app.import_source.ImportSource` adapter that makes Smithy IDL models
-importable into the catalog (store-raw).
+importable into the catalog (store-raw). Three inputs (MFI-17.1, #3808):
+
+* **one ``.smithy`` file** — read by the built-in IDL reader (:mod:`app.smithy_parser`);
+* **one JSON AST model** (``{"smithy": "2.0", "shapes": {...}}``) — read directly with
+  :mod:`json` (:func:`app.smithy_ast.parse_smithy_ast_text`), no CLI needed;
+* **a set of several model files** — assembled by the bundled Smithy CLI into one JSON AST
+  (:func:`app.smithy_ast.assemble_smithy_set`); without the CLI such a set is refused
+  (``ADAPTER_UNAVAILABLE``) rather than imported from its root alone.
 """
 
 from __future__ import annotations
@@ -20,6 +27,7 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
+from .smithy_ast import assemble_smithy_set, is_smithy_ast_text, model_members, parse_smithy_ast_text
 from .smithy_parser import SmithyDocument, SmithyParseError, is_smithy, parse_smithy
 
 __all__ = ["SmithyImportSource"]
@@ -36,10 +44,14 @@ class SmithyImportSource(ImportSource, register=True):
     input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
     supports_live_discovery = False
     formats = ("smithy",)
-    file_extensions = (".smithy",)
+    file_extensions = (".smithy", ".json")
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         text = payload.text
+        if text is not None and is_smithy_ast_text(text):
+            return DetectionResult(
+                confidence=0.97, format="smithy", reason="Smithy JSON AST (`smithy` + `shapes`)"
+            )
         if text is not None and is_smithy(text):
             if re.search(r"""^\s*\$version\s*:\s*['"]""", text, re.MULTILINE):
                 reason = "`$version` control statement"
@@ -64,6 +76,9 @@ class SmithyImportSource(ImportSource, register=True):
         return NO_MATCH
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> SmithyDocument:
+        """Parse one model: a JSON AST directly, IDL text with the built-in reader."""
+        if is_smithy_ast_text(raw):
+            return parse_smithy_ast_text(raw, source_label=source_label)
         try:
             return parse_smithy(raw, source_label=source_label)
         except SmithyParseError as exc:
@@ -75,10 +90,16 @@ class SmithyImportSource(ImportSource, register=True):
         *,
         source_label: Optional[str] = None,
     ) -> SmithyDocument:
+        """Parse a set: several model files are assembled through the Smithy CLI (MFI-17.1).
+
+        A set with a single model file is read like that one file.
+        """
         root = fileset.root
         if root not in fileset.members:
             raise ImportSourceError("Smithy fileset is missing its root document")
-        return self.parse(fileset.members[root], source_label=root or source_label)
+        if len(model_members(fileset.members)) <= 1:
+            return self.parse(fileset.members[root], source_label=root or source_label)
+        return assemble_smithy_set(dict(fileset.members), root, source_label=root or source_label)
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, SmithyDocument):

@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.458.0] - 2026-10-26
+
+### Changed
+- **Smithy build → JSON AST (MFI-17.1, #3808)** — a `smithy` file set with more than one model file is assembled by
+  the bundled Smithy CLI (`smithy ast --allow-unknown-traits <files>`, new `app.smithy_ast`) into one JSON AST, read
+  with `json` and mapped into the `SmithyDocument` the normalizer consumes (new `app.smithy_ast_mapper`). Only
+  `.smithy` and JSON AST `.json` members are staged (never `smithy-build.json`), in a private temporary directory;
+  the CLI runs from a separate empty working directory. A JSON AST uploaded on its own is read directly, without
+  the CLI (`.json` joins the adapter's file extensions; detection at 0.97). The model's identity is captured:
+  `$version`, every namespace (`extras.smithy_namespaces`), a hash of the assembled AST
+  (`extras.smithy_ast_sha256`) and the model files (`extras.smithy_source_files`). Shapes outside the primary
+  namespace keep their absolute id and are keyed under their own namespace; simple shapes resolve to their base
+  type; a service's operations include its resources'. Errors: the CLI's validation errors →
+  `INPUT_SEMANTIC_INVALID` (staging path scrubbed); an undefined target in a JSON AST →
+  `INPUT_REFERENCE_UNRESOLVED`; no CLI for a multi-file set → `ADAPTER_UNAVAILABLE` (previously only the root
+  was parsed). A single `.smithy` file still uses the built-in reader. The `smithy` tool no longer has its stdout
+  JSON-parsed by the runner (`parses_json=False`). `app.fileset.normalize_member_path` is shared with the RAML AMF
+  seam. OpenAPI 1.322.0.
+
 ## [1.457.0] - 2026-10-26
 
 ### Changed

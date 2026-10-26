@@ -1,0 +1,21 @@
+---
+slug: smithy-multi-file-models
+title: Multi-file Smithy models and JSON AST import
+description: Smithy imports assemble multi-file models and read the JSON AST directly.
+authors: [apiome]
+---
+
+A Smithy model split across files now imports whole. Upload the model files as an archive and the
+Smithy CLI assembles them into one JSON AST before they are cataloged. A JSON AST file imports on
+its own too. [Import a Smithy model](/bring-in/smithy-import).
+
+{/* truncate */}
+
+- **Multi-file models.** A namespace spread over several files, and shapes from other namespaces,
+  join one catalog item, each keyed under its own namespace.
+- **JSON AST input.** Upload a Smithy JSON AST (`.json`) directly; no CLI is needed.
+- **Model identity.** The catalog item records the model's `$version`, its namespaces, a hash of the
+  assembled model and the files it came from.
+- **Resources included.** A service's operations include the ones bound to its resources.
+- **Safe by design.** A `smithy-build.json` in the upload is never read, so an import cannot fetch
+  dependencies.

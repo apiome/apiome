@@ -47,6 +47,10 @@ _SMITHY_PRIMITIVES: Dict[str, str] = {
 
 
 def _type_key(name: str, namespace: Optional[str]) -> str:
+    # A shape from another namespace of an assembled model is named by its absolute id
+    # (``example.common#Money``, MFI-17.1), which already carries its namespace.
+    if "#" in name:
+        return name.replace("#", ".")
     return Keys.type(name, namespace)
 
 
@@ -336,6 +340,10 @@ class SmithyNormalizer(Normalizer, register=True):
             extras={
                 "smithy_version": source.version,
                 "smithy_namespace": namespace,
+                # MFI-17.1: an assembled model's namespaces, AST hash and model files.
+                **({"smithy_namespaces": list(source.namespaces)} if source.namespaces else {}),
+                **({"smithy_ast_sha256": source.model_sha256} if source.model_sha256 else {}),
+                **({"smithy_source_files": list(source.source_files)} if source.source_files else {}),
             },
         )
         return normalize_ordering(api)

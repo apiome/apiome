@@ -108,6 +108,14 @@ class SmithyDocument:
     operations: Tuple[SmithyOperation, ...]
     services: Tuple[SmithyService, ...]
     raw: str
+    #: Every namespace the model defines shapes in (MFI-17.1); empty for the IDL reader,
+    #: which only sees the one ``namespace`` statement of a single file.
+    namespaces: Tuple[str, ...] = ()
+    #: SHA-256 of the assembled JSON AST when the model came through it (MFI-17.1, see
+    #: :mod:`app.smithy_ast`); ``None`` for the IDL reader.
+    model_sha256: Optional[str] = None
+    #: Every model file the document was assembled from.
+    source_files: Tuple[str, ...] = ()
 
 
 def is_smithy(content: str) -> bool:

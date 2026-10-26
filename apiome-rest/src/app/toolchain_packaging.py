@@ -160,6 +160,9 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version="1.53.0",
         description="Smithy IDL model build/validate CLI (smithy-lang/smithy, JVM).",
         env_override_key="APIOME_SMITHY_BIN",
+        # The Smithy seam (MFI-17.1, app.smithy_ast) reads `smithy ast` stdout itself, so a
+        # missing model is reported with the CLI's own validation messages.
+        parses_json=False,
         runtime="jvm",
     ),
     BundledTool(

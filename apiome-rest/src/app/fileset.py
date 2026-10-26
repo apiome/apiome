@@ -12,9 +12,28 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, Mapping, Optional
 
-__all__ = ["IntakeFileset", "Fileset", "resolve_relative_reference"]
+__all__ = ["IntakeFileset", "Fileset", "normalize_member_path", "resolve_relative_reference"]
 
 _SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def normalize_member_path(member: str) -> Optional[str]:
+    """Normalize a member's path for writing it under a staging directory.
+
+    Used by the adapters that stage a set on disk for an external tool (RAML through AMF,
+    Smithy through the Smithy CLI).
+
+    Args:
+        member: The member's path inside the set (``\\`` separators are accepted).
+
+    Returns:
+        The POSIX-normalized relative path, or ``None`` when it is empty or would land
+        outside the staging directory.
+    """
+    normalized = posixpath.normpath(member.replace("\\", "/").lstrip("/"))
+    if normalized in ("", ".") or normalized == ".." or normalized.startswith("../"):
+        return None
+    return normalized
 
 
 def resolve_relative_reference(member: str, target: str) -> Optional[str]:
