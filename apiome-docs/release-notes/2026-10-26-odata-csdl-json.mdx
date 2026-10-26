@@ -1,0 +1,18 @@
+---
+slug: odata-csdl-json
+title: OData CSDL JSON import and OASIS schema validation
+description: OData imports read CSDL JSON and check v4 metadata against the OASIS schema.
+authors: [apiome]
+---
+
+OData metadata now imports in either standard form, CSDL XML or CSDL JSON, and every v4 document is
+checked against the OASIS CSDL schema. [Import an OData service](/bring-in/odata-import).
+
+{/* truncate */}
+
+- **CSDL JSON input.** Upload OData v4 metadata in its JSON form (`"$Version": "4.01"`); it imports
+  into the same model as the XML form of the same service.
+- **Schema validation.** CSDL XML is converted to its CSDL JSON form and checked with the OASIS
+  schema, as uploaded JSON is. The converted form is kept with the catalog item.
+- **Problems recorded, not refused.** A document that strays from the schema still imports; each
+  problem is listed on the catalog item and reported by the new `odata.csdl-schema` lint rule.

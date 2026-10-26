@@ -63,7 +63,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | Istio VirtualService | `istio` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `istio`, `virtualservice` | `.yaml`, `.yml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Kong Declarative Config | `kong` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `kong`, `kong-declarative` | `.yaml`, `.yml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | nginx configuration | `nginx` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `nginx` | `.conf`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-nginx) | Ready |
-| OData | `odata` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `odata`, `odata-v2`, `odata-v3`, `edmx` | `.edmx`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| OData | `odata` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `odata`, `odata-v2`, `odata-v3`, `edmx` | `.edmx`, `.xml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | OpenAPI / Swagger | `openapi` | Import + export | Project | `file`, `url`, `paste`, `fileset` | — | `openapi-3.0`, `openapi-3.1`, `openapi-3.2`, `swagger-2.0`, `swagger-1.2` | `.yaml`, `.yml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Postman | `postman` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `postman`, `postmancollection`, `postman-2.0` | `.postman_collection.json`, `.postman.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | RAML | `raml` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `raml` | `.raml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |

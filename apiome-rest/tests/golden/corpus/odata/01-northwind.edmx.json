@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.Catalog.Product",
@@ -620,7 +621,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:b98624de97a307e93d3e07cb8394babfd3bb2dbe88fd88cfdd53953375d9434a",
+  "fingerprint": "sha256:ab524eee21f3e6de578ff42bd92a7c5e81499426b99d66c9f7dc861b06fa0ae9",
   "lint": {
     "findings": 23,
     "grade": "F",

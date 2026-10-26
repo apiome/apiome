@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1517 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1518 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -39,7 +39,7 @@ The corpus holds **1517 files** across **110 format directories**. Every file ha
 | `istio/` | Istio traffic resources | rest | `apiVersion: networking.istio.io/*` + `kind: VirtualService` | 15 |
 | `kong/` | Kong Declarative Config | rest | `_format_version` + `services:`/`routes:` declarative sections | 12 |
 | `nginx/` | nginx configuration | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
-| `odata/` | OData v4 (EDMX) | rest | `<edmx:Edmx>` root | 12 |
+| `odata/` | OData v4 (EDMX) | rest | `<edmx:Edmx>` root | 13 |
 | `odata-v2/` | OData v2 / v3 (CSDL) | rest | `<edmx:Edmx>` with the 2007/06 or 2009/11 EDM namespaces | 14 |
 | `openapi/` | OpenAPI 3.x | rest | top-level `openapi:` version | 44 |
 | `postman/` | Postman v2.1 | rest | collection `info.schema` URL | 11 |
@@ -1668,6 +1668,7 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-inheritance-two-schemas.edmx` | composition | `odata` ≥ 0.95 | valid | `inheritance`, `base-type`, `multiple-schemas`, `complex-type`, `navigation` |
 | `05-stress-service-surface.edmx` | stress | `odata` ≥ 0.95 | valid | `enum-type`, `type-definition`, `singleton`, `function`, `action`, `annotations` |
 | `06-trippin-reference.edmx` | real-world | `odata` ≥ 0.95 | valid | `entity-type`, `complex-type`, `enum-type`, `singleton`, `navigation` |
+| `07-csdl-json-trippin.json` | typical | `odata` ≥ 0.95 | valid | `csdl-json`, `entity-type`, `complex-type`, `enum-type`, `singleton`, `navigation` |
 | `adversarial/01-external-dtd-entity.xml` | — | `odata` (no guarantee) | adversarial | `adversarial`, `xxe`, `external-entity`, `edmx` |
 | `negative/01-syntactic-mismatched-tag.edmx` | — | `odata` (no guarantee) | invalid | `negative`, `syntactic`, `mismatched-tag` |
 | `negative/02-semantic-no-schema.edmx` | — | `odata` (no guarantee) | invalid | `negative`, `semantic`, `empty-data-services` |
@@ -2821,7 +2822,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1517 | `Apache-2.0` |
+| `hand-authored` | 1518 | `Apache-2.0` |
 
 ## Trying an import
 

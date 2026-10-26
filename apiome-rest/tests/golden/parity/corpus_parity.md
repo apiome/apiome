@@ -76,7 +76,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `natural-ddm` | Natural / ADABAS DDM | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `ncpdp` | NCPDP SCRIPT / Telecom | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `nginx` | nginx configuration | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
-| `odata` | OData | rest | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `odata` |
+| `odata` | OData | rest | 15 | 11 | 1 | 0 | 27 | 6/6 | 14 | `odata` |
 | `odcs` | ODCS Data Contract | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `odcs` |
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
 | `opcua-nodeset` | OPC UA NodeSet2 | rpc | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |

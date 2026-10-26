@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, replace
-from typing import Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Sequence, Tuple
 
 from .odata_associations import (
     ODataAssociation,
@@ -256,6 +256,11 @@ class ODataDocument:
         dialect: The full version evidence (namespaces, ``Version`` attribute,
             ``m:DataServiceVersion``) the version was resolved from.
         references: The ``<edmx:Reference>`` declarations and whether each resolved.
+        csdl_json: The document in canonical CSDL JSON (MFI-11.1, :mod:`app.odata_csdl_json`);
+            ``None`` before validation and for v2/v3, which have no CSDL JSON form.
+        csdl_violations: Where the CSDL JSON departs from the OASIS schema, as
+            ``{"path", "message"}`` dicts (at most :data:`app.odata_csdl_schema.MAX_REPORTED_VIOLATIONS`).
+        csdl_violation_count: How many violations there were in all.
     """
 
     version: str
@@ -263,6 +268,9 @@ class ODataDocument:
     raw: str
     dialect: Optional[ODataDialect] = None
     references: Tuple[ODataReference, ...] = ()
+    csdl_json: Optional[Dict[str, Any]] = None
+    csdl_violations: Tuple[Dict[str, str], ...] = ()
+    csdl_violation_count: int = 0
 
 
 def is_odata(content: str) -> bool:

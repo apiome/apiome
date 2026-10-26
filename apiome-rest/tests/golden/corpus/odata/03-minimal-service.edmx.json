@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.Minimal.Item",
@@ -278,7 +279,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:f886f7719cbe9c254537fe551a6ee9a45196e5881b7f6a99696e33a539b9ef05",
+  "fingerprint": "sha256:46fab1925600fbcd7543b65bbc3daf60ccb38847ad0ce47cfcb59a65a4cbca63",
   "lint": {
     "findings": 10,
     "grade": "C",

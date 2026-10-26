@@ -3019,11 +3019,11 @@
         "odata-v2"
       ],
       "fixtures": {
-        "valid": 14,
+        "valid": 15,
         "negative": 11,
         "adversarial": 1,
         "scale": 0,
-        "total": 26
+        "total": 27
       },
       "rungs": [
         "composition",
@@ -3034,7 +3034,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 13,
+      "goldens": 14,
       "golden_directories": [
         "odata",
         "odata-v2"

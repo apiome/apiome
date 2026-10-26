@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.Warehouse.Bin",
@@ -713,7 +714,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:32ef24b88dfb65c49036a4fbaa8a83305f13c96dca43020718c21f4a90d1e161",
+  "fingerprint": "sha256:8d04ae5f86b4cfb38313a7310cb8c6fa7e9e55dcd5a5c2baf6f9e5850fbce0c7",
   "lint": {
     "findings": 25,
     "grade": "F",

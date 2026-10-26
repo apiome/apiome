@@ -290,8 +290,18 @@ def test_a_traversal_whose_target_declares_no_inverse_has_no_partner():
     assert items.partner is None, "Item declares no navigation property back to Order"
 
 
+def _v4_xml_corpus():
+    """The valid v4 corpus entries written in CSDL XML (MFI-11.1 added a CSDL JSON one, which
+    the XML reader these tests exercise does not read)."""
+    return [
+        entry
+        for entry in load_corpus(format="odata", validity_class=ValidityClass.VALID)
+        if not entry.path.lower().endswith(".json")
+    ]
+
+
 def test_v4_navigation_properties_are_left_exactly_as_declared():
-    for entry in load_corpus(format="odata", validity_class=ValidityClass.VALID):
+    for entry in _v4_xml_corpus():
         for schema in parse_odata(entry.read_text()).schemas:
             for entity in schema.entity_types:
                 for navigation in entity.navigation_properties:
@@ -390,7 +400,7 @@ def test_v4_parsing_captures_no_annotations_so_its_model_is_unchanged():
     the document predating v4. A v4 document must therefore come out of the parser with
     empty bags everywhere, which is what makes its canonical model byte-identical.
     """
-    for entry in load_corpus(format="odata", validity_class=ValidityClass.VALID):
+    for entry in _v4_xml_corpus():
         document = parse_odata(entry.read_text())
         assert document.version == "4.0", entry.path
         for schema in document.schemas:
@@ -534,7 +544,7 @@ def test_v4_normalization_adds_none_of_the_new_extras_keys():
         "odata_data_service_version",
         "odata_references",
     }
-    for entry in load_corpus(format="odata", validity_class=ValidityClass.VALID):
+    for entry in _v4_xml_corpus():
         extras = _model_extras(entry.read_text())
         assert not new_keys & set(extras), entry.path
         assert extras["odata_version"] == "4.0", entry.path

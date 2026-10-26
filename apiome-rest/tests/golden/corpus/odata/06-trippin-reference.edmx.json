@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.TripPin.Person",
@@ -1364,7 +1365,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:365bbfa35593fd9703029e1ac2cf7b4515f601b8e082d630769b757d78ff9706",
+  "fingerprint": "sha256:bd04c7a94d82271218799726ed739fbefbda5573bfa18955677a67c6e4cb1538",
   "lint": {
     "findings": 52,
     "grade": "F",

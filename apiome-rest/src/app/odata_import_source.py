@@ -26,6 +26,7 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
+from .odata_csdl_json import is_csdl_json, parse_csdl_json, with_csdl_validation
 from .odata_csdl_versions import detect_odata_version, format_key_for_version
 from .odata_parser import ODataDocument, ODataParseError, is_odata, parse_odata
 from .secure_xml import SecureXmlError
@@ -48,7 +49,7 @@ class ODataImportSource(ImportSource, register=True):
     #: keys name the CSDL generations FMT-3.4 added, and ``edmx`` is the long-standing
     #: filename-shaped alias.
     formats = ("odata", "odata-v2", "odata-v3", "edmx")
-    file_extensions = (".edmx", ".xml")
+    file_extensions = (".edmx", ".xml", ".json")
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         """Claim OData EDMX text and report which CSDL generation it is written in.
@@ -66,6 +67,9 @@ class ODataImportSource(ImportSource, register=True):
             The verdict; :data:`~app.import_source.NO_MATCH` when the text is not EDMX.
         """
         text = payload.text
+        if text is not None and is_csdl_json(text):
+            # MFI-11.1: the OASIS CSDL JSON representation of v4 metadata.
+            return DetectionResult(confidence=0.97, format="odata", reason="CSDL JSON (`$Version` 4.x)")
         if text is not None and is_odata(text):
             version = detect_odata_version(text)
             root = "`<edmx:Edmx>` root" if "<edmx:Edmx" in text else "OData `<Edmx>` root"
@@ -81,8 +85,13 @@ class ODataImportSource(ImportSource, register=True):
         return NO_MATCH
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> ODataDocument:
+        """Parse CSDL XML or CSDL JSON, then validate it against the OASIS schema (MFI-11.1)."""
         try:
-            return parse_odata(raw, source_label=source_label)
+            if is_csdl_json(raw):
+                document = parse_csdl_json(raw, source_label=source_label)
+            else:
+                document = parse_odata(raw, source_label=source_label)
+            return with_csdl_validation(document, source_label=source_label)
         except (ODataParseError, SecureXmlError) as exc:
             # SecureXmlError carries the taxonomy code for a rejected DTD /
             # entity / external reference or an exceeded size or depth limit.
@@ -115,11 +124,15 @@ class ODataImportSource(ImportSource, register=True):
         if root not in fileset.members:
             raise ImportSourceError("OData fileset is missing its root document")
         try:
-            return parse_odata(
-                fileset.members[root],
-                source_label=root or source_label,
-                members=fileset.members,
-            )
+            if is_csdl_json(fileset.members[root]):
+                document = parse_csdl_json(fileset.members[root], source_label=root or source_label)
+            else:
+                document = parse_odata(
+                    fileset.members[root],
+                    source_label=root or source_label,
+                    members=fileset.members,
+                )
+            return with_csdl_validation(document, source_label=root or source_label)
         except (ODataParseError, SecureXmlError) as exc:
             raise ImportSourceError(str(exc), code=getattr(exc, "code", None)) from exc
 

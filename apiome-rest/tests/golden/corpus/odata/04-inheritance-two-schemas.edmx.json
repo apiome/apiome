@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.Sales.Invoice",
@@ -991,7 +992,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:cba44b468a5eb95e67b21e87d3d817084738707313d60ad12c5317c90ac55dd5",
+  "fingerprint": "sha256:6d8c17f3faaea1c1c1a1c0bf8c31f06d23edeed0abc01f97bc1d896041c88d95",
   "lint": {
     "findings": 38,
     "grade": "F",

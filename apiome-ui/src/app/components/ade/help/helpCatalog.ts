@@ -791,6 +791,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['http archive', 'devtools', 'network', 'traffic', 'proxy', 'recording', 'inferred', 'browser'],
   },
   {
+    id: 'odata-import',
+    title: 'Import an OData service',
+    summary: 'Catalog OData metadata as CSDL XML or CSDL JSON, checked against the OASIS schema.',
+    page: 'apiome-docs/docs/bring-in/odata-import.md',
+    section: 'reference',
+    keywords: ['edmx', 'metadata', '$metadata', 'oasis', 'validation', 'sap', 'entity set', 'v4'],
+  },
+  {
     id: 'raml-import',
     title: 'Import a RAML API',
     summary: 'Catalog a RAML 1.0 API with includes, libraries, resource types and traits resolved.',

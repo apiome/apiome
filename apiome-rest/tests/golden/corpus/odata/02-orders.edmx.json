@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "odata_csdl_valid": true,
       "odata_entity_sets": [
         {
           "entity_type": "Example.Orders.Order",
@@ -444,7 +445,7 @@
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:08e5a8be8b4315f406a249291bb0462411f1564bff85ac1b9478fe4893950d73",
+  "fingerprint": "sha256:cdc0669364010f6f699d14c5c74a8dcf706935c4b25bfdb6f8c6b05599fba48f",
   "lint": {
     "findings": 16,
     "grade": "D",
