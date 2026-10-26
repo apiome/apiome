@@ -1,6 +1,7 @@
 import { Importer, ImportSourceKind, NormalizeOptions, NormalizeResult, NormalizedClass, NormalizedProperty } from './index';
 import { applyNamingConventionToClasses } from '../../src/app/utils/naming-conventions';
 import { extractDirectProperties } from '../../src/app/utils/openapi-schema-direct-properties';
+import { applyStreamItemSchemas } from '../../src/app/utils/openapi-stream-media-types';
 import { getSmartClassName } from '../schema-context-naming';
 import { collectReservedNameWarnings } from './reserved-names';
 
@@ -132,7 +133,7 @@ function collectKeysFromProp(prop: any, keys: Set<string>): void {
 
 /** Collect all external type keys present in the given document for selected schemas (#757). */
 export function collectExternalTypeKeysFromDocument(document: any, selectedSchemas: string[]): string[] {
-  const schemas = document?.components?.schemas || {};
+  const schemas = applyStreamItemSchemas(document)?.components?.schemas || {};
   const selected = new Set(selectedSchemas);
   const keys = new Set<string>();
   for (const [schemaName, schema] of Object.entries<any>(schemas)) {
@@ -200,7 +201,8 @@ export const openApiImporter: Importer = {
     const classes: NormalizedClass[] = [];
     const warnings: string[] = [];
 
-    const schemas = document?.components?.schemas || {};
+    // Stream element schemas (3.2 itemSchema) become classes tagged x-apiome-stream-kind (OA3, #3500).
+    const schemas = applyStreamItemSchemas(document)?.components?.schemas || {};
     const schemaKeys = Object.keys(schemas);
     // Empty array is truthy in JS; REST/CLI send selected_schemas: [] by default meaning "no filter".
     const effectiveSelection =

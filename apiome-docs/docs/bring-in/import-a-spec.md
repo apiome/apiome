@@ -224,6 +224,44 @@ curl -X POST "$APIOME_API/v1/tenants/$TENANT/governance/quality-waivers" \
 The grant is refused with **403** unless the policy permits overrides *and* names your role — the
 check is server-side, so a client cannot grant itself one.
 
+## Streaming responses (OpenAPI 3.2)
+
+OpenAPI 3.2 describes a streamed body with `itemSchema`: the schema of **each element** of the
+stream, not of the whole body. The Projects importer reads `itemSchema` wherever it would read
+`schema`, in request bodies and responses:
+
+```yaml
+responses:
+  "200":
+    content:
+      application/jsonl:
+        itemSchema:
+          $ref: '#/components/schemas/LogEvent'
+```
+
+| Media type | Stream kind |
+| --- | --- |
+| `application/jsonl` (and any `+jsonl` type) | `jsonl` — JSON Lines |
+| `application/json-seq` (and any `+json-seq` type) | `json-seq` — JSON text sequence |
+| `text/event-stream` | `sse` — Server-Sent Events |
+| Any other media type with an `itemSchema`, such as a stream of `application/problem+json` | `sequential` |
+
+What the import does with it:
+
+- **The element becomes a class.** A `$ref` element imports as the class it points at. An inline
+  element with properties becomes a class named after the operation, such as
+  `ImportLogsRequestStreamItem` for a request body or `StreamLogsStreamItem` for a response. A
+  number is added if that name is taken. An element without properties, such as a plain `string`,
+  stays inline on the path.
+- **The class is tagged.** Each element class carries `x-apiome-stream-kind` with the stream kind
+  from the table, so a stream element is never mistaken for a single body. A class streamed as two
+  different kinds is tagged `sequential`.
+- **The path links to it.** The operation's request body or response points at the element class.
+
+On the **Analyze** step, **Feature compatibility** lists **Sequential / streaming media types**.
+The entry names each streaming media type with its kind and counts its uses. A stream media type
+that has only a `schema` and no `itemSchema` is listed too, and imports as a regular body.
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

@@ -189,7 +189,7 @@ describe('OpenAPI 3.2 import integration (OA2 #3499)', () => {
       expect.arrayContaining([
         'openapi32-additional-operations',
         'openapi32-query-method',
-        'openapi32-item-schema',
+        'sequential-media-types',
         'openapi32-tag-metadata'
       ])
     );
