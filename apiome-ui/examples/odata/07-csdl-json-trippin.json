@@ -1,0 +1,139 @@
+{
+  "$Version": "4.0",
+  "$EntityContainer": "Example.TripPin.TripPinService",
+  "Example.TripPin": {
+    "PersonGender": {
+      "$Kind": "EnumType",
+      "Male": 0,
+      "Female": 1,
+      "Unknown": 2
+    },
+    "City": {
+      "$Kind": "ComplexType",
+      "Name": {
+        "$Nullable": true
+      },
+      "CountryRegion": {
+        "$Nullable": true
+      },
+      "Region": {
+        "$Nullable": true
+      }
+    },
+    "Location": {
+      "$Kind": "ComplexType",
+      "Address": {
+        "$Nullable": true
+      },
+      "City": {
+        "$Type": "Example.TripPin.City",
+        "$Nullable": true
+      }
+    },
+    "Person": {
+      "$Kind": "EntityType",
+      "$Key": [
+        "UserName"
+      ],
+      "UserName": {},
+      "FirstName": {},
+      "LastName": {
+        "$Nullable": true
+      },
+      "Emails": {
+        "$Collection": true
+      },
+      "AddressInfo": {
+        "$Collection": true,
+        "$Type": "Example.TripPin.Location"
+      },
+      "Gender": {
+        "$Type": "Example.TripPin.PersonGender",
+        "$Nullable": true
+      },
+      "Friends": {
+        "$Kind": "NavigationProperty",
+        "$Collection": true,
+        "$Type": "Example.TripPin.Person"
+      },
+      "Trips": {
+        "$Kind": "NavigationProperty",
+        "$Collection": true,
+        "$Type": "Example.TripPin.Trip",
+        "$ContainsTarget": true
+      }
+    },
+    "Trip": {
+      "$Kind": "EntityType",
+      "$Key": [
+        "TripId"
+      ],
+      "TripId": {
+        "$Type": "Edm.Int32"
+      },
+      "Name": {
+        "$Nullable": true
+      },
+      "Budget": {
+        "$Type": "Edm.Single",
+        "$Nullable": true
+      },
+      "Description": {
+        "$Nullable": true
+      },
+      "StartsAt": {
+        "$Type": "Edm.DateTimeOffset",
+        "$Nullable": true
+      },
+      "EndsAt": {
+        "$Type": "Edm.DateTimeOffset",
+        "$Nullable": true
+      }
+    },
+    "Airline": {
+      "$Kind": "EntityType",
+      "$Key": [
+        "AirlineCode"
+      ],
+      "AirlineCode": {},
+      "Name": {
+        "$Nullable": true
+      }
+    },
+    "Airport": {
+      "$Kind": "EntityType",
+      "$Key": [
+        "IcaoCode"
+      ],
+      "IcaoCode": {},
+      "IataCode": {
+        "$Nullable": true
+      },
+      "Name": {
+        "$Nullable": true
+      },
+      "Location": {
+        "$Type": "Example.TripPin.Location",
+        "$Nullable": true
+      }
+    },
+    "TripPinService": {
+      "$Kind": "EntityContainer",
+      "People": {
+        "$Collection": true,
+        "$Type": "Example.TripPin.Person"
+      },
+      "Airlines": {
+        "$Collection": true,
+        "$Type": "Example.TripPin.Airline"
+      },
+      "Airports": {
+        "$Collection": true,
+        "$Type": "Example.TripPin.Airport"
+      },
+      "Me": {
+        "$Type": "Example.TripPin.Person"
+      }
+    }
+  }
+}

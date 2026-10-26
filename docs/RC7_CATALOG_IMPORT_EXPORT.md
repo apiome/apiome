@@ -163,8 +163,10 @@ Archive intake now has root candidates for `.raml`, `.smithy`, `.thrift` and `.t
 
 | Ticket | Work |
 | --- | --- |
-| [#3776](https://github.com/apiome/apiome/issues/3776) MFI-11.1 | OData CSDL JSON input and OASIS schema validation |
 | [#3812](https://github.com/apiome/apiome/issues/3812) MFI-17.5 | Smithy JSON AST input (with #3808) |
+
+MFI-11.1 (#3776) is built: OData CSDL JSON input (`app.odata_csdl_json`) and OASIS CSDL schema validation of every
+v4 document (`app.odata_csdl_schema`; violations recorded and linted as `odata.csdl-schema`, not refused).
 
 **Live discovery:**
 

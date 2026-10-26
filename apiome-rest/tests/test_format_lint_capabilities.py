@@ -22,7 +22,6 @@ def test_matrix_covers_planned_formats_with_linked_issues():
         ("raml", RELATED_FORMAT_LINT_ISSUES["raml"]),
         ("typespec", RELATED_FORMAT_LINT_ISSUES["typespec"]),
         ("avro", RELATED_FORMAT_LINT_ISSUES["avro"]),
-        ("odata", RELATED_FORMAT_LINT_ISSUES["odata"]),
         ("apiblueprint", RELATED_FORMAT_LINT_ISSUES["apiblueprint"]),
         ("wsdl", RELATED_FORMAT_LINT_ISSUES["wsdl"]),
     ):
@@ -31,6 +30,14 @@ def test_matrix_covers_planned_formats_with_linked_issues():
         assert row.mode == MODE_UNSUPPORTED
         assert row.related_issues == issues
         assert all("github.com/apiome/apiome/issues/" in u for u in row.related_issues)
+
+
+def test_odata_has_a_native_pack_since_mfi_11_1():
+    # MFI-11.1 (#3776) registered the `odata` pack (the OASIS CSDL schema rule); the fuller
+    # OData pack is still tracked by its related issue.
+    row = {r.format: r for r in build_format_lint_capabilities()}["odata"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "odata"
 
 
 def test_every_row_has_valid_mode():

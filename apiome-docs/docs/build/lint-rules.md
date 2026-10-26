@@ -626,6 +626,15 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Flag tools whose description is too short or equals the name.
 
 
+## Pack: `odata`
+
+### `odata.csdl-schema` {#odata-csdl-schema}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** OData CSDL should validate against the OASIS CSDL JSON schema.
+
+
 ## Pack: `openapi`
 
 ### `compatibility.breaking` {#compatibility-breaking}

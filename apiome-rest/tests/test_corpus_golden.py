@@ -76,6 +76,12 @@ _RAML_REASON = (
     "moves when the source is reordered."
 )
 
+_ODATA_CSDL_JSON_REASON = (
+    "odata_normalizer numbers fields (field_number) and keeps enum members and navigation "
+    "extras in CSDL declaration order — property order is significant in OData — so "
+    "permuting a CSDL JSON document's object keys moves the fingerprint (MFI-11.1)."
+)
+
 #: Corpus entries whose canonical output still depends on the *source's* declaration
 #: order, so their version fingerprint moves when a semantically identical document
 #: is reordered. Surfaced by this suite (IXH-1.6): in every case a ``Type``'s
@@ -112,6 +118,7 @@ KNOWN_ORDER_SENSITIVE_FINGERPRINTS: Dict[str, str] = {
     "jtd/04-support-ticket.jtd.json": _JTD_REASON,
     "jtd/05-sensor-envelope-stress.jtd.json": _JTD_REASON,
     "jtd/06-github-push-event.jtd.json": _JTD_REASON,
+    "odata/07-csdl-json-trippin.json": _ODATA_CSDL_JSON_REASON,
     "raml/01-simple-api.raml": _RAML_REASON,
     "raml/03-orders-service.raml": _RAML_REASON,
     "raml/04-resource-types-and-traits.raml": _RAML_REASON,

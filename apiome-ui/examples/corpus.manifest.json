@@ -19954,6 +19954,29 @@
       "rung": "real-world"
     },
     {
+      "path": "odata/07-csdl-json-trippin.json",
+      "format": "odata",
+      "adapter_key": "odata",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "odata",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "csdl-json",
+        "entity-type",
+        "complex-type",
+        "enum-type",
+        "singleton",
+        "navigation"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "The TripPin service of 06-trippin-reference.edmx in the OASIS CSDL JSON representation (MFI-11.1).",
+      "rung": "typical"
+    },
+    {
       "path": "odata/adversarial/01-external-dtd-entity.xml",
       "format": "odata",
       "adapter_key": "odata",

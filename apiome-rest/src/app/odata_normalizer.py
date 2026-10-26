@@ -514,6 +514,25 @@ def _reference_extras(source: ODataDocument) -> Dict[str, Any]:
     }
 
 
+def _raw(source: ODataDocument) -> Dict[str, Any]:
+    """The native sources kept on the model: the document, and its canonical CSDL JSON (v4)."""
+    raw: Dict[str, Any] = {"odata": source.raw}
+    if source.csdl_json is not None:
+        raw["csdl_json"] = source.csdl_json
+    return raw
+
+
+def _csdl_validation_extras(source: ODataDocument) -> Dict[str, Any]:
+    """The OASIS CSDL schema verdict (MFI-11.1); empty when the document was not validated."""
+    if source.csdl_json is None:
+        return {}
+    extras: Dict[str, Any] = {"odata_csdl_valid": source.csdl_violation_count == 0}
+    if source.csdl_violation_count:
+        extras["odata_csdl_violations"] = [dict(v) for v in source.csdl_violations]
+        extras["odata_csdl_violation_count"] = source.csdl_violation_count
+    return extras
+
+
 class ODataNormalizer(Normalizer, register=True):
     """Normalize a parsed OData document into a :class:`CanonicalApi`."""
 
@@ -634,13 +653,14 @@ class ODataNormalizer(Normalizer, register=True):
             version=source.version,
             services=services,
             types=types,
-            raw={"odata": source.raw} if include_raw else None,
+            raw=_raw(source) if include_raw else None,
             extras={
                 "odata_version": source.version,
                 "odata_schemas": [_schema_extras(schema) for schema in source.schemas],
                 "odata_entity_sets": entity_sets,
                 **_source_version_extras(source),
                 **_reference_extras(source),
+                **_csdl_validation_extras(source),
             },
         )
         return normalize_ordering(api)

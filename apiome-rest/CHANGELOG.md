@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.461.0] - 2026-10-26
+
+### Changed
+- **OData CSDL parse + validate (MFI-11.1, #3776)** — the `odata` import source now reads **CSDL JSON** (OASIS
+  *CSDL JSON Representation 4.01*, `"$Version": "4.0"/"4.01"`; detected at 0.97, `.json` added to the adapter's
+  extensions) into the same `ODataDocument` the CSDL XML reader produces (new `app.odata_csdl_json`). Every OData
+  v4 document is validated against the vendored OASIS `csdl.schema.json` (`app/data/odata_csdl_4_01_schema.json`,
+  new `app.odata_csdl_schema`, Draft-04): CSDL JSON as uploaded, CSDL XML after conversion to canonical CSDL JSON
+  following the OASIS mapping (`$Kind` members, JSON defaults such as `$Nullable`, facets, keys with aliases,
+  navigation constraints, enums with explicit values, type definitions, terms, action/function overloads,
+  container members, references and annotation expressions). The conversion reproduces the OASIS specifications'
+  own Products-and-Categories example. Violations do not refuse the import: the model's extras carry
+  `odata_csdl_valid`, `odata_csdl_violations` (up to 50 `{path, message}`, the most specific cause of each) and
+  `odata_csdl_violation_count`, `raw.csdl_json` keeps the canonical form, and the new `odata` lint pack
+  (`app.odata_lint`) reports each as `odata.csdl-schema` (warning). v2/v3 metadata has no CSDL JSON form and is not
+  validated. Migration `V322` seeds the rule into the built-in style guide. New corpus entry
+  `odata/07-csdl-json-trippin.json`. OpenAPI 1.325.0.
+
 ## [1.460.0] - 2026-10-26
 
 ### Changed
