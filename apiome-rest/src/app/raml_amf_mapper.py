@@ -16,6 +16,12 @@ include, an unknown type name — appears as a shape whose ``@id`` ends in ``/un
 the mapper collects those and refuses the import (``INPUT_REFERENCE_UNRESOLVED``) rather
 than importing a model with holes in it. The resulting document has the same shape the
 YAML reader produces, so :mod:`app.raml_normalizer` is unchanged.
+
+Resource types and traits (MFI-15.2, #3800) are already applied in AMF's model: each
+operation carries the headers, parameters, bodies and responses they contribute. The
+model no longer says which resource type and traits those came from, so that provenance is
+read from the root document's text (:func:`app.raml_traits.applied_reuse_from_text`); the
+declared names come from the graph (``apiContract:Trait`` / ``apiContract:ResourceType``).
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .import_source import ImportSourceError
 from .raml_parser import RamlDocument, RamlOperation, RamlParameter, RamlType, RamlTypeField
+from .raml_traits import AppliedReuse, applied_reuse_from_text
 
 __all__ = ["document_from_amf_model", "XSD_TO_RAML"]
 
@@ -47,7 +54,9 @@ XSD_TO_RAML: Dict[str, str] = {
 }
 
 _XSD_PREFIXES = ("http://www.w3.org/2001/XMLSchema#", "http://a.ml/vocabularies/shapes#")
-_PARAMETER_BINDINGS = ("path", "query")
+_PARAMETER_BINDINGS = ("path", "query", "header")
+#: ``@type`` of a declared trait / resource type → the RamlDocument field that lists it.
+_REUSE_DECLARATIONS = {"apiContract:Trait": "traits", "apiContract:ResourceType": "resource_types"}
 _UNRESOLVED_SUFFIX = "/unresolved"
 
 
@@ -96,6 +105,8 @@ class _Graph:
         self.unresolved: List[str] = []
         self.declared: Dict[str, str] = {}
         self.declaration_order: List[str] = []
+        #: ``traits`` / ``resource_types`` → declared names (library ones as ``alias.name``).
+        self.reuse: Dict[str, List[str]] = {field: [] for field in _REUSE_DECLARATIONS.values()}
         self._declare(self.root, alias=None)
         aliases = self._library_aliases()
         for node_id, node in self.nodes.items():
@@ -108,6 +119,8 @@ class _Graph:
         """Register the shapes a unit declares under their RAML names."""
         for shape_id in _ids(unit.get("doc:declares")):
             shape = self.nodes.get(shape_id)
+            if shape and self._declare_reuse(shape, alias=alias):
+                continue
             name = _text(shape.get("shacl:name")) if shape else None
             if shape_id.endswith(_UNRESOLVED_SUFFIX):
                 # A declaration whose definition AMF could not load (e.g. a missing include).
@@ -117,6 +130,18 @@ class _Graph:
                 continue
             self.declared[shape_id] = f"{alias}.{name}" if alias else name
             self.declaration_order.append(shape_id)
+
+    def _declare_reuse(self, node: Mapping[str, Any], *, alias: Optional[str]) -> bool:
+        """Record a declared trait or resource type; ``False`` when ``node`` is neither."""
+        field = next((f for t, f in _REUSE_DECLARATIONS.items() if t in _types(node)), None)
+        if field is None:
+            return False
+        name = _text(node.get("core:name"))
+        if name:
+            qualified = f"{alias}.{name}" if alias else name
+            if qualified not in self.reuse[field]:
+                self.reuse[field].append(qualified)
+        return True
 
     def _note_unresolved(self, name: str) -> None:
         """Record a reference AMF could not resolve (once)."""
@@ -256,7 +281,7 @@ def _declared_types(graph: _Graph) -> Tuple[RamlType, ...]:
 
 
 def _parameters(graph: _Graph, parameter_ids: Sequence[str]) -> List[RamlParameter]:
-    """Path and query parameters, in order."""
+    """Path, query and header parameters, in order."""
     params: List[RamlParameter] = []
     for parameter_id in parameter_ids:
         param = graph.node(parameter_id)
@@ -287,8 +312,15 @@ def _first_payload_type(graph: _Graph, message: Mapping[str, Any]) -> Optional[s
     return None
 
 
-def _operations(graph: _Graph, web_api: Mapping[str, Any]) -> Tuple[RamlOperation, ...]:
-    """Every operation of every endpoint (AMF gives each endpoint its full path)."""
+def _operations(
+    graph: _Graph,
+    web_api: Mapping[str, Any],
+    applied: Mapping[Tuple[str, str], AppliedReuse],
+) -> Tuple[RamlOperation, ...]:
+    """Every operation of every endpoint (AMF gives each endpoint its full path).
+
+    ``applied`` names the resource type and traits behind each ``(path, method)``.
+    """
     operations: List[RamlOperation] = []
     for endpoint_id in _ids(web_api.get("apiContract:endpoint")):
         endpoint = graph.node(endpoint_id)
@@ -306,15 +338,20 @@ def _operations(graph: _Graph, web_api: Mapping[str, Any]) -> Tuple[RamlOperatio
             for request in requests:
                 request_params.extend(_parameters(graph, _ids(request.get("apiContract:parameter"))))
                 request_params.extend(_parameters(graph, _ids(request.get("apiContract:uriParameter"))))
+                request_params.extend(_parameters(graph, _ids(request.get("apiContract:header"))))
             params = {(p.location, p.name): p for p in endpoint_params}
             params.update({(p.location, p.name): p for p in request_params})
             responses: List[Tuple[str, str]] = []
+            untyped: List[str] = []
             for response_id in _ids(operation.get("apiContract:returns")):
                 response = graph.node(response_id)
                 status = _text(response.get("apiContract:statusCode")) or _text(response.get("core:name"))
                 body = _first_payload_type(graph, response)
                 if status and body:
                     responses.append((status, body))
+                elif status:
+                    untyped.append(status)
+            reuse = applied.get((path, method.lower()), AppliedReuse())
             operations.append(
                 RamlOperation(
                     path=path,
@@ -323,6 +360,9 @@ def _operations(graph: _Graph, web_api: Mapping[str, Any]) -> Tuple[RamlOperatio
                     parameters=tuple(params.values()),
                     request_type=next((t for t in (_first_payload_type(graph, r) for r in requests) if t), None),
                     response_types=tuple(responses),
+                    untyped_response_statuses=tuple(untyped),
+                    resource_type=reuse.resource_type,
+                    traits=reuse.traits,
                 )
             )
     return tuple(operations)
@@ -365,7 +405,7 @@ def document_from_amf_model(
     graph = _Graph(model)
     web_api = graph.node(next(iter(_ids(graph.root.get("doc:encodes"))), None))
     types = _declared_types(graph)
-    operations = _operations(graph, web_api)
+    operations = _operations(graph, web_api, applied_reuse_from_text(raw))
     label = f" ({source_label})" if source_label else ""
 
     if graph.unresolved:
@@ -396,4 +436,6 @@ def document_from_amf_model(
         raw=raw,
         model_sha256=model_sha256,
         source_files=source_files,
+        traits=tuple(graph.reuse["traits"]),
+        resource_types=tuple(graph.reuse["resource_types"]),
     )

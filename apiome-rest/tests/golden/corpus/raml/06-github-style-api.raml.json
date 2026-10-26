@@ -62,7 +62,22 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "404"
+                },
+                "headers": [],
+                "key": "GET /repos/{owner}/{repo}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "404"
               }
             ],
             "name": "GET /repos/{owner}/{repo}",
@@ -118,7 +133,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /repos/{owner}/{repo}/issues",
@@ -193,7 +208,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /repos/{owner}/{repo}/issues/{issue_number}",
@@ -267,7 +282,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "POST /repos/{owner}/{repo}/issues",
@@ -677,15 +692,15 @@
     "confidence": 0.99,
     "format": "raml"
   },
-  "fingerprint": "sha256:44292d8dc3a4ea064b86b18f57574b1b6ca91ab96f076ed08a02bff115271da3",
+  "fingerprint": "sha256:bb05c5fd1567e1a83f4975e0a5e4a2379dd487b7f5c678c9cbe9c2aaa3ce6394",
   "lint": {
-    "findings": 7,
+    "findings": 8,
     "grade": "A",
-    "report_fingerprint": "e4e10a8bfa58649a3c0d8dae5683498a80228d95cce8d28fbc84bd2c75adafb1",
-    "score": 93,
+    "report_fingerprint": "27b6ee1cdc946237a99e673bd0004312f25c511fd8b2650016070d7750cbc39e",
+    "score": 92,
     "severity_counts": {
       "error": 0,
-      "info": 7,
+      "info": 8,
       "warning": 0
     }
   },

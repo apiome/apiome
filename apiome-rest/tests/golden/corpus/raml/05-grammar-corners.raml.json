@@ -62,7 +62,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /archives",
@@ -137,7 +137,22 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "404"
+                },
+                "headers": [],
+                "key": "GET /archives/{archiveId}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "404"
               }
             ],
             "name": "GET /archives/{archiveId}",
@@ -174,7 +189,23 @@
             "http_path": "/archives/{archiveId}",
             "key": "HEAD /archives/{archiveId}",
             "kind": "request_response",
-            "messages": [],
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "204"
+                },
+                "headers": [],
+                "key": "HEAD /archives/{archiveId}#response.204",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
             "name": "HEAD /archives/{archiveId}",
             "parameters": [
               {
@@ -209,7 +240,23 @@
             "http_path": "/archives/{archiveId}/attachments",
             "key": "OPTIONS /archives/{archiveId}/attachments",
             "kind": "request_response",
-            "messages": [],
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {
+                  "http_status": "204"
+                },
+                "headers": [],
+                "key": "OPTIONS /archives/{archiveId}/attachments#response.204",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
             "name": "OPTIONS /archives/{archiveId}/attachments",
             "parameters": [],
             "streaming": "none",
@@ -261,7 +308,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "PATCH /archives/{archiveId}",
@@ -335,7 +382,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "POST /archives/{archiveId}/attachments",
@@ -647,15 +694,15 @@
     "confidence": 0.99,
     "format": "raml"
   },
-  "fingerprint": "sha256:4fa767326d2a13ec80584c51d5351998e6a219b5d18518c05c8b09706bdcd7df",
+  "fingerprint": "sha256:bf5ec01cce2be4446302a1005b7940f106892f359f78d19078833184192dd639",
   "lint": {
-    "findings": 6,
+    "findings": 9,
     "grade": "A",
-    "report_fingerprint": "1ba1fac7350b886965dd9d83078024d36af2718b5aa40db2ea1859253c16f468",
-    "score": 94,
+    "report_fingerprint": "956136a52f13b12f4e193ce5d829f762318a40acca6eeffde927958e8edf5bbe",
+    "score": 91,
     "severity_counts": {
       "error": 0,
-      "info": 6,
+      "info": 9,
       "warning": 0
     }
   },

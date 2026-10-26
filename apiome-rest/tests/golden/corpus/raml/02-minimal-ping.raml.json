@@ -53,7 +53,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /ping",
@@ -80,7 +80,7 @@
     "confidence": 0.99,
     "format": "raml"
   },
-  "fingerprint": "sha256:c33e08c48a3e82e38fee84096334a69d08e0349c1fab29dca95b479004de321c",
+  "fingerprint": "sha256:3dc49d7c05526a5105c3fb54ce39a9fec4bb5f2e535ab7334467f2058aaf404f",
   "lint": {
     "findings": 2,
     "grade": "A",

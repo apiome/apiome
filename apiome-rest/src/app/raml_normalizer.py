@@ -3,6 +3,11 @@
 Maps a parsed :class:`~app.raml_parser.RamlDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.REST`.
+
+The document's resources are already resolved: each method carries what its resource type
+and traits contribute (MFI-15.2). Which ones shaped an operation is kept in the operation's
+extras (``raml_resource_type``, ``raml_traits``), and the names the API declares in the API's
+extras (``raml_traits``, ``raml_resource_types``).
 """
 
 from __future__ import annotations
@@ -97,6 +102,16 @@ def _canonical_field(
     )
 
 
+def _operation_extras(endpoint: RamlOperation) -> Dict[str, Any]:
+    """The resource type and traits applied to an operation, when there are any."""
+    extras: Dict[str, Any] = {}
+    if endpoint.resource_type:
+        extras["raml_resource_type"] = endpoint.resource_type
+    if endpoint.traits:
+        extras["raml_traits"] = list(endpoint.traits)
+    return extras
+
+
 def _parameter(param: RamlParameter, *, operation_key: str, type_names: frozenset[str]) -> Parameter:
     location = _PARAM_LOCATIONS.get(param.location, ParameterLocation.QUERY)
     return Parameter(
@@ -183,6 +198,16 @@ class RamlNormalizer(Normalizer, register=True):
                         key=Keys.response_message(op_key, status),
                         role=MessageRole.RESPONSE,
                         payload=_type_ref_from_expr(response_type, type_names=type_names),
+                        status_code=status,
+                        extras={"http_status": status},
+                    )
+                )
+            for status in endpoint.untyped_response_statuses:
+                messages.append(
+                    Message(
+                        key=Keys.response_message(op_key, status),
+                        role=MessageRole.RESPONSE,
+                        status_code=status,
                         extras={"http_status": status},
                     )
                 )
@@ -200,6 +225,7 @@ class RamlNormalizer(Normalizer, register=True):
                         for param in endpoint.parameters
                     ],
                     messages=messages,
+                    extras=_operation_extras(endpoint),
                 )
             )
 
@@ -231,6 +257,9 @@ class RamlNormalizer(Normalizer, register=True):
                 # MFI-15.1: the AMF-resolved model's hash and the files it was resolved from.
                 **({"raml_amf_model_sha256": source.model_sha256} if source.model_sha256 else {}),
                 **({"raml_source_files": list(source.source_files)} if source.source_files else {}),
+                # MFI-15.2: the traits and resource types the API declares.
+                **({"raml_traits": list(source.traits)} if source.traits else {}),
+                **({"raml_resource_types": list(source.resource_types)} if source.resource_types else {}),
             },
         )
         return normalize_ordering(api)

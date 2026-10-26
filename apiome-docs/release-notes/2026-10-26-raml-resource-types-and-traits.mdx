@@ -1,0 +1,21 @@
+---
+slug: raml-resource-types-and-traits
+title: RAML resource types and traits apply on import
+description: RAML imports apply resource types and traits to every operation.
+authors: [apiome]
+---
+
+A RAML API that shares its shapes through resource types and traits now imports with them applied.
+Each operation carries the headers, parameters, bodies and responses its `type:` and `is:` add.
+[Import a RAML API](/bring-in/raml-import).
+
+{/* truncate */}
+
+- **Parameters filled in.** `<<resourcePathName>>`, `<<item>>` and functions such as
+  `!pluralize` are replaced before the API is cataloged.
+- **Headers and bodiless responses.** Request headers import as header parameters, and a response
+  without a body, such as `204`, keeps its status code.
+- **Provenance.** Each operation records the resource type and traits applied to it, and the API
+  lists the ones it declares, including library ones as `alias.name`.
+- **Cleaner OpenAPI export.** Exporting a RAML API to OpenAPI 3.1 now keeps every response under
+  its own status code.

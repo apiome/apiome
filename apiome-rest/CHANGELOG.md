@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.456.0] - 2026-10-26
+
+### Changed
+- **RAML → canonical model: resource types and traits (MFI-15.2, #3800)** — RAML resources and methods now import
+  *resolved*: a resource's `type:` (resource type) and the `is:` traits on a resource, a method or a resource-type
+  method are applied with their `<<parameters>>` substituted (`resourcePath`, `resourcePathName`, `methodName`,
+  caller parameters, and the `!singularize` / `!pluralize` / case functions), so each operation carries the headers,
+  query parameters, bodies and responses they add. Without AMF the YAML reader applies the document's own resource
+  types and traits through the new `app.raml_traits` resolver (optional `get?` methods, resource types extending
+  resource types, method values winning over inherited ones); with AMF the resolved model is used as is and only the
+  provenance comes from the resolver. New in the canonical model: request headers as `header` parameters; a
+  response without a typed body (e.g. `204`) as a payload-less response message; every response message's
+  `status_code` (so an OpenAPI export keeps each status instead of collapsing them onto `200`); operation `extras`
+  `raml_resource_type` and `raml_traits`; API `extras` `raml_traits` and `raml_resource_types` (library ones as
+  `alias.name`). A document whose YAML anchors would expand past 200,000 nodes while resolving is refused
+  (`raml_traits.MAX_EXPANDED_NODES`). RAML corpus goldens regenerated. OpenAPI 1.320.0.
+
 ## [1.455.0] - 2026-10-26
 
 ### Changed
