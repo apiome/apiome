@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field / parameter / typedef without a trailing separator (previously lost) are read, `service … extends …` is
   read (previously dropped), and `//` / `#` inside quoted strings are no longer taken as comments. The reference
   resolver shared with RAML moves to `app.fileset.resolve_relative_reference`. New corpus set
-  `thrift/07-orders-set`; Thrift corpus goldens regenerated. OpenAPI 1.321.0.
+  `thrift/07-orders-set`; Thrift corpus goldens regenerated. Migration `V321` re-seeds the built-in
+  "Apiome Recommended" style guide with the five `thrift.*` rules (otherwise their findings would be dropped by
+  `CompiledStyleGuide.apply`). OpenAPI 1.321.0.
 
 ## [1.456.0] - 2026-10-26
 
