@@ -298,6 +298,46 @@ their token. Importing that document again restores the same operations.
 On the **Analyze** step, **Feature compatibility** lists **QUERY HTTP method** and
 **additionalOperations (custom HTTP methods)** as information, with a use count for each.
 
+## Tag hierarchy (OpenAPI 3.2)
+
+OpenAPI 3.2 tags can carry a `summary`, a `kind` (such as `nav`, `badge` or `audience`) and a
+`parent` naming another tag, which turns the tags into a tree:
+
+```yaml
+tags:
+  - name: billing
+    kind: nav
+  - name: invoices
+    parent: billing
+  - name: refunds
+    parent: billing
+```
+
+The Projects importer keeps the whole taxonomy:
+
+- **Every tag field is kept.** `name`, `summary`, `description`, `parent`, `kind` and
+  `externalDocs` are stored on the project's metadata under `x-apiome-tag-taxonomy`. A later
+  import into the same project that declares tags replaces it. In a project built from several
+  repository files, the highest-precedence file's taxonomy wins.
+- **Operations keep their tags.** Each operation keeps the tag names it lists.
+- **Classes keep the tags they declare.** A schema that names tags with `x-tags`, `x-tag` or
+  `tags` imports as a class that lists them in `x-apiome-tags`. OpenAPI schemas have no tag field
+  of their own, so a schema without one of these imports untagged.
+
+Two problems are fixed during import, and each one shows as an import warning:
+
+| Problem | What the import does |
+| --- | --- |
+| `parent` names a tag the document does not declare | The tag imports as a top-level tag. |
+| Tags form a parent cycle (`a` → `b` → `a`, or a tag that is its own parent) | Every tag on the cycle imports as a top-level tag. Tags below the cycle stay under their parent. |
+
+A tag name declared twice keeps its first declaration, also with a warning.
+
+On the **Analyze** step, **Feature compatibility** lists **Tag taxonomy (summary / parent /
+kind)**. It shows the number of tags, levels and top-level tags, and the kinds used. It appears
+only when a tag uses `summary`, `parent` or `kind`, or when the tag hierarchy has a problem. The
+entry is a warning when the hierarchy has a problem, and names it.
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

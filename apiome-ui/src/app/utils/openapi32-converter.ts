@@ -28,7 +28,8 @@
          {@link ./openapi-path-operations.ts}).
  *       - sequential media types / `itemSchema` (OA3 — consumed by
          {@link ./openapi-stream-media-types.ts}).
- *       - `tags[].summary` / `parent` / `kind` (OA5).
+ *       - `tags[].summary` / `parent` / `kind` (OA5 — consumed by
+         {@link ./openapi-tag-taxonomy.ts}).
  *
  * The emitted document carries `openapi: '3.1.0'` so the downstream importer treats
  * it natively as 3.1.
@@ -227,7 +228,7 @@ function convertTags(tags: any[], ctx: ConversionContext): void {
       id: 'tag-metadata',
       label: 'Tag metadata (summary/parent/kind)',
       description:
-        'OpenAPI 3.2 tag fields summary/parent/kind are preserved on the tag objects and carried forward for hierarchical tag support (OA5).',
+        'OpenAPI 3.2 tag fields summary/parent/kind are preserved on the tag objects and imported as the tag taxonomy (OA5).',
       ownedBy: 'OA5',
       count,
       severity: 'info'

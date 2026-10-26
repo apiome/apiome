@@ -1,0 +1,33 @@
+# OpenAPI 3.2.0 tags with a parent cycle (a > b > c > a), a self-parent, an unknown parent,
+# and a tag hanging below the cycle (OA5, #3502).
+openapi: 3.2.0
+info:
+  title: Cyclic tags
+  version: 1.0.0
+tags:
+  - name: a
+    parent: c
+  - name: b
+    parent: a
+  - name: c
+    parent: b
+  - name: leaf
+    parent: b
+  - name: self
+    parent: self
+  - name: orphan
+    parent: missing
+paths:
+  /things:
+    get:
+      tags: [leaf]
+      responses:
+        "200":
+          description: ok
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        id:
+          type: string

@@ -13,6 +13,7 @@ import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGrap
 import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter';
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32 } from './openapi32-converter';
 import { listPathItemOperations } from './openapi-path-operations';
+import { buildTagTaxonomy, type ParsedTag, type TagTreeNode } from './openapi-tag-taxonomy';
 import { applyStreamItemSchemas, getMediaTypeItemSchema, getStreamKind, type StreamKind } from './openapi-stream-media-types';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -128,8 +129,10 @@ export interface OpenAPIParseResult {
   info?: ParsedOpenAPIInfo;
   /** Servers array for import */
   servers?: ParsedOpenAPIServer[];
-  /** Top-level tags */
-  tags?: Array<{ name: string; description?: string }>;
+  /** Top-level tags, with the 3.2 summary / parent / kind and externalDocs (OA5, #3502) */
+  tags?: ParsedTag[];
+  /** Tag hierarchy resolved from `parent` links; cycles and unknown parents are flattened (OA5) */
+  tagHierarchy?: TagTreeNode[];
 }
 
 /**
@@ -943,9 +946,10 @@ function parseOpenAPISpecInternal(spec: any, initialWarnings: string[]): OpenAPI
       })).filter((s: ParsedOpenAPIServer) => s.url)
     : [];
 
-  const tags = Array.isArray(spec.tags)
-    ? spec.tags.map((t: any) => ({ name: t.name || '', description: t.description }))
-    : undefined;
+  // Full Tag Objects and their parent hierarchy (OA5, #3502).
+  const taxonomy = buildTagTaxonomy(spec);
+  globalWarnings.push(...taxonomy.warnings);
+  const tags = Array.isArray(spec.tags) ? taxonomy.tags : undefined;
 
   return {
     success: true,
@@ -959,6 +963,7 @@ function parseOpenAPISpecInternal(spec: any, initialWarnings: string[]): OpenAPI
     info,
     servers: servers.length > 0 ? servers : undefined,
     tags,
+    tagHierarchy: taxonomy.roots.length > 0 ? taxonomy.roots : undefined,
   };
 }
 
