@@ -1,0 +1,20 @@
+---
+slug: openapi-32-tag-hierarchy
+title: OpenAPI 3.2 tag hierarchy import
+description: Tag summary, parent and kind import, with a cycle-safe tag tree.
+authors: [apiome]
+---
+
+OpenAPI 3.2 tag taxonomies now survive import. Each tag keeps its `summary`, `parent`, `kind`
+and `externalDocs`, and the `parent` links form a tag tree.
+[Tag hierarchy (OpenAPI 3.2)](/bring-in/import-a-spec#tag-hierarchy-openapi-32).
+
+{/* truncate */}
+
+- **Project metadata.** The taxonomy is stored on the project under `x-apiome-tag-taxonomy`.
+- **Associations.** Operations keep their tags. Classes list the tags their schema declares
+  (`x-tags`, `x-tag` or `tags`) in `x-apiome-tags`.
+- **Cycles and unknown parents.** A tag whose parent is undeclared, or that sits on a parent cycle,
+  imports as a top-level tag, with an import warning.
+- **Analyze.** **Feature compatibility** lists **Tag taxonomy (summary / parent / kind)** with the
+  tag, level and top-level counts, and the kinds used.

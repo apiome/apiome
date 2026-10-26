@@ -8,6 +8,12 @@
  * `info.description` maps to the project `description` column only when the request did not supply one.
  */
 
+import {
+  buildTagTaxonomy,
+  TAG_TAXONOMY_METADATA_KEY,
+  toStoredTagTaxonomy,
+} from "../src/app/utils/openapi-tag-taxonomy";
+
 export type RestSpecImportMetadata = {
   project: { name: string; slug: string; description?: string | null };
   version: { versionId: string; description?: string | null };
@@ -62,7 +68,8 @@ function extractOpenApiInfoObject(document: unknown): Record<string, unknown> | 
 /**
  * When merging for OpenAPI/Swagger (`internalKind === 'openapi'`), reads `document.info`:
  * - Fills `project.description` from `info.description` if the request did not supply one.
- * - Builds flat `projectMetadata` for `apiome.projects.metadata` (summary, termsOfService, contact, license).
+ * - Builds flat `projectMetadata` for `apiome.projects.metadata` (summary, termsOfService, contact, license),
+ *   plus the document's tag taxonomy under `x-apiome-tag-taxonomy` (OA5, #3502).
  */
 export function mergeOpenApiDocumentIntoCatalogTargets(
   metadata: RestSpecImportMetadata,
@@ -86,8 +93,12 @@ export function mergeOpenApiDocumentIntoCatalogTargets(
     return base;
   }
 
+  // Tag taxonomy (summary / parent / kind / externalDocs), kept on project metadata (OA5, #3502).
+  const taxonomy = toStoredTagTaxonomy(buildTagTaxonomy(document));
+
   const info = extractOpenApiInfoObject(document);
   if (!info) {
+    if (taxonomy) base.projectMetadata = { [TAG_TAXONOMY_METADATA_KEY]: taxonomy };
     return base;
   }
 
@@ -118,6 +129,8 @@ export function mergeOpenApiDocumentIntoCatalogTargets(
       flatMeta[key] = value;
     }
   }
+
+  if (taxonomy) flatMeta[TAG_TAXONOMY_METADATA_KEY] = taxonomy;
 
   if (Object.keys(flatMeta).length > 0) {
     base.projectMetadata = flatMeta;

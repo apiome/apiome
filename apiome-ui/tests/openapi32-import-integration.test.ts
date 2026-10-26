@@ -190,7 +190,7 @@ describe('OpenAPI 3.2 import integration (OA2 #3499)', () => {
         'openapi32-additional-operations',
         'openapi32-query-method',
         'sequential-media-types',
-        'openapi32-tag-metadata'
+        'tag-taxonomy'
       ])
     );
   });

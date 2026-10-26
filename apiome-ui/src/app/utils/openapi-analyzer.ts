@@ -10,6 +10,7 @@ import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGrap
 import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter';
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32, OpenAPI32UnsupportedConstruct } from './openapi32-converter';
 import { collectStreamMediaTypes, STREAM_KIND_LABELS } from './openapi-stream-media-types';
+import { buildTagTaxonomy, type TagTreeNode } from './openapi-tag-taxonomy';
 import { convertAsyncAPIToOpenAPI, isAsyncAPI } from './asyncapi-converter';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -1651,7 +1652,44 @@ function identifyUnsupportedFeatures(doc: any): UnsupportedFeature[] {
   const streamFeature = identifyStreamMediaTypes(doc);
   if (streamFeature) features.push(streamFeature);
 
+  const tagFeature = identifyTagTaxonomy(doc);
+  if (tagFeature) features.push(tagFeature);
+
   return features;
+}
+
+/**
+ * Report the document's tag taxonomy — the OpenAPI 3.2 `summary`, `parent` and `kind`
+ * on Tag Objects — for the pre-import compatibility check (OA5, #3502).
+ *
+ * @param doc - the OpenAPI document being analyzed.
+ * @returns one `tag-taxonomy` feature (a warning when parents are unknown or cyclic), or
+ *   null when no tag uses the 3.2 fields and the hierarchy has no problems.
+ */
+function identifyTagTaxonomy(doc: any): UnsupportedFeature | null {
+  const taxonomy = buildTagTaxonomy(doc);
+  const enriched = taxonomy.tags.filter((t) => t.summary || t.parent || t.kind).length;
+  if (enriched === 0 && taxonomy.warnings.length === 0) return null;
+
+  const depthOf = (node: TagTreeNode): number => Math.max(node.depth, ...node.children.map(depthOf));
+  const levels = taxonomy.roots.length > 0 ? Math.max(...taxonomy.roots.map(depthOf)) + 1 : 0;
+  const kinds = Array.from(new Set(taxonomy.tags.map((t) => t.kind).filter(Boolean)));
+  const parts = [
+    `${taxonomy.tags.length} tag${taxonomy.tags.length === 1 ? '' : 's'} in ${levels} level${levels === 1 ? '' : 's'} ` +
+      `(${taxonomy.roots.length} top-level)`,
+    kinds.length > 0 ? `kinds: ${kinds.join(', ')}` : '',
+  ].filter(Boolean);
+
+  return {
+    id: 'tag-taxonomy',
+    label: 'Tag taxonomy (summary / parent / kind)',
+    description:
+      `${parts.join('; ')}. Tags import with their summary, parent and kind, kept on the project metadata as x-apiome-tag-taxonomy.` +
+      (taxonomy.warnings.length > 0 ? ` ${taxonomy.warnings.join(' ')}` : ''),
+    path: 'tags',
+    count: taxonomy.tags.length,
+    severity: taxonomy.warnings.length > 0 ? 'warning' : 'info'
+  };
 }
 
 /**
@@ -1844,9 +1882,10 @@ export async function analyzeSpecification(fileContent: string, fileName: string
   if (isOpenAPI32(doc)) {
     const conversionResult = convertOpenAPI32ToOpenAPI31(doc);
     if (conversionResult.success) {
-      // itemSchema is reported by the sequential-media-types feature instead (OA3, #3500).
+      // itemSchema and tag metadata are reported by the sequential-media-types (OA3, #3500)
+      // and tag-taxonomy (OA5, #3502) features instead.
       openapi32Constructs = conversionResult.unsupportedConstructs
-        .filter((c) => c.id !== 'item-schema')
+        .filter((c) => c.id !== 'item-schema' && c.id !== 'tag-metadata')
         .map(toUnsupportedFeature);
       conversionWarnings = [
         ...conversionWarnings,

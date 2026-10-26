@@ -2,6 +2,8 @@ import { Importer, ImportSourceKind, NormalizeOptions, NormalizeResult, Normaliz
 import { applyNamingConventionToClasses } from '../../src/app/utils/naming-conventions';
 import { extractDirectProperties } from '../../src/app/utils/openapi-schema-direct-properties';
 import { applyStreamItemSchemas } from '../../src/app/utils/openapi-stream-media-types';
+import { buildTagTaxonomy, CLASS_TAGS_EXTENSION } from '../../src/app/utils/openapi-tag-taxonomy';
+import { getSchemaTags } from '../../src/app/utils/schema-tree-utils';
 import { getSmartClassName } from '../schema-context-naming';
 import { collectReservedNameWarnings } from './reserved-names';
 
@@ -225,16 +227,25 @@ export const openApiImporter: Importer = {
       // Smart naming from schema context (#753): title / x-class-name / then schema key
       const baseName = classNameMap?.[schemaName] ?? getSmartClassName(schemaName, originalSchema);
 
+      // Tags the schema declares (x-tags / x-tag / tags), kept as provenance (OA5, #3502).
+      const declaredTags = getSchemaTags(originalSchema);
+      const schema = declaredTags.length > 0
+        ? { ...originalSchema, [CLASS_TAGS_EXTENSION]: declaredTags }
+        : originalSchema;
+
       classes.push({
         name: baseName,
         originalSchemaKey: schemaName,
         description: originalSchema?.description ?? null,
-        schema: originalSchema,
+        schema,
         properties: props
       });
     }
 
     if (classes.length === 0) warnings.push('No selected schemas to import.');
+
+    // Tag hierarchy problems (unknown parents, cycles) are reported with the import (OA5).
+    warnings.push(...buildTagTaxonomy(document).warnings);
 
     // Required field override (#759): apply before naming so we key by original schema + property name
     const requiredOverrides = options.requiredOverrides;
