@@ -29,6 +29,7 @@ from .import_source import (
     InputKind,
 )
 from .typespec_compile import TypeSpecCompiled, compile_typespec_set, typespec_members
+from .typespec_config import find_tspconfig
 from .typespec_parser import TypeSpecDocument, TypeSpecParseError, is_typespec, parse_typespec
 
 __all__ = ["TypeSpecImportSource"]
@@ -89,9 +90,10 @@ class TypeSpecImportSource(ImportSource, register=True):
         *,
         source_label: Optional[str] = None,
     ) -> Union[TypeSpecDocument, TypeSpecCompiled]:
-        """Parse a set: several ``.tsp`` files compile through ``tsp`` (MFI-14.1).
+        """Parse a set: a TypeSpec project compiles through ``tsp`` (MFI-14.1, MFI-14.5).
 
-        A set with a single ``.tsp`` file is read like that one file.
+        A set is a project when it holds several ``.tsp`` files or a ``tspconfig.yaml`` beside
+        the root; a lone ``.tsp`` file is read like that one file.
 
         Raises:
             ImportSourceError: See :func:`app.typespec_compile.compile_typespec_set`.
@@ -99,7 +101,8 @@ class TypeSpecImportSource(ImportSource, register=True):
         root = fileset.root
         if root not in fileset.members:
             raise ImportSourceError("TypeSpec fileset is missing its root document")
-        if len(typespec_members(fileset.members)) <= 1:
+        is_project = len(typespec_members(fileset.members)) > 1 or find_tspconfig(fileset.members, root)
+        if not is_project:
             return self.parse(fileset.members[root], source_label=root or source_label)
         return compile_typespec_set(dict(fileset.members), root, source_label=source_label)
 
@@ -132,5 +135,10 @@ class TypeSpecImportSource(ImportSource, register=True):
             "typespec_namespaces": list(compiled.namespaces),
             "typespec_openapi_sha256": compiled.openapi_sha256,
         }
+        if compiled.config is not None:
+            # MFI-14.5: which tspconfig settings shaped the emitted API, and which were left out.
+            extras["typespec_tspconfig"] = compiled.config.path
+            extras["typespec_tspconfig_applied"] = compiled.config.applied
+            extras["typespec_tspconfig_ignored"] = list(compiled.config.ignored)
         raw = {"typespec": compiled.root_text, "openapi": compiled.openapi} if include_raw else None
         return api.model_copy(update={"format": "typespec", "extras": extras, "raw": raw})

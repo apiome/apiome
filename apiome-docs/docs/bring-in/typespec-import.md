@@ -13,12 +13,12 @@ like any other catalog item.
 
 Import the definition like any other catalog format: in the [import wizard](./import-wizard.mdx)
 (**Import to catalog** → **TypeSpec**), over the REST API (see
-[Import a specification](./import-a-spec.md)), or from the CLI with `apiome import typespec <file>`.
+[Import a specification](./import-a-spec.md)), or [from the CLI](#from-the-cli).
 
 | What you have | How it is read |
 | --- | --- |
 | One `.tsp` file | Read by the built-in TypeSpec reader. |
-| Several `.tsp` files (a `.zip`, `.tar.gz` or `.tar`) | Compiled to OpenAPI by the **TypeSpec compiler**, then cataloged from that OpenAPI. |
+| A TypeSpec project: several `.tsp` files, or a `.tsp` file with its `tspconfig.yaml` (a `.zip`, `.tar.gz` or `.tar`, or a directory from the CLI) | Compiled to OpenAPI by the **TypeSpec compiler**, then cataloged from that OpenAPI. |
 
 ## Multi-file projects
 
@@ -43,8 +43,8 @@ document is the compile's entry point. Apiome then:
 3. Catalogs the **OpenAPI** the compiler emits. The item's operations, types, diff and lint are the
    ones an OpenAPI import of that document would have, and it stays a TypeSpec item.
 
-Only `.tsp` files are compiled. An uploaded `tspconfig.yaml`, `package.json` or `node_modules` is
-ignored: Apiome compiles with its own configuration and the libraries it ships.
+Only `.tsp` files are compiled, with the libraries the server ships: an uploaded `package.json` or
+`node_modules` is ignored. A `tspconfig.yaml` beside the root is read for the settings below.
 
 The catalog item records how it was built:
 
@@ -58,6 +58,59 @@ The catalog item records how it was built:
 
 **Convert to OpenAPI** on a compiled item uses the OpenAPI the compiler emitted at import.
 
+## `tspconfig.yaml`
+
+A `tspconfig.yaml` (or `tspconfig.yml`) in the same folder as the root `.tsp` marks a TypeSpec
+project: it compiles even when it holds only one `.tsp` file. Apiome always compiles with the
+`@typespec/openapi3` emitter into one OpenAPI document, and applies these settings from your file:
+
+| Setting | Values | Effect |
+| --- | --- | --- |
+| `options."@typespec/openapi3".openapi-versions` | `3.0.0`, `3.1.0` | The OpenAPI version emitted. Only the **first** listed version is used. |
+| `options."@typespec/openapi3".omit-unreachable-types` | `true`, `false` | Leave out types no operation uses. |
+| `options."@typespec/openapi3".include-x-typespec-name` | `inline-only`, `never` | Add `x-typespec-name` to inline types. |
+| `options."@typespec/openapi3".safeint-strategy` | `double-int`, `int64` | How `safeint` is written. |
+| `warn-as-error` | `true`, `false` | Treat compiler warnings as errors, which refuses the import. |
+
+```yaml
+options:
+  "@typespec/openapi3":
+    openapi-versions:
+      - 3.1.0
+    omit-unreachable-types: true
+```
+
+Every other setting is ignored, and the catalog item lists each one with the reason:
+
+- `emit` and other emitters' options: only `@typespec/openapi3` runs on import.
+- `output-dir`, `emitter-output-dir`, `output-file`, `file-type`, `new-line`: Apiome reads one JSON
+  document from its own working folder.
+- `imports`, `linter`, `extends`, `parameters`, `environment-variables`, `trace`: the project's
+  `.tsp` files are its imports, lint is Apiome's, and no interpolation is performed.
+- A value of the wrong type, such as `omit-unreachable-types: "yes"`.
+
+| Field | What it holds |
+| --- | --- |
+| `typespec_tspconfig` | The configuration's path in the upload |
+| `typespec_tspconfig_applied` | The settings applied |
+| `typespec_tspconfig_ignored` | One line per setting left out, with the reason |
+
+A `tspconfig.yaml` that is not a YAML mapping refuses the import with `INPUT_MALFORMED`.
+
+## From the CLI
+
+Point `apiome import typespec` at a file, an archive or a project directory:
+
+```bash
+apiome import typespec ./main.tsp
+apiome import typespec ./shop-api.zip --root main.tsp
+apiome import typespec ./shop-api/
+```
+
+A directory is packed into an archive and sent as one upload. `node_modules`, `tsp-output`,
+`dist`, `build` and hidden folders are left out. The root is `--root` when you give it, otherwise
+the `tspMain` in the directory's `package.json`, otherwise `main.tsp`.
+
 ## When the import refuses a project
 
 | Code | Why | What to do |
@@ -67,6 +120,7 @@ The catalog item records how it was built:
 | `INPUT_REFERENCE_UNRESOLVED` | A file `import` is an absolute path, a URL, or a `../` path that leaves the upload. Such files are never read. | Copy the file into the archive and import it by a relative path. |
 | `ADAPTER_UNAVAILABLE` | The upload holds several `.tsp` files and this server has no TypeSpec compiler. | Ask your administrator to deploy the standard image, which ships the compiler. |
 | `INPUT_ARCHIVE_INVALID` | The archive's root document is not a `.tsp` file. | Make the main `.tsp` file the archive's root. |
+| `INPUT_MALFORMED` | The `tspconfig.yaml` beside the root is not a YAML mapping. | Fix the file, or leave it out. |
 
 ## Related
 

@@ -12,7 +12,8 @@ the OpenAPI ones (see :mod:`app.typespec_import_source`).
 1. checks every relative ``import`` stays inside the uploaded set (``INPUT_REFERENCE_UNRESOLVED``);
 2. stages only the ``.tsp`` members in a private temporary directory — never an uploaded
    ``tspconfig.yaml``, ``package.json`` or ``node_modules`` — and writes Apiome's own
-   ``tspconfig.yaml`` emitting ``@typespec/openapi3``;
+   ``tspconfig.yaml`` emitting ``@typespec/openapi3``, with the safe settings of an uploaded
+   ``tspconfig.yaml`` beside the root merged in (MFI-14.5, :mod:`app.typespec_config`);
 3. links the bundled TypeSpec libraries (:func:`typespec_node_modules`) in as ``node_modules``,
    so ``import "@typespec/http"`` resolves as it would in a project;
 4. runs ``tsp compile <root> --output-dir <out>`` and reads the emitted OpenAPI
@@ -44,6 +45,7 @@ from .toolchain_runner import (
     ToolTimeoutError,
     run_tool_blocking,
 )
+from .typespec_config import TypeSpecConfig, build_tspconfig, find_tspconfig, resolve_tspconfig
 
 __all__ = [
     "OPENAPI_TSPCONFIG",
@@ -70,17 +72,9 @@ TSP_NODE_MODULES_ENV = "APIOME_TSP_NODE_MODULES"
 #: Wall-clock limit for one ``tsp compile``.
 TSP_TIMEOUT_SECONDS = 120.0
 
-#: The project configuration written next to the staged files: emit OpenAPI 3 as one JSON file.
-OPENAPI_TSPCONFIG = "\n".join(
-    [
-        "emit:",
-        '  - "@typespec/openapi3"',
-        "options:",
-        '  "@typespec/openapi3":',
-        "    output-file: openapi.json",
-        "",
-    ]
-)
+#: The project configuration written next to the staged files: emit OpenAPI 3 as one JSON file
+#: (an uploaded ``tspconfig.yaml`` adds its honored settings, :mod:`app.typespec_config`).
+OPENAPI_TSPCONFIG = build_tspconfig()
 
 _IMPORT_RE = re.compile(r"""^\s*import\s+["']([^"']+)["']\s*;""", re.MULTILINE)
 _NAMESPACE_RE = re.compile(r"^\s*namespace\s+([A-Za-z_][\w.]*)", re.MULTILINE)
@@ -98,6 +92,8 @@ class TypeSpecCompiled:
         source_files: Every ``.tsp`` file of the set.
         namespaces: The namespaces the set declares, in sorted order.
         openapi_sha256: SHA-256 of the emitted document (sorted-key JSON).
+        config: The uploaded ``tspconfig.yaml`` as Apiome read it (MFI-14.5); ``None`` when the
+            project had none.
     """
 
     openapi: Dict[str, Any]
@@ -105,6 +101,7 @@ class TypeSpecCompiled:
     source_files: Tuple[str, ...]
     namespaces: Tuple[str, ...]
     openapi_sha256: str
+    config: Optional[TypeSpecConfig] = None
 
 
 def typespec_members(members: Mapping[str, str]) -> Dict[str, str]:
@@ -344,6 +341,8 @@ def compile_typespec_set(
             )
         staged_paths[path] = normalized
     check_import_targets(sources)
+    config_path = find_tspconfig(members, root)
+    config = resolve_tspconfig(members[config_path], path=config_path) if config_path else None
 
     staging_dir = Path(tempfile.mkdtemp(prefix="apiome-tsp-set-"))
     scratch = Path(tempfile.mkdtemp(prefix="apiome-tsp-run-"))
@@ -352,7 +351,9 @@ def compile_typespec_set(
             target = staging_dir / normalized
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(sources[path], encoding="utf-8")
-        (staging_dir / "tspconfig.yaml").write_text(OPENAPI_TSPCONFIG, encoding="utf-8")
+        (staging_dir / "tspconfig.yaml").write_text(
+            build_tspconfig(config.applied if config else None), encoding="utf-8"
+        )
         link_typespec_libraries(staging_dir)
         document = _run_compile(staged_paths[root], staging_dir, scratch / "out", scratch)
     finally:
@@ -366,4 +367,5 @@ def compile_typespec_set(
         source_files=tuple(sorted(staged_paths.values())),
         namespaces=tuple(namespaces),
         openapi_sha256=openapi_sha256(document),
+        config=config,
     )

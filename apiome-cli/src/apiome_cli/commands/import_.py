@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import time
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -87,6 +88,7 @@ from apiome_cli.import_.sources import (
 from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
 from apiome_cli.import_.agents_manifest import discover_site_manifest_url
+from apiome_cli.import_.project_dir import ProjectDirectoryError, pack_project_directory
 from apiome_cli.import_.json_schema import (
     JsonSchemaTarget,
 )
@@ -1721,7 +1723,11 @@ def _build_generic_import_command(source_format: str) -> click.Command:
         "archive_root",
         default=None,
         metavar="PATH",
-        help="Root document path inside a .zip/.tar.gz archive (MFI-29.1).",
+        help=(
+            "Root document path inside a .zip/.tar.gz archive or a project directory "
+            "(MFI-29.1). For a TypeSpec directory it defaults to package.json `tspMain`, "
+            "else main.tsp."
+        ),
     )
     @click.option("--dry-run", "dry_run", is_flag=True, default=False, help=_GENERIC_DRY_RUN_HELP)
     @click.option(
@@ -2352,15 +2358,31 @@ def _run_generic_adapter_import(
         typer.echo(unknown_format_message(source_format, descriptors), err=True)
         raise typer.Exit(EXIT_USAGE)
 
-    try:
-        raw_bytes, filename = load_document_bytes(
-            resolved_source,
-            timeout=import_timeout,
-            verify=verify,
-        )
-    except OSError as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(EXIT_USAGE) from exc
+    if is_local_file_source(resolved_source) and Path(resolved_source).is_dir():
+        # MFI-14.5: a project directory is sent as the archive an upload would be.
+        try:
+            packed = pack_project_directory(Path(resolved_source), source_format)
+        except (ProjectDirectoryError, OSError) as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+        raw_bytes, filename = packed.archive, packed.filename
+        archive_root = archive_root or packed.root
+        if not no_progress:
+            root_note = f", root {archive_root}" if archive_root else ""
+            typer.echo(
+                f"Packed {len(packed.members)} file(s) from {resolved_source}{root_note}.",
+                err=True,
+            )
+    else:
+        try:
+            raw_bytes, filename = load_document_bytes(
+                resolved_source,
+                timeout=import_timeout,
+                verify=verify,
+            )
+        except OSError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
 
     source_label = filename or source_basename(resolved_source)
     body = build_adapter_import_body(

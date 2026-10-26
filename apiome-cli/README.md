@@ -315,6 +315,8 @@ apiome import grpc --url https://example.com/echo.proto
 apiome import har ./session.har               # HAR capture (inferred REST surface)
 apiome import insomnia ./collection.yaml      # Insomnia v4 (JSON) / v5 (YAML) export
 apiome import bruno ./my-collection.zip       # zipped Bruno folder (bruno.json + .bru files)
+apiome import typespec ./shop-api/            # TypeSpec project directory (.tsp + tspconfig.yaml)
+apiome import typespec ./shop-api.zip --root main.tsp
 apiome import sample - < ./payload.json     # read from stdin
 
 # Shared flags: --dry-run previews without persisting; --import-timeout bounds
@@ -328,6 +330,13 @@ formats. Provide the document as an `INPUT` argument (path, `http(s)` URL, or `-
 for stdin) **or** via `--file` / `--url` — exactly one. The dedicated verbs below
 (`openapi`, `arazzo`, …) keep their format-specific flags and take precedence
 over this generic seam.
+
+A **directory** `INPUT` is packed into a `.zip` in memory and sent as one archive
+upload (MFI-14.5): `node_modules`, `tsp-output`, `dist`, `build` and hidden folders are
+left out, and the root is `--root` when given. For `typespec` it otherwise defaults to
+`package.json`'s `tspMain`, then `main.tsp`; other formats let the server rank the
+members. A TypeSpec project's `tspconfig.yaml` travels with it, and the server applies
+its safe settings (OpenAPI version, `omit-unreachable-types`, …).
 
 For `grpc`, the `INPUT` / `--file` / `--url` paths import a single `.proto`
 document (the REST service compiles it with `buf`); a proto that `import`s sibling
