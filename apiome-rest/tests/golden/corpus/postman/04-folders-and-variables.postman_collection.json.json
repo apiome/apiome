@@ -9,10 +9,12 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://api.example.com"
         },
         {
           "key": "apiVersion",
+          "secret": false,
           "value": "v2"
         }
       ]
@@ -258,7 +260,7 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:413e2d24fe4437dece12e9f44da5e7ef0182ba9acf0e6a4898dcfdd05b6b56fb",
+  "fingerprint": "sha256:8b8698c5b209bc7cec2f193a0408fe452b858f503c4b25729ff7c9018f1df38a",
   "lint": {
     "findings": 9,
     "grade": "C",

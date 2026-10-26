@@ -41,6 +41,9 @@ from .canonical_model import (
     StreamingMode,
     TypeRef,
 )
+from .client_collection import safe_named_value as _safe_value
+from .client_collection import scrub_value, template_servers
+from .client_collection import variable_record as _variable_record
 from .inference_provenance import INFERRED, SYNTHESIZED, provenance_extras
 from .normalizer import Keys, Normalizer, SchemaCoercer, normalize_ordering
 from .postman_parser import (
@@ -49,6 +52,7 @@ from .postman_parser import (
     PostmanOperation,
     postman_http_path,
 )
+from .security_scheme_stubs import apply_security_scheme_stubs
 
 __all__ = ["PostmanNormalizer"]
 
@@ -175,6 +179,42 @@ def _collect_components(
     return components
 
 
+def _scrubbed_raw(raw: Any) -> Any:
+    """The parsed collection with credentials removed, for ``api.raw`` (MFI-32.5).
+
+    The redaction marker carries no quote or escape character, so the scrubbed JSON still parses.
+    """
+    if raw is None:
+        return None
+    return json.loads(scrub_value(json.dumps(raw)))
+
+
+#: Postman auth ``type`` → the canonical scheme :mod:`app.canonical_security` reads (MFI-32.5).
+#: Request-signing schemes have no canonical scheme of their own: a generic ``authorization``.
+POSTMAN_AUTH_SCHEMES: Dict[str, str] = {
+    "basic": "basic",
+    "bearer": "bearer",
+    "jwt": "bearer",
+    "digest": "digest",
+    "oauth2": "oauth2",
+    "apikey": "apiKey",
+}
+
+
+def _canonical_scheme(auth_type: str) -> str:
+    """The canonical scheme for a Postman auth type (``authorization`` for signing schemes)."""
+    return POSTMAN_AUTH_SCHEMES.get(str(auth_type or "").strip().lower(), "authorization")
+
+
+def _apikey_placements(source: PostmanDocument) -> Dict[str, Dict[str, Any]]:
+    """Where the collection's API key is sent, for its stub: the first request (else the collection) naming it."""
+    declared = [endpoint.request.auth for endpoint in source.operations] + [source.auth]
+    for auth in declared:
+        if auth is not None and auth.key_name and _canonical_scheme(auth.type) == "apiKey":
+            return {"apiKey": {"key_name": auth.key_name, "key_location": auth.key_location}}
+    return {}
+
+
 def _auth_extras(auth: Optional[PostmanAuth]) -> Optional[Dict[str, Any]]:
     """Render an auth declaration for the extras bag — scheme and parameter names only.
 
@@ -222,7 +262,7 @@ def _parameters(operation: PostmanOperation, *, op_key: str) -> List[Parameter]:
                 location=ParameterLocation.PATH,
                 required=True,
                 type=TypeRef(name="string", nullable=False),
-                extras={"postman_style": "path", "postman_sample": variable.value},
+                extras={"postman_style": "path", "postman_sample": _safe_value(variable.key, variable.value)},
             )
         )
     for query in operation.request.url.query:
@@ -235,7 +275,7 @@ def _parameters(operation: PostmanOperation, *, op_key: str) -> List[Parameter]:
                 location=ParameterLocation.QUERY,
                 required=False,
                 type=TypeRef(name="string", nullable=False),
-                extras={"postman_style": "query", "postman_sample": query.value},
+                extras={"postman_style": "query", "postman_sample": _safe_value(query.name, query.value)},
             )
         )
     return params
@@ -359,13 +399,14 @@ class PostmanNormalizer(Normalizer, register=True):
             operation_extras: Dict[str, Any] = {
                 "postman_folder_path": list(endpoint.folder_path),
                 "postman_headers": [
-                    {"key": header.key, "value": header.value, "disabled": header.disabled}
+                    {"key": header.key, "value": _safe_value(header.key, header.value), "disabled": header.disabled}
                     for header in endpoint.request.headers
                 ],
             }
             request_auth = _auth_extras(endpoint.request.auth)
             if request_auth is not None:
                 operation_extras["postman_auth"] = request_auth
+                operation_extras["security"] = [_canonical_scheme(request_auth["type"])]
             operations.append(
                 Operation(
                     key=op_key,
@@ -382,9 +423,13 @@ class PostmanNormalizer(Normalizer, register=True):
             )
 
         servers: List[Server] = []
-        base_url = next((var.value for var in source.variables if var.key == "baseUrl" and var.value), None)
-        if base_url:
-            servers.append(Server(url=base_url, description="From Postman collection variable"))
+        base = next((var for var in source.variables if var.key == "baseUrl"), None)
+        if base is not None and base.value and _safe_value(base.key, base.value) == base.value:
+            servers.append(Server(url=base.value, description="From Postman collection variable"))
+        elif base is not None:
+            # MFI-32.5: a `baseUrl` with no value, or one carrying a credential, keeps only its name —
+            # as a server variable the user fills in.
+            servers = template_servers({"baseUrl": None}, describe=lambda name: f"Postman variable `{{{{{name}}}}}`.")
 
         # Every type is a schema read from an example body (FMT-8.6): inferred, never declared.
         types = [
@@ -405,16 +450,17 @@ class PostmanNormalizer(Normalizer, register=True):
         ]
         document_extras: Dict[str, Any] = {
             "postman_schema_url": source.schema_url,
-            "postman_variables": [
-                {"key": variable.key, "value": variable.value}
-                for variable in source.variables
-            ],
+            "postman_variables": [_variable_record(variable.key, variable.value) for variable in source.variables],
         }
         if source.collection_version:
             document_extras["postman_collection_version"] = source.collection_version
         collection_auth = _auth_extras(source.auth)
         if collection_auth is not None:
             document_extras["postman_auth"] = collection_auth
+            # The collection's auth applies to requests that inherit it, which the parser cannot tell
+            # apart from an explicit `noauth`; so it is recorded as an observed scheme (a stub), not a
+            # per-operation requirement.
+            document_extras["inferred_auth_schemes"] = [_canonical_scheme(collection_auth["type"])]
         api = CanonicalApi(
             paradigm=self.paradigm,
             format=self.format,
@@ -425,7 +471,8 @@ class PostmanNormalizer(Normalizer, register=True):
             servers=servers,
             services=[Service(key=service_key, name=source.name, operations=operations)],
             types=types,
-            raw={"postman": source.raw} if include_raw else None,
+            raw={"postman": _scrubbed_raw(source.raw)} if include_raw else None,
             extras=document_extras,
         )
+        apply_security_scheme_stubs(api, placements=_apikey_placements(source))
         return normalize_ordering(api)

@@ -37,6 +37,7 @@ import {
   Plug,
   Radar,
   ScanSearch,
+  ShieldCheck,
   User,
   Wrench,
 } from 'lucide-react';
@@ -56,6 +57,8 @@ import {
   catalogDetailTimestamp,
   catalogFingerprint,
   catalogFingerprintShort,
+  catalogScrubSiteLabel,
+  catalogSecretScrub,
   catalogImportJobRef,
   catalogPublishableRow,
   catalogRoutingNote,
@@ -174,6 +177,7 @@ export function CatalogItemProvenance({
   const routingNote = catalogRoutingNote(formatMetadata, sourceFormat);
   const publishableRow = catalogPublishableRow(publishable);
   const connectorRows = catalogConnectorRows(source?.connector);
+  const scrub = catalogSecretScrub(formatMetadata);
 
   return (
     <Card data-testid="catalog-detail-provenance">
@@ -343,6 +347,44 @@ export function CatalogItemProvenance({
                 {publishableRow.value}
               </Badge>
               <span className="cid-quiet">{publishableRow.note}</span>
+            </dd>
+            <dt>Secret scrub</dt>
+            <dd data-testid="catalog-detail-secret-scrub">
+              {scrub === null ? (
+                <span className="cid-absent">{PROVENANCE_ABSENT.secretScrub}</span>
+              ) : scrub.redactions === 0 ? (
+                <span className="cid-prov__note">No credentials found in the stored source.</span>
+              ) : (
+                <>
+                  <Badge variant={scrub.applied ? 'neutral' : 'warning'} mono>
+                    <ShieldCheck aria-hidden />
+                    {scrub.applied ? `${scrub.redactions} redacted` : `${scrub.redactions} found`}
+                  </Badge>
+                  <span className="cid-quiet">
+                    {scrub.applied
+                      ? scrub.withheld
+                        ? 'The archive was withheld; only its member list was stored.'
+                        : 'Replaced with «redacted» in the stored source.'
+                      : 'Warn-only policy: the stored source was kept unredacted.'}
+                  </span>
+                  <span className="cid-prov__scrub-types mono">{scrub.types.join(' · ')}</span>
+                  <details className="cid-prov__sites">
+                    <summary>
+                      {scrub.sites.length === 1 ? '1 redaction site' : `${scrub.sites.length} redaction sites`}
+                    </summary>
+                    <ul data-testid="catalog-detail-secret-scrub-sites">
+                      {scrub.sites.map((site) => (
+                        <li key={catalogScrubSiteLabel(site)} className="mono">
+                          {catalogScrubSiteLabel(site)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </>
+              )}
+              {scrub?.locked ? (
+                <span className="cid-prov__scrub-locked cid-quiet">Always enforced for this format.</span>
+              ) : null}
             </dd>
             <dt>Routing</dt>
             <dd data-testid="catalog-detail-routing-note">

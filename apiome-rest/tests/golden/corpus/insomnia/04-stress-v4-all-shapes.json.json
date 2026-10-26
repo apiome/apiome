@@ -207,6 +207,35 @@
         "POST /legacy": 1,
         "POST /login": 1,
         "PUT /blobs/{blobId}": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-API-Key",
+          "type": "apiKey"
+        },
+        "authorization": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "Authorization",
+          "type": "apiKey"
+        },
+        "basic": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "basic",
+          "type": "http"
+        },
+        "digest": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "digest",
+          "type": "http"
+        },
+        "oauth2": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "flows": {},
+          "type": "oauth2"
+        }
       }
     },
     "format": "insomnia",
@@ -1581,7 +1610,7 @@
     "confidence": 0.97,
     "format": "insomnia"
   },
-  "fingerprint": "sha256:9d5291ac2a30dab836712b0b8cee93a2e251532241b11129c5721e6dfdd88b95",
+  "fingerprint": "sha256:46345c7a4a3669d0896375847c1c4d9a63d1dd3049b6d4975e1dd4945db52495",
   "lint": {
     "findings": 36,
     "grade": "F",

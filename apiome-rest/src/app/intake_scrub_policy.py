@@ -11,17 +11,21 @@
 
 Resolution
 ----------
-Four tiers, in order, and the winner is named on every scrub report so nobody has to guess
+Five tiers, in order, and the winner is named on every scrub report so nobody has to guess
 which one applied:
 
+0. **format locked** — :data:`LOCKED_FORMATS`. HAR, Insomnia, Bruno, Postman and ``.http``
+   request files (MFI-EPIC-32) are recordings of real traffic: a bearer token or a session
+   cookie is not an edge case in them, it is the normal content. MFI-32.5 makes scrubbing
+   **on and unskippable** for them: they always resolve to ``enforce`` with entropy detection
+   on, whatever the tenant tier or a per-format override says, and the policy API refuses an
+   override that names one (:func:`locked_override_formats`).
 1. **format override** — the tenant policy's ``format_overrides[<adapter key>]["mode"]``.
    An explicit tenant decision about one format beats everything, including tier 2.
-2. **format default** — :data:`ALWAYS_ENFORCED_FORMATS`. HAR, Insomnia, Bruno, Postman and
-   ``.http`` request files (MFI-EPIC-32) are recordings of real traffic: a bearer token or a
-   session cookie is not an edge case in them, it is the normal content. They resolve to
-   ``enforce`` even when the tenant tier says otherwise, which is what MFI-32.5 gates on.
-   A tenant that genuinely needs warn-only for one of them must say so per format (tier 1),
-   which is a deliberate, auditable act rather than a side effect of a global setting.
+2. **format default** — :data:`ALWAYS_ENFORCED_FORMATS`. Gateway configurations that embed
+   consumer credentials (Kong, Traefik, Tyk) resolve to ``enforce`` even when the tenant tier
+   says otherwise. A tenant that genuinely needs warn-only for one of them must say so per
+   format (tier 1), a deliberate, auditable act rather than a side effect of a global setting.
 3. **tenant** — the tenant's current policy row (the highest ``version_number``).
 4. **default** — :data:`DEFAULT_POLICY`: enforce, entropy detection on. A tenant with no
    policy row runs this, so upgrading changes no behaviour.
@@ -45,6 +49,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "ALWAYS_ENFORCED_FORMATS",
     "DEFAULT_POLICY",
+    "LOCKED_FORMATS",
     "MODE_ENFORCE",
     "MODE_WARN_ONLY",
     "SCRUB_MODES",
@@ -52,9 +57,11 @@ __all__ = [
     "ScrubResolution",
     "TIER_DEFAULT",
     "TIER_FORMAT_DEFAULT",
+    "TIER_FORMAT_LOCKED",
     "TIER_FORMAT_OVERRIDE",
     "TIER_TENANT",
     "load_tenant_scrub_policy",
+    "locked_override_formats",
     "normalize_mode",
     "resolve_scrub_mode",
     "scrub_policy_content_fingerprint",
@@ -69,6 +76,7 @@ MODE_WARN_ONLY = "warn_only"
 SCRUB_MODES: Tuple[str, ...] = (MODE_ENFORCE, MODE_WARN_ONLY)
 
 #: Resolution tiers, reported as ``policy_tier`` on the scrub report.
+TIER_FORMAT_LOCKED = "format_locked"
 TIER_FORMAT_OVERRIDE = "format_override"
 TIER_FORMAT_DEFAULT = "format_default"
 TIER_TENANT = "tenant"
@@ -87,6 +95,12 @@ TIER_DEFAULT = "default"
 ALWAYS_ENFORCED_FORMATS: FrozenSet[str] = frozenset(
     {"bruno", "har", "http-file", "insomnia", "kong", "postman", "traefik", "tyk"}
 )
+
+#: The MFI-EPIC-32 collection and captured-traffic formats (plus the request-file adapter that
+#: shares their pipeline) for which scrubbing is **unskippable** (MFI-32.5): always ``enforce``,
+#: always with entropy detection, and no per-format override may name them. A subset of
+#: :data:`ALWAYS_ENFORCED_FORMATS`.
+LOCKED_FORMATS: FrozenSet[str] = frozenset({"bruno", "har", "http-file", "insomnia", "postman"})
 
 
 @dataclass(frozen=True)
@@ -234,9 +248,10 @@ def resolve_scrub_mode(
 ) -> ScrubResolution:
     """Resolve the mode that governs one import, and name the tier that produced it.
 
-    See the module docstring for the tier order. In short: an explicit per-format override
-    wins; failing that, an MFI-EPIC-32 collection/capture format is always enforced; failing
-    that, the tenant tier applies; failing that, the default.
+    See the module docstring for the tier order. In short: an MFI-EPIC-32 collection/capture
+    format is locked to enforce (with entropy detection) whatever the policy says; otherwise an
+    explicit per-format override wins; failing that, a format default; failing that, the tenant
+    tier; failing that, the default.
 
     Args:
         policy: The tenant's policy (or :data:`DEFAULT_POLICY`).
@@ -247,6 +262,16 @@ def resolve_scrub_mode(
         The :class:`ScrubResolution` in force.
     """
     key = str(format_key or "").strip().lower() or None
+    if key and key in LOCKED_FORMATS:
+        # Unskippable (MFI-32.5): no tenant setting can weaken scrubbing for these formats.
+        return ScrubResolution(
+            mode=MODE_ENFORCE,
+            tier=TIER_FORMAT_LOCKED,
+            entropy_detection=True,
+            format_key=key,
+            policy_version_id=policy.policy_version_id,
+            policy_content_fingerprint=policy.content_fingerprint,
+        )
     base = ScrubResolution(
         entropy_detection=policy.entropy_detection,
         format_key=key,
@@ -268,6 +293,23 @@ def resolve_scrub_mode(
         return _replace_mode(base, normalize_mode(policy.mode), TIER_TENANT)
 
     return _replace_mode(base, DEFAULT_POLICY.mode, TIER_DEFAULT)
+
+
+def locked_override_formats(format_overrides: Optional[Mapping[str, Any]]) -> Tuple[str, ...]:
+    """The keys of a per-format override map that name a :data:`LOCKED_FORMATS` format.
+
+    The policy API refuses such a map: an override there would never take effect, and accepting
+    it would let a tenant believe it had relaxed scrubbing for HAR or Postman.
+
+    Args:
+        format_overrides: The ``{adapter key: {"mode": ...}}`` map from a policy write.
+
+    Returns:
+        The offending keys, sorted (empty when the map is fine).
+    """
+    return tuple(
+        sorted(str(key) for key in (format_overrides or {}) if str(key).strip().lower() in LOCKED_FORMATS)
+    )
 
 
 def _replace_mode(base: ScrubResolution, mode: str, tier: str) -> ScrubResolution:

@@ -138,10 +138,15 @@ class PostmanAuth:
             writes (an object) and the shape v2.1 writes (an array of entries) both
             reduce to this same set of names, which is what makes the two minors
             comparable without ever touching a secret.
+        key_name: For ``apikey`` only, the header / query parameter the key is sent in — a
+            placement, not a credential (MFI-32.5 needs it for the scheme stub).
+        key_location: For ``apikey`` only, Postman's ``in`` (``header`` or ``query``).
     """
 
     type: str
     parameters: Tuple[str, ...] = ()
+    key_name: Optional[str] = None
+    key_location: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -474,7 +479,34 @@ def _parse_auth(auth_value: Any) -> Optional[PostmanAuth]:
             and isinstance(entry.get("key"), str)
             and entry["key"].strip()
         ]
-    return PostmanAuth(type=kind, parameters=tuple(sorted(set(parameters))))
+    key_name, key_location = _apikey_placement(kind, payload)
+    return PostmanAuth(
+        type=kind,
+        parameters=tuple(sorted(set(parameters))),
+        key_name=key_name,
+        key_location=key_location,
+    )
+
+
+def _apikey_placement(kind: str, payload: Any) -> Tuple[Optional[str], Optional[str]]:
+    """An ``apikey`` block's ``key`` (the header / parameter name) and ``in`` — never its ``value``."""
+    if kind.lower() != "apikey":
+        return None, None
+    if isinstance(payload, list):
+        entries = {
+            entry.get("key"): entry.get("value")
+            for entry in payload
+            if isinstance(entry, Mapping) and entry.get("key") in ("key", "in")
+        }
+    elif isinstance(payload, Mapping):
+        entries = {name: payload.get(name) for name in ("key", "in")}
+    else:
+        return None, None
+    name, location = entries.get("key"), entries.get("in")
+    return (
+        name.strip() if isinstance(name, str) and name.strip() else None,
+        location.strip() if isinstance(location, str) and location.strip() else None,
+    )
 
 
 def _parse_responses(responses_value: Any) -> Tuple[PostmanResponse, ...]:

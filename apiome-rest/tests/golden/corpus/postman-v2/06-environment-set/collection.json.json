@@ -9,15 +9,17 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://staging.example.com/inventory"
         },
         {
           "key": "warehouse",
+          "secret": false,
           "value": "AMS"
         },
         {
           "key": "apiKey",
-          "value": ""
+          "secret": true
         }
       ]
     },
@@ -236,7 +238,7 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:2548280c5958593b30fff4f2af91224ce775aaeab9378b7ba2334fdb7110d844",
+  "fingerprint": "sha256:1f64f5295b4b6905d87fa0b5342eacb34e2560e825463e619bfe5fad25441e7a",
   "lint": {
     "findings": 7,
     "grade": "B",

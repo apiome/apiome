@@ -99,7 +99,7 @@ Eight tabs follow:
 | **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot. An entity Apiome inferred or synthesized carries a badge, and a **Provenance** filter narrows the entities to one kind — see [Declared, inferred and synthesized](./inference-provenance.mdx). A source that carries its own tests, such as a [SoapUI project](./soapui-import.md), adds a **Declared tests** group |
 | **Format details** | The payload's native structure in its own vocabulary — see [Catalog format details](./catalog-format-details.md) |
 | **Source & code** | The raw imported source, read-only, with **“Download raw source”** |
-| **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item) and **Routing**, why the import stored it in the catalog |
+| **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item), **Secret scrub** (what intake redacted — see [Secrets in collections and captures](./collection-secret-scrubbing.md)) and **Routing**, why the import stored it in the catalog |
 | **Conversions** | Every conversion to OpenAPI, with its evidence |
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |

@@ -75,7 +75,8 @@ them:
   variable or parameter default.
 - **Cookie jars are never read.**
 - **The stored copy of your upload is scrubbed too.** Apiome keeps the uploaded file so it can be
-  converted later. Insomnia is one of the formats the secret scrubber always enforces. It redacts
+  converted later. For Insomnia, secret scrubbing is always on and cannot be switched off
+  ([Secrets in collections and captures](./collection-secret-scrubbing.md)). It redacts
   credentials in both JSON and YAML exports, including name/value pairs, `token:` values, cookie jars
   and secret-typed variables, replacing them with `«redacted»`.
 

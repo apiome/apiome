@@ -18,14 +18,17 @@ from app import intake_scrub_policy
 from app.intake_scrub_policy import (
     ALWAYS_ENFORCED_FORMATS,
     DEFAULT_POLICY,
+    LOCKED_FORMATS,
     MODE_ENFORCE,
     MODE_WARN_ONLY,
     TIER_DEFAULT,
     TIER_FORMAT_DEFAULT,
+    TIER_FORMAT_LOCKED,
     TIER_FORMAT_OVERRIDE,
     TIER_TENANT,
     ScrubPolicy,
     load_tenant_scrub_policy,
+    locked_override_formats,
     normalize_mode,
     resolve_scrub_mode,
     scrub_policy_content_fingerprint,
@@ -74,18 +77,44 @@ def test_tenant_tier_applies_to_an_ordinary_format():
     assert resolution.enforced is False
 
 
-@pytest.mark.parametrize("format_key", sorted(ALWAYS_ENFORCED_FORMATS))
-def test_capture_formats_stay_enforced_under_a_warn_only_tenant(format_key):
-    """MFI-32.5 gates on this: a global warn-only must not disarm the capture formats."""
+@pytest.mark.parametrize("format_key", sorted(ALWAYS_ENFORCED_FORMATS - LOCKED_FORMATS))
+def test_gateway_formats_stay_enforced_under_a_warn_only_tenant(format_key):
+    """A global warn-only must not disarm the credential-carrying gateway formats."""
     resolution = resolve_scrub_mode(_saved(mode=MODE_WARN_ONLY), format_key=format_key)
     assert resolution.mode == MODE_ENFORCE
     assert resolution.tier == TIER_FORMAT_DEFAULT
 
 
-def test_explicit_format_override_beats_the_capture_format_default():
-    """The escape hatch exists, but only as a deliberate, per-format, audited statement."""
-    policy = _saved(mode=MODE_ENFORCE, format_overrides={"postman": {"mode": "warn_only"}})
-    resolution = resolve_scrub_mode(policy, format_key="postman")
+@pytest.mark.parametrize("format_key", sorted(LOCKED_FORMATS))
+def test_capture_formats_are_locked_whatever_the_policy_says(format_key):
+    """MFI-32.5: scrubbing is on and unskippable for the collection and capture formats."""
+    policy = _saved(
+        mode=MODE_WARN_ONLY,
+        entropy_detection=False,
+        format_overrides={format_key: {"mode": "warn_only"}},
+    )
+    resolution = resolve_scrub_mode(policy, format_key=format_key.upper())
+    assert resolution.mode == MODE_ENFORCE
+    assert resolution.tier == TIER_FORMAT_LOCKED
+    assert resolution.entropy_detection is True
+
+
+def test_locked_formats_are_a_subset_of_the_always_enforced_formats():
+    assert LOCKED_FORMATS <= ALWAYS_ENFORCED_FORMATS
+    assert LOCKED_FORMATS == {"bruno", "har", "http-file", "insomnia", "postman"}
+
+
+def test_locked_override_formats_names_only_locked_keys():
+    overrides = {" Postman ": {"mode": "warn_only"}, "kong": {"mode": "warn_only"}, "har": {"mode": "enforce"}}
+    assert locked_override_formats(overrides) == (" Postman ", "har")
+    assert locked_override_formats({"kong": {"mode": "warn_only"}}) == ()
+    assert locked_override_formats(None) == ()
+
+
+def test_explicit_format_override_beats_a_gateway_format_default():
+    """The escape hatch exists for the gateway formats, as a deliberate, per-format, audited statement."""
+    policy = _saved(mode=MODE_ENFORCE, format_overrides={"kong": {"mode": "warn_only"}})
+    resolution = resolve_scrub_mode(policy, format_key="kong")
     assert resolution.mode == MODE_WARN_ONLY
     assert resolution.tier == TIER_FORMAT_OVERRIDE
 

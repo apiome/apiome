@@ -448,19 +448,25 @@ class ScrubFinding:
         secret_type: The pattern name that matched (e.g. ``aws-access-key-id``).
         line: 1-based line number of the match within the document.
         occurrences: How many values of this type were redacted on that line.
+        member: The fileset member the line is in, for an archive or git intake (MFI-32.5:
+            a line number alone does not locate a redaction across several files).
     """
 
     secret_type: str
     line: int
     occurrences: int = 1
+    member: Optional[str] = None
 
     def as_dict(self) -> Dict[str, object]:
         """Return the finding as a JSON-safe dict for the job summary."""
-        return {
+        record: Dict[str, object] = {
             "secret_type": self.secret_type,
             "line": self.line,
             "occurrences": self.occurrences,
         }
+        if self.member is not None:
+            record["member"] = self.member
+        return record
 
 
 @dataclass

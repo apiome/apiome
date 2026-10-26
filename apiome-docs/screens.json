@@ -417,6 +417,13 @@
       "data": "fixture:hive-catalog-item/provenance.html"
     },
     {
+      "id": "catalog-item-provenance-secret-scrub",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/provenance-secret-scrub.html",
+      "scrollTo": "[data-testid=\"catalog-detail-secret-scrub\"]"
+    },
+    {
       "id": "catalog-item-x12",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",

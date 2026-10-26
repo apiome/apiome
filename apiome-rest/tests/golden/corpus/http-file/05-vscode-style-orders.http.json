@@ -7,10 +7,11 @@
       "http_file_variables": [
         {
           "key": "apiKey",
-          "value": "demo-key"
+          "secret": true
         },
         {
           "key": "host",
+          "secret": false,
           "value": "https://orders.example.com"
         }
       ],
@@ -65,6 +66,14 @@
         "GET /orders": 1,
         "GET /orders/{id}": 2,
         "POST /orders": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-API-Key",
+          "type": "apiKey"
+        }
       }
     },
     "format": "http-file",
@@ -621,7 +630,7 @@
     "confidence": 0.96,
     "format": "http-file"
   },
-  "fingerprint": "sha256:ef52ef58c48ceee642ed01b99d0740ba3a850e5a14453318c622c42db33f0ee8",
+  "fingerprint": "sha256:8680db3d7907b23d4eddadb07b40fec57881edadd1670b24abf3151e606f81d0",
   "lint": {
     "findings": 12,
     "grade": "C",

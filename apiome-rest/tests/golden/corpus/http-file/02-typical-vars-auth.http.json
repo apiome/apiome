@@ -7,11 +7,12 @@
       "http_file_variables": [
         {
           "key": "host",
+          "secret": false,
           "value": "https://api.example.com"
         },
         {
           "key": "token",
-          "value": "demo-token"
+          "secret": true
         }
       ],
       "inferred_auth_schemes": [
@@ -22,6 +23,13 @@
       "sample_counts": {
         "GET /users": 1,
         "POST /users": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "http-file",
@@ -310,7 +318,7 @@
     "confidence": 0.96,
     "format": "http-file"
   },
-  "fingerprint": "sha256:08448eeea3ce0521ff755ab64f14ba4baf9c6475da47be3607fe7215b70d4173",
+  "fingerprint": "sha256:7a4c19734de8eec42aca45998485d170f7099a2e139c07d36cb9914c9cac225a",
   "lint": {
     "findings": 8,
     "grade": "B",

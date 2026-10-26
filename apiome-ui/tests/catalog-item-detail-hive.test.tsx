@@ -782,6 +782,62 @@ describe('the browser fixtures', () => {
     write('overview-provenance', page().outerHTML);
   });
 
+  /**
+   * MFI-32.5 (#4407): the Provenance tab of a HAR capture, whose import redacted credentials. The
+   * docs page on secrets in collections (screenshot `catalog-item-provenance-secret-scrub`) shows the
+   * **Secret scrub** row: the count, the types and the redaction sites — never a value.
+   */
+  it('writes the Provenance of a scrubbed capture, with its redaction sites', async () => {
+    mockReads({
+      ...ITEM,
+      name: 'Dashboard API',
+      slug: 'dashboard-api',
+      description: 'Traffic recorded from the dashboard in Chrome devtools.',
+      sourceFormat: 'har',
+      protocol: 'http',
+      paradigm: 'rest',
+      domain: 'internal',
+      tags: ['dashboard', 'har'],
+      formatMetadata: {
+        ...ITEM.formatMetadata,
+        sourceLabel: 'dashboard.har',
+        routingReason: 'har is OpenAPI-worthy but not OpenAPI (6 operation(s), 4 type(s), 0 channel(s)) → catalog item.',
+        secretScrub: {
+          scrubbed: true,
+          redactions: 5,
+          secret_types: ['authorization-header', 'cookie-header', 'cookie-jar-value'],
+          findings: [
+            { secret_type: 'authorization-header', line: 18, occurrences: 1 },
+            { secret_type: 'cookie-header', line: 22, occurrences: 1 },
+            { secret_type: 'cookie-jar-value', line: 31, occurrences: 2 },
+            { secret_type: 'authorization-header', line: 74, occurrences: 1 },
+          ],
+          applied: true,
+          source_withheld: false,
+          mode: 'enforce',
+          policy_tier: 'format_locked',
+        },
+      },
+      toolVersions: { 'har-adapter': '1.0.0' },
+      source: { ...ITEM.source, label: 'dashboard.har', uri: 'upload://dashboard.har' },
+      conversion: null,
+    });
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: /Dashboard API/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByTestId('catalog-detail-tab-provenance'));
+    await waitFor(() => expect(screen.getByTestId('catalog-detail-pane-provenance')).toBeVisible());
+    const row = screen.getByTestId('catalog-detail-secret-scrub');
+    expect(row).toHaveTextContent('5 redacted');
+    expect(row).toHaveTextContent('Always enforced for this format.');
+    const sites = screen.getByTestId('catalog-detail-secret-scrub-sites');
+    expect(sites.children).toHaveLength(4);
+    // The docs screenshot shows the sites expanded.
+    (sites.closest('details') as HTMLDetailsElement).open = true;
+    write('provenance-secret-scrub', page().outerHTML);
+  });
+
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
     await renderDetail({
       ...ITEM,

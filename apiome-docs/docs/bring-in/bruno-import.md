@@ -71,8 +71,10 @@ A `.bru` file can hold a real token, password, client secret or API key. Apiome 
   whose name says it holds a credential, never becomes a server variable or parameter default.
 - **`.env` files are never read.** Neither archive nor git intake picks up dotfiles, so
   `{{process.env.*}}` values stay unresolved.
-- **The stored copy of your upload is scrubbed too.** Bruno is one of the formats the secret scrubber
-  always enforces; credential values in the stored `.bru` files are replaced with `«redacted»`.
+- **The stored copy of your upload is scrubbed too.** For Bruno, secret scrubbing is always on and
+  cannot be switched off. Credential values in a stored `.bru` file are replaced with `«redacted»`.
+  An archive or git selection that holds a credential is not stored at all; only its member list is.
+  See [Secrets in collections and captures](./collection-secret-scrubbing.md).
 
 ## What is declared, not imported
 

@@ -382,6 +382,16 @@ def downgrade_to_swagger_2(document: Dict[str, Any], losses: LossTracker) -> Dic
 
     result.update(_swagger2_host(document.get("servers"), losses))
 
+    components = document.get("components")
+    if isinstance(components, dict) and components.get("securitySchemes"):
+        # MFI-32.5 stubs (and the operations' requirements on them) have no faithful Swagger 2.0
+        # form here — an OAuth 2 stub has no flow — so they are dropped and said so.
+        losses.record(
+            LossKind.NA,
+            "security-scheme-stubs-dropped",
+            "Swagger 2.0 output omits the security-scheme stubs recorded at import",
+            pointer="#/components/securitySchemes",
+        )
     definitions = _swagger2_definitions(document.get("components"), losses)
     if definitions:
         result["definitions"] = definitions

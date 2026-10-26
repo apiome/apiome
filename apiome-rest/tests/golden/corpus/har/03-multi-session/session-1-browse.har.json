@@ -79,6 +79,13 @@
         "GET /v2/orders": 2,
         "GET /v2/orders/ord_1001": 1,
         "POST /v2/orders/ord_1001/checkout": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "har",
@@ -751,7 +758,7 @@
     "confidence": 0.97,
     "format": "har"
   },
-  "fingerprint": "sha256:16c8e0475709d99e83b05343d86dd5a1e013a329caa306c7b6cef9191825ab42",
+  "fingerprint": "sha256:ed0fc3624fb3e966ed888b03b4298fed4f49a8db6d3dff7ea12634bfd7668012",
   "lint": {
     "findings": 23,
     "grade": "F",

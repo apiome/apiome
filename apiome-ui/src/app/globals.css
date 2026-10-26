@@ -23236,6 +23236,32 @@ button.cid-entity__head {
   line-height: var(--lh-snug);
 }
 
+/* The secret-scrub report (MFI-32.5): its type list, the redaction sites
+   (collapsed by default, one `member:line · type` per row) and the locked-format
+   note each take a line of their own. */
+.cid-prov__scrub-types,
+.cid-prov__sites,
+.cid-prov__scrub-locked {
+  flex-basis: 100%;
+  inline-size: 100%;
+}
+
+.cid-prov__scrub-types {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.cid-prov__sites > summary {
+  cursor: pointer;
+  color: var(--fg-muted);
+}
+
+.cid-prov__sites > ul {
+  margin: var(--space-1) 0 0;
+  padding-inline-start: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
 /* ---- The Provenance rail ------------------------------------------------
    Four steps, each a tinted glyph tile beside its facts, joined by a connector
    drawn on the tile itself. The connector is `::after` on the tile rather than

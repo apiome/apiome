@@ -179,6 +179,13 @@
         "GET /v3/projects/prj_beta": 1,
         "GET /v3/projects/prj_beta/metrics": 3,
         "PUT /v3/projects/prj_alpha/alerts/al_9": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "har",
@@ -1545,7 +1552,7 @@
     "confidence": 0.97,
     "format": "har"
   },
-  "fingerprint": "sha256:cc84eb9ade99dc12fc5d59b90d7592f13280206ce6349e37a76a087032bc50da",
+  "fingerprint": "sha256:0e5e5739dcf40dfbc4053cf7467ecb83450788bba7aaa106b2d9023a14f6abb0",
   "lint": {
     "findings": 38,
     "grade": "F",

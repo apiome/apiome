@@ -39,6 +39,14 @@
       "provenance": "inferred",
       "sample_counts": {
         "POST /graphql": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-Shop-Key",
+          "type": "apiKey"
+        }
       }
     },
     "format": "bruno",
@@ -263,7 +271,7 @@
     "confidence": 0.96,
     "format": "bruno"
   },
-  "fingerprint": "sha256:6071b8e59089f9026a7ecce132ab11f3ebfc7a5d49ae60ce76d3fe5fc0127a68",
+  "fingerprint": "sha256:68998f9b36843eba9301752a81b13014f91285a1415f0952e065fe58d651dc8c",
   "lint": {
     "findings": 7,
     "grade": "B",

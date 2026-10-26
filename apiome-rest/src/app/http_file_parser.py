@@ -12,8 +12,9 @@ import re
 import shlex
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from .client_collection import safe_named_value, scrub_value
 from .inferred_spec import HttpObservation
 
 __all__ = [
@@ -225,6 +226,27 @@ def _parse_headers_and_body(
     return headers, body
 
 
+def _scrubbed_url(url: str) -> Tuple[str, Tuple[Tuple[str, str], ...]]:
+    """The URL and its query pairs with credentials removed (MFI-32.5).
+
+    Variables are substituted before inference, so a ``{{token}}`` in a query string arrives here as
+    the token itself; each pair passes the same name-and-value gate as a header.
+    """
+    parts = urlparse(url)
+    pairs = tuple(parse_qsl(parts.query, keep_blank_values=True))
+    query = tuple((name, safe_named_value(name, value) or "") for name, value in pairs)
+    rebuilt = parts._replace(netloc=scrub_value(parts.netloc), path=scrub_value(parts.path))
+    if query != pairs:
+        # Re-encoded only when a value was redacted, so a clean URL keeps its spelling.
+        rebuilt = rebuilt._replace(query=urlencode(query, safe="{}[]"))
+    return urlunparse(rebuilt), query
+
+
+def _scrubbed_headers(headers: Sequence[Tuple[str, str]]) -> Tuple[Tuple[str, str], ...]:
+    """Header pairs with credentials removed: an ``Authorization`` keeps its scheme word (MFI-32.5)."""
+    return tuple((name, safe_named_value(name, value) or "") for name, value in headers)
+
+
 def _parse_curl_command(text: str, *, source_location: str, source_label: Optional[str], source_file: Optional[str], variables: Dict[str, str]) -> HttpObservation:
     """Parse a single ``curl`` invocation into an observation."""
     # Collapse line continuations
@@ -278,13 +300,13 @@ def _parse_curl_command(text: str, *, source_location: str, source_label: Option
     if not url:
         raise HttpFileParseError("cURL command is missing a URL", code="INPUT_MALFORMED")
 
-    query = tuple(parse_qsl(urlparse(url).query, keep_blank_values=True))
+    url, query = _scrubbed_url(url)
     return HttpObservation(
         method=method,
         url=url,
-        headers=tuple(headers),
+        headers=_scrubbed_headers(headers),
         query=query,
-        request_body=body,
+        request_body=scrub_value(body) if body else body,
         source_location=source_location,
         source_label=source_label,
         source_file=source_file,
@@ -364,13 +386,13 @@ def _parse_request_block(
     )
     if body is not None:
         body = _substitute(body, local_vars)
-    query = tuple(parse_qsl(urlparse(url).query, keep_blank_values=True))
+    url, query = _scrubbed_url(url)
     return HttpObservation(
         method=method,
         url=url,
-        headers=headers,
+        headers=_scrubbed_headers(headers),
         query=query,
-        request_body=body,
+        request_body=scrub_value(body) if body else body,
         source_location=f"{start_line + req_index}:1",
         source_label=source_label or request_name,
         source_file=source_file,

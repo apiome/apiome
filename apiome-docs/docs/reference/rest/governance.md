@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.316.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.317.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `governance` · 25 operations
 
@@ -1031,7 +1031,8 @@ The tenant's intake secret-scrub policy in force (MFI-29.6, #4393).
 | `mode` | enum `"enforce"`, `"warn_only"` | no | 'enforce' redacts credential values from the source intake persists; 'warn_only' reports the same findings and stores the content unmodified. |
 | `entropyDetection` | boolean | no | Whether the high-entropy heuristic runs alongside the named credential patterns. The named patterns always run and cannot be disabled. |
 | `formatOverrides` | object | no | Per-adapter-key mode overrides, e.g. {'openapi': {'mode': 'warn_only'}}. Resolution is format override → format default → tenant → default. |
-| `alwaysEnforcedFormats` | array of string | no | Adapter keys that resolve to 'enforce' regardless of the tenant mode — the collection and captured-traffic formats. A per-format override still wins. |
+| `alwaysEnforcedFormats` | array of string | no | Adapter keys that resolve to 'enforce' regardless of the tenant mode. A per-format override still wins, except for the lockedFormats. |
+| `lockedFormats` | array of string | no | Collection and captured-traffic formats (HAR, Insomnia, Bruno, Postman, .http request files — MFI-32.5) for which scrubbing is unskippable: always 'enforce' with entropy detection on, whatever the tenant mode or entropy setting says. A formatOverrides entry naming one is refused with 422. |
 | `actorLabel` | string or null | no | Human-readable actor who saved this version. |
 | `createdAt` | string (date-time) or null | no | When the version was saved; null for the built-in default. |
 

@@ -9,11 +9,12 @@
       "postman_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://api.payments-example.com"
         },
         {
           "key": "secretKey",
-          "value": "sk_test_placeholder"
+          "secret": true
         }
       ]
     },
@@ -288,7 +289,7 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:5b60cac5c2a806cdb2419df49b0d63b393ece4645eced34ec0aac06c3c1fb853",
+  "fingerprint": "sha256:f13a6c5c0de14655ac2924921756b3794c73f31483377b73c99a78168ec316f4",
   "lint": {
     "findings": 2,
     "grade": "A",

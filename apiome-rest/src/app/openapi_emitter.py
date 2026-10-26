@@ -102,6 +102,7 @@ from .projection import (
     RouteBinding,
     get_projection,
 )
+from .security_scheme_stubs import SECURITY_SCHEMES_EXTRAS_KEY
 
 __all__ = ["OpenApiEmitOptions", "OpenApiEmitter", "OpenApiFidelityRulePack"]
 
@@ -548,6 +549,7 @@ class OpenApiEmitter(Emitter, register=True):
             if isinstance(op.extras.get("operationId"), str)
         }
 
+        stubs = self._security_stubs(api)
         paths: Dict[str, Any] = {}
         for service, operation in pairs:
             binding = projection.route(operation, service, losses)
@@ -567,6 +569,7 @@ class OpenApiEmitter(Emitter, register=True):
                 operation, binding.method, binding.path, op_ptr, reserved, schema, tracker
             )
             self._apply_extensions(operation_obj, binding, op_ptr, tracker)
+            self._apply_security(operation_obj, operation, stubs, op_ptr, tracker)
             method = binding.method.lower()
             if method not in _OAS31_METHODS:
                 self._stash_non_oas31_operation(
@@ -913,7 +916,7 @@ class OpenApiEmitter(Emitter, register=True):
     def _components(
         self, api: CanonicalApi, schema: SchemaEmitter, tracker: ProvenanceTracker
     ) -> Dict[str, Any]:
-        """Emit ``components.schemas`` from the model's named types."""
+        """Emit ``components.schemas`` from the model's named types, and any security-scheme stubs."""
         schemas: Dict[str, Any] = {}
         for type_ in sorted(api.types, key=lambda t: t.key):
             schemas[type_.key] = schema.named_schema(type_)
@@ -921,7 +924,43 @@ class OpenApiEmitter(Emitter, register=True):
                 ProvenanceTracker.child("/components/schemas", type_.key),
                 Provenance.SOURCE,
             )
-        return {"schemas": schemas} if schemas else {}
+        components: Dict[str, Any] = {"schemas": schemas} if schemas else {}
+        stubs = self._security_stubs(api)
+        if stubs:
+            components["securitySchemes"] = {name: dict(stub) for name, stub in stubs.items()}
+            for name in stubs:
+                tracker.record(
+                    ProvenanceTracker.child("/components/securitySchemes", name),
+                    Provenance.INFERRED,
+                    "security-scheme stub recorded at import (type only, no credential)",
+                )
+        return components
+
+    @staticmethod
+    def _security_stubs(api: CanonicalApi) -> Dict[str, Any]:
+        """The MFI-32.5 ``securityScheme`` stubs a collection or capture import recorded."""
+        stubs = (api.extras or {}).get(SECURITY_SCHEMES_EXTRAS_KEY)
+        return dict(sorted(stubs.items())) if isinstance(stubs, dict) else {}
+
+    @staticmethod
+    def _apply_security(
+        operation_obj: Dict[str, Any],
+        operation: Operation,
+        stubs: Dict[str, Any],
+        op_ptr: str,
+        tracker: ProvenanceTracker,
+    ) -> None:
+        """Add the operation's ``security`` requirement, naming only schemes that have a stub."""
+        if not stubs:
+            return
+        # Only the operation's own declaration is a requirement; a model-wide observation
+        # (`inferred_auth_schemes`) is a stub in components, never a claim about this call.
+        declared = operation.extras.get("security")
+        schemes = [name for name in declared if isinstance(name, str)] if isinstance(declared, list) else []
+        required = [{name: []} for name in dict.fromkeys(schemes) if name in stubs]
+        if required:
+            operation_obj["security"] = required
+            tracker.record(f"{op_ptr}/security", Provenance.SOURCE)
 
     # --- shared helpers -----------------------------------------------------
 

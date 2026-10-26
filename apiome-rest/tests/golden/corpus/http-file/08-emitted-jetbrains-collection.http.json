@@ -7,6 +7,7 @@
       "http_file_variables": [
         {
           "key": "baseUrl",
+          "secret": false,
           "value": "https://api.example.com/v1"
         }
       ],
@@ -707,7 +708,7 @@
     "confidence": 0.96,
     "format": "http-file"
   },
-  "fingerprint": "sha256:e35a6d89ce70be94cde3dd22ec8a1b8239e108355bb881614d3078fd0644cedc",
+  "fingerprint": "sha256:1a2cfdad0e6b918a3a4e8fb96cbda632f9ea55f69f2cc2bd87c32be4685eb241",
   "lint": {
     "findings": 15,
     "grade": "D",

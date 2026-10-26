@@ -137,6 +137,13 @@
         "GET /v1/users": 1,
         "GET /v1/users/{userId}": 1,
         "POST /v1/users": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
       }
     },
     "format": "insomnia",
@@ -765,7 +772,7 @@
     "confidence": 0.97,
     "format": "insomnia"
   },
-  "fingerprint": "sha256:82a37e27bb3402bdc7bed945eccb1903f50e915c4ce17be803bed93e96a8f4b4",
+  "fingerprint": "sha256:a1d79d3d74f0405ed29f0bdd651979e51e1e51c6149f07a4e640d08e1e681015",
   "lint": {
     "findings": 12,
     "grade": "C",

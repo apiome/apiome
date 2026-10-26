@@ -65,7 +65,7 @@ import binascii
 import json
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
@@ -739,7 +739,7 @@ def scrub_intake_source(
             )
             if outcome.scrubbed:
                 affected_members.append(member_path)
-            findings.extend(outcome.findings)
+            findings.extend(replace(finding, member=member_path) for finding in outcome.findings)
         combined = ScrubOutcome(text="", findings=findings)
         # An archive's blob is only withheld when the policy is actually enforcing;
         # warn-only keeps the upload whole so the tenant can still re-download it.
@@ -768,18 +768,6 @@ def scrub_intake_source(
     report.update(effective.as_report_fields())
     stored_text = outcome.text if effective.enforced else intake.text
     return {"sourceContent": stored_text, "intakeKind": "file"}, report
-
-
-def _source_content_for_persist(
-    intake: _ResolvedIntake, resolution: Optional[ScrubResolution] = None
-) -> Dict[str, Any]:
-    """Build format_metadata source fields, credentials scrubbed.
-
-    Thin wrapper over :func:`scrub_intake_source` for callers that do not need the
-    scrub report.
-    """
-    fields, _report = scrub_intake_source(intake, resolution)
-    return fields
 
 
 def capture_canonical_quality_score(
@@ -1307,7 +1295,11 @@ def persist_adapter_import(
     fix_msg_types = fix_msg_types_metadata(model)
     if fix_msg_types:
         format_metadata["fixMsgTypes"] = fix_msg_types
-    format_metadata.update(_source_content_for_persist(intake, scrub_resolution))
+    source_fields, scrub_report = scrub_intake_source(intake, scrub_resolution)
+    format_metadata.update(source_fields)
+    # MFI-32.5: the scrub report (types and sites, never values) travels with the catalog item, so its
+    # Provenance pane can say what intake redacted and under which policy — not just the job summary.
+    format_metadata["secretScrub"] = scrub_report
     withheld = source_retention_withheld(model)
     if withheld is not None:
         format_metadata.pop("sourceEncoding", None)
