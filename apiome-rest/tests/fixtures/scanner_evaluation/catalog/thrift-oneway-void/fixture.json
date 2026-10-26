@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/thrift-oneway-void",
+  "source_format": "thrift",
+  "description": "Thrift IDL with exactly one blocking defect: a oneway method that returns a value.",
+  "document": "namespace java com.example.events.v1\n\nservice Events {\n  oneway string publish(1: string topic),\n}\n"
+}

@@ -341,6 +341,10 @@ def load_format_breaking_change_classifiers() -> None:
     # Arazzo breaking-change classifier (MFI-30.2): registers under ``arazzo``.
     from . import arazzo_breaking_change as _arazzo_breaking  # noqa: F401
 
+    # Apache Thrift breaking-change classifier (MFI-19.3): registers under ``thrift`` and
+    # pairs fields by wire id (renames, reused ids, requiredness).
+    from . import thrift_breaking as _thrift_breaking  # noqa: F401
+
 
 def register_breaking_change_classifier(
     cls: type[BreakingChangeClassifier],

@@ -137,7 +137,6 @@ Every format imports today. These tickets make specific formats complete.
 
 | Ticket | Work |
 | --- | --- |
-| [#3981](https://github.com/apiome/apiome/issues/3981) MFI-19.3 | Thrift `include` across files |
 | [#3808](https://github.com/apiome/apiome/issues/3808) MFI-17.1 | Smithy multi-file sets and JSON AST input |
 | [#3794](https://github.com/apiome/apiome/issues/3794) MFI-14.1 | TypeSpec multi-file sets (and `tspconfig`, [#3798](https://github.com/apiome/apiome/issues/3798)) |
 
@@ -149,6 +148,10 @@ MFI-15.2 (#3800) is built: resource types and traits are applied to every operat
 model, or `app.raml_traits` for a self-contained document without AMF), with headers, bodiless
 responses, response `status_code`s and `raml_resource_type` / `raml_traits` provenance in the
 canonical model.
+
+MFI-19.3 (#3981) is built: a Thrift file set resolves `include`s across files (`app.thrift_fileset`),
+with a field-id-aware breaking-change classifier (`app.thrift_breaking`) and a native `thrift` lint
+pack (`app.thrift_lint`).
 
 **Input variants:**
 

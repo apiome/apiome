@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.457.0] - 2026-10-26
+
+### Changed
+- **Apache Thrift: multi-file sets, field-id breaking rules and lint pack (MFI-19.3, #3981)** — the `thrift`
+  import source's `parse_fileset` now parses the root and every file it `include`s (new `app.thrift_fileset`):
+  includes resolve beside the including file, then from the root's folder; an include that is absolute, a URL or
+  climbs out of the set is refused (`INPUT_REFERENCE_UNRESOLVED`), as is a missing one; an include cycle is
+  `INPUT_SEMANTIC_INVALID`. The normalizer keys each file's types under its own namespace (or its include prefix),
+  resolves qualified names (`shared.Money`, typedefs in included files), keeps every file's services, records
+  `extends` in the service's `extras.thrift_extends` and the set's files in `extras.thrift_source_files`. New
+  breaking-change classifier `thrift` (`app.thrift_breaking`) pairs fields by wire id: `thrift.field-renamed`
+  (dangerous), `thrift.field-id-reused` / `thrift.field-id-changed` (breaking), required fields added or removed
+  (breaking), optional fields removed (dangerous) or added (safe), `thrift.made-required` / `thrift.made-optional`.
+  New native lint pack `thrift` (`app.thrift_lint`): `thrift.namespace-declared`, `thrift.field-no-required`,
+  `thrift.unique-field-ids`, `thrift.enum-explicit-values`, `thrift.oneway-void`; implicit enum values carry
+  `extras.thrift_implicit_value`. Parser fixes: methods with several parameters (previously dropped) and the last
+  field / parameter / typedef without a trailing separator (previously lost) are read, `service … extends …` is
+  read (previously dropped), and `//` / `#` inside quoted strings are no longer taken as comments. The reference
+  resolver shared with RAML moves to `app.fileset.resolve_relative_reference`. New corpus set
+  `thrift/07-orders-set`; Thrift corpus goldens regenerated. OpenAPI 1.321.0.
+
 ## [1.456.0] - 2026-10-26
 
 ### Changed

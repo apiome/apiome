@@ -3973,23 +3973,22 @@
         "thrift"
       ],
       "fixtures": {
-        "valid": 6,
+        "valid": 9,
         "negative": 5,
         "adversarial": 0,
         "scale": 0,
-        "total": 11
+        "total": 14
       },
       "rungs": [
         "composition",
         "minimal",
+        "multi-file",
         "real-world",
         "stress",
         "typical"
       ],
-      "rung_waivers": [
-        "multi-file"
-      ],
-      "goldens": 6,
+      "rung_waivers": [],
+      "goldens": 7,
       "golden_directories": [
         "thrift"
       ],

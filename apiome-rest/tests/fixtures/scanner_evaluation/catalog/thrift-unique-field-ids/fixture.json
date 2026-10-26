@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/thrift-unique-field-ids",
+  "source_format": "thrift",
+  "description": "Thrift IDL with exactly one blocking defect: two fields of `Order` share id 2.",
+  "document": "namespace java com.example.orders.v1\n\nstruct Order {\n  1: optional string id,\n  2: optional string sku,\n  2: optional i32 quantity,\n}\n"
+}

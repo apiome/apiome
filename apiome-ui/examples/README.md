@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1514 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1517 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -70,7 +70,7 @@ The corpus holds **1514 files** across **110 format directories**. Every file ha
 | `protobuf-editions/` | Protobuf editions (2023/2024) | rpc | `edition = "2023"` / `"2024"` in place of `syntax` | 14 |
 | `ros2/` | ROS 2 interfaces | rpc | `.msg`/`.srv`/`.action` field lines with ROS primitive types and `---` separators | 16 |
 | `smithy/` | Smithy 2.0 | rpc | `$version` + Smithy shapes | 11 |
-| `thrift/` | Apache Thrift | rpc | `service` / `struct` shapes | 11 |
+| `thrift/` | Apache Thrift | rpc | `service` / `struct` shapes | 14 |
 | `trpc/` | tRPC routers | rpc | `initTRPC` + exported `t.router({...})` with `.query`/`.mutation` procedures | 16 |
 | `wit/` | WIT (WebAssembly Component Model) | rpc | `package ns:name` + `interface`/`world` blocks | 16 |
 | `xml-rpc/` | XML-RPC | rpc | `<methodCall>` / `<methodResponse>` root | 13 |
@@ -2375,6 +2375,9 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-telemetry-stress.thrift` ⚠ | stress | `thrift` ≥ 0.9 | valid | `union`, `oneway`, `exceptions`, `containers`, `enum`, `typedef` |
 | `05-evernote-notestore.thrift` ⚠ | real-world | `thrift` ≥ 0.9 | valid | `service`, `struct`, `exceptions`, `containers` |
 | `06-payment-service.thrift` ⚠ | typical | `thrift` ≥ 0.9 | valid | `service`, `struct`, `enum`, `exceptions`, `optional` |
+| `07-orders-set/api.thrift` | multi-file (root) | `thrift` ≥ 0.9 | valid | `multi-file`, `include`, `service-extends`, `typedef`, `exception`, `oneway` |
+| `07-orders-set/errors.thrift` ⚠ | multi-file (member) | `thrift` ≥ 0.9 | valid | `multi-file`, `exception` |
+| `07-orders-set/shared.thrift` ⚠ | multi-file (member) | `thrift` ≥ 0.9 | valid | `multi-file`, `typedef`, `enum`, `service` |
 | `negative/01-syntactic-unclosed-brace.thrift` | — | `thrift` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-brace` |
 | `negative/02-semantic-no-definitions.thrift` | — | `thrift` (no guarantee) | invalid | `negative`, `semantic`, `no-definitions` |
 | `negative/03-truncated-mid-token.thrift` | — | `thrift` (no guarantee) | invalid | `negative`, `truncated`, `mid-token-cut` |
@@ -2390,6 +2393,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`05-evernote-notestore.thrift`** — Currently outranked: detection ranks `smithy` (0.95) above `thrift` (0.95); expected_detection records the intended winner for the detection-hardening work.
 
 > ⚠ **`06-payment-service.thrift`** — Currently outranked: detection ranks `oncrpc` (0.95) and `smithy` (0.95) above `thrift` (0.95); expected_detection records the intended winner for the detection-hardening work.
+
+> ⚠ **`07-orders-set/errors.thrift`** — Fileset member: the exceptions the root's services throw, referenced as `errors.NotFound`.
+
+> ⚠ **`07-orders-set/shared.thrift`** — Fileset member: money types and the BaseService the root's OrderService extends.
 
 ### `thunder-client/` — Thunder Client collections
 
@@ -2801,7 +2808,6 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 | `openrpc` | multi-file | The openrpc adapter's parse_fileset only parses the root member and does not resolve external $ref targets in other members, so a multi-file set exercises nothing. |
 | `raml` | multi-file | The RAML adapter's parse_fileset only parses the root document and never resolves !include or library references across fileset members, so a multi-file set would exercise nothing beyond a single file. |
 | `smithy` | multi-file | The smithy adapter's parse_fileset parses only the root member and never resolves shapes defined in other members, so a multi-file set demonstrates nothing. |
-| `thrift` | multi-file | ThriftImportSource.parse_fileset only parses the fileset root and never resolves included members, so a multi-file set demonstrates nothing beyond a single file. |
 | `typespec` | multi-file | The typespec adapter's parse_fileset parses only the root member and does not resolve relative import statements across members, so a multi-file set demonstrates nothing. |
 | `wadl` | multi-file | parse_fileset in wadl_import_source.py parses only the root member and never resolves references into other members (verified in source), so a multi-file set adds no coverage. |
 | `xmlrpc` | multi-file | XmlRpcImportSource.parse_fileset parses only the root member and XML-RPC has no cross-file reference mechanism, so a genuine multi-file set is not importable. |
@@ -2815,7 +2821,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1514 | `Apache-2.0` |
+| `hand-authored` | 1517 | `Apache-2.0` |
 
 ## Trying an import
 

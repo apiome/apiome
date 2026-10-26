@@ -179,6 +179,32 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/arzzo-unresolvable-operation-ref",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "thrift.unique-field-ids": _meta(
+        "thrift.unique-field-ids",
+        ENGINE_SCHEMA,
+        rationale="Field, parameter and exception ids must be unique within their struct or method.",
+        reference="https://thrift.apache.org/docs/idl#field",
+        remediation="Give each field, parameter or exception of the struct or method its own id; "
+        "never reuse the id of a removed field.",
+        false_positive_guidance="Not a false positive: the Thrift compiler rejects duplicate ids, "
+        "so the document cannot be compiled as written.",
+        scan_modes=("lint",),
+        fixture_id="catalog/thrift-unique-field-ids",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "thrift.oneway-void": _meta(
+        "thrift.oneway-void",
+        ENGINE_SCHEMA,
+        rationale="A oneway method must return void and declare no throws; no reply is ever sent.",
+        reference="https://thrift.apache.org/docs/idl#service",
+        remediation="Make the method return `void` and drop its `throws`, or remove `oneway` so "
+        "the caller waits for the reply.",
+        false_positive_guidance="Not a false positive: the Thrift compiler rejects a oneway "
+        "method with a return value or exceptions.",
+        scan_modes=("lint",),
+        fixture_id="catalog/thrift-oneway-void",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

@@ -380,6 +380,34 @@
         "namespace": "com.example.orders",
         "union_members": [],
         "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "thrift_map": true
+        },
+        "fields": [],
+        "key": "com.example.orders.map_string_shared.Money_",
+        "key_type": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": true
+        },
+        "kind": "map",
+        "name": "map<string,shared.Money>",
+        "namespace": null,
+        "union_members": [],
+        "value_type": {
+          "extras": {},
+          "item": null,
+          "name": "shared.Money",
+          "nullable": true
+        }
       }
     ],
     "version": null
@@ -390,22 +418,22 @@
     "operations": 3,
     "servers": 0,
     "services": 1,
-    "types": 2
+    "types": 3
   },
   "detection": {
     "confidence": 0.95,
     "format": "thrift"
   },
-  "fingerprint": "sha256:49592ae1547e31fce4a8aaa18e56f97cd18cc4a0766c97be0c23ebb34fa984e3",
+  "fingerprint": "sha256:57a301974cbe59523bf7f8ba14e4b1bade818c355a190a6e5bf0c1c07f4a8d60",
   "lint": {
-    "findings": 19,
-    "grade": "D",
-    "report_fingerprint": "236c6bf73d3cf6eeb6ded965e07752d801bebe72891025778cab1aebca359bd0",
-    "score": 66,
+    "findings": 24,
+    "grade": "F",
+    "report_fingerprint": "df37cd8568a75be412af0497256d0ccc4571cf3ae69f2f2917a7b3d11d44108a",
+    "score": 46,
     "severity_counts": {
       "error": 0,
       "info": 14,
-      "warning": 5
+      "warning": 10
     }
   },
   "snapshot_version": 1

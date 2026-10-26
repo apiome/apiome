@@ -770,14 +770,14 @@
   },
   "fingerprint": "sha256:41311051ffaa68469b2b14aac4486bb5a77f3e67389d5a285d20fcc3d7d20cc5",
   "lint": {
-    "findings": 35,
+    "findings": 37,
     "grade": "F",
-    "report_fingerprint": "4f283a0f77edc8daf0a5ffe7acbd85c0f78451a04f1113376070fcceaaa37d3e",
-    "score": 45,
+    "report_fingerprint": "b8a50f907c610b397a050a5c9efcceaa9974e3882e59a4bb1564fe295c5b1042",
+    "score": 37,
     "severity_counts": {
       "error": 0,
       "info": 23,
-      "warning": 12
+      "warning": 14
     }
   },
   "snapshot_version": 1
