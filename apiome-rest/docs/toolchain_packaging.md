@@ -31,7 +31,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `tsp` | TypeSpec compiler (`@typespec/compiler`) | `0.65.0` | node | npm into tools prefix + wrapper |
 | `smithy` | Smithy IDL build·validate | `1.53.0` | jvm | GitHub CLI zip (bundles its own runtime) |
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
-| `amf` | AML Modeling Framework (RAML/OAS) | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
+| `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |

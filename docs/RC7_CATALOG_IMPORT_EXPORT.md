@@ -137,10 +137,14 @@ Every format imports today. These tickets make specific formats complete.
 
 | Ticket | Work |
 | --- | --- |
-| [#3799](https://github.com/apiome/apiome/issues/3799) MFI-15.1 / [#3800](https://github.com/apiome/apiome/issues/3800) MFI-15.2 | RAML `!include` / `uses` / libraries; traits and resourceTypes resolved into the model |
+| [#3800](https://github.com/apiome/apiome/issues/3800) MFI-15.2 | RAML traits and resourceTypes resolved into the canonical model |
 | [#3981](https://github.com/apiome/apiome/issues/3981) MFI-19.3 | Thrift `include` across files |
 | [#3808](https://github.com/apiome/apiome/issues/3808) MFI-17.1 | Smithy multi-file sets and JSON AST input |
 | [#3794](https://github.com/apiome/apiome/issues/3794) MFI-14.1 | TypeSpec multi-file sets (and `tspconfig`, [#3798](https://github.com/apiome/apiome/issues/3798)) |
+
+MFI-15.1 (#3799) is built: RAML parses through AMF when the runtime has it, so `!include` files
+and `uses` libraries resolve into the imported model (library types as `alias.Type`); without AMF,
+a set that includes or uses files is refused with `ADAPTER_UNAVAILABLE`.
 
 **Input variants:**
 

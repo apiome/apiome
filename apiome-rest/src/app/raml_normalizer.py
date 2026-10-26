@@ -228,6 +228,9 @@ class RamlNormalizer(Normalizer, register=True):
             extras={
                 "raml_version": source.raml_version,
                 "raml_media_type": source.media_type,
+                # MFI-15.1: the AMF-resolved model's hash and the files it was resolved from.
+                **({"raml_amf_model_sha256": source.model_sha256} if source.model_sha256 else {}),
+                **({"raml_source_files": list(source.source_files)} if source.source_files else {}),
             },
         )
         return normalize_ordering(api)
