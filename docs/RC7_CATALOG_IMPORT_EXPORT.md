@@ -137,7 +137,6 @@ Every format imports today. These tickets make specific formats complete.
 
 | Ticket | Work |
 | --- | --- |
-| [#3808](https://github.com/apiome/apiome/issues/3808) MFI-17.1 | Smithy multi-file sets and JSON AST input |
 | [#3794](https://github.com/apiome/apiome/issues/3794) MFI-14.1 | TypeSpec multi-file sets (and `tspconfig`, [#3798](https://github.com/apiome/apiome/issues/3798)) |
 
 MFI-15.1 (#3799) is built: RAML parses through AMF when the runtime has it, so `!include` files
@@ -152,6 +151,11 @@ canonical model.
 MFI-19.3 (#3981) is built: a Thrift file set resolves `include`s across files (`app.thrift_fileset`),
 with a field-id-aware breaking-change classifier (`app.thrift_breaking`) and a native `thrift` lint
 pack (`app.thrift_lint`).
+
+MFI-17.1 (#3808) is built: a Smithy set with several model files is assembled by `smithy ast` into one JSON
+AST (`app.smithy_ast`, `app.smithy_ast_mapper`), a JSON AST imports directly, and the model's `$version`,
+namespaces, AST hash and source files are recorded. Without the Smithy CLI a multi-file set is
+`ADAPTER_UNAVAILABLE`.
 
 **Input variants:**
 

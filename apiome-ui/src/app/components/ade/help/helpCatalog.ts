@@ -807,6 +807,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['idl', 'include', 'rpc', 'field id', 'breaking change', 'lint', 'file set', 'archive'],
   },
   {
+    id: 'smithy-import',
+    title: 'Import a Smithy model',
+    summary: 'Catalog a Smithy model: one file, a JSON AST, or a multi-file set.',
+    page: 'apiome-docs/docs/bring-in/smithy-import.md',
+    section: 'reference',
+    keywords: ['json ast', 'namespace', 'aws', 'idl', 'multi-file', 'archive', 'smithy ast', 'resource'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

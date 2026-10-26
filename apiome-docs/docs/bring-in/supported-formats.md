@@ -89,7 +89,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | OPC UA NodeSet2 | `opcua-nodeset` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `opcua-nodeset`, `nodeset2`, `opcua` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Format-native (reviewed)](#format-opcua-nodeset) | Ready |
 | OpenRPC | `openrpc` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `openrpc`, `jsonrpc` | `.openrpc.json`, `.openrpc`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | ROS 2 interfaces | `ros2` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `ros2`, `ros2-interface` | `.msg`, `.srv`, `.action`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-ros2) | Ready |
-| Smithy | `smithy` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `smithy` | `.smithy`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| Smithy | `smithy` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `smithy` | `.smithy`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Thrift | `thrift` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `thrift` | `.thrift`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | tRPC router | `trpc` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `trpc` | `.d.ts`, `.ts`, `.d.mts`, `.mts`, `.d.cts`, `.cts`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-trpc) | Ready |
 | WIT (WebAssembly) | `wit` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `wit` | `.wit`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |

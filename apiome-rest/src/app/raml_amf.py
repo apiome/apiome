@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import posixpath
 import re
 import shutil
 import tempfile
@@ -35,7 +34,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import yaml
 
-from .fileset import resolve_relative_reference
+from .fileset import normalize_member_path, resolve_relative_reference
 from .import_source import ImportSourceError
 from .raml_parser import RamlDocument
 from .raml_traits import IncludeAsText
@@ -163,8 +162,8 @@ def check_reference_targets(members: Mapping[str, str]) -> None:
 
 def _safe_member_path(member: str) -> str:
     """Normalize a member path, refusing anything that would land outside the staging root."""
-    normalized = posixpath.normpath(member.replace("\\", "/").lstrip("/"))
-    if normalized in ("", ".") or normalized == ".." or normalized.startswith("../"):
+    normalized = normalize_member_path(member)
+    if normalized is None:
         raise ImportSourceError(
             f"RAML file path {member!r} is not a relative path inside the upload.",
             code="INPUT_ARCHIVE_INVALID",
