@@ -1,0 +1,7 @@
+{
+  "tool": "@typespec/compiler 0.65.0 + @typespec/http, rest, openapi3, versioning 0.65.0",
+  "exit_code": 1,
+  "stdout": "TypeSpec compiler v0.65.0\n\nDiagnostics were reported during compilation:\n\nmodels/pets.tsp:9:11 - error invalid-ref: Unknown identifier PetState\n> 9 |   status: PetState;\n    |           ^^^^^^^^\n\nFound 1 error.\n\n",
+  "stderr": "",
+  "emitted": {}
+}

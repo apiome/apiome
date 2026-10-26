@@ -1,6 +1,6 @@
 {
   "name": "apiome-ui",
-  "version": "0.495.0",
+  "version": "0.496.0",
   "private": true,
   "scripts": {
     "dev": "./scripts/run.sh dev",

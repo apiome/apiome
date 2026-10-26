@@ -182,13 +182,17 @@ RUN curl -fsSL "https://repository-master.mulesoft.org/nexus/content/repositorie
 # app.toolchain_selfcheck refuses to start without them.
 COPY apiome-rest/toolchain/package.json ${TOOLS_PREFIX}/lib/node/package.json
 
-# tsp (TypeSpec compiler) + asyncapi CLI + @graphql-inspector/core — Node packages installed
+# tsp (TypeSpec compiler, with the @typespec/http, rest, openapi3 and versioning libraries a
+# compile resolves through the staged project's node_modules link — MFI-14.1) + asyncapi CLI +
+# @graphql-inspector/core — Node packages installed
 # into the tools prefix and wrapped so the runtime invokes them with its own node (no global npm
 # needed at runtime). `@asyncapi/parser` (from the manifest above) backs the MFI-8.1
 # parse/validate/dereference wrapper below; `@graphql-inspector/core` (+ its `graphql` peer)
 # backs the MFI-10.5 breaking-change wrapper.
 RUN npm install --prefix ${TOOLS_PREFIX}/lib/node --no-audit --no-fund \
-      "@typespec/compiler@${TSP_VERSION}" "@asyncapi/cli@${ASYNCAPI_VERSION}" \
+      "@typespec/compiler@${TSP_VERSION}" "@typespec/http@${TSP_VERSION}" "@typespec/rest@${TSP_VERSION}" \
+      "@typespec/openapi3@${TSP_VERSION}" "@typespec/versioning@${TSP_VERSION}" \
+      "@asyncapi/cli@${ASYNCAPI_VERSION}" \
       "@asyncapi/diff@${ASYNCAPI_DIFF_VERSION}" \
       "graphql@${GRAPHQL_JS_VERSION}" "@graphql-inspector/core@${GRAPHQL_INSPECTOR_VERSION}" \
       "@stoplight/spectral-cli@${SPECTRAL_VERSION}" "@redocly/cli@${REDOCLY_VERSION}" \

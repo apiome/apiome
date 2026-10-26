@@ -152,6 +152,9 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version="0.65.0",
         description="TypeSpec compiler CLI (@typespec/compiler).",
         env_override_key="APIOME_TSP_BIN",
+        # `tsp compile` prints progress and diagnostics as text and writes the emitted OpenAPI
+        # to files (MFI-14.1, app.typespec_compile); its stdout is never JSON.
+        parses_json=False,
         runtime="node",
     ),
     BundledTool(

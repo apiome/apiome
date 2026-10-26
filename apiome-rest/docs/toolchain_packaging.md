@@ -28,7 +28,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | Key | Tool | Pinned | Runtime | Installed by |
 |-----|------|--------|---------|--------------|
 | `buf` | Protobuf/gRPC build·lint·breaking | `1.72.0` — floor for Protobuf Edition 2024 (FMT-3.7) | native | GitHub release binary |
-| `tsp` | TypeSpec compiler (`@typespec/compiler`) | `0.65.0` | node | npm into tools prefix + wrapper |
+| `tsp` | TypeSpec compiler (`@typespec/compiler`) with `@typespec/http`, `rest`, `openapi3` and `versioning` at the same version. `tsp compile` turns a multi-file TypeSpec set into OpenAPI for the `typespec` adapter (MFI-14.1, `app.typespec_compile`) and backs convert-to-OpenAPI; the staged project links the libraries in as `node_modules` (found beside the wrapper, or from `APIOME_TSP_NODE_MODULES`). Optional: without it, a single `.tsp` still imports and a multi-file set is `ADAPTER_UNAVAILABLE` | `0.65.0` | node | npm into tools prefix + wrapper |
 | `smithy` | Smithy IDL build·validate; `smithy ast` assembles a multi-file model into one JSON AST for the `smithy` adapter (MFI-17.1, `app.smithy_ast`). Optional: without it, a single `.smithy` file still imports and a set of several model files is `ADAPTER_UNAVAILABLE` | `1.53.0` | jvm | GitHub CLI zip (bundles its own runtime) |
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
 | `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |

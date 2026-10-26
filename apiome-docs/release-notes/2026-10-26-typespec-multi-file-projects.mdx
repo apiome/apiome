@@ -1,0 +1,22 @@
+---
+slug: typespec-multi-file-projects
+title: Multi-file TypeSpec projects compile on import
+description: TypeSpec projects compile to OpenAPI on import; IDL archives find their root.
+authors: [apiome]
+---
+
+A TypeSpec API split across files now imports whole. Upload the `.tsp` files as an archive and the
+TypeSpec compiler turns them into OpenAPI, which is then cataloged.
+[Import a TypeSpec API](/bring-in/typespec-import).
+
+{/* truncate */}
+
+- **Compiled with the TypeSpec compiler.** The server now ships `@typespec/http`, `@typespec/rest`,
+  `@typespec/openapi3` and `@typespec/versioning`, so `import "@typespec/http"` resolves.
+- **OpenAPI as the surface.** A compiled project's operations, types, diff and lint come from the
+  OpenAPI the compiler emits, and **Convert to OpenAPI** reuses that document.
+- **Clear failures.** A project that does not compile lists each compiler error with its file, line
+  and column.
+- **Archives find their entry point.** A `.zip` or `.tar.gz` of RAML, Smithy, Thrift or TypeSpec files
+  is no longer refused for having "no recognisable format": the file that includes or imports the
+  others becomes the root.

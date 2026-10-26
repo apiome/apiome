@@ -133,11 +133,7 @@ Import dialog and repository-file imports do not supply source documents yet.
 
 Every format imports today. These tickets make specific formats complete.
 
-**Multi-file assembly (P1 — today only the root file of a set is parsed):**
-
-| Ticket | Work |
-| --- | --- |
-| [#3794](https://github.com/apiome/apiome/issues/3794) MFI-14.1 | TypeSpec multi-file sets (and `tspconfig`, [#3798](https://github.com/apiome/apiome/issues/3798)) |
+**Multi-file assembly (P1):** every ticket below is built; a set now resolves across its files.
 
 MFI-15.1 (#3799) is built: RAML parses through AMF when the runtime has it, so `!include` files
 and `uses` libraries resolve into the imported model (library types as `alias.Type`); without AMF,
@@ -156,6 +152,11 @@ MFI-17.1 (#3808) is built: a Smithy set with several model files is assembled by
 AST (`app.smithy_ast`, `app.smithy_ast_mapper`), a JSON AST imports directly, and the model's `$version`,
 namespaces, AST hash and source files are recorded. Without the Smithy CLI a multi-file set is
 `ADAPTER_UNAVAILABLE`.
+
+MFI-14.1 (#3794) is built: a TypeSpec set with several `.tsp` files compiles through `tsp` to OpenAPI
+(`app.typespec_compile`), normalized by the OpenAPI normalizer; the image now ships `@typespec/http`, `rest`,
+`openapi3` and `versioning`. `tspconfig` handling is still [#3798](https://github.com/apiome/apiome/issues/3798).
+Archive intake now has root candidates for `.raml`, `.smithy`, `.thrift` and `.tsp`.
 
 **Input variants:**
 
