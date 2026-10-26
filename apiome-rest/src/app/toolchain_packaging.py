@@ -178,6 +178,9 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version="5.7.1",
         description="AML Modeling Framework CLI for RAML/OAS (aml-org/amf, JVM).",
         env_override_key="APIOME_AMF_BIN",
+        # The RAML seam (MFI-15.1, app.raml_amf) reads stdout itself: the CLI exits 0 even
+        # when it throws, so a missing model is reported with AMF's own stderr message.
+        parses_json=False,
         runtime="jvm",
     ),
     BundledTool(

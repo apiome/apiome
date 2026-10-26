@@ -1,0 +1,12 @@
+#%RAML 1.0 Library
+# Shared types for the pet store.
+types:
+  Status:
+    type: string
+    description: Adoption status.
+    enum: [available, pending, sold]
+  Error:
+    type: object
+    properties:
+      code: integer
+      message: string

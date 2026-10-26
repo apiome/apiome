@@ -1,0 +1,17 @@
+#%RAML 1.0 DataType
+uses:
+  common: ../libs/common.raml
+type: object
+description: A pet in the store.
+properties:
+  id: integer
+  name:
+    type: string
+    description: The pet's name.
+  status:
+    type: common.Status
+    description: Where the pet is in the adoption process.
+  tag?: string
+  tags:
+    type: string[]
+    required: false

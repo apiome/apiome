@@ -1,0 +1,44 @@
+#%RAML 1.0
+# MFI-15.1 (#3799) fixture: a root that !includes a type and an example, and `uses` a library.
+title: Pet Store
+description: Pets, with their types split across files.
+version: v1
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+uses:
+  common: libs/common.raml
+types:
+  Pet: !include types/pet.raml
+/pets:
+  get:
+    description: List pets.
+    queryParameters:
+      limit:
+        type: integer
+        required: false
+        description: Page size.
+    responses:
+      200:
+        body:
+          type: Pet[]
+  post:
+    body:
+      type: Pet
+      example: !include examples/pet.json
+    responses:
+      201:
+        body:
+          type: Pet
+  /{petId}:
+    uriParameters:
+      petId:
+        type: integer
+        description: The pet's id.
+    get:
+      responses:
+        200:
+          body:
+            type: Pet
+        404:
+          body:
+            type: common.Error

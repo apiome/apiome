@@ -108,6 +108,11 @@ class RamlDocument:
     types: Tuple[RamlType, ...]
     operations: Tuple[RamlOperation, ...]
     raw: str
+    #: SHA-256 of the AMF-resolved model when the document was parsed through AMF
+    #: (MFI-15.1, see :mod:`app.raml_amf`); ``None`` for the YAML reader.
+    model_sha256: Optional[str] = None
+    #: Every file of the set the document was resolved from (root, includes, libraries).
+    source_files: Tuple[str, ...] = ()
 
 
 def is_raml(content: str) -> bool:

@@ -791,6 +791,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['http archive', 'devtools', 'network', 'traffic', 'proxy', 'recording', 'inferred', 'browser'],
   },
   {
+    id: 'raml-import',
+    title: 'Import a RAML API',
+    summary: 'Catalog a RAML 1.0 API, with its includes and libraries resolved.',
+    page: 'apiome-docs/docs/bring-in/raml-import.md',
+    section: 'reference',
+    keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

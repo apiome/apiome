@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.455.0] - 2026-10-26
+
+### Changed
+- **RAML parse / resolve through AMF (MFI-15.1, #3799)** — the `raml` import source now parses through the bundled
+  AMF CLI (`amf`, aml-org's AML Modeling Framework) when the runtime has it, so `!include` fragments, `uses`
+  libraries and external examples resolve into the imported model: an included type and every library type import
+  as types (library types as `<alias>.<Type>`, e.g. `common.Error`), and arrays keep their item type. A file set
+  (`fileset`, `.zip`, `.tar.gz`) is staged in a private temporary directory; a reference that is absolute, a URL,
+  or climbs out of the set with `..` is refused before AMF runs (`INPUT_REFERENCE_UNRESOLVED`). A missing include
+  or unknown type name is `INPUT_REFERENCE_UNRESOLVED`; AMF's validation violations are `INPUT_SEMANTIC_INVALID`
+  with each message and line. The normalized model's `extras` carry `raml_amf_model_sha256` (a hash of the
+  AMF-resolved model, independent of the staging path) and `raml_source_files`. Without AMF, a self-contained
+  document still imports through the YAML reader, and a document that includes or uses other files is refused
+  with `ADAPTER_UNAVAILABLE` instead of importing only its root. The `amf` tool no longer has its stdout
+  JSON-parsed by the runner (`parses_json=False`), so AMF's own error text reaches the message. OpenAPI 1.319.0.
+
 ## [1.454.0] - 2026-10-25
 
 ### Changed

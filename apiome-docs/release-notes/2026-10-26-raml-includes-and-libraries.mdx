@@ -1,0 +1,21 @@
+---
+slug: raml-includes-and-libraries
+title: RAML includes and libraries resolve on import
+description: RAML imports resolve !include files and uses libraries through AMF.
+authors: [apiome]
+---
+
+A RAML API split across files now imports whole. Apiome parses RAML with AMF, so types pulled in
+with `!include` and the types of `uses` libraries become part of the catalog item.
+[Import a RAML API](/bring-in/raml-import).
+
+{/* truncate */}
+
+- **File sets.** Upload the root document with its included files and libraries as a `.zip`,
+  `.tar.gz` or `.tar`.
+- **Library types.** A library's types import under its alias, such as `common.Error`.
+- **Safer references.** A reference that is absolute, a URL, or a `../` path out of the upload is
+  refused, and the file is never read.
+- **Clear failures.** A missing file or unknown type names what is missing, and an invalid document
+  lists each problem with its file and line.
+- **Provenance.** The catalog item records its source files and a hash of the resolved model.
