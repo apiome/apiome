@@ -312,6 +312,9 @@ apiome import asyncapi ./asyncapi.yaml        # AsyncAPI 2.x/3.x event API
 apiome import asyncapi --url https://example.com/asyncapi.yaml
 apiome import grpc ./echo.proto               # gRPC / Protobuf .proto (rpc paradigm)
 apiome import grpc --url https://example.com/echo.proto
+apiome import har ./session.har               # HAR capture (inferred REST surface)
+apiome import insomnia ./collection.yaml      # Insomnia v4 (JSON) / v5 (YAML) export
+apiome import bruno ./my-collection.zip       # zipped Bruno folder (bruno.json + .bru files)
 apiome import sample - < ./payload.json     # read from stdin
 
 # Shared flags: --dry-run previews without persisting; --import-timeout bounds

@@ -767,6 +767,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['git', 'repository', 'folders', 'environment', 'variables', 'migrate', 'api client', 'bru lang'],
   },
   {
+    id: 'collection-secret-scrubbing',
+    title: 'Secrets in collections and captures',
+    summary: 'How Apiome strips credentials from collections, captures and request files.',
+    page: 'apiome-docs/docs/bring-in/collection-secret-scrubbing.md',
+    section: 'reference',
+    keywords: ['credentials', 'tokens', 'redaction', 'scrub', 'security schemes', 'environment', 'variables'],
+  },
+  {
     id: 'insomnia-import',
     title: 'Import an Insomnia collection',
     summary: 'Catalog an Insomnia v4 or v5 export and its environments as one inferred REST API.',

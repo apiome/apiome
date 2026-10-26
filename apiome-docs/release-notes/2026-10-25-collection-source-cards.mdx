@@ -1,0 +1,22 @@
+---
+slug: collection-source-cards
+title: HAR, Insomnia and Bruno cards and CLI verbs
+description: Collection formats get import cards, CLI verbs and cleaner detection.
+authors: [apiome]
+---
+
+HAR captures, Insomnia exports and Bruno collections each have a card in **Import to catalog** and
+a verb in the CLI: `apiome import har`, `apiome import insomnia` and `apiome import bruno`.
+[Import a HAR capture](/bring-in/har-import).
+
+{/* truncate */}
+
+- **Cards.** **HAR (inferred)** uses an activity icon. **Insomnia collection** and
+  **Bruno collection** use a neutral send icon. Each card takes a file or a `.zip` / `.tar.gz`
+  archive.
+- **CLI.** `apiome import har ./session.har`, `apiome import insomnia ./collection.yaml` and
+  `apiome import bruno ./my-collection.zip` work like any other format, `--dry-run` included. See
+  [Import a Bruno collection](/bring-in/bruno-import) and
+  [Import an Insomnia collection](/bring-in/insomnia-import).
+- **Detection.** A single Bruno `.bru` request is no longer also detected as an `.http` request file,
+  so the import wizard picks **Bruno collection** without asking.

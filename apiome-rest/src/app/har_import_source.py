@@ -59,7 +59,7 @@ class HarImportSource(ImportSource, register=True):
         "assets and analytics are left out, each host becomes its own catalog item, and cookies and "
         "credentials are never kept."
     )
-    icon = "radio"
+    icon = "activity"
     paradigm = ApiParadigm.REST
     input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
     supports_live_discovery = False

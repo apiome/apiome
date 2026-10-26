@@ -29,9 +29,11 @@ __all__ = [
 _HTTP_METHODS = frozenset(
     {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"}
 )
+# A lone ``{`` is never a request target: ``get {`` opens a Bruno ``.bru`` method block (MFI-32.6),
+# so it must not make a ``.bru`` file read as an ``.http`` file. ``GET {{baseUrl}}/x`` still matches.
 _REQUEST_LINE_RE = re.compile(
     r"^\s*(?P<method>GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+"
-    r"(?P<url>\S+)\s*(?:HTTP/\d(?:\.\d)?)?\s*$",
+    r"(?P<url>(?!\{\s*$)\S+)\s*(?:HTTP/\d(?:\.\d)?)?\s*$",
     re.IGNORECASE,
 )
 _VAR_DEF_RE = re.compile(r"^@(?P<name>[A-Za-z_][\w-]*)\s*=\s*(?P<value>.*)$")

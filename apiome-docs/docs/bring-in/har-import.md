@@ -41,8 +41,12 @@ Import the `.har` file like any other specification: in the [import wizard](./im
 with `apiome import`, or through the REST API (see [Import a specification](./import-a-spec.md)).
 Apiome picks **HAR (inferred)** (`har`).
 
+- **In the app:** in **Import to catalog**, choose the **HAR (inferred)** card (the activity icon),
+  or upload the file on **File Upload** and let Apiome detect it.
+- **From the CLI:** `apiome import har ./session.har`. Add `--dry-run` to preview without saving.
+
 To import several recording sessions as one API, put the `.har` files in one archive (`.zip`,
-`.tar.gz`) and import the archive.
+`.tar.gz`) and import the archive: `apiome import har ./sessions.zip`.
 
 ## What is left out
 
