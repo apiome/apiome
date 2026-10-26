@@ -338,6 +338,53 @@ kind)**. It shows the number of tags, levels and top-level tags, and the kinds u
 only when a tag uses `summary`, `parent` or `kind`, or when the tag hierarchy has a problem. The
 entry is a warning when the hierarchy has a problem, and names it.
 
+## References: `$self` and `$ref` overrides (OpenAPI 3.2)
+
+OpenAPI 3.2 lets a document name itself with `$self`. Each `$ref` is a URI resolved against it,
+so a reference can point back into the same document by its full or relative address:
+
+```yaml
+openapi: 3.2.0
+$self: https://api.example.com/specs/orders.yaml
+components:
+  schemas:
+    Order:
+      properties:
+        customer:
+          $ref: https://api.example.com/specs/orders.yaml#/components/schemas/Customer
+          summary: Billing customer
+          description: Overrides Customer.description for this field
+        shipping:
+          $ref: ./orders.yaml#/components/schemas/Address
+```
+
+What the Projects importer does:
+
+- **Same-document references resolve.** A `$ref` that resolves against `$self` to the same
+  document imports as a local reference, the same as `#/components/schemas/Customer`. Both
+  `customer` and `shipping` above link to their classes.
+- **References to other documents are kept, not followed.** A `$ref` that resolves to another
+  document, such as `common.yaml#/components/schemas/Customer`, is kept as written. The import
+  shows a warning that lists it.
+- **Without `$self`, nothing changes.** References are read exactly as before.
+
+A `summary` or `description` written beside a `$ref` is a **local override**:
+
+- On a property, the sibling `description` becomes the property's description and the `summary`
+  stays on the property. The referenced class keeps its own description.
+- On a class built with `allOf`, a sibling `description` on a `$ref` entry is used instead of the
+  referenced class's description. Without a sibling, the referenced class's description is used,
+  as before.
+- On a class that is a `$ref` to another class, the sibling `description` becomes the class's
+  description.
+
+Circular references still stop at the first repeat.
+
+On the **Analyze** step, **Feature compatibility** lists **Document base URI ($self)**. It counts
+the references that point back into the document and names any that point to another document.
+The entry is a warning when some do. Same-document references written as full URLs no longer
+count as **External references**.
+
 ## Verify
 
 - **UI:** the wizard shows **Import Complete!** and the new project appears on **Projects**.

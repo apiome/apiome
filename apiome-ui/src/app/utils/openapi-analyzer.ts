@@ -11,6 +11,7 @@ import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter'
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32, OpenAPI32UnsupportedConstruct } from './openapi32-converter';
 import { collectStreamMediaTypes, STREAM_KIND_LABELS } from './openapi-stream-media-types';
 import { buildTagTaxonomy, type TagTreeNode } from './openapi-tag-taxonomy';
+import { resolveSelfReferences } from './openapi-self-references';
 import { convertAsyncAPIToOpenAPI, isAsyncAPI } from './asyncapi-converter';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -1507,9 +1508,27 @@ function identifyUnsupportedFeatures(doc: any): UnsupportedFeature[] {
     });
   }
 
-  // External references: not resolved during import
-  const refs = findReferences(doc);
+  // External references: not resolved during import. A same-document $ref written against
+  // $self is local, not external (OA6, #3503).
+  const selfResolution = resolveSelfReferences(doc);
+  const refs = findReferences(selfResolution.document);
   const externalRefs = findExternalReferences(refs);
+  if (selfResolution.self) {
+    const externalNote = selfResolution.external.length > 0
+      ? ` ${selfResolution.external.length} point${selfResolution.external.length === 1 ? 's' : ''} to another document and ${selfResolution.external.length === 1 ? 'is' : 'are'} not followed: ${selfResolution.external.join(', ')}.`
+      : '';
+    features.push({
+      id: 'self-base-uri',
+      label: 'Document base URI ($self)',
+      description:
+        `References resolve against $self "${selfResolution.self}". ` +
+        `${selfResolution.rewritten} reference${selfResolution.rewritten === 1 ? '' : 's'} back into this document ` +
+        `${selfResolution.rewritten === 1 ? 'is' : 'are'} imported as local references.${externalNote}`,
+      path: '$self',
+      count: selfResolution.rewritten + selfResolution.external.length,
+      severity: selfResolution.external.length > 0 ? 'warning' : 'info'
+    });
+  }
   if (externalRefs.length > 0) {
     features.push({
       id: 'external-refs',
@@ -2305,8 +2324,8 @@ export async function analyzeSpecification(fileContent: string, fileName: string
   // Validate meta-schema
   const validation = validateMetaSchema(doc, formatDetection.format);
 
-  // Collect metrics
-  const refs = findReferences(doc);
+  // Collect metrics (same-document $refs written against $self count as local, OA6)
+  const refs = findReferences(resolveSelfReferences(doc).document);
   const metrics = {
     schemaCount: countSchemas(doc),
     propertyCount: countProperties(doc),

@@ -1,0 +1,21 @@
+---
+slug: openapi-32-self-references
+title: OpenAPI 3.2 $self references and $ref overrides
+description: $ref resolves against $self; sibling summary and description override the target.
+authors: [apiome]
+---
+
+OpenAPI 3.2 documents that name themselves with `$self` now import their references correctly. A
+`$ref` written as a full or relative address that points back into the same document links to its
+class like a local reference.
+[References: `$self` and `$ref` overrides (OpenAPI 3.2)](/bring-in/import-a-spec#references-self-and-ref-overrides-openapi-32).
+
+{/* truncate */}
+
+- **Other documents.** A `$ref` that resolves to another document is kept as written and listed
+  in an import warning.
+- **Local overrides.** A `summary` or `description` beside a `$ref` stays on the property, and on
+  an `allOf` class it replaces the referenced class's description.
+- **Analyze.** **Feature compatibility** lists **Document base URI ($self)**, and same-document
+  full-URL references no longer count as **External references**.
+- Documents without `$self` import exactly as before.

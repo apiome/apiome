@@ -14,6 +14,7 @@ import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter'
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32 } from './openapi32-converter';
 import { listPathItemOperations } from './openapi-path-operations';
 import { buildTagTaxonomy, type ParsedTag, type TagTreeNode } from './openapi-tag-taxonomy';
+import { applyRefSiblingOverrides, describeExternalSelfReferences, resolveSelfReferences } from './openapi-self-references';
 import { applyStreamItemSchemas, getMediaTypeItemSchema, getStreamKind, type StreamKind } from './openapi-stream-media-types';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -228,6 +229,8 @@ function resolveAllOf(schema: any, schemas: any, seen: Set<string> = new Set()):
       nextSeen.add(item.$ref);
       // Recursively resolve allOf in referenced schema
       itemSchema = resolveAllOf(itemSchema, schemas, nextSeen);
+      // summary/description beside the $ref override the target's (OA6, #3503).
+      itemSchema = applyRefSiblingOverrides(itemSchema, item);
     } else {
       itemSchema = resolveAllOf(item, schemas, seen);
     }
@@ -666,6 +669,8 @@ function normalizeContentSchema(mediaType: string, mediaObj: any): ParsedMediaTy
  * Exported for use by import-helper when importing OpenAPI via startImport.
  */
 export function extractPaths(spec: any): ParsedPath[] {
+  // Same-document $refs written against $self become local fragments (OA6).
+  spec = resolveSelfReferences(spec).document;
   // Inline stream element schemas become component $refs, matching the classes (OA3).
   spec = applyStreamItemSchemas(spec);
   const pathObj = spec?.paths;
@@ -837,6 +842,12 @@ export function extractSecuritySchemes(spec: any): ParsedSecurityScheme[] {
  */
 function parseOpenAPISpecInternal(spec: any, initialWarnings: string[]): OpenAPIParseResult {
   const globalWarnings: string[] = [...initialWarnings];
+
+  // $refs are resolved against a declared $self; same-document refs become local (OA6, #3503).
+  const selfResolution = resolveSelfReferences(spec);
+  spec = selfResolution.document;
+  const externalSelfRefs = describeExternalSelfReferences(selfResolution);
+  if (externalSelfRefs) globalWarnings.push(externalSelfRefs);
 
   // Stream element schemas (3.2 itemSchema) import as classes tagged x-apiome-stream-kind (OA3, #3500).
   spec = applyStreamItemSchemas(spec);
