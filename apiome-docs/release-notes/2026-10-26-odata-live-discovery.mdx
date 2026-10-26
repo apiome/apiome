@@ -1,0 +1,19 @@
+---
+slug: odata-live-discovery
+title: Discover a live OData service from the CLI
+description: apiome import odata --discover imports a running service's $metadata.
+authors: [apiome]
+---
+
+Import a running OData service by giving its service root:
+`apiome import odata --discover https://services.example.com/odata/trippin/`. The CLI finds the
+service's `$metadata` and imports it like any other OData document.
+[Import an OData service](/bring-in/odata-import#discover-a-live-service).
+
+{/* truncate */}
+
+- **Service root or `$metadata`.** Either URL works, and a query string such as SAP's
+  `sap-client=100` is kept.
+- **Same import.** The metadata is validated against the OASIS schema (v4), cataloged and linted
+  exactly as an upload is.
+- **OData now counts as a live-discovery format** in the supported-formats list.

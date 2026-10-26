@@ -261,6 +261,11 @@ class ODataDocument:
         csdl_violations: Where the CSDL JSON departs from the OASIS schema, as
             ``{"path", "message"}`` dicts (at most :data:`app.odata_csdl_schema.MAX_REPORTED_VIOLATIONS`).
         csdl_violation_count: How many violations there were in all.
+        service_url: The live service root the document was discovered from (MFI-11.3,
+            :mod:`app.odata_discovery`); ``None`` for an uploaded document.
+        service_document: The resources the live service document lists, as
+            ``{"name", "kind", "url"}`` dicts.
+        discovery_notes: Why the service document is missing, when it is.
     """
 
     version: str
@@ -271,6 +276,9 @@ class ODataDocument:
     csdl_json: Optional[Dict[str, Any]] = None
     csdl_violations: Tuple[Dict[str, str], ...] = ()
     csdl_violation_count: int = 0
+    service_url: Optional[str] = None
+    service_document: Tuple[Dict[str, str], ...] = ()
+    discovery_notes: Tuple[str, ...] = ()
 
 
 def is_odata(content: str) -> bool:

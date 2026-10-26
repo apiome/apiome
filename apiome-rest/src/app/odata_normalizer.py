@@ -522,6 +522,35 @@ def _raw(source: ODataDocument) -> Dict[str, Any]:
     return raw
 
 
+def _discovery_extras(source: ODataDocument) -> Dict[str, Any]:
+    """What live discovery found (MFI-11.3); empty for an uploaded document.
+
+    Besides the service document itself, records the entity sets the metadata declares that the
+    service document does not list — sets hidden from the service document
+    (``IncludeInServiceDocument="false"``) or a service document out of step with ``$metadata``.
+    """
+    if not source.service_url:
+        return {}
+    extras: Dict[str, Any] = {
+        "odata_service_url": source.service_url,
+        "odata_service_document": [dict(entry) for entry in source.service_document],
+    }
+    if source.discovery_notes:
+        extras["odata_discovery_notes"] = list(source.discovery_notes)
+    if source.service_document:
+        listed = {entry.get("name") for entry in source.service_document}
+        declared = [
+            entity_set.name
+            for schema in source.schemas
+            if schema.entity_container is not None
+            for entity_set in schema.entity_container.entity_sets
+        ]
+        unlisted = sorted(name for name in declared if name not in listed)
+        if unlisted:
+            extras["odata_unlisted_entity_sets"] = unlisted
+    return extras
+
+
 def _csdl_validation_extras(source: ODataDocument) -> Dict[str, Any]:
     """The OASIS CSDL schema verdict (MFI-11.1); empty when the document was not validated."""
     if source.csdl_json is None:
@@ -661,6 +690,7 @@ class ODataNormalizer(Normalizer, register=True):
                 **_source_version_extras(source),
                 **_reference_extras(source),
                 **_csdl_validation_extras(source),
+                **_discovery_extras(source),
             },
         )
         return normalize_ordering(api)

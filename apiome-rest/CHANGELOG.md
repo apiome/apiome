@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.463.0] - 2026-10-26
+
+### Changed
+- **OData live discovery (MFI-11.3, #3778)** — the `odata` import source now advertises live discovery
+  (`supports_live_discovery`, input kind `discovery`) and gains `discover()` (new `app.odata_discovery`): from a
+  service root or `$metadata` URL (query string kept) it fetches `$metadata` and the **service document** over the
+  SSRF-guarded client (every redirect re-validated, 16 MiB per document, optional credential-vault auth), reading the
+  service document in its v4 JSON (`value`), v2 JSON (`d.EntitySets`) and AtomPub (`<app:service>`) spellings. The
+  metadata is parsed and OASIS-validated exactly as an upload; the model's extras gain `odata_service_url`,
+  `odata_service_document` (`name`/`kind`/`url`), `odata_unlisted_entity_sets` (declared in `$metadata`, not listed
+  by the service document) and `odata_discovery_notes` (a missing service document is noted, not fatal). Failures:
+  404 → `SOURCE_NOT_FOUND`, 401/403 → `SOURCE_AUTH_REQUIRED`, network error or other status → `SOURCE_UNREACHABLE`,
+  oversized → `INPUT_TOO_LARGE`. The CLI gains `apiome import odata --discover <service root>`. Format counts
+  (live discovery 8 → 9) and the supported-formats page regenerated. OpenAPI 1.327.0.
+
 ## [1.462.0] - 2026-10-26
 
 ### Changed

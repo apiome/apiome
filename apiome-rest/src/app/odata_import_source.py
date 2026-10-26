@@ -13,7 +13,8 @@ supported-formats page renders.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from dataclasses import replace
+from typing import Any, Mapping, Optional
 
 from . import odata_normalizer  # noqa: F401 — self-registers the normalizer
 from .canonical_model import ApiParadigm, CanonicalApi
@@ -28,6 +29,7 @@ from .import_source import (
 )
 from .odata_csdl_json import is_csdl_json, parse_csdl_json, with_csdl_validation
 from .odata_csdl_versions import detect_odata_version, format_key_for_version
+from .odata_discovery import discover_odata_service
 from .odata_parser import ODataDocument, ODataParseError, is_odata, parse_odata
 from .secure_xml import SecureXmlError
 
@@ -42,8 +44,10 @@ class ODataImportSource(ImportSource, register=True):
     description = "Import an OData v2, v3 or v4 CSDL / EDMX service metadata document."
     icon = "database"
     paradigm = ApiParadigm.REST
-    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.FILESET)
-    supports_live_discovery = False
+    input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE, InputKind.DISCOVERY, InputKind.FILESET)
+    #: A live service is discovered from its root URL: ``$metadata`` plus the service document
+    #: (MFI-11.3, :meth:`discover`).
+    supports_live_discovery = True
     #: Declared version coverage. ``odata`` stays first because it is the registry key every
     #: existing caller sends and the key a v4 document still detects as; the version-scoped
     #: keys name the CSDL generations FMT-3.4 added, and ``edmx`` is the long-standing
@@ -135,6 +139,47 @@ class ODataImportSource(ImportSource, register=True):
             return with_csdl_validation(document, source_label=root or source_label)
         except (ODataParseError, SecureXmlError) as exc:
             raise ImportSourceError(str(exc), code=getattr(exc, "code", None)) from exc
+
+    def discover(
+        self,
+        service_url: str,
+        *,
+        auth_type: Optional[str] = None,
+        auth_payload: Optional[Mapping[str, Any]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+        client: Optional[Any] = None,
+    ) -> ODataDocument:
+        """Discover a live OData service: its ``$metadata`` and service document (MFI-11.3).
+
+        The live counterpart to :meth:`parse`: the SSRF-guarded discovery
+        (:func:`app.odata_discovery.discover_odata_service`) fetches ``<root>/$metadata`` and the
+        service document at ``<root>/``; the metadata is parsed and validated exactly as an
+        upload is, and the service document is recorded with it.
+
+        Args:
+            service_url: The service root, or its ``$metadata`` URL.
+            auth_type: Credential-vault auth type.
+            auth_payload: The decrypted credential for ``auth_type``.
+            headers: Extra request headers.
+            client: An httpx client to inject (tests).
+
+        Returns:
+            The parsed document, with ``service_url``, ``service_document`` and
+            ``discovery_notes`` set.
+
+        Raises:
+            ImportSourceError: When the service cannot be reached or its metadata does not parse.
+        """
+        discovery = discover_odata_service(
+            service_url, auth_type=auth_type, auth_payload=auth_payload, headers=headers, client=client
+        )
+        document = self.parse(discovery.metadata, source_label=discovery.metadata_url)
+        return replace(
+            document,
+            service_url=discovery.service_url,
+            service_document=tuple(entry.as_dict() for entry in discovery.service_document),
+            discovery_notes=discovery.notes,
+        )
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, ODataDocument):

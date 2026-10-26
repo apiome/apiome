@@ -87,6 +87,7 @@ from apiome_cli.import_.sources import (
 )
 from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
+from apiome_cli.import_.odata import odata_metadata_url
 from apiome_cli.import_.agents_manifest import discover_site_manifest_url
 from apiome_cli.import_.project_dir import ProjectDirectoryError, pack_project_directory
 from apiome_cli.import_.json_schema import (
@@ -1997,6 +1998,84 @@ def import_acp(
         file_path=file_path,
         url=url,
         archive_root=None,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
+
+
+@app.command("odata")
+def import_odata(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="OData metadata (CSDL XML / EDMX or CSDL JSON): path, ``http``/``https`` URL, or ``-``.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    discover: str | None = typer.Option(
+        None,
+        "--discover",
+        metavar="SERVICE_URL",
+        help=(
+            "OData service root (for example ``https://host/odata/trippin/``) whose "
+            "``$metadata`` is imported; a ``…/$metadata`` URL works too, and a query string "
+            "(``sap-client=100``) is kept."
+        ),
+    ),
+    archive_root: str | None = typer.Option(
+        None,
+        "--root",
+        metavar="PATH",
+        help="Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1).",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import OData service metadata from a file, URL, stdin, archive, or a live service.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--discover`` names the document. With
+    ``--discover`` the service's ``$metadata`` URL is derived from its root and imported through
+    the registered ``odata`` adapter like any other source (MFI-11.3).
+    """
+    if discover is not None:
+        url = _resolve_discover_url(
+            ctx,
+            discover,
+            other_inputs=(source, file_path, url),
+            resolve=odata_metadata_url,
+            found_label="OData $metadata",
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="odata",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=archive_root,
         dry_run=dry_run,
         import_timeout_override=import_timeout,
         wait=wait,
