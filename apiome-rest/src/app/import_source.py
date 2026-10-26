@@ -1265,6 +1265,10 @@ def load_builtin_import_sources() -> None:
     # same engine.
     from . import har_import_source as _har  # noqa: F401
 
+    # ``insomnia_import_source`` (MFI-32.3) self-registers the ``insomnia`` adapter — Insomnia v4
+    # JSON and v5 YAML exports and their environments, through the same engine.
+    from . import insomnia_import_source as _insomnia  # noqa: F401
+
     # ``soapui_import_source`` (FMT-10.3) self-registers the ``soapui`` adapter — SoapUI / ReadyAPI
     # project XML: WSDL interfaces through the WSDL adapter, REST interfaces through the same engine.
     from . import soapui_import_source as _soapui  # noqa: F401

@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 98
+- **Formats gated:** 99
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -57,6 +57,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `http-file` | HTTP Request File | rest | 10 | 5 | 0 | 0 | 15 | 6/6 | 8 | `http-file` |
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
 | `ims` | IMS DBD and PSB | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
+| `insomnia` | Insomnia collection | rest | 8 | 8 | 0 | 0 | 16 | 6/6 | 7 | — |
 | `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
 | `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `istio` |
@@ -162,6 +163,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `http-file` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `idoc` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `ims` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `insomnia` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `iso20022` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `iso8583` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `istio` | ✅ | ✅ | ✅ | ✅ | ✅ |

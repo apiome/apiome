@@ -1,0 +1,671 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-25T09:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "parentId": null,
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Stress",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Bodies",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0002",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/items",
+      "name": "JSON with bare variable",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\"name\": \"widget\", \"qty\": {{ _.qty }}, \"tags\": [\"a\"]}"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -2,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0003",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/login",
+      "name": "Form urlencoded",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "name": "username",
+            "value": "ada"
+          },
+          {
+            "name": "password",
+            "value": "demo-password-not-real"
+          },
+          {
+            "name": "remember",
+            "value": "1",
+            "disabled": true
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -3,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0004",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/files",
+      "name": "Multipart upload",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "title",
+            "value": "Report"
+          },
+          {
+            "name": "file",
+            "type": "file",
+            "fileName": "/home/ada/report.pdf"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -4,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0005",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/graphql",
+      "name": "GraphQL",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/graphql",
+        "text": "{\"query\": \"query Item($id: ID!) { item(id: $id) { id name } }\", \"variables\": {\"id\": \"1\"}}"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -5,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0006",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/legacy",
+      "name": "XML",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/xml",
+        "text": "<item><name>w</name></item>"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -6,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0007",
+      "parentId": "fld_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/blobs/:blobId",
+      "name": "Binary",
+      "description": "",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/octet-stream",
+        "fileName": "/tmp/blob.bin"
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -7,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0008",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Auth",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -8,
+      "_type": "request_group",
+      "authentication": {
+        "type": "basic",
+        "username": "ada",
+        "password": "demo-basic-not-real"
+      }
+    },
+    {
+      "_id": "req_0009",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/me",
+      "name": "Inherits basic",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -9,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0010",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/oauth/me",
+      "name": "OAuth 2",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "oauth2",
+        "grantType": "authorization_code",
+        "accessTokenUrl": "https://auth.example.com/oauth/token",
+        "authorizationUrl": "https://auth.example.com/oauth/authorize",
+        "clientId": "demo-client",
+        "clientSecret": "demo-client-secret-not-real",
+        "scope": "read:items write:items",
+        "accessToken": "demo-oauth-token-not-real"
+      },
+      "metaSortKey": -10,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0011",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/keyed",
+      "name": "API key header",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "apikey",
+        "key": "X-API-Key",
+        "value": "demo-apikey-not-real",
+        "addTo": "header"
+      },
+      "metaSortKey": -11,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0012",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/keyed-query",
+      "name": "API key query",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "apikey",
+        "key": "api_key",
+        "value": "demo-apikey-q-not-real",
+        "addTo": "queryParams"
+      },
+      "metaSortKey": -12,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0013",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/digest",
+      "name": "Digest",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "digest",
+        "username": "ada",
+        "password": "demo-digest-not-real"
+      },
+      "metaSortKey": -13,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0014",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/signed",
+      "name": "AWS IAM",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "iam",
+        "accessKeyId": "demo",
+        "secretAccessKey": "demo-iam-not-real",
+        "region": "us-east-1"
+      },
+      "metaSortKey": -14,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0015",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/public",
+      "name": "Explicit none",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "none"
+      },
+      "metaSortKey": -15,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0016",
+      "parentId": "fld_0008",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/off",
+      "name": "Disabled bearer",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "demo-off-not-real",
+        "disabled": true
+      },
+      "metaSortKey": -16,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0017",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Deep",
+      "description": "",
+      "environment": {
+        "region": "eu"
+      },
+      "environmentPropertyOrder": null,
+      "metaSortKey": -17,
+      "_type": "request_group",
+      "headers": [
+        {
+          "name": "X-Region",
+          "value": "{{ _.region }}"
+        }
+      ]
+    },
+    {
+      "_id": "fld_0018",
+      "parentId": "fld_0017",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Deeper",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -18,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_0019",
+      "parentId": "fld_0018",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Deepest",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -19,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0020",
+      "parentId": "fld_0019",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.api.host }}/v3/regions/{{ _.region }}/zones",
+      "name": "Nested env value",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -20,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request",
+      "preRequestScript": "insomnia.environment.set('ts', Date.now());"
+    },
+    {
+      "_id": "req_0021",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/chained",
+      "name": "Chained token",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "X-Session",
+          "value": "{% response 'body', 'req_0002', 'b64::JC50b2tlbg==::46b', 'never', 60 %}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -21,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0022",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "localhost:3000/api/status",
+      "name": "Scheme-less",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -22,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "env_base_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "https://stress.example.com",
+        "qty": 3,
+        "api": {
+          "host": "https://geo.example.com"
+        },
+        "clientSecret": "demo-env-secret-not-real"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "baseUrl",
+          "qty",
+          "api",
+          "clientSecret"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800000,
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Default Jar",
+      "cookies": [
+        {
+          "key": "sid",
+          "value": "demo-cookie-not-real",
+          "domain": "stress.example.com",
+          "path": "/",
+          "httpOnly": true,
+          "id": "c1"
+        }
+      ],
+      "_type": "cookie_jar"
+    },
+    {
+      "_id": "greq_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "name": "Say hello (gRPC)",
+      "url": "grpcb.in:9000",
+      "protoFileId": "pf_1",
+      "protoMethodName": "/hello.HelloService/SayHello",
+      "metadata": [],
+      "body": {
+        "text": "{}"
+      },
+      "metaSortKey": -900,
+      "_type": "grpc_request"
+    },
+    {
+      "_id": "ws_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "name": "Live feed",
+      "url": "wss://stream.example.com/feed",
+      "metaSortKey": -901,
+      "_type": "websocket_request"
+    },
+    {
+      "_id": "uts_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "name": "Smoke tests",
+      "metaSortKey": -902,
+      "_type": "unit_test_suite"
+    },
+    {
+      "_id": "ut_0001",
+      "parentId": "uts_0001",
+      "name": "Returns 200",
+      "code": "expect(1).to.equal(1);",
+      "requestId": "req_0002",
+      "_type": "unit_test"
+    },
+    {
+      "_id": "env_kv_0001",
+      "parentId": "env_base_0001",
+      "name": "Vault",
+      "data": {},
+      "environmentType": "kv",
+      "kvPairData": [
+        {
+          "id": "kv1",
+          "name": "stripeKey",
+          "value": "demo-vault-not-real",
+          "type": "secret",
+          "enabled": true
+        },
+        {
+          "id": "kv2",
+          "name": "region",
+          "value": "us",
+          "type": "str",
+          "enabled": true
+        }
+      ],
+      "metaSortKey": 1761382800009,
+      "_type": "environment"
+    }
+  ]
+}

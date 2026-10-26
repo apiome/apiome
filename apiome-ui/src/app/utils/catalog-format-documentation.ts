@@ -38,6 +38,7 @@ export const CATALOG_FORMAT_DOCUMENTATION_URL: Readonly<Record<string, string>> 
   'thunder-client': 'https://docs.thunderclient.com/features/collections',
   soapui: 'https://www.soapui.org/docs/soap-and-wsdl/working-with-wsdls/',
   har: 'https://w3c.github.io/web-performance/specs/HAR/Overview.html',
+  insomnia: 'https://docs.insomnia.rest/insomnia/import-export-data',
   'http-file': 'https://www.jetbrains.com/help/idea/exploring-http-syntax.html',
   kong: 'https://docs.konghq.com/gateway/latest/production/deployment-topologies/db-less-and-declarative-config/',
   'gateway-api': 'https://gateway-api.sigs.k8s.io/api-types/httproute/',

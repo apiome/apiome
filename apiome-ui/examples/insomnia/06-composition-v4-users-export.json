@@ -1,0 +1,277 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-25T09:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "parentId": null,
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Users API",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "req_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/health",
+      "name": "Health",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "none"
+      },
+      "metaSortKey": -1,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0002",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Users",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -2,
+      "_type": "request_group",
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.accessToken }}",
+        "prefix": ""
+      },
+      "headers": [
+        {
+          "name": "X-Tenant",
+          "value": "{{ _.tenant }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_0003",
+      "parentId": "fld_0002",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/v1/users",
+      "name": "List users",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "page",
+          "value": "1"
+        },
+        {
+          "name": "limit",
+          "value": "{{ _.pageSize }}"
+        },
+        {
+          "name": "debug",
+          "value": "true",
+          "disabled": true
+        }
+      ],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -3,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_0004",
+      "parentId": "fld_0002",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/v1/users/:userId",
+      "name": "Get user",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -4,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request",
+      "pathParameters": [
+        {
+          "name": "userId",
+          "value": "42"
+        }
+      ]
+    },
+    {
+      "_id": "req_0005",
+      "parentId": "fld_0002",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/v1/users",
+      "name": "Create user",
+      "description": "",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Ada\",\n  \"email\": \"ada@example.com\",\n  \"roles\": [\n    \"admin\"\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -5,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_0006",
+      "parentId": "fld_0002",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Admin",
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -6,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0007",
+      "parentId": "fld_0006",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "{{ _.baseUrl }}/v1/users/{{ _.userId }}",
+      "name": "Delete user",
+      "description": "",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -7,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "env_base_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "https://api.example.com",
+        "tenant": "acme",
+        "pageSize": "20",
+        "accessToken": ""
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "baseUrl",
+          "tenant",
+          "pageSize",
+          "accessToken"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800000,
+      "_type": "environment"
+    },
+    {
+      "_id": "env_sub_0001",
+      "parentId": "env_base_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Staging",
+      "data": {
+        "baseUrl": "https://staging.api.example.com",
+        "userId": "7"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "baseUrl",
+          "userId"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800001,
+      "_type": "environment"
+    },
+    {
+      "_id": "env_sub_0002",
+      "parentId": "env_base_0001",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Production",
+      "data": {
+        "accessToken": "demo-access-token-not-real"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "accessToken"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1761382800002,
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Default Jar",
+      "cookies": [],
+      "_type": "cookie_jar"
+    }
+  ]
+}

@@ -164,6 +164,43 @@ _PATTERNS: Tuple[Tuple[str, Pattern[str]], ...] = (
         ))
         for member in ("value", "initialValue", "currentValue")
     ),
+    # --- YAML-shaped client exports (Insomnia v5, MFI-32.3) ---------------------
+    # The same ``name``/``key`` + ``value`` pairs as above, written as YAML list items or mappings
+    # (``- name: password`` then ``value: …`` a few sibling lines below). Lines starting with ``-``
+    # end the search, so a match never reaches into the next list item.
+    ("secret-key-value-pair", _p(
+        r"^[ \t]*(?:-[ \t]+)?(?:key|name):[ \t]*[\"']?[^\n\"']*"
+        r"(?:password|passwd|secret|api[-_]?key|apikey|token|credential|passphrase"
+        r"|session|private[-_]?key|authorization|cookie)"
+        r"[^\n\"']*[\"']?[ \t]*\n"
+        r"(?:[ \t]+[A-Za-z_][A-Za-z0-9_]*:[^\n]*\n){0,6}?"
+        r"[ \t]+(?:value|initialValue|currentValue):[ \t]*[\"']?([^\s\"'#][^\n\"']{3,}?)[\"']?[ \t]*$",
+        re.IGNORECASE | re.MULTILINE,
+    )),
+    # A YAML key named exactly ``token`` / ``bearer`` (an Insomnia bearer auth block), unquoted or
+    # quoted; the JSON spelling is the rule above.
+    ("secret-assignment", _p(
+        r"^[ \t]*(?:-[ \t]+)?(?:token|bearer):[ \t]*[\"']?([^\s\"'#][^\n\"']{3,}?)[\"']?[ \t]*$",
+        re.IGNORECASE | re.MULTILINE,
+    )),
+    # A key-value environment variable whose ``type`` is ``secret`` (Insomnia's secret variables),
+    # whatever it is called: JSON with ``type`` after or before the ``value``, and YAML.
+    ("secret-typed-value", _p(
+        r"\"value\"\s*:\s*\"((?:[^\"\\\n]|\\.)+)\"\s*,"
+        r"(?:\s*\"[A-Za-z_]+\"\s*:\s*(?:\"[^\"\n]*\"|true|false|null|-?\d+)\s*,)*?"
+        r"\s*\"type\"\s*:\s*\"secret\"",
+    )),
+    ("secret-typed-value", _p(
+        r"\"type\"\s*:\s*\"secret\"\s*,"
+        r"(?:\s*\"[A-Za-z_]+\"\s*:\s*(?:\"[^\"\n]*\"|true|false|null|-?\d+)\s*,)*?"
+        r"\s*\"value\"\s*:\s*\"((?:[^\"\\\n]|\\.)+)\"",
+    )),
+    ("secret-typed-value", _p(
+        r"^[ \t]*(?:-[ \t]+)?value:[ \t]*[\"']?([^\s\"'#][^\n\"']*?)[\"']?[ \t]*\n"
+        r"(?:[ \t]+[A-Za-z_][A-Za-z0-9_]*:[^\n]*\n){0,6}?"
+        r"[ \t]+type:[ \t]*[\"']?secret[\"']?[ \t]*$",
+        re.MULTILINE,
+    )),
     # --- XML-shaped credentials (SoapUI / ReadyAPI projects) ---------------------
     # A SoapUI project keeps a saved request's password as element text
     # (``<con:password>…</con:password>``) and a saved SOAP envelope — escaped into the project
@@ -242,8 +279,38 @@ def _json_array_end(text: str, start: int) -> int:
     return length
 
 
+#: Where a YAML cookie jar starts: a ``cookies:`` key with its list on the following lines
+#: (an Insomnia v5 ``cookieJar``).
+_YAML_COOKIE_JAR_START: Pattern[str] = _p(r"^([ \t]*)cookies:[ \t]*$", re.MULTILINE)
+
+#: A ``value:`` member of a YAML cookie entry (``- key: sid`` / ``  value: …``).
+_YAML_COOKIE_JAR_VALUE: Pattern[str] = _p(
+    r"^[ \t]*(?:-[ \t]+)?value:[ \t]*[\"']?([^\s\"'#][^\n\"']*?)[\"']?[ \t]*$", re.MULTILINE
+)
+
+
+def _yaml_block_end(text: str, start: int, indent: int) -> int:
+    """Offset where the YAML block under a key indented ``indent`` ends.
+
+    The block is every following line indented further, or at the same indent when it is a list
+    item (``- …``), which YAML allows directly under its key; blank lines continue it.
+    """
+    position = start
+    length = len(text)
+    while position < length:
+        line_end = text.find("\n", position)
+        line_end = length if line_end == -1 else line_end
+        line = text[position:line_end]
+        stripped = line.lstrip(" \t")
+        depth = len(line) - len(stripped)
+        if stripped and not (depth > indent or (depth == indent and stripped.startswith("- "))):
+            return position
+        position = line_end + 1
+    return length
+
+
 def _cookie_jar_spans(text: str) -> List[Tuple[int, int]]:
-    """Every ``value`` span inside a ``"cookies": [...]`` array.
+    """Every ``value`` span inside a ``"cookies": [...]`` array or a YAML ``cookies:`` block.
 
     A HAR capture keeps each request's and response's cookies as ``{"name": …, "value": …}``
     objects, and a cookie's *name* (``sid``, ``connect.sid``, ``_gh_sess``) rarely says it is a
@@ -262,6 +329,13 @@ def _cookie_jar_spans(text: str) -> List[Tuple[int, int]]:
             spans.append(value.span(1))
         if scanned_to >= len(text):
             break
+    yaml_scanned_to = 0
+    for start in _YAML_COOKIE_JAR_START.finditer(text):
+        if start.start() < yaml_scanned_to:
+            continue
+        yaml_scanned_to = _yaml_block_end(text, start.end() + 1, len(start.group(1)))
+        for value in _YAML_COOKIE_JAR_VALUE.finditer(text, start.end(), yaml_scanned_to):
+            spans.append(value.span(1))
     return spans
 
 

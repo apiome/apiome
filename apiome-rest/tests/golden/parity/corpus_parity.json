@@ -2113,6 +2113,49 @@
       "waivers": {}
     },
     {
+      "format_key": "insomnia",
+      "label": "Insomnia collection",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "insomnia"
+      ],
+      "corpus_directories": [
+        "insomnia"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 8,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 16
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "insomnia"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "iso20022",
       "label": "ISO 20022",
       "paradigm": "data_schema",

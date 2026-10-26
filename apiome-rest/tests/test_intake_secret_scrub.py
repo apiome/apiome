@@ -511,3 +511,72 @@ def test_many_unterminated_cookie_jars_do_not_rescan_the_tail():
     started = time.perf_counter()
     scrub_document_text(text, entropy_detection=False)
     assert time.perf_counter() - started < 10
+
+
+# --- MFI-32.3: Insomnia shapes (YAML pairs, YAML jars, secret-typed variables) ---
+
+
+@pytest.mark.parametrize("name", ["password", "X-API-Key", "client_secret", "Authorization"])
+def test_a_secret_named_yaml_pair_has_its_value_redacted(name):
+    text = yaml.safe_dump({"params": [{"name": name, "disabled": False, "value": "yaml-pair-0042"}]}, sort_keys=False)
+    scrubbed = yaml.safe_load(scrub_document_text(text).text)
+    assert scrubbed["params"][0]["value"] == REDACTION_MARKER
+    assert scrubbed["params"][0]["disabled"] is False
+
+
+def test_a_yaml_api_key_auth_block_has_its_value_redacted():
+    auth = {"type": "apikey", "key": "X-API-Key", "value": "yaml-key-0042", "addTo": "header"}
+    text = yaml.safe_dump({"authentication": auth}, sort_keys=False)
+    scrubbed = yaml.safe_load(scrub_document_text(text).text)["authentication"]
+    assert scrubbed == {"type": "apikey", "key": "X-API-Key", "value": REDACTION_MARKER, "addTo": "header"}
+
+
+def test_a_non_secret_yaml_pair_and_the_next_list_item_are_kept():
+    text = yaml.safe_dump(
+        {"headers": [{"name": "Accept", "value": "application/json"}, {"name": "X-Trace", "value": "trace-0042"}]},
+        sort_keys=False,
+    )
+    assert scrub_document_text(text, entropy_detection=False).text == text
+
+
+def test_an_unquoted_yaml_token_is_redacted():
+    text = "authentication:\n  type: bearer\n  token: yaml-bearer-0042\n  prefix: ''\n"
+    scrubbed = yaml.safe_load(scrub_document_text(text).text)["authentication"]
+    assert scrubbed == {"type": "bearer", "token": REDACTION_MARKER, "prefix": ""}
+
+
+def test_every_yaml_cookie_jar_value_is_redacted():
+    document = {
+        "cookieJar": {
+            "name": "Default Jar",
+            "cookies": [
+                {"key": "sid", "value": "jar-y-0001", "domain": "a.example.com"},
+                {"key": "theme", "value": "dark"},
+            ],
+        },
+        "after": {"value": "kept-value"},
+    }
+    text = yaml.safe_dump(document, sort_keys=False)
+    scrubbed = yaml.safe_load(scrub_document_text(text, entropy_detection=False).text)
+    assert [c["value"] for c in scrubbed["cookieJar"]["cookies"]] == [REDACTION_MARKER, REDACTION_MARKER]
+    assert scrubbed["after"]["value"] == "kept-value"
+
+
+@pytest.mark.parametrize("dump", ["json", "yaml"])
+def test_a_secret_typed_variable_is_redacted_whatever_it_is_called(dump):
+    pairs = [
+        {"id": "1", "name": "stripe", "value": "typed-secret-0042", "type": "secret", "enabled": True},
+        {"id": "2", "type": "secret", "name": "vault", "value": "typed-secret-0043"},
+        {"id": "3", "name": "region", "value": "us-east", "type": "str"},
+    ]
+    if dump == "json":
+        text = json.dumps({"kvPairData": pairs})
+        scrubbed = json.loads(scrub_document_text(text, entropy_detection=False).text)
+    else:
+        text = yaml.safe_dump({"kvPairData": pairs}, sort_keys=False)
+        scrubbed = yaml.safe_load(scrub_document_text(text, entropy_detection=False).text)
+    values = [pair["value"] for pair in scrubbed["kvPairData"]]
+    assert values[0] == REDACTION_MARKER
+    assert values[2] == "us-east"
+    if dump == "json":
+        assert values[1] == REDACTION_MARKER

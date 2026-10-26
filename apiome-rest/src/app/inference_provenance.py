@@ -106,6 +106,7 @@ INFERENCE_BASED_ADAPTERS: Mapping[str, str] = {
     "hoppscotch": "Every construct is inferred from the saved requests in the collection.",
     "thunder-client": "Every construct is inferred from the saved requests in the collection.",
     "har": "Every construct is inferred from the captured traffic.",
+    "insomnia": "Every construct is inferred from the saved requests in the export.",
     "soapui": "REST interfaces are inferred from their saved requests and mock responses; WSDL "
     "interfaces are declared by their WSDL.",
     "kong": "Paths recovered from regex patterns are inferred.",

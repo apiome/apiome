@@ -115,6 +115,7 @@ const FORMAT_LABELS: Readonly<Record<string, string>> = {
   'thunder-client': 'Thunder Client',
   soapui: 'SoapUI / ReadyAPI',
   har: 'HAR (inferred)',
+  insomnia: 'Insomnia',
   'http-file': 'HTTP Request File',
   kong: 'Kong Declarative Config',
   'gateway-api': 'Gateway API HTTPRoute',

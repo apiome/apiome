@@ -1,0 +1,50 @@
+{
+  "_type": "export",
+  "__export_format": 3,
+  "__export_date": "2026-10-25T09:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "parentId": null,
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Old",
+      "description": "",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "req_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "url": "https://api.example.com/ping",
+      "name": "Ping",
+      "description": "",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "jar_0001",
+      "parentId": "wrk_7d3c1b9a0e2f4d6c8b5a3e1f0d9c8b7a",
+      "modified": 1761382800000,
+      "created": 1761382800000,
+      "name": "Default Jar",
+      "cookies": [],
+      "_type": "cookie_jar"
+    }
+  ]
+}

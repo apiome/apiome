@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_pets",
+      "operation": "GET /pets"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "name",
+          "tag"
+        ],
+        "type": "object"
+      },
+      "name": "POST_pets",
+      "operation": "POST /pets"
+    }
+  ]
+}

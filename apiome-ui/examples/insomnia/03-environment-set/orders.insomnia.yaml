@@ -1,0 +1,58 @@
+type: collection.insomnia.rest/5.0
+name: Orders
+meta:
+  id: wrk_5f0c2a6b8d1e4f3a9b7c6d5e4f3a2b1c
+  created: 1761382800000
+  modified: 1761382800000
+  description: ''
+collection:
+- name: Orders
+  meta:
+    id: fld_00000000000000000000000000000001
+    created: 1761382800000
+    modified: 1761382800000
+    sortKey: -1
+  children:
+  - url: '{{ _.ordersHost }}/v2/orders'
+    name: List orders
+    meta:
+      id: req_00000000000000000000000000000002
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: -2
+    method: GET
+    parameters:
+    - name: status
+      value: open
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: '{{ _.ordersHost }}/v2/orders/:orderId'
+    name: Get order
+    meta:
+      id: req_00000000000000000000000000000003
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: -3
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c
+    created: 1761382800000
+    modified: 1761382800000

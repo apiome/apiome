@@ -1,0 +1,124 @@
+{
+  "adapter": "insomnia",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "insomnia": {
+        "capability_limits": [],
+        "environments": [],
+        "export_formats": [
+          "v5"
+        ],
+        "folders": [],
+        "requests": 1,
+        "variables": []
+      },
+      "path_inferences": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /ping": 1
+      }
+    },
+    "format": "insomnia",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Ping",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred",
+          "source_file": "insomnia/01-minimal-v5-single-request.yaml"
+        },
+        "name": null,
+        "protocol": null,
+        "url": "https://api.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Ping",
+        "name": "Ping",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "https://api.example.com/ping"
+                ],
+                "template": "/ping"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/01-minimal-v5-single-request.yaml"
+              ],
+              "source_label": "Ping",
+              "source_location": "collection/0"
+            },
+            "http_method": "GET",
+            "http_path": "/ping",
+            "key": "GET /ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Ping",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "insomnia/01-minimal-v5-single-request.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "insomnia"
+  },
+  "fingerprint": "sha256:73c50d3987a322170654c67cf29dcf99d43649d8cea78521e7eba6f032ed482a",
+  "lint": {
+    "findings": 3,
+    "grade": "A",
+    "report_fingerprint": "8c9b74acea48097b52c67a3d4974ea2484ec2b92055f36ae6ddf15106060732c",
+    "score": 94,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

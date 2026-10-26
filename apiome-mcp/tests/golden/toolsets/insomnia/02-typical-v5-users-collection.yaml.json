@@ -1,0 +1,117 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "default": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v1_users_userId",
+      "operation": "DELETE /v1/users/{userId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_health",
+      "operation": "GET /health"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "limit": {
+            "default": "20",
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "default": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "page",
+          "accept",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_users",
+      "operation": "GET /v1/users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "default": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_users_userId",
+      "operation": "GET /v1/users/{userId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "x-tenant": {
+            "default": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "x-tenant",
+          "email",
+          "name",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_users",
+      "operation": "POST /v1/users"
+    }
+  ]
+}

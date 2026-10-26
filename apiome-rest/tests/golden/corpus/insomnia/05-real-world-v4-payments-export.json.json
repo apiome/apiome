@@ -1,0 +1,1280 @@
+{
+  "adapter": "insomnia",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
+      "insomnia": {
+        "capability_limits": [
+          {
+            "construct": "insomnia.script",
+            "count": 1,
+            "locations": [
+              "Create token"
+            ],
+            "note": "Pre-request and after-response scripts are run by Insomnia; they are not modelled."
+          },
+          {
+            "construct": "insomnia.auth_credential",
+            "count": 5,
+            "locations": [
+              "Capture payment",
+              "Create payment",
+              "Get payment",
+              "List payments",
+              "Refund"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's grant type, URL and scopes, or an API key's name) is kept; saved credentials are never read."
+          },
+          {
+            "construct": "insomnia.secret_variable",
+            "count": 2,
+            "locations": [
+              "access_token",
+              "client_secret"
+            ],
+            "note": "A secret variable (by its name, or Insomnia's `secret` type) is listed by name; its value is withheld."
+          }
+        ],
+        "environments": [
+          "Base Environment",
+          "Live"
+        ],
+        "export_formats": [
+          "v4"
+        ],
+        "folders": [
+          "Auth",
+          "Payments",
+          "Refunds"
+        ],
+        "requests": 6,
+        "variables": [
+          {
+            "name": "access_token",
+            "secret": true,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "api_version",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "base_url",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "base_url",
+            "secret": false,
+            "source": "environment:Live"
+          },
+          {
+            "name": "client_id",
+            "secret": false,
+            "source": "environment:Base Environment"
+          },
+          {
+            "name": "client_secret",
+            "secret": true,
+            "source": "environment:Base Environment"
+          }
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "payments"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "paymentId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v1/payments/{paymentId}"
+          ],
+          "template": "/v1/payments/{paymentId}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "payments"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "paymentId"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "capture"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/v1/payments/{paymentId}/capture"
+          ],
+          "template": "/v1/payments/{paymentId}/capture"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "payments"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "paymentId"
+            },
+            {
+              "index": 3,
+              "kind": "literal",
+              "value": "refunds"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/v1/payments/{paymentId}/refunds"
+          ],
+          "template": "/v1/payments/{paymentId}/refunds"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v1/payments": 1,
+        "GET /v1/payments/{paymentId}": 1,
+        "POST /v1/oauth/token": 1,
+        "POST /v1/payments": 1,
+        "POST /v1/payments/{paymentId}/capture": 1,
+        "POST /v1/payments/{paymentId}/refunds": 1
+      }
+    },
+    "format": "insomnia",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Payments Sandbox",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "base_url",
+        "protocol": null,
+        "url": "{base_url}",
+        "variables": [
+          {
+            "default": "https://sandbox.payments.example.com",
+            "description": "Insomnia environment variable `{{ _.base_url }}`.",
+            "enum": null,
+            "extras": {},
+            "name": "base_url"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Payments Sandbox",
+        "name": "Payments Sandbox",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "payments"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/payments"
+                ],
+                "template": "/v1/payments"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Payments",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "List payments",
+              "source_location": "resources/7"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/payments",
+            "key": "GET /v1/payments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/payments",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/payments#header.idempotency-key",
+                "location": "header",
+                "name": "idempotency-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "2026-10-01",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/payments#header.x-api-version",
+                "location": "header",
+                "name": "x-api-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "25"
+                  ]
+                },
+                "key": "GET /v1/payments#query.limit",
+                "location": "query",
+                "name": "limit",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    ""
+                  ]
+                },
+                "key": "GET /v1/payments#query.starting_after",
+                "location": "query",
+                "name": "starting_after",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Payments"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "payments"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "paymentId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/payments/{paymentId}"
+                ],
+                "template": "/v1/payments/{paymentId}"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Payments",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "Get payment",
+              "source_location": "resources/5"
+            },
+            "http_method": "GET",
+            "http_path": "/v1/payments/{paymentId}",
+            "key": "GET /v1/payments/{paymentId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v1/payments/{paymentId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/payments/{paymentId}#header.idempotency-key",
+                "location": "header",
+                "name": "idempotency-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "2026-10-01",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/payments/{paymentId}#header.x-api-version",
+                "location": "header",
+                "name": "x-api-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/payments/{paymentId}#path.paymentId",
+                "location": "path",
+                "name": "paymentId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Payments"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "oauth"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "token"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/oauth/token"
+                ],
+                "template": "/v1/oauth/token"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "Create token",
+              "source_location": "resources/2"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/oauth/token",
+            "key": "POST /v1/oauth/token",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/x-www-form-urlencoded"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/oauth/token#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostTokenRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/oauth/token",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/oauth/token#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Auth"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "payments"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/payments"
+                ],
+                "template": "/v1/payments"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Payments",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "Create payment",
+              "source_location": "resources/4"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/payments",
+            "key": "POST /v1/payments",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/payments#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostPaymentRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/payments",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments#header.idempotency-key",
+                "location": "header",
+                "name": "idempotency-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "2026-10-01",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments#header.x-api-version",
+                "location": "header",
+                "name": "x-api-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Payments"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "payments"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "paymentId"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "capture"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/payments/{paymentId}/capture"
+                ],
+                "template": "/v1/payments/{paymentId}/capture"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Payments",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "Capture payment",
+              "source_location": "resources/6"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/payments/{paymentId}/capture",
+            "key": "POST /v1/payments/{paymentId}/capture",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/payments/{paymentId}/capture#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostCaptureRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/payments/{paymentId}/capture",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/capture#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/capture#header.idempotency-key",
+                "location": "header",
+                "name": "idempotency-key",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "2026-10-01",
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/capture#header.x-api-version",
+                "location": "header",
+                "name": "x-api-version",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/capture#path.paymentId",
+                "location": "path",
+                "name": "paymentId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Payments"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "payments"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "paymentId"
+                  },
+                  {
+                    "index": 3,
+                    "kind": "literal",
+                    "value": "refunds"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/payments/{paymentId}/refunds"
+                ],
+                "template": "/v1/payments/{paymentId}/refunds"
+              },
+              "insomnia_auth": [
+                {
+                  "declared_at": "Refunds",
+                  "scheme": "bearer",
+                  "type": "bearer"
+                }
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "bearer"
+              ],
+              "source_files": [
+                "insomnia/05-real-world-v4-payments-export.json"
+              ],
+              "source_label": "Refund",
+              "source_location": "resources/9"
+            },
+            "http_method": "POST",
+            "http_path": "/v1/payments/{paymentId}/refunds",
+            "key": "POST /v1/payments/{paymentId}/refunds",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "headers": [],
+                "key": "POST /v1/payments/{paymentId}/refunds#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "PostRefundRequest",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              }
+            ],
+            "name": "POST /v1/payments/{paymentId}/refunds",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/refunds#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/payments/{paymentId}/refunds#path.paymentId",
+                "location": "path",
+                "name": "paymentId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Refunds"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Payments Sandbox",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostCaptureRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostCaptureRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostCaptureRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostPaymentRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostPaymentRequest.capture",
+            "name": "capture",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostPaymentRequest.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostPaymentRequest.source",
+            "name": "source",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostPaymentRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostPaymentRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostRefundRequest.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostRefundRequest.reason",
+            "name": "reason",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostRefundRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostRefundRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.client_id",
+            "name": "client_id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.client_secret",
+            "name": "client_secret",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostTokenRequest.grant_type",
+            "name": "grant_type",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostTokenRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostTokenRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "insomnia/05-real-world-v4-payments-export.json",
+  "counts": {
+    "channels": 0,
+    "operations": 6,
+    "servers": 1,
+    "services": 1,
+    "types": 4
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "insomnia"
+  },
+  "fingerprint": "sha256:cdfce175459201ae3602ded443cd943c2b2cab8a82fcd67340155c2fb8eb5701",
+  "lint": {
+    "findings": 26,
+    "grade": "F",
+    "report_fingerprint": "cfab557a8e4fb87874913a7e549b9e8e992e224bbf68a246358b1e8f3b6da3d0",
+    "score": 48,
+    "severity_counts": {
+      "error": 0,
+      "info": 16,
+      "warning": 10
+    }
+  },
+  "snapshot_version": 1
+}

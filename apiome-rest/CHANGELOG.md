@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.451.0] - 2026-10-25
+
+### Added
+- **Insomnia collection import (MFI-32.3, #4405)** — an `insomnia` import source (file, URL, paste, fileset; label
+  `Insomnia collection`) reads Insomnia **v4** JSON exports (`_type: export`, `__export_format: 4`; the flat
+  `resources[]` tree rebuilt from `parentId`) and **v5** YAML exports (`collection.insomnia.rest/5.0`, a design
+  document's `spec.insomnia.rest/5.0`, global `environment.insomnia.rest/5.0` files beside them) through the shared
+  MFI-32.1 inferred-spec engine. New modules `insomnia_parser`, `insomnia_normalizer`, `insomnia_import_source`.
+  - Folders → operation tags; requests → single-sample operations, bodies as declared (JSON, GraphQL, form,
+    multipart; XML / text / file keep their media type); folder auth and headers inherited.
+  - Environment variables → server variables (`{{ _.baseUrl }}` → `{baseUrl}`, base environment wins, then the
+    first sub-environment; folder environments override) and query / header parameter defaults for whole-variable
+    values. Secret variables (by name, or Insomnia's `secret` type) never become defaults.
+  - Auth read as scheme + public facts only (OAuth 2 grant type, URLs, scopes; API key name and location).
+    Cookie jars are never read.
+  - Declared limits: scripts, template tags, gRPC / WebSocket requests, unit tests, API spec, mock routes, cookie
+    jars, withheld credentials, secret variables. `FORMAT_VERSION_UNSUPPORTED` for other export formats.
+  - Structural stability: the v4 and v5 exports of one collection import identically (round trip with an Insomnia
+    export waits for MFX-31.3, #4291).
+  - Corpus `apiome-ui/examples/insomnia/` (8 valid across all six rungs, 8 negative), goldens, round-trip matrix row,
+    MCP toolset goldens, version coverage, inference-provenance entry, generated `secrets-insomnia.yaml` fixture.
+  - `client_collection.load_client_yaml` shares the JSON loader's encoding and intake-guard checks.
+
+### Fixed
+- **Secret scrub gate: YAML client exports and secret-typed variables** — the gate now redacts YAML
+  `name`/`key` + `value` pairs that name a secret, YAML `token:` / `bearer:` values (quoted or not), every value in a
+  YAML `cookies:` block, and any key-value variable whose `type` is `secret` (JSON, either member order, and YAML),
+  whatever it is called.
+
 ## [1.450.0] - 2026-10-25
 
 ### Added

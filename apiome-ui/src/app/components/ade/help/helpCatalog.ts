@@ -759,6 +759,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['vs code', 'vscode', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
   },
   {
+    id: 'insomnia-import',
+    title: 'Import an Insomnia collection',
+    summary: 'Catalog an Insomnia v4 or v5 export and its environments as one inferred REST API.',
+    page: 'apiome-docs/docs/bring-in/insomnia-import.md',
+    section: 'reference',
+    keywords: ['kong', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client', 'yaml'],
+  },
+  {
     id: 'har-import',
     title: 'Import a HAR capture',
     summary: 'Record traffic in devtools or a proxy and catalog the inferred REST API.',

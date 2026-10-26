@@ -1,0 +1,183 @@
+type: collection.insomnia.rest/5.0
+name: Users API
+meta:
+  id: wrk_5f0c2a6b8d1e4f3a9b7c6d5e4f3a2b1c
+  created: 1761382800000
+  modified: 1761382800000
+  description: ''
+collection:
+- url: '{{ _.baseUrl }}/health'
+  name: Health
+  meta:
+    id: req_00000000000000000000000000000001
+    created: 1761382800000
+    modified: 1761382800000
+    isPrivate: false
+    sortKey: -1
+  method: GET
+  authentication:
+    type: none
+  settings:
+    renderRequestBody: true
+    encodeUrl: true
+    followRedirects: global
+    cookies:
+      send: true
+      store: true
+    rebuildPath: true
+- name: Users
+  meta:
+    id: fld_00000000000000000000000000000002
+    created: 1761382800000
+    modified: 1761382800000
+    sortKey: -2
+  authentication:
+    type: bearer
+    token: '{{ _.accessToken }}'
+    prefix: ''
+  headers:
+  - name: X-Tenant
+    value: '{{ _.tenant }}'
+  children:
+  - url: '{{ _.baseUrl }}/v1/users'
+    name: List users
+    meta:
+      id: req_00000000000000000000000000000003
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: -3
+    method: GET
+    parameters:
+    - name: page
+      value: '1'
+    - name: limit
+      value: '{{ _.pageSize }}'
+    - name: debug
+      value: 'true'
+      disabled: true
+    headers:
+    - name: Accept
+      value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: '{{ _.baseUrl }}/v1/users/:userId'
+    name: Get user
+    meta:
+      id: req_00000000000000000000000000000004
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: -4
+    method: GET
+    pathParameters:
+    - name: userId
+      value: '42'
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: '{{ _.baseUrl }}/v1/users'
+    name: Create user
+    meta:
+      id: req_00000000000000000000000000000005
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: -5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Ada",
+          "email": "ada@example.com",
+          "roles": [
+            "admin"
+          ]
+        }
+    headers:
+    - name: Content-Type
+      value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - name: Admin
+    meta:
+      id: fld_00000000000000000000000000000006
+      created: 1761382800000
+      modified: 1761382800000
+      sortKey: -6
+    children:
+    - url: '{{ _.baseUrl }}/v1/users/{{ _.userId }}'
+      name: Delete user
+      meta:
+        id: req_00000000000000000000000000000007
+        created: 1761382800000
+        modified: 1761382800000
+        isPrivate: false
+        sortKey: -7
+      method: DELETE
+      settings:
+        renderRequestBody: true
+        encodeUrl: true
+        followRedirects: global
+        cookies:
+          send: true
+          store: true
+        rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c
+    created: 1761382800000
+    modified: 1761382800000
+environments:
+  name: Base Environment
+  meta:
+    id: env_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d
+    created: 1761382800000
+    modified: 1761382800000
+    isPrivate: false
+  data:
+    baseUrl: https://api.example.com
+    tenant: acme
+    pageSize: '20'
+    accessToken: ''
+  subEnvironments:
+  - name: Staging
+    meta:
+      id: env_sub1
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: 1
+    data:
+      baseUrl: https://staging.api.example.com
+      userId: '7'
+    color: null
+  - name: Production
+    meta:
+      id: env_sub2
+      created: 1761382800000
+      modified: 1761382800000
+      isPrivate: false
+      sortKey: 2
+    data:
+      accessToken: demo-access-token-not-real
+    color: null

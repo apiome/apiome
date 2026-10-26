@@ -272,6 +272,12 @@
       "paradigm": "data_schema",
       "marker": "`DBD NAME=\u2026,ACCESS=(\u2026)` with `SEGM`/`FIELD`, or `PCB TYPE=DB` with `SENSEG`"
     },
+    "insomnia": {
+      "label": "Insomnia exports",
+      "category": "rest-http",
+      "paradigm": "rest",
+      "marker": "v4 JSON `{\"_type\": \"export\", \"__export_format\": 4, \"resources\": [\u2026]}`, or v5 YAML `type: collection.insomnia.rest/5.0`"
+    },
     "iso20022": {
       "label": "ISO 20022",
       "category": "industry-messaging",
@@ -13807,6 +13813,375 @@
       "notes": "The FMT-11.2 acceptance case: a DBD with a dangling PARENT.",
       "failure_class": "unresolvable-ref",
       "expected_error_code": "INPUT_REFERENCE_UNRESOLVED"
+    },
+    {
+      "path": "insomnia/01-minimal-v5-single-request.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v5",
+        "yaml",
+        "single-request"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "insomnia/02-typical-v5-users-collection.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v5",
+        "yaml",
+        "folders",
+        "folder-auth",
+        "folder-headers",
+        "sub-environments",
+        "path-params",
+        "disabled-entries"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The same collection as 06-composition-v4-users-export.json, exported as v5 YAML: both must import to the same operations, tags and servers."
+    },
+    {
+      "path": "insomnia/03-environment-set/orders.insomnia.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "v5",
+        "collection"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "insomnia/03-environment-set/staging.environment.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "multi-file",
+        "v5",
+        "global-environment"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "insomnia/04-stress-v4-all-shapes.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v4",
+        "json-body",
+        "bare-variable",
+        "form-body",
+        "multipart-body",
+        "graphql-body",
+        "xml-body",
+        "binary-body",
+        "basic-auth",
+        "oauth2-auth",
+        "apikey-auth",
+        "digest-auth",
+        "iam-auth",
+        "auth-inheritance",
+        "disabled-auth",
+        "nested-folders",
+        "folder-environment",
+        "nested-env-data",
+        "template-tag",
+        "pre-request-script",
+        "grpc-request",
+        "websocket-request",
+        "unit-tests",
+        "cookie-jar",
+        "kv-secret"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "insomnia/05-real-world-v4-payments-export.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v4",
+        "token-exchange",
+        "after-response-script",
+        "idempotency-key",
+        "uuid-template-tag",
+        "folder-auth"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Reconstructed in-repo from the shape of a payments vendor's Insomnia collection; no upstream text copied.",
+      "rung": "real-world"
+    },
+    {
+      "path": "insomnia/06-composition-v4-users-export.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v4",
+        "parentId-tree",
+        "folder-auth-inheritance",
+        "folder-header-inheritance",
+        "sub-environments"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition",
+      "notes": "The v4 JSON export of the collection in 02-typical-v5-users-collection.yaml; the two import identically (structural stability across export formats)."
+    },
+    {
+      "path": "insomnia/07-real-world-v5-design-document.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "v5",
+        "design-document",
+        "api-spec",
+        "unit-tests",
+        "after-response-script"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "real-world"
+    },
+    {
+      "path": "insomnia/negative/01-syntactic-bad-indentation.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "yaml",
+        "bad-mapping"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "insomnia/negative/02-semantic-no-requests.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "empty-folder"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "insomnia/negative/03-truncated-v4-mid-resource.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated",
+        "v4",
+        "mid-resource"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "insomnia/negative/04-wrong-format-postman.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "postman"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "insomnia/negative/05-encoding-utf16.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
+      "path": "insomnia/negative/06-version-out-of-range-format-3.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "version-out-of-range",
+        "export-format-3"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "version-out-of-range",
+      "expected_error_code": "FORMAT_VERSION_UNSUPPORTED"
+    },
+    {
+      "path": "insomnia/negative/07-semantic-orphan-parent.json",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "orphan-parentId"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "insomnia/negative/08-semantic-environment-alone.yaml",
+      "format": "insomnia",
+      "adapter_key": "insomnia",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "insomnia",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "environment-alone"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "A global environment exported on its own defines variables but no requests; it imports only beside the collection that uses it (see 03-environment-set/).",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
     },
     {
       "path": "iso20022/01-pain.001-credit-transfer.xml",

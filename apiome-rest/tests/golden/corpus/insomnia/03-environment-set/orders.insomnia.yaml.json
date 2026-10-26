@@ -1,0 +1,281 @@
+{
+  "adapter": "insomnia",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "insomnia": {
+        "capability_limits": [
+          {
+            "construct": "insomnia.secret_variable",
+            "count": 1,
+            "locations": [
+              "ordersApiKey"
+            ],
+            "note": "A secret variable (by its name, or Insomnia's `secret` type) is listed by name; its value is withheld."
+          }
+        ],
+        "environments": [
+          "Staging"
+        ],
+        "export_formats": [
+          "v5",
+          "v5"
+        ],
+        "folders": [
+          "Orders"
+        ],
+        "requests": 2,
+        "variables": [
+          {
+            "name": "ordersApiKey",
+            "secret": true,
+            "source": "environment:Staging"
+          },
+          {
+            "name": "ordersHost",
+            "secret": false,
+            "source": "environment:Staging"
+          }
+        ]
+      },
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v2"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v2/orders/{orderId}"
+          ],
+          "template": "/v2/orders/{orderId}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v2/orders": 1,
+        "GET /v2/orders/{orderId}": 1
+      }
+    },
+    "format": "insomnia",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders · Staging",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "ordersHost",
+        "protocol": null,
+        "url": "{ordersHost}",
+        "variables": [
+          {
+            "default": "https://orders.staging.example.com",
+            "description": "Insomnia environment variable `{{ _.ordersHost }}`.",
+            "enum": null,
+            "extras": {},
+            "name": "ordersHost"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Orders · Staging",
+        "name": "Orders · Staging",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "orders.insomnia.yaml"
+              ],
+              "source_label": "List orders",
+              "source_location": "collection/0/children/0"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders",
+            "key": "GET /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "open"
+                  ]
+                },
+                "key": "GET /v2/orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/orders/{orderId}"
+                ],
+                "template": "/v2/orders/{orderId}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [
+                "orders.insomnia.yaml"
+              ],
+              "source_label": "Get order",
+              "source_location": "collection/0/children/1"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders/{orderId}",
+            "key": "GET /v2/orders/{orderId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders/{orderId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v2/orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "Orders"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Orders · Staging",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "insomnia/03-environment-set/orders.insomnia.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "insomnia"
+  },
+  "fingerprint": "sha256:356f36cb26d1ed703ba48414ef5fccb106ae60a1722ff7ba9d06ff40d9881487",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "bd097dc0a3f70df02a533fba2ed77400fc5c35d2668c4d5ff1dad7d46a393ad4",
+    "score": 90,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

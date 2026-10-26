@@ -1,0 +1,10 @@
+type: environment.insomnia.rest/5.0
+name: Staging
+meta:
+  id: env_glob_0001
+  created: 1761382800000
+  modified: 1761382800000
+  isPrivate: false
+data:
+  ordersHost: https://orders.staging.example.com
+  ordersApiKey: demo-orders-key-not-real

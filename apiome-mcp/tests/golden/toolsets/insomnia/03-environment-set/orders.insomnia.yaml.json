@@ -1,0 +1,35 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_orders",
+      "operation": "GET /v2/orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v2_orders_orderId",
+      "operation": "GET /v2/orders/{orderId}"
+    }
+  ]
+}

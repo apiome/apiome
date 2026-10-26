@@ -1120,6 +1120,27 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[],
         default_write=None,
     ),
+    "insomnia": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="Insomnia export format 4 (JSON)",
+                format_key="insomnia",
+                support=VersionSupport.FULL,
+                note="`_type: export`, `__export_format: 4`: a flat `resources[]` list whose folder tree is "
+                "rebuilt from `parentId` links.",
+            ),
+            FormatVersion(
+                version="Insomnia export format 5 (YAML)",
+                format_key="insomnia",
+                support=VersionSupport.FULL,
+                note="`collection.insomnia.rest/5.0` (and a design document's `spec.insomnia.rest/5.0`, a global "
+                "`environment.insomnia.rest/5.0` beside it): a nested `collection:` tree. Any other export format "
+                "is refused with `FORMAT_VERSION_UNSUPPORTED`.",
+            ),
+        ],
+        writes=[],
+        default_write=None,
+    ),
     "hoppscotch": VersionCoverage(
         reads=[
             FormatVersion(
