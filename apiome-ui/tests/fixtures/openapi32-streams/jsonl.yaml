@@ -1,0 +1,47 @@
+# OpenAPI 3.2.0 JSON Lines stream (OA3, #3500): a $ref element and an inline element.
+openapi: 3.2.0
+info:
+  title: Log stream API
+  version: 1.0.0
+paths:
+  /logs:
+    get:
+      operationId: streamLogs
+      responses:
+        "200":
+          description: One LogEvent per line
+          content:
+            application/jsonl:
+              itemSchema:
+                $ref: '#/components/schemas/LogEvent'
+  /logs/import:
+    post:
+      operationId: importLogs
+      requestBody:
+        content:
+          application/jsonl:
+            itemSchema:
+              type: object
+              required: [line]
+              properties:
+                line:
+                  type: string
+                source:
+                  type: string
+      responses:
+        "202":
+          description: Accepted
+components:
+  schemas:
+    LogEvent:
+      type: object
+      required: [message]
+      properties:
+        level:
+          type: string
+          enum: [debug, info, warn, error]
+        message:
+          type: string
+        at:
+          type: string
+          format: date-time

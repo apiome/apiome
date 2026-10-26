@@ -1,0 +1,52 @@
+# OpenAPI 3.2.0 Server-Sent Events stream (OA3, #3500).
+openapi: 3.2.0
+info:
+  title: Build progress API
+  version: 1.0.0
+paths:
+  /builds/{id}/progress:
+    get:
+      operationId: watchBuild
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Progress events
+          content:
+            text/event-stream:
+              itemSchema:
+                $ref: '#/components/schemas/ProgressEvent'
+        "default":
+          description: Problems, streamed
+          content:
+            application/problem+json:
+              itemSchema:
+                $ref: '#/components/schemas/Problem'
+components:
+  schemas:
+    ProgressEvent:
+      type: object
+      required: [event, data]
+      properties:
+        event:
+          type: string
+        data:
+          type: object
+          properties:
+            percent:
+              type: integer
+        id:
+          type: string
+        retry:
+          type: integer
+    Problem:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: integer

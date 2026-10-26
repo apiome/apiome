@@ -12,6 +12,7 @@ import { convertJsonSchemaToOpenAPI, isJsonSchema } from './jsonschema-converter
 import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGraphQLIntrospectionToOpenAPI } from './graphql-converter';
 import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter';
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32 } from './openapi32-converter';
+import { applyStreamItemSchemas, getMediaTypeItemSchema, getStreamKind, type StreamKind } from './openapi-stream-media-types';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
 import { convertAvroToOpenAPI, isAvroSchemaObject } from './avro-converter';
@@ -43,6 +44,17 @@ export interface ParsedPath {
   operations: ParsedOperation[];
 }
 
+/**
+ * One media type of a parsed request body or response: a `$ref` to a class or an
+ * inline schema. `streamKind` is set when the schema came from `itemSchema` and so
+ * describes each element of a stream rather than the whole body (OA3, #3500).
+ */
+export interface ParsedMediaTypeContent {
+  schema?: Record<string, unknown>;
+  $ref?: string;
+  streamKind?: StreamKind;
+}
+
 /** Parsed OpenAPI operation (get, post, etc.) */
 export interface ParsedOperation {
   method: string;
@@ -55,9 +67,9 @@ export interface ParsedOperation {
   requestBody?: {
     required?: boolean;
     description?: string;
-    content: Record<string, { schema?: Record<string, unknown>; $ref?: string }>;
+    content: Record<string, ParsedMediaTypeContent>;
   };
-  responses: Record<string, { description?: string; content?: Record<string, { schema?: Record<string, unknown>; $ref?: string }>; headers?: Record<string, unknown>; links?: Record<string, unknown> }>;
+  responses: Record<string, { description?: string; content?: Record<string, ParsedMediaTypeContent>; headers?: Record<string, unknown>; links?: Record<string, unknown> }>;
   security?: Record<string, string[]>;
 }
 
@@ -610,13 +622,29 @@ function getRefSchemaName(ref: string | undefined): string | null {
   return m ? m[1] : null;
 }
 
-/** Normalize OpenAPI schema for storage (inline or $ref) */
-function normalizeContentSchema(mediaObj: any): { schema?: Record<string, unknown>; $ref?: string } | undefined {
+/**
+ * Normalize a Media Type Object's schema for storage (inline or $ref).
+ *
+ * `schema` wins; without it, the 3.2 `itemSchema` (raw, or stashed by OA2 on
+ * `x-apiome-item-schema`) is used as an equivalent schema source and the entry is
+ * marked with its stream kind (OA3, #3500).
+ *
+ * @param mediaType - the media type key (used to classify a stream).
+ * @param mediaObj - the Media Type Object.
+ * @returns the normalized content entry, or undefined when it has no schema.
+ */
+function normalizeContentSchema(mediaType: string, mediaObj: any): ParsedMediaTypeContent | undefined {
   if (!mediaObj || typeof mediaObj !== 'object') return undefined;
-  const s = mediaObj.schema;
-  if (!s) return undefined;
-  if (s.$ref) return { $ref: s.$ref };
-  return { schema: s };
+  let s = mediaObj.schema;
+  let streamKind: StreamKind | undefined;
+  if (!s) {
+    s = getMediaTypeItemSchema(mediaObj);
+    if (s) streamKind = getStreamKind(mediaType, true) ?? undefined;
+  }
+  if (!s || typeof s !== 'object') return undefined;
+  const entry: ParsedMediaTypeContent = s.$ref ? { $ref: s.$ref } : { schema: s };
+  if (streamKind) entry.streamKind = streamKind;
+  return entry;
 }
 
 /**
@@ -624,7 +652,9 @@ function normalizeContentSchema(mediaObj: any): { schema?: Record<string, unknow
  * Exported for use by import-helper when importing OpenAPI via startImport.
  */
 export function extractPaths(spec: any): ParsedPath[] {
-  const pathObj = spec.paths;
+  // Inline stream element schemas become component $refs, matching the classes (OA3).
+  spec = applyStreamItemSchemas(spec);
+  const pathObj = spec?.paths;
   if (!pathObj || typeof pathObj !== 'object') return [];
 
   const methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'];
@@ -672,9 +702,9 @@ export function extractPaths(spec: any): ParsedPath[] {
       if (op.requestBody && typeof op.requestBody === 'object') {
         const content = op.requestBody.content;
         if (content && typeof content === 'object') {
-          const contentMap: Record<string, { schema?: Record<string, unknown>; $ref?: string }> = {};
+          const contentMap: Record<string, ParsedMediaTypeContent> = {};
           for (const [mediaType, mediaObj] of Object.entries(content)) {
-            const norm = normalizeContentSchema(mediaObj as any);
+            const norm = normalizeContentSchema(mediaType, mediaObj as any);
             if (norm) contentMap[mediaType] = norm;
           }
           if (Object.keys(contentMap).length > 0) {
@@ -692,10 +722,10 @@ export function extractPaths(spec: any): ParsedPath[] {
         for (const [status, res] of Object.entries(op.responses)) {
           const r = res as any;
           if (!r || typeof r !== 'object') continue;
-          const content: Record<string, { schema?: Record<string, unknown>; $ref?: string }> = {};
+          const content: Record<string, ParsedMediaTypeContent> = {};
           if (r.content && typeof r.content === 'object') {
             for (const [mediaType, mediaObj] of Object.entries(r.content)) {
-              const norm = normalizeContentSchema(mediaObj as any);
+              const norm = normalizeContentSchema(mediaType, mediaObj as any);
               if (norm) content[mediaType] = norm;
             }
           }
@@ -792,6 +822,9 @@ export function extractSecuritySchemes(spec: any): ParsedSecurityScheme[] {
  */
 function parseOpenAPISpecInternal(spec: any, initialWarnings: string[]): OpenAPIParseResult {
   const globalWarnings: string[] = [...initialWarnings];
+
+  // Stream element schemas (3.2 itemSchema) import as classes tagged x-apiome-stream-kind (OA3, #3500).
+  spec = applyStreamItemSchemas(spec);
 
   const schemas = spec.components?.schemas;
   const hasSchemas = schemas && typeof schemas === 'object' && Object.keys(schemas).length > 0;

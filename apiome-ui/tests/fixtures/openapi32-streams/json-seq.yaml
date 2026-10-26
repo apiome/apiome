@@ -1,0 +1,35 @@
+# OpenAPI 3.2.0 JSON text sequence (RFC 7464) stream (OA3, #3500).
+openapi: 3.2.0
+info:
+  title: Geo feed API
+  version: 1.0.0
+paths:
+  /features:
+    get:
+      operationId: streamFeatures
+      responses:
+        "200":
+          description: A sequence of features
+          content:
+            application/json-seq:
+              itemSchema:
+                $ref: '#/components/schemas/Feature'
+            application/geo+json-seq:
+              itemSchema:
+                $ref: '#/components/schemas/Feature'
+components:
+  schemas:
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+        geometry:
+          type: object
+          properties:
+            type:
+              type: string
+            coordinates:
+              type: array
+              items:
+                type: number

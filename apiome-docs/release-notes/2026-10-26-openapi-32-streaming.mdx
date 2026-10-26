@@ -1,0 +1,19 @@
+---
+slug: openapi-32-streaming
+title: OpenAPI 3.2 streaming responses import
+description: itemSchema elements of JSON Lines, JSON sequences and SSE import as classes.
+authors: [apiome]
+---
+
+OpenAPI 3.2 documents that stream their bodies now import their element schemas. An `itemSchema`
+under `application/jsonl`, `application/json-seq` or `text/event-stream` becomes a class, and the
+operation links to it. [Streaming responses (OpenAPI 3.2)](/bring-in/import-a-spec#streaming-responses-openapi-32).
+
+{/* truncate */}
+
+- **Element classes.** A `$ref` element imports as the class it names. An inline element with
+  properties becomes a class named after its operation, such as `StreamLogsStreamItem`.
+- **Provenance.** Every element class carries `x-apiome-stream-kind` (`jsonl`, `json-seq`, `sse`
+  or `sequential`), so a stream element is never mistaken for a single body.
+- **Analyze.** **Feature compatibility** lists **Sequential / streaming media types** with each
+  media type and its stream kind.

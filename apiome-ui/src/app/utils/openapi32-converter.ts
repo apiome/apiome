@@ -25,7 +25,8 @@
  *     {@link OpenAPI32ConversionResult.unsupportedConstructs} so the downstream
  *     issues can light them up incrementally without re-parsing:
  *       - `additionalOperations` and the `QUERY` HTTP method (OA4).
- *       - sequential media types / `itemSchema` (OA3).
+ *       - sequential media types / `itemSchema` (OA3 — consumed by
+         {@link ./openapi-stream-media-types.ts}).
  *       - `tags[].summary` / `parent` / `kind` (OA5).
  *
  * The emitted document carries `openapi: '3.1.0'` so the downstream importer treats
@@ -481,9 +482,9 @@ function convertContent(content: any, ctx: ConversionContext, path: string): any
         id: 'item-schema',
         label: 'Sequential media type itemSchema',
         description:
-          'Media Type itemSchema (streaming / sequential media types) is stashed on x-apiome-item-schema and carried forward (OA3).',
+          'Media Type itemSchema (streaming / sequential media types) is stashed on x-apiome-item-schema; the element schema is imported as a class tagged x-apiome-stream-kind (OA3).',
         ownedBy: 'OA3',
-        severity: 'warning'
+        severity: 'info'
       });
     }
 

@@ -9,6 +9,7 @@ import { convertJsonSchemaToOpenAPI, isJsonSchema } from './jsonschema-converter
 import { convertGraphQLToOpenAPI, isGraphQL, isGraphQLIntrospection, convertGraphQLIntrospectionToOpenAPI } from './graphql-converter';
 import { convertOpenAPI30ToOpenAPI31, isOpenAPI30 } from './openapi30-converter';
 import { convertOpenAPI32ToOpenAPI31, isOpenAPI32, OpenAPI32UnsupportedConstruct } from './openapi32-converter';
+import { collectStreamMediaTypes, STREAM_KIND_LABELS } from './openapi-stream-media-types';
 import { convertAsyncAPIToOpenAPI, isAsyncAPI } from './asyncapi-converter';
 import { convertRAMLToOpenAPI, isRAML } from './raml-converter';
 import { convertProtobufToOpenAPI, isProtobuf } from './protobuf-converter';
@@ -1647,7 +1648,44 @@ function identifyUnsupportedFeatures(doc: any): UnsupportedFeature[] {
     });
   }
 
+  const streamFeature = identifyStreamMediaTypes(doc);
+  if (streamFeature) features.push(streamFeature);
+
   return features;
+}
+
+/**
+ * Report sequential / streaming media types (JSON Lines, JSON text sequences,
+ * Server-Sent Events, and any media type with an `itemSchema`) for the
+ * pre-import compatibility check (OA3, #3500).
+ *
+ * @param doc - the OpenAPI document being analyzed.
+ * @returns one `sequential-media-types` feature listing each distinct media type
+ *   and its stream kind, or null when the document has no streams.
+ */
+function identifyStreamMediaTypes(doc: any): UnsupportedFeature | null {
+  const occurrences = collectStreamMediaTypes(doc);
+  if (occurrences.length === 0) return null;
+
+  const distinct = new Map<string, string>();
+  for (const o of occurrences) {
+    if (!distinct.has(o.mediaType)) distinct.set(o.mediaType, `${o.mediaType} (${STREAM_KIND_LABELS[o.kind]})`);
+  }
+  const withoutItemSchema = occurrences.filter((o) => !o.hasItemSchema).length;
+  const note = withoutItemSchema > 0
+    ? ` ${withoutItemSchema} without an itemSchema import${withoutItemSchema === 1 ? 's' : ''} as a regular body schema.`
+    : '';
+
+  return {
+    id: 'sequential-media-types',
+    label: 'Sequential / streaming media types',
+    description:
+      `Streaming media types: ${Array.from(distinct.values()).join(', ')}. ` +
+      `Each itemSchema element schema is imported as a class tagged x-apiome-stream-kind.${note}`,
+    path: occurrences[0].location,
+    count: occurrences.length,
+    severity: 'info'
+  };
 }
 
 /**
@@ -1806,7 +1844,10 @@ export async function analyzeSpecification(fileContent: string, fileName: string
   if (isOpenAPI32(doc)) {
     const conversionResult = convertOpenAPI32ToOpenAPI31(doc);
     if (conversionResult.success) {
-      openapi32Constructs = conversionResult.unsupportedConstructs.map(toUnsupportedFeature);
+      // itemSchema is reported by the sequential-media-types feature instead (OA3, #3500).
+      openapi32Constructs = conversionResult.unsupportedConstructs
+        .filter((c) => c.id !== 'item-schema')
+        .map(toUnsupportedFeature);
       conversionWarnings = [
         ...conversionWarnings,
         ...conversionResult.warnings.map(warning => ({
