@@ -1,0 +1,333 @@
+{
+  "adapter": "bruno",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "bruno": {
+        "bruno_version": "1",
+        "capability_limits": [
+          {
+            "construct": "bruno.auth_credential",
+            "count": 2,
+            "locations": [
+              "Get order",
+              "List orders"
+            ],
+            "note": "The auth scheme (and an OAuth 2 grant's grant type, URL and scopes, or an API key's name) is kept; saved credentials are never read."
+          }
+        ],
+        "environments": [],
+        "folders": [],
+        "requests": 2,
+        "variables": [
+          {
+            "name": "baseUrl",
+            "secret": false,
+            "source": "collection"
+          }
+        ]
+      },
+      "inferred_auth_schemes": [
+        "apiKey"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v2"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v2/orders/{orderId}"
+          ],
+          "template": "/v2/orders/{orderId}"
+        }
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v2/orders": 1,
+        "GET /v2/orders/{orderId}": 1
+      }
+    },
+    "format": "bruno",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Orders API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": "baseUrl",
+        "protocol": null,
+        "url": "{baseUrl}",
+        "variables": [
+          {
+            "default": "https://orders.example.com",
+            "description": "Bruno variable `{{baseUrl}}`.",
+            "enum": null,
+            "extras": {},
+            "name": "baseUrl"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {
+          "provenance": "inferred"
+        },
+        "key": "Orders API",
+        "name": "Orders API",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "key_location": "header",
+                  "key_name": "X-Orders-Key",
+                  "scheme": "apiKey",
+                  "type": "apikey"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/orders"
+                ],
+                "template": "/v2/orders"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "apiKey"
+              ],
+              "source_files": [
+                "list-orders.bru"
+              ],
+              "source_label": "List orders",
+              "source_location": "list-orders.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders",
+            "key": "GET /v2/orders",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v2/orders#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "open"
+                  ]
+                },
+                "key": "GET /v2/orders#query.status",
+                "location": "query",
+                "name": "status",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "bruno_auth": [
+                {
+                  "declared_at": "collection",
+                  "key_location": "header",
+                  "key_name": "X-Orders-Key",
+                  "scheme": "apiKey",
+                  "type": "apikey"
+                }
+              ],
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v2"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v2/orders/{orderId}"
+                ],
+                "template": "/v2/orders/{orderId}"
+              },
+              "provenance": "inferred",
+              "sample_count": 1,
+              "security": [
+                "apiKey"
+              ],
+              "source_files": [
+                "get-order.bru"
+              ],
+              "source_label": "Get order",
+              "source_location": "get-order.bru"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/orders/{orderId}",
+            "key": "GET /v2/orders/{orderId}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GET /v2/orders/{orderId}",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v2/orders/{orderId}#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v2/orders/{orderId}#path.orderId",
+                "location": "path",
+                "name": "orderId",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Orders API",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "bruno/07-flat-orders-collection/bruno.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.98,
+    "format": "bruno"
+  },
+  "fingerprint": "sha256:d807787a70879defd064699ce0eb4cb893078ac5900029251d279f613d88b85e",
+  "lint": {
+    "findings": 4,
+    "grade": "A",
+    "report_fingerprint": "91a0a1f055c926b7c04a109082593573de8d7005a42da1f358595c0fab148d9a",
+    "score": 90,
+    "severity_counts": {
+      "error": 0,
+      "info": 2,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

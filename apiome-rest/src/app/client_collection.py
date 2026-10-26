@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Pattern, Protoc
 
 import yaml
 
-from .canonical_model import CanonicalApi, MessageRole, Server, ServerVariable
+from .canonical_model import CanonicalApi, MessageRole, ParameterLocation, Server, ServerVariable
 from .intake_resource_guard import IntakeLimitError, guard_document_text, guard_parsed_document
 from .intake_secret_scrub import REDACTION_MARKER, scrub_document_text
 
@@ -31,6 +31,8 @@ __all__ = [
     "FOLDER_SEPARATOR",
     "SECRET_NAME_RE",
     "annotate_operations",
+    "apply_parameter_defaults",
+    "check_client_text",
     "declared_limit",
     "folder_paths",
     "load_client_json",
@@ -78,7 +80,7 @@ def load_client_json(text: str, label: Optional[str], *, product: str, error: Er
             ends while a value is open), ``INPUT_MALFORMED`` (any other syntax error, an empty
             upload) or a resource-guard code.
     """
-    _check_text(text, label, product=product, syntax="JSON", error=error)
+    check_client_text(text, label, product=product, syntax="JSON", error=error)
     try:
         document = json.loads(text)
     except json.JSONDecodeError as exc:
@@ -97,8 +99,20 @@ def load_client_json(text: str, label: Optional[str], *, product: str, error: Er
     return document
 
 
-def _check_text(text: str, label: Optional[str], *, product: str, syntax: str, error: ErrorFactory) -> None:
-    """The checks every client export gets before it is parsed: encoding, emptiness, intake guards."""
+def check_client_text(text: str, label: Optional[str], *, product: str, syntax: str, error: ErrorFactory) -> None:
+    """The checks every client export gets before it is parsed: encoding, emptiness, intake guards.
+
+    Args:
+        text: The decoded upload.
+        label: The member path or filename, for messages.
+        product: The client's name, for messages.
+        syntax: What the export is written in (``JSON``, ``YAML``, ``.bru``), for messages.
+        error: Builds the reader's error from ``(message, code)``.
+
+    Raises:
+        Exception: The reader's error with ``INPUT_ENCODING_INVALID``, ``INPUT_MALFORMED`` (an empty
+            upload) or a resource-guard code.
+    """
     if text.startswith("\ufeff") or any(marker in text for marker in _ENCODING_FAULT_MARKERS):
         raise error(
             f"The upload{_where(label)} is not UTF-8 text (NULs, replacement characters or a "
@@ -133,7 +147,7 @@ def load_client_yaml(text: str, label: Optional[str], *, product: str, error: Er
             stream ends inside a quoted scalar or flow collection), ``INPUT_MALFORMED`` or a
             resource-guard code.
     """
-    _check_text(text, label, product=product, syntax="YAML", error=error)
+    check_client_text(text, label, product=product, syntax="YAML", error=error)
     try:
         document = yaml.safe_load(text)
     except yaml.YAMLError as exc:
@@ -257,6 +271,48 @@ def annotate_operations(api: CanonicalApi, requests: Sequence[ClientRequest], *,
                 if message.role is MessageRole.REQUEST and content_types:
                     message.content_types = content_types
     return schemes
+
+
+class DefaultedRequest(Protocol):
+    """The per-request facts :func:`apply_parameter_defaults` reads."""
+
+    method: str
+    url: str
+    defaults: Tuple[Tuple[str, str, str], ...]
+
+
+_DEFAULT_LOCATIONS = {"query": ParameterLocation.QUERY, "header": ParameterLocation.HEADER}
+
+
+def apply_parameter_defaults(api: CanonicalApi, requests: Sequence[DefaultedRequest]) -> None:
+    """Set query / header parameter defaults from environment values, where every sample agrees.
+
+    A reader records, per request, ``(location, name, value)`` for each parameter written as a
+    whole variable whose (non-secret) value an environment defines — header names lower-cased, as
+    the engine names header parameters. The requests are matched back to the engine's operations
+    through ``inference_evidence.sample_urls`` (as in :func:`annotate_operations`), and a parameter
+    gets a default only when all its samples give the same value.
+
+    Args:
+        api: The engine's model (modified in place).
+        requests: The parsed requests.
+    """
+    index: Dict[Tuple[str, str], List[DefaultedRequest]] = defaultdict(list)
+    for request in requests:
+        index[(request.method, request.url)].append(request)
+    for service in api.services:
+        for operation in service.operations:
+            evidence = operation.extras.get("inference_evidence") or {}
+            values: Dict[Tuple[str, str], Set[str]] = defaultdict(set)
+            for url in dict.fromkeys(evidence.get("sample_urls") or []):
+                for request in index.get((operation.http_method or "", url), []):
+                    for location, name, value in request.defaults:
+                        values[(location, name)].add(value)
+            for parameter in operation.parameters:
+                for location, enum in _DEFAULT_LOCATIONS.items():
+                    found = values.get((location, parameter.name))
+                    if parameter.location is enum and found and len(found) == 1:
+                        parameter.default = next(iter(found))
 
 
 def template_servers(server_variables: Mapping[str, Optional[str]], *, describe: Callable[[str], str]) -> List[Server]:

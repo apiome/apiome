@@ -1,0 +1,33 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "amount_to_capture": {
+            "type": "string"
+          },
+          "content-type": {
+            "type": "string"
+          },
+          "intentId": {
+            "type": "string"
+          },
+          "stripe-version": {
+            "default": "2026-09-30",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intentId",
+          "content-type",
+          "stripe-version",
+          "amount_to_capture"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_payment_intents_intentId_capture",
+      "operation": "POST /v1/payment_intents/{intentId}/capture"
+    }
+  ]
+}

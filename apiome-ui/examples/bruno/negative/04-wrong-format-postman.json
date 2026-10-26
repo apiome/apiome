@@ -1,0 +1,10 @@
+{
+  "info": {
+    "_postman_id": "0d6c1a7e-4b1f-4f8e-9a51-3c2b8e7d6f10",
+    "name": "Ping",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {"name": "Ping", "request": {"method": "GET", "url": "https://api.example.com/ping"}}
+  ]
+}

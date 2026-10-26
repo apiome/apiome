@@ -759,6 +759,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['vs code', 'vscode', 'requests', 'folders', 'environment', 'variables', 'migrate', 'api client'],
   },
   {
+    id: 'bruno-import',
+    title: 'Import a Bruno collection',
+    summary: 'Catalog a Bruno collection folder, from an archive or git, as one inferred REST API.',
+    page: 'apiome-docs/docs/bring-in/bruno-import.md',
+    section: 'reference',
+    keywords: ['git', 'repository', 'folders', 'environment', 'variables', 'migrate', 'api client', 'bru lang'],
+  },
+  {
     id: 'insomnia-import',
     title: 'Import an Insomnia collection',
     summary: 'Catalog an Insomnia v4 or v5 export and its environments as one inferred REST API.',

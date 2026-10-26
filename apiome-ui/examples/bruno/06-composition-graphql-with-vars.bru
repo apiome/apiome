@@ -1,0 +1,41 @@
+meta {
+  name: Search products
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: apikey
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:apikey {
+  key: X-Shop-Key
+  value: {{shopKey}}
+  placement: header
+}
+
+body:graphql {
+  query Search($term: String!, $first: Int) {
+    products(search: $term, first: $first) {
+      edges { node { id title price } }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "term": "shoes",
+    "first": {{pageSize}}
+  }
+}
+
+vars:pre-request {
+  baseUrl: https://shop.example.com
+  pageSize: 10
+}

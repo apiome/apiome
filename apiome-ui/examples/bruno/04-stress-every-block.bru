@@ -1,0 +1,108 @@
+meta {
+  name: Stress — every block kind
+  type: http
+  seq: 99
+}
+
+put {
+  url: {{host}}/v3/tenants/:tenantId/items/{{itemId}}?dry_run=false
+  body: formUrlEncoded
+  auth: oauth2
+}
+
+params:query {
+  dry_run: false
+  ~verbose: 1
+  "quoted key": a value: with a colon
+}
+
+params:path {
+  tenantId: t-1
+}
+
+headers {
+  Accept: application/json
+  X-Api-Key: demo-header-key-not-real
+  ~X-Disabled: off
+  X-Trace: {{process.env.TRACE_ID}}
+}
+
+auth:oauth2 {
+  grant_type: client_credentials
+  access_token_url: https://auth.example.com/oauth/token
+  client_id: demo-client
+  client_secret: demo-client-secret-not-real
+  scope: items:read items:write
+}
+
+auth:bearer {
+  token: demo-unused-bearer-not-real
+}
+
+body:json {
+  {
+    "kept": "but not sent: the mode is formUrlEncoded"
+  }
+}
+
+body:xml {
+  <item><name>widget</name></item>
+}
+
+body:form-urlencoded {
+  name: widget
+  password: demo-form-password-not-real
+  ~legacy: 1
+}
+
+body:multipart-form {
+  file: @file(/tmp/a.bin)
+}
+
+body:graphql {
+  query { item(id: 1) { id } }
+}
+
+vars:pre-request {
+  itemId: 99
+  note: '''
+    a multi-line
+    value
+  '''
+}
+
+vars:post-response {
+  etag: res.headers.etag
+}
+
+script:pre-request {
+  const ts = Date.now();
+  req.setHeader("X-Ts", ts);
+}
+
+script:post-response {
+  bru.setVar("last", res.status);
+}
+
+tests {
+  test("ok", () => expect(res.status).to.equal(200));
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # Stress
+  Every block kind Bruno writes. }
+  A brace on an indented line does not close the block.
+}
+
+settings {
+  encodeUrl: true
+}
+
+example {
+  this future block has free text: kept as text
+  and a line with no colon
+}

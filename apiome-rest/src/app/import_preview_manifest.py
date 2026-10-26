@@ -138,6 +138,8 @@ from .export_projection import (
 )
 from .format_lint_capabilities import FormatLintCapability, capability_for_format
 from .gateway_family import flavor_for
+from .bruno_normalizer import BRUNO_EXTRAS_KEY
+from .bruno_normalizer import PARTIAL_LIMITS as BRUNO_PARTIAL_LIMITS
 from .har_normalizer import HAR_EXTRAS_KEY
 from .insomnia_normalizer import INSOMNIA_EXTRAS_KEY
 from .insomnia_normalizer import PARTIAL_LIMITS as INSOMNIA_PARTIAL_LIMITS
@@ -329,6 +331,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # MFI-32.3: the Insomnia projection record (export formats, environments, folders, variable
         # names, declared limits). Our own bookkeeping — never a credential.
         INSOMNIA_EXTRAS_KEY,
+        # MFI-32.4: the Bruno projection record (version, environments, folders, variable names,
+        # declared limits). Our own bookkeeping — never a credential.
+        BRUNO_EXTRAS_KEY,
         # FMT-10.3: the SoapUI projection record (interfaces and where each WSDL came from, saved
         # request names, environments, property names, mock services, declared limits). Our own
         # bookkeeping — never a credential.
@@ -1302,6 +1307,7 @@ def _document_scope_rows(
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_har_capability_rows(api))
     ledger.extend(_insomnia_capability_rows(api))
+    ledger.extend(_bruno_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
     ledger.extend(_device_model_capability_rows(api))
     ledger.extend(_linked_data_capability_rows(api))
@@ -2244,6 +2250,22 @@ def _insomnia_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     return _graded_limit_rows(
         api, format_key="insomnia", extras_key=INSOMNIA_EXTRAS_KEY, partial=INSOMNIA_PARTIAL_LIMITS
     )
+
+
+def _bruno_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the MFI-32.4 Bruno declared limits as document-scoped ledger rows.
+
+    A withheld credential keeps its auth scheme, a secret variable its name and a
+    ``{{process.env.*}}`` request is kept with the variable unresolved, so those are
+    ``partially-mapped``; scripts, tests and non-HTTP requests are not modelled at all.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(api, format_key="bruno", extras_key=BRUNO_EXTRAS_KEY, partial=BRUNO_PARTIAL_LIMITS)
 
 
 def _linked_data_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:

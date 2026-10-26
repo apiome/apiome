@@ -5,7 +5,7 @@
 
 Every shipped, non-preview import adapter must carry four artifacts: corpus examples (at least one valid and one negative), a golden snapshot directory, a round-trip matrix row, and a `format_capability_registry` entry. This report is what the FMT-1.4 parity gate (`apiome-rest/tests/test_corpus_parity.py`) asserts.
 
-- **Formats gated:** 99
+- **Formats gated:** 100
 - **Formats with an unwaived gap:** 0
 - **Formats with a waived requirement:** 0
 
@@ -25,6 +25,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `avro` | Avro | data_schema | 14 | 11 | 0 | 0 | 25 | 6/6 | 12 | `avro` |
 | `aws-apigateway` | AWS API Gateway | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 7 | `aws-apigateway` |
 | `azure-apim` | Azure API Management | rest | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `azure-apim` |
+| `bruno` | Bruno collection | rest | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
 | `capnproto` | Cap'n Proto | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `capnproto` |
 | `cddl` | CDDL | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `cddl` |
 | `cics-bms` | CICS BMS maps | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
@@ -131,6 +132,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `avro` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `aws-apigateway` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `azure-apim` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `bruno` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `capnproto` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cddl` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `cics-bms` | ✅ | ✅ | ✅ | ✅ | ✅ |

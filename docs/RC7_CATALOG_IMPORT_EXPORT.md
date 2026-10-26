@@ -97,9 +97,8 @@ first follow-up. Status is from the 2026-10-25 audit.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#4406](https://github.com/apiome/apiome/issues/4406) MFI-32.4 | Bruno collection adapter | Not built |
 | [#4407](https://github.com/apiome/apiome/issues/4407) MFI-32.5 | Secret scrubbing and environment mapping gate — scrubbing is built and forced on for these formats; environment → server-variable mapping unverified | Partly built |
-| [#4408](https://github.com/apiome/apiome/issues/4408) MFI-32.6 | Source cards, CLI, fixtures for the three (cards and CLI come from the registry once the adapters exist) | Blocked on the three above |
+| [#4408](https://github.com/apiome/apiome/issues/4408) MFI-32.6 | Source cards, CLI, fixtures for the three (cards and CLI come from the registry once the adapters exist) | Ready — the HAR, Insomnia and Bruno adapters are built (#4404, #4405, #4406) |
 
 ### 3.2 OpenAPI 3.2 and Arazzo import gaps (P1)
 

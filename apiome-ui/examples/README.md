@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1498 files** across **109 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1514 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -26,6 +26,7 @@ The corpus holds **1498 files** across **109 format directories**. Every file ha
 | `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
 | `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
 | `azure-apim/` | Azure API Management | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
+| `bruno/` | Bruno collections | rest | `bruno.json` with `"type": "collection"` beside `.bru` files (`meta {` + a method block such as `get {`) | 16 |
 | `consul/` | Consul service definitions | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
 | `discovery/` | Google API Discovery | rest | `kind: discovery#restDescription` / `discoveryVersion` | 11 |
 | `envoy-xds/` | Envoy xDS routes | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
@@ -492,6 +493,33 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`04-stress-policy-vocabulary.xml`** — Carries <example-unknown-policy>: FMT-7.2 requires unmapped policy elements preserved verbatim in extras and visible in the detail view.
 
 > ⚠ **`07-composition-policy-inheritance.xml`** — Carries all four policy scopes in evaluation order; <base /> is the composition operator, and its position decides whether the inherited fragment runs before or after the local one.
+
+### `bruno/` — Bruno collections
+
+| File | Rung | Expected detection | Class | Features |
+| --- | --- | --- | --- | --- |
+| `01-minimal-get.bru` | minimal | `bruno` ≥ 0.9 | valid | `bru-lang`, `single-request` |
+| `02-typical-create-order.bru` | typical | `bruno` ≥ 0.9 | valid | `json-body`, `bearer-auth`, `query-params`, `request-vars`, `assert` |
+| `03-users-collection.zip` ⚠ | composition | `bruno` ≥ 0.9 | valid | `archive-intake`, `bruno-json`, `folder-tree`, `collection-bru`, `folder-bru`, `environments`, `vars-secret`, `auth-inheritance`, `header-inheritance`, `multipart-form`, `scripts`, `tests` |
+| `04-stress-every-block.bru` | stress | `bruno` ≥ 0.9 | valid | `oauth2-auth`, `form-urlencoded`, `multiple-body-blocks`, `quoted-key`, `multiline-value`, `disabled-entries`, `process-env`, `scripts`, `tests`, `assert`, `docs`, `settings`, `unknown-block`, `undefined-server-variable` |
+| `05-real-world-capture-payment.bru` | real-world | `bruno` ≥ 0.9 | valid | `basic-auth`, `form-urlencoded`, `path-params`, `request-vars`, `post-response-script` |
+| `06-composition-graphql-with-vars.bru` | composition | `bruno` ≥ 0.9 | valid | `graphql-body`, `graphql-vars`, `apikey-auth`, `request-vars`, `bare-variable` |
+| `07-flat-orders-collection/bruno.json` | multi-file (root) | `bruno` ≥ 0.9 | valid | `multi-file`, `bruno-json`, `collection-bru`, `apikey-auth` |
+| `07-flat-orders-collection/collection.bru` | multi-file (member) | `bruno` (no guarantee) | valid | `multi-file`, `bru-lang` |
+| `07-flat-orders-collection/get-order.bru` | multi-file (member) | `bruno` (no guarantee) | valid | `multi-file`, `bru-lang` |
+| `07-flat-orders-collection/list-orders.bru` | multi-file (member) | `bruno` (no guarantee) | valid | `multi-file`, `bru-lang` |
+| `negative/01-syntactic-line-outside-block.bru` | — | `bruno` (no guarantee) | invalid | `negative`, `syntactic`, `line-outside-block` |
+| `negative/02-semantic-environment-alone.bru` ⚠ | — | `bruno` (no guarantee) | invalid | `negative`, `semantic`, `environment-alone` |
+| `negative/03-truncated-unclosed-block.bru` | — | `bruno` (no guarantee) | invalid | `negative`, `truncated`, `unclosed-block` |
+| `negative/04-wrong-format-postman.json` | — | `bruno` (no guarantee) | invalid | `negative`, `wrong-format`, `postman` |
+| `negative/05-encoding-utf16.bru` | — | `bruno` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-semantic-bruno-json-alone.json` ⚠ | — | `bruno` (no guarantee) | invalid | `negative`, `semantic`, `bruno-json-alone` |
+
+> ⚠ **`03-users-collection.zip`** — A whole collection folder, zipped (a Bruno tree nests deeper than a corpus set directory allows). Imported as an archive or from a git selection, it gives the same fingerprint.
+
+> ⚠ **`negative/02-semantic-environment-alone.bru`** — An environment file on its own defines variables but no requests; it imports only inside its collection folder.
+
+> ⚠ **`negative/06-semantic-bruno-json-alone.json`** — bruno.json on its own names a collection but carries no requests; upload the whole folder.
 
 ### `capnproto/` — Cap'n Proto
 
@@ -2787,7 +2815,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1498 | `Apache-2.0` |
+| `hand-authored` | 1514 | `Apache-2.0` |
 
 ## Trying an import
 

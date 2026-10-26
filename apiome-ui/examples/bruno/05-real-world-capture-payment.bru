@@ -1,0 +1,42 @@
+meta {
+  name: Capture a payment
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/payment_intents/:intentId/capture
+  body: formUrlEncoded
+  auth: basic
+}
+
+params:path {
+  intentId: pi_3MtwBwLkdIwHu7ix28a3tqPa
+}
+
+headers {
+  Stripe-Version: {{apiVersion}}
+}
+
+auth:basic {
+  username: {{secretKey}}
+  password:
+}
+
+body:form-urlencoded {
+  amount_to_capture: 1500
+  ~statement_descriptor: APIOME DEMO
+}
+
+vars:pre-request {
+  baseUrl: https://api.stripe-like.example.com
+  apiVersion: 2026-09-30
+}
+
+script:post-response {
+  if (res.status === 200) { bru.setEnvVar("lastIntent", res.body.id); }
+}
+
+docs {
+  Captures the funds of an authorised payment intent.
+}

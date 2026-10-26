@@ -86,6 +86,12 @@
       "paradigm": "rest",
       "marker": "`<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources"
     },
+    "bruno": {
+      "label": "Bruno collections",
+      "category": "rest-http",
+      "paradigm": "rest",
+      "marker": "`bruno.json` with `\"type\": \"collection\"` beside `.bru` files (`meta {` + a method block such as `get {`)"
+    },
     "capnproto": {
       "label": "Cap'n Proto",
       "category": "data-schema",
@@ -4578,6 +4584,362 @@
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "failure_class": "unresolvable-ref",
       "expected_error_code": "INPUT_REFERENCE_UNRESOLVED"
+    },
+    {
+      "path": "bruno/01-minimal-get.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "bru-lang",
+        "single-request"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "minimal"
+    },
+    {
+      "path": "bruno/02-typical-create-order.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "json-body",
+        "bearer-auth",
+        "query-params",
+        "request-vars",
+        "assert"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical"
+    },
+    {
+      "path": "bruno/03-users-collection.zip",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "archive-intake",
+        "bruno-json",
+        "folder-tree",
+        "collection-bru",
+        "folder-bru",
+        "environments",
+        "vars-secret",
+        "auth-inheritance",
+        "header-inheritance",
+        "multipart-form",
+        "scripts",
+        "tests"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition",
+      "notes": "A whole collection folder, zipped (a Bruno tree nests deeper than a corpus set directory allows). Imported as an archive or from a git selection, it gives the same fingerprint."
+    },
+    {
+      "path": "bruno/04-stress-every-block.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "oauth2-auth",
+        "form-urlencoded",
+        "multiple-body-blocks",
+        "quoted-key",
+        "multiline-value",
+        "disabled-entries",
+        "process-env",
+        "scripts",
+        "tests",
+        "assert",
+        "docs",
+        "settings",
+        "unknown-block",
+        "undefined-server-variable"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "stress"
+    },
+    {
+      "path": "bruno/05-real-world-capture-payment.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "basic-auth",
+        "form-urlencoded",
+        "path-params",
+        "request-vars",
+        "post-response-script"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Reconstructed in-repo from the shape of a payments vendor's Bruno collection; no upstream text copied.",
+      "rung": "real-world"
+    },
+    {
+      "path": "bruno/06-composition-graphql-with-vars.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "graphql-body",
+        "graphql-vars",
+        "apikey-auth",
+        "request-vars",
+        "bare-variable"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "composition"
+    },
+    {
+      "path": "bruno/07-flat-orders-collection/bruno.json",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "multi-file",
+        "bruno-json",
+        "collection-bru",
+        "apikey-auth"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "bruno/07-flat-orders-collection/collection.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "multi-file",
+        "bru-lang"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "bruno/07-flat-orders-collection/get-order.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "multi-file",
+        "bru-lang"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "bruno/07-flat-orders-collection/list-orders.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "multi-file",
+        "bru-lang"
+      ],
+      "expected_outcome": "imports_with_warnings",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "bruno/negative/01-syntactic-line-outside-block.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "syntactic",
+        "line-outside-block"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "syntactic",
+      "expected_error_code": "INPUT_MALFORMED"
+    },
+    {
+      "path": "bruno/negative/02-semantic-environment-alone.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "environment-alone"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "An environment file on its own defines variables but no requests; it imports only inside its collection folder.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
+    },
+    {
+      "path": "bruno/negative/03-truncated-unclosed-block.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "truncated",
+        "unclosed-block"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "truncated",
+      "expected_error_code": "INPUT_TRUNCATED"
+    },
+    {
+      "path": "bruno/negative/04-wrong-format-postman.json",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "wrong-format",
+        "postman"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "wrong-format",
+      "expected_error_code": "FORMAT_MISMATCH"
+    },
+    {
+      "path": "bruno/negative/05-encoding-utf16.bru",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "encoding",
+        "utf-16"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "failure_class": "encoding",
+      "expected_error_code": "INPUT_ENCODING_INVALID"
+    },
+    {
+      "path": "bruno/negative/06-semantic-bruno-json-alone.json",
+      "format": "bruno",
+      "adapter_key": "bruno",
+      "validity_class": "invalid",
+      "expected_detection": {
+        "format": "bruno",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "negative",
+        "semantic",
+        "bruno-json-alone"
+      ],
+      "expected_outcome": "rejects",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "notes": "bruno.json on its own names a collection but carries no requests; upload the whole folder.",
+      "failure_class": "semantic",
+      "expected_error_code": "INPUT_SEMANTIC_INVALID"
     },
     {
       "path": "capnproto/01-address-book.capnp",
