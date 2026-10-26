@@ -29,9 +29,16 @@ export const APP_BUILD_LABEL: string | undefined =
   process.env.NEXT_PUBLIC_APP_BUILD_LABEL?.trim() || undefined;
 
 /**
- * What the reader sees: the CI stamp when there is one, otherwise `v<semver> RC`.
- *
- * The `RC` suffix is what an unstamped local or preview build has always said, and the
- * mockups print it verbatim (`docs/mockups/assets/hive.js`, `v0.241.0 RC`).
+ * The release candidate this build belongs to, e.g. `RC7`. Bump it when the next release
+ * candidate opens (see `docs/RC7_CATALOG_IMPORT_EXPORT.md` for RC7's scope).
  */
-export const APP_VERSION_BADGE: string = APP_BUILD_LABEL ?? `v${APP_VERSION} RC`;
+export const APP_RELEASE_CANDIDATE = 'RC7';
+
+/**
+ * What the reader sees: the CI stamp when there is one, otherwise `v<semver> <RC>`
+ * (`v0.482.0 RC7`).
+ *
+ * The mockups print the older, unnumbered `RC` suffix (`docs/mockups/assets/hive.js`,
+ * `v0.241.0 RC`).
+ */
+export const APP_VERSION_BADGE: string = APP_BUILD_LABEL ?? `v${APP_VERSION} ${APP_RELEASE_CANDIDATE}`;
