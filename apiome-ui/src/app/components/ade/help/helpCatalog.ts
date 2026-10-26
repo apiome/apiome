@@ -793,10 +793,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'odata-import',
     title: 'Import an OData service',
-    summary: 'Catalog OData metadata as CSDL XML or CSDL JSON, checked against the OASIS schema.',
+    summary: 'Catalog OData as CSDL XML or JSON, or discover a live service.',
     page: 'apiome-docs/docs/bring-in/odata-import.md',
     section: 'reference',
-    keywords: ['edmx', 'metadata', '$metadata', 'oasis', 'validation', 'sap', 'entity set', 'v4'],
+    keywords: ['edmx', 'metadata', '$metadata', 'oasis', 'validation', 'sap', 'entity set', 'v4', 'discover', 'service root'],
   },
   {
     id: 'raml-import',

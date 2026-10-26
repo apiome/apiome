@@ -1,6 +1,6 @@
 ---
 title: "Import an OData service"
-description: "Catalog OData metadata as CSDL XML or CSDL JSON, checked against the OASIS schema."
+description: "Catalog OData as CSDL XML or JSON, or discover a live service."
 sidebar_position: 43
 tags: [import, odata, csdl, edmx, validation]
 ---
@@ -20,6 +20,25 @@ Import the metadata like any other catalog format: in the [import wizard](./impo
 | --- | --- |
 | CSDL XML: a `$metadata` document or `.edmx` file, OData v4, v3 or v2 | Read by the CSDL XML reader. v2 and v3 associations become v4-style navigation properties. |
 | CSDL JSON: the OData v4 JSON metadata format (`.json`, `"$Version": "4.0"` or `"4.01"`) | Read into the same model as CSDL XML, so both forms of one service import alike. |
+
+## Discover a live service
+
+Import a running OData service from the CLI by giving its **service root** (or its `$metadata` URL):
+
+```bash
+apiome import odata --discover https://services.example.com/odata/trippin/
+apiome import odata --discover "https://sap.example.com/sap/opu/odata/sap/ZBP_SRV/?sap-client=100"
+```
+
+The CLI derives the `$metadata` URL (`<service root>/$metadata`, query string kept), reports it
+(`Discovered OData $metadata at …`) and imports that document exactly as it would a `--url` import:
+it is parsed, checked against the OASIS schema (v4), cataloged and linted. `--discover` must be the
+only input.
+
+| Problem | What you see |
+| --- | --- |
+| The URL is not `http`/`https` or has no host | The CLI stops with a usage error. |
+| `$metadata` cannot be fetched (404, 401, network) | The CLI stops with the fetch error; check the service root and your access. |
 
 ## OASIS schema validation
 

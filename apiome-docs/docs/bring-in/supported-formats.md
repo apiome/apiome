@@ -13,7 +13,7 @@ Every format Apiome reads or writes, generated from the running registries — t
 - **100 formats can be imported.**
 - **53 formats can be exported.**
 - **53 round-trip** — import *and* export.
-- **8** can introspect a live endpoint rather than reading a file.
+- **9** can introspect a live endpoint rather than reading a file.
 
 The same answer is machine-readable at `GET /v1/formats/matrix` and printed by `apiome formats` (`--json`, `--paradigm`, `--direction`). This page is *rendered from that response*, so the documentation, the API and the CLI cannot disagree: there is one traversal of the registries behind all three.
 
@@ -63,7 +63,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | Istio VirtualService | `istio` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `istio`, `virtualservice` | `.yaml`, `.yml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Kong Declarative Config | `kong` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `kong`, `kong-declarative` | `.yaml`, `.yml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | nginx configuration | `nginx` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `nginx` | `.conf`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-nginx) | Ready |
-| OData | `odata` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `odata`, `odata-v2`, `odata-v3`, `edmx` | `.edmx`, `.xml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| OData | `odata` | Import + export | Catalog | `file`, `url`, `paste`, `discovery`, `fileset` | Yes | `odata`, `odata-v2`, `odata-v3`, `edmx` | `.edmx`, `.xml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | OpenAPI / Swagger | `openapi` | Import + export | Project | `file`, `url`, `paste`, `fileset` | — | `openapi-3.0`, `openapi-3.1`, `openapi-3.2`, `swagger-2.0`, `swagger-1.2` | `.yaml`, `.yml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Postman | `postman` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `postman`, `postmancollection`, `postman-2.0` | `.postman_collection.json`, `.postman.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | RAML | `raml` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `raml` | `.raml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
