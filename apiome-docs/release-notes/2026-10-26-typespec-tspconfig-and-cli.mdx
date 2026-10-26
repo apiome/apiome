@@ -1,0 +1,20 @@
+---
+slug: typespec-tspconfig-and-cli
+title: TypeSpec projects honor tspconfig.yaml and import from a folder
+description: TypeSpec imports apply tspconfig settings; the CLI imports a project folder.
+authors: [apiome]
+---
+
+A TypeSpec project's `tspconfig.yaml` now shapes the import, and the CLI imports a project
+straight from its folder. [Import a TypeSpec API](/bring-in/typespec-import#tspconfigyaml).
+
+{/* truncate */}
+
+- **`tspconfig.yaml` settings.** The OpenAPI version, `omit-unreachable-types`,
+  `include-x-typespec-name`, `safeint-strategy` and `warn-as-error` are applied. Every other
+  setting is ignored and listed, with the reason, on the catalog item.
+- **One-file projects compile.** A `.tsp` file uploaded with its `tspconfig.yaml` compiles like a
+  multi-file project.
+- **Import a folder from the CLI.** `apiome import typespec ./shop-api/` packs the project's files,
+  leaving out `node_modules` and build output, and starts from `package.json`'s `tspMain` or
+  `main.tsp`.

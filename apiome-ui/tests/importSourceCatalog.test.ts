@@ -11,6 +11,7 @@ import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   baseImportSourceCards,
   baseIntakeTiles,
+  mergeImportFileExtensions,
   mergeImportSourceCards,
   filterCardsForVariant,
   panelForInputKinds,
@@ -532,5 +533,41 @@ describe('Collection source cards (MFI-32.6)', () => {
       expect(catalog).toContain(key);
       expect(projects).not.toContain(key);
     }
+  });
+});
+
+/**
+ * The TypeSpec source as the REST registry advertises it (MFI-14.5, #3798). A TypeSpec project
+ * arrives as a `.tsp` file or as an archive of its `.tsp` files and `tspconfig.yaml`, so the card
+ * opens the file panel and the picker offers `.tsp` alongside the archive suffixes.
+ */
+const TYPESPEC_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'typespec',
+  label: 'TypeSpec',
+  description: 'Import a Microsoft TypeSpec API definition (.tsp).',
+  icon: 'file-code',
+  paradigm: 'rest',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['typespec', 'tsp', 'cadl'],
+  file_extensions: ['.tsp', '.cadl', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('TypeSpec source card (MFI-14.5)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([TYPESPEC_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'typespec');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('TypeSpec');
+    expect(card?.icon).toBe(FileCode);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('typespec');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('typespec');
+  });
+
+  it('adds .tsp and the archive suffixes to the file picker', () => {
+    const accept = mergeImportFileExtensions([TYPESPEC_DESCRIPTOR]);
+    expect(accept).toEqual(['.tsp', '.cadl', '.zip', '.tar.gz', '.tgz', '.tar']);
   });
 });

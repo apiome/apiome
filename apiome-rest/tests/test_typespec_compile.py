@@ -291,7 +291,7 @@ def test_the_fingerprint_does_not_depend_on_member_order(monkeypatch, libraries)
 
 def test_a_single_file_keeps_the_built_in_reader(monkeypatch):
     calls = _replay(monkeypatch, "petstore")
-    members = {"main.tsp": 'import "@typespec/http";\nnamespace A;\nmodel Pet { id: int32; }\n', "tspconfig.yaml": "x"}
+    members = {"main.tsp": 'import "@typespec/http";\nnamespace A;\nmodel Pet { id: int32; }\n', "package.json": "{}"}
     doc = TypeSpecImportSource().parse_fileset(IntakeFileset.from_members(members, root="main.tsp"))
     assert calls == []
     assert not isinstance(doc, TypeSpecCompiled)

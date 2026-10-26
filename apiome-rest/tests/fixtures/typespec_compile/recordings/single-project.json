@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "stdout": "TypeSpec compiler v0.65.0\n\nCompilation completed successfully.\n\n",
+  "stderr": "",
+  "emitted": {
+    "@typespec/openapi3/openapi.json": "{\n  \"openapi\": \"3.1.0\",\n  \"info\": {\n    \"title\": \"Greeter\",\n    \"version\": \"0.0.0\"\n  },\n  \"tags\": [],\n  \"paths\": {\n    \"/greetings\": {\n      \"get\": {\n        \"operationId\": \"list\",\n        \"parameters\": [],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"The request has succeeded.\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"$ref\": \"#/components/schemas/Greeting\"\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Greeting\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"message\",\n          \"count\"\n        ],\n        \"properties\": {\n          \"message\": {\n            \"type\": \"string\"\n          },\n          \"count\": {\n            \"type\": \"integer\",\n            \"format\": \"double-int\"\n          }\n        }\n      }\n    }\n  }\n}\n"
+  },
+  "tspconfig": "emit:\n- '@typespec/openapi3'\noptions:\n  '@typespec/openapi3':\n    openapi-versions:\n    - 3.1.0\n    omit-unreachable-types: true\n    safeint-strategy: double-int\n    output-file: openapi.json\n",
+  "tool": "@typespec/compiler 0.65.0 + @typespec/http, rest, openapi3, versioning 0.65.0"
+}

@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.460.0] - 2026-10-26
+
+### Changed
+- **TypeSpec `tspconfig.yaml` (MFI-14.5, #3798)** — a TypeSpec set compiles as a project when it holds several
+  `.tsp` files **or** a `tspconfig.yaml` / `tspconfig.yml` beside the root (previously a lone `.tsp` with its
+  config used the built-in reader). The uploaded config is read by the new `app.typespec_config` and only its safe,
+  API-shaping settings are merged into Apiome's own compile configuration: `@typespec/openapi3` `openapi-versions`
+  (first listed version only, so one document is emitted), `omit-unreachable-types`, `include-x-typespec-name`,
+  `safeint-strategy`, and top-level `warn-as-error`. Everything else — `emit` and other emitters' options, output
+  locations (`output-dir`, `emitter-output-dir`, `output-file`, `file-type`, `new-line`), `imports`, `linter`,
+  `extends`, `parameters`, `environment-variables`, `trace`, and values of the wrong type — is ignored and listed
+  with its reason. The item's extras gain `typespec_tspconfig`, `typespec_tspconfig_applied` and
+  `typespec_tspconfig_ignored`. A config that is not a YAML mapping is `INPUT_MALFORMED`. Fixtures recorded from the
+  real `@typespec/compiler` 0.65.0. OpenAPI 1.324.0.
+
 ## [1.459.0] - 2026-10-26
 
 ### Changed

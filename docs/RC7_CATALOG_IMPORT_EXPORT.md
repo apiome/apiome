@@ -155,7 +155,8 @@ namespaces, AST hash and source files are recorded. Without the Smithy CLI a mul
 
 MFI-14.1 (#3794) is built: a TypeSpec set with several `.tsp` files compiles through `tsp` to OpenAPI
 (`app.typespec_compile`), normalized by the OpenAPI normalizer; the image now ships `@typespec/http`, `rest`,
-`openapi3` and `versioning`. `tspconfig` handling is still [#3798](https://github.com/apiome/apiome/issues/3798).
+`openapi3` and `versioning`. MFI-14.5 (#3798) is built too: a `tspconfig.yaml` beside the root is honored for its
+safe settings (`app.typespec_config`), and `apiome import typespec <dir>` packs a project folder.
 Archive intake now has root candidates for `.raml`, `.smithy`, `.thrift` and `.tsp`.
 
 **Input variants:**
@@ -305,7 +306,7 @@ The audit found the work these describe already in the code (often delivered lat
 numbers). Verify each against its acceptance criteria and close; none blocks RC7.
 
 **Import:** #760, #2775, #2776, #3748, #3777, #3781, #3783, #3787, #3788, #3789 (except soapAction —
-see #3792), #3793, #3795, #3798 (except `tspconfig`), #3803, #3804, #3805, #3807, #3809, #3982,
+see #3792), #3793, #3795, #3803, #3804, #3805, #3807, #3809, #3982,
 #3983, #3985–#3991, #3993–#3996, #4409; #3505 once the Projects importer is done. **#568** —
 close as superseded (OA1 #3498 accepts 2.x–3.2).
 

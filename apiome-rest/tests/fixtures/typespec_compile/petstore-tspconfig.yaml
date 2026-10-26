@@ -1,0 +1,18 @@
+# MFI-14.5 (#3798) fixture: the tspconfig.yaml uploaded beside petstore/main.tsp.
+emit:
+  - "@typespec/openapi3"
+  - "@typespec/json-schema"
+output-dir: "{project-root}/../outside"
+options:
+  "@typespec/openapi3":
+    openapi-versions:
+      - 3.1.0
+      - 3.0.0
+    omit-unreachable-types: true
+    output-file: "../../escape.json"
+  "@typespec/json-schema":
+    file-type: json
+linter:
+  extends:
+    - "@typespec/http/all"
+warn-as-error: false
