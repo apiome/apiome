@@ -20,6 +20,7 @@ import {
   listProjectLibraryPropertiesTx,
 } from './import-transaction';
 import { ImportSourceKind, getImporter, NormalizedClass, NormalizedProperty } from '../importers';
+import type { ArazzoResolution } from '../importers/arazzo-sources';
 import { randomUUID } from 'crypto';
 import { withRetry } from '../retry';
 import { permanentDeleteProject } from './helper';
@@ -93,6 +94,13 @@ export interface ImportJobInput {
   userId: string;
   sourceKind: ImportSourceKind;
   document: any;
+  /**
+   * Documents supplied with the import, keyed by member path (Arazzo AZ2, #3505): an Arazzo
+   * import resolves its sourceDescriptions against them. No caller passes them yet.
+   */
+  sourceDocuments?: Record<string, unknown>;
+  /** The document's own member path inside that bundle (AZ2). */
+  documentPath?: string;
   project: { name: string; slug: string; description?: string | null };
   version: { versionId: string; description?: string | null };
   /** JSON merged into apiome.projects.metadata when creating a new project (REST import: OpenAPI info.contact, etc.). */
@@ -207,6 +215,8 @@ interface JobState {
     failed: number;
     /** Multi-repository merge (REPO-5.7): classes / paths carried forward from other files. */
     repositoryMerge?: { sources: number; classesCarried: number; pathsCarried: number };
+    /** Arazzo imports: sourceDescriptions and step references resolved against the bundle (AZ2, #3505). */
+    arazzoResolution?: ArazzoResolution;
     totalTime?: number;
     sourceName?: string;
     projectName?: string;
@@ -1204,9 +1214,13 @@ export async function startImport(input: ImportJobInput) {
           requiredOverrides: input.options.requiredOverrides,
           descriptionOverrides: input.options.descriptionOverrides,
           generateExamples: input.options.generateExamples,
+          sourceDocuments: input.sourceDocuments,
+          documentPath: input.documentPath,
         },
       });
       job.normalizedClasses = norm.classes;
+      // Arazzo source / step resolution map, returned on the job for #2773 (AZ2, #3505).
+      if (norm.arazzoResolution && job.summary) job.summary.arazzoResolution = norm.arazzoResolution;
       recordPhase(job, 'parse:normalize', Date.now() - _normalizeStart);
       if (norm.warnings.length) emit(job, 'warn', 'NORMALIZE_WARN', norm.warnings.join('\n'));
 

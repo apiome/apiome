@@ -1,11 +1,14 @@
 /**
  * Arazzo document importer (#299).
  * Imports Arazzo 1.0.1 workflow documents by extracting classes from
- * components.schemas (when present) or inferring schemas from workflow steps.
+ * components.schemas (when present) or inferring schemas from workflow steps, and
+ * resolves `sourceDescriptions` / step references against the import bundle (AZ2,
+ * #3505; see ./arazzo-sources.ts).
  */
 
 import { Importer, ImportSourceKind, NormalizeOptions, NormalizeResult } from './index';
 import { openApiImporter } from './openapi';
+import { arazzoResolutionWarnings, resolveArazzoSources } from './arazzo-sources';
 
 /**
  * Infer JSON Schema-like objects from Arazzo workflows when components.schemas is missing.
@@ -100,7 +103,13 @@ function inferPropertySchema(value: unknown): Record<string, unknown> {
 export const arazzoImporter: Importer = {
   kind: 'arazzo' as ImportSourceKind,
   normalize({ document, options }: { document: any; options: NormalizeOptions }): NormalizeResult {
-    const warnings: string[] = [];
+    // Register + validate sourceDescriptions and resolve step references (AZ2, #3505).
+    const arazzoResolution = resolveArazzoSources({
+      document,
+      sourceDocuments: options.sourceDocuments,
+      documentPath: options.documentPath,
+    });
+    const warnings: string[] = arazzoResolutionWarnings(arazzoResolution);
     let doc = document;
 
     const hasComponentsSchemas =
@@ -120,7 +129,8 @@ export const arazzoImporter: Importer = {
       } else {
         return {
           classes: [],
-          warnings: ['No components.schemas and no workflow steps with request bodies to import.'],
+          warnings: [...warnings, 'No components.schemas and no workflow steps with request bodies to import.'],
+          arazzoResolution,
         };
       }
     }
@@ -129,6 +139,7 @@ export const arazzoImporter: Importer = {
     return {
       classes: result.classes,
       warnings: [...warnings, ...(result.warnings || [])],
+      arazzoResolution,
     };
   },
 };

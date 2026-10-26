@@ -1,0 +1,23 @@
+---
+slug: arazzo-source-resolution
+title: Arazzo source and step resolution on Projects import
+description: Arazzo sources are validated and step references resolved, with structured warnings.
+authors: [apiome]
+---
+
+An Arazzo workflow imported through the Projects importer now has its `sourceDescriptions`
+checked and its steps' `operationId` / `operationPath` resolved against the documents supplied with
+the import. [Arazzo sources in a Projects import](/bring-in/import-a-spec#arazzo-sources-in-a-projects-import).
+
+{/* truncate */}
+
+- **Validated sources.** A source with an unsupported `type`, a missing `name` or `url`, or no
+  matching document is reported with a code instead of being ignored.
+- **Resolved steps.** Bare, source-qualified and `$sourceDescriptions` operation ids, and
+  `operationPath` pointers, resolve to the operation's path and method.
+- **Raw references kept.** A step that does not resolve keeps its reference, with a warning that
+  gives the reason.
+- **Result map.** The import job's summary carries `arazzoResolution`, ready for the Workflow
+  model.
+- The **Import** dialog and repository-file imports send only the workflow today, so their
+  sources are reported as not in the import bundle.

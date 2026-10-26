@@ -105,8 +105,7 @@ handle these.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#3505](https://github.com/apiome/apiome/issues/3505) AZ2 | Arazzo `sourceDescriptions` resolution | Catalog done; the Projects importer (`lib/importers/arazzo.ts`) ignores them |
-| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | Close when AZ2 is done |
+| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | All five are built on the Projects path; the Catalog side of OA3, OA5 and OA6 is still open (notes below) |
 
 OA3 (#3500) is built on the Projects path: `itemSchema` elements of JSON Lines, JSON text
 sequences and SSE import as classes tagged `x-apiome-stream-kind`, and **Analyze** lists the
@@ -124,6 +123,11 @@ OA6 (#3503) is built on the Projects path: `$ref`s resolve against a declared `$
 (same-document references import as local, others are kept and warned about), and `$ref` sibling
 summary/description are kept as local overrides. The Catalog (REST normalizer) side was outside
 that issue's scope.
+
+AZ2 (#3505) is built on the Projects path: `lib/importers/arazzo.ts` validates
+`sourceDescriptions` and resolves step `operationId` / `operationPath` against the documents
+supplied with the import (`sourceDocuments`), returning `arazzoResolution` on the import job. The
+Import dialog and repository-file imports do not supply source documents yet.
 
 ### 3.3 Format depth (P2 unless noted)
 
