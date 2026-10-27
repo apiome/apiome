@@ -55,8 +55,6 @@ RELATED_FORMAT_LINT_ISSUES: Dict[str, Tuple[str, ...]] = {
     "api-blueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apiblueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apib": ("https://github.com/apiome/apiome/issues/3806",),
-    "wsdl": ("https://github.com/apiome/apiome/issues/3791",),
-    "soap": ("https://github.com/apiome/apiome/issues/3791",),
 }
 
 #: Formats that always receive native OpenAPI ``schema_lint`` (not a RulePack key).

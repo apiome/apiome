@@ -844,7 +844,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',
     page: 'apiome-docs/docs/bring-in/wsdl-import.md',
     section: 'reference',
-    keywords: ['xsd', 'singlewsdl', 'wcf', 'discover', 'endpoint', 'xml schema'],
+    keywords: ['xsd', 'singlewsdl', 'wcf', 'discover', 'endpoint', 'xml schema', 'ws-i', 'basic profile', 'document/literal', 'soapaction'],
   },
   {
     id: 'soapui-import',

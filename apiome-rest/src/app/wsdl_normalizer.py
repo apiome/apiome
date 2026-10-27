@@ -211,6 +211,16 @@ def _live_fetch_extras(source: WsdlDocument) -> Dict[str, Any]:
     return extras
 
 
+def _wsi_extras(source: WsdlDocument) -> Dict[str, Any]:
+    """WS-I Basic Profile issues (MFI-13.4); empty when there are none, so a clean model is unchanged."""
+    if not source.wsi_issue_count:
+        return {}
+    return {
+        "wsdl_wsi_issues": [dict(issue) for issue in source.wsi_issues],
+        "wsdl_wsi_issue_count": source.wsi_issue_count,
+    }
+
+
 def _version_extras(source: WsdlDocument) -> Dict[str, Any]:
     """Provenance keys recording which WSDL grammar the document was written in.
 
@@ -345,6 +355,7 @@ class WsdlNormalizer(Normalizer, register=True):
                 "wsdl_target_namespace": source.target_namespace,
                 **_version_extras(source),
                 **_live_fetch_extras(source),
+                **_wsi_extras(source),
             },
         )
         return normalize_ordering(api)

@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.468.0] - 2026-10-26
+
+### Added
+- **WS-I lint pack for WSDL (MFI-13.4, #3791)** — new `app.wsdl_wsi` checks a description against the WS-I Basic
+  Profile from its XML (bindings and the import graph are not in the canonical model), including the WSDL files it
+  `wsdl:import`s. `WsdlImportSource.parse` runs it with the fileset / live-fetch members its imports resolve against
+  and records `WsdlDocument.wsi_issues` / `wsi_issue_count`; the normalizer adds `wsdl_wsi_issues` (`rule`, `path`,
+  `message`; capped at 50) and `wsdl_wsi_issue_count` when there are any. Binding rules (WSDL 1.1, SOAP 1.1 and 1.2
+  bindings): `use="encoded"` on body / header / headerfault / fault (R2706), mixed rpc/document styles in one binding
+  (R2705), document-literal bodies with several parts, `type` parts or a `namespace` (R2201, R2204, R2716),
+  rpc-literal bodies with `element` parts or no `namespace` (R2203, R2717), operations with the same body element and
+  soapAction (R2710), shared soapActions. Import rules (both grammars): `wsdl:import` / `xs:import` / `xs:include`
+  locations that resolve to nothing or cannot be read, location-less `xs:import`s of an undeclared namespace, and
+  `wsdl:import`s without `location` or of a non-WSDL document (R2007, R2001, R2002). New `app.wsdl_lint` pack
+  (`wsi`, format `wsdl`): `wsi.literal-use`, `wsi.binding-style`, `wsi.document-literal`, `wsi.rpc-literal`,
+  `wsi.unique-operation-signature`, `wsi.unresolved-import`, `wsi.wsdl-import-target` (errors, with blocking-rule
+  transparency entries and evaluation fixtures) and `wsi.unique-soap-action` (warning); seeded into the built-in
+  style guide by V326. WSDL leaves the planned-pack list. The `wsdl/04-kitchen-sink` corpus golden gains its seven
+  deliberate WS-I defects. OpenAPI 1.332.0.
+
 ## [1.467.0] - 2026-10-26
 
 ### Added

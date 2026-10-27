@@ -1,0 +1,20 @@
+---
+slug: wsi-lint-pack
+title: WS-I lint pack for SOAP / WSDL
+description: WSDL descriptions are checked against the WS-I Basic Profile.
+authors: [apiome]
+---
+
+SOAP services imported from WSDL are now checked against the WS-I Basic Profile, the rules SOAP
+toolkits follow to interoperate.
+[WS-I Basic Profile checks](/bring-in/wsdl-import#ws-i-basic-profile-checks).
+
+{/* truncate */}
+
+- **Document/literal.** `encoded` messages, bindings that mix rpc and document styles, and
+  document- or rpc-literal bodies with the wrong parts are errors.
+- **Unique operations.** Operations a receiver cannot tell apart are errors; operations that share
+  a `soapAction` are warnings.
+- **Resolvable imports.** A `wsdl:import`, `xs:import` or `xs:include` that the import cannot read
+  is an error, as is a `wsdl:import` of a schema.
+- **Imports still succeed.** Every problem is listed on the catalog item with its path.

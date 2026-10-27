@@ -33,6 +33,7 @@ from .secure_xml import SecureXmlError
 from .wsdl_fetch import fetch_wsdl_service
 from .wsdl_parser import WsdlDocument, WsdlParseError, is_wsdl, parse_wsdl
 from .wsdl_versions import VERSION_2_0, detect_wsdl_version, format_key_for_version
+from .wsdl_wsi import check_wsi
 
 __all__ = ["WsdlImportSource"]
 
@@ -106,20 +107,24 @@ class WsdlImportSource(ImportSource, register=True):
             members: Sibling documents of a multi-file set, when parsing one.
 
         Returns:
-            The parsed document.
+            The parsed document, with its WS-I Basic Profile issues (:mod:`app.wsdl_wsi`).
 
         Raises:
             ImportSourceError: When the text cannot be parsed, carrying the parser's own
                 taxonomy code when it has one.
         """
         try:
-            return parse_wsdl(raw, source_label=source_label, members=members)
+            document = parse_wsdl(raw, source_label=source_label, members=members)
         except (WsdlParseError, SecureXmlError) as exc:
             # WsdlParseError carries the taxonomy code for a semantic defect the parser can
             # name (a 2.0 document with no interface, a dangling interface reference);
             # SecureXmlError carries it for a rejected DTD / entity / external reference or
             # an exceeded size or depth limit.
             raise ImportSourceError(str(exc), code=getattr(exc, "code", None)) from exc
+        # MFI-13.4: WS-I Basic Profile checks need the bindings and the import graph, which the
+        # AST does not keep, and the members the imports resolve against — so they run here.
+        issues, total = check_wsi(raw, version=document.version, members=members, source_label=source_label)
+        return replace(document, wsi_issues=tuple(i.as_dict() for i in issues), wsi_issue_count=total)
 
     def parse_fileset(
         self,

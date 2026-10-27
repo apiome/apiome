@@ -28,7 +28,8 @@ A WSDL often pulls in other documents:
 
 When you upload the files together, every one of them is read, at any depth, and the API is cataloged
 as one: types from the schemas, and messages and operations from the imported WSDL files. A location
-nothing in the upload answers is skipped, and the types it would have supplied stay unresolved.
+nothing in the upload answers is skipped, and the types it would have supplied stay unresolved. Lint
+reports it as [`wsi.unresolved-import`](#ws-i-basic-profile-checks).
 
 ## Discover a live service
 
@@ -49,6 +50,33 @@ import. A `?singleWsdl` or `.wsdl` URL is used as given. `--discover` must be th
 
 A `?wsdl` description that imports other documents by URL arrives without them. For such services,
 use `?singleWsdl` when the service offers it, or save the files and upload them together.
+
+## WS-I Basic Profile checks
+
+Every imported description is checked against the
+[WS-I Basic Profile](https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html), the rules SOAP
+toolkits follow to interoperate. The checks read the bindings and imports exactly as written,
+including those in the files the description imports. Problems never stop the import; each is
+listed on the catalog item (`wsdl_wsi_issues`, up to 50, with `wsdl_wsi_issue_count`) and reported
+by lint at a path such as `wsdl:/binding/OrdersSoap/operation/GetOrder/input`.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| [`wsi.literal-use`](../build/lint-rules.md#wsi-literal-use) | error | A `soap:body`, `soap:header`, `soap:headerfault` or `soap:fault` with `use="encoded"`. Only `literal` is interoperable. |
+| [`wsi.binding-style`](../build/lint-rules.md#wsi-binding-style) | error | One binding that mixes `rpc` and `document` operations. |
+| [`wsi.document-literal`](../build/lint-rules.md#wsi-document-literal) | error | A document-literal body that references more than one part, a part defined with `type` rather than `element`, or that carries a `namespace` attribute. |
+| [`wsi.rpc-literal`](../build/lint-rules.md#wsi-rpc-literal) | error | An rpc-literal body that references a part defined with `element`, or has no `namespace`. |
+| [`wsi.unique-operation-signature`](../build/lint-rules.md#wsi-unique-operation-signature) | error | Two operations of a binding that send the same body element with the same `soapAction`, so a receiver cannot tell them apart. |
+| [`wsi.unresolved-import`](../build/lint-rules.md#wsi-unresolved-import) | error | A `wsdl:import`, `xs:import` or `xs:include` that resolves to nothing in the import, or an `xs:import` without `schemaLocation` whose namespace no schema declares. |
+| [`wsi.wsdl-import-target`](../build/lint-rules.md#wsi-wsdl-import-target) | error | A `wsdl:import` with no `location`, or one that names a schema instead of a WSDL description. Import schemas with `xs:import` inside `wsdl:types`. |
+| [`wsi.unique-soap-action`](../build/lint-rules.md#wsi-unique-soap-action) | warning | Two operations of a binding that share a `soapAction`, which a service that routes on it cannot tell apart. |
+
+The binding rules apply to SOAP 1.1 and SOAP 1.2 bindings in WSDL 1.1; for WSDL 2.0, only the
+import rules apply.
+
+A single `.wsdl` uploaded without the schemas it imports reports each of them as
+`wsi.unresolved-import`. Upload the files together, use `?singleWsdl`, or discover the live service,
+and import it again.
 
 ## Related
 

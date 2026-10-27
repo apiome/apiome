@@ -525,6 +525,55 @@
       "expected_blocking_rule_ids": [
         "avro.alias-conflict"
       ]
+    },
+    {
+      "id": "catalog/wsdl-literal-use",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.literal-use"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-binding-style",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.binding-style"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-document-literal",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.document-literal"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-rpc-literal",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.rpc-literal"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-unique-operation-signature",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.unique-operation-signature"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-unresolved-import",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.unresolved-import"
+      ]
+    },
+    {
+      "id": "catalog/wsdl-wsdl-import-target",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wsi.wsdl-import-target"
+      ]
     }
   ]
 }
