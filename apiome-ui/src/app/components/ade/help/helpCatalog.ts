@@ -804,7 +804,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog a RAML 1.0 API with includes, libraries, resource types and traits resolved.',
     page: 'apiome-docs/docs/bring-in/raml-import.md',
     section: 'reference',
-    keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive', 'trait', 'resource type', 'resourceTypes'],
+    keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive', 'trait', 'resource type', 'resourceTypes', 'shacl', 'validation', 'lint', 'securedBy'],
   },
   {
     id: 'thrift-import',

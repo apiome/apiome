@@ -1,0 +1,45 @@
+#%RAML 1.0
+title: Shelter API
+version: v1
+baseUri: https://api.example.com/{version}
+baseUriParameters:
+  region:
+    type: string
+securitySchemes:
+  basic:
+    type: Basic Authentication
+securedBy: [ basic ]
+types:
+  Pet:
+    type: object
+    properties:
+      id: integer
+      name:
+        type: string
+        minLength: 2
+    example:
+      id: "not-a-number"
+      name: x
+/pets:
+  get:
+    securedBy: [ oauth ]
+    queryParameters:
+      limit:
+        type: integer
+        default: "ten"
+    responses:
+      200:
+        body:
+          application/json:
+            type: Pet[]
+  /{petId}:
+    uriParameters:
+      petId: string
+      ownerId: string
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: Pet
+    delete:

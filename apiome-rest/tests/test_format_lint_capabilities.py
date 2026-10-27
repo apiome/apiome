@@ -19,7 +19,6 @@ def test_matrix_covers_planned_formats_with_linked_issues():
     rows = {r.format: r for r in build_format_lint_capabilities()}
     for fmt, issues in (
         ("smithy", RELATED_FORMAT_LINT_ISSUES["smithy"]),
-        ("raml", RELATED_FORMAT_LINT_ISSUES["raml"]),
         ("apiblueprint", RELATED_FORMAT_LINT_ISSUES["apiblueprint"]),
     ):
         assert fmt in rows
@@ -59,6 +58,14 @@ def test_typespec_has_a_native_pack_since_mfi_14_3():
     row = {r.format: r for r in build_format_lint_capabilities()}["typespec"]
     assert row.mode == MODE_NATIVE
     assert row.native_pack == "typespec"
+    assert row.related_issues == ()
+
+
+def test_raml_has_a_native_pack_since_mfi_15_3():
+    # MFI-15.3 (#3801) registered the `raml` pack, so no planned-pack issue is linked any more.
+    row = {r.format: r for r in build_format_lint_capabilities()}["raml"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "raml"
     assert row.related_issues == ()
 
 

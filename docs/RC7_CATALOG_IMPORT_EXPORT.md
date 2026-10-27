@@ -198,8 +198,13 @@ MFI-14.3 (#3796) is built: every TypeSpec compile enables the built-in `@typespe
 the warnings of a successful compile (`TypeSpecCompiled.diagnostics`, extras `typespec_diagnostics`), and the
 `typespec` lint pack (`app.typespec_lint`, `typespec.compiler-diagnostic`, V327) reports them.
 
+MFI-15.3 (#3801) is built: with AMF, every RAML import is also run through `amf validate` (`app.raml_amf`,
+JSON-LD SHACL report); a self-contained document AMF refuses imports through the YAML reader with its violations as
+findings. The `raml` lint pack (`app.raml_lint`, seven rules, V328) reports `raml.shacl-*` plus hygiene
+(`app.raml_hygiene`: undeclared security schemes, unused base-URI / URI parameters, methods without responses).
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-RAML [#3801](https://github.com/apiome/apiome/issues/3801), API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
+API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).
 
 **Breaking-change rules** (the generic classifier applies today):

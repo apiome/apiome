@@ -1,0 +1,19 @@
+---
+slug: raml-lint-pack
+title: RAML lint pack with AMF validation
+description: RAML imports report AMF validation results and RAML hygiene findings in lint.
+authors: [apiome]
+---
+
+RAML APIs now have their own lint pack. Every import runs AMF's validation of the RAML profile and
+reports each problem with its file and line, along with RAML hygiene checks.
+[Lint and validation](/bring-in/raml-import#lint-and-validation).
+
+{/* truncate */}
+
+- **AMF validation.** An example that does not match its type, or a default of the wrong type, is a
+  `raml.shacl-violation` error at `raml:<file>:<line>:<column>`.
+- **Imports instead of refusals.** A self-contained RAML document AMF rejects now imports, with its
+  violations as findings. A multi-file set must still pass AMF to import.
+- **Hygiene.** Undeclared `securedBy` schemes, unused base-URI and URI parameters, and methods
+  without responses are warnings.

@@ -104,11 +104,52 @@ again gives the same hash.
 | --- | --- | --- |
 | `INPUT_REFERENCE_UNRESOLVED` | An `!include` or `uses` names a file that is not in the upload, or a type name that is not defined. | Add the missing file to the archive, or fix the type name. |
 | `INPUT_REFERENCE_UNRESOLVED` | A reference is an absolute path, a URL, or a `../` path that leaves the uploaded files. Such files are never read. | Copy the file into the archive and reference it with a relative path. |
-| `INPUT_SEMANTIC_INVALID` | AMF found the RAML invalid, for example a missing `title`. The message lists each problem with its file and line. | Fix the reported lines. |
+| `INPUT_SEMANTIC_INVALID` | A set that includes or uses other files does not pass AMF's validation, for example a missing `title`. The message lists each problem with its file and line. A self-contained document imports instead, with each problem as a lint finding (see [Lint and validation](#lint-and-validation)). | Fix the reported lines. |
 | `ADAPTER_UNAVAILABLE` | The document includes or uses other files, and this server has no AMF. | Ask your administrator to deploy the standard image, which ships AMF. |
 
 On a server without AMF, a self-contained RAML document (no `!include`, no `uses`) still imports
 with the built-in reader, which applies the document's own resource types and traits the same way.
+
+## Lint and validation
+
+RAML items are linted by the `raml` pack, on top of the checks every catalog item gets.
+
+**AMF validation.** On a server with AMF, every import is also run through AMF's validation of the
+RAML profile, the rules the RAML specification sets: an example that does not match its type, a
+default of the wrong type, a facet that does not fit. Each result is a lint finding at
+`raml:<file>:<line>:<column>`, its message starting with AMF's constraint name:
+
+```text
+raml.shacl-violation  raml:api.raml:21:1  example-validation-error: /id expected type: Integer, found: String
+```
+
+| Rule | Severity |
+| --- | --- |
+| [`raml.shacl-violation`](../build/lint-rules.md#raml-shacl-violation) | error |
+| [`raml.shacl-warning`](../build/lint-rules.md#raml-shacl-warning) | warning |
+| [`raml.shacl-info`](../build/lint-rules.md#raml-shacl-info) | info |
+
+AMF builds no model for a document that does not pass, so:
+
+- a **self-contained** document with violations is read by the built-in reader instead, and
+  imports with each violation as an error finding;
+- a set that **includes or uses other files** still cannot be imported until it passes
+  (`INPUT_SEMANTIC_INVALID`, below), because only AMF can resolve it.
+
+**Hygiene.** These checks run with or without AMF. AMF's RAML profile does not report them:
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| [`raml.undeclared-security-scheme`](../build/lint-rules.md#raml-undeclared-security-scheme) | warning | A `securedBy` (API, resource or method) naming a scheme `securitySchemes` does not declare. |
+| [`raml.unused-base-uri-parameter`](../build/lint-rules.md#raml-unused-base-uri-parameter) | warning | A `baseUriParameters` entry that `baseUri` never uses. |
+| [`raml.unused-uri-parameter`](../build/lint-rules.md#raml-unused-uri-parameter) | warning | A resource's `uriParameters` entry that its path never uses. |
+| [`raml.method-without-responses`](../build/lint-rules.md#raml-method-without-responses) | warning | A method that declares no response. |
+
+The hygiene checks read the root document as written: a scheme or parameter declared in an
+`!include`d file, or a library scheme such as `lib.oauth`, is not checked.
+
+Every problem is listed on the catalog item (`raml_lint_issues`, up to 50, with
+`raml_lint_issue_count`), each with its rule, path and message.
 
 ## Move to OpenAPI
 

@@ -392,6 +392,21 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/wsdl-wsdl-import-target",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "raml.shacl-violation": _meta(
+        "raml.shacl-violation",
+        ENGINE_SCHEMA,
+        rationale="AMF, the maintained RAML processor, validates a RAML API against the RAML profile's SHACL "
+        "shapes; a violation (an example that does not match its type, a default of the wrong type) is a "
+        "definition other RAML tools reject or misread.",
+        reference="https://a.ml/docs/related-docs/validation_profile_dialect/",
+        remediation="Fix the value AMF names at the reported file and line so it conforms to its declared type "
+        "or facet, then re-import.",
+        false_positive_guidance="Not a false positive: AMF reports violations only for documents that break the "
+        "RAML specification's constraints. Only servers with the bundled AMF toolchain report it.",
+        scan_modes=("lint",),
+        fixture_id="catalog/raml-shacl-violation",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

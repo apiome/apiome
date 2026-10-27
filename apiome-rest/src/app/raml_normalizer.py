@@ -34,6 +34,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
+from .raml_hygiene import MAX_REPORTED_ISSUES, raml_lint_issues
 from .raml_parser import RamlDocument, RamlOperation, RamlParameter, RamlTypeField
 
 __all__ = ["RamlNormalizer"]
@@ -100,6 +101,21 @@ def _canonical_field(
         description=field.description,
         extras={"raml_type": field.type_expr},
     )
+
+
+def _lint_extras(source: RamlDocument) -> Dict[str, Any]:
+    """The lint issues (MFI-15.3, :func:`app.raml_hygiene.raml_lint_issues`); empty when there are none.
+
+    Capped at :data:`app.raml_hygiene.MAX_REPORTED_ISSUES` with the total counted, and omitted for a
+    clean document so its canonical model is unchanged.
+    """
+    issues = raml_lint_issues(source)
+    if not issues:
+        return {}
+    return {
+        "raml_lint_issues": issues[:MAX_REPORTED_ISSUES],
+        "raml_lint_issue_count": len(issues),
+    }
 
 
 def _operation_extras(endpoint: RamlOperation) -> Dict[str, Any]:
@@ -260,6 +276,8 @@ class RamlNormalizer(Normalizer, register=True):
                 # MFI-15.2: the traits and resource types the API declares.
                 **({"raml_traits": list(source.traits)} if source.traits else {}),
                 **({"raml_resource_types": list(source.resource_types)} if source.resource_types else {}),
+                # MFI-15.3: AMF SHACL results and hygiene issues, for the `raml` lint pack.
+                **_lint_extras(source),
             },
         )
         return normalize_ordering(api)

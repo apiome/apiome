@@ -574,6 +574,13 @@
       "expected_blocking_rule_ids": [
         "wsi.wsdl-import-target"
       ]
+    },
+    {
+      "id": "catalog/raml-shacl-violation",
+      "kind": "catalog_raml_amf",
+      "expected_blocking_rule_ids": [
+        "raml.shacl-violation"
+      ]
     }
   ]
 }

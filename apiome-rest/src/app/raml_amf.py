@@ -18,6 +18,13 @@ a JVM jar behind a wrapper), run through the polyglot toolchain runner:
 4. :mod:`app.raml_amf_mapper` turns the graph into the :class:`~app.raml_parser.RamlDocument`
    the RAML normalizer already consumes.
 
+MFI-15.3 (#3801) adds AMF's SHACL validation as lint input:
+:func:`validate_raml_set_with_amf` runs ``amf validate``, whose JSON-LD ``sh:ValidationReport``
+:func:`read_validation_report` turns into one result per problem (severity, constraint, message,
+file, line, column). ``amf parse`` refuses a document that does not conform, so the import source
+runs validation after a successful parse (to keep its warnings) and, for a self-contained document
+AMF refused, before falling back to the YAML reader (so its violations become lint findings).
+
 :func:`parse_raml_set_with_amf` runs all four. Every failure is an
 :class:`~app.import_source.ImportSourceError` carrying an intake-taxonomy code.
 """
@@ -38,7 +45,13 @@ from .fileset import normalize_member_path, resolve_relative_reference
 from .import_source import ImportSourceError
 from .raml_parser import RamlDocument
 from .raml_traits import IncludeAsText
-from .toolchain_runner import ToolchainError, ToolNotAvailableError, ToolTimeoutError, run_tool_blocking
+from .toolchain_runner import (
+    ToolchainError,
+    ToolExecutionError,
+    ToolNotAvailableError,
+    ToolTimeoutError,
+    run_tool_blocking,
+)
 
 __all__ = [
     "AMF_TOOL_KEY",
@@ -49,9 +62,12 @@ __all__ = [
     "find_reference_targets",
     "parse_raml_set_with_amf",
     "parse_validation_violations",
+    "read_validation_report",
     "references_other_files",
     "run_amf_parse",
+    "run_amf_validate",
     "stage_raml_members",
+    "validate_raml_set_with_amf",
 ]
 
 #: Registry key of the bundled AMF CLI (declared in :mod:`app.toolchain_packaging`).
@@ -275,6 +291,125 @@ def run_amf_parse(root_file: Path, *, root_text: str, staging_dir: Path) -> Dict
     return model
 
 
+_SHACL = "http://www.w3.org/ns/shacl#"
+_AMF_PARSER = "http://a.ml/vocabularies/amf/parser#"
+
+
+def _shacl_values(node: Mapping[str, Any], key: str) -> List[Any]:
+    """A JSON-LD property's values as a list (compaction writes a single value bare)."""
+    value = node.get(key)
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def _iri_tail(value: Any) -> str:
+    """The fragment of an ``{"@id": iri}`` (``…#example-validation-error`` → ``example-validation-error``)."""
+    iri = value.get("@id") if isinstance(value, Mapping) else value
+    return str(iri or "").rsplit("#", 1)[-1]
+
+
+def read_validation_report(stdout: Optional[str], staging_dir: Path) -> Optional[List[Dict[str, Any]]]:
+    """Read the JSON-LD ``sh:ValidationReport`` ``amf validate`` prints.
+
+    Args:
+        stdout: The tool's standard output.
+        staging_dir: The staging directory (removed from file locations).
+
+    Returns:
+        One dict per result, in report order: ``severity`` (``Violation`` / ``Warning`` /
+        ``Info``), ``constraint`` (the AMF shape, ``example-validation-error``), ``message`` (its
+        lines joined with ``; ``), and ``file`` (relative to the set), ``line`` (1-based) and
+        ``column`` (1-based) when AMF located it. ``None`` when the output is not a report.
+    """
+    try:
+        report = json.loads(stdout or "")
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(report, Mapping) or _iri_tail(report.get("@type")) != "ValidationReport":
+        return None
+    results: List[Dict[str, Any]] = []
+    for result in _shacl_values(report, f"{_SHACL}result"):
+        if not isinstance(result, Mapping):
+            continue
+        message = "; ".join(
+            line.strip() for line in str(result.get(f"{_SHACL}resultMessage") or "").splitlines() if line.strip()
+        )
+        item: Dict[str, Any] = {
+            "severity": _iri_tail(result.get(f"{_SHACL}resultSeverity")) or "Violation",
+            "constraint": _iri_tail(result.get(f"{_SHACL}sourceShape")),
+            "message": message,
+        }
+        focus = result.get(f"{_SHACL}focusNode")
+        focus_iri = str(focus.get("@id") if isinstance(focus, Mapping) else focus or "")
+        file = _scrub(focus_iri.split("#", 1)[0], staging_dir).lstrip("/") if focus_iri.startswith("file:") else ""
+        position = result.get(f"{_AMF_PARSER}lexicalPosition")
+        start = position.get(f"{_AMF_PARSER}start") if isinstance(position, Mapping) else None
+        if file:
+            item["file"] = file
+            if isinstance(start, Mapping) and isinstance(start.get(f"{_AMF_PARSER}line"), int):
+                item["line"] = start[f"{_AMF_PARSER}line"]
+                column = start.get(f"{_AMF_PARSER}column")
+                item["column"] = column + 1 if isinstance(column, int) else None
+        results.append(item)
+    return results
+
+
+def run_amf_validate(root_file: Path, *, root_text: str, staging_dir: Path) -> List[Dict[str, Any]]:
+    """Run ``amf validate`` on a staged root document against its RAML profile.
+
+    The CLI exits ``1`` when the document does not conform, with the report still on stdout,
+    so a non-zero exit is read like a zero one.
+
+    Args:
+        root_file: The staged root document.
+        root_text: The root document's text (its ``#%RAML`` header picks the profile).
+        staging_dir: The staging directory (the tool's working directory and ``HOME``).
+
+    Returns:
+        The report's results (:func:`read_validation_report`).
+
+    Raises:
+        ImportSourceError: ``ADAPTER_UNAVAILABLE``, ``INPUT_TIME_LIMIT``, or ``INPUT_MALFORMED``
+            when AMF printed no report.
+    """
+    profile = _amf_format(root_text)
+    args = ["validate", root_file.resolve().as_uri(), "-in", profile, "-mime-in", "application/yaml", "-p", profile]
+    try:
+        result = run_tool_blocking(
+            AMF_TOOL_KEY,
+            args,
+            timeout=AMF_TIMEOUT_SECONDS,
+            thread_name="amf-validate",
+            cwd=str(staging_dir),
+            extra_env={"HOME": str(staging_dir)},
+        )
+        stdout, stderr = result.stdout, result.stderr
+    except ToolExecutionError as exc:
+        stdout, stderr = exc.stdout, exc.stderr
+    except ToolNotAvailableError as exc:
+        raise ImportSourceError(
+            "RAML validation needs the bundled AMF toolchain, which is not available on this server.",
+            code="ADAPTER_UNAVAILABLE",
+        ) from exc
+    except ToolTimeoutError as exc:
+        raise ImportSourceError(
+            f"AMF took longer than {AMF_TIMEOUT_SECONDS:.0f} s to validate the RAML set.",
+            code="INPUT_TIME_LIMIT",
+        ) from exc
+    except ToolchainError as exc:
+        raise ImportSourceError(
+            f"AMF could not validate the RAML set: {_scrub(str(exc), staging_dir)}", code="INPUT_MALFORMED"
+        ) from exc
+    results = read_validation_report(stdout, staging_dir)
+    if results is None:
+        detail = _first_error_line(stderr) or "it printed no validation report"
+        raise ImportSourceError(
+            f"AMF could not validate the RAML set: {_scrub(detail, staging_dir)}", code="INPUT_MALFORMED"
+        )
+    return results
+
+
 _REPORT_FIELD_RE = re.compile(r"^\s*-?\s*(Constraint|Message|Severity|Range|Location):\s*(.*)$")
 _RANGE_LINE_RE = re.compile(r"\((\d+),\d+\)")
 
@@ -449,6 +584,31 @@ def parse_raml_set_with_amf(
             source_files=_source_files(members),
             source_label=source_label or root,
         )
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
+
+
+def validate_raml_set_with_amf(members: Mapping[str, str], root: str) -> List[Dict[str, Any]]:
+    """Validate a RAML set with AMF's SHACL profile (MFI-15.3, #3801).
+
+    Args:
+        members: The set's members, path → text.
+        root: The root document's path among ``members``.
+
+    Returns:
+        The validation results (:func:`read_validation_report`); empty when the set conforms
+        with nothing to report.
+
+    Raises:
+        ImportSourceError: See :func:`check_reference_targets` and :func:`run_amf_validate`.
+    """
+    if root not in members:
+        raise ImportSourceError("RAML fileset is missing its root document", code="INPUT_ARCHIVE_INVALID")
+    check_reference_targets(members)
+    staging_dir = Path(tempfile.mkdtemp(prefix="apiome-raml-amf-"))
+    try:
+        staged = stage_raml_members(members, staging_dir)
+        return run_amf_validate(staged[_safe_member_path(root)], root_text=members[root], staging_dir=staging_dir)
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
 
