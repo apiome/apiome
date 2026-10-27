@@ -184,8 +184,9 @@ function RegistrySettingsForm({ config, onSaved }: { config: RegistryConfig; onS
           ))}
         </select>
         <p className="sr-note">
-          Used by every subject that sets no level of its own. Until compatibility rules ship, a new version under any
-          level except NONE is refused (error 42290).
+          Used by every subject that sets no level of its own. Avro versions are checked against it; JSON Schema and
+          Protobuf have no compatibility rules yet, so a new version under any level except NONE is refused (error
+          42290).
         </p>
       </div>
       <div className="sr-field">

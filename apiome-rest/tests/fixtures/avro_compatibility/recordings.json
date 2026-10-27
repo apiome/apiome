@@ -1,0 +1,855 @@
+{
+  "_comment": "Recorded by scripts/record_avro_compatibility_fixtures.py; do not edit by hand.",
+  "registry": "7.7.1",
+  "recordings": {
+    "add-field-with-default": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "add-field-without-default": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'email' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'email'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'email' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'email'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "remove-field-without-default": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "remove-field-with-default": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "promote-int-to-long": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"n\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "narrow-long-to-int": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"n\",\"type\":\"long\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"n\",\"type\":\"long\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "int-to-double": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: DOUBLE'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"n\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: DOUBLE'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "string-to-bytes": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "string-to-int": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: STRING'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"b\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: INT'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"b\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: INT'}",
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: STRING'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"C\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"b\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "rename-field-with-alias": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "rename-field-without-alias": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'fullName' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'fullName'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'name' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'name'}",
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'fullName' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'fullName'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "rename-record": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.User'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.Person'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.Person'}",
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.User'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "rename-record-with-alias": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.Person'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'NAME_MISMATCH', description:'The name of the schema has changed (path '/name')', additionalInfo:'expected: com.example.Person'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "change-namespace": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "enum-add-symbol": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_ENUM_SYMBOLS', description:'The old schema is missing enum symbols '[C]' at path '/fields/0/type/symbols' in the new schema', additionalInfo:'[C]'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"S\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"s\",\"type\":{\"type\":\"enum\",\"name\":\"Status\",\"symbols\":[\"A\",\"B\"]}}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_ENUM_SYMBOLS', description:'The old schema is missing enum symbols '[C]' at path '/fields/0/type/symbols' in the new schema', additionalInfo:'[C]'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "enum-remove-symbol": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_ENUM_SYMBOLS', description:'The new schema is missing enum symbols '[C]' at path '/fields/0/type/symbols' in the old schema', additionalInfo:'[C]'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"S\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"s\",\"type\":{\"type\":\"enum\",\"name\":\"Status\",\"symbols\":[\"A\",\"B\",\"C\"]}}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_ENUM_SYMBOLS', description:'The new schema is missing enum symbols '[C]' at path '/fields/0/type/symbols' in the old schema', additionalInfo:'[C]'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"S\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"s\",\"type\":{\"type\":\"enum\",\"name\":\"Status\",\"symbols\":[\"A\",\"B\",\"C\"]}}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "enum-add-symbol-reader-default": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "union-add-branch": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_UNION_BRANCH', description:'The old schema is missing a type inside a union field at path '/fields/0/type/2' in the new schema', additionalInfo:'reader union lacking writer type: INT'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":[\"null\",\"string\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_UNION_BRANCH', description:'The old schema is missing a type inside a union field at path '/fields/0/type/2' in the new schema', additionalInfo:'reader union lacking writer type: INT'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "union-remove-branch": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_UNION_BRANCH', description:'The new schema is missing a type inside a union field at path '/fields/0/type/2' in the old schema', additionalInfo:'reader union lacking writer type: INT'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":[\"null\",\"string\",\"int\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'MISSING_UNION_BRANCH', description:'The new schema is missing a type inside a union field at path '/fields/0/type/2' in the old schema', additionalInfo:'reader union lacking writer type: INT'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":[\"null\",\"string\",\"int\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "make-field-optional": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: NULL'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":\"string\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: NULL'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "make-field-required": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: STRING not compatible with writer type: NULL'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":[\"null\",\"string\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: STRING not compatible with writer type: NULL'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"U\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"u\",\"type\":[\"null\",\"string\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "fixed-size-change": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'FIXED_SIZE_MISMATCH', description:'The size of FIXED type field at path '/fields/0/type/size' in the new schema does not match with the old schema', additionalInfo:'expected: 16, found: 32'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"H\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"d\",\"type\":{\"type\":\"fixed\",\"name\":\"Digest\",\"size\":16}}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'FIXED_SIZE_MISMATCH', description:'The size of FIXED type field at path '/fields/0/type/size' in the old schema does not match with the new schema', additionalInfo:'expected: 32, found: 16'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"H\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"d\",\"type\":{\"type\":\"fixed\",\"name\":\"Digest\",\"size\":16}}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'FIXED_SIZE_MISMATCH', description:'The size of FIXED type field at path '/fields/0/type/size' in the old schema does not match with the new schema', additionalInfo:'expected: 32, found: 16'}",
+          "{errorType:'FIXED_SIZE_MISMATCH', description:'The size of FIXED type field at path '/fields/0/type/size' in the new schema does not match with the old schema', additionalInfo:'expected: 16, found: 32'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"H\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"d\",\"type\":{\"type\":\"fixed\",\"name\":\"Digest\",\"size\":16}}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "array-items-widen": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/items') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"A\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":{\"type\":\"array\",\"items\":\"int\"}}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/items') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: INT not compatible with writer type: LONG'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "map-values-change": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/values') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: STRING'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"M\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"m\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/values') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: INT'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"M\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"m\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/values') of a field in the old schema does not match with the new schema', additionalInfo:'reader type: STRING not compatible with writer type: INT'}",
+          "{errorType:'TYPE_MISMATCH', description:'The type (path '/fields/0/type/values') of a field in the new schema does not match with the old schema', additionalInfo:'reader type: INT not compatible with writer type: STRING'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"M\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"m\",\"type\":{\"type\":\"map\",\"values\":\"string\"}}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "nested-record-add-field": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'zip' at path '/fields/1/type/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'zip'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"home\",\"type\":{\"type\":\"record\",\"name\":\"Address\",\"fields\":[{\"name\":\"city\",\"type\":\"string\"}]}}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'zip' at path '/fields/1/type/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'zip'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"User\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"home\",\"type\":{\"type\":\"record\",\"name\":\"Address\",\"fields\":[{\"name\":\"city\",\"type\":\"string\"}]}}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "recursive-add-field": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'label' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'label'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"Node\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"value\",\"type\":\"int\"},{\"name\":\"next\",\"type\":[\"null\",\"Node\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'label' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'label'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"Node\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"value\",\"type\":\"int\"},{\"name\":\"next\",\"type\":[\"null\",\"Node\"],\"default\":null}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      }
+    },
+    "transitive-backward": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "BACKWARD_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD_TRANSITIVE'}"
+        ]
+      },
+      "BACKWARD@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "BACKWARD_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD_TRANSITIVE'}"
+        ]
+      }
+    },
+    "transitive-forward": {
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"x\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD_TRANSITIVE'}"
+        ]
+      },
+      "FORWARD@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"x\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FORWARD_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"x\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD_TRANSITIVE'}"
+        ]
+      }
+    },
+    "transitive-full": {
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      },
+      "FULL@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      },
+      "FULL_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'x' at path '/fields/1' in the old schema has no default value and is missing in the new schema', additionalInfo:'x'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      }
+    },
+    "no-change": {
+      "BACKWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "BACKWARD_TRANSITIVE": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FORWARD_TRANSITIVE": {
+        "is_compatible": true,
+        "messages": []
+      },
+      "FULL_TRANSITIVE": {
+        "is_compatible": true,
+        "messages": []
+      }
+    },
+    "add-required-to-every-version": {
+      "BACKWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "BACKWARD_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD_TRANSITIVE'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      },
+      "FULL_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      },
+      "BACKWARD@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'b' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'b'}",
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD'}"
+        ]
+      },
+      "BACKWARD_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'b' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'b'}",
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'BACKWARD_TRANSITIVE'}"
+        ]
+      },
+      "FULL@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'b' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'b'}",
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      },
+      "FULL_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'b' at path '/fields/1' in the new schema has no default value and is missing in the old schema', additionalInfo:'b'}",
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'c' at path '/fields/2' in the new schema has no default value and is missing in the old schema', additionalInfo:'c'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      }
+    },
+    "remove-required-from-every-version": {
+      "FORWARD": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FORWARD_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{oldSchemaVersion: 2}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"},{\"name\":\"b\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD_TRANSITIVE'}"
+        ]
+      },
+      "FULL": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      },
+      "FULL_TRANSITIVE": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      },
+      "FORWARD@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD'}"
+        ]
+      },
+      "FORWARD_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{oldSchemaVersion: 1}",
+          "{oldSchema: '{\"type\":\"record\",\"name\":\"T\",\"namespace\":\"com.example\",\"fields\":[{\"name\":\"a\",\"type\":\"int\"}]}'}",
+          "{validateFields: 'false', compatibility: 'FORWARD_TRANSITIVE'}"
+        ]
+      },
+      "FULL@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{validateFields: 'false', compatibility: 'FULL'}"
+        ]
+      },
+      "FULL_TRANSITIVE@1": {
+        "is_compatible": false,
+        "messages": [
+          "{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE', description:'The field 'a' at path '/fields/0' in the old schema has no default value and is missing in the new schema', additionalInfo:'a'}",
+          "{validateFields: 'false', compatibility: 'FULL_TRANSITIVE'}"
+        ]
+      }
+    }
+  }
+}

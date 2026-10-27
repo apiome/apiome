@@ -8,8 +8,9 @@ page use:
   one with its schema text (``--version 3`` / ``--version latest``);
 * ``register <subject> <file>`` registers a schema (idempotent on its fingerprint);
 * ``compat <subject> <file>`` tests a schema on the Confluent-compatible API (CDG-4.3) and exits 1
-  when it is not compatible — until XPC-4.x ships rules, any level but ``NONE`` is refused with
-  error code ``42290``, which exits 2 like every other refusal;
+  when it is not compatible, printing the registry's reasons. Avro is judged under every level
+  (MFI-12.4); for JSON Schema and Protobuf, which have no rules yet, any level but ``NONE`` is
+  refused with error code ``42290``, which exits 2 like every other refusal;
 * ``config`` reads or changes the tenant defaults, ``config <subject>`` one subject's settings.
 
 A refusal prints the registry's message on stderr and exits with the HTTP-derived code (4xx → 2,
@@ -315,8 +316,9 @@ def compat(
 ) -> None:
     """Test a schema against a subject without registering it (Confluent POST /compatibility/…).
 
-    Exits 0 when compatible and 1 when not. Until compatibility rules ship, a subject whose level is
-    not NONE is refused with error code 42290 (exit 2).
+    Exits 0 when compatible and 1 when not, printing the reasons. Avro schemas are judged under every
+    level; for JSON Schema and Protobuf, which have no compatibility rules yet, a subject whose level
+    is not NONE is refused with error code 42290 (exit 2).
     """
     fmt = _format(ctx, output_format)
     text, resolved = _read_schema(file, schema_type)

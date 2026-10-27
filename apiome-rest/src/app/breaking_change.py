@@ -388,6 +388,9 @@ def load_format_breaking_change_classifiers() -> None:
     # Smithy breaking-change classifier (MFI-17.4): registers under ``smithy`` and overlays the
     # ``smithy diff`` evaluators (NOTE / WARNING / DANGER / ERROR) on the baseline grades.
     from . import smithy_breaking as _smithy_breaking  # noqa: F401
+    # Avro breaking-change classifier (MFI-12.4): registers under ``avro`` and grades by Avro schema
+    # resolution — BACKWARD breaks are breaking, FORWARD-only breaks dangerous (Confluent's modes).
+    from . import avro_breaking as _avro_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

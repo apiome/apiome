@@ -14,9 +14,12 @@ Responses use ``application/vnd.schemaregistry.v1+json``; errors use Confluent's
 ``{"error_code", "message"}`` and codes (``40401`` subject, ``40402`` version, ``40403`` schema not
 found, ``42201`` invalid schema, ``42205`` read-only, …).
 
-**Compatibility.** No XPC-4.x rules have shipped, so a new version under any level but ``NONE`` is
-refused with ``422`` / ``error_code`` ``42290`` (``compatibility-rules-unavailable``) instead of being
-accepted unchecked; ``/schemas/types?details=true`` says so per type.
+**Compatibility.** Avro schemas are judged under every level (MFI-12.4, :mod:`app.avro_compatibility`):
+an incompatible one is refused with ``409`` / ``error_code`` ``409``, and ``/compatibility`` answers
+with Confluent's verbose messages. JSON Schema and Protobuf have no rules yet, so a new version under
+any level but ``NONE`` is refused with ``422`` / ``error_code`` ``42290``
+(``compatibility-rules-unavailable``) instead of being accepted unchecked;
+``/schemas/types?details=true`` says so per type.
 
 **Auth.** Workspace API keys only — no second key system. A Confluent client sends basic auth
 ``<any-name>:<api-key>`` (the password is the key) or ``Authorization: Bearer <api-key>``;
@@ -90,6 +93,7 @@ _CONFLUENT_CODES: Dict[str, tuple] = {
     "mode-invalid": (422, 42204),
     "subject-read-only": (422, 42205),
     "compatibility-rules-unavailable": (422, ERROR_COMPATIBILITY_RULES_UNAVAILABLE),
+    "schema-incompatible": (409, 409),
 }
 
 
@@ -310,7 +314,8 @@ async def confluent_register(
     """Register a schema under a subject and return its id (Confluent ``POST /subjects/{s}/versions``).
 
     Registering content the subject already holds returns the same id. A new version under a level
-    other than ``NONE`` is refused with ``42290`` until XPC-4.x rules exist for the schema type.
+    other than ``NONE`` is checked: an incompatible Avro schema is refused with ``409``, and a type
+    without compatibility rules with ``42290``.
     """
     tenant_id = _tenant_id(auth_data)
     actor_id = _permit(auth_data, Action.CREATE, f"subject:{subject}")

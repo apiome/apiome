@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.480.0] - 2026-10-27
+
+### Added
+- **Avro compatibility engine (MFI-12.4, #3785)** — new `app.avro_compatibility`: `can_read(reader, writer)` applies
+  Avro schema resolution as Avro's Java `SchemaCompatibility` does (`NAME_MISMATCH`, `FIXED_SIZE_MISMATCH`,
+  `MISSING_ENUM_SYMBOLS`, `READER_FIELD_MISSING_DEFAULT_VALUE`, `TYPE_MISMATCH`, `MISSING_UNION_BRANCH`, with the
+  same locations; promotions, reader aliases, enum defaults, recursive types), and `check_compatibility(level, …)`
+  evaluates Confluent's seven levels: newest version first, stopping at the first that fails.
+  `confluent_messages` renders Confluent's verbose messages. Verified against 112 verdicts recorded from Confluent
+  Schema Registry 7.7.1 (`tests/fixtures/avro_compatibility`, re-recorded with
+  `scripts/record_avro_compatibility_fixtures.py`).
+- **`avro` breaking-change classifier** (`app.avro_breaking`, id `avro-compatibility`): runs the check both ways over
+  the two versions' schemas; a BACKWARD failure is breaking, a FORWARD-only failure dangerous, and a type or field
+  change the check reads both ways is safe. Rationales name the modes broken and carry Confluent's message.
+
+### Changed
+- **Schema registry: Avro levels are enforced.** `AVRO` is in `schema_registry.COMPATIBILITY_RULES_SHIPPED`.
+  Registering an Avro version that fails the subject's level is refused with `schema-incompatible` (409; Confluent
+  routes `error_code` 409, "Schema being registered is incompatible with an earlier schema…"), and
+  `POST /compatibility/subjects/{s}/versions[/{v}]` answers with the real verdict and messages
+  (`schema_registry_service.compatibility_verdict`). JSON Schema and Protobuf still answer
+  `compatibility-rules-unavailable` (42290). `/schemas/types?details=true` lists Avro as `available` under every
+  level.
+
 ## [1.479.0] - 2026-10-27
 
 ### Added

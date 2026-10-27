@@ -11,9 +11,12 @@ Two ways a subject gains a version, both ending in :func:`app.schema_registry_st
   subject's catalog item (created on the subject's first registration). So a subject version **is** a
   catalog item revision, and registering the same schema twice makes one revision.
 * **Compatibility** (CDG-4.3) — a new version under a level other than ``NONE`` needs a verdict.
-  Until XPC-4.x ships rules for the schema type, :func:`register_schema` refuses it with
-  ``compatibility-rules-unavailable`` rather than accepting it unchecked; :func:`check_compatibility`
-  answers the same way. A subject's first version needs no verdict.
+  Avro has one (MFI-12.4, :func:`compatibility_verdict` over :mod:`app.avro_compatibility`): an
+  incompatible schema is refused with ``schema-incompatible`` (409), as a Confluent registry does,
+  and :func:`check_compatibility` answers with Confluent's verdict and messages. For a schema type
+  without rules, :func:`register_schema` refuses it with ``compatibility-rules-unavailable`` rather
+  than accepting it unchecked, and :func:`check_compatibility` answers the same way. A subject's
+  first version needs no verdict.
 * **Attach** (:func:`attach_catalog_item`) — an existing Avro, JSON Schema or Protobuf catalog item
   backs an empty subject: its latest revision becomes version 1, and its earlier revisions are left
   exactly as they are.
@@ -170,8 +173,9 @@ def register_schema(
         ``version``, ``project_id``, ``version_record_id``, ``created`` …).
 
     Raises:
-        SchemaRegistryError: For an invalid name, type, strategy or schema, a READONLY subject, or a
-            failed import.
+        SchemaRegistryError: For an invalid name, type, strategy or schema, a READONLY subject, a
+            failed import, or ``schema-incompatible`` (409) when the schema fails the subject's
+            compatibility level.
     """
     subject = validate_subject_name(subject)
     normalize_choice(schema_type, SCHEMA_TYPES, field="schemaType")
@@ -190,8 +194,18 @@ def register_schema(
         if held is not None:
             return {**held, "created": False, "subject": subject, "subject_id": existing_subject["id"]}
 
-    has_versions = bool(existing_subject and store.list_versions(db, str(existing_subject["id"])))
-    require_verdict_possible(effective_level(db, tenant_id, existing_subject), parsed.schema_type, has_versions)
+    live_versions = store.list_versions(db, str(existing_subject["id"])) if existing_subject else []
+    level = effective_level(db, tenant_id, existing_subject)
+    require_verdict_possible(level, parsed.schema_type, bool(live_versions))
+    if level != LEVEL_NONE and live_versions:
+        verdict = compatibility_verdict(db, level, parsed.schema_type, schema, live_versions)
+        if not verdict["is_compatible"]:
+            raise SchemaRegistryError(
+                "schema-incompatible",
+                f'Schema being registered is incompatible with an earlier schema for subject "{subject}", '
+                f"details: [{', '.join(verdict['messages'])}]",
+                status_code=409,
+            )
 
     known = store.get_schema_by_fingerprint(db, tenant_id, parsed.schema_type, parsed.fingerprint)
     subject_project_id: Optional[str] = None
@@ -273,7 +287,8 @@ def check_compatibility(
     """Test ``schema`` against a subject's versions (Confluent ``POST /compatibility/…``).
 
     Under ``NONE``, or against a subject with no versions, the answer is compatible. Any other level
-    needs an XPC-4.x verdict; until one exists for the type the call is refused rather than answered.
+    needs a verdict: Avro's is computed (:func:`compatibility_verdict`); for a type without rules
+    the call is refused rather than answered. Naming a ``version`` checks that version alone.
 
     Args:
         db: The database handle.
@@ -288,7 +303,7 @@ def check_compatibility(
 
     Raises:
         SchemaRegistryError: ``subject-not-found`` / ``version-not-found`` (404), ``schema-invalid``
-            (422), ``compatibility-rules-unavailable`` (422).
+            (422), ``compatibility-rules-unavailable`` (422), ``version-has-no-source`` (422).
     """
     subject = validate_subject_name(subject)
     normalize_choice(schema_type, SCHEMA_TYPES, field="schemaType")
@@ -301,7 +316,91 @@ def check_compatibility(
     fingerprint_schema(schema_type, schema, subject)
     level = effective_level(db, tenant_id, row)
     require_verdict_possible(level, schema_type, bool(versions))
-    return {"is_compatible": True, "messages": []}
+    if level == LEVEL_NONE or not versions:
+        return {"is_compatible": True, "messages": []}
+    if version is not None:
+        selected = [v for v in versions if int(v["version"]) <= int(version)]
+        return compatibility_verdict(db, level, schema_type, schema, selected, only_latest=True)
+    return compatibility_verdict(db, level, schema_type, schema, versions)
+
+
+def _avro_schema(text: str, *, what: str) -> Any:
+    """Parse Avro schema text (``.avsc`` JSON, or IDL) for a compatibility check.
+
+    Raises:
+        SchemaRegistryError: ``schema-invalid`` (422) when the text is not a readable Avro schema.
+    """
+    from .avro_compatibility import AvroCompatibilityError, parse_schema_text, schema_of_document
+    from .avro_import_source import AvroImportSource
+    from .import_source import ImportSourceError
+
+    try:
+        return parse_schema_text(text)
+    except AvroCompatibilityError as json_error:
+        try:
+            return schema_of_document(AvroImportSource().parse(text, source_label="schema.avdl"))
+        except (AvroCompatibilityError, ImportSourceError):
+            raise SchemaRegistryError("schema-invalid", f"Invalid AVRO schema ({what}): {json_error}") from json_error
+
+
+def compatibility_verdict(
+    db: Any,
+    level: str,
+    schema_type: str,
+    schema: str,
+    versions: List[Dict[str, Any]],
+    *,
+    only_latest: bool = False,
+) -> Dict[str, Any]:
+    """Judge ``schema`` against a subject's versions under ``level`` (MFI-12.4).
+
+    The versions the level selects are checked newest first and the check stops at the first that
+    fails, as a Confluent registry's does; the messages are Confluent's verbose ones
+    (:func:`app.avro_compatibility.confluent_messages`).
+
+    Args:
+        db: The database handle (each version's schema text is read from its revision).
+        level: The effective compatibility level (not ``NONE``).
+        schema_type: The schema type; only ``AVRO`` has rules.
+        schema: The candidate schema text.
+        versions: The subject's live versions, oldest first.
+        only_latest: Check only the last of ``versions`` (a request that names a version).
+
+    Returns:
+        ``{"is_compatible": bool, "messages": [str]}``.
+
+    Raises:
+        SchemaRegistryError: ``compatibility-rules-unavailable`` (422) for a type without rules;
+            ``schema-invalid`` (422) for an unreadable candidate; ``version-has-no-source`` (422)
+            when a version's schema text was not captured.
+    """
+    from .avro_compatibility import check_compatibility as check_avro
+    from .avro_compatibility import confluent_messages
+    from .schema_registry import SCHEMA_TYPE_AVRO
+
+    if schema_type != SCHEMA_TYPE_AVRO:
+        raise SchemaRegistryError(
+            "compatibility-rules-unavailable", f"No {schema_type} compatibility engine is wired in."
+        )
+    candidate = _avro_schema(schema, what="candidate")
+    texts: List[str] = []
+    for row in versions:
+        text = schema_text(db, row.get("version_record_id"))
+        if text is None:
+            raise SchemaRegistryError(
+                "version-has-no-source",
+                f"Version {row.get('version')} has no captured schema to check compatibility against.",
+            )
+        texts.append(text)
+    previous = [_avro_schema(text, what=f"version {row.get('version')}") for text, row in zip(texts, versions)]
+    verdict = check_avro(level, candidate, previous, only_latest=only_latest)
+    failed = verdict.failed_version
+    messages = confluent_messages(
+        verdict,
+        old_version=None if failed is None else int(versions[failed]["version"]),
+        old_schema=None if failed is None else texts[failed],
+    )
+    return {"is_compatible": verdict.is_compatible, "messages": messages}
 
 
 def revision_fingerprint(revision: Dict[str, Any], schema_type: str, subject: str) -> str:

@@ -841,10 +841,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'avro-import',
     title: 'Import an Apache Avro schema',
-    summary: 'Catalog .avsc schemas and .avdl IDL, with Parsing Canonical Form fingerprints.',
+    summary: 'Catalog .avsc schemas and .avdl IDL, with fingerprints and compatibility checks.',
     page: 'apiome-docs/docs/bring-in/avro-import.md',
     section: 'reference',
-    keywords: ['avsc', 'avdl', 'pcf', 'crc-64', 'fingerprint', 'semantic hash', 'kafka'],
+    keywords: ['avsc', 'avdl', 'pcf', 'crc-64', 'fingerprint', 'semantic hash', 'kafka', 'backward', 'forward', 'transitive', 'breaking'],
   },
   {
     id: 'wsdl-import',

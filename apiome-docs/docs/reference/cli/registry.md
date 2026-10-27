@@ -24,7 +24,7 @@ Subcommands: [`compat`](#registry-compat), [`config`](#registry-config), [`regis
 
 Test a schema against a subject without registering it (Confluent POST /compatibility/…).
 
-Exits 0 when compatible and 1 when not. Until compatibility rules ship, a subject whose level is not NONE is refused with error code 42290 (exit 2).
+Exits 0 when compatible and 1 when not, printing the reasons. Avro schemas are judged under every level; for JSON Schema and Protobuf, which have no compatibility rules yet, a subject whose level is not NONE is refused with error code 42290 (exit 2).
 
 ```text
 apiome registry compat [OPTIONS] SUBJECT FILE

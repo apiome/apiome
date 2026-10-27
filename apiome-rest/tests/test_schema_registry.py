@@ -63,6 +63,22 @@ ORDER_V2 = json.dumps(
         "fields": [{"name": "id", "type": "string"}, {"name": "total", "type": ["null", "double"], "default": None}],
     }
 )
+ORDER_BREAKING = json.dumps(
+    {
+        "type": "record",
+        "name": "Order",
+        "namespace": "acme",
+        "fields": [{"name": "id", "type": "string"}, {"name": "total", "type": "double"}],
+    }
+)
+PERSON_V2 = json.dumps(
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Person",
+        "type": "object",
+        "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+    }
+)
 PERSON = json.dumps(
     {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -257,18 +273,47 @@ def test_a_soft_deleted_subjects_versions_are_hidden_but_resolvable_by_id(regist
     assert len(registry.catalog.revisions) == 1
 
 
-def test_a_second_version_under_a_checked_level_is_refused_not_accepted_unchecked(registry):
-    """CDG-4.3: no XPC-4.x rules yet, so BACKWARD (the default) cannot judge a second version."""
+def test_a_second_avro_version_is_judged_under_the_level(registry):
+    """MFI-12.4: BACKWARD (the default) accepts a compatible Avro version and refuses a breaking one."""
     _register(registry, "orders-value")
     with pytest.raises(SchemaRegistryError) as exc:
-        _register(registry, "orders-value", ORDER_V2)
-    assert exc.value.code == "compatibility-rules-unavailable" and exc.value.status_code == 422
+        _register(registry, "orders-value", ORDER_BREAKING)
+    assert exc.value.code == "schema-incompatible" and exc.value.status_code == 409
+    assert "READER_FIELD_MISSING_DEFAULT_VALUE" in str(exc.value) and '"orders-value"' in str(exc.value)
     assert len(registry.catalog.imports) == 1
     # Re-registering what the subject already holds needs no verdict.
     assert _register(registry, "orders-value", ORDER_REORDERED)["created"] is False
+    # An added optional field with a default is BACKWARD compatible.
+    assert _register(registry, "orders-value", ORDER_V2)["version"] == 2
     # A subject-level NONE beats the tenant default.
     registry.store.get_subject(None, T, "orders-value")["compatibility_level"] = "NONE"
-    assert _register(registry, "orders-value", ORDER_V2)["version"] == 2
+    assert _register(registry, "orders-value", ORDER_BREAKING)["version"] == 3
+
+
+def test_a_second_version_of_a_type_without_rules_is_refused_not_accepted_unchecked(registry):
+    """CDG-4.3: JSON Schema has no compatibility rules yet, so BACKWARD cannot judge a second version."""
+    _register(registry, "people-value", PERSON, "JSON")
+    with pytest.raises(SchemaRegistryError) as exc:
+        _register(registry, "people-value", PERSON_V2, "JSON")
+    assert exc.value.code == "compatibility-rules-unavailable" and exc.value.status_code == 422
+
+
+def test_check_compatibility_answers_with_confluent_messages(registry):
+    _register(registry, "orders-value")
+    ok = service.check_compatibility(
+        registry.db, tenant_id=T, subject="orders-value", schema=ORDER_V2, schema_type="AVRO"
+    )
+    assert ok == {"is_compatible": True, "messages": []}
+    bad = service.check_compatibility(
+        registry.db, tenant_id=T, subject="orders-value", schema=ORDER_BREAKING, schema_type="AVRO", version=1
+    )
+    assert bad["is_compatible"] is False
+    assert bad["messages"][0].startswith("{errorType:'READER_FIELD_MISSING_DEFAULT_VALUE'")
+    assert bad["messages"][1:] == [
+        "{oldSchemaVersion: 1}",
+        f"{{oldSchema: '{ORDER}'}}",
+        "{validateFields: 'false', compatibility: 'BACKWARD'}",
+    ]
 
 
 @pytest.mark.parametrize("where", ["tenant", "subject"])

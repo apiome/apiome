@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.343.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.344.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `schema-registry` · 32 operations
 
@@ -501,7 +501,8 @@ Operation id: `confluent_list_versions_registry_schema__tenant__subjects__subjec
 Register a schema under a subject and return its id (Confluent ``POST /subjects/{s}/versions``).
 
 Registering content the subject already holds returns the same id. A new version under a level
-other than ``NONE`` is refused with ``42290`` until XPC-4.x rules exist for the schema type.
+other than ``NONE`` is checked: an incompatible Avro schema is refused with ``409``, and a type
+without compatibility rules with ``42290``.
 
 Operation id: `confluent_register_registry_schema__tenant__subjects__subject__versions_post`
 

@@ -59,10 +59,11 @@ FINGERPRINT_KIND = "canonical-model"
 #: The compatibility level that needs no verdict.
 LEVEL_NONE = "NONE"
 
-#: Schema types whose XPC-4.x compatibility rules have shipped (Avro #3785, JSON Schema #5746,
-#: Protobuf #5747). None yet: until a type is listed here, a new version under any level but
-#: ``NONE`` is refused with ``compatibility-rules-unavailable`` instead of being accepted unchecked.
-COMPATIBILITY_RULES_SHIPPED: frozenset = frozenset()
+#: Schema types whose compatibility rules have shipped: Avro (MFI-12.4, #3785,
+#: :mod:`app.avro_compatibility`). JSON Schema (#5746) and Protobuf (#5747) are still to come: until
+#: a type is listed here, a new version under any level but ``NONE`` is refused with
+#: ``compatibility-rules-unavailable`` instead of being accepted unchecked.
+COMPATIBILITY_RULES_SHIPPED: frozenset = frozenset({SCHEMA_TYPE_AVRO})
 
 #: Longest subject name (V294 ``VARCHAR(255)``).
 SUBJECT_NAME_MAX = 255
@@ -276,8 +277,10 @@ def require_verdict_possible(level: str, schema_type: str, has_live_versions: bo
     """Refuse a check that would need a compatibility verdict Apiome cannot compute yet.
 
     No silent success (CDG-4.3): a level other than ``NONE`` against a subject that already has
-    versions needs a verdict, and until XPC-4.x ships rules for the schema type there is none to
-    give. A first version needs no verdict — there is nothing to compare it with.
+    versions needs a verdict, and until rules ship for the schema type there is none to give. A
+    first version needs no verdict — there is nothing to compare it with. For a type whose rules
+    have shipped this returns, and the caller computes the verdict
+    (:func:`app.schema_registry_service.compatibility_verdict`).
 
     Args:
         level: The subject's effective compatibility level.
@@ -296,10 +299,6 @@ def require_verdict_possible(level: str, schema_type: str, has_live_versions: bo
             "not have yet (XPC-4.x). Set the subject's compatibility level to NONE to register "
             "without a check.",
         )
-    # Unreachable until a type is added to COMPATIBILITY_RULES_SHIPPED with its XPC-4.x engine.
-    raise SchemaRegistryError(
-        "compatibility-rules-unavailable", f"No {schema_type} compatibility engine is wired in."
-    )
 
 
 def registrable_schema_types() -> Tuple[str, ...]:

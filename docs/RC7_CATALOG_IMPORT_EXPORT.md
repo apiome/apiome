@@ -241,6 +241,14 @@ that keeps `doc` / `default` / `aliases` / `order` / `logicalType`. They are rec
 `AvroPcfHasher` fills `FingerprintResult.format_hash` with the root's PCF SHA-256 (none for an IDL protocol). The
 schema registry still keys on the canonical-model fingerprint.
 
+MFI-12.4 (#3785) is built: `app.avro_compatibility` applies Avro schema resolution as Java `SchemaCompatibility`
+does (same incompatibility types and locations) and Confluent's levels on top (newest version first, stop at the first
+that fails; Confluent's verbose messages). It matches 112 verdicts recorded from Confluent Schema Registry 7.7.1
+(`tests/fixtures/avro_compatibility`, `scripts/record_avro_compatibility_fixtures.py`). AVRO is in
+`schema_registry.COMPATIBILITY_RULES_SHIPPED`: registration refuses an incompatible version with 409 and
+`/compatibility` answers with real verdicts. The `avro` breaking-change classifier (`app.avro_breaking`, id
+`avro-compatibility`) grades BACKWARD failures breaking and FORWARD-only failures dangerous.
+
 MFI-17.4 (#3811) is built: the `smithy` breaking-change classifier (`app.smithy_breaking`, id `smithy-diff`) runs
 `smithy diff --format csv` (`app.smithy_ast.run_smithy_diff`) and maps ERROR / DANGER / WARNING / NOTE to breaking /
 dangerous / dangerous / safe on the change each finding's shape joins; findings that join no change land in the new
@@ -249,9 +257,6 @@ through `smithy ast` when the CLI is available (built-in reader as fallback), an
 assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 
 **Breaking-change rules:** every planned format classifier has shipped.
-
-**Avro:** the compatibility engine [#3785](https://github.com/apiome/apiome/issues/3785)
-(`schema_registry.COMPATIBILITY_RULES_SHIPPED` is empty).
 
 **Other:** JSON:API / HAL / Hydra convention tagging and lint
 [#3984](https://github.com/apiome/apiome/issues/3984); z/OS Connect ↔ copybook linking
