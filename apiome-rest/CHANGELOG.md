@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.483.0] - 2026-10-27
+
+### Added
+- **Import a new version: compare with the latest version (IXH-3.7, #6321)** — new
+  `POST /v1/tenants/{tenant_slug}/import/project-delta` (`app.import_project_delta`). Given the incoming OpenAPI
+  document and the `project_slug` (or `project_id`) the commit would use, it resolves the target the way the commit
+  does (an explicit id first, else the slug trimmed and lower-cased) and compares the document with the project's
+  **latest** revision, rebuilt from the database with `openapi_for_revision` — so OpenAPI projects that keep no
+  captured source work. The response (`ProjectDeltaResponse`) carries the compatibility engine's `overall` and
+  `findings` (the Versions → Compare / gate rules), `counts` (added / changed / removed / breaking / total), a ranked
+  `changes` list from `source_change_review.diff_documents` over `paths`, `webhooks` and `components` (each row's
+  `severity` is the worst covering finding, or null when ungraded; breaking first; capped at 5 000 with `truncated`),
+  and both documents unless `include_documents` is false. **204** when the import is not a new version of an existing
+  Project (no match, a catalog item, or no revision yet). Requires `imports:create` and `versions:view`; writes nothing.
+
 ## [1.482.0] - 2026-10-27
 
 ### Added

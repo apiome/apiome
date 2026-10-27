@@ -457,6 +457,16 @@
       "data": "fixture:hive-import-wizard/intake.html"
     },
     {
+      "id": "import-wizard-changes",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "[data-testid=\"import-changes\"]",
+      "data": "fixture:hive-import-wizard/changes.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/import/ImportChangesPanel.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/ImportDialog.tsx"
+      ]
+    },
+    {
       "id": "import-wizard-running",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",

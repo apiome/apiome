@@ -16,8 +16,11 @@
  *   - the source grid, the intake tab bar, the File intake and the MCP summary are their own
  *     components.
  *
- * The flow itself is unchanged: Source → Analyze → Preview → Import → Done, with MCP short-
- * circuiting Analyze and Preview because a discovery scan has neither.
+ * The flow: Source → Analyze → Preview → [Changes] → Import → Done, with MCP short-circuiting
+ * Analyze and Preview because a discovery scan has neither. *Changes* (IXH-3.7, #6321) is asked
+ * for when Preview's **Import →** is pressed: if the slug resolves to an existing Project the
+ * wizard stops there to compare the spec with that project's latest version; otherwise (and for
+ * the Catalog) it goes straight to Import.
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -50,10 +53,12 @@ import {
   type McpImportForm,
 } from './mcp/mcpImportFlow';
 import { startImport, getImportStatus, rollbackImport } from '../../../../../lib/db/import-actions';
+import { fetchProjectDelta, type ProjectDeltaState } from '../../../utils/import-project-delta';
 import { generateSlug } from '../../../utils/slug';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '../../../utils/project-quality-score-history';
 import {
   FileIntakePanel,
+  ImportChangesPanel,
   ImportIntakeTabs,
   ImportSourceCards,
   ImportWizardBody,
@@ -65,6 +70,9 @@ import {
   RecentImportsList,
   importFooterFor,
   importQualityGate,
+  importWizardStepsFor,
+  showsChangesStep,
+  stepperIdFor,
   isAcceptedImportFile,
   detectAndDescribe,
   urlTestAction,
@@ -143,6 +151,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [postmanFilename, setPostmanFilename] = useState<string | null>(null);
   const [postmanMetadata, setPostmanMetadata] = useState<FileMetadataPreview | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  /** The Changes step's comparison with the target project's latest version (IXH-3.7). */
+  const [projectDelta, setProjectDelta] = useState<ProjectDeltaState>({ status: 'idle' });
+  /** Bumped per comparison request (and on Back / reset) so a stale answer is ignored. */
+  const deltaRequestRef = useRef(0);
   /** The mockup's *Recent import jobs* side-sheet (HIVE-6.4). */
   const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false);
 
@@ -273,9 +285,14 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       setImportComplete(false);
       setImportSucceeded(false);
     } else if (currentStep === 'import') {
-      setCurrentStep('preview');
+      setCurrentStep(showsChangesStep(projectDelta) ? 'changes' : 'preview');
       setJobId(null);
+    } else if (currentStep === 'changes') {
+      deltaRequestRef.current += 1;
+      setCurrentStep('preview');
     } else if (currentStep === 'preview') {
+      deltaRequestRef.current += 1;
+      setProjectDelta({ status: 'idle' });
       setCurrentStep('analysis');
     } else if (currentStep === 'analysis') {
       // If the source was LLM and we were opened from New Project AI, return to that conversation instead of source
@@ -358,6 +375,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setMcpEndpointCommitted(false);
     setErrorMessage(null);
     setJobsDrawerOpen(false);
+    deltaRequestRef.current += 1;
+    setProjectDelta({ status: 'idle' });
     dryRunRef.current = false;
   };
 
@@ -519,6 +538,41 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
   };
 
+  /**
+   * The project slug the commit will use — Preview's slug, else one derived from the title.
+   * Shared by the commit and the Changes comparison so both resolve the same project.
+   */
+  const importProjectSlug = (): string =>
+    importOptions?.projectSlug ||
+    generateSlug(analysisResult?.document?.info?.title || 'new-project') ||
+    'imported-project';
+
+  /**
+   * Ask whether this import is a new version of an existing Project (IXH-3.7).
+   *
+   * @param fromPreview `true` when Preview's primary asked: a "not a new version" answer then goes
+   *   straight on to the import. From the Changes step's retry it only refreshes the step.
+   */
+  const checkProjectDelta = async (fromPreview: boolean) => {
+    if (!analysisResult || !importOptions) return;
+    // An Arazzo workflow document is not an API version — there is nothing to compare.
+    if (analysisResult.format === 'arazzo') {
+      if (fromPreview) void beginImport();
+      return;
+    }
+    const request = ++deltaRequestRef.current;
+    setProjectDelta({ status: 'checking' });
+    const next = await fetchProjectDelta({
+      document: analysisResult.document,
+      project_slug: importProjectSlug(),
+    });
+    if (request !== deltaRequestRef.current) return; // the reader moved on
+    setProjectDelta(next);
+    if (!fromPreview) return;
+    if (showsChangesStep(next)) setCurrentStep('changes');
+    else void beginImport();
+  };
+
   const beginImport = async () => {
     if (!analysisResult || !importOptions) return;
 
@@ -543,7 +597,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       document,
       project: {
         name: importOptions.projectName || (document?.info?.title || 'New Project'),
-        slug: importOptions.projectSlug || generateSlug(document?.info?.title || 'new-project') || 'imported-project',
+        slug: importProjectSlug(),
         description: document?.info?.description || null
       },
       version: {
@@ -709,6 +763,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     intakeReady,
     analysisImportable: Boolean(analysisResult?.isValid && analysisResult?.formatSupported),
     hasSelection: Boolean(importOptions && importOptions.selectedSchemas.length > 0),
+    checkingChanges: currentStep === 'preview' && projectDelta.status === 'checking',
     mcpReady: validateMcpImportForm(mcpForm) === null,
     mcpSubmitting,
   });
@@ -722,6 +777,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       return;
     }
     if (currentStep === 'preview') {
+      void checkProjectDelta(true);
+      return;
+    }
+    if (currentStep === 'changes') {
       void beginImport();
       return;
     }
@@ -783,6 +842,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
     if (currentStep === 'preview' && analysisResult) {
       return <PreviewPanel analysis={analysisResult} onImportOptionsChange={setImportOptions} />;
+    }
+
+    if (currentStep === 'changes') {
+      return <ImportChangesPanel state={projectDelta} onRetry={() => void checkProjectDelta(false)} />;
     }
 
     if (currentStep === 'import' && selectedSource === 'mcp' && mcpEndpointId && mcpJobId) {
@@ -912,7 +975,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
               </Button>
             }
           />
-          <ImportWizardSteps step={currentStep} />
+          <ImportWizardSteps
+            steps={importWizardStepsFor(showsChangesStep(projectDelta))}
+            current={stepperIdFor(currentStep)}
+            complete={currentStep === 'done'}
+          />
           <ImportWizardBody>
             {errorMessage ? (
               <Alert variant="danger" className="mb-4">

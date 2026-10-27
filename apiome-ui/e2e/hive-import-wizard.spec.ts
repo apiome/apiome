@@ -60,10 +60,10 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1024, 900, 768, 640, 420];
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-import-wizard');
 
 /** The surfaces the jsdom suite dumps. */
-type Fixture = 'source' | 'intake' | 'mcp' | 'import-running' | 'import-failed';
+type Fixture = 'source' | 'intake' | 'mcp' | 'changes' | 'import-running' | 'import-failed';
 
 /** The three that are the wizard itself; the other two are the Import step's panel alone. */
-const DIALOG_FIXTURES: Fixture[] = ['source', 'intake', 'mcp'];
+const DIALOG_FIXTURES: Fixture[] = ['source', 'intake', 'mcp', 'changes'];
 
 /**
  * One rendered surface, as the jsdom suite wrote it.
@@ -171,6 +171,13 @@ test.describe('the wizard keeps the document to one column', () => {
     test(`the intake step does not scroll sideways at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await mount(page, 'intake');
+      expect(await documentOverflows(page)).toBe(false);
+    });
+
+    // IXH-3.7 (#6321): the Changes step's summary bar, filters and change list.
+    test(`the changes step does not scroll sideways at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await mount(page, 'changes');
       expect(await documentOverflows(page)).toBe(false);
     });
   }
@@ -343,10 +350,26 @@ test.describe('the import log', () => {
    ------------------------------------------------------------------------- */
 
 test.describe('accessibility', () => {
-  for (const name of ['source', 'intake', 'mcp', 'import-running', 'import-failed'] as const) {
+  for (const name of ['source', 'intake', 'mcp', 'changes', 'import-running', 'import-failed'] as const) {
     test(`the ${name} surface has no serious or critical violations`, async ({ page }) => {
       await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
       await mount(page, name);
+      const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+      const serious = results.violations.filter((violation) =>
+        ['serious', 'critical'].includes(violation.impact ?? '')
+      );
+      expect(serious.map((violation) => violation.id)).toEqual([]);
+    });
+  }
+
+  // IXH-3.7 (#6321): the Changes step is axe-clean in light and dark.
+  for (const theme of [null, 'dark']) {
+    test(`the changes step has no serious or critical violations in the ${theme ?? 'light'} theme`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+      await mount(page, 'changes');
+      await applyPreferences(page, { theme });
       const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
       const serious = results.violations.filter((violation) =>
         ['serious', 'critical'].includes(violation.impact ?? '')

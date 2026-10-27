@@ -17,7 +17,9 @@ The sample files below are in the Apiome repository under `apiome-ui/examples/`.
 
 ## Import specification
 
-Steps: **Source → Analyze → Preview → Import → Done**.
+Steps: **Source → Analyze → Preview → Import → Done** — with a **Changes** step between Preview and
+Import when the spec is a new version of a project you already have
+([below](#import-a-new-version-of-an-existing-project)).
 
 <Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step: the source cards, then the three most recent imports with their state" caption="The Source step. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
 
@@ -30,7 +32,8 @@ Steps: **Source → Analyze → Preview → Import → Done**.
    not take). **Click “Continue”.**
 3. **Preview** — review the schemas in a **List View**, **Relationship Diagram** or **Tree View**,
    pick them with **Select All** / **Select None** and the filters, and set the **Project Name**,
-   **Slug** and **Version** under **Import Options**. **Click “Import →”.**
+   **Slug** and **Version** under **Import Options**. **Click “Import →”.** The button reads
+   **Checking for changes…** for a moment while Apiome looks for a project with that **Slug**.
 4. **Import** — the job runs; you can close the dialog and it keeps going.
 5. **Done** — **Import Complete!** **“Undo import”** reverses it; **“Download error report”**
    explains anything that was skipped.
@@ -42,6 +45,37 @@ If the import fails, nothing is saved; the failures are listed with **“Retry i
 <Screenshot id="import-wizard-failed" alt="A failed import: the failure, the stopped progress bar, Retry import and the import log" />
 
 **Recent import jobs** in the wizard's header lists earlier jobs.
+
+### Import a new version of an existing project
+
+When the **Slug** on Preview matches a project you already have, the import adds a new version to
+that project instead of creating one. Before it does, the wizard stops at **Changes** so you can see
+what the new version changes compared with the project's **latest** version. The step is skipped for a
+first-time import and for anything that lands in the [Catalog](./catalog.mdx).
+
+<Screenshot id="import-wizard-changes" alt="The Changes step: Changes vs. Payments API v2.4.0 (latest), counts of 1 added, 2 changed, 1 removed and 2 breaking, a breaking-changes warning, and the change list with the removed DELETE /refunds/{id} operation first" caption="The Changes step for a new version of Payments API. Breaking changes come first." />
+
+1. **Read the summary bar** — **added**, **changed** and **removed** count every changed path,
+   operation, schema and property; **breaking** counts the breaking findings. These are the same
+   rules as **Compare** on [Versions](../build/versions.mdx) and the compatibility gate.
+2. If anything is breaking, a warning says so. It is a warning, not a block — the compatibility gate
+   decides whether the version can merge or publish.
+3. On the **Summary** tab, the list puts breaking changes first. Each row shows **Added**,
+   **Changed** or **Removed**, what changed (for example `schema Refund.amount minimum 0 → 0.01`) and
+   its grade (**breaking**, **unknown** or **safe**). A change no compatibility rule grades has no
+   badge. Narrow the list with **Show** (**All**, **Breaking**, **Added**, **Changed**, **Removed**)
+   or **Filter changes**; **“Show more”** loads the next 50.
+4. **Click “Side-by-side spec”** to compare the two documents: the latest version on the left, the
+   incoming spec on the right, with unchanged regions folded.
+5. **Click “Continue to import”.** **“← Back”** returns to Preview, where you can change the
+   **Slug** to import into a different project.
+
+If nothing changed, the step says **No changes from v2.4.0** (with your version); importing still
+records a new version. If the comparison cannot be computed, **“Try again”** asks again, and
+**“Continue to import”** still works. The step appears for a **Dry run (preview only)** import too.
+
+To try it, import `apiome-ui/examples/openapi/30-openapi-3.0-petstore.yaml`, then edit a copy (remove
+an operation, add a path) and import it again with the same **Slug** and a new **Version**.
 
 ### File Upload
 
@@ -121,7 +155,8 @@ Options → Quality → Import**.
   ./01-simple-user.graphql`, `apiome import preflight` — see the [CLI
   quick-start](../reference/cli-quickstart.md).
 - REST: `POST /v1/tenants/{tenant}/imports` (and `…/imports/upload`), `GET …/imports/{job}`,
-  `POST …/imports/{job}/commit|rollback`, `POST /v1/import/detect` — see [Import a
+  `POST …/imports/{job}/commit|rollback`, `POST /v1/import/detect`, and
+  `POST /v1/tenants/{tenant}/import/project-delta` (the Changes step's comparison) — see [Import a
   specification](./import-a-spec.md) and the [API reference](../reference/api-reference.md).
 
 ## Where next

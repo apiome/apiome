@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -39,6 +40,11 @@ from .import_bundle_explorer import (
 )
 from .import_export_quality_policy import QualityGateError, enforce_import_quality_gate
 from .import_preflight import run_import_preflight
+from .import_project_delta import (
+    ProjectDeltaRequest,
+    ProjectDeltaResponse,
+    run_project_delta,
+)
 from .import_preview_manifest import (
     ImportPreviewManifestRequest,
     ImportPreviewManifestResponse,
@@ -69,6 +75,8 @@ from .spec_import_engine import (
 )
 
 router = APIRouter(prefix="/v1/tenants", tags=["spec-import"])
+
+logger = logging.getLogger(__name__)
 
 
 def _require_tenant_and_user(auth_data: Dict[str, Any]) -> tuple[str, str]:
@@ -233,6 +241,53 @@ async def preview_import_manifest(
     except ValueError as exc:
         # A malformed pagination cursor is a client error, not a pre-flight verdict.
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post(
+    "/{tenant_slug}/import/project-delta",
+    response_model=ProjectDeltaResponse,
+    responses={204: {"description": "Not a new version of an existing Project — skip the Changes step."}},
+    summary="Compare an incoming spec with the target project's latest version (no write)",
+    description=(
+        "Answer **what a new version would change** before the import commits it (IXH-3.7). "
+        "The target is resolved the way the commit resolves it — an explicit `project_id`, "
+        "otherwise `project_slug` trimmed and lower-cased — and compared with the project's "
+        "**latest** revision, whose OpenAPI is rebuilt from the database with the generator "
+        "Versions → Compare and the compatibility gate use (so OpenAPI projects that keep no "
+        "captured source work too).\n\n"
+        "The response carries the compatibility engine's overall verdict and findings (the same "
+        "safe / breaking / unknown rules as Versions → Compare), summary counts (added / changed / "
+        "removed / breaking), a ranked structural change list over `paths`, `webhooks` and "
+        "`components` (breaking first; each row graded by the findings that cover it, or "
+        "ungraded), and both documents for a side-by-side view.\n\n"
+        "**204** when the import is not a new version of an existing Project: nothing matches, "
+        "the match is a catalog item (see the preview manifest's re-import delta), or the "
+        "project has no revision yet. Nothing is persisted."
+    ),
+)
+async def preview_project_delta(
+    tenant_slug: str,
+    body: ProjectDeltaRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+):
+    # The import flow's gate (like the pre-flight), plus versions:view — the response carries
+    # the latest version's whole document.
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.CREATE)
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    tenant_id, _user_id = _require_tenant_and_user(auth_data)
+    try:
+        delta = run_project_delta(db, body, tenant_id=tenant_id, tenant_slug=tenant_slug)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 - surfaced as a retryable error, never a crash
+        logger.exception("project delta failed for tenant %s", tenant_slug)
+        raise HTTPException(
+            status_code=500,
+            detail="The latest version could not be compared with this specification.",
+        ) from exc
+    if delta is None:
+        return Response(status_code=204)
+    return delta
 
 
 @router.post(
