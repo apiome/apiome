@@ -1,0 +1,38 @@
+openapi: 3.1.0
+info: {title: People (JSON-LD and Hydra), version: "1.0"}
+paths:
+  /people:
+    get:
+      responses:
+        "200":
+          description: A Hydra collection of people.
+          content:
+            application/ld+json:
+              schema:
+                type: object
+                properties:
+                  "@context": {type: string, const: "http://www.w3.org/ns/hydra/context.jsonld"}
+                  "@id": {type: string}
+                  "@type": {type: string, const: hydra:Collection}
+                  "hydra:totalItems": {type: integer}
+                  "hydra:member": {type: array, items: {$ref: "#/components/schemas/Person"}}
+  /people/{id}:
+    get:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: One person; the JSON-LD context is sent in a Link header.
+          headers:
+            Link: {schema: {type: string}}
+          content:
+            application/ld+json:
+              schema: {$ref: "#/components/schemas/Person"}
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        "@id": {type: string}
+        "@type": {type: string, enum: [Person]}
+        name: {type: string}

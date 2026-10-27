@@ -847,6 +847,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['avsc', 'avdl', 'pcf', 'crc-64', 'fingerprint', 'semantic hash', 'kafka', 'backward', 'forward', 'transitive', 'breaking'],
   },
   {
+    id: 'rest-hypermedia-conventions',
+    title: 'REST hypermedia conventions',
+    summary: 'How JSON:API, HAL, HAL-FORMS, JSON-LD and Hydra APIs are tagged and linted.',
+    page: 'apiome-docs/docs/bring-in/rest-hypermedia-conventions.md',
+    section: 'reference',
+    keywords: ['jsonapi', 'json:api', 'hal-forms', 'hydra', 'json-ld', 'media type', 'jtd', 'facet'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

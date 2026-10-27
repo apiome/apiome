@@ -974,6 +974,63 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Every uriParameters entry should appear in its resource path.
 
 
+## Pack: `rest-conventions`
+
+### `rest-conventions.hal-forms-template` {#rest-conventions-hal-forms-template}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A HAL-FORMS document must have a `_templates.default` template.
+
+### `rest-conventions.hal-link-object` {#rest-conventions-hal-link-object}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A HAL link object must have `href`.
+
+### `rest-conventions.hal-self-link` {#rest-conventions-hal-self-link}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A HAL resource should have a `_links.self` link.
+
+### `rest-conventions.hydra-collection-member` {#rest-conventions-hydra-collection-member}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A Hydra collection's `member` must be an array.
+
+### `rest-conventions.jsonapi-data-and-errors` {#rest-conventions-jsonapi-data-and-errors}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A JSON:API document must not contain both `data` and `errors`.
+
+### `rest-conventions.jsonapi-error-document` {#rest-conventions-jsonapi-error-document}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A 4xx / 5xx JSON:API response should be an error document with `errors`.
+
+### `rest-conventions.jsonapi-resource-object` {#rest-conventions-jsonapi-resource-object}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A JSON:API resource object must have `type`, and `id` in a response.
+
+### `rest-conventions.jsonapi-top-level` {#rest-conventions-jsonapi-top-level}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A JSON:API document must contain `data`, `errors` or `meta`.
+
+### `rest-conventions.jsonld-context` {#rest-conventions-jsonld-context}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A JSON-LD body should declare `@context` (or send it in a `Link` header).
+
+
 ## Pack: `smithy`
 
 ### `smithy.linter` {#smithy-linter}

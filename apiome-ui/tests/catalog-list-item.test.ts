@@ -21,4 +21,12 @@ describe('normalizeCatalogListItem', () => {
     expect(item.qualityGrade).toBe('B');
     expect(item.versionsCount).toBe(2);
   });
+
+  it('keeps the REST conventions an item declares (MFI-19.6), and none from an older API', () => {
+    expect(normalizeCatalogListItem({ id: 'a', conventions: ['hal', 7, 'hal-forms'] }).conventions).toEqual([
+      'hal',
+      'hal-forms',
+    ]);
+    expect(normalizeCatalogListItem({ id: 'b' }).conventions).toEqual([]);
+  });
 });

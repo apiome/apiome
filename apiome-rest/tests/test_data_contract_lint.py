@@ -76,7 +76,7 @@ RESEED_MIGRATION = (
     Path(__file__).resolve().parents[2]
     / "apiome-db"
     / "scripts"
-    / "V330__style_guide_builtin_reseed_smithy_pack_3810.sql"
+    / "V331__style_guide_builtin_reseed_rest_conventions_pack_3984.sql"
 )
 
 
@@ -166,7 +166,7 @@ def _record(*fields: CanonicalField, key: str = "orders") -> Type:
 
 def test_the_pack_is_registered_against_the_data_schema_paradigm() -> None:
     """AC1: dispatch is on paradigm, which is the dimension the ticket names."""
-    assert available_lint_paradigms() == ["data_schema"]
+    assert "data_schema" in available_lint_paradigms()
     assert get_paradigm_rule_pack(ApiParadigm.DATA_SCHEMA) is DataContractRulePack
     # The enum member and its string value must resolve to the same pack: `str(member)` of a
     # str-Enum renders as `ApiParadigm.DATA_SCHEMA`, which is exactly how a paradigm pack

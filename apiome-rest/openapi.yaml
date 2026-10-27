@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.344.0
+  version: 1.345.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -2106,8 +2106,8 @@ paths:
         Registering content the subject already holds returns the same id. A new version
         under a level
 
-        other than ``NONE`` is checked: an incompatible Avro schema is refused with ``409``,
-        and a type
+        other than ``NONE`` is checked: an incompatible Avro schema is refused with
+        ``409``, and a type
 
         without compatibility rules with ``42290``.'
       operationId: confluent_register_registry_schema__tenant__subjects__subject__versions_post
@@ -10856,20 +10856,23 @@ paths:
         \ from the Projects dashboard) restricted to the non-publishable slice, with\
         \ each item\nalso carrying the latest revision's format/protocol/source provenance\
         \ and its categorization\n(MFI-6.3): the auto-derived ``paradigm``, the manual\
-        \ ``domain`` and the free-form ``tags``.\n\nThe four categorization facets\
-        \ — ``protocol`` (paradigm), ``format``, ``domain`` and ``tag`` —\nare repeatable:\
-        \ values within one facet OR together, facets AND, an unknown value narrows\
-        \ to\nnothing, and ``uncategorized`` selects the items with no value. Their\
-        \ counts are\n``GET /v1/catalog/{tenant_slug}/facets``.\n\nSupports authentication\
-        \ via:\n- JWT token in Authorization header (Bearer token)\n- API key in X-API-Key\
-        \ header\n\nArgs:\n    tenant_slug: The tenant slug.\n    include_deleted:\
-        \ Include rows with deleted_at set (for trash / restore flows).\n    identity_group_id:\
-        \ Restrict to one cross-format identity group (MFI-6.4).\n    protocol: Paradigm\
-        \ facet values.\n    format_: Source-format facet values.\n    domain: Domain\
-        \ facet values.\n    tag: Tag facet values.\n    team: Owner team slug; filtered\
-        \ in SQL, on the owner each item shows (CDG-2.4).\n    auth_data: Authentication\
-        \ data (injected by dependency).\n\nReturns:\n    List of catalog items for\
-        \ the tenant (active first when include_deleted is set)."
+        \ ``domain`` and the free-form ``tags``.\n\nThe five categorization facets\
+        \ — ``protocol`` (paradigm), ``format``, ``domain``, ``tag`` and\n``convention``\
+        \ (the REST hypermedia conventions the latest revision declares, MFI-19.6)\
+        \ — are\nrepeatable: values within one facet OR together, facets AND, an unknown\
+        \ value narrows to\nnothing, and ``uncategorized`` selects the items with\
+        \ no value. Their counts are\n``GET /v1/catalog/{tenant_slug}/facets``.\n\n\
+        Supports authentication via:\n- JWT token in Authorization header (Bearer\
+        \ token)\n- API key in X-API-Key header\n\nArgs:\n    tenant_slug: The tenant\
+        \ slug.\n    include_deleted: Include rows with deleted_at set (for trash\
+        \ / restore flows).\n    identity_group_id: Restrict to one cross-format identity\
+        \ group (MFI-6.4).\n    protocol: Paradigm facet values.\n    format_: Source-format\
+        \ facet values.\n    domain: Domain facet values.\n    tag: Tag facet values.\n\
+        \    convention: REST hypermedia convention facet values (MFI-19.6).\n   \
+        \ team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).\n\
+        \    auth_data: Authentication data (injected by dependency).\n\nReturns:\n\
+        \    List of catalog items for the tenant (active first when include_deleted\
+        \ is set)."
       operationId: list_catalog_items_v1_catalog__tenant_slug__get
       parameters:
       - name: tenant_slug
@@ -10965,6 +10968,22 @@ paths:
           description: Tag facet, repeatable ('uncategorized' = untagged items).
           title: Tag
         description: Tag facet, repeatable ('uncategorized' = untagged items).
+      - name: convention
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: List Catalog Itemsconvention schema.
+          - type: 'null'
+            description: List Catalog Itemsconvention schema.
+          description: REST hypermedia convention facet, repeatable (jsonapi, hal,
+            hal-forms, json-ld, hydra, or 'uncategorized' = items declaring none).
+          title: Convention
+        description: REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms,
+          json-ld, hydra, or 'uncategorized' = items declaring none).
       - name: team
         in: query
         required: false
@@ -11038,9 +11057,10 @@ paths:
         \  include_deleted: Count soft-deleted items too.\n    identity_group_id:\
         \ Restrict to one cross-format identity group.\n    protocol: Paradigm facet\
         \ values.\n    format_: Source-format facet values.\n    domain: Domain facet\
-        \ values.\n    tag: Tag facet values.\n    auth_data: Authentication data\
-        \ (injected by dependency).\n\nReturns:\n    The total, the number the selection\
-        \ keeps, and the four facets' buckets."
+        \ values.\n    tag: Tag facet values.\n    convention: REST hypermedia convention\
+        \ facet values (MFI-19.6).\n    auth_data: Authentication data (injected by\
+        \ dependency).\n\nReturns:\n    The total, the number the selection keeps,\
+        \ and the five facets' buckets."
       operationId: get_catalog_facets_v1_catalog__tenant_slug__facets_get
       parameters:
       - name: tenant_slug
@@ -11132,6 +11152,22 @@ paths:
           description: Tag facet, repeatable ('uncategorized' = untagged items).
           title: Tag
         description: Tag facet, repeatable ('uncategorized' = untagged items).
+      - name: convention
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Get Catalog Facetsconvention schema.
+          - type: 'null'
+            description: Get Catalog Facetsconvention schema.
+          description: REST hypermedia convention facet, repeatable (jsonapi, hal,
+            hal-forms, json-ld, hydra, or 'uncategorized' = items declaring none).
+          title: Convention
+        description: REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms,
+          json-ld, hydra, or 'uncategorized' = items declaring none).
       - name: authorization
         in: header
         required: false
@@ -83733,9 +83769,17 @@ components:
           title: Tags
           description: Free-form tags.
           maxItems: 1000
+        conventions:
+          items:
+            $ref: '#/components/schemas/CatalogFacetBucket'
+          type: array
+          title: Conventions
+          description: REST hypermedia convention (JSON:API, HAL, HAL-FORMS, JSON-LD,
+            Hydra).
+          maxItems: 1000
       type: object
       title: CatalogFacets
-      description: The four catalog browse facets (MFI-6.3).
+      description: The five catalog browse facets (MFI-6.3; convention MFI-19.6).
     CatalogFacetsResponse:
       properties:
         total:
@@ -84061,6 +84105,14 @@ components:
           title: Tags
           description: Free-form tags, lower-cased, alphabetical.
           maxItems: 1000
+        conventions:
+          items:
+            type: string
+          type: array
+          title: Conventions
+          description: 'REST hypermedia conventions the latest revision declares (MFI-19.6):
+            jsonapi, hal, hal-forms, json-ld, hydra.'
+          maxItems: 1000
         owner:
           anyOf:
           - $ref: '#/components/schemas/EntityOwnerRef'
@@ -84343,6 +84395,14 @@ components:
           type: array
           title: Tags
           description: Free-form tags, lower-cased, alphabetical.
+          maxItems: 1000
+        conventions:
+          items:
+            type: string
+          type: array
+          title: Conventions
+          description: 'REST hypermedia conventions the latest revision declares (MFI-19.6):
+            jsonapi, hal, hal-forms, json-ld, hydra.'
           maxItems: 1000
         owner:
           anyOf:
@@ -131436,7 +131496,8 @@ components:
         fingerprintKind:
           type: string
           title: Fingerprintkind
-          description: '`canonical-model` today; `avro-pcf` is reserved for Avro Parsing Canonical Form identity.'
+          description: '`canonical-model` today; `avro-pcf` is reserved for Avro Parsing
+            Canonical Form identity.'
           example: a1b2c3d4e5f6789012345678901234ab
         references:
           items: {}

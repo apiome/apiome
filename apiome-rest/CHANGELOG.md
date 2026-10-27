@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.481.0] - 2026-10-27
+
+### Added
+- **REST hypermedia conventions (MFI-19.6, #3984)** — new `app.rest_conventions`: a REST artifact's request and
+  response bodies (read from the retained OpenAPI 3 / Swagger 2 document with local `$ref`s resolved and `allOf`
+  merged, else from the canonical messages) are matched to the conventions their media types declare: `jsonapi`
+  (`application/vnd.api+json`), `hal` (`application/hal+json` / `+xml`), `hal-forms`
+  (`application/prs.hal-forms+json`), `json-ld` (`application/ld+json`) and `hydra` (JSON-LD using Hydra terms or a
+  Hydra `profile`). `convention_details` normalizes JSON:API resource types, HAL link relations and embedded
+  resources, HAL-FORMS templates and JSON-LD / Hydra `@type`s per convention.
+- The import pipeline records them on the revision: `format_metadata.restConventions` and
+  `restConventionDetails` (`import_source_pipeline.rest_conventions_metadata`).
+- **Catalog `convention` facet** — `GET /v1/catalog/{tenant}` and `…/facets` take a repeatable `convention` filter
+  (`uncategorized` = items declaring none); `CatalogItemSchema.conventions` lists an item's conventions and
+  `CatalogFacets.conventions` counts them.
+- **`rest-conventions` lint pack** (`app.rest_conventions_lint`, REST *paradigm* pack): nine warnings —
+  `jsonapi-top-level`, `jsonapi-data-and-errors`, `jsonapi-resource-object`, `jsonapi-error-document`,
+  `hal-self-link`, `hal-link-object`, `hal-forms-template`, `jsonld-context`, `hydra-collection-member`. Seeded into
+  the built-in style guide by V331.
+
 ## [1.480.0] - 2026-10-27
 
 ### Added

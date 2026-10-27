@@ -249,6 +249,13 @@ that fails; Confluent's verbose messages). It matches 112 verdicts recorded from
 `/compatibility` answers with real verdicts. The `avro` breaking-change classifier (`app.avro_breaking`, id
 `avro-compatibility`) grades BACKWARD failures breaking and FORWARD-only failures dangerous.
 
+MFI-19.6 (#3984) is built: `app.rest_conventions` tags REST artifacts by the hypermedia conventions their media
+types declare (JSON:API, HAL, HAL-FORMS, JSON-LD, Hydra) and normalizes resource types / link relations / templates /
+`@type`s; the revision records them (`format_metadata.restConventions`), the catalog list and facets take
+`convention`, the Catalog screen has a **Convention** filter, and the `rest-conventions` REST paradigm lint pack
+(nine warnings, V331) checks conformance. JTD keeps its own adapter; a test pins that it lands as the same record as
+its JSON Schema equivalent.
+
 MFI-17.4 (#3811) is built: the `smithy` breaking-change classifier (`app.smithy_breaking`, id `smithy-diff`) runs
 `smithy diff --format csv` (`app.smithy_ast.run_smithy_diff`) and maps ERROR / DANGER / WARNING / NOTE to breaking /
 dangerous / dangerous / safe on the change each finding's shape joins; findings that join no change land in the new
@@ -258,9 +265,7 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 
 **Breaking-change rules:** every planned format classifier has shipped.
 
-**Other:** JSON:API / HAL / Hydra convention tagging and lint
-[#3984](https://github.com/apiome/apiome/issues/3984); z/OS Connect ↔ copybook linking
-[#3992](https://github.com/apiome/apiome/issues/3992).
+**Other:** z/OS Connect ↔ copybook linking [#3992](https://github.com/apiome/apiome/issues/3992).
 
 ### 3.4 Import flow (Catalog and Projects)
 

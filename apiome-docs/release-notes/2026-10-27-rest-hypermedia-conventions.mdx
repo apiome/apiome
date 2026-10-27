@@ -1,0 +1,21 @@
+---
+slug: rest-hypermedia-conventions
+title: JSON:API, HAL and Hydra APIs, tagged and linted
+description: REST APIs declaring JSON:API, HAL, HAL-FORMS, JSON-LD or Hydra are tagged, filterable and linted.
+authors: [apiome]
+---
+
+An API that follows a REST hypermedia convention is now recognized as one.
+[REST hypermedia conventions](/bring-in/rest-hypermedia-conventions).
+
+{/* truncate */}
+
+- **Tagged on import.** An OpenAPI, Swagger or RAML document whose bodies use
+  `application/vnd.api+json`, `application/hal+json`, `application/prs.hal-forms+json` or
+  `application/ld+json` (with or without Hydra) is tagged with that convention. The catalog item
+  records its JSON:API resource types, HAL link relations, HAL-FORMS templates and JSON-LD types.
+- **Filter by convention.** **Bring in → Catalog** shows a **Convention** filter once an item declares one, and
+  `GET /v1/catalog/{tenant}` takes `convention`.
+- **Conformance checks.** The new `rest-conventions` lint pack checks each body against its
+  convention: JSON:API documents and resource objects, HAL `self` links and link `href`s,
+  HAL-FORMS `default` templates, JSON-LD `@context` and Hydra collection members.

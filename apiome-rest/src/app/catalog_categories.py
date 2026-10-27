@@ -11,6 +11,9 @@ A catalog item is categorized three ways, and each is a browse facet on
   free-text ``metadata.domain`` (older imports) still wins, exactly as the public browse
   directory reads it.
 * **Tags** — *manual*, free-form: rows in ``apiome.artifact_tags`` (V277), lower-cased.
+* **Convention** — *auto-derived* (MFI-19.6, #3984): the REST hypermedia conventions the latest
+  revision declares (``format_metadata.restConventions``: ``jsonapi``, ``hal``, ``hal-forms``,
+  ``json-ld``, ``hydra``; :mod:`app.rest_conventions`). An item can declare several.
 
 The facet semantics are the MCP catalog's (:mod:`app.mcp_facets`) and the public browse
 directory's (:mod:`app.browse_facets`): facets AND together and the values within one facet OR;
@@ -37,6 +40,7 @@ from .browse_facets import (
     protocol_label,
 )
 from .projects_routes import PROJECT_DOMAIN_CATEGORY_IDS
+from .rest_conventions import CONVENTION_LABELS, CONVENTIONS
 
 __all__ = [
     "MAX_TAGS_PER_ITEM",
@@ -187,6 +191,29 @@ def item_domain(item: Mapping[str, Any]) -> Optional[str]:
     return None
 
 
+def item_conventions(item: Mapping[str, Any]) -> List[str]:
+    """The REST hypermedia conventions the item's latest revision declares (MFI-19.6), in order."""
+    metadata = item.get("format_metadata")
+    declared = metadata.get("restConventions") if isinstance(metadata, Mapping) else None
+    if not isinstance(declared, list):
+        return []
+    return [c for c in CONVENTIONS if c in declared]
+
+
+def _normalize_convention(value: str) -> Optional[str]:
+    """A caller's convention value (``JSON:API``, ``json-api``, ``hal_forms``…) → the stored key."""
+    squashed = re.sub(r"[^a-z]", "", value.strip().lower())
+    for key, label in CONVENTION_LABELS.items():
+        if squashed in (re.sub(r"[^a-z]", "", key), re.sub(r"[^a-z]", "", label.lower())):
+            return key
+    return None
+
+
+def catalog_convention_label(value: str) -> str:
+    """Display name for a convention key."""
+    return "No convention" if value == UNCATEGORIZED else CONVENTION_LABELS.get(value, value)
+
+
 def catalog_domain_label(value: str) -> str:
     """Display name for a domain id (a free-text domain is shown as written)."""
     if value == UNCATEGORIZED:
@@ -226,6 +253,7 @@ class CatalogFacetFilters:
     formats: FrozenSet[str] = field(default_factory=frozenset)
     domains: FrozenSet[str] = field(default_factory=frozenset)
     tags: FrozenSet[str] = field(default_factory=frozenset)
+    conventions: FrozenSet[str] = field(default_factory=frozenset)
 
     @classmethod
     def from_query(
@@ -235,6 +263,7 @@ class CatalogFacetFilters:
         formats: Optional[Iterable[str]] = None,
         domains: Optional[Iterable[str]] = None,
         tags: Optional[Iterable[str]] = None,
+        conventions: Optional[Iterable[str]] = None,
     ) -> "CatalogFacetFilters":
         """Normalize raw query values into a filter set."""
         return cls(
@@ -242,12 +271,13 @@ class CatalogFacetFilters:
             formats=_normalized_set(formats, normalize_format_filter),
             domains=_normalized_set(domains, _lower),
             tags=_normalized_set(tags, _lower),
+            conventions=_normalized_set(conventions, _normalize_convention),
         )
 
     @property
     def active(self) -> bool:
         """Whether any facet is selected."""
-        return bool(self.protocols or self.formats or self.domains or self.tags)
+        return bool(self.protocols or self.formats or self.domains or self.tags or self.conventions)
 
 
 def _item_values(item: Mapping[str, Any], tags: Sequence[str]) -> Dict[str, FrozenSet[str]]:
@@ -255,17 +285,19 @@ def _item_values(item: Mapping[str, Any], tags: Sequence[str]) -> Dict[str, Froz
     paradigm = item_paradigm(item)
     fmt = item_format(item)
     domain = item_domain(item)
+    conventions = item_conventions(item)
     return {
         "protocols": frozenset({paradigm or UNCATEGORIZED}),
         "formats": frozenset({fmt or UNCATEGORIZED}),
         "domains": frozenset({domain or UNCATEGORIZED}),
         "tags": frozenset(tags) if tags else frozenset({UNCATEGORIZED}),
+        "conventions": frozenset(conventions) if conventions else frozenset({UNCATEGORIZED}),
     }
 
 
 def _passes(values: Mapping[str, FrozenSet[str]], filters: CatalogFacetFilters, skip: str = "") -> bool:
     """AND across facets, OR within one; ``skip`` ignores one facet (for its own counts)."""
-    for facet in ("protocols", "formats", "domains", "tags"):
+    for facet in ("protocols", "formats", "domains", "tags", "conventions"):
         if facet == skip:
             continue
         selected = getattr(filters, facet)
@@ -329,7 +361,7 @@ def catalog_facet_counts(
     """Count every facet's values over the items the *other* facets leave.
 
     Returns:
-        ``{"protocols", "formats", "domains", "tags"}`` → buckets of
+        ``{"protocols", "formats", "domains", "tags", "conventions"}`` → buckets of
         ``{value, label, count, selected}``.
     """
     rows = [(_item_values(item, tags_by_item.get(str(item["id"]), ()))) for item in items]
@@ -338,6 +370,7 @@ def catalog_facet_counts(
         "formats": _format_bucket_label,
         "domains": catalog_domain_label,
         "tags": _tag_bucket_label,
+        "conventions": catalog_convention_label,
     }
     result: Dict[str, List[Dict[str, Any]]] = {}
     for facet, label in labels.items():

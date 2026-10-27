@@ -99,6 +99,8 @@ export interface CatalogItem {
   domain?: string | null;
   /** Free-form tags, lower-cased and alphabetical (MFI-6.3). */
   tags?: readonly string[];
+  /** REST hypermedia conventions the latest revision declares — `jsonapi`, `hal`, … (MFI-19.6). */
+  conventions?: readonly string[];
   /** The owner team: confirmed, else suggested; null when none (CDG-2.2/2.4). */
   owner?: EntityOwner | null;
   /**
@@ -298,6 +300,11 @@ export interface CatalogFilterState {
   domain: string;
   /** A tag, {@link CATALOG_UNCATEGORIZED}, or {@link CATALOG_FILTER_ANY} (MFI-6.3). */
   tag: string;
+  /**
+   * A REST hypermedia convention, {@link CATALOG_UNCATEGORIZED}, or {@link CATALOG_FILTER_ANY}
+   * (MFI-19.6). Optional so a state saved before it existed still reads as "any".
+   */
+  convention?: string;
 }
 
 /** The neutral state of every quick filter — what "Clear all filters" restores. */
@@ -308,6 +315,7 @@ export const EMPTY_CATALOG_FILTERS: CatalogFilterState = {
   grade: CATALOG_FILTER_ANY,
   domain: CATALOG_FILTER_ANY,
   tag: CATALOG_FILTER_ANY,
+  convention: CATALOG_FILTER_ANY,
 };
 
 /**
@@ -399,6 +407,41 @@ export function catalogTagOptions(
     { value: CATALOG_FILTER_ANY, label: 'All tags' },
     ...[...present].sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value })),
     { value: CATALOG_UNCATEGORIZED, label: 'No tags' },
+  ];
+}
+
+/**
+ * Display names of the REST hypermedia conventions (MFI-19.6), in the order the Convention select
+ * lists them — the keys `GET /v1/catalog/{tenant}?convention=` takes.
+ */
+export const CATALOG_CONVENTION_LABELS: Readonly<Record<string, string>> = {
+  jsonapi: 'JSON:API',
+  hal: 'HAL',
+  'hal-forms': 'HAL-FORMS',
+  'json-ld': 'JSON-LD',
+  hydra: 'Hydra',
+};
+
+/**
+ * The Convention select (MFI-19.6): every convention a catalog item declares (plus the current
+ * choice), in the standard order, then **No convention**.
+ *
+ * @param items Every row on screen (before the quick filters).
+ * @param selected The current Convention value.
+ * @returns The select's options.
+ */
+export function catalogConventionOptions(
+  items: readonly CatalogItem[],
+  selected: string = CATALOG_FILTER_ANY
+): CatalogFilterOption[] {
+  const present = new Set(items.flatMap((item) => item.conventions ?? []));
+  if (selected !== CATALOG_FILTER_ANY && selected !== CATALOG_UNCATEGORIZED) present.add(selected);
+  const known = Object.keys(CATALOG_CONVENTION_LABELS);
+  const ordered = [...known.filter((key) => present.has(key)), ...[...present].filter((key) => !known.includes(key))];
+  return [
+    { value: CATALOG_FILTER_ANY, label: 'All conventions' },
+    ...ordered.map((value) => ({ value, label: CATALOG_CONVENTION_LABELS[value] ?? value })),
+    { value: CATALOG_UNCATEGORIZED, label: 'No convention' },
   ];
 }
 
@@ -538,6 +581,14 @@ export function matchesCatalogFilters(
     const tags = item.tags ?? [];
     if (tag === CATALOG_UNCATEGORIZED ? tags.length > 0 : !tags.includes(tag)) return false;
   }
+  // Convention (MFI-19.6): an item can declare several; `uncategorized` keeps those with none.
+  const convention = filters.convention ?? CATALOG_FILTER_ANY;
+  if (convention !== CATALOG_FILTER_ANY) {
+    const conventions = item.conventions ?? [];
+    if (convention === CATALOG_UNCATEGORIZED ? conventions.length > 0 : !conventions.includes(convention)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -555,7 +606,8 @@ export function isCatalogNarrowed(
     filters.source !== CATALOG_FILTER_ANY ||
     filters.grade !== CATALOG_FILTER_ANY ||
     (filters.domain ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY ||
-    (filters.tag ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY
+    (filters.tag ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY ||
+    (filters.convention ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY
   );
 }
 

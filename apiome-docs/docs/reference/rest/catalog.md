@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.344.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.345.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -24,8 +24,9 @@ cloned from the Projects dashboard) restricted to the non-publishable slice, wit
 also carrying the latest revision's format/protocol/source provenance and its categorization
 (MFI-6.3): the auto-derived ``paradigm``, the manual ``domain`` and the free-form ``tags``.
 
-The four categorization facets — ``protocol`` (paradigm), ``format``, ``domain`` and ``tag`` —
-are repeatable: values within one facet OR together, facets AND, an unknown value narrows to
+The five categorization facets — ``protocol`` (paradigm), ``format``, ``domain``, ``tag`` and
+``convention`` (the REST hypermedia conventions the latest revision declares, MFI-19.6) — are
+repeatable: values within one facet OR together, facets AND, an unknown value narrows to
 nothing, and ``uncategorized`` selects the items with no value. Their counts are
 ``GET /v1/catalog/{tenant_slug}/facets``.
 
@@ -41,6 +42,7 @@ Args:
     format_: Source-format facet values.
     domain: Domain facet values.
     tag: Tag facet values.
+    convention: REST hypermedia convention facet values (MFI-19.6).
     team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
     auth_data: Authentication data (injected by dependency).
 
@@ -60,6 +62,7 @@ Operation id: `list_catalog_items_v1_catalog__tenant_slug__get`
 | `format` | query | array of string or null | no | Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3). |
 | `domain` | query | array of string or null | no | Domain facet, repeatable (a domain id from GET /v1/projects/domains, or 'uncategorized'). |
 | `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
+| `convention` | query | array of string or null | no | REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms, json-ld, hydra, or 'uncategorized' = items declaring none). |
 | `team` | query | string or null | no | Only items whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -119,10 +122,11 @@ Args:
     format_: Source-format facet values.
     domain: Domain facet values.
     tag: Tag facet values.
+    convention: REST hypermedia convention facet values (MFI-19.6).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
-    The total, the number the selection keeps, and the four facets' buckets.
+    The total, the number the selection keeps, and the five facets' buckets.
 
 Operation id: `get_catalog_facets_v1_catalog__tenant_slug__facets_get`
 
@@ -137,6 +141,7 @@ Operation id: `get_catalog_facets_v1_catalog__tenant_slug__facets_get`
 | `format` | query | array of string or null | no | Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3). |
 | `domain` | query | array of string or null | no | Domain facet, repeatable (a domain id from GET /v1/projects/domains, or 'uncategorized'). |
 | `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
+| `convention` | query | array of string or null | no | REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms, json-ld, hydra, or 'uncategorized' = items declaring none). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -728,6 +733,7 @@ analysed reports a declared ``unavailable`` status with a reason code, never a f
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
 | `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
 | `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
+| `conventions` | array of string | no | REST hypermedia conventions the latest revision declares (MFI-19.6): jsonapi, hal, hal-forms, json-ld, hydra. |
 | `owner` | `EntityOwnerRef` or null | no | The owner team: confirmed, or else suggested (with its source). |
 | `summary` | `CatalogNormalizedSummary` | no | Short summary suitable for navigation and reference docs. |
 | `source` | `CatalogSourceDescriptor` | no | Provenance source for the record (for example human or imported). |
@@ -776,6 +782,7 @@ latest revision (MFI-7.1/7.2): ``sourceFormat``, ``protocol``, ``formatMetadata`
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
 | `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
 | `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
+| `conventions` | array of string | no | REST hypermedia conventions the latest revision declares (MFI-19.6): jsonapi, hal, hal-forms, json-ld, hydra. |
 | `owner` | `EntityOwnerRef` or null | no | The owner team: confirmed, or else suggested (with its source). |
 
 ### `CatalogProjectionRequest` {#schema-catalogprojectionrequest}
