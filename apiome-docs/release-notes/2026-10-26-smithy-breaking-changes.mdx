@@ -1,0 +1,21 @@
+---
+slug: smithy-breaking-changes
+title: Smithy breaking changes
+description: Smithy version diffs are graded by Smithy's own smithy diff checker.
+authors: [apiome]
+---
+
+Comparing two versions of a Smithy model now runs Smithy's own compatibility checker, `smithy diff`,
+and grades each change by its findings.
+[Breaking changes between versions](/bring-in/smithy-import#breaking-changes-between-versions).
+
+{/* truncate */}
+
+- **Breaking:** Smithy `ERROR` findings, such as a removed shape or member, a changed member target,
+  a new required member without a default, or a removed enum value.
+- **Dangerous:** `DANGER` and `WARNING` findings, such as reordered structure members.
+- **Safe:** `NOTE` findings, such as a new shape, member or appended enum value.
+- Findings that belong to no single change are listed as **unattributed** and still count toward the
+  overall result.
+- A single `.smithy` file is now read by the Smithy CLI when the server has it, so inline `:=` input
+  and output members are cataloged too.

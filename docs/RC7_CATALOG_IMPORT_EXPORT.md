@@ -234,8 +234,14 @@ step's OpenAPI compatibility grade (`app.typespec_versioning`, `typespec_version
 MFI-15.4 (#3802) is built: the `raml` breaking-change classifier (`app.raml_breaking`) grades parameter, property and
 enum moves and applied resource-type / trait changes with a custom ruleset (RAML has no official one).
 
-**Breaking-change rules** (the generic classifier applies today):
-Smithy [#3811](https://github.com/apiome/apiome/issues/3811).
+MFI-17.4 (#3811) is built: the `smithy` breaking-change classifier (`app.smithy_breaking`, id `smithy-diff`) runs
+`smithy diff --format csv` (`app.smithy_ast.run_smithy_diff`) and maps ERROR / DANGER / WARNING / NOTE to breaking /
+dangerous / dangerous / safe on the change each finding's shape joins; findings that join no change land in the new
+`ClassificationResult.unattributed` and count toward the overall severity. A single `.smithy` file is now assembled
+through `smithy ast` when the CLI is available (built-in reader as fallback), and a multi-file set keeps its
+assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
+
+**Breaking-change rules:** every planned format classifier has shipped.
 
 **Avro:** PCF fingerprint [#3782](https://github.com/apiome/apiome/issues/3782) and the
 compatibility engine [#3785](https://github.com/apiome/apiome/issues/3785)

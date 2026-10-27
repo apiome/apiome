@@ -20,7 +20,7 @@ You can bring the model in three ways:
 
 | What you have | How it is read |
 | --- | --- |
-| One `.smithy` file | Read by the built-in Smithy reader. |
+| One `.smithy` file | Assembled by the **Smithy CLI** like a multi-file set, so inline `:=` input and output members are read too. If this server has no Smithy CLI, or the CLI cannot load the file, the built-in Smithy reader reads it instead. |
 | One JSON AST file (`.json`) | Read as is. A JSON AST already holds every shape by its absolute id. |
 | Several model files (a `.zip`, `.tar.gz` or `.tar`) | Assembled by the **Smithy CLI** into one JSON AST, then read. |
 
@@ -105,6 +105,31 @@ Suppressions in the model (`@suppress`, `metadata suppressions`) are honored. Th
 on the catalog item (`smithy_validation_events`, up to 50, with `smithy_validation_event_count`).
 Without the Smithy CLI the model imports the same way, with no Smithy lint findings. The linters
 ship with the server, so validation never fetches anything from the network.
+
+## Breaking changes between versions
+
+When you compare two versions of a Smithy catalog item, Apiome runs Smithy's own compatibility
+checker, `smithy diff`, over the two models. It maps each finding's Smithy severity onto Apiome's:
+
+| Smithy severity | Apiome severity | Typical findings |
+| --- | --- | --- |
+| `ERROR` | Breaking | A shape or member removed, a member's target changed, a required member added without a default, an enum value removed |
+| `DANGER` | Dangerous | A structure's members reordered |
+| `WARNING` | Dangerous | Changes Smithy flags for review |
+| `NOTE` | Safe | A shape or member added, an enum value appended |
+
+Each finding names a shape, such as `example.shelter#Pet$size`. Apiome attaches it to the change on
+that shape: the member's field, or else the shape that holds it, such as an enum for its values. The
+change takes the worst severity of its findings. Its rule is `smithy-diff.<finding id>`, for example
+`smithy-diff.ChangedMemberTarget`, and Smithy's messages explain it.
+
+Some findings belong to no single change in the comparison, such as reordered members or an
+operation unbound from a service. These are listed as **unattributed** findings. They still count
+toward the overall severity, so a Smithy `ERROR` always makes the comparison breaking.
+
+A multi-file model is compared as a whole, using the model Apiome assembled at import. Without the
+Smithy CLI, or when `smithy diff` cannot load a model, Apiome grades the changes with its
+format-neutral rules: a removed entity is breaking and an added one is safe.
 
 ## From the CLI
 

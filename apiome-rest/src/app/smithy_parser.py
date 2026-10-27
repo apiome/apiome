@@ -8,7 +8,7 @@ do not depend on the external ``smithy`` CLI.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 __all__ = [
@@ -120,6 +120,9 @@ class SmithyDocument:
     #: :func:`app.smithy_ast.validate_smithy_members`): ``{"severity", "id", "shape", "file",
     #: "line", "column", "message"}``; empty without the Smithy CLI.
     validation_events: Tuple[Dict[str, Any], ...] = ()
+    #: The assembled JSON AST when the model came through the Smithy CLI (MFI-17.4): the whole
+    #: model that ``smithy diff`` compares when a later version is classified.
+    ast: Optional[Dict[str, Any]] = field(default=None, compare=False, repr=False)
 
 
 def is_smithy(content: str) -> bool:

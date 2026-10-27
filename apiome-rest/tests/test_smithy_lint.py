@@ -77,6 +77,10 @@ def _replay(monkeypatch: pytest.MonkeyPatch, name: str) -> List[Dict[str, Any]]:
     recorded = _recording(name)
 
     def _fake(key: str, args: List[str], **kwargs: Any) -> ToolRunResult:
+        if args[0] != "validate":
+            # One `.smithy` file is assembled through `smithy ast` first (MFI-17.4); without a
+            # recording for it the import falls back to the built-in reader.
+            raise ToolNotAvailableError(key, "smithy")
         staging = str(Path(args[-1]).parent)
         calls.append(
             {
