@@ -276,7 +276,6 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 | Ticket | Work | Priority |
 | --- | --- | --- |
 | [#6321](https://github.com/apiome/apiome/issues/6321) IXH-3.7 | Import a new version into a project: a **Changes** step comparing the incoming spec with the latest version | P1 |
-| [#4098](https://github.com/apiome/apiome/issues/4098) MFI-26.5 | Live-discovery intake tiles, driven by the registry | P2 |
 | [#4099](https://github.com/apiome/apiome/issues/4099) MFI-27.1 | Convert CTA copy and wiring | P2 |
 | [#4100](https://github.com/apiome/apiome/issues/4100) MFI-27.2 | Cross-surface polish (remaining: catalog search placeholder) | P2 |
 | [#3758](https://github.com/apiome/apiome/issues/3758) MFI-7.3 | Backfill format/protocol on existing rows | P2 |
@@ -288,6 +287,13 @@ import pre-flight (`POST /api/import/preflight`, the commit's own importer with 
 the candidate the commit would send (`buildCatalogPreflightRequest`, shared with the quality step) and
 shows the predicted format, routing and reason, catalog name/slug, counts, lint and fingerprint
 (`CatalogImportDryRunPanel`). No import job and no catalog write; Continue still commits.
+
+MFI-26.5 (#4098) is built as the registry hook: `ImportSource.alternate_intake` /
+`ImportSourceDescriptor.alternate_intake` (`kind`, `label`, `description`, `icon`) names an intake a format offers
+beyond File / URL / Clipboard, and **Import to catalog** draws it as a card (`alternateIntakeTiles`) only when a panel
+is registered for its kind (`CATALOG_ALTERNATE_INTAKE_PANELS`). Both are empty: `supports_live_discovery` alone does
+not qualify, since the import pipeline runs no adapter's `introspect` / `discover` yet (that is #4399's re-discovery
+work). A live-discovery card is then a server flag plus one panel, with no dialog change.
 
 Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives)
 belongs to the gated `primitives` feature.

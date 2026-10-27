@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.484.0] - 2026-10-27
+
+### Added
+- **Alternate intake on the import-source registry (MFI-26.5, #4098)** — `ImportSourceDescriptor` gains
+  `alternate_intake` (`ImportSourceAlternateIntake`: `kind`, `label`, `description`, `icon`), set from the new
+  `ImportSource.alternate_intake` class variable. It names an intake method a format offers beyond File / URL /
+  Clipboard (a future live introspection, reflection or registry crawl), which the **Import to catalog** wizard
+  draws as its own source card. It is `null` for every adapter today: `supports_live_discovery` alone does not
+  qualify, because the import pipeline does not yet run any adapter's `introspect` / `discover`. API 1.348.0.
+
 ## [1.483.0] - 2026-10-27
 
 ### Added

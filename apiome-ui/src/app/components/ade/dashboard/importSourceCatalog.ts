@@ -37,7 +37,9 @@ export type ImportPanelId =
   | 'postman'
   | 'mcp'
   // CDG-5.5: the catalog importer's Compass export intake (never a Projects card).
-  | 'compass';
+  | 'compass'
+  // MFI-26.5: a format's own alternate intake, by capability kind (see {@link alternateIntakeTiles}).
+  | `alternate:${string}`;
 
 /**
  * Which import surface a source card belongs to (MFI-23.12):
@@ -52,6 +54,22 @@ export type ImportSourceScope = 'native' | 'alternative' | 'both';
 
 /** Which importer variant a grid is being rendered for; drives {@link filterCardsForVariant}. */
 export type ImportVariant = 'projects' | 'catalog' | 'all';
+
+/**
+ * An intake method a format offers beyond File / URL / Clipboard (REST `ImportSourceAlternateIntake`,
+ * MFI-26.5, #4098) — a future live introspection, reflection or registry crawl. The catalog importer
+ * draws it as its own source card, labelled from this record.
+ */
+export interface ImportSourceAlternateIntake {
+  /** Stable capability id shared by every format offering it, e.g. `introspection`. */
+  kind: string;
+  /** The card's title. */
+  label: string;
+  /** The card's one-line subtitle. */
+  description: string;
+  /** Lucide icon name in kebab-case. */
+  icon: string;
+}
 
 /** The descriptor shape returned by `GET /api/import/sources` (REST `ImportSourceDescriptor`). */
 export interface ImportSourceDescriptor {
@@ -78,6 +96,11 @@ export interface ImportSourceDescriptor {
   available?: boolean;
   /** Human-readable reason the source is unavailable, when `available` is `false`. */
   unavailable_reason?: string | null;
+  /**
+   * The format's alternate intake (MFI-26.5), or `null`/absent when it is imported through the base
+   * intake methods only — every format today. Absent on older REST builds.
+   */
+  alternate_intake?: ImportSourceAlternateIntake | null;
 }
 
 /** A renderable source card. */
@@ -350,4 +373,72 @@ export function filterCardsForVariant(
   if (variant === 'all') return cards.map((card) => ({ ...card }));
   const wanted: ImportSourceScope = variant === 'projects' ? 'native' : 'alternative';
   return cards.filter((card) => card.scope === wanted || card.scope === 'both').map((card) => ({ ...card }));
+}
+
+/* -------------------------------------------------------------------------
+   Alternate intake tiles (MFI-26.5, #4098)
+   ------------------------------------------------------------------------- */
+
+/** A source card for a format's own alternate intake, after the base tiles. */
+export interface AlternateIntakeTile {
+  method: 'alternate';
+  /** The capability kind — which registered panel runs it. */
+  kind: string;
+  /** The registry key of the format that offers it. */
+  sourceKey: string;
+  /** The card, labelled from the descriptor; its panel is `alternate:<kind>:<sourceKey>`. */
+  card: ImportSourceCard;
+}
+
+/** Any tile on the catalog importer's source grid. */
+export type CatalogIntakeTile = BaseIntakeTile | AlternateIntakeTile;
+
+/**
+ * The catalog importer's alternate intake tiles — one per format that declares an
+ * `alternate_intake` the UI can run.
+ *
+ * Fully data-driven: the label, description and icon come from `GET /v1/import/sources`, never from
+ * format-specific code. Two gates keep a tile from leading nowhere:
+ *
+ *  - **The server must declare it.** A format's `supports_live_discovery` flag alone adds nothing —
+ *    only an `alternate_intake` record does, and the server sets one only when its import pipeline
+ *    can run that intake. No format declares one today, so no tile appears.
+ *  - **The UI must have a panel for the kind.** `panelKinds` names the capability kinds a panel is
+ *    registered for (`CATALOG_ALTERNATE_INTAKE_PANELS` in the catalog importer); a declared kind
+ *    with no panel draws no tile.
+ *
+ * Unavailable sources (`available: false`, a missing toolchain) are left out too: their alternate
+ * intake could not run either. Tiles are de-duplicated by format and sorted by format key.
+ *
+ * @param descriptors The registry list from `GET /api/import/sources` (may be empty/undefined).
+ * @param panelKinds The capability kinds the UI has a panel for.
+ * @returns The tiles to draw after the base intake tiles, usually none.
+ */
+export function alternateIntakeTiles(
+  descriptors: ReadonlyArray<ImportSourceDescriptor> | undefined | null,
+  panelKinds: ReadonlySet<string>,
+): AlternateIntakeTile[] {
+  const tiles: AlternateIntakeTile[] = [];
+  const seen = new Set<string>();
+  for (const descriptor of descriptors ?? []) {
+    const intake = descriptor?.alternate_intake;
+    if (!intake || typeof intake.kind !== 'string' || !panelKinds.has(intake.kind)) continue;
+    if (descriptor.available === false || seen.has(descriptor.key)) continue;
+    seen.add(descriptor.key);
+    tiles.push({
+      method: 'alternate',
+      kind: intake.kind,
+      sourceKey: descriptor.key,
+      card: {
+        key: `alternate-${descriptor.key}`,
+        label: intake.label,
+        description: intake.description,
+        icon: resolveLucideIcon(intake.icon),
+        panel: `alternate:${intake.kind}:${descriptor.key}`,
+        builtin: false,
+        scope: 'alternative',
+      },
+    });
+  }
+  return tiles.sort((a, b) => a.sourceKey.localeCompare(b.sourceKey));
 }

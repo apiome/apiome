@@ -26,6 +26,11 @@ export interface UseImportSourcesResult {
    * fetch fails.
    */
   fileExtensions: string[];
+  /**
+   * The raw registry descriptors, unfiltered — empty until the registry resolves or when it fails.
+   * The catalog importer reads each format's `alternate_intake` from these (MFI-26.5).
+   */
+  descriptors: ImportSourceDescriptor[];
 }
 
 /**
@@ -57,6 +62,7 @@ export function useImportSources(
   const [fileExtensions, setFileExtensions] = useState<string[]>(() =>
     mergeImportFileExtensions(null),
   );
+  const [descriptors, setDescriptors] = useState<ImportSourceDescriptor[]>([]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -78,6 +84,7 @@ export function useImportSources(
         const sources = (data as { sources?: ImportSourceDescriptor[] }).sources;
         setCards(filterCardsForVariant(mergeImportSourceCards(sources), variant));
         setFileExtensions(mergeImportFileExtensions(sources));
+        setDescriptors(Array.isArray(sources) ? sources : []);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : 'Could not load import sources.');
@@ -85,6 +92,7 @@ export function useImportSources(
         // The picker keeps the offline fallback rather than emptying out: an unreachable registry
         // must not make every file unbrowsable.
         setFileExtensions(mergeImportFileExtensions(null));
+        setDescriptors([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -97,5 +105,5 @@ export function useImportSources(
     };
   }, [enabled, variant]);
 
-  return { cards, loading, error, fileExtensions };
+  return { cards, loading, error, fileExtensions, descriptors };
 }
