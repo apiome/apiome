@@ -419,6 +419,9 @@ def load_format_rule_packs() -> None:
     # OData lint pack (MFI-11.1): registers under ``odata`` (the OASIS CSDL schema rule).
     from . import odata_lint as _odata_lint  # noqa: F401
 
+    # Avro lint pack (MFI-12.5): registers under ``avro`` (defaults / unions / aliases / docs).
+    from . import avro_lint as _avro_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.

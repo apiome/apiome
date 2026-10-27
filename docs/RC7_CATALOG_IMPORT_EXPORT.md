@@ -186,8 +186,11 @@ MFI-11.4 (#3779) is built: the OData lint pack is complete — v4 CSDL XML is va
 EDMX / EDM XML schemas (`app.odata_csdl_xsd`, `odata.csdl-xsd`), and every reference and entity key of v2/v3/v4
 metadata is resolved (`app.odata_resolution`, blocking `odata.unresolved-reference` / `odata.entity-key`, V324).
 
+MFI-12.5 (#3786) is built: the Avro lint pack (`app.avro_lint`, eight `avro.*` rules, V325) checks `.avsc` and IDL
+schemas as written (`app.avro_hygiene`): defaults, nested/repeated union branches, optional-union order and
+defaults, aliases and ignored docs.
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-Avro [#3786](https://github.com/apiome/apiome/issues/3786),
 WS-I [#3791](https://github.com/apiome/apiome/issues/3791), TypeSpec [#3796](https://github.com/apiome/apiome/issues/3796),
 RAML [#3801](https://github.com/apiome/apiome/issues/3801), API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).

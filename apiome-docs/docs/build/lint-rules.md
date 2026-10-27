@@ -292,6 +292,77 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Servers should usually declare a security scheme.
 
 
+## Pack: `avro`
+
+### `avro.alias-conflict` {#avro-alias-conflict}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** An Avro alias must not collide with another field's or named type's name or alias.
+- **Reference:** https://avro.apache.org/docs/1.12.0/specification/
+- **Remediation:** Remove or rename the alias so it names only the element it belongs to.
+- **False-positive guidance:** Not a false positive: an alias shared by two fields of a record, or two named types, matches both during resolution.
+- **Fixture:** `catalog/avro-alias-conflict`
+- **Scan modes:** `lint`
+
+### `avro.doc-ignored` {#avro-doc-ignored}
+
+- **Category:** documentation
+- **Default severity:** warning
+- **Rationale:** An Avro doc should be a string on a field or named type, where tools keep it.
+
+### `avro.invalid-alias` {#avro-invalid-alias}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** An Avro alias must be a valid Avro name.
+- **Reference:** https://avro.apache.org/docs/1.12.0/specification/
+- **Remediation:** Spell the alias as an Avro name ([A-Za-z_][A-Za-z0-9_]*; dotted parts for a named type's full name).
+- **False-positive guidance:** Not a false positive: the Avro specification requires aliases to be valid names.
+- **Fixture:** `catalog/avro-invalid-alias`
+- **Scan modes:** `lint`
+
+### `avro.invalid-default` {#avro-invalid-default}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** An Avro default must be a value of its type (a union's, of its first branch).
+- **Reference:** https://avro.apache.org/docs/1.12.0/specification/
+- **Remediation:** Change the default to a value of the field's type; for a union, put the branch the default belongs to first (for null, write ["null", T]).
+- **False-positive guidance:** Not a false positive: the Avro specification requires a default to match the field's schema, and a union's default its first branch.
+- **Fixture:** `catalog/avro-invalid-default`
+- **Scan modes:** `lint`
+
+### `avro.invalid-union` {#avro-invalid-union}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** An Avro union must not nest a union or repeat a branch.
+- **Reference:** https://avro.apache.org/docs/1.12.0/specification/
+- **Remediation:** Flatten nested unions into one, and list each unnamed type and each named type only once.
+- **False-positive guidance:** Not a false positive: the Avro specification forbids unions that directly contain unions or repeat a type.
+- **Fixture:** `catalog/avro-invalid-union`
+- **Scan modes:** `lint`
+
+### `avro.optional-union-missing-default` {#avro-optional-union-missing-default}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An optional ["null", T] Avro field should declare "default": null.
+
+### `avro.optional-union-null-first` {#avro-optional-union-null-first}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An optional Avro field should be ["null", T] so it can default to null.
+
+### `avro.redundant-alias` {#avro-redundant-alias}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** An Avro alias should differ from the name it aliases.
+
+
 ## Pack: `common`
 
 ### `common.api-missing-description` {#common-api-missing-description}

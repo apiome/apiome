@@ -1,0 +1,29 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/avro-invalid-union",
+  "source_format": "avro",
+  "description": "Avro schema with exactly one blocking defect: field reference is a union that repeats string.",
+  "document": {
+    "type": "record",
+    "name": "Account",
+    "namespace": "com.example.bank",
+    "doc": "A bank account.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "string",
+        "doc": "The id."
+      },
+      {
+        "name": "reference",
+        "type": [
+          "null",
+          "string",
+          "string"
+        ],
+        "doc": "The reference.",
+        "default": null
+      }
+    ]
+  }
+}
