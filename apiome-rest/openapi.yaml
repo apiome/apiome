@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.347.0
+  version: 1.348.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -104112,6 +104112,60 @@ components:
         the
 
         commit would create an empty revision, so it can offer to skip it.'
+    ImportSourceAlternateIntake:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Stable id of the intake capability, shared by every format that
+            offers it (e.g. ``introspection``). The UI maps a kind to the panel that runs
+            it and draws no card for a kind it has no panel for.
+          example: example
+        label:
+          type: string
+          title: Label
+          description: The source card's title, e.g. ``Live introspection``.
+          example: example
+        description:
+          type: string
+          title: Description
+          description: The source card's one-line subtitle.
+          example: A pet available for adoption in the store.
+        icon:
+          type: string
+          title: Icon
+          description: Lucide icon name for the source card, in kebab-case.
+          example: example
+      type: object
+      required:
+      - kind
+      - label
+      - description
+      - icon
+      title: ImportSourceAlternateIntake
+      description: 'An intake method a format offers beyond File / URL / Clipboard (MFI-26.5,
+        #4098).
+
+
+        A format that can be brought in some other way — introspecting a live GraphQL
+        endpoint,
+
+        reflecting a running gRPC server, crawling a registry — declares it here, and
+        the import
+
+        wizard draws it as its own source card, labelled from this record. The card is
+        driven by
+
+        this data, not by format-specific code in the dialog.
+
+
+        Declare one **only** when the import pipeline can run the intake end to end. A
+        capability
+
+        flag such as :attr:`ImportSource.supports_live_discovery` is not enough on its
+        own: a card
+
+        for an intake nothing can run would lead nowhere.'
     ImportSourceDescriptor:
       properties:
         key:
@@ -104211,6 +104265,15 @@ components:
             a ``registry`` connector names to bulk-import every artifact of a registry
             as its own versioned catalog item (``a2a-registry``, ``xregistry``, ``fhir-metadata``),
             or ``null`` when the adapter imports single documents only.
+        alternate_intake:
+          anyOf:
+          - $ref: '#/components/schemas/ImportSourceAlternateIntake'
+          - type: 'null'
+            description: Import Source Descriptor schema.
+          description: An intake method this format offers beyond File / URL / Clipboard (MFI-26.5)
+            — the import wizard shows it as its own source card — or ``null`` when the format
+            is imported through the base intake methods only. Set only when the import pipeline
+            can run it end to end.
       type: object
       required:
       - key

@@ -139,7 +139,10 @@ Options → Quality → Import**.
    Try `apiome-ui/examples/graphql/01-simple-user.graphql` or
    `apiome-ui/examples/asyncapi/01-user-events-2.6.yaml`. Not sure your format is supported?
    **Click “Which formats can I import?”** to open [How the catalog
-   works](./catalog.mdx#how-the-catalog-works) over the wizard.
+   works](./catalog.mdx#how-the-catalog-works) over the wizard. A format that can be brought in
+   another way, such as reading a schema from a live endpoint, gets its own card here once Apiome
+   can import it that way. No format has one yet: import a GraphQL schema or a `.proto` file
+   through **File Upload**, **URL Import** or **Clipboard Paste**.
 2. **Detect & route** — Apiome names the format it detected (**Auto-detected: GraphQL**) and where
    it goes. OpenAPI and Swagger are routed to Projects; choose **Import as format** if the
    detection is ambiguous.

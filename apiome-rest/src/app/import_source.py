@@ -98,6 +98,7 @@ __all__ = [
     "DetectionInput",
     "DetectionResult",
     "NO_MATCH",
+    "ImportSourceAlternateIntake",
     "ImportSourceDescriptor",
     "DiffChangeKind",
     "CanonicalDiffEntry",
@@ -154,6 +155,31 @@ class InputKind(str, Enum):
     PASTE = "paste"  # inline pasted text
     DISCOVERY = "discovery"  # a live endpoint the adapter introspects
     FILESET = "fileset"  # a root document plus sibling members (archive/git intake)
+
+
+class ImportSourceAlternateIntake(BaseModel):
+    """An intake method a format offers beyond File / URL / Clipboard (MFI-26.5, #4098).
+
+    A format that can be brought in some other way — introspecting a live GraphQL endpoint,
+    reflecting a running gRPC server, crawling a registry — declares it here, and the import
+    wizard draws it as its own source card, labelled from this record. The card is driven by
+    this data, not by format-specific code in the dialog.
+
+    Declare one **only** when the import pipeline can run the intake end to end. A capability
+    flag such as :attr:`ImportSource.supports_live_discovery` is not enough on its own: a card
+    for an intake nothing can run would lead nowhere.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: str = Field(
+        description="Stable id of the intake capability, shared by every format that offers it "
+        "(e.g. ``introspection``). The UI maps a kind to the panel that runs it and draws no card "
+        "for a kind it has no panel for.",
+    )
+    label: str = Field(description="The source card's title, e.g. ``Live introspection``.")
+    description: str = Field(description="The source card's one-line subtitle.")
+    icon: str = Field(description="Lucide icon name for the source card, in kebab-case.")
 
 
 class ImportSourceDescriptor(BaseModel):
@@ -220,6 +246,13 @@ class ImportSourceDescriptor(BaseModel):
         "``registry`` connector names to bulk-import every artifact of a registry as its own "
         "versioned catalog item (``a2a-registry``, ``xregistry``, ``fhir-metadata``), or ``null`` "
         "when the adapter imports single documents only.",
+    )
+    alternate_intake: Optional[ImportSourceAlternateIntake] = Field(
+        default=None,
+        description="An intake method this format offers beyond File / URL / Clipboard (MFI-26.5) — "
+        "the import wizard shows it as its own source card — or ``null`` when the format is "
+        "imported through the base intake methods only. Set only when the import pipeline can run "
+        "it end to end.",
     )
 
 
@@ -557,6 +590,11 @@ class ImportSource(ABC):
     #: it lists the registry and imports every artifact as its own versioned catalog item through
     #: the CDG-1.1 connector engine. ``None`` for an adapter that imports single documents only.
     registry_crawl: ClassVar[Optional[str]] = None
+    #: The intake this adapter offers beyond File / URL / Clipboard (MFI-26.5), drawn by the import
+    #: wizard as its own source card. ``None`` — the default, and every adapter today — means the
+    #: format is imported through the base intake methods only. Declare one only when the import
+    #: pipeline runs that intake end to end; :attr:`supports_live_discovery` alone does not qualify.
+    alternate_intake: ClassVar[Optional[ImportSourceAlternateIntake]] = None
     #: Normalizer format keys this adapter can emit.
     formats: ClassVar[Tuple[str, ...]] = ()
     #: Lower-case filename extensions this format's documents normally carry (FMT-1.1), each with
@@ -967,6 +1005,7 @@ class ImportSource(ABC):
             unavailable_reason=unavailable_reason,
             supports_remote_refs=cls.supports_remote_refs,
             registry_crawl=cls.registry_crawl,
+            alternate_intake=cls.alternate_intake,
         )
 
 

@@ -15,7 +15,16 @@ import {
   X,
 } from 'lucide-react';
 import { useImportSources } from '../useImportSources';
-import { baseIntakeTiles } from '../importSourceCatalog';
+import {
+  alternateIntakeTiles,
+  baseIntakeTiles,
+  type AlternateIntakeTile,
+  type CatalogIntakeTile,
+} from '../importSourceCatalog';
+import {
+  CATALOG_ALTERNATE_INTAKE_KINDS,
+  CATALOG_ALTERNATE_INTAKE_PANELS,
+} from './catalogAlternateIntakePanels';
 import { isFeatureReleased } from '@lib/feature-release';
 import { Dialog, DialogContent } from '../../../ui/Dialog';
 import { Button } from '../../../ui/Button';
@@ -265,8 +274,26 @@ export function CatalogImportDialog({
   // so no reflection/introspection/registry tiles ever appear (§0.3 routing policy, #4101).
   // The picker's `accept` comes from the registry (FMT-1.1, #5412) rather than a hard-coded
   // array, so every registered adapter's format is browsable here without a UI change.
-  const { cards: sourceCards, fileExtensions } = useImportSources(open, 'catalog');
-  const sourceTiles = useMemo(() => baseIntakeTiles(sourceCards), [sourceCards]);
+  const { cards: sourceCards, fileExtensions, descriptors } = useImportSources(open, 'catalog');
+  // After the base tiles, a card for each format's own alternate intake (MFI-26.5) — drawn from
+  // the registry, and only where a panel is registered for its kind. None today.
+  const sourceTiles = useMemo<CatalogIntakeTile[]>(
+    () => [
+      ...baseIntakeTiles(sourceCards),
+      ...alternateIntakeTiles(descriptors, CATALOG_ALTERNATE_INTAKE_KINDS),
+    ],
+    [descriptors, sourceCards],
+  );
+  // The chosen alternate intake card, or null while a base intake method is chosen.
+  const [alternateIntake, setAlternateIntake] = useState<AlternateIntakeTile | null>(null);
+  // The base intake panel to show — none while an alternate intake card is chosen.
+  const intakeMethod: SourceMethod | null = alternateIntake ? null : sourceMethod;
+  const AlternateIntakePanel = alternateIntake
+    ? CATALOG_ALTERNATE_INTAKE_PANELS[alternateIntake.kind]
+    : undefined;
+  const alternateSource = alternateIntake
+    ? descriptors.find((descriptor) => descriptor.key === alternateIntake.sourceKey)
+    : undefined;
 
   const detectedFormat = detection?.detected?.format || metadata?.format || null;
   const effectiveFormat = formatOverride ?? detectedFormat;
@@ -382,6 +409,7 @@ export function CatalogImportDialog({
     setRetryRead(null);
     setStep('source');
     setSourceMethod('file');
+    setAlternateIntake(null);
     setCompassRun(null);
     setState('idle');
     setFileName('');
@@ -951,16 +979,26 @@ export function CatalogImportDialog({
                   heading="Choose a source"
                   cards={sourceTiles.map((tile) => tile.card)}
                   selected={
-                    sourceTiles.find((tile) => tile.method === sourceMethod)?.card.panel ?? null
+                    alternateIntake?.card.panel ??
+                    sourceTiles.find((tile) => tile.method === sourceMethod)?.card.panel ??
+                    null
                   }
                   testId={(card) => {
                     const tile = sourceTiles.find((entry) => entry.card.key === card.key);
-                    return tile ? `catalog-import-source-${tile.method}` : undefined;
+                    if (!tile) return undefined;
+                    return tile.method === 'alternate'
+                      ? `catalog-import-source-alternate-${tile.sourceKey}`
+                      : `catalog-import-source-${tile.method}`;
                   }}
                   onSelect={(panel) => {
                     const tile = sourceTiles.find((entry) => entry.card.panel === panel);
                     if (!tile) return;
-                    setSourceMethod(tile.method);
+                    if (tile.method === 'alternate') {
+                      setAlternateIntake(tile);
+                    } else {
+                      setAlternateIntake(null);
+                      setSourceMethod(tile.method);
+                    }
                     setError(null);
                   }}
                 />
@@ -977,7 +1015,7 @@ export function CatalogImportDialog({
                   </button>
                 </p>
 
-                {sourceMethod === 'file' && (
+                {intakeMethod === 'file' && (
                   <label
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -1010,7 +1048,7 @@ export function CatalogImportDialog({
                   </label>
                 )}
 
-                {sourceMethod === 'compass' && (
+                {intakeMethod === 'compass' && (
                   <CompassImportIntake
                     onImported={(run) => {
                       setCompassRun(run);
@@ -1021,7 +1059,7 @@ export function CatalogImportDialog({
                   />
                 )}
 
-                {sourceMethod === 'url' && (
+                {intakeMethod === 'url' && (
                   <div className="cat-imp-form">
                     <FormField label="Document URL" htmlFor="catalog-import-url">
                       <Input
@@ -1038,7 +1076,7 @@ export function CatalogImportDialog({
                   </div>
                 )}
 
-                {sourceMethod === 'paste' && (
+                {intakeMethod === 'paste' && (
                   <div className="cat-imp-form">
                     <FormField label="Source content" htmlFor="catalog-import-paste">
                       <Textarea
@@ -1063,7 +1101,7 @@ export function CatalogImportDialog({
 
                 {/* Git selection (MFI-29.3): a repository path or glob at a ref, read
                     server-side at an immutable commit and imported as a multi-file selection. */}
-                {sourceMethod === 'git' && (
+                {intakeMethod === 'git' && (
                   <div className="cat-imp-form" data-testid="catalog-import-git-panel">
                     <FormField label="Repository URL" htmlFor="catalog-import-git-repo">
                       <Input
@@ -1100,6 +1138,11 @@ export function CatalogImportDialog({
                       Fetch and detect
                     </Button>
                   </div>
+                )}
+
+                {/* MFI-26.5: the chosen format's alternate intake, from the panel registry. */}
+                {AlternateIntakePanel && alternateSource && (
+                  <AlternateIntakePanel source={alternateSource} />
                 )}
 
                 {/* IXH-6.3: paginated recent import jobs on the source step (bounded list). */}

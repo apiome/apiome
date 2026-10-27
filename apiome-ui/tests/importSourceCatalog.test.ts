@@ -9,6 +9,7 @@
 import { Activity, Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
+  alternateIntakeTiles,
   baseImportSourceCards,
   baseIntakeTiles,
   mergeImportFileExtensions,
@@ -18,6 +19,7 @@ import {
   resolveLucideIcon,
   type ImportSourceDescriptor,
 } from '../src/app/components/ade/dashboard/importSourceCatalog';
+import { CATALOG_ALTERNATE_INTAKE_KINDS } from '../src/app/components/ade/dashboard/catalog/catalogAlternateIntakePanels';
 
 /** The AsyncAPI source as the REST registry advertises it (MFI-8.5, #3763). */
 const ASYNCAPI_DESCRIPTOR: ImportSourceDescriptor = {
@@ -611,5 +613,68 @@ describe('Smithy source card (MFI-17.5)', () => {
       '.tgz',
       '.tar',
     ]);
+  });
+});
+
+describe('alternateIntakeTiles (MFI-26.5, #4098)', () => {
+  const INTROSPECTION = {
+    kind: 'introspection',
+    label: 'Live introspection',
+    description: 'Read the schema from a running endpoint',
+    icon: 'radar',
+  };
+  const WITH_INTAKE: ImportSourceDescriptor = { ...GRAPHQL_DESCRIPTOR, alternate_intake: INTROSPECTION };
+  const PANELS = new Set(['introspection']);
+
+  it('draws nothing today: no panel kind is registered', () => {
+    expect(CATALOG_ALTERNATE_INTAKE_KINDS.size).toBe(0);
+    expect(alternateIntakeTiles([WITH_INTAKE], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+
+  it('never draws a tile from supports_live_discovery alone', () => {
+    expect(alternateIntakeTiles([GRAPHQL_DESCRIPTOR, GRPC_DESCRIPTOR], PANELS)).toEqual([]);
+  });
+
+  it('draws a declared intake whose kind has a panel, labelled from the registry', () => {
+    const [tile, ...rest] = alternateIntakeTiles([ASYNCAPI_DESCRIPTOR, WITH_INTAKE], PANELS);
+    expect(rest).toEqual([]);
+    expect(tile.method).toBe('alternate');
+    expect(tile.kind).toBe('introspection');
+    expect(tile.sourceKey).toBe('graphql');
+    expect(tile.card).toMatchObject({
+      key: 'alternate-graphql',
+      label: 'Live introspection',
+      description: 'Read the schema from a running endpoint',
+      panel: 'alternate:introspection:graphql',
+      builtin: false,
+      scope: 'alternative',
+    });
+    expect(tile.card.icon).toBe(resolveLucideIcon('radar'));
+  });
+
+  it('draws no tile for a declared kind with no panel', () => {
+    const reflection = { ...GRPC_DESCRIPTOR, alternate_intake: { ...INTROSPECTION, kind: 'reflection' } };
+    expect(alternateIntakeTiles([reflection], PANELS)).toEqual([]);
+  });
+
+  it('leaves out an unavailable source', () => {
+    expect(alternateIntakeTiles([{ ...WITH_INTAKE, available: false }], PANELS)).toEqual([]);
+  });
+
+  it('de-duplicates by format and sorts by format key', () => {
+    const grpc = { ...GRPC_DESCRIPTOR, alternate_intake: INTROSPECTION };
+    const tiles = alternateIntakeTiles([grpc, WITH_INTAKE, WITH_INTAKE], PANELS);
+    expect(tiles.map((t) => t.sourceKey)).toEqual(['graphql', 'grpc']);
+  });
+
+  it('tolerates a missing or malformed registry', () => {
+    expect(alternateIntakeTiles(undefined, PANELS)).toEqual([]);
+    expect(alternateIntakeTiles(null, PANELS)).toEqual([]);
+    expect(
+      alternateIntakeTiles(
+        [{ ...GRAPHQL_DESCRIPTOR, alternate_intake: { label: 'x' } as unknown as typeof INTROSPECTION }],
+        PANELS,
+      ),
+    ).toEqual([]);
   });
 });
