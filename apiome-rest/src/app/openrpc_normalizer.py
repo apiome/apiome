@@ -1,8 +1,13 @@
-"""OpenRPC → canonical model normalizer — MFI-18.2.
+"""OpenRPC → canonical model normalizer — MFI-18.2, MFI-19.1 (#3979).
 
 Maps a parsed :class:`~app.openrpc_parser.OpenRpcDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.RPC`.
+
+Every method's parameters are kept, in order, as the request message's
+``extras["openrpc_params"]``; a declared ``paramStructure`` is kept as the operation's
+``extras["openrpc_param_structure"]``. A document discovered from a live service records the
+endpoint as ``extras["openrpc_discovery_url"]``.
 """
 
 from __future__ import annotations
@@ -102,6 +107,11 @@ class OpenRpcNormalizer(Normalizer, register=True):
                     extras={
                         "openrpc_summary": method.summary,
                         "openrpc_result_name": method.result_name,
+                        **(
+                            {"openrpc_param_structure": method.param_structure}
+                            if method.param_structure
+                            else {}
+                        ),
                     },
                 )
             )
@@ -126,6 +136,7 @@ class OpenRpcNormalizer(Normalizer, register=True):
             raw={"openrpc": source.raw} if include_raw else None,
             extras={
                 "openrpc_version": source.openrpc_version,
+                **({"openrpc_discovery_url": source.discovery_url} if source.discovery_url else {}),
             },
         )
         return normalize_ordering(api)

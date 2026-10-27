@@ -321,6 +321,7 @@ apiome import smithy ./weather.smithy           # Smithy IDL, a JSON AST (.json)
 apiome import smithy ./weather-model/
 apiome import odata --discover https://services.example.com/odata/trippin/   # live OData service: imports its $metadata
 apiome import wsdl --discover https://soap.example.com/Calculator.svc        # live SOAP service: ?singleWsdl, else ?wsdl
+apiome import openrpc --discover https://rpc.example.com/                   # live JSON-RPC service: calls rpc.discover
 apiome import sample - < ./payload.json     # read from stdin
 
 # Shared flags: --dry-run previews without persisting; --import-timeout bounds

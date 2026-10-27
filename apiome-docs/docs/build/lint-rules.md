@@ -703,6 +703,54 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** An array without maxItems permits unbounded payloads that strain clients and servers.
 
 
+## Pack: `openrpc`
+
+### `openrpc.method-described` {#openrpc-method-described}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** Methods should have a summary or a description.
+
+### `openrpc.required-params-first` {#openrpc-required-params-first}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Required parameters must come before optional ones.
+- **Reference:** https://spec.open-rpc.org/#method-object
+- **Remediation:** Move every required parameter ahead of the first optional parameter.
+- **False-positive guidance:** Not a false positive: the OpenRPC specification requires every required parameter to be positioned before any optional parameter.
+- **Fixture:** `catalog/openrpc-required-params-first`
+- **Scan modes:** `lint`
+
+### `openrpc.reserved-method-name` {#openrpc-reserved-method-name}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** Method names must not begin with the reserved 'rpc.' prefix.
+
+### `openrpc.unique-method-names` {#openrpc-unique-method-names}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Method names must be unique.
+- **Reference:** https://spec.open-rpc.org/#openrpc-object
+- **Remediation:** Rename one of the methods, or merge them into one method.
+- **False-positive guidance:** Not a false positive: the OpenRPC specification requires unique method names, so callers cannot reach both methods.
+- **Fixture:** `catalog/openrpc-unique-method-names`
+- **Scan modes:** `lint`
+
+### `openrpc.unique-param-names` {#openrpc-unique-param-names}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Parameter names must be unique within a method.
+- **Reference:** https://spec.open-rpc.org/#method-object
+- **Remediation:** Give each parameter of the method its own name.
+- **False-positive guidance:** Not a false positive: the OpenRPC specification forbids duplicated parameters within a method.
+- **Fixture:** `catalog/openrpc-unique-param-names`
+- **Scan modes:** `lint`
+
+
 ## Pack: `protobuf`
 
 ### `protobuf.editions.closed-enum` {#protobuf-editions-closed-enum}

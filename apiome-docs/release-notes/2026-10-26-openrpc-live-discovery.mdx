@@ -1,0 +1,21 @@
+---
+slug: openrpc-live-discovery
+title: OpenRPC from a live JSON-RPC service, with parameter-aware diffs and lint
+description: Import a JSON-RPC service via rpc.discover; diffs and lint understand OpenRPC parameters.
+authors: [apiome]
+---
+
+Import a running JSON-RPC service with `apiome import openrpc --discover https://rpc.example.com/`.
+Diffs and lint now understand OpenRPC parameters. [Import an OpenRPC / JSON-RPC API](/bring-in/openrpc-import).
+
+{/* truncate */}
+
+- **`rpc.discover`.** `--discover` calls the service's reserved `rpc.discover` method and imports the
+  OpenRPC document it returns. A provider URL that carries an API key in its path works as given.
+- **Every parameter kept.** Parameters and results written as `$ref`s to reusable content descriptors
+  are resolved; they were dropped before.
+- **Parameter-aware diffs.** A new version is graded parameter by parameter: a removed or newly
+  required parameter is breaking, an optional one added at the end is safe, and a reorder or a
+  rename is graded against the method's `paramStructure`.
+- **An `openrpc` lint pack.** Duplicate method names, duplicate parameter names and a required
+  parameter after an optional one are errors; a method named `rpc.*` is a warning.

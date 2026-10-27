@@ -205,6 +205,43 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/thrift-oneway-void",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "openrpc.unique-method-names": _meta(
+        "openrpc.unique-method-names",
+        ENGINE_SCHEMA,
+        rationale="Method names must be unique; a JSON-RPC server can dispatch only one method per name.",
+        reference="https://spec.open-rpc.org/#openrpc-object",
+        remediation="Rename one of the methods, or merge them into one method.",
+        false_positive_guidance="Not a false positive: the OpenRPC specification requires unique "
+        "method names, so callers cannot reach both methods.",
+        scan_modes=("lint",),
+        fixture_id="catalog/openrpc-unique-method-names",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "openrpc.unique-param-names": _meta(
+        "openrpc.unique-param-names",
+        ENGINE_SCHEMA,
+        rationale="Parameter names must be unique within a method; a by-name call cannot tell them apart.",
+        reference="https://spec.open-rpc.org/#method-object",
+        remediation="Give each parameter of the method its own name.",
+        false_positive_guidance="Not a false positive: the OpenRPC specification forbids "
+        "duplicated parameters within a method.",
+        scan_modes=("lint",),
+        fixture_id="catalog/openrpc-unique-param-names",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "openrpc.required-params-first": _meta(
+        "openrpc.required-params-first",
+        ENGINE_SCHEMA,
+        rationale="Required parameters must come before optional ones, or a by-position caller "
+        "cannot omit an optional parameter.",
+        reference="https://spec.open-rpc.org/#method-object",
+        remediation="Move every required parameter ahead of the first optional parameter.",
+        false_positive_guidance="Not a false positive: the OpenRPC specification requires every "
+        "required parameter to be positioned before any optional parameter.",
+        scan_modes=("lint",),
+        fixture_id="catalog/openrpc-required-params-first",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

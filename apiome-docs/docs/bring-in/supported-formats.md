@@ -13,7 +13,7 @@ Every format Apiome reads or writes, generated from the running registries — t
 - **100 formats can be imported.**
 - **53 formats can be exported.**
 - **53 round-trip** — import *and* export.
-- **10** can introspect a live endpoint rather than reading a file.
+- **11** can introspect a live endpoint rather than reading a file.
 
 The same answer is machine-readable at `GET /v1/formats/matrix` and printed by `apiome formats` (`--json`, `--paradigm`, `--direction`). This page is *rendered from that response*, so the documentation, the API and the CLI cannot disagree: there is one traversal of the registries behind all three.
 
@@ -87,7 +87,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | Matter clusters and device types | `matter` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `matter`, `matter-zap` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-matter) | Ready |
 | ONC RPC | `oncrpc` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `oncrpc`, `sunrpc`, `rpcgen`, `xdr` | `.x`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | OPC UA NodeSet2 | `opcua-nodeset` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `opcua-nodeset`, `nodeset2`, `opcua` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Format-native (reviewed)](#format-opcua-nodeset) | Ready |
-| OpenRPC | `openrpc` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `openrpc`, `jsonrpc` | `.openrpc.json`, `.openrpc`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| OpenRPC | `openrpc` | Import + export | Catalog | `file`, `url`, `paste`, `discovery`, `fileset` | Yes | `openrpc`, `jsonrpc` | `.openrpc.json`, `.openrpc`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | ROS 2 interfaces | `ros2` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `ros2`, `ros2-interface` | `.msg`, `.srv`, `.action`, `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-ros2) | Ready |
 | Smithy | `smithy` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `smithy` | `.smithy`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Thrift | `thrift` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `thrift` | `.thrift`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |

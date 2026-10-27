@@ -38,6 +38,7 @@
             "deprecated": false,
             "description": "Fire-and-forget sensor reading (notification: no result).",
             "extras": {
+              "openrpc_param_structure": "by-name",
               "openrpc_result_name": null,
               "openrpc_summary": "Fire-and-forget sensor reading (notification: no result)."
             },
@@ -151,6 +152,7 @@
             "deprecated": false,
             "description": "Query stored readings for a sensor.",
             "extras": {
+              "openrpc_param_structure": "either",
               "openrpc_result_name": "readings",
               "openrpc_summary": "Query stored readings for a sensor."
             },
@@ -250,7 +252,7 @@
     "confidence": 0.98,
     "format": "openrpc"
   },
-  "fingerprint": "sha256:07ecb37860457864995555ccaeadf283c7090152124f0966d83698ced3b6b22e",
+  "fingerprint": "sha256:a25e9c9e6418b7eaccb1653802c0d8fa237c1cae30749815621cf73f4570f608",
   "lint": {
     "findings": 4,
     "grade": "A",

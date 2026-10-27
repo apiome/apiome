@@ -1,7 +1,7 @@
-"""Shared fetch helpers for live import discovery — MFI-11.3 (#3778), MFI-13.3 (#3790).
+"""Shared fetch helpers for live import discovery — MFI-11.3 (#3778), MFI-13.3 (#3790), MFI-19.1 (#3979).
 
-The live-discovery adapters (OData ``$metadata``, WSDL ``?singleWsdl``) read documents from a
-user-supplied service URL. They share three rules, kept here:
+The live-discovery adapters (OData ``$metadata``, WSDL ``?singleWsdl``, OpenRPC ``rpc.discover``)
+read documents from a user-supplied service URL. They share three rules, kept here:
 
 * every request goes through an SSRF-guarded client (:func:`app.ssrf_guard.build_guarded_client`,
   each redirect hop re-validated) unless a test injects one;
@@ -22,7 +22,14 @@ from .import_source import ImportSourceError
 from .mcp_auth import AUTH_TYPE_NONE, CredentialPayloadError, build_auth_headers
 from .ssrf_guard import SSRFError, build_guarded_client, validate_url
 
-__all__ = ["LIVE_FETCH_TIMEOUT", "auth_headers", "check_public_url", "guarded_client", "guarded_get"]
+__all__ = [
+    "LIVE_FETCH_TIMEOUT",
+    "auth_headers",
+    "check_public_url",
+    "guarded_client",
+    "guarded_get",
+    "guarded_post_json",
+]
 
 #: Per-request timeout for live discovery.
 LIVE_FETCH_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
@@ -87,8 +94,78 @@ def guarded_get(
             ``SOURCE_UNREACHABLE`` (network error, other status), ``INPUT_TOO_LARGE``; a redirect
             to a forbidden address is refused without a code.
     """
+    return _send(client, "GET", url, accept=accept, headers=headers, what=what, max_bytes=max_bytes)
+
+
+def guarded_post_json(
+    client: httpx.Client,
+    url: str,
+    payload: Any,
+    *,
+    headers: Mapping[str, str],
+    what: str,
+    max_bytes: int,
+) -> str:
+    """POST ``payload`` as JSON to ``url`` and return the body as text (MFI-19.1).
+
+    Used for a JSON-RPC call such as ``rpc.discover``. Failures map to the same intake codes as
+    :func:`guarded_get`.
+
+    Args:
+        client: The (guarded) client.
+        url: The URL.
+        payload: The JSON-serialisable request body.
+        headers: Extra headers (auth first).
+        what: What is being fetched, for messages (``"OpenRPC document"``).
+        max_bytes: The largest body accepted.
+
+    Raises:
+        ImportSourceError: As :func:`guarded_get`.
+    """
+    return _send(
+        client,
+        "POST",
+        url,
+        accept="application/json",
+        headers=headers,
+        what=what,
+        max_bytes=max_bytes,
+        json_body=payload,
+    )
+
+
+def _send(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    *,
+    accept: str,
+    headers: Mapping[str, str],
+    what: str,
+    max_bytes: int,
+    json_body: Any = None,
+) -> str:
+    """Send one request and return its body as text, mapping failures to intake codes.
+
+    Args:
+        client: The (guarded) client.
+        method: ``GET`` or ``POST``.
+        url: The URL.
+        accept: The ``Accept`` header.
+        headers: Extra headers (auth first).
+        what: What is being fetched, for messages.
+        max_bytes: The largest body accepted.
+        json_body: A JSON body to send (``POST``); ``None`` sends none.
+
+    Raises:
+        ImportSourceError: As :func:`guarded_get`.
+    """
+    request_headers = {"User-Agent": _UA, "Accept": accept, **dict(headers)}
     try:
-        response = client.get(url, headers={"User-Agent": _UA, "Accept": accept, **dict(headers)})
+        if json_body is None:
+            response = client.request(method, url, headers=request_headers)
+        else:
+            response = client.request(method, url, headers=request_headers, json=json_body)
     except SSRFError as exc:
         raise ImportSourceError(f"The {what} URL is not allowed: {exc}") from exc
     except httpx.HTTPError as exc:
