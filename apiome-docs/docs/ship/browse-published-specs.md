@@ -53,6 +53,15 @@ Words, phrases and filters go in one box. Every word must match; filters narrow 
 Repeating a filter ORs its values (`method:GET method:POST`). An unknown `key:value` is searched as
 plain text.
 
+An import records the version's format and paradigm. Versions that existed before Apiome recorded
+them were tagged once, so the `format:` and `paradigm:` filters find them too:
+
+| Older version | Format | Paradigm |
+|---|---|---|
+| Its source was kept when it was imported | The imported format (`openapi-3.1`, `swagger-2.0`, `asyncapi-3`, …) | That format's paradigm |
+| An Arazzo file imported from a repository | `arazzo` | `rest` |
+| Any other version (built in the designer, the `petstore-sample` project, older OpenAPI imports) | `openapi` | `rest` |
+
 ### Results page
 
 - **Scope tabs** — *All*, *Operations*, *Schemas*, *Projects & orgs* and *MCP servers* (the public
