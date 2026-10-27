@@ -467,6 +467,16 @@
       ]
     },
     {
+      "id": "catalog-import-dry-run",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"catalog-import-dry-run\"]",
+      "data": "fixture:hive-import-wizard/catalog-dry-run.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogImportDryRunPanel.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogImportDialog.tsx"
+      ]
+    },
+    {
       "id": "import-wizard-running",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",

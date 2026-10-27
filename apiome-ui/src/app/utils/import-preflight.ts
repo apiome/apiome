@@ -169,6 +169,45 @@ export interface PreflightRequest {
   archive_root?: string | null;
 }
 
+/** What the catalog import wizard knows about its candidate, for {@link buildCatalogPreflightRequest}. */
+export interface CatalogPreflightCandidate {
+  /** The candidate bytes, base64-encoded (a single document, an archive or a git selection). */
+  documentBase64: string;
+  /** The importer the commit would run, or `null` to let the server detect it. */
+  sourceKind: string | null;
+  /** The upload filename or source label. */
+  label: string;
+  /** How the candidate arrived — a git selection is a `fileset`. */
+  inputKind: 'file' | 'url' | 'paste' | 'fileset';
+  /** Root document inside an archive / git selection, when one was chosen. */
+  archiveRoot: string | null;
+  /** The fetched URL, sent only for `inputKind: 'url'`. */
+  url: string | null;
+}
+
+/**
+ * The pre-flight request for a catalog import candidate.
+ *
+ * The quality step and the options step's **Dry run** (MFI-26.4, #4097) both score the candidate
+ * the commit would store; building the request in one place keeps the two from drifting, and an
+ * identical request is what lets the second call hit the server's per-tenant pre-flight cache.
+ *
+ * @param candidate What the wizard holds — see {@link CatalogPreflightCandidate}.
+ * @returns The request, always targeting the catalog.
+ */
+export function buildCatalogPreflightRequest(candidate: CatalogPreflightCandidate): PreflightRequest {
+  const { documentBase64, sourceKind, label, inputKind, archiveRoot, url } = candidate;
+  return {
+    document_base64: documentBase64,
+    source_kind: sourceKind ?? undefined,
+    filename: label || undefined,
+    url: inputKind === 'url' ? url ?? undefined : undefined,
+    input_kind: inputKind,
+    archive_root: archiveRoot ?? undefined,
+    import_target: 'catalog',
+  };
+}
+
 /** Severities in the order the tally and the ranked list present them. */
 export const PREFLIGHT_SEVERITIES = ['error', 'warning', 'info'] as const;
 export type PreflightSeverity = (typeof PREFLIGHT_SEVERITIES)[number];

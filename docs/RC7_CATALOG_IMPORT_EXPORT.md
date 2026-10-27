@@ -276,13 +276,18 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 | Ticket | Work | Priority |
 | --- | --- | --- |
 | [#6321](https://github.com/apiome/apiome/issues/6321) IXH-3.7 | Import a new version into a project: a **Changes** step comparing the incoming spec with the latest version | P1 |
-| [#4097](https://github.com/apiome/apiome/issues/4097) MFI-26.4 | Explicit **Dry run** in **Import to catalog** (Projects and CLI have one) | P1 |
 | [#4098](https://github.com/apiome/apiome/issues/4098) MFI-26.5 | Live-discovery intake tiles, driven by the registry | P2 |
 | [#4099](https://github.com/apiome/apiome/issues/4099) MFI-27.1 | Convert CTA copy and wiring | P2 |
 | [#4100](https://github.com/apiome/apiome/issues/4100) MFI-27.2 | Cross-surface polish (remaining: catalog search placeholder) | P2 |
 | [#3758](https://github.com/apiome/apiome/issues/3758) MFI-7.3 | Backfill format/protocol on existing rows | P2 |
 | [#3754](https://github.com/apiome/apiome/issues/3754) MFI-6.2 | Cross-protocol full-text search over the normalized model | P2 |
 | [#4079](https://github.com/apiome/apiome/issues/4079), [#4080](https://github.com/apiome/apiome/issues/4080), [#3715](https://github.com/apiome/apiome/issues/3715) | Epics — close when their open children close | — |
+
+MFI-26.4 (#4097) is built: **Import to catalog** has a **Dry run** on the Options step. It runs the
+import pre-flight (`POST /api/import/preflight`, the commit's own importer with `dry_run` forced) for
+the candidate the commit would send (`buildCatalogPreflightRequest`, shared with the quality step) and
+shows the predicted format, routing and reason, catalog name/slug, counts, lint and fingerprint
+(`CatalogImportDryRunPanel`). No import job and no catalog write; Continue still commits.
 
 Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives)
 belongs to the gated `primitives` feature.

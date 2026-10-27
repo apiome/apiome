@@ -22495,6 +22495,32 @@ html[data-motion='reduce'] .prm-spin {
   color: var(--fg-muted);
 }
 
+/* ---- Dry run (MFI-26.4) ----------------------------------------------------
+   What Import would do, on the Options step. A card of label/value facts. */
+.cat-imp-dryrun {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cat-imp-dryrun__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.cat-imp-dryrun__facts dt {
+  color: var(--fg-muted);
+}
+
+.cat-imp-dryrun__facts dd {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
 /* ---- The commit step ----------------------------------------------------- */
 .cat-imp-terminal {
   display: flex;
