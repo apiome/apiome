@@ -422,6 +422,21 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/apiblueprint-drafter-error",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "smithy.validation-error": _meta(
+        "smithy.validation-error",
+        ENGINE_SCHEMA,
+        rationale="The Smithy CLI reports an ERROR when the model is not valid Smithy (a member targeting a shape "
+        "that does not exist, a trait applied where it is not allowed); code generators and other Smithy tools "
+        "refuse such a model.",
+        reference="https://smithy.io/2.0/spec/model-validation.html",
+        remediation="Fix the shape the event names at its file and line — define the missing shape, or correct the "
+        "trait — then re-import.",
+        false_positive_guidance="Not a false positive: ERROR events mark a model the Smithy specification rejects. "
+        "Only servers with the bundled Smithy CLI report it.",
+        scan_modes=("lint",),
+        fixture_id="catalog/smithy-validation-error",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

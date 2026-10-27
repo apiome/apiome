@@ -125,6 +125,20 @@ def _canonical_field(
     )
 
 
+
+#: Most ``smithy validate`` events recorded on a catalog item (the rest are counted, not listed).
+MAX_RECORDED_EVENTS = 50
+
+
+def _validation_extras(source: SmithyDocument) -> Dict[str, Any]:
+    """The model's validation events (MFI-17.3); empty when there are none, so a clean model is unchanged."""
+    if not source.validation_events:
+        return {}
+    return {
+        "smithy_validation_events": [dict(e) for e in source.validation_events[:MAX_RECORDED_EVENTS]],
+        "smithy_validation_event_count": len(source.validation_events),
+    }
+
 class SmithyNormalizer(Normalizer, register=True):
     """Normalize a parsed Smithy document into a :class:`CanonicalApi`."""
 
@@ -344,6 +358,8 @@ class SmithyNormalizer(Normalizer, register=True):
                 **({"smithy_namespaces": list(source.namespaces)} if source.namespaces else {}),
                 **({"smithy_ast_sha256": source.model_sha256} if source.model_sha256 else {}),
                 **({"smithy_source_files": list(source.source_files)} if source.source_files else {}),
+                # MFI-17.3: `smithy validate` events (smithy-linters included), for the `smithy` pack.
+                **_validation_extras(source),
             },
         )
         return normalize_ordering(api)

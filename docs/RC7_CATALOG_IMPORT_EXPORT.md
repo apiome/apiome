@@ -208,8 +208,12 @@ MFI-16.3 (#3806) is built: with the bundled drafter, every API Blueprint import 
 pack (`app.apiblueprint_lint`, V329) reports drafter's annotations as `apiblueprint.drafter-warning` /
 `apiblueprint.drafter-error`.
 
-**Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-Smithy [#3810](https://github.com/apiome/apiome/issues/3810).
+MFI-17.3 (#3810) is built: with the Smithy CLI, every Smithy import is also run through `smithy validate --format csv`
+with nine `smithy-linters` validators switched on (`app.smithy_ast.validate_smithy_members`); the linters resolve from
+an offline Maven folder baked into the image (`lib/smithy-m2`). The `smithy` lint pack (`app.smithy_lint`, V330)
+reports `smithy.linter` / `smithy.validation-error` / `-warning` / `-note`.
+
+**Lint packs:** every planned native pack has shipped (`format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` is empty).
 
 **Breaking-change rules** (the generic classifier applies today):
 OData [#3780](https://github.com/apiome/apiome/issues/3780), WSDL/XSD [#3792](https://github.com/apiome/apiome/issues/3792) (needs soapAction captured, [#3789](https://github.com/apiome/apiome/issues/3789)),

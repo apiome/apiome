@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 __all__ = [
     "SmithyParseError",
@@ -116,6 +116,10 @@ class SmithyDocument:
     model_sha256: Optional[str] = None
     #: Every model file the document was assembled from.
     source_files: Tuple[str, ...] = ()
+    #: ``smithy validate`` events, ``smithy-linters`` included (MFI-17.3,
+    #: :func:`app.smithy_ast.validate_smithy_members`): ``{"severity", "id", "shape", "file",
+    #: "line", "column", "message"}``; empty without the Smithy CLI.
+    validation_events: Tuple[Dict[str, Any], ...] = ()
 
 
 def is_smithy(content: str) -> bool:

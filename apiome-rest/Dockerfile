@@ -165,6 +165,19 @@ RUN ARCH="$(cat /tmp/arch_gnu)"; \
     && ln -s ${TOOLS_PREFIX}/lib/smithy/bin/smithy ${TOOLS_PREFIX}/bin/smithy \
     && rm -rf /tmp/smithy.zip /tmp/smithy
 
+# smithy-linters (MFI-17.3) — the CLI does not ship the CamelCase / MissingPaginatedTrait / ...
+# validators. Keep the jar and the two artifacts it depends on in a local Maven-layout folder; at
+# import, app.smithy_ast writes a smithy-build.json naming only this file:// repository, so the
+# linters resolve with no network access.
+RUN for artifact in smithy-linters smithy-model smithy-utils; do \
+      dir="${TOOLS_PREFIX}/lib/smithy-m2/software/amazon/smithy/${artifact}/${SMITHY_VERSION}"; \
+      mkdir -p "${dir}"; \
+      for ext in jar pom; do \
+        curl -fsSL "https://repo1.maven.org/maven2/software/amazon/smithy/${artifact}/${SMITHY_VERSION}/${artifact}-${SMITHY_VERSION}.${ext}" \
+          -o "${dir}/${artifact}-${SMITHY_VERSION}.${ext}" || exit 1; \
+      done; \
+    done
+
 # AMF — JVM assembly (fat) jar invoked through a thin wrapper so it looks like a native `amf`
 # on PATH. aml-org publishes amf-cli to MuleSoft's Nexus (not Maven Central), and only the
 # `-assembly` classifier is the self-contained runnable jar; the plain artifact omits its

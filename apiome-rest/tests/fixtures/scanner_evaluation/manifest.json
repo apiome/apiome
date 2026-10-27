@@ -588,6 +588,13 @@
       "expected_blocking_rule_ids": [
         "apiblueprint.drafter-error"
       ]
+    },
+    {
+      "id": "catalog/smithy-validation-error",
+      "kind": "catalog_smithy_validate",
+      "expected_blocking_rule_ids": [
+        "smithy.validation-error"
+      ]
     }
   ]
 }

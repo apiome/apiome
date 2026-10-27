@@ -1,0 +1,6 @@
+{
+  "tool": "smithy 1.53.0 validate --format csv --severity NOTE (+ smithy-linters 1.53.0, offline repo)",
+  "exit_code": 1,
+  "stdout": "severity,id,shape,file,line,column,message,hint,suppressionReason\n\"ERROR\",\"Target.UnresolvedShape\",\"example.shelter#Pet$owner\",\"/__STAGING__/model.smithy\",6,5,\"member shape targets an unresolved shape `example.shelter#Person`\",\"\",\"\"\n",
+  "stderr": ""
+}

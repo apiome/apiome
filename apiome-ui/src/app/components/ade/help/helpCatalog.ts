@@ -820,7 +820,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog a Smithy model: one file, a JSON AST, or a multi-file set.',
     page: 'apiome-docs/docs/bring-in/smithy-import.md',
     section: 'reference',
-    keywords: ['json ast', 'namespace', 'aws', 'idl', 'multi-file', 'archive', 'smithy ast', 'resource', 'cli', 'folder'],
+    keywords: ['json ast', 'namespace', 'aws', 'idl', 'multi-file', 'archive', 'smithy ast', 'resource', 'cli', 'folder', 'lint', 'smithy-linters', 'camelcase', 'paginated', 'validate'],
   },
   {
     id: 'typespec-import',
