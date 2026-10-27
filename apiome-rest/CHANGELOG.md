@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.473.0] - 2026-10-26
+
+### Added
+- **OData breaking-change classifier: §5.2 Model Versioning + `$schemaversion` (MFI-11.5, #3780)** — new
+  `app.odata_breaking.ODataBreakingChangeClassifier` (`odata`, id `odata-model-versioning`), a subclass of the
+  baseline that grades by OData 4.01 Part 1 §5.2: properties added nullable (`odata.property-added-nullable`) or with
+  a `$DefaultValue` (`odata.property-added-with-default`) are safe, a non-nullable property with no default is
+  breaking (`odata.property-added-required`); a type change (`odata.property-type-changed`) or becoming non-nullable
+  (`odata.property-made-non-nullable`) is breaking, becoming nullable dangerous; an entity type's key change
+  (`odata.key-changed`), a removed or retyped navigation property (`odata.navigation-removed` /
+  `-type-changed`) and a new single-valued non-nullable navigation (`odata.navigation-added-required`) are breaking;
+  a new collection-valued or nullable navigation (`odata.navigation-added`) and added annotations
+  (`odata.annotation-added`) are safe; an unknown-nullability navigation, a partner change and a changed / removed
+  annotation are dangerous. v2/v3 navigation nullability comes from the association multiplicity; v4 `$Nullable`,
+  `$DefaultValue` and `Core.SchemaVersion` are read from the model's canonical CSDL JSON. Every breaking grade's
+  rationale notes whether `Core.SchemaVersion` moved between the versions (`schema_versions`). Other changes keep the
+  baseline grading. OpenAPI 1.337.0.
+
 ## [1.472.0] - 2026-10-26
 
 ### Added

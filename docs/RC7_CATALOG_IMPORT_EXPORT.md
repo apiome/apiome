@@ -215,8 +215,12 @@ reports `smithy.linter` / `smithy.validation-error` / `-warning` / `-note`.
 
 **Lint packs:** every planned native pack has shipped (`format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` is empty).
 
+MFI-11.5 (#3780) is built: the `odata` breaking-change classifier (`app.odata_breaking`) grades diffs by OData 4.01
+§5.2 Model Versioning (properties, keys, navigation properties, annotations) and notes on every breaking grade whether
+the schema's `Core.SchemaVersion` (`$schemaversion`) moved.
+
 **Breaking-change rules** (the generic classifier applies today):
-OData [#3780](https://github.com/apiome/apiome/issues/3780), WSDL/XSD [#3792](https://github.com/apiome/apiome/issues/3792) (needs soapAction captured, [#3789](https://github.com/apiome/apiome/issues/3789)),
+WSDL/XSD [#3792](https://github.com/apiome/apiome/issues/3792) (needs soapAction captured, [#3789](https://github.com/apiome/apiome/issues/3789)),
 TypeSpec versioning [#3797](https://github.com/apiome/apiome/issues/3797), RAML [#3802](https://github.com/apiome/apiome/issues/3802),
 Smithy [#3811](https://github.com/apiome/apiome/issues/3811).
 

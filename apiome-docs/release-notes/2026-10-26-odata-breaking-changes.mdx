@@ -1,0 +1,19 @@
+---
+slug: odata-breaking-changes
+title: OData breaking changes by the OData versioning rules
+description: OData version diffs are graded by OData's model-versioning rules and schema version.
+authors: [apiome]
+---
+
+Comparing two versions of an OData service now grades each change by OData's own rules for which
+model changes are safe (OData 4.01 Protocol, section 5.2 Model Versioning).
+[Breaking changes between versions](/bring-in/odata-import#breaking-changes-between-versions).
+
+{/* truncate */}
+
+- **Safe:** a new nullable or defaulted property, a new collection-valued or nullable navigation
+  property, new types and entity sets, added annotations.
+- **Breaking:** a new required property, a changed key, a changed property type, a property made
+  non-nullable, a removed or retyped navigation property.
+- **Schema version.** Every breaking change says whether the schema's `Core.SchemaVersion` was
+  bumped, so clients can keep asking for the old model with `$schemaversion`.
