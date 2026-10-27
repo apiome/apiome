@@ -797,8 +797,9 @@ export default function CatalogClient() {
           ref={searchRef}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Filter catalog…  ( / )"
+          placeholder="Search name, slug, format, protocol…  ( / )"
           aria-label="Filter catalog"
+          className="cat-search"
           data-testid="catalog-search"
         />
         <CatalogFormatFacet

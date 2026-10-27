@@ -110,7 +110,7 @@ async function mount(items: readonly unknown[]) {
 
 /** Filter by `term` and wait until `expected` is listed and Item 0000 is gone. */
 async function filterTo(term: string, expected: string) {
-  fireEvent.change(screen.getByPlaceholderText(/Filter catalog/), { target: { value: term } });
+  fireEvent.change(screen.getByLabelText('Filter catalog'), { target: { value: term } });
   await screen.findByText(expected);
   await waitFor(() => expect(screen.queryByText('Item 0000')).toBeNull());
 }
@@ -155,7 +155,7 @@ describe.each(['cards', 'table'] as const)('the Catalog %s view at 1,000 items',
     fireEvent.click(within(pager).getByRole('button', { name: 'Page 2' }));
     await screen.findByText('Item 0050');
     expect(screen.queryByText('Item 0000')).toBeNull();
-    fireEvent.change(screen.getByPlaceholderText(/Filter catalog/), { target: { value: 'Item 00' } });
+    fireEvent.change(screen.getByLabelText('Filter catalog'), { target: { value: 'Item 00' } });
     await screen.findByText('Item 0000');
     expect(screen.getByText(/Showing 1–50 of 100 items/)).toBeInTheDocument();
   });

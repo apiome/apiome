@@ -489,6 +489,13 @@ describe('narrowing', () => {
     expect(screen.getByText('Orders RPC')).toBeInTheDocument();
   });
 
+  it('names what the search box matches and keeps the / hint (MFI-27.2)', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    const search = screen.getByLabelText('Filter catalog');
+    expect(search).toHaveAttribute('placeholder', 'Search name, slug, format, protocol…  ( / )');
+  });
+
   it('counts each chip over the rows the other controls left', async () => {
     await renderCatalog();
     await screen.findByText('Ledger Graph');
