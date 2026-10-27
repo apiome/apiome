@@ -1,0 +1,56 @@
+openapi: 3.1.0
+info: {title: Orders (HAL and HAL-FORMS), version: "1.0"}
+paths:
+  /orders:
+    get:
+      responses:
+        "200":
+          description: The orders, as a HAL resource.
+          content:
+            application/hal+json:
+              schema: {$ref: "#/components/schemas/OrderList"}
+  /orders/{id}:
+    get:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: One order, with the form to cancel it.
+          content:
+            application/prs.hal-forms+json:
+              schema:
+                type: object
+                properties:
+                  _links:
+                    type: object
+                    properties:
+                      self: {$ref: "#/components/schemas/Link"}
+                  _templates:
+                    type: object
+                    properties:
+                      default:
+                        type: object
+                        properties:
+                          method: {type: string, const: DELETE}
+                  total: {type: number}
+components:
+  schemas:
+    Link:
+      type: object
+      required: [href]
+      properties:
+        href: {type: string}
+        templated: {type: boolean}
+    OrderList:
+      type: object
+      properties:
+        _links:
+          type: object
+          properties:
+            self: {$ref: "#/components/schemas/Link"}
+            next: {$ref: "#/components/schemas/Link"}
+            item: {type: array, items: {$ref: "#/components/schemas/Link"}}
+        _embedded:
+          type: object
+          properties:
+            orders: {type: array, items: {type: object}}

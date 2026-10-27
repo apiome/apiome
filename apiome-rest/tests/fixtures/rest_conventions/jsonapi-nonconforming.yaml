@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info: {title: Articles (JSON:API, nonconforming), version: "1.0"}
+paths:
+  /articles/{id}:
+    get:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: An article without a resource identity.
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                required: [data, errors]
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      attributes: {type: object, properties: {title: {type: string}}}
+                  errors: {type: array, items: {type: object}}
+        "500":
+          description: Not an error document.
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  message: {type: string}

@@ -35,6 +35,7 @@ from .catalog_categories import (
     CatalogFacetFilters,
     catalog_facet_counts,
     filter_catalog_items,
+    item_conventions,
     item_domain,
     item_paradigm,
     normalize_domain,
@@ -173,7 +174,12 @@ def _build_related_artifacts(
 
 def _category_fields(item: Dict[str, Any], tags: List[str]) -> Dict[str, Any]:
     """The categorization fields every catalog item carries (MFI-6.3, #3755)."""
-    return {"paradigm": item_paradigm(item), "domain": item_domain(item), "tags": list(tags)}
+    return {
+        "paradigm": item_paradigm(item),
+        "domain": item_domain(item),
+        "tags": list(tags),
+        "conventions": item_conventions(item),
+    }
 
 
 def _facet_filters(
@@ -181,10 +187,11 @@ def _facet_filters(
     format_: Optional[List[str]],
     domain: Optional[List[str]],
     tag: Optional[List[str]],
+    convention: Optional[List[str]] = None,
 ) -> CatalogFacetFilters:
     """The facet selection of a list/facets request (repeatable query parameters)."""
     return CatalogFacetFilters.from_query(
-        protocols=protocol, formats=format_, domains=domain, tags=tag
+        protocols=protocol, formats=format_, domains=domain, tags=tag, conventions=convention
     )
 
 
@@ -205,6 +212,11 @@ _DOMAIN_QUERY = Query(
     "'uncategorized').",
 )
 _TAG_QUERY = Query(None, description="Tag facet, repeatable ('uncategorized' = untagged items).")
+_CONVENTION_QUERY = Query(
+    None,
+    description="REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms, json-ld, hydra, or "
+    "'uncategorized' = items declaring none).",
+)
 
 
 @router.get("/{tenant_slug}")
@@ -223,6 +235,7 @@ async def list_catalog_items(
     format_: Optional[List[str]] = _FORMAT_QUERY,
     domain: Optional[List[str]] = _DOMAIN_QUERY,
     tag: Optional[List[str]] = _TAG_QUERY,
+    convention: Optional[List[str]] = _CONVENTION_QUERY,
     team: Optional[str] = Query(
         None,
         max_length=128,
@@ -238,8 +251,9 @@ async def list_catalog_items(
     also carrying the latest revision's format/protocol/source provenance and its categorization
     (MFI-6.3): the auto-derived ``paradigm``, the manual ``domain`` and the free-form ``tags``.
 
-    The four categorization facets — ``protocol`` (paradigm), ``format``, ``domain`` and ``tag`` —
-    are repeatable: values within one facet OR together, facets AND, an unknown value narrows to
+    The five categorization facets — ``protocol`` (paradigm), ``format``, ``domain``, ``tag`` and
+    ``convention`` (the REST hypermedia conventions the latest revision declares, MFI-19.6) — are
+    repeatable: values within one facet OR together, facets AND, an unknown value narrows to
     nothing, and ``uncategorized`` selects the items with no value. Their counts are
     ``GET /v1/catalog/{tenant_slug}/facets``.
 
@@ -255,6 +269,7 @@ async def list_catalog_items(
         format_: Source-format facet values.
         domain: Domain facet values.
         tag: Tag facet values.
+        convention: REST hypermedia convention facet values (MFI-19.6).
         team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
         auth_data: Authentication data (injected by dependency).
 
@@ -271,7 +286,9 @@ async def list_catalog_items(
     tags_by_item = db.get_artifact_tags_for_projects(
         tenant_id, [str(item["id"]) for item in items]
     )
-    kept = filter_catalog_items(items, tags_by_item, _facet_filters(protocol, format_, domain, tag))
+    kept = filter_catalog_items(
+        items, tags_by_item, _facet_filters(protocol, format_, domain, tag, convention)
+    )
     return [
         CatalogItemSchema(
             **item,
@@ -293,6 +310,7 @@ async def get_catalog_facets(
     format_: Optional[List[str]] = _FORMAT_QUERY,
     domain: Optional[List[str]] = _DOMAIN_QUERY,
     tag: Optional[List[str]] = _TAG_QUERY,
+    convention: Optional[List[str]] = _CONVENTION_QUERY,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogFacetsResponse:
     """
@@ -311,10 +329,11 @@ async def get_catalog_facets(
         format_: Source-format facet values.
         domain: Domain facet values.
         tag: Tag facet values.
+        convention: REST hypermedia convention facet values (MFI-19.6).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
-        The total, the number the selection keeps, and the four facets' buckets.
+        The total, the number the selection keeps, and the five facets' buckets.
     """
     tenant_id = auth_data["tenant_id"]
     items = db.get_catalog_items_for_tenant(
@@ -323,7 +342,7 @@ async def get_catalog_facets(
     tags_by_item = db.get_artifact_tags_for_projects(
         tenant_id, [str(item["id"]) for item in items]
     )
-    filters = _facet_filters(protocol, format_, domain, tag)
+    filters = _facet_filters(protocol, format_, domain, tag, convention)
     return CatalogFacetsResponse(
         total=len(items),
         matched=len(filter_catalog_items(items, tags_by_item, filters)),

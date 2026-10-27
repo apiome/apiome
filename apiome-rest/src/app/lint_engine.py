@@ -452,6 +452,10 @@ def load_format_rule_packs() -> None:
     # so it runs for every data-schema artifact rather than for one format key.
     from . import data_contract_lint as _data_contract_lint  # noqa: F401
 
+    # REST hypermedia convention pack (MFI-19.6): registers under the ``rest`` *paradigm* and
+    # checks JSON:API / HAL / HAL-FORMS / JSON-LD / Hydra bodies against their conventions.
+    from . import rest_conventions_lint as _rest_conventions_lint  # noqa: F401
+
 
 # ===========================================================================
 # Cross-format hygiene helpers (shared by the common pack's rules)

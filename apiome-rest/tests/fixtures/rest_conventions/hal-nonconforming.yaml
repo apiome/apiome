@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info: {title: Orders (HAL, nonconforming), version: "1.0"}
+paths:
+  /orders:
+    get:
+      responses:
+        "200":
+          description: Links without self, and a link object without href.
+          content:
+            application/hal+json:
+              schema:
+                type: object
+                properties:
+                  _links:
+                    type: object
+                    properties:
+                      next: {type: object, properties: {title: {type: string}}}
+  /orders/{id}:
+    get:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: HAL-FORMS without templates, and HAL without _links.
+          content:
+            application/prs.hal-forms+json:
+              schema:
+                type: object
+                properties:
+                  _links: {type: object, properties: {self: {type: object, properties: {href: {type: string}}}}}
+            application/hal+json:
+              schema:
+                type: object
+                properties:
+                  total: {type: number}

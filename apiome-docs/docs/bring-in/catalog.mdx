@@ -44,6 +44,8 @@ list on [Supported formats](./supported-formats.md).
   file**, **Source URL**, **Pasted content**, **Live discovery**), grade, **domain** and
   **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
   **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
+  Once an item declares a REST hypermedia convention, a **convention** menu joins them — see
+  [REST hypermedia conventions](./rest-hypermedia-conventions.md).
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
@@ -233,8 +235,8 @@ Every control on the list and on an item's page works from the keyboard.
 
 - CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
   --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
-- REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain` and
-  `tag`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
+- REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain`, `tag`
+  and `convention`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
   (the count per value), `PUT /v1/catalog/{tenant}/{item}/categories` (`{ "domain", "tags" }`),
   `GET /v1/catalog/{tenant}/{item}`,
   `GET …/{item}/analysis|lint|source`, `POST …/{item}/convert`, `GET …/{item}/conversions` — see the

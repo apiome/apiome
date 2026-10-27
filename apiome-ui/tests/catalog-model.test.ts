@@ -28,6 +28,8 @@ import {
   catalogDomainLabel,
   catalogDomainOptions,
   catalogTagOptions,
+  catalogConventionOptions,
+  CATALOG_CONVENTION_LABELS,
   CATALOG_MAX_TAG_LENGTH,
   CATALOG_UNCATEGORIZED,
   normalizeCatalogTag,
@@ -221,6 +223,7 @@ describe('quick filters', () => {
       grade: CATALOG_FILTER_ANY,
       domain: CATALOG_FILTER_ANY,
       tag: CATALOG_FILTER_ANY,
+      convention: CATALOG_FILTER_ANY,
     });
     for (const row of ALL) expect(matchesCatalogFilters(row, EMPTY_CATALOG_FILTERS)).toBe(true);
   });
@@ -735,5 +738,48 @@ describe('categories (MFI-6.3)', () => {
     expect('error' in normalizeCatalogTag('x'.repeat(CATALOG_MAX_TAG_LENGTH + 1))).toBe(true);
     expect('error' in normalizeCatalogTag('Uncategorized')).toBe(true);
     expect('error' in normalizeCatalogTag('bell\u0007')).toBe(true);
+  });
+});
+
+/* -------------------------------------------------------------------------
+   REST hypermedia conventions (MFI-19.6)
+   ------------------------------------------------------------------------- */
+
+describe('conventions (MFI-19.6)', () => {
+  const ARTICLES = item({ id: 'articles', name: 'Articles', conventions: ['jsonapi'] });
+  const ORDERS = item({ id: 'orders', name: 'Orders', conventions: ['hal', 'hal-forms'] });
+  const PLAIN = item({ id: 'plain', name: 'Plain', conventions: [] });
+  const ROWS = [ARTICLES, ORDERS, PLAIN];
+  const kept = (convention: string) =>
+    ROWS.filter((row) => matchesCatalogFilters(row, { ...EMPTY_CATALOG_FILTERS, convention })).map(
+      (row) => row.id
+    );
+
+  it('filters by convention, and "uncategorized" keeps the items declaring none', () => {
+    expect(kept('hal')).toEqual(['orders']);
+    expect(kept('hal-forms')).toEqual(['orders']);
+    expect(kept('jsonapi')).toEqual(['articles']);
+    expect(kept(CATALOG_UNCATEGORIZED)).toEqual(['plain']);
+    expect(kept(CATALOG_FILTER_ANY)).toEqual(['articles', 'orders', 'plain']);
+  });
+
+  it('lists the conventions in use, in the standard order, with their names', () => {
+    expect(catalogConventionOptions(ROWS).map((o) => o.label)).toEqual([
+      'All conventions',
+      'JSON:API',
+      'HAL',
+      'HAL-FORMS',
+      'No convention',
+    ]);
+    expect(catalogConventionOptions(ROWS, 'hydra').map((o) => o.label)).toContain('Hydra');
+    expect(CATALOG_CONVENTION_LABELS['json-ld']).toBe('JSON-LD');
+  });
+
+  it('counts as narrowing, and a saved state without it reads as any', () => {
+    expect(isCatalogNarrowed('', 'all', { ...EMPTY_CATALOG_FILTERS, convention: 'hal' })).toBe(true);
+    const legacy = { ...EMPTY_CATALOG_FILTERS };
+    delete legacy.convention;
+    expect(isCatalogNarrowed('', 'all', legacy)).toBe(false);
+    expect(matchesCatalogFilters(ARTICLES, legacy)).toBe(true);
   });
 });

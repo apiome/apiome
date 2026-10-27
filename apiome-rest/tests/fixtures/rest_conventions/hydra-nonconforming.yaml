@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info: {title: People (Hydra, nonconforming), version: "1.0"}
+paths:
+  /people:
+    get:
+      responses:
+        "200":
+          description: No context, and a collection whose member is not an array.
+          content:
+            application/ld+json:
+              schema:
+                type: object
+                properties:
+                  "@type": {type: string, const: hydra:Collection}
+                  "hydra:totalItems": {type: integer}
+                  "hydra:member": {type: object}

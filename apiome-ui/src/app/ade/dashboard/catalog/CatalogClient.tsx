@@ -108,6 +108,7 @@ import {
   catalogBulkFailureTitle,
   catalogDomainOptions,
   catalogTagOptions,
+  catalogConventionOptions,
   CATALOG_PAGE_SIZE,
   catalogBulkPlan,
   catalogFootLabel,
@@ -433,6 +434,12 @@ export default function CatalogClient() {
   const formatOptions = React.useMemo(
     () => catalogFormatFacetOptions(beforeFormatFacet, filters.formats),
     [beforeFormatFacet, filters.formats]
+  );
+
+  /** The Convention select's options (MFI-19.6): "all", each convention in use, "none". */
+  const conventionOptions = React.useMemo(
+    () => catalogConventionOptions(items, filters.convention),
+    [items, filters.convention]
   );
 
   /** The chip counts, over the rows the search and the four quick filters left. */
@@ -835,6 +842,17 @@ export default function CatalogClient() {
           options={catalogTagOptions(items, filters.tag)}
           onChange={(tag) => setFilters((current) => ({ ...current, tag }))}
         />
+        {/* MFI-19.6: the REST hypermedia conventions an item's media types declare. Shown only
+            once an item declares one (or one is chosen), so a catalog without any keeps its row. */}
+        {conventionOptions.length > 2 || (filters.convention ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY ? (
+          <CatalogQuickFilter
+            label="Convention"
+            testId="catalog-filter-convention"
+            value={filters.convention ?? CATALOG_FILTER_ANY}
+            options={conventionOptions}
+            onChange={(convention) => setFilters((current) => ({ ...current, convention }))}
+          />
+        ) : null}
 
         {/* The view switch closes the filter row, as the quiet-pass mockup draws it. */}
         <DataTableToolbarSpacer />

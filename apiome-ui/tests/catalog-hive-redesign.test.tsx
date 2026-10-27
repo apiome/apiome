@@ -848,6 +848,24 @@ describe('categories (MFI-6.3)', () => {
     expect(screen.getByText('Ledger Graph')).toBeInTheDocument();
   });
 
+  it('hides the Convention filter while no item declares a convention', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    expect(screen.queryByTestId('catalog-filter-convention')).not.toBeInTheDocument();
+  });
+
+  it('filters by REST hypermedia convention once an item declares one (MFI-19.6)', async () => {
+    await renderCatalog([{ ...LEDGER, conventions: ['hal', 'hal-forms'] }, ORDERS, EVENTS, RETIRED]);
+    await screen.findByText('Ledger Graph');
+    fireEvent.click(screen.getByTestId('catalog-filter-convention'));
+    const names = (await screen.findAllByRole('option')).map((option) => option.textContent);
+    expect(names).toEqual(['All conventions', 'HAL', 'HAL-FORMS', 'No convention']);
+    fireEvent.click(screen.getByRole('option', { name: 'HAL' }));
+    await waitFor(() => expect(screen.queryByText('Orders RPC')).not.toBeInTheDocument());
+    expect(screen.getByText('Ledger Graph')).toBeInTheDocument();
+    expect(screen.getByTestId('catalog-filter-convention')).toHaveAttribute('data-active');
+  });
+
   it('offers Categorize… in the row menu and opens the dialog on that item', async () => {
     await renderCatalog();
     const card = (await screen.findAllByTestId('catalog-card'))[0];

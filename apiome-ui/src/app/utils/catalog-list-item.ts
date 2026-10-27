@@ -36,6 +36,8 @@ export interface NormalizedCatalogListItem {
   paradigm?: string | null;
   domain?: string | null;
   tags?: string[];
+  /** REST hypermedia conventions the latest revision declares (MFI-19.6). */
+  conventions?: string[];
 }
 
 function pick<T>(raw: Record<string, unknown>, camel: string, snake: string): T | undefined {
@@ -59,6 +61,10 @@ export function normalizeCatalogListItem(raw: Record<string, unknown>): Normaliz
       pick<string | null>(raw, 'identityGroupId', 'identity_group_id') ?? base.identityGroupId,
     // An older API without MFI-6.3 sends no tags; an empty list keeps every reader simple.
     tags: Array.isArray(raw.tags) ? (raw.tags as unknown[]).filter((t): t is string => typeof t === 'string') : [],
+    // MFI-19.6: an older API sends no conventions; an empty list reads as "declares none".
+    conventions: Array.isArray(raw.conventions)
+      ? (raw.conventions as unknown[]).filter((c): c is string => typeof c === 'string')
+      : [],
     // CDG-2.4: the owner team, validated once here so every reader gets the typed shape.
     owner: parseEntityOwner(raw.owner),
   };

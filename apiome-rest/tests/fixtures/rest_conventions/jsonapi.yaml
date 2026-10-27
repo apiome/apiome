@@ -1,0 +1,87 @@
+openapi: 3.1.0
+info: {title: Articles (JSON:API), version: "1.0"}
+paths:
+  /articles:
+    get:
+      operationId: listArticles
+      responses:
+        "200":
+          description: A page of articles.
+          content:
+            application/vnd.api+json:
+              schema: {$ref: "#/components/schemas/ArticleCollection"}
+        "404":
+          description: Not found.
+          content:
+            application/vnd.api+json:
+              schema: {$ref: "#/components/schemas/ErrorDocument"}
+    post:
+      operationId: createArticle
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              type: object
+              required: [data]
+              properties:
+                data:
+                  type: object
+                  required: [type]
+                  properties:
+                    type: {type: string, const: articles}
+                    attributes: {$ref: "#/components/schemas/ArticleAttributes"}
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/vnd.api+json:
+              schema: {$ref: "#/components/schemas/ArticleDocument"}
+components:
+  schemas:
+    ArticleAttributes:
+      type: object
+      properties:
+        title: {type: string}
+        body: {type: string}
+    Article:
+      type: object
+      required: [type, id]
+      properties:
+        type: {type: string, const: articles}
+        id: {type: string}
+        attributes: {$ref: "#/components/schemas/ArticleAttributes"}
+        relationships:
+          type: object
+          properties:
+            author:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type: {type: string, enum: [people]}
+                    id: {type: string}
+    ArticleDocument:
+      type: object
+      properties:
+        data: {$ref: "#/components/schemas/Article"}
+        links: {type: object, properties: {self: {type: string}}}
+    ArticleCollection:
+      allOf:
+        - type: object
+          properties:
+            data: {type: array, items: {$ref: "#/components/schemas/Article"}}
+        - type: object
+          properties:
+            meta: {type: object, properties: {total: {type: integer}}}
+    ErrorDocument:
+      type: object
+      required: [errors]
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status: {type: string}
+              title: {type: string}

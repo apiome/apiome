@@ -261,7 +261,7 @@ def test_facets_route_is_not_mistaken_for_an_item(authed) -> None:
     assert response.status_code == 200
     body = response.json()
     assert (body["total"], body["matched"]) == (4, 2)
-    assert set(body["facets"]) == {"protocols", "formats", "domains", "tags"}
+    assert set(body["facets"]) == {"protocols", "formats", "domains", "tags", "conventions"}
     assert _bucket(body["facets"]["tags"], "public")["selected"] is True
     mock_db.get_catalog_item_by_id.assert_not_called()
 

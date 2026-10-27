@@ -1170,6 +1170,31 @@ def fix_msg_types_metadata(model: CanonicalApi) -> List[str]:
     return sorted({str(value) for value in values if isinstance(value, str) and value})
 
 
+def rest_conventions_metadata(model: CanonicalApi) -> Dict[str, Any]:
+    """Return the REST hypermedia conventions a model declares, for the revision (MFI-19.6).
+
+    ``restConventions`` lists the conventions its bodies' media types declare (``jsonapi``,
+    ``hal``, ``hal-forms``, ``json-ld``, ``hydra``) — what the catalog's **convention** facet
+    filters on — and ``restConventionDetails`` what each says about the API's resources and links
+    (:func:`app.rest_conventions.convention_details`).
+
+    Args:
+        model: The normalized model.
+
+    Returns:
+        Both keys for a REST model that declares a convention; empty otherwise.
+    """
+    from .canonical_model import ApiParadigm
+    from .rest_conventions import convention_details, detect_conventions
+
+    if model.paradigm is not ApiParadigm.REST:
+        return {}
+    conventions = detect_conventions(model)
+    if not conventions:
+        return {}
+    return {"restConventions": conventions, "restConventionDetails": convention_details(model)}
+
+
 def source_retention_withheld(model: CanonicalApi) -> Optional[str]:
     """Return why a model asks for its verbatim upload not to be stored, or ``None`` (FMT-6.7).
 
@@ -1295,6 +1320,7 @@ def persist_adapter_import(
     fix_msg_types = fix_msg_types_metadata(model)
     if fix_msg_types:
         format_metadata["fixMsgTypes"] = fix_msg_types
+    format_metadata.update(rest_conventions_metadata(model))
     source_fields, scrub_report = scrub_intake_source(intake, scrub_resolution)
     format_metadata.update(source_fields)
     # MFI-32.5: the scrub report (types and sites, never values) travels with the catalog item, so its

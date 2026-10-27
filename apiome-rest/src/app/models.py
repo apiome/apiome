@@ -2701,6 +2701,11 @@ class CatalogItemSchema(BaseModel):
     tags: List[str] = Field(
         default_factory=list, description="Free-form tags, lower-cased, alphabetical."
     )
+    conventions: List[str] = Field(
+        default_factory=list,
+        description="REST hypermedia conventions the latest revision declares (MFI-19.6): jsonapi, hal, "
+        "hal-forms, json-ld, hydra.",
+    )
     # Owner team (CDG-2.2, #5961): the confirmed owner, else the first suggestion; null when none.
     owner: Optional[EntityOwnerRef] = Field(
         None,
@@ -2749,12 +2754,15 @@ class CatalogFacetBucket(BaseModel):
 
 
 class CatalogFacets(BaseModel):
-    """The four catalog browse facets (MFI-6.3)."""
+    """The five catalog browse facets (MFI-6.3; convention MFI-19.6)."""
 
     protocols: List[CatalogFacetBucket] = Field(default_factory=list, description="Paradigm.")
     formats: List[CatalogFacetBucket] = Field(default_factory=list, description="Source format.")
     domains: List[CatalogFacetBucket] = Field(default_factory=list, description="Manual domain.")
     tags: List[CatalogFacetBucket] = Field(default_factory=list, description="Free-form tags.")
+    conventions: List[CatalogFacetBucket] = Field(
+        default_factory=list, description="REST hypermedia convention (JSON:API, HAL, HAL-FORMS, JSON-LD, Hydra)."
+    )
 
 
 class CatalogFacetsResponse(BaseModel):
