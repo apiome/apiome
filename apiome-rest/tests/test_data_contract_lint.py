@@ -76,7 +76,7 @@ RESEED_MIGRATION = (
     Path(__file__).resolve().parents[2]
     / "apiome-db"
     / "scripts"
-    / "V323__style_guide_builtin_reseed_openrpc_pack_3979.sql"
+    / "V324__style_guide_builtin_reseed_odata_resolution_3779.sql"
 )
 
 

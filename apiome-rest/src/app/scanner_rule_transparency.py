@@ -242,6 +242,35 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/openrpc-required-params-first",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "odata.unresolved-reference": _meta(
+        "odata.unresolved-reference",
+        ENGINE_SCHEMA,
+        rationale="Every type, entity set, partner, binding and operation an OData document names "
+        "must be declared; a name that resolves to nothing cannot be bound by clients or the service.",
+        reference="https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html",
+        remediation="Declare the missing element, fix the spelling, or qualify the name with the "
+        "namespace (or alias) that declares it; for a type in another document, add an "
+        "edmx:Reference that includes its namespace.",
+        false_positive_guidance="Names in namespaces the document only references are never "
+        "reported. A finding names something declared nowhere in the document or its merged set.",
+        scan_modes=("lint",),
+        fixture_id="catalog/odata-unresolved-reference",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "odata.entity-key": _meta(
+        "odata.entity-key",
+        ENGINE_SCHEMA,
+        rationale="An entity is addressed by its key, so a non-abstract entity type needs one key "
+        "of non-nullable, single primitive values, declared once.",
+        reference="https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html",
+        remediation="Declare a Key whose PropertyRefs name existing primitive properties marked "
+        "Nullable=\"false\"; on a derived type, remove the Key and inherit the base type's.",
+        false_positive_guidance="Not a false positive: OData CSDL requires every non-abstract entity "
+        "type to declare or inherit a key, and key properties to be non-nullable primitives.",
+        scan_modes=("lint",),
+        fixture_id="catalog/odata-entity-key",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

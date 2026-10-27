@@ -137,7 +137,12 @@ class ODataNavigationProperty:
 
 @dataclass(frozen=True)
 class ODataEntityType:
-    """An addressable entity type: a key, structural properties, relationships."""
+    """An addressable entity type: a key, structural properties, relationships.
+
+    ``base_type`` and ``abstract`` are recorded for v2/v3 documents only (MFI-11.4): the key
+    and reference checks of :mod:`app.odata_resolution` need them to find an inherited key.
+    A v4 document is checked from its CSDL JSON instead, so v4 parsing leaves them unset.
+    """
 
     name: str
     namespace: str
@@ -145,6 +150,8 @@ class ODataEntityType:
     properties: Tuple[ODataProperty, ...]
     navigation_properties: Tuple[ODataNavigationProperty, ...]
     annotations: Tuple[Tuple[str, str], ...] = ()
+    base_type: Optional[str] = None
+    abstract: bool = False
 
 
 @dataclass(frozen=True)
@@ -171,12 +178,16 @@ class ODataEnumType:
 
 @dataclass(frozen=True)
 class ODataComplexType:
-    """A structured type with no key, usable as a property type."""
+    """A structured type with no key, usable as a property type.
+
+    ``base_type`` is recorded for v2/v3 documents only (see :class:`ODataEntityType`).
+    """
 
     name: str
     namespace: str
     properties: Tuple[ODataProperty, ...]
     annotations: Tuple[Tuple[str, str], ...] = ()
+    base_type: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -233,7 +244,11 @@ class ODataReference:
 
 @dataclass(frozen=True)
 class ODataSchema:
-    """One ``<Schema>``: a namespace and everything declared in it."""
+    """One ``<Schema>``: a namespace and everything declared in it.
+
+    ``alias`` (the ``Alias`` attribute, e.g. ``Self``) is recorded for v2/v3 documents only, so
+    :mod:`app.odata_resolution` can resolve ``Self.Customer`` the way the service does.
+    """
 
     namespace: str
     entity_types: Tuple[ODataEntityType, ...]
@@ -242,6 +257,7 @@ class ODataSchema:
     entity_container: Optional[ODataEntityContainer]
     associations: Tuple[ODataAssociation, ...] = ()
     annotations: Tuple[Tuple[str, str], ...] = ()
+    alias: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -261,6 +277,12 @@ class ODataDocument:
         csdl_violations: Where the CSDL JSON departs from the OASIS schema, as
             ``{"path", "message"}`` dicts (at most :data:`app.odata_csdl_schema.MAX_REPORTED_VIOLATIONS`).
         csdl_violation_count: How many violations there were in all.
+        xsd_violations: Where v4 CSDL XML departs from the OASIS EDMX / EDM XML schemas
+            (MFI-11.4, :mod:`app.odata_csdl_xsd`), as ``{"path", "message"}`` dicts.
+        xsd_violation_count: How many XSD violations there were in all.
+        resolution_issues: Names that resolve to nothing and entity-key defects (MFI-11.4,
+            :mod:`app.odata_resolution`), as ``{"kind", "path", "message"}`` dicts.
+        resolution_issue_count: How many resolution issues there were in all.
         service_url: The live service root the document was discovered from (MFI-11.3,
             :mod:`app.odata_discovery`); ``None`` for an uploaded document.
         service_document: The resources the live service document lists, as
@@ -276,6 +298,10 @@ class ODataDocument:
     csdl_json: Optional[Dict[str, Any]] = None
     csdl_violations: Tuple[Dict[str, str], ...] = ()
     csdl_violation_count: int = 0
+    xsd_violations: Tuple[Dict[str, str], ...] = ()
+    xsd_violation_count: int = 0
+    resolution_issues: Tuple[Dict[str, str], ...] = ()
+    resolution_issue_count: int = 0
     service_url: Optional[str] = None
     service_document: Tuple[Dict[str, str], ...] = ()
     discovery_notes: Tuple[str, ...] = ()
@@ -436,6 +462,8 @@ def _parse_entity_types(
                 properties=_parse_properties(entity, legacy=legacy),
                 navigation_properties=_parse_navigation_properties(entity, legacy=legacy),
                 annotations=_annotations(entity) if legacy else (),
+                base_type=entity.get("BaseType") if legacy else None,
+                abstract=legacy and (entity.get("Abstract") or "").lower() == "true",
             )
         )
     return tuple(entity_types)
@@ -455,6 +483,7 @@ def _parse_complex_types(
                 namespace=namespace,
                 properties=_parse_properties(complex_type, legacy=legacy),
                 annotations=_annotations(complex_type) if legacy else (),
+                base_type=complex_type.get("BaseType") if legacy else None,
             )
         )
     return tuple(complex_types)
@@ -638,6 +667,7 @@ def _parse_schema(schema: ET.Element, *, legacy: bool) -> Optional[ODataSchema]:
         entity_container=_parse_entity_container(schema, legacy=legacy),
         associations=_parse_associations(schema, namespace) if legacy else (),
         annotations=_annotations(schema) if legacy else (),
+        alias=schema.get("Alias") if legacy else None,
     )
 
 

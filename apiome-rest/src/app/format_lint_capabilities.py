@@ -53,7 +53,6 @@ RELATED_FORMAT_LINT_ISSUES: Dict[str, Tuple[str, ...]] = {
     "raml": ("https://github.com/apiome/apiome/issues/3801",),
     "typespec": ("https://github.com/apiome/apiome/issues/3796",),
     "avro": ("https://github.com/apiome/apiome/issues/3786",),
-    "odata": ("https://github.com/apiome/apiome/issues/3779",),
     "api-blueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apiblueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apib": ("https://github.com/apiome/apiome/issues/3806",),

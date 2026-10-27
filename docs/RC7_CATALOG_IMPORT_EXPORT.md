@@ -182,8 +182,12 @@ MFI-13.3 (#3790) is built: `WsdlImportSource.discover` fetches `?singleWsdl` (el
 remote `wsdl:import` / `xs:import` / `xs:include` (`app.wsdl_fetch`); the parser follows `wsdl:import` in filesets;
 `.wsdl` archives resolve their root; the CLI has `apiome import wsdl --discover`.
 
+MFI-11.4 (#3779) is built: the OData lint pack is complete — v4 CSDL XML is validated against the vendored OASIS
+EDMX / EDM XML schemas (`app.odata_csdl_xsd`, `odata.csdl-xsd`), and every reference and entity key of v2/v3/v4
+metadata is resolved (`app.odata_resolution`, blocking `odata.unresolved-reference` / `odata.entity-key`, V324).
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-OData [#3779](https://github.com/apiome/apiome/issues/3779), Avro [#3786](https://github.com/apiome/apiome/issues/3786),
+Avro [#3786](https://github.com/apiome/apiome/issues/3786),
 WS-I [#3791](https://github.com/apiome/apiome/issues/3791), TypeSpec [#3796](https://github.com/apiome/apiome/issues/3796),
 RAML [#3801](https://github.com/apiome/apiome/issues/3801), API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).

@@ -1,0 +1,20 @@
+---
+slug: odata-validation
+title: "OData validation: OASIS XML schemas, references and keys"
+description: New OData lint rules catch XML schema errors, dangling names and unusable keys.
+authors: [apiome]
+---
+
+OData imports now check more than shape. v4 CSDL XML is validated against the OASIS XML schemas,
+and every name a v2, v3 or v4 document uses must point at something.
+[Import an OData service](/bring-in/odata-import#how-the-metadata-is-checked).
+
+{/* truncate */}
+
+- **OASIS XML schemas.** A misspelled attribute (`Nulable`), an element CSDL does not define or a
+  missing required attribute is reported by `odata.csdl-xsd` (warning).
+- **References.** An undeclared type, entity set, navigation partner, binding, association or
+  operation is reported by `odata.unresolved-reference` (error).
+- **Keys.** An entity type with no key to declare or inherit, or a key property that is missing,
+  nullable, a collection or of a type a key cannot have, is reported by `odata.entity-key` (error).
+- **Imports still succeed.** Every problem is listed on the catalog item with its path.

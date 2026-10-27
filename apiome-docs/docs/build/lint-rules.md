@@ -634,6 +634,34 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** OData CSDL should validate against the OASIS CSDL JSON schema.
 
+### `odata.csdl-xsd` {#odata-csdl-xsd}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** OData v4 CSDL XML should validate against the OASIS EDMX / EDM XML schemas.
+
+### `odata.entity-key` {#odata-entity-key}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every OData entity type must declare or inherit a key of non-nullable primitive properties.
+- **Reference:** https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
+- **Remediation:** Declare a Key whose PropertyRefs name existing primitive properties marked Nullable="false"; on a derived type, remove the Key and inherit the base type's.
+- **False-positive guidance:** Not a false positive: OData CSDL requires every non-abstract entity type to declare or inherit a key, and key properties to be non-nullable primitives.
+- **Fixture:** `catalog/odata-entity-key`
+- **Scan modes:** `lint`
+
+### `odata.unresolved-reference` {#odata-unresolved-reference}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every type, entity set, partner, binding and operation an OData document names must be declared.
+- **Reference:** https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
+- **Remediation:** Declare the missing element, fix the spelling, or qualify the name with the namespace (or alias) that declares it; for a type in another document, add an edmx:Reference that includes its namespace.
+- **False-positive guidance:** Names in namespaces the document only references are never reported. A finding names something declared nowhere in the document or its merged set.
+- **Fixture:** `catalog/odata-unresolved-reference`
+- **Scan modes:** `lint`
+
 
 ## Pack: `openapi`
 

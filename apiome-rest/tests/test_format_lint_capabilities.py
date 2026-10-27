@@ -33,11 +33,12 @@ def test_matrix_covers_planned_formats_with_linked_issues():
 
 
 def test_odata_has_a_native_pack_since_mfi_11_1():
-    # MFI-11.1 (#3776) registered the `odata` pack (the OASIS CSDL schema rule); the fuller
-    # OData pack is still tracked by its related issue.
+    # MFI-11.1 (#3776) registered the `odata` pack (the OASIS CSDL schema rule); MFI-11.4 (#3779)
+    # completed it (XML schema, reference and key rules), so no planned-pack issue is linked.
     row = {r.format: r for r in build_format_lint_capabilities()}["odata"]
     assert row.mode == MODE_NATIVE
     assert row.native_pack == "odata"
+    assert row.related_issues == ()
 
 
 def test_every_row_has_valid_mode():
