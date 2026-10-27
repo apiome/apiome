@@ -436,6 +436,21 @@
       "data": "fixture:hive-catalog-item/inspector-copybook.html"
     },
     {
+      "id": "catalog-zosconnect-binding",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/catalog-zosconnect-binding.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/catalog/CatalogZosConnectBindingPanel.tsx"
+      ],
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 280
+      }
+    },
+    {
       "id": "import-wizard-intake",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",

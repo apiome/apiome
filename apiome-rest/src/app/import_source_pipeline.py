@@ -136,6 +136,7 @@ from .style_guide_engine import (
     apply_style_guide_to_lint_report,
     resolve_style_guide,
 )
+from .zosconnect_binding import binding_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -1320,6 +1321,9 @@ def persist_adapter_import(
     fix_msg_types = fix_msg_types_metadata(model)
     if fix_msg_types:
         format_metadata["fixMsgTypes"] = fix_msg_types
+    # MFI-21.2: a z/OS Connect descriptor's binding, or a copybook's 01-level records, so the
+    # descriptor, its copybooks and its OpenAPI can be suggested as linked and browsed together.
+    format_metadata.update(binding_metadata(model))
     format_metadata.update(rest_conventions_metadata(model))
     source_fields, scrub_report = scrub_intake_source(intake, scrub_resolution)
     format_metadata.update(source_fields)

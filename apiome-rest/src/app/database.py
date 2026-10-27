@@ -15428,6 +15428,44 @@ class Database:
         rows = self.execute_query(query, (tenant_id, project_id))
         return rows[0] if rows else None
 
+    def get_cobol_record_holders(
+        self, tenant_id: str, structures: List[str], *, limit: int = 200
+    ) -> List[Dict[str, Any]]:
+        """Projects whose latest revision declares any of ``structures`` as a COBOL 01 record (MFI-21.2).
+
+        Reads ``format_metadata.cobolRecords``, which a copybook import records
+        (:func:`app.zosconnect_binding.binding_metadata`).
+
+        Args:
+            tenant_id: The tenant.
+            structures: Upper-case 01-level record names.
+            limit: Most rows returned.
+
+        Returns:
+            Rows with ``project_id``, ``name``, ``slug``, ``publishable``, ``source_format``,
+            ``protocol`` and ``format_metadata``; empty when ``structures`` is.
+        """
+        if not structures:
+            return []
+        query = """
+            SELECT p.id::text AS project_id, p.name, p.slug, p.publishable,
+                   cv.source_format, cv.protocol, cv.format_metadata
+            FROM apiome.projects p
+            JOIN LATERAL (
+                SELECT v.source_format, v.protocol, v.format_metadata
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) cv ON TRUE
+            WHERE p.tenant_id = %s
+              AND p.deleted_at IS NULL
+              AND cv.format_metadata -> 'cobolRecords' ?| %s::text[]
+            ORDER BY p.name
+            LIMIT %s
+        """
+        return self.execute_query(query, (tenant_id, list(structures), limit))
+
     def get_identity_suggestion_candidates(
         self, tenant_id: str, project_id: str, *, limit: int = 20
     ) -> List[Dict[str, Any]]:

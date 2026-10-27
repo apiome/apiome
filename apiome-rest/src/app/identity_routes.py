@@ -21,7 +21,9 @@ from .models import (
     LinkArtifactsRequest,
     RelatedArtifactRef,
     UnlinkArtifactsRequest,
+    ZosConnectBindingResponse,
 )
+from .zosconnect_binding import BINDING_KEY, resolve_binding
 
 router = APIRouter(prefix="/v1/identity", tags=["identity"])
 
@@ -70,6 +72,62 @@ async def get_identity_suggestions(
         candidates=candidates,
         candidate_ops=candidate_ops,
     )
+
+
+@router.get(
+    "/{tenant_slug}/projects/{project_id}/zosconnect-binding",
+    response_model=ZosConnectBindingResponse,
+    response_model_by_alias=True,
+)
+async def get_zosconnect_binding(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ZosConnectBindingResponse:
+    """A z/OS Connect descriptor's copybook ↔ REST binding, joined to the catalog (MFI-21.2, #3992).
+
+    Each operation the descriptor binds is listed with its request and response COBOL structures,
+    the copybook items that declare each structure (``format_metadata.cobolRecords``), and the
+    OpenAPI items that define the operation. Items linked to the descriptor (same identity group)
+    are marked ``linked`` and listed first; the others are matches to confirm with
+    ``POST /v1/identity/{tenant}/link``.
+
+    Args:
+        tenant_slug: The tenant slug.
+        project_id: The descriptor's catalog item.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The resolved binding.
+
+    Raises:
+        HTTPException: 404 when the item does not exist or is not a z/OS Connect descriptor.
+    """
+    tenant_id = auth_data["tenant_id"]
+    anchor = db.get_project_identity_profile(tenant_id, project_id)
+    if not anchor:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    metadata = anchor.get("format_metadata") if isinstance(anchor.get("format_metadata"), dict) else {}
+    binding = metadata.get(BINDING_KEY)
+    if not isinstance(binding, dict):
+        raise HTTPException(status_code=404, detail="This item has no z/OS Connect binding.")
+
+    related = list(db.get_related_artifact_rows(tenant_id, project_id))
+    linked_ids = {str(row["project_id"]) for row in related}
+    peers: Dict[str, Dict[str, Any]] = {}
+    for row in db.get_cobol_record_holders(tenant_id, list(binding.get("structures") or [])):
+        peers[str(row["project_id"])] = dict(row)
+    # OpenAPI side: the linked items and the suggestion candidates, by their operation keys.
+    for row in related + list(db.get_identity_suggestion_candidates(tenant_id, project_id, limit=50)):
+        pid = str(row["project_id"])
+        if pid == project_id or row.get("source_format") == "zosconnect":
+            continue
+        entry = peers.setdefault(pid, dict(row))
+        if (row.get("protocol") or "").lower() in ("rest", "http"):
+            entry["operations"] = set(db.get_operation_keys_for_project(tenant_id, pid))
+    for pid, entry in peers.items():
+        entry["linked"] = pid in linked_ids
+    return ZosConnectBindingResponse(**resolve_binding(binding, peers.values()))
 
 
 @router.post("/{tenant_slug}/link")

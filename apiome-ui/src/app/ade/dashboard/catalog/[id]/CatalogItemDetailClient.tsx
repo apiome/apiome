@@ -99,6 +99,7 @@ import { CatalogLintPanel } from '@/app/components/ade/dashboard/catalog/Catalog
 import { CatalogRelatedArtifactsPanel } from '@/app/components/ade/dashboard/catalog/CatalogRelatedArtifactsPanel';
 import { CatalogSourceViewer } from '@/app/components/ade/dashboard/catalog/CatalogSourceViewer';
 import { CatalogVersionsPanel } from '@/app/components/ade/dashboard/catalog/CatalogVersionsPanel';
+import { CatalogZosConnectBindingPanel } from '@/app/components/ade/dashboard/catalog/CatalogZosConnectBindingPanel';
 import { SchemaTestBench } from '@/app/components/ade/dashboard/test-bench/SchemaTestBench';
 import { deriveParsedSummaryNote, type CatalogParsedGroup } from '@/app/components/ade/dashboard/catalog/CatalogParsedModel';
 import {
@@ -739,6 +740,13 @@ export function CatalogItemDetailClient({
               conversionCount={tabCounts.conversions ?? 0}
               onOpenHistory={() => selectTab('conversions')}
             />
+            {/* MFI-21.2: a z/OS Connect descriptor's copybook ↔ REST binding, joined to the catalog. */}
+            {item.sourceFormat === 'zosconnect' ? (
+              <CatalogZosConnectBindingPanel
+                projectId={item.id}
+                refreshKey={(item.relatedArtifacts ?? []).map((artifact) => artifact.projectId).join(',')}
+              />
+            ) : null}
           </div>
           <CatalogRelatedArtifactsPanel
             projectId={item.id}

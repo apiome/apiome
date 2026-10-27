@@ -13429,6 +13429,151 @@ button.tfa-reset-notice__close > svg {
   }
 }
 
+/* ---- z/OS Connect binding (catalog item detail, MFI-21.2) -------------- */
+.zcb {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.zcb__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: calc(var(--space-3) + 0.125rem) var(--card-pad);
+  border-bottom: 1px solid var(--border);
+}
+
+.zcb__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.zcb__title > svg {
+  inline-size: var(--icon-button);
+  block-size: var(--icon-button);
+  color: var(--fg-subtle);
+}
+
+.zcb__summary {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.zcb__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.zcb__table th {
+  padding: var(--space-2) var(--card-pad);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-align: start;
+  color: var(--fg-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.zcb__table td {
+  padding: var(--space-3) var(--card-pad);
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.zcb__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.zcb__operation,
+.zcb__structure {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.zcb__program {
+  display: block;
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.zcb__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zcb__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.zcb__link {
+  color: var(--fg);
+}
+
+.zcb__link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.zcb__state {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.zcb__state--linked {
+  color: var(--ok-fg);
+  font-weight: 500;
+}
+
+.zcb__missing {
+  display: block;
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.zcb__empty {
+  padding: var(--space-3) var(--card-pad);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+@media (max-width: 48rem) {
+  .zcb__table thead {
+    display: none;
+  }
+
+  .zcb__table tr,
+  .zcb__table td {
+    display: block;
+  }
+
+  .zcb__table td {
+    padding-block: var(--space-2);
+    border-bottom: 0;
+  }
+
+  .zcb__table tr {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
 /* ---- Related artifacts (shared with the catalog item detail) ------------ */
 .rart {
   display: flex;

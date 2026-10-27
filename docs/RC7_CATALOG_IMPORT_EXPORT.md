@@ -256,6 +256,12 @@ types declare (JSON:API, HAL, HAL-FORMS, JSON-LD, Hydra) and normalizes resource
 (nine warnings, V331) checks conformance. JTD keeps its own adapter; a test pins that it lands as the same record as
 its JSON Schema equivalent.
 
+MFI-21.2 (#3992) is built: a z/OS Connect descriptor records its binding (`format_metadata.zosConnectBinding`) and a
+copybook every 01-level record (`cobolRecords`); identity suggestions pair descriptor ↔ copybooks (shared COBOL
+structures) and descriptor ↔ OpenAPI (target API title, shared operations); `GET …/zosconnect-binding` and the
+catalog item's **z/OS Connect binding** panel show each operation's structures, copybooks and OpenAPI
+(`app.zosconnect_binding`).
+
 MFI-17.4 (#3811) is built: the `smithy` breaking-change classifier (`app.smithy_breaking`, id `smithy-diff`) runs
 `smithy diff --format csv` (`app.smithy_ast.run_smithy_diff`) and maps ERROR / DANGER / WARNING / NOTE to breaking /
 dangerous / dangerous / safe on the change each finding's shape joins; findings that join no change land in the new
@@ -264,8 +270,6 @@ through `smithy ast` when the CLI is available (built-in reader as fallback), an
 assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 
 **Breaking-change rules:** every planned format classifier has shipped.
-
-**Other:** z/OS Connect ↔ copybook linking [#3992](https://github.com/apiome/apiome/issues/3992).
 
 ### 3.4 Import flow (Catalog and Projects)
 

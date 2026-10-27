@@ -1,6 +1,6 @@
 ---
 title: "Identity"
-description: "REST endpoints tagged identity: 4 operations."
+description: "REST endpoints tagged identity: 5 operations."
 sidebar_position: 35
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.345.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.346.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `identity` · 4 operations
+Tag: `identity` · 5 operations
 
 ## `POST /v1/identity/{tenant_slug}/link` {#link-artifacts-v1-identity-tenant-slug-link-post}
 
@@ -119,6 +119,47 @@ Operation id: `get_identity_suggestions_v1_identity__tenant_slug__projects__proj
 | 200 | Successful response for get identity suggestions. | `application/json` array of [`IdentitySuggestionRef`](#schema-identitysuggestionref) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/identity/{tenant_slug}/projects/{project_id}/zosconnect-binding` {#get-zosconnect-binding-v1-identity-tenant-slug-projects-project-id-zosconnect-binding-get}
+
+**Get Zosconnect Binding**
+
+A z/OS Connect descriptor's copybook ↔ REST binding, joined to the catalog (MFI-21.2, #3992).
+
+Each operation the descriptor binds is listed with its request and response COBOL structures,
+the copybook items that declare each structure (``format_metadata.cobolRecords``), and the
+OpenAPI items that define the operation. Items linked to the descriptor (same identity group)
+are marked ``linked`` and listed first; the others are matches to confirm with
+``POST /v1/identity/{tenant}/link``.
+
+Args:
+    tenant_slug: The tenant slug.
+    project_id: The descriptor's catalog item.
+    auth_data: Authentication data (injected by dependency).
+
+Returns:
+    The resolved binding.
+
+Raises:
+    HTTPException: 404 when the item does not exist or is not a z/OS Connect descriptor.
+
+Operation id: `get_zosconnect_binding_v1_identity__tenant_slug__projects__project_id__zosconnect_binding_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get zosconnect binding. | `application/json` [`ZosConnectBindingResponse`](#schema-zosconnectbindingresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -182,3 +223,14 @@ Remove one project from a shared identity group (pairwise unlink).
 | --- | --- | --- | --- |
 | `projectId` | string | yes | Project ID. |
 | `relatedProjectId` | string | yes | Related Project ID. |
+
+### `ZosConnectBindingResponse` {#schema-zosconnectbindingresponse}
+
+``GET /v1/identity/{tenant}/projects/{id}/zosconnect-binding`` (MFI-21.2, #3992).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | string or null | no | 'requester' or 'provider'. |
+| `api` | map of string or null | no | The target REST API: title, specification, basePath. |
+| `operations` | array of `ZosConnectBindingOperation` | no | Operations. |
+| `summary` | `ZosConnectBindingSummary` | yes | Short summary suitable for navigation and reference docs. |

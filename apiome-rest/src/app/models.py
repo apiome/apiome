@@ -2603,6 +2603,61 @@ class RelatedArtifactRef(BaseModel):
         from_attributes = True
 
 
+class ZosConnectBindingItemRef(BaseModel):
+    """A catalog item that holds one side of a z/OS Connect binding (MFI-21.2, #3992)."""
+
+    project_id: str = Field(serialization_alias="projectId")
+    name: str
+    source_format: Optional[str] = Field(None, serialization_alias="sourceFormat")
+    publishable: bool = False
+    linked: bool = Field(
+        False, description="Whether the item is linked to the descriptor (same identity group)."
+    )
+
+
+class ZosConnectBindingSide(BaseModel):
+    """One structure an operation passes, and the copybook items that declare it (MFI-21.2)."""
+
+    structure: str = Field(description="The COBOL 01-level record name, upper case.")
+    copybooks: List[ZosConnectBindingItemRef] = Field(default_factory=list)
+
+
+class ZosConnectBindingOperation(BaseModel):
+    """One bound REST operation of a z/OS Connect descriptor (MFI-21.2)."""
+
+    operation: str = Field(description="The operation key, e.g. 'GET /items/{sku}/stock'.")
+    operation_id: Optional[str] = Field(None, serialization_alias="operationId")
+    method: Optional[str] = None
+    path: Optional[str] = None
+    program: Optional[str] = Field(None, description="The CICS / IMS program, when the descriptor names one.")
+    request: Optional[ZosConnectBindingSide] = None
+    response: Optional[ZosConnectBindingSide] = None
+    openapi: List[ZosConnectBindingItemRef] = Field(
+        default_factory=list, description="Items whose OpenAPI defines this operation."
+    )
+
+
+class ZosConnectBindingSummary(BaseModel):
+    """Counts over a z/OS Connect binding (MFI-21.2)."""
+
+    operations: int = 0
+    structures: int = 0
+    structures_with_copybook: int = Field(0, serialization_alias="structuresWithCopybook")
+    structures_linked: int = Field(0, serialization_alias="structuresLinked")
+    operations_with_openapi: int = Field(0, serialization_alias="operationsWithOpenApi")
+
+
+class ZosConnectBindingResponse(BaseModel):
+    """``GET /v1/identity/{tenant}/projects/{id}/zosconnect-binding`` (MFI-21.2, #3992)."""
+
+    kind: Optional[str] = Field(None, description="'requester' or 'provider'.")
+    api: Dict[str, Optional[str]] = Field(
+        default_factory=dict, description="The target REST API: title, specification, basePath."
+    )
+    operations: List[ZosConnectBindingOperation] = Field(default_factory=list)
+    summary: ZosConnectBindingSummary
+
+
 class IdentitySuggestionRef(BaseModel):
     """A heuristic suggestion to link two artifacts (MFI-6.4, #4410).
 
