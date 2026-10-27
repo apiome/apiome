@@ -172,6 +172,10 @@ class WsdlDocument:
         fetched_documents: The documents the live description referenced and that were
             fetched, as ``{"location", "url"}`` dicts.
         fetch_notes: Referenced documents that were skipped, and why.
+        wsi_issues: WS-I Basic Profile problems (MFI-13.4, :mod:`app.wsdl_wsi`), as
+            ``{"rule", "path", "message"}`` dicts; set by the import source, which holds the
+            members the imports resolve against.
+        wsi_issue_count: How many WS-I problems there were in all.
     """
 
     name: Optional[str]
@@ -187,6 +191,8 @@ class WsdlDocument:
     single_wsdl: bool = False
     fetched_documents: Tuple[Dict[str, str], ...] = ()
     fetch_notes: Tuple[str, ...] = ()
+    wsi_issues: Tuple[Dict[str, str], ...] = ()
+    wsi_issue_count: int = 0
 
 
 def is_wsdl(content: str) -> bool:

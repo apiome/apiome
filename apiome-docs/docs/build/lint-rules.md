@@ -945,3 +945,89 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **False-positive guidance:** Not a false positive: the Thrift compiler rejects duplicate ids, so the document cannot be compiled as written.
 - **Fixture:** `catalog/thrift-unique-field-ids`
 - **Scan modes:** `lint`
+
+
+## Pack: `wsi`
+
+### `wsi.binding-style` {#wsi-binding-style}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: a binding must be all rpc-literal or all document-literal.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Make every operation of the binding the same style, or split the operations into two bindings.
+- **False-positive guidance:** Not a false positive: R2705 requires each binding to be wholly rpc-literal or wholly document-literal.
+- **Fixture:** `catalog/wsdl-binding-style`
+- **Scan modes:** `lint`
+
+### `wsi.document-literal` {#wsi-document-literal}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: a document-literal body references at most one part, defined by element, with no namespace.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Reference one part defined with element= (wrap several values in one element), and remove namespace= from soap:body.
+- **False-positive guidance:** Not a false positive: these are Basic Profile requirements on document-literal bindings.
+- **Fixture:** `catalog/wsdl-document-literal`
+- **Scan modes:** `lint`
+
+### `wsi.literal-use` {#wsi-literal-use}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: SOAP bindings must use literal, not encoded, messages.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Describe the message with XML Schema elements and set use="literal" on every soap:body, soap:header, soap:headerfault and soap:fault.
+- **False-positive guidance:** Not a false positive: R2706 forbids encoded use in a conformant description; only legacy RPC/encoded toolkits accept it.
+- **Fixture:** `catalog/wsdl-literal-use`
+- **Scan modes:** `lint`
+
+### `wsi.rpc-literal` {#wsi-rpc-literal}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: an rpc-literal body references parts defined by type and names a namespace.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Define rpc-literal parts with type=, and give soap:body a namespace= naming the wrapper's namespace.
+- **False-positive guidance:** Not a false positive: these are Basic Profile requirements on rpc-literal bindings.
+- **Fixture:** `catalog/wsdl-rpc-literal`
+- **Scan modes:** `lint`
+
+### `wsi.unique-operation-signature` {#wsi-unique-operation-signature}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: the operations of a binding must differ on the wire.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Give each operation its own request element (or rpc operation name), or distinct soapAction values.
+- **False-positive guidance:** Reported only when both the body element and the soapAction are identical, which no receiver can disambiguate.
+- **Fixture:** `catalog/wsdl-unique-operation-signature`
+- **Scan modes:** `lint`
+
+### `wsi.unique-soap-action` {#wsi-unique-soap-action}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** The operations of a binding should have distinct soapAction values.
+
+### `wsi.unresolved-import` {#wsi-unresolved-import}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every wsdl:import, xs:import and xs:include must resolve within the import.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Upload the imported documents with the description (a .zip or file set), import the live service URL so they are fetched, or inline them (?singleWsdl).
+- **False-positive guidance:** A single file uploaded without its imports reports every external import; re-import it with its members before treating the finding as a defect of the service.
+- **Fixture:** `catalog/wsdl-unresolved-import`
+- **Scan modes:** `lint`
+
+### `wsi.wsdl-import-target` {#wsi-wsdl-import-target}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** WS-I: wsdl:import must have a location and import only WSDL descriptions.
+- **Reference:** https://www.ws-i.org/Profiles/BasicProfile-1.2-2010-11-09.html
+- **Remediation:** Give the wsdl:import a location, and import XML Schema documents with xs:import in wsdl:types instead.
+- **False-positive guidance:** Not a false positive: the Basic Profile requires these import forms.
+- **Fixture:** `catalog/wsdl-wsdl-import-target`
+- **Scan modes:** `lint`

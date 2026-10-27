@@ -22,7 +22,6 @@ def test_matrix_covers_planned_formats_with_linked_issues():
         ("raml", RELATED_FORMAT_LINT_ISSUES["raml"]),
         ("typespec", RELATED_FORMAT_LINT_ISSUES["typespec"]),
         ("apiblueprint", RELATED_FORMAT_LINT_ISSUES["apiblueprint"]),
-        ("wsdl", RELATED_FORMAT_LINT_ISSUES["wsdl"]),
     ):
         assert fmt in rows
         row = rows[fmt]
@@ -45,6 +44,14 @@ def test_avro_has_a_native_pack_since_mfi_12_5():
     row = {r.format: r for r in build_format_lint_capabilities()}["avro"]
     assert row.mode == MODE_NATIVE
     assert row.native_pack == "avro"
+    assert row.related_issues == ()
+
+
+def test_wsdl_has_a_native_pack_since_mfi_13_4():
+    # MFI-13.4 (#3791) registered the WS-I pack under `wsdl`, so no planned-pack issue is linked.
+    row = {r.format: r for r in build_format_lint_capabilities()}["wsdl"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "wsdl"
     assert row.related_issues == ()
 
 

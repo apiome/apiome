@@ -190,8 +190,12 @@ MFI-12.5 (#3786) is built: the Avro lint pack (`app.avro_lint`, eight `avro.*` r
 schemas as written (`app.avro_hygiene`): defaults, nested/repeated union branches, optional-union order and
 defaults, aliases and ignored docs.
 
+MFI-13.4 (#3791) is built: the WS-I lint pack (`app.wsdl_lint`, eight `wsi.*` rules, V326) checks WSDL bindings
+(literal use, consistent style, document-/rpc-literal parts and namespaces, unique operation signatures and
+soapActions) and the import graph (`app.wsdl_wsi`, run by the import source with the fileset / live-fetch members).
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-WS-I [#3791](https://github.com/apiome/apiome/issues/3791), TypeSpec [#3796](https://github.com/apiome/apiome/issues/3796),
+TypeSpec [#3796](https://github.com/apiome/apiome/issues/3796),
 RAML [#3801](https://github.com/apiome/apiome/issues/3801), API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).
 

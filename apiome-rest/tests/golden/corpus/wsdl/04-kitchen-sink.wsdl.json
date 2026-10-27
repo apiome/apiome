@@ -4,7 +4,45 @@
     "channels": [],
     "description": null,
     "extras": {
-      "wsdl_target_namespace": "http://example.com/telemetry"
+      "wsdl_target_namespace": "http://example.com/telemetry",
+      "wsdl_wsi_issue_count": 7,
+      "wsdl_wsi_issues": [
+        {
+          "message": "binding `IngestionSoap11Binding` mixes operation styles (document: SubmitBatch; rpc: GetSensorStatus); a binding must be all rpc-literal or all document-literal (WS-I R2705).",
+          "path": "/binding/IngestionSoap11Binding",
+          "rule": "wsi.binding-style"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references 2 parts; it may reference at most one (WS-I R2201). Wrap them in one element, or list one with `parts`.",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/input",
+          "rule": "wsi.document-literal"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references part `sensorId` defined by `type`; document-literal parts must use `element` (WS-I R2204).",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/input",
+          "rule": "wsi.document-literal"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references part `includeHistory` defined by `type`; document-literal parts must use `element` (WS-I R2204).",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/input",
+          "rule": "wsi.document-literal"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references 2 parts; it may reference at most one (WS-I R2201). Wrap them in one element, or list one with `parts`.",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/output",
+          "rule": "wsi.document-literal"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references part `status` defined by `type`; document-literal parts must use `element` (WS-I R2204).",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/output",
+          "rule": "wsi.document-literal"
+        },
+        {
+          "message": "document-literal `GetSensorStatus` body references part `lastReading` defined by `type`; document-literal parts must use `element` (WS-I R2204).",
+          "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/output",
+          "rule": "wsi.document-literal"
+        }
+      ]
     },
     "format": "wsdl",
     "identity": {
@@ -471,14 +509,14 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:80841eab0f585029d6c3d92769f3f3a5ec25707b6440b7a5c8f80f20703dd67b",
+  "fingerprint": "sha256:c492d39bf2d993867ad6295482895334473070f250f19ceb8f602b6a23fd7fa4",
   "lint": {
-    "findings": 23,
+    "findings": 30,
     "grade": "F",
-    "report_fingerprint": "87accbfa93b2ffa3da1dd464dcef494b2416a8eff6a95c1b228ac02ad614436a",
-    "score": 56,
+    "report_fingerprint": "90da75287f8de909ec06bfee1e2aa6ecdb2f63e8bdeafc3a8b3622e8aecb4f23",
+    "score": 26,
     "severity_counts": {
-      "error": 0,
+      "error": 7,
       "info": 16,
       "warning": 7
     }

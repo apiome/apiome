@@ -422,6 +422,9 @@ def load_format_rule_packs() -> None:
     # Avro lint pack (MFI-12.5): registers under ``avro`` (defaults / unions / aliases / docs).
     from . import avro_lint as _avro_lint  # noqa: F401
 
+    # WS-I lint pack (MFI-13.4): registers under ``wsdl`` (WS-I Basic Profile).
+    from . import wsdl_lint as _wsdl_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.
