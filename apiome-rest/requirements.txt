@@ -36,3 +36,5 @@ google-auth>=2.30.0
 pydicom>=3.0.0
 # SHACL / OWL / RDFS import (FMT-9.4): Turtle, RDF/XML and JSON-LD readers.
 rdflib>=7.0.0
+# OData lint/validate (MFI-11.4): OASIS CSDL XML schema validation.
+xmlschema>=3.4

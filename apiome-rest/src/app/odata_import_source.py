@@ -27,10 +27,11 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
-from .odata_csdl_json import is_csdl_json, parse_csdl_json, with_csdl_validation
+from .odata_csdl_json import is_csdl_json, parse_csdl_json
 from .odata_csdl_versions import detect_odata_version, format_key_for_version
 from .odata_discovery import discover_odata_service
 from .odata_parser import ODataDocument, ODataParseError, is_odata, parse_odata
+from .odata_validation import validate_odata_document
 from .secure_xml import SecureXmlError
 
 __all__ = ["ODataImportSource"]
@@ -89,13 +90,13 @@ class ODataImportSource(ImportSource, register=True):
         return NO_MATCH
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> ODataDocument:
-        """Parse CSDL XML or CSDL JSON, then validate it against the OASIS schema (MFI-11.1)."""
+        """Parse CSDL XML or CSDL JSON, then validate it (OASIS schemas, MFI-11.1; references and keys, MFI-11.4)."""
         try:
             if is_csdl_json(raw):
                 document = parse_csdl_json(raw, source_label=source_label)
             else:
                 document = parse_odata(raw, source_label=source_label)
-            return with_csdl_validation(document, source_label=source_label)
+            return validate_odata_document(document, source_label=source_label)
         except (ODataParseError, SecureXmlError) as exc:
             # SecureXmlError carries the taxonomy code for a rejected DTD /
             # entity / external reference or an exceeded size or depth limit.
@@ -136,7 +137,7 @@ class ODataImportSource(ImportSource, register=True):
                     source_label=root or source_label,
                     members=fileset.members,
                 )
-            return with_csdl_validation(document, source_label=root or source_label)
+            return validate_odata_document(document, source_label=root or source_label)
         except (ODataParseError, SecureXmlError) as exc:
             raise ImportSourceError(str(exc), code=getattr(exc, "code", None)) from exc
 

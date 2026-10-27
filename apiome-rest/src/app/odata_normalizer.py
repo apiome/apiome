@@ -562,6 +562,29 @@ def _csdl_validation_extras(source: ODataDocument) -> Dict[str, Any]:
     return extras
 
 
+def _xsd_validation_extras(source: ODataDocument) -> Dict[str, Any]:
+    """The OASIS CSDL XML schema violations (MFI-11.4); empty when there are none."""
+    if not source.xsd_violation_count:
+        return {}
+    return {
+        "odata_xsd_violations": [dict(v) for v in source.xsd_violations],
+        "odata_xsd_violation_count": source.xsd_violation_count,
+    }
+
+
+def _resolution_extras(source: ODataDocument) -> Dict[str, Any]:
+    """Unresolved references and entity-key defects (MFI-11.4); empty when there are none.
+
+    Omitted when clean so a valid document's canonical model is unchanged.
+    """
+    if not source.resolution_issue_count:
+        return {}
+    return {
+        "odata_resolution_issues": [dict(issue) for issue in source.resolution_issues],
+        "odata_resolution_issue_count": source.resolution_issue_count,
+    }
+
+
 class ODataNormalizer(Normalizer, register=True):
     """Normalize a parsed OData document into a :class:`CanonicalApi`."""
 
@@ -690,6 +713,8 @@ class ODataNormalizer(Normalizer, register=True):
                 **_source_version_extras(source),
                 **_reference_extras(source),
                 **_csdl_validation_extras(source),
+                **_xsd_validation_extras(source),
+                **_resolution_extras(source),
                 **_discovery_extras(source),
             },
         )

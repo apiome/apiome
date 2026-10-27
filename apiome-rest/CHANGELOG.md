@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.466.0] - 2026-10-26
+
+### Added
+- **OData lint/validate: OASIS XML schemas, reference and key resolution (MFI-11.4, #3779)** — every OData import now
+  runs one validation pass (new `app.odata_validation.validate_odata_document`, used by upload, fileset and live
+  discovery). New `app.odata_csdl_xsd`: v4 CSDL XML is validated against the OASIS *EDMX / EDM XML Schema 4.01*
+  (vendored byte for byte under `data/odata_csdl_xsd/`, OASIS notice kept) with the new `xmlschema` dependency; the
+  document is parsed by `secure_xml` first and validated with every resource access blocked and location hints
+  ignored, so it catches what the JSON form cannot see (misspelled attributes, stray elements, missing required
+  attributes). New `app.odata_resolution`: v4 is resolved from its canonical CSDL JSON, v2/v3 from the parsed model —
+  property / parameter / return / term / type-definition types, base types, entity set and singleton types,
+  navigation targets, partners, referential constraints and bindings, action / function imports and their entity
+  sets, v2/v3 association ends, association sets and function imports; schema aliases resolve, names in namespaces
+  only referenced (`<edmx:Reference>`, not merged) are skipped. Entity keys: a non-abstract type must declare or
+  inherit one, a derived type must not redeclare it, and each key property must exist and be a single non-nullable
+  primitive (not floating-point, stream or spatial), enum or type-definition value. Issues never refuse the import;
+  extras gain `odata_xsd_violations` / `_count` and `odata_resolution_issues` / `_count` (each issue a `kind`, `path`,
+  `message`; capped at 50; omitted when clean, so valid documents' models are unchanged). The parser records
+  `Schema/@Alias`, `BaseType` and `Abstract` for v2/v3 only. The `odata` lint pack gains `odata.csdl-xsd` (warning),
+  `odata.unresolved-reference` and `odata.entity-key` (errors, with blocking-rule transparency entries and evaluation
+  fixtures), seeded into the built-in style guide by V324; OData leaves the planned-pack list. OpenAPI 1.330.0.
+
 ## [1.465.0] - 2026-10-26
 
 ### Added

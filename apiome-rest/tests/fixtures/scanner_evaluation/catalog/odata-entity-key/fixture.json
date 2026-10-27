@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/odata-entity-key",
+  "source_format": "odata",
+  "description": "OData v4 document with exactly one blocking defect: the key property Vin of entity type Vehicle is nullable (no Nullable=\"false\").",
+  "document": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<edmx:Edmx xmlns:edmx=\"http://docs.oasis-open.org/odata/ns/edmx\" Version=\"4.0\">\n  <edmx:DataServices>\n    <Schema xmlns=\"http://docs.oasis-open.org/odata/ns/edm\" Namespace=\"Fleet\">\n      <EntityType Name=\"Vehicle\">\n        <Key><PropertyRef Name=\"Vin\"/></Key>\n        <Property Name=\"Vin\" Type=\"Edm.String\"/>\n      </EntityType>\n      <EntityContainer Name=\"Service\">\n        <EntitySet Name=\"Vehicles\" EntityType=\"Fleet.Vehicle\"/>\n      </EntityContainer>\n    </Schema>\n  </edmx:DataServices>\n</edmx:Edmx>\n"
+}

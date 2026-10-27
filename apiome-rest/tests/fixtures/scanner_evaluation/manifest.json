@@ -483,6 +483,20 @@
       "expected_blocking_rule_ids": [
         "openrpc.required-params-first"
       ]
+    },
+    {
+      "id": "catalog/odata-unresolved-reference",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "odata.unresolved-reference"
+      ]
+    },
+    {
+      "id": "catalog/odata-entity-key",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "odata.entity-key"
+      ]
     }
   ]
 }
