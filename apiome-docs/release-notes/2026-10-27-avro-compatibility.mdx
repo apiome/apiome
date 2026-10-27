@@ -1,0 +1,21 @@
+---
+slug: avro-compatibility
+title: Avro compatibility checks, Confluent-style
+description: Avro diffs and the schema registry now apply BACKWARD, FORWARD and FULL compatibility.
+authors: [apiome]
+---
+
+Avro schemas are now checked for compatibility the way a Confluent Schema Registry checks them.
+[Import an Apache Avro schema](/bring-in/avro-import#compatibility-between-versions).
+
+{/* truncate */}
+
+- **Diffs grade by mode.** Comparing two versions of an Avro catalog item grades a change as
+  breaking when new readers cannot read old data (`BACKWARD`), and as dangerous when only old readers
+  fail (`FORWARD`). Adding a field without a `default` is breaking, removing one is dangerous, and
+  either with a `default` is safe.
+- **The registry enforces levels.** Avro subjects now honour `BACKWARD`, `FORWARD` and `FULL` and
+  their `TRANSITIVE` forms. An incompatible version is refused with HTTP `409`, and
+  `apiome registry compat` lists the reasons.
+- **Same answers as Confluent.** Verdicts and messages match a live Confluent Schema Registry on
+  more than a hundred recorded cases.

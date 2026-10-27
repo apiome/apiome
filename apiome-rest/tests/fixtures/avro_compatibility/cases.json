@@ -1,0 +1,1393 @@
+{
+  "_comment": "MFI-12.4 (#3785): Avro compatibility cases. Expected verdicts are recorded from a live Confluent Schema Registry by scripts/record_avro_compatibility_fixtures.py into recordings.json.",
+  "cases": [
+    {
+      "id": "add-field-with-default",
+      "description": "Add a field that has a default",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "type": "string",
+            "default": ""
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "add-field-without-default",
+      "description": "Add a field without a default",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "remove-field-without-default",
+      "description": "Remove a field that had no default",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "remove-field-with-default",
+      "description": "Remove a field that had a default",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "default": "x"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "promote-int-to-long",
+      "description": "Widen a field from int to long",
+      "versions": [
+        {
+          "type": "record",
+          "name": "C",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "n",
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "C",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "n",
+            "type": "long"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "narrow-long-to-int",
+      "description": "Narrow a field from long to int",
+      "versions": [
+        {
+          "type": "record",
+          "name": "C",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "n",
+              "type": "long"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "C",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "int-to-double",
+      "description": "Widen int to double",
+      "versions": [
+        {
+          "type": "record",
+          "name": "C",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "n",
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "C",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "n",
+            "type": "double"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "string-to-bytes",
+      "description": "Change string to bytes",
+      "versions": [
+        {
+          "type": "record",
+          "name": "C",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "b",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "C",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "b",
+            "type": "bytes"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "string-to-int",
+      "description": "Change string to int",
+      "versions": [
+        {
+          "type": "record",
+          "name": "C",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "b",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "C",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "rename-field-with-alias",
+      "description": "Rename a field, keeping the old name as an alias",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "fullName",
+            "type": "string",
+            "aliases": [
+              "name"
+            ]
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "rename-field-without-alias",
+      "description": "Rename a field with no alias",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "fullName",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "rename-record",
+      "description": "Rename the record",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "Person",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "rename-record-with-alias",
+      "description": "Rename the record, keeping the old name as an alias",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "Person",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "aliases": [
+          "User"
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "change-namespace",
+      "description": "Move the record to another namespace",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "org.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "enum-add-symbol",
+      "description": "Add an enum symbol",
+      "versions": [
+        {
+          "type": "record",
+          "name": "S",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "s",
+              "type": {
+                "type": "enum",
+                "name": "Status",
+                "symbols": [
+                  "A",
+                  "B"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "S",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "s",
+            "type": {
+              "type": "enum",
+              "name": "Status",
+              "symbols": [
+                "A",
+                "B",
+                "C"
+              ]
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "enum-remove-symbol",
+      "description": "Remove an enum symbol",
+      "versions": [
+        {
+          "type": "record",
+          "name": "S",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "s",
+              "type": {
+                "type": "enum",
+                "name": "Status",
+                "symbols": [
+                  "A",
+                  "B",
+                  "C"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "S",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "s",
+            "type": {
+              "type": "enum",
+              "name": "Status",
+              "symbols": [
+                "A",
+                "B"
+              ]
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "enum-add-symbol-reader-default",
+      "description": "Add an enum symbol when the enum has a default",
+      "versions": [
+        {
+          "type": "record",
+          "name": "S",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "s",
+              "type": {
+                "type": "enum",
+                "name": "Status",
+                "symbols": [
+                  "A",
+                  "B"
+                ],
+                "default": "A"
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "S",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "s",
+            "type": {
+              "type": "enum",
+              "name": "Status",
+              "symbols": [
+                "A",
+                "B",
+                "C"
+              ],
+              "default": "A"
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "union-add-branch",
+      "description": "Add a union branch",
+      "versions": [
+        {
+          "type": "record",
+          "name": "U",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "u",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "U",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "u",
+            "type": [
+              "null",
+              "string",
+              "int"
+            ],
+            "default": null
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "union-remove-branch",
+      "description": "Remove a union branch",
+      "versions": [
+        {
+          "type": "record",
+          "name": "U",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "u",
+              "type": [
+                "null",
+                "string",
+                "int"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "U",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "u",
+            "type": [
+              "null",
+              "string"
+            ],
+            "default": null
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "make-field-optional",
+      "description": "Make a field nullable",
+      "versions": [
+        {
+          "type": "record",
+          "name": "U",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "u",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "U",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "u",
+            "type": [
+              "null",
+              "string"
+            ],
+            "default": null
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "make-field-required",
+      "description": "Make a nullable field required",
+      "versions": [
+        {
+          "type": "record",
+          "name": "U",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "u",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "U",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "u",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "fixed-size-change",
+      "description": "Change a fixed size",
+      "versions": [
+        {
+          "type": "record",
+          "name": "H",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "d",
+              "type": {
+                "type": "fixed",
+                "name": "Digest",
+                "size": 16
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "H",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "d",
+            "type": {
+              "type": "fixed",
+              "name": "Digest",
+              "size": 32
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "array-items-widen",
+      "description": "Widen array items from int to long",
+      "versions": [
+        {
+          "type": "record",
+          "name": "A",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "a",
+              "type": {
+                "type": "array",
+                "items": "int"
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "A",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "a",
+            "type": {
+              "type": "array",
+              "items": "long"
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "map-values-change",
+      "description": "Change map values from string to int",
+      "versions": [
+        {
+          "type": "record",
+          "name": "M",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "m",
+              "type": {
+                "type": "map",
+                "values": "string"
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "M",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "m",
+            "type": {
+              "type": "map",
+              "values": "int"
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "nested-record-add-field",
+      "description": "Add a field without a default to a nested record",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "home",
+              "type": {
+                "type": "record",
+                "name": "Address",
+                "fields": [
+                  {
+                    "name": "city",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "home",
+            "type": {
+              "type": "record",
+              "name": "Address",
+              "fields": [
+                {
+                  "name": "city",
+                  "type": "string"
+                },
+                {
+                  "name": "zip",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "recursive-add-field",
+      "description": "Add a field without a default to a recursive record",
+      "versions": [
+        {
+          "type": "record",
+          "name": "Node",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "value",
+              "type": "int"
+            },
+            {
+              "name": "next",
+              "type": [
+                "null",
+                "Node"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "Node",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "value",
+            "type": "int"
+          },
+          {
+            "name": "next",
+            "type": [
+              "null",
+              "Node"
+            ],
+            "default": null
+          },
+          {
+            "name": "label",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL"
+      ]
+    },
+    {
+      "id": "transitive-backward",
+      "description": "A default added in v2 and dropped by the candidate: fine against v2, not v1",
+      "versions": [
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "x",
+              "type": "int",
+              "default": 0
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "T",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "x",
+            "type": "int"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "BACKWARD_TRANSITIVE"
+      ]
+    },
+    {
+      "id": "transitive-forward",
+      "description": "A field v1 required, defaulted in v2, removed by the candidate",
+      "versions": [
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "x",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "x",
+              "type": "int",
+              "default": 0
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "T",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          }
+        ]
+      },
+      "levels": [
+        "FORWARD",
+        "FORWARD_TRANSITIVE"
+      ]
+    },
+    {
+      "id": "transitive-full",
+      "description": "FULL against the latest only vs every version",
+      "versions": [
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "x",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "x",
+              "type": "int",
+              "default": 0
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "T",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          }
+        ]
+      },
+      "levels": [
+        "FULL",
+        "FULL_TRANSITIVE"
+      ]
+    },
+    {
+      "id": "no-change",
+      "description": "The same schema again",
+      "versions": [
+        {
+          "type": "record",
+          "name": "User",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "id",
+              "type": "long"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "User",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "id",
+            "type": "long"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "FORWARD",
+        "FULL",
+        "BACKWARD_TRANSITIVE",
+        "FORWARD_TRANSITIVE",
+        "FULL_TRANSITIVE"
+      ]
+    },
+    {
+      "id": "add-required-to-every-version",
+      "description": "Add a required field: fails against every version; the newest is reported",
+      "versions": [
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "a",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "a",
+              "type": "int"
+            },
+            {
+              "name": "b",
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "T",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          },
+          {
+            "name": "c",
+            "type": "int"
+          }
+        ]
+      },
+      "levels": [
+        "BACKWARD",
+        "BACKWARD_TRANSITIVE",
+        "FULL",
+        "FULL_TRANSITIVE"
+      ]
+    },
+    {
+      "id": "remove-required-from-every-version",
+      "description": "Remove a field every version required: a forward-only failure",
+      "versions": [
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "a",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "T",
+          "namespace": "com.example",
+          "fields": [
+            {
+              "name": "a",
+              "type": "int"
+            },
+            {
+              "name": "b",
+              "type": "int"
+            }
+          ]
+        }
+      ],
+      "candidate": {
+        "type": "record",
+        "name": "T",
+        "namespace": "com.example",
+        "fields": [
+          {
+            "name": "b",
+            "type": "int",
+            "default": 0
+          }
+        ]
+      },
+      "levels": [
+        "FORWARD",
+        "FORWARD_TRANSITIVE",
+        "FULL",
+        "FULL_TRANSITIVE"
+      ]
+    }
+  ]
+}

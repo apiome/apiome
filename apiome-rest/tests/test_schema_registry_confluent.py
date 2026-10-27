@@ -55,6 +55,23 @@ ORDER_V2 = json.dumps(
         "fields": [{"name": "id", "type": "string"}, {"name": "total", "type": ["null", "double"], "default": None}],
     }
 )
+ORDER_BREAKING = json.dumps(
+    {
+        "type": "record",
+        "name": "Order",
+        "namespace": "acme",
+        "fields": [{"name": "id", "type": "string"}, {"name": "total", "type": "double"}],
+    }
+)
+PERSON_V2 = json.dumps(
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Person",
+        "type": "object",
+        "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
+        "required": ["name"],
+    }
+)
 PERSON = json.dumps(
     {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -277,16 +294,29 @@ def test_ids_are_shared_across_subjects_and_listed(reg):
     ]
 
 
-# --------------------------------------------------------------------------- compatibility (NONE-only)
+# --------------------------------------------------------------------------- compatibility
 
 
-def test_a_second_version_under_backward_is_refused_with_42290(reg):
+def test_an_incompatible_avro_version_is_refused_with_409(reg):
     _post("/subjects/orders-value/versions", {"schema": ORDER})  # the first version needs no verdict
-    resp = _post("/subjects/orders-value/versions", {"schema": ORDER_V2})
+    resp = _post("/subjects/orders-value/versions", {"schema": ORDER_BREAKING})
+    assert resp.status_code == 409
+    body = _error(resp)
+    assert body["error_code"] == 409
+    assert body["message"].startswith(
+        'Schema being registered is incompatible with an earlier schema for subject "orders-value"'
+    )
+    assert _post("/subjects/orders-value/versions", {"schema": ORDER_V2}).json() == {"id": 2}
+    assert _get("/subjects/orders-value/versions").json() == [1, 2]
+
+
+def test_a_second_json_schema_version_under_backward_is_refused_with_42290(reg):
+    _post("/subjects/people-value/versions", {"schema": PERSON, "schemaType": "JSON"})
+    resp = _post("/subjects/people-value/versions", {"schema": PERSON_V2, "schemaType": "JSON"})
     assert resp.status_code == 422
     body = _error(resp)
     assert body["error_code"] == 42290 and body["message"].startswith("compatibility-rules-unavailable")
-    assert _get("/subjects/orders-value/versions").json() == [1]
+    assert _get("/subjects/people-value/versions").json() == [1]
 
 
 def test_none_registers_without_a_check(reg):
@@ -301,10 +331,12 @@ def test_none_registers_without_a_check(reg):
 def test_compatibility_routes(reg):
     _post("/subjects/orders-value/versions", {"schema": ORDER})
     for path in ("/compatibility/subjects/orders-value/versions/latest", "/compatibility/subjects/orders-value/versions"):
-        resp = _post(path, {"schema": ORDER_V2})
-        assert resp.status_code == 422 and _error(resp)["error_code"] == 42290
+        assert _post(path, {"schema": ORDER_V2}).json() == {"is_compatible": True, "messages": []}
+        verdict = _post(path, {"schema": ORDER_BREAKING}).json()
+        assert verdict["is_compatible"] is False
+        assert verdict["messages"][-1] == "{validateFields: 'false', compatibility: 'BACKWARD'}"
     client.put(BASE + "/config", json={"compatibility": "NONE"}, headers=_basic())
-    assert _post("/compatibility/subjects/orders-value/versions/1", {"schema": ORDER_V2}).json() == {
+    assert _post("/compatibility/subjects/orders-value/versions/1", {"schema": ORDER_BREAKING}).json() == {
         "is_compatible": True,
         "messages": [],
     }
@@ -317,7 +349,19 @@ def test_schema_types_are_labelled(reg):
         assert _get("/schemas/types").json() == ["AVRO", "JSON"]
         detailed = _get("/schemas/types", params={"details": "true"}).json()
     assert detailed == [
-        {"schemaType": "AVRO", "compatibilityRules": "unavailable", "registrableUnder": ["NONE"]},
+        {
+            "schemaType": "AVRO",
+            "compatibilityRules": "available",
+            "registrableUnder": [
+                "NONE",
+                "BACKWARD",
+                "BACKWARD_TRANSITIVE",
+                "FORWARD",
+                "FORWARD_TRANSITIVE",
+                "FULL",
+                "FULL_TRANSITIVE",
+            ],
+        },
         {"schemaType": "JSON", "compatibilityRules": "unavailable", "registrableUnder": ["NONE"]},
     ]
 
@@ -431,13 +475,15 @@ def test_confluent_kafka_client_with_zero_changes(reg, served):
     assert JSONDeserializer(PERSON, schema_registry_client=consumer)(json_payload, people) == {"name": "Ada"}
     assert sorted(producer.get_subjects()) == ["orders-value", "people-value"]
 
-    # BACKWARD has no XPC-4.x rules yet: a second version is refused, not accepted unchecked.
+    # BACKWARD (MFI-12.4): a compatible version registers, a breaking one is refused with 409.
     from confluent_kafka.schema_registry.error import SchemaRegistryError as ClientError
 
-    with pytest.raises(ClientError) as exc:
-        producer.register_schema("orders-value", Schema(ORDER_V2, "AVRO"))
-    assert exc.value.http_status_code == 422 and exc.value.error_code == 42290
-    producer.set_compatibility("orders-value", "NONE")
-    assert producer.register_schema("orders-value", Schema(ORDER_V2, "AVRO")) == 3
     assert producer.test_compatibility("orders-value", Schema(ORDER_V2, "AVRO")) is True
+    assert producer.test_compatibility("orders-value", Schema(ORDER_BREAKING, "AVRO")) is False
+    with pytest.raises(ClientError) as exc:
+        producer.register_schema("orders-value", Schema(ORDER_BREAKING, "AVRO"))
+    assert exc.value.http_status_code == 409 and exc.value.error_code == 409
+    assert producer.register_schema("orders-value", Schema(ORDER_V2, "AVRO")) == 3
+    producer.set_compatibility("orders-value", "NONE")
+    assert producer.register_schema("orders-value", Schema(ORDER_BREAKING, "AVRO")) == 4
     assert producer.delete_subject("people-value") == [1]

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.343.0
+  version: 1.344.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -2106,8 +2106,10 @@ paths:
         Registering content the subject already holds returns the same id. A new version
         under a level
 
-        other than ``NONE`` is refused with ``42290`` until XPC-4.x rules exist for
-        the schema type.'
+        other than ``NONE`` is checked: an incompatible Avro schema is refused with ``409``,
+        and a type
+
+        without compatibility rules with ``42290``.'
       operationId: confluent_register_registry_schema__tenant__subjects__subject__versions_post
       parameters:
       - name: tenant
