@@ -194,8 +194,11 @@ MFI-13.4 (#3791) is built: the WS-I lint pack (`app.wsdl_lint`, eight `wsi.*` ru
 (literal use, consistent style, document-/rpc-literal parts and namespaces, unique operation signatures and
 soapActions) and the import graph (`app.wsdl_wsi`, run by the import source with the fileset / live-fetch members).
 
+MFI-14.3 (#3796) is built: every TypeSpec compile enables the built-in `@typespec/http/all` linter ruleset, keeps
+the warnings of a successful compile (`TypeSpecCompiled.diagnostics`, extras `typespec_diagnostics`), and the
+`typespec` lint pack (`app.typespec_lint`, `typespec.compiler-diagnostic`, V327) reports them.
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-TypeSpec [#3796](https://github.com/apiome/apiome/issues/3796),
 RAML [#3801](https://github.com/apiome/apiome/issues/3801), API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).
 

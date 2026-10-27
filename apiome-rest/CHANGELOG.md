@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.469.0] - 2026-10-26
+
+### Added
+- **TypeSpec lint pack: built-in `tsp` linter diagnostics (MFI-14.3, #3796)** — every TypeSpec compile now enables
+  the bundled libraries' built-in linter rulesets (`app.typespec_config.BUILTIN_LINTER_RULESETS` =
+  `@typespec/http/all`, written into Apiome's `tspconfig.yaml`; an uploaded `linter` setting stays ignored), and the
+  warnings of a successful compile are kept instead of discarded: `app.typespec_compile.parse_diagnostics` reads each
+  diagnostic (severity, code, message, optional file/line/column; code frames and summaries skipped, duplicates
+  dropped) into `TypeSpecCompiled.diagnostics`. The diagnostic pattern now matches library-prefixed codes
+  (`@typespec/http/…`) and unlocated diagnostics, so failed-compile messages quote those too. Compiled items record
+  `typespec_diagnostics` (capped at 50) and `typespec_diagnostic_count` when there are any. New `app.typespec_lint`
+  pack (`typespec`): `typespec.compiler-diagnostic` (warning), one finding per diagnostic at
+  `tsp:<file>:<line>:<column>`; seeded into the built-in style guide by V327. TypeSpec leaves the planned-pack list.
+  New recorded fixture `typespec_compile/diagnostics` (real `@typespec/compiler` 0.65.0 output: a `deprecated` and
+  an `op-reference-container-route` warning). OpenAPI 1.333.0.
+
 ## [1.468.0] - 2026-10-26
 
 ### Added

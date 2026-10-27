@@ -20,7 +20,6 @@ def test_matrix_covers_planned_formats_with_linked_issues():
     for fmt, issues in (
         ("smithy", RELATED_FORMAT_LINT_ISSUES["smithy"]),
         ("raml", RELATED_FORMAT_LINT_ISSUES["raml"]),
-        ("typespec", RELATED_FORMAT_LINT_ISSUES["typespec"]),
         ("apiblueprint", RELATED_FORMAT_LINT_ISSUES["apiblueprint"]),
     ):
         assert fmt in rows
@@ -52,6 +51,14 @@ def test_wsdl_has_a_native_pack_since_mfi_13_4():
     row = {r.format: r for r in build_format_lint_capabilities()}["wsdl"]
     assert row.mode == MODE_NATIVE
     assert row.native_pack == "wsdl"
+    assert row.related_issues == ()
+
+
+def test_typespec_has_a_native_pack_since_mfi_14_3():
+    # MFI-14.3 (#3796) registered the `typespec` pack, so no planned-pack issue is linked any more.
+    row = {r.format: r for r in build_format_lint_capabilities()}["typespec"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "typespec"
     assert row.related_issues == ()
 
 
