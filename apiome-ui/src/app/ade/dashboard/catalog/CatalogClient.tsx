@@ -1369,6 +1369,7 @@ export default function CatalogClient() {
         itemId={convertFor?.id ?? null}
         itemName={convertFor?.name ?? ''}
         sourceFormat={convertFor?.sourceFormat ?? null}
+        conversion={convertFor?.conversion ?? null}
         open={convertFor !== null}
         onOpenChange={(open) => {
           if (!open) setConvertFor(null);

@@ -117,6 +117,35 @@ describe('ConversionPreviewDialog', () => {
     expect(convert).toBeEnabled();
   });
 
+  it('labels the confirm button "Convert & create Project" on a first conversion (MFI-27.1)', async () => {
+    global.fetch = okFetch(HIGH_TIER) as unknown as typeof fetch;
+    render(<ConversionPreviewDialog itemId="cat-1" itemName="Catalog" open onOpenChange={() => {}} />);
+
+    await waitFor(() => expect(screen.getByTestId('conversion-convert-btn')).toBeInTheDocument());
+    expect(screen.getByTestId('conversion-convert-btn')).toHaveTextContent(/^Convert & create Project$/);
+  });
+
+  it('labels the confirm button "Re-convert" when the item already has a conversion (MFI-27.1)', async () => {
+    global.fetch = okFetch(LOW_TIER) as unknown as typeof fetch;
+    render(
+      <ConversionPreviewDialog
+        itemId="cat-1"
+        itemName="Orders"
+        open
+        onOpenChange={() => {}}
+        conversion={{ projectId: 'proj-1', projectName: 'Orders API' }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('conversion-convert-btn')).toBeInTheDocument());
+    const convert = screen.getByTestId('conversion-convert-btn');
+    expect(convert).toHaveTextContent(/^Re-convert$/);
+    // The acknowledgement gate is unchanged by the new label.
+    expect(convert).toBeDisabled();
+    fireEvent.click(screen.getByTestId('conversion-ack'));
+    expect(convert).toBeEnabled();
+  });
+
   it('does not gate Convert on high tier (warning shown, no acknowledgement)', async () => {
     global.fetch = okFetch(HIGH_TIER) as unknown as typeof fetch;
     render(<ConversionPreviewDialog itemId="cat-1" itemName="Catalog" open onOpenChange={() => {}} />);

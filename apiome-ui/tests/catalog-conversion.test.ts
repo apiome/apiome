@@ -7,6 +7,7 @@
  */
 import {
   convertActionLabel,
+  convertCommitLabel,
   convertPreviewDialogTitle,
   convertedProjectHref,
   convertedProjectLabel,
@@ -136,5 +137,16 @@ describe('CPDO-3.3 provenance linkage fields', () => {
   it('pre-manifest conversions carry null linkage without breaking anything', () => {
     const conversion = makeConversion({ provenanceId: null, manifestHash: null });
     expect(isConvertedLinkLive(conversion)).toBe(true);
+  });
+});
+
+describe('convertCommitLabel (MFI-27.1, #4099)', () => {
+  it('names the outcome on a first conversion', () => {
+    expect(convertCommitLabel(null)).toBe('Convert & create Project');
+    expect(convertCommitLabel(undefined)).toBe('Convert & create Project');
+  });
+
+  it('reads "Re-convert" once the item has a conversion', () => {
+    expect(convertCommitLabel(makeConversion())).toBe('Re-convert');
   });
 });

@@ -165,10 +165,12 @@ is `/catalog/{id}`; `?tab=source` opens it on **Raw source**.
    source maps.
 3. Optionally fill **Title**, **Version** and **Servers** under **Fill cheap gaps** and **click
    “Apply & recompute preview”**.
-4. **Click “Convert”.** For a low-fidelity conversion, first tick **I understand the converted spec
-   will be incomplete and want to convert anyway.**
+4. **Click “Convert & create Project”.** For a low-fidelity conversion, first tick **I understand
+   the converted spec will be incomplete and want to convert anyway.**
 
-Apiome creates a new OpenAPI project, and the item shows **Converted to OpenAPI project**. The full
+Apiome creates a new OpenAPI project, and the item shows **Converted to OpenAPI project**. Once
+converted, the header action reads **“Re-convert to OpenAPI Project”** and the dialog's button
+**“Re-convert”**: a re-convert adds a new version to the same project rather than creating another. The full
 explanation of reason codes and evidence is on [Convert a catalog item to
 OpenAPI](./convert-to-openapi.md).
 

@@ -35,9 +35,10 @@ flowchart LR
 
 ## Walkthrough: in the UI
 
-1. Go to **Bring in → Catalog**, select the item, and open the
-   **Convert** preview (dialog title **Convert to OpenAPI Project — _item_**). Nothing
-   is created until you convert.
+1. Go to **Bring in → Catalog**, open the item, and **click “Convert to OpenAPI Project”** — the
+   primary action in its header (**“Convert to Project”** for an OpenAPI or Arazzo item,
+   **“Re-convert…”** once it has been converted). The preview opens (dialog title **Convert to
+   OpenAPI Project — _item_**). Nothing is created until you convert.
 2. The header shows the **fidelity score** (`Fidelity n/100`), tier pill, and a banner.
    Every preview carries the same caution: *"The fidelity of the original API may not be
    complete enough to create a fully defined OpenAPI Specification — review the gaps
@@ -51,8 +52,10 @@ flowchart LR
      gaps** fields (**Title**, **Version**, **Servers**) are on **Summary**.
 4. **Select any graph node or table row** to open the evidence drawer; use the safe
    defaults it offers (**Apply & recompute**) to close cheap gaps.
-5. Tick the acknowledgement if the tier requires it, then **Convert** — or **Cancel**,
-   which persists nothing.
+5. Tick the acknowledgement if the tier requires it, then **click “Convert & create
+   Project”** — or **Cancel**, which persists nothing. For an item that has been converted
+   before, the button reads **“Re-convert”**: it adds a new version to the Project the item
+   already produced instead of creating another one.
 
 ## The projection graph
 
@@ -148,9 +151,9 @@ and the same values can be supplied in the CLI, so the manifest is reproducible.
 
 | Fidelity tier | Banner | Acknowledgement |
 |---|---|---|
-| `high` | High fidelity — a near-lossless conversion | None — **Convert** is enabled. |
-| `medium` | Partial fidelity — some constructs had to be inferred | None — **Convert** is enabled. |
-| `low` | Low fidelity — this conversion will be substantially incomplete | **Required** — Convert stays disabled until you tick *"I understand the converted spec will be incomplete and want to convert anyway."* |
+| `high` | High fidelity — a near-lossless conversion | None — **Convert & create Project** (or **Re-convert**) is enabled. |
+| `medium` | Partial fidelity — some constructs had to be inferred | None — **Convert & create Project** (or **Re-convert**) is enabled. |
+| `low` | Low fidelity — this conversion will be substantially incomplete | **Required** — the button stays disabled until you tick *"I understand the converted spec will be incomplete and want to convert anyway."* |
 
 Recomputing (changed defaults, changed source) always resets the acknowledgement.
 **Cancel produces no persisted conversion state** — no project, no history entry.
