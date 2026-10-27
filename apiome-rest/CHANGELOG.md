@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.486.0] - 2026-10-27
+
+### Added
+- **OpenAPI 3.1 components importer for Primitives (#3465)** — `POST /v1/primitives/{tenant_slug}/import` and
+  `/import/review` with `source_kind='openapi'` now read the document's `components.schemas` (`app.primitives_openapi`):
+  each entry becomes one `odb.primitives` row named after its component, and the document root (`info`, `paths`,
+  other components) is no longer mistaken for a type. Sibling refs (`#/components/schemas/Money`, with any deeper
+  pointer kept as a fragment) are rewritten to relative registry refs (`./money`) by the #3463 rewrite and land in
+  the `refs` JSONB column; conflicts, dedupe and the draft 2020-12 report come from the #3464 review unchanged. An
+  OpenAPI 3.0 document imports with a warning, as does a `jsonSchemaDialect` other than 2020-12; a document with no
+  `openapi` field, a non-3.x version or no `components.schemas` is a 400 (a Swagger 2.0 document is named and
+  pointed at the JSON Schema kind). API 1.350.0.
+
 ## [1.485.0] - 2026-10-27
 
 ### Added

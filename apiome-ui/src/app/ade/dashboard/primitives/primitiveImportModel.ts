@@ -401,14 +401,15 @@ export function determineCategoryFromSchema(schema: Record<string, unknown>): st
 }
 
 /**
- * Container keywords read for each source kind, in precedence order. A type-def bundle
- * reads `types` first (its native container) before the JSON Schema equivalents; mirrors
- * apiome-rest's `BUNDLE_CONTAINERS` and `_resolve_import_definitions`.
+ * Container paths read for each source kind, in precedence order. A type-def bundle
+ * reads `types` first (its native container) before the JSON Schema equivalents, and an
+ * OpenAPI 3.1 document reads only `components.schemas` (#3465); mirrors apiome-rest's
+ * `BUNDLE_CONTAINERS`, `parse_openapi_components` and `_resolve_import_definitions`.
  */
-const CONTAINER_KEYS: Record<SourceKind, string[]> = {
-  'json-schema': ['$defs', 'definitions'],
-  openapi: ['$defs', 'definitions'],
-  'type-def-bundle': ['types', '$defs', 'definitions'],
+const CONTAINER_PATHS: Record<SourceKind, string[][]> = {
+  'json-schema': [['$defs'], ['definitions']],
+  openapi: [['components', 'schemas']],
+  'type-def-bundle': [['types'], ['$defs'], ['definitions']],
 };
 
 /**
@@ -437,9 +438,10 @@ export function extractDefinitions(
 ): Record<string, Record<string, unknown>> {
   const container = containerDefinitions(doc, sourceKind);
 
-  // A root type is only meaningful for JSON Schema / OpenAPI; a bundle is purely a container.
+  // A root type is only meaningful for JSON Schema: a bundle is purely a container, and an
+  // OpenAPI document's root describes an API (info, paths), not a type.
   if (
-    sourceKind === 'type-def-bundle' ||
+    sourceKind !== 'json-schema' ||
     !isSchemaDocument(doc, Object.keys(container).length > 0)
   ) {
     return container;
@@ -453,14 +455,23 @@ export function extractDefinitions(
   return { [rootName]: root, ...container };
 }
 
-/** Read just the `$defs` / `definitions` / `types` members of a document, in declaration order. */
+/**
+ * Read just the container members of a document (`$defs` / `definitions` / `types`, or an
+ * OpenAPI document's `components.schemas`), in declaration order.
+ */
 function containerDefinitions(
   doc: Record<string, unknown>,
   sourceKind: SourceKind
 ): Record<string, Record<string, unknown>> {
   const defs: Record<string, Record<string, unknown>> = {};
-  for (const key of CONTAINER_KEYS[sourceKind]) {
-    const container = doc[key];
+  for (const path of CONTAINER_PATHS[sourceKind]) {
+    let container: unknown = doc;
+    for (const key of path) {
+      container =
+        container && typeof container === 'object'
+          ? (container as Record<string, unknown>)[key]
+          : undefined;
+    }
     if (container && typeof container === 'object') {
       for (const [name, schema] of Object.entries(container as Record<string, unknown>)) {
         if (schema && typeof schema === 'object') {

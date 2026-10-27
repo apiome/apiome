@@ -38,6 +38,7 @@ from .primitives_bundle import (
     BundleError,
     parse_type_def_bundle,
 )
+from .primitives_openapi import OpenApiComponentsError, parse_openapi_components
 from .primitives_resolver import build_ref_edges
 from .primitives_review import (
     ACTION_RENAME,
@@ -1811,9 +1812,10 @@ def _resolve_import_definitions(
 
     Shared by the commit (``/import``) and review (``/import/review``) endpoints so both
     interpret the source identically. A type-def bundle is expanded by the bundle importer
-    (#3462) — a malformed bundle is a clear 400 — while a JSON Schema / OpenAPI document
-    yields its own root schema (when it declares one) *plus* every member of its ``$defs`` /
-    ``definitions`` containers. The ``selected_definitions`` filter is applied here when
+    (#3462) — a malformed bundle is a clear 400 — an OpenAPI 3.1 document yields its
+    ``components.schemas`` entries (#3465), and a JSON Schema document yields its own root
+    schema (when it declares one) *plus* every member of its ``$defs`` / ``definitions``
+    containers. The ``selected_definitions`` filter is applied here when
     ``import_all`` is false.
 
     A document is not only its ``$defs``: ``.../api/list/response.json`` declares an ``$id``,
@@ -1830,8 +1832,9 @@ def _resolve_import_definitions(
         (e.g. from bundle expansion, or a root renamed around a ``$defs`` collision).
 
     Raises:
-        HTTPException: 400 for an invalid source kind, a malformed bundle, a document that is
-            neither a schema nor a container, or a selection that matches nothing.
+        HTTPException: 400 for an invalid source kind, a malformed bundle, an OpenAPI document
+            that is not 3.x or has no ``components.schemas``, a document that is neither a
+            schema nor a container, or a selection that matches nothing.
     """
     if request.source_kind not in VALID_IMPORT_SOURCE_KINDS:
         raise HTTPException(
@@ -1851,6 +1854,13 @@ def _resolve_import_definitions(
         except BundleError as e:
             raise HTTPException(status_code=400, detail=e.message)
         definitions: Dict[str, Any] = {p.name: p.schema for p in parsed_types}
+    elif request.source_kind == 'openapi':
+        # An OpenAPI 3.1 document's types are its components.schemas (#3465); the document root
+        # is an API description, not a schema, so it never contributes a root type.
+        try:
+            definitions, warnings = parse_openapi_components(request.schema)
+        except OpenApiComponentsError as e:
+            raise HTTPException(status_code=400, detail=e.message)
     else:
         # $defs is the draft 2020-12 container; definitions the pre-2020 equivalent.
         container = merge_definition_containers(request.schema)
@@ -1988,8 +1998,11 @@ async def import_primitives(
     """
     Import primitives from a JSON Schema document or an Apiome type-def bundle.
 
-    For ``source_kind='json-schema'`` (the default) and ``'openapi'``, type definitions are
-    extracted from the document's ``$defs`` / ``definitions`` and each becomes a primitive.
+    For ``source_kind='json-schema'`` (the default), type definitions are extracted from the
+    document's root schema and its ``$defs`` / ``definitions``, and each becomes a primitive.
+    For ``source_kind='openapi'`` (#3465), each OpenAPI 3.1 ``components.schemas`` entry becomes
+    a primitive, and its ``#/components/schemas/X`` refs are rewritten to relative registry refs
+    (``./x``) stored in the ``refs`` JSONB column.
     For ``source_kind='type-def-bundle'`` (#3462), the request ``schema`` is expanded as an
     Apiome type-definition bundle — its ``types`` (or ``$defs`` / ``definitions``)
     container is read into many interlinked types, each committed as a primitive with its

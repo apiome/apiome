@@ -74,6 +74,22 @@ type the value — it is validated as you type.
 
 <Screenshot id="primitives-import" alt="The Import primitives dialog on its Source step: source types, file, URL or paste, and namespace options" />
 
+### From an OpenAPI 3.1 document
+
+Choose **OpenAPI** to import the reusable types of an API description. Each entry under
+`components/schemas` becomes one type, named after its component; the document's `info`, `paths`
+and other components are not types and are left out.
+
+- **References.** A `$ref` to another component, such as `#/components/schemas/Money`, is rewritten
+  to a reference to that type in the registry (`./money`), so the imported types still point at
+  each other. A reference to a type arriving in the same import is not reported as unresolved.
+- **Versions.** OpenAPI 3.1 schemas are JSON Schema 2020-12, so they are validated as written. An
+  OpenAPI 3.0 document still imports, with a warning that 3.0-only keywords may not validate. A
+  `jsonSchemaDialect` other than 2020-12 is warned about too.
+- **Not OpenAPI.** A document with no `openapi` version, with a version other than 3.x, or with no
+  `components/schemas` is refused with a message saying why. A Swagger 2.0 document keeps its types
+  under `definitions`: import it as **JSON Schema** instead.
+
 ## Namespaces & scopes
 
 A **namespace** groups types under a base URI and version, such as `tenant/acme/v1/types`. The tab

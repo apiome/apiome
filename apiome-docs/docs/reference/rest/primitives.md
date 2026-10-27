@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.349.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.350.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `primitives` · 12 operations
 
@@ -156,8 +156,11 @@ Request body for create primitive.
 
 Import primitives from a JSON Schema document or an Apiome type-def bundle.
 
-For ``source_kind='json-schema'`` (the default) and ``'openapi'``, type definitions are
-extracted from the document's ``$defs`` / ``definitions`` and each becomes a primitive.
+For ``source_kind='json-schema'`` (the default), type definitions are extracted from the
+document's root schema and its ``$defs`` / ``definitions``, and each becomes a primitive.
+For ``source_kind='openapi'`` (#3465), each OpenAPI 3.1 ``components.schemas`` entry becomes
+a primitive, and its ``#/components/schemas/X`` refs are rewritten to relative registry refs
+(``./x``) stored in the ``refs`` JSONB column.
 For ``source_kind='type-def-bundle'`` (#3462), the request ``schema`` is expanded as an
 Apiome type-definition bundle — its ``types`` (or ``$defs`` / ``definitions``)
 container is read into many interlinked types, each committed as a primitive with its
