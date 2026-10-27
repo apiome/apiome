@@ -36,7 +36,9 @@ from .wsdl_versions import (
 __all__ = [
     "WsdlParseError",
     "WsdlField",
+    "WsdlBinding",
     "WsdlComplexType",
+    "WsdlFault",
     "WsdlElementDecl",
     "WsdlMessagePart",
     "WsdlMessage",
@@ -122,6 +124,21 @@ class WsdlMessage:
 
 
 @dataclass(frozen=True)
+class WsdlFault:
+    """A fault an operation may return (MFI-13.2).
+
+    Attributes:
+        name: The fault name (1.1 ``wsdl:fault@name``; 2.0 the interface ``fault`` it refers to).
+        message: 1.1 fault ``message`` (local part), if any.
+        element: 2.0 fault payload element (local part), if any.
+    """
+
+    name: str
+    message: Optional[str] = None
+    element: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class WsdlOperation:
     """One operation of a ``portType`` (1.1) or ``interface`` (2.0).
 
@@ -143,10 +160,10 @@ class WsdlOperation:
             document's SOAP binding gives the operation (MFI-13.5); ``None`` when unstated.
         soap_style: The binding's effective style for the operation (``rpc`` / ``document``),
             when the document has a SOAP 1.1 binding for it.
+        faults: The faults the operation declares (MFI-13.2): 1.1 ``wsdl:fault``, 2.0 ``outfault``.
 
-    Faults are read past rather than recorded: the canonical model has no fault construct,
-    and the 1.1 path has never carried ``wsdl:fault``, so keeping 2.0's ``outfault`` here
-    would be state nothing downstream can use.
+    Faults are recorded (MFI-13.2, :attr:`faults`); the normalizer projects them as ``error``
+    messages.
     """
 
     name: str
@@ -157,6 +174,7 @@ class WsdlOperation:
     output_element: Optional[str] = None
     soap_action: Optional[str] = None
     soap_style: Optional[str] = None
+    faults: Tuple[WsdlFault, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -165,6 +183,24 @@ class WsdlPortType:
 
     name: str
     operations: Tuple[WsdlOperation, ...]
+
+
+@dataclass(frozen=True)
+class WsdlBinding:
+    """A ``binding``: which port type it binds, over which protocol (MFI-13.2).
+
+    Attributes:
+        name: The binding name.
+        port_type: The bound ``portType`` / ``interface`` (local part).
+        protocol: ``soap11`` / ``soap12`` / ``http`` (1.1 extension namespace; 2.0 binding
+            ``type`` and ``wsoap:version``), ``None`` for an unknown binding extension.
+        transport: The SOAP transport URI (1.1 ``soap:binding@transport``; 2.0 ``wsoap:protocol``).
+    """
+
+    name: str
+    port_type: str
+    protocol: Optional[str] = None
+    transport: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -209,6 +245,8 @@ class WsdlDocument:
             ``{"rule", "path", "message"}`` dicts; set by the import source, which holds the
             members the imports resolve against.
         wsi_issue_count: How many WS-I problems there were in all.
+        bindings: The document's bindings, with the port type, protocol and transport of each
+            (MFI-13.2); ports name them.
     """
 
     name: Optional[str]
@@ -226,6 +264,7 @@ class WsdlDocument:
     fetch_notes: Tuple[str, ...] = ()
     wsi_issues: Tuple[Dict[str, str], ...] = ()
     wsi_issue_count: int = 0
+    bindings: Tuple[WsdlBinding, ...] = ()
 
 
 def is_wsdl(content: str) -> bool:
@@ -721,11 +760,17 @@ def _parse_port_types(root: ET.Element) -> Tuple[WsdlPortType, ...]:
             output_message = (
                 _attr_local(output_el.get("message")) if output_el is not None else None
             )
+            faults = tuple(
+                WsdlFault(name=fault.get("name") or "", message=_attr_local(fault.get("message")))
+                for fault in _children(operation_el, "fault")
+                if fault.get("name")
+            )
             operations.append(
                 WsdlOperation(
                     name=op_name,
                     input_message=input_message,
                     output_message=output_message,
+                    faults=faults,
                 )
             )
         port_types.append(WsdlPortType(name=name, operations=tuple(operations)))
@@ -814,6 +859,53 @@ def _binding_details(
     return details
 
 
+_HTTP_BINDING_NAMESPACE = "http://schemas.xmlsoap.org/wsdl/http/"
+_WSDL_2_HTTP_NAMESPACE = "http://www.w3.org/ns/wsdl/http"
+
+
+def _parse_bindings(roots: Sequence[ET.Element], version: str) -> Tuple[WsdlBinding, ...]:
+    """Every ``binding`` of the description with its port type, protocol and transport (MFI-13.2).
+
+    Args:
+        roots: The root ``definitions`` / ``description`` and any it imported.
+        version: The WSDL version.
+
+    Returns:
+        The bindings, in document order (a name declared twice is read once).
+    """
+    bindings: Dict[str, WsdlBinding] = {}
+    for root in roots:
+        for binding in _children(root, "binding"):
+            name = binding.get("name")
+            if not name or name in bindings:
+                continue
+            protocol: Optional[str] = None
+            transport: Optional[str] = None
+            if version == VERSION_2_0:
+                port_type = _attr_local(binding.get("interface")) or ""
+                kind = binding.get("type")
+                if kind == _WSDL_2_SOAP_NAMESPACE:
+                    soap_version = binding.get(f"{{{_WSDL_2_SOAP_NAMESPACE}}}version") or "1.2"
+                    protocol = "soap11" if soap_version.strip() == "1.1" else "soap12"
+                    transport = binding.get(f"{{{_WSDL_2_SOAP_NAMESPACE}}}protocol")
+                elif kind == _WSDL_2_HTTP_NAMESPACE:
+                    protocol = "http"
+            else:
+                port_type = _attr_local(binding.get("type")) or ""
+                for child in binding:
+                    if _local(child.tag) != "binding":
+                        continue
+                    namespace = _namespace(child.tag)
+                    if namespace == "http://schemas.xmlsoap.org/wsdl/soap/":
+                        protocol, transport = "soap11", child.get("transport")
+                    elif namespace == "http://schemas.xmlsoap.org/wsdl/soap12/":
+                        protocol, transport = "soap12", child.get("transport")
+                    elif namespace == _HTTP_BINDING_NAMESPACE:
+                        protocol = "http"
+            bindings[name] = WsdlBinding(name=name, port_type=port_type, protocol=protocol, transport=transport)
+    return tuple(bindings.values())
+
+
 def _with_binding_details(
     port_types: Sequence[WsdlPortType], details: Mapping[Tuple[str, str], Tuple[Optional[str], Optional[str]]]
 ) -> Tuple[WsdlPortType, ...]:
@@ -844,15 +936,20 @@ class _Interface:
     operations: Tuple[WsdlOperation, ...]
 
 
-def _parse_interface_operations(interface_el: ET.Element) -> Tuple[WsdlOperation, ...]:
+def _parse_interface_operations(
+    interface_el: ET.Element, fault_elements: Optional[Mapping[str, Optional[str]]] = None
+) -> Tuple[WsdlOperation, ...]:
     """Read the operations declared directly on one ``interface``.
 
     Args:
         interface_el: The ``interface`` element.
+        fault_elements: Every interface ``fault`` of the description, ``name → element``, which an
+            operation's ``outfault ref`` resolves against (MFI-13.2).
 
     Returns:
         Its operations, in document order.
     """
+    fault_elements = fault_elements or {}
     operations: List[WsdlOperation] = []
     for operation_el in _children(interface_el, "operation"):
         op_name = operation_el.get("name")
@@ -867,6 +964,11 @@ def _parse_interface_operations(interface_el: ET.Element) -> Tuple[WsdlOperation
                 input_element=_attr_local(input_el.get("element")) if input_el is not None else None,
                 output_element=(
                     _attr_local(output_el.get("element")) if output_el is not None else None
+                ),
+                faults=tuple(
+                    WsdlFault(name=ref, element=fault_elements.get(ref))
+                    for outfault in _children(operation_el, "outfault")
+                    if (ref := _attr_local(outfault.get("ref")))
                 ),
             )
         )
@@ -923,6 +1025,12 @@ def _parse_interfaces(root: ET.Element) -> Tuple[WsdlPortType, ...]:
     """
     declared: Dict[str, _Interface] = {}
     order: List[str] = []
+    fault_elements = {
+        fault.get("name") or "": _attr_local(fault.get("element"))
+        for interface_el in _children(root, "interface")
+        for fault in _children(interface_el, "fault")
+        if fault.get("name")
+    }
     for interface_el in _children(root, "interface"):
         name = interface_el.get("name")
         if not name:
@@ -937,7 +1045,7 @@ def _parse_interfaces(root: ET.Element) -> Tuple[WsdlPortType, ...]:
         declared[name] = _Interface(
             name=name,
             extends=extends,
-            operations=_parse_interface_operations(interface_el),
+            operations=_parse_interface_operations(interface_el, fault_elements),
         )
     return tuple(
         WsdlPortType(name=name, operations=_flatten_interface(name, declared)) for name in order
@@ -1079,6 +1187,7 @@ def parse_wsdl(
             elements=elements,
             messages=(),
             port_types=_with_binding_details(port_types, _binding_details([root], VERSION_2_0)),
+            bindings=_parse_bindings([root], VERSION_2_0),
             services=_parse_endpoints(root),
             raw=content,
             version=VERSION_2_0,
@@ -1094,6 +1203,7 @@ def parse_wsdl(
             tuple(p for definition in roots for p in _parse_port_types(definition)),
             _binding_details(roots, VERSION_1_1),
         ),
+        bindings=_parse_bindings(roots, VERSION_1_1),
         services=tuple(s for definition in roots for s in _parse_services(definition)),
         raw=content,
         version=VERSION_1_1,

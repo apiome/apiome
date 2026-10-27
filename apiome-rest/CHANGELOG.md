@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.475.0] - 2026-10-26
+
+### Added
+- **WSDL → canonical model: ports, bindings, faults, multi-part messages (MFI-13.2, #3789)** — completes the WSDL
+  projection (soapAction / style and XSD occurs / facets landed with MFI-13.5). Parser: new `WsdlBinding` records
+  (`WsdlDocument.bindings`: name, port type, protocol `soap11` / `soap12` / `http` from the 1.1 extension namespace or
+  the 2.0 binding `type` + `wsoap:version`, transport from `soap:binding@transport` / `wsoap:protocol`); new
+  `WsdlFault` on `WsdlOperation.faults` (1.1 `wsdl:fault@message`; 2.0 `outfault ref` resolved to the interface
+  `fault` element). Normalizer: each port with an address is a `Server` named after the port, `protocol` = its
+  binding's, extras `wsdl_service` / `wsdl_binding` / `wsdl_port_type` / `wsdl_transport` (description unchanged);
+  faults are `error`-role messages keyed `<operation>#fault.<name>`; a multi-part 1.1 message becomes a synthesized
+  record type (`extras` `wsdl_kind: message`, `wsdl_message`; `<Message>Message` on a name clash) with one field per
+  part (`wsdl_part_element` / `wsdl_part_type`) as the operation's payload, instead of only its first part. The WSDL
+  emitter writes all of it back: bindings per recorded protocol (`soap` / `soap12` / `http`, transport only when
+  recorded), services and ports regrouped from the servers, portType / binding faults with their messages, multi-part
+  messages from their synthesized types (not emitted as schema types), and scalar payloads as `type` parts; models
+  without WSDL topology keep the single-binding export. Corpus goldens for the WSDL / WSDL 2.0 / SoapUI fixtures gain
+  the servers' topology, fault messages and kitchen-sink's message types. OpenAPI 1.339.0.
+
 ## [1.474.0] - 2026-10-26
 
 ### Added

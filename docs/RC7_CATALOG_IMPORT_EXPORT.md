@@ -219,6 +219,10 @@ MFI-11.5 (#3780) is built: the `odata` breaking-change classifier (`app.odata_br
 §5.2 Model Versioning (properties, keys, navigation properties, annotations) and notes on every breaking grade whether
 the schema's `Core.SchemaVersion` (`$schemaversion`) moved.
 
+MFI-13.2 (#3789) is built: the WSDL canonical model records each port as a named server with its binding's protocol
+(soap11 / soap12 / http) and the WSDL service / binding / port type / transport, faults as `error` messages, and
+multi-part messages as synthesized record types; the WSDL emitter writes all of them back.
+
 MFI-13.5 (#3792) is built: the WSDL importer records soapAction / rpc style per operation and each element's occurs,
 nillable, default and simple-type facets (written back by the WSDL emitter), and the `wsdl` breaking-change classifier
 (`app.wsdl_breaking`) grades MEP / soapAction / style and XSD occurs / facet moves with strict-receiver rules.

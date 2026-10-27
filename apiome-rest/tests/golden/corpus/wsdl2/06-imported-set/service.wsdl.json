@@ -20,9 +20,14 @@
     "servers": [
       {
         "description": "BillingService/Main",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "BillingBinding",
+          "wsdl_port_type": "BillingInterface",
+          "wsdl_service": "BillingService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "Main",
+        "protocol": "soap12",
         "url": "https://api.example.com/billing",
         "variables": []
       }
@@ -234,7 +239,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:f30bf14dd510292e38697b0218a64cfd88aaf44f0970fcc1e883ad8e0df6197c",
+  "fingerprint": "sha256:e308813dfd4a99145c1d813a3fdd14502bfb8c05285d9782a23604bcf88d5b14",
   "lint": {
     "findings": 11,
     "grade": "B",

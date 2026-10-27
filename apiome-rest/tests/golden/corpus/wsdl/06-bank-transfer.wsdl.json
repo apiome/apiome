@@ -19,9 +19,14 @@
     "servers": [
       {
         "description": "TransferService/TransferPort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "TransferBinding",
+          "wsdl_port_type": "TransferPort",
+          "wsdl_service": "TransferService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "TransferPort",
+        "protocol": "soap11",
         "url": "https://api.example.com/soap/banking",
         "variables": []
       }
@@ -99,6 +104,24 @@
             "key": "http://example.com/banking.TransferPort.TransferFunds",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/banking.TransferPort.TransferFunds#fault.insufficientFunds",
+                "name": "insufficientFunds",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/banking.InsufficientFundsFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -509,15 +532,15 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:7aa96ef4789e6ea0f44db8f4ebbaae242eaca30bd558e33fb21812efe5a65782",
+  "fingerprint": "sha256:8da085fb04cfa8a592297137846ef3eb452fd1082f0eb9574e878a5d1af9ea68",
   "lint": {
-    "findings": 26,
+    "findings": 27,
     "grade": "F",
-    "report_fingerprint": "fc0953ec5c41adee6cda1a1cc19da17dab332b60dfea5c3e6f994a5e6cb48750",
-    "score": 53,
+    "report_fingerprint": "bc150c205056401b4fa476941e431ed799d6b723c8036f35ff64d8f3e24eeb95",
+    "score": 52,
     "severity_counts": {
       "error": 0,
-      "info": 19,
+      "info": 20,
       "warning": 7
     }
   },

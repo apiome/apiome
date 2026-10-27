@@ -19,9 +19,14 @@
     "servers": [
       {
         "description": "CalculatorService/CalculatorPort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "CalculatorBinding",
+          "wsdl_port_type": "CalculatorPort",
+          "wsdl_service": "CalculatorService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "CalculatorPort",
+        "protocol": "soap11",
         "url": "https://api.example.com/calculator",
         "variables": []
       }
@@ -199,7 +204,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:1e802c2066d4c118a8438ae9dcd5c1d622fec86b70d2d7df16920889012a8178",
+  "fingerprint": "sha256:ef709336e97e8c61556c29273bce88b64950c31c573d426631e59398c5b8a706",
   "lint": {
     "findings": 9,
     "grade": "B",

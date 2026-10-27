@@ -19,9 +19,14 @@
     "servers": [
       {
         "description": "OrderService/OrderPort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "OrderBinding",
+          "wsdl_port_type": "OrderPort",
+          "wsdl_service": "OrderService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "OrderPort",
+        "protocol": "soap11",
         "url": "https://api.example.com/soap/orders",
         "variables": []
       }
@@ -45,6 +50,24 @@
             "key": "http://example.com/orders.OrderPort.CancelOrder",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/orders.OrderPort.CancelOrder#fault.orderFault",
+                "name": "orderFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/orders.OrderFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -104,6 +127,24 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
+                "key": "http://example.com/orders.OrderPort.CreateOrder#fault.orderFault",
+                "name": "orderFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/orders.OrderFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
                 "key": "http://example.com/orders.OrderPort.CreateOrder#request",
                 "name": null,
                 "payload": {
@@ -153,6 +194,24 @@
             "key": "http://example.com/orders.OrderPort.GetOrder",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/orders.OrderPort.GetOrder#fault.orderFault",
+                "name": "orderFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/orders.OrderFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -713,15 +772,15 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:3e7c98bf301d219d7a8916d492bf61addeca2855202aa7ddbfa888fca9319389",
+  "fingerprint": "sha256:e84a2bb45d40b2814ea3b890005c08966adb9d50cd6fcac4b06c5d22604b0daa",
   "lint": {
-    "findings": 37,
+    "findings": 40,
     "grade": "F",
-    "report_fingerprint": "5a16019ea418513c81a757b75d063e02ec4f9787b80330a75c65d5f02042d8c9",
-    "score": 43,
+    "report_fingerprint": "a50b3b0dc41cea57e694d92369c21406b046708877b2072423c37d7786c3fffa",
+    "score": 40,
     "severity_counts": {
       "error": 0,
-      "info": 25,
+      "info": 28,
       "warning": 12
     }
   },

@@ -19,9 +19,14 @@
     "servers": [
       {
         "description": "QuoteService/QuotePort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "QuoteBinding",
+          "wsdl_port_type": "QuotePort",
+          "wsdl_service": "QuoteService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "QuotePort",
+        "protocol": "soap11",
         "url": "https://api.example.com/soap/quotes",
         "variables": []
       }
@@ -45,6 +50,24 @@
             "key": "http://example.com/quotes.QuotePort.AcceptQuote",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/quotes.QuotePort.AcceptQuote#fault.quoteFault",
+                "name": "quoteFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/quotes.QuoteFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -99,6 +122,24 @@
             "key": "http://example.com/quotes.QuotePort.RequestQuote",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/quotes.QuotePort.RequestQuote#fault.quoteFault",
+                "name": "quoteFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/quotes.QuoteFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -582,15 +623,15 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:4d57b141761e9890e4331d04ecd867c19510178aabbd2401baa567a698c40f6f",
+  "fingerprint": "sha256:89c97d68fc143921e3d7e112e4da38fdfca2daff0a2adf79cebc2df26651fcc4",
   "lint": {
-    "findings": 30,
+    "findings": 32,
     "grade": "F",
-    "report_fingerprint": "29781aa57083d208dfeec83378bf4c8724f84683df477af319a9661acbd0c509",
-    "score": 51,
+    "report_fingerprint": "9a3fbab5069a88c2d4efc1ea38ade71b82a1a7aa05e168bc59b7d9d40d56198a",
+    "score": 49,
     "severity_counts": {
       "error": 0,
-      "info": 21,
+      "info": 23,
       "warning": 9
     }
   },

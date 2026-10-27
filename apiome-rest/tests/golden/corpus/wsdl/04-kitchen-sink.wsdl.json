@@ -57,25 +57,40 @@
     "servers": [
       {
         "description": "TelemetryHubService/IngestionSoap11Port",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "IngestionSoap11Binding",
+          "wsdl_port_type": "IngestionPort",
+          "wsdl_service": "TelemetryHubService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "IngestionSoap11Port",
+        "protocol": "soap11",
         "url": "https://api.example.com/telemetry/soap11",
         "variables": []
       },
       {
         "description": "TelemetryHubService/IngestionSoap12Port",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "IngestionSoap12Binding",
+          "wsdl_port_type": "IngestionPort",
+          "wsdl_service": "TelemetryHubService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "IngestionSoap12Port",
+        "protocol": "soap12",
         "url": "https://api.example.com/telemetry/soap12",
         "variables": []
       },
       {
         "description": "TelemetryHubService/AlarmPort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "AlarmBinding",
+          "wsdl_port_type": "AlarmPort",
+          "wsdl_service": "TelemetryHubService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "AlarmPort",
+        "protocol": "soap11",
         "url": "https://api.example.com/telemetry/alarms",
         "variables": []
       }
@@ -154,7 +169,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "string",
+                  "name": "http://example.com/telemetry.GetSensorStatusInput",
                   "nullable": true
                 },
                 "payload_schema": null,
@@ -172,7 +187,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "string",
+                  "name": "http://example.com/telemetry.GetSensorStatusOutput",
                   "nullable": true
                 },
                 "payload_schema": null,
@@ -324,6 +339,118 @@
         "key_type": null,
         "kind": "record",
         "name": "AlarmEvent",
+        "namespace": "http://example.com/telemetry",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "wsdl_kind": "message",
+          "wsdl_message": "GetSensorStatusInput"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "wsdl_part_type": "boolean"
+            },
+            "field_number": 2,
+            "key": "http://example.com/telemetry.GetSensorStatusInput.includeHistory",
+            "name": "includeHistory",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "wsdl_part_type": "string"
+            },
+            "field_number": 1,
+            "key": "http://example.com/telemetry.GetSensorStatusInput.sensorId",
+            "name": "sensorId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "http://example.com/telemetry.GetSensorStatusInput",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetSensorStatusInput",
+        "namespace": "http://example.com/telemetry",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "wsdl_kind": "message",
+          "wsdl_message": "GetSensorStatusOutput"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "wsdl_part_type": "Reading"
+            },
+            "field_number": 2,
+            "key": "http://example.com/telemetry.GetSensorStatusOutput.lastReading",
+            "name": "lastReading",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "http://example.com/telemetry.Reading",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "wsdl_part_type": "string"
+            },
+            "field_number": 1,
+            "key": "http://example.com/telemetry.GetSensorStatusOutput.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "key": "http://example.com/telemetry.GetSensorStatusOutput",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetSensorStatusOutput",
         "namespace": "http://example.com/telemetry",
         "union_members": [],
         "value_type": null
@@ -522,22 +649,22 @@
     "operations": 3,
     "servers": 3,
     "services": 2,
-    "types": 4
+    "types": 6
   },
   "detection": {
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:0cb48ecd83be1eb7af8be17a8587e04687d0cac7ed7fc1b4303e55b3d2bddc6c",
+  "fingerprint": "sha256:81c124e9e8bfe906f486cfb2d3a01b0d3d697b56b100d504097c2ac7d570bc08",
   "lint": {
-    "findings": 30,
+    "findings": 36,
     "grade": "F",
-    "report_fingerprint": "90da75287f8de909ec06bfee1e2aa6ecdb2f63e8bdeafc3a8b3622e8aecb4f23",
-    "score": 26,
+    "report_fingerprint": "508f2b6cf346d77357b4bcf2208beafe48106f11def0037a300b63339467adb7",
+    "score": 18,
     "severity_counts": {
       "error": 7,
-      "info": 16,
-      "warning": 7
+      "info": 20,
+      "warning": 9
     }
   },
   "snapshot_version": 1

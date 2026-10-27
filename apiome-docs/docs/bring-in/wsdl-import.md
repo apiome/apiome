@@ -17,6 +17,23 @@ operation. You can then search, version, diff and convert it like any other cata
 | A WSDL that imports other files | Upload them together as a `.zip`, `.tar.gz` or `.tar`, or `apiome import wsdl ./service-folder/`. |
 | A running SOAP service | `apiome import wsdl --discover https://host/Service.svc` |
 
+## What the catalog item records
+
+| WSDL | Catalog item |
+| --- | --- |
+| Each `portType` (1.1) or `interface` (2.0) | A service, with one operation per WSDL operation |
+| An operation's input and output | Its request and response messages |
+| An operation's `wsdl:fault` (1.1) or `outfault` (2.0) | An **error** message named after the fault, with the fault's payload |
+| A message with several parts (typical of `rpc` style) | A type named after the message, with one field per part |
+| XSD complex types | Types, with each element's `minOccurs`, `maxOccurs`, `nillable`, `default` and restrictions |
+| Each `port` (1.1) or `endpoint` (2.0) with an address | A server named after the port, with its binding's protocol (`soap11`, `soap12` or `http`) |
+| The SOAP binding of an operation | Its `soapAction`, and `rpc` when the binding uses that style |
+
+Each server also records its WSDL service, binding, port type and SOAP transport, so a description
+with SOAP 1.1 and SOAP 1.2 ports keeps both. When you export the item to WSDL (see
+[Export a specification](../ship/export-a-spec.md)), its bindings, services, ports, faults and
+multi-part messages are written out again.
+
 ## A description split across files
 
 A WSDL often pulls in other documents:

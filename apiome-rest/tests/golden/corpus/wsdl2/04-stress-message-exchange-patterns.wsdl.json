@@ -20,17 +20,26 @@
     "servers": [
       {
         "description": "MepService/HttpEndpoint",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "MepHttpBinding",
+          "wsdl_port_type": "MepInterface",
+          "wsdl_service": "MepService"
+        },
+        "name": "HttpEndpoint",
+        "protocol": "http",
         "url": "https://api.example.com/meps/",
         "variables": []
       },
       {
         "description": "MepService/SoapEndpoint",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "MepSoapBinding",
+          "wsdl_port_type": "MepInterface",
+          "wsdl_service": "MepService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "SoapEndpoint",
+        "protocol": "soap12",
         "url": "https://api.example.com/meps/soap",
         "variables": []
       }
@@ -91,6 +100,24 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
+                "key": "http://example.com/meps.MepInterface.inOptionalOut#fault.GeneralFault",
+                "name": "GeneralFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
                 "key": "http://example.com/meps.MepInterface.inOptionalOut#request",
                 "name": null,
                 "payload": {
@@ -138,6 +165,24 @@
             "key": "http://example.com/meps.MepInterface.inOut",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/meps.MepInterface.inOut#fault.GeneralFault",
+                "name": "GeneralFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -229,6 +274,24 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
+                "key": "http://example.com/meps.MepInterface.robustInOnly#fault.GeneralFault",
+                "name": "GeneralFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
                 "key": "http://example.com/meps.MepInterface.robustInOnly#request",
                 "name": null,
                 "payload": {
@@ -267,15 +330,15 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:9c5ef81dca9331c40b6fa9158a0bcd7e3781fbfdbac554ba07a5f65b8bc2ab8a",
+  "fingerprint": "sha256:902e0f486747a9f00e5c684256dbf0b262b7a42f32bd1cb9d68fe35d5ef716cc",
   "lint": {
-    "findings": 13,
-    "grade": "C",
-    "report_fingerprint": "ae5ae79a96b8494f50b3777a0a97c9e96c367fb135813d711839ab8ff56e4dda",
-    "score": 72,
+    "findings": 16,
+    "grade": "D",
+    "report_fingerprint": "b184d9c2786bd680abdde492ec7a18acb82259addef9d21412221c3bc3bea22d",
+    "score": 69,
     "severity_counts": {
       "error": 0,
-      "info": 8,
+      "info": 11,
       "warning": 5
     }
   },
