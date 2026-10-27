@@ -1,0 +1,29 @@
+FORMAT: 1A
+
+# Shelter API
+
+A small shelter service whose blueprint drafter warns about (MFI-16.3 fixture).
+
+## Pets [/pets{?status}]
+
+### List pets [GET]
+
++ Parameters
+    + status (string, optional) - Filter by adoption status.
+    + limit (number, optional) - Not in the URI template.
+
++ Response 200 (application/json)
+
+        [{"id": 1, "name": "Rex"}]
+
+## Pet [/pets/{id}]
+
+### Adopt [POST]
+
++ Request
+
++ Response 204
+
+## Pet [/pets/{id}]
+
+### Remove [DELETE]

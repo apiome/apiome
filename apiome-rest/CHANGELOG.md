@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.471.0] - 2026-10-26
+
+### Added
+- **API Blueprint lint pack: drafter warnings (MFI-16.3, #3806)** — new `app.apiblueprint_drafter`: `run_drafter` feeds
+  the blueprint to the bundled `drafter` 4.0.0 (`drafter -f json`, document on stdin; a non-zero exit — drafter
+  exits with its first error's code — is read like a zero one) and `read_drafter_annotations` reads the Refract
+  parse result's annotations (severity, code, message, 1-based line / column from the source map). When drafter is
+  available, `ApiblueprintImportSource.parse` attaches them to the document (`drafter_annotations`); the import
+  itself still uses the built-in reader and never depends on drafter (missing tool, timeout or unreadable output →
+  no annotations). The normalizer records `apib_drafter_annotations` (capped at 50) and
+  `apib_drafter_annotation_count` when there are any. New `app.apiblueprint_lint` pack (`apiblueprint`):
+  `apiblueprint.drafter-error` (error, transparency entry + `catalog_apiblueprint_drafter` evaluation fixture
+  carrying a captured drafter result) and `apiblueprint.drafter-warning` (warning), at `apib:<line>:<column>` with
+  drafter's code; seeded by V329. API Blueprint leaves the planned-pack list. New drafter 4.0.0 recordings
+  (`apiblueprint_drafter/recordings`). OpenAPI 1.335.0.
+
 ## [1.470.0] - 2026-10-26
 
 ### Added

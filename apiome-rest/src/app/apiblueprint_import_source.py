@@ -6,9 +6,11 @@ documents importable into the catalog (store-raw).
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Optional
 
 from . import apiblueprint_normalizer  # noqa: F401 — self-registers the normalizer
+from .apiblueprint_drafter import drafter_available, run_drafter
 from .apiblueprint_parser import (
     ApiblueprintDocument,
     ApiblueprintParseError,
@@ -64,10 +66,18 @@ class ApiblueprintImportSource(ImportSource, register=True):
         return NO_MATCH
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> ApiblueprintDocument:
+        """Parse with the built-in reader, then attach drafter's annotations when it is available.
+
+        drafter (MFI-16.3, :mod:`app.apiblueprint_drafter`) is the reference parser; its warnings and
+        errors are the format's lint. The import never depends on it.
+        """
         try:
-            return parse_apiblueprint(raw, source_label=source_label)
+            document = parse_apiblueprint(raw, source_label=source_label)
         except ApiblueprintParseError as exc:
             raise ImportSourceError(str(exc)) from exc
+        if not drafter_available():
+            return document
+        return replace(document, drafter_annotations=tuple(run_drafter(raw)))
 
     def parse_fileset(
         self,

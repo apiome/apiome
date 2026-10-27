@@ -581,6 +581,13 @@
       "expected_blocking_rule_ids": [
         "raml.shacl-violation"
       ]
+    },
+    {
+      "id": "catalog/apiblueprint-drafter-error",
+      "kind": "catalog_apiblueprint_drafter",
+      "expected_blocking_rule_ids": [
+        "apiblueprint.drafter-error"
+      ]
     }
   ]
 }

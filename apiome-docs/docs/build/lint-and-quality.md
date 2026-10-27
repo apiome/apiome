@@ -148,6 +148,27 @@ up to 50, with `avro_lint_issue_count`) and reported at a path such as
 `avro:/com.acme.Account/fields/balance/default`. IDL message parameters are checked too
 (`avro:/messages/open/request/limit`).
 
+### API Blueprint: drafter's warnings
+
+An API Blueprint (`.apib`) is imported by Apiome's own reader. On a server with the bundled
+**drafter** (the reference API Blueprint parser, 4.0.0), the blueprint is also run through drafter,
+and everything drafter reports becomes a lint finding. Zero warnings is a good blueprint.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| [`apiblueprint.drafter-warning`](./lint-rules.md#apiblueprint-drafter-warning) | warning | A drafter warning: a parameter missing from the URI template, a resource defined twice, an empty request body, an action with no response. |
+| [`apiblueprint.drafter-error`](./lint-rules.md#apiblueprint-drafter-error) | error | A drafter error: a data structure inheriting from a type that is not defined (or from itself), tabs in the source. Other API Blueprint tools reject such a blueprint. |
+
+Each finding is at `apib:<line>:<column>`, and its message starts with drafter's annotation code:
+
+```text
+apiblueprint.drafter-warning  apib:9:1  (8) parameter 'limit' is not found within the URI template '/pets{?status}' for 'Pets'
+```
+
+The import never depends on drafter: a server without it imports the blueprint the same way and
+reports no `apiblueprint.*` findings. drafter's results are listed on the catalog item
+(`apib_drafter_annotations`, up to 50, with `apib_drafter_annotation_count`) when there are any.
+
 ### Inferred sources can block publish
 
 The `provenance` pack has one rule, `provenance.inferred-construct-ratio`. It reports what share
