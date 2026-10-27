@@ -1,0 +1,19 @@
+---
+slug: avro-lint-pack
+title: Avro lint pack
+description: Avro schemas are linted for defaults, unions, aliases and docs.
+authors: [apiome]
+---
+
+Avro schemas (`.avsc` and IDL) now have their own lint pack. It checks each schema as written, so
+the mistakes that only show up when data is read are caught at import.
+[Avro schemas are checked as written](/build/lint-and-quality#avro-schemas-are-checked-as-written).
+
+{/* truncate */}
+
+- **Defaults.** A default that is not a value of its type, such as `"default": "zero"` on a `long`,
+  or `null` on a `["string", "null"]` union (a union's default matches its first branch), is an error.
+- **Optional unions.** Optional fields should be `["null", T]` with `"default": null`; anything else
+  is a warning.
+- **Unions and aliases.** Nested unions, repeated branches, and invalid or clashing aliases are errors.
+- **Docs.** A `doc` on an anonymous type, or one that is not a string, is flagged because tools drop it.

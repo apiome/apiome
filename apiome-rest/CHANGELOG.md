@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.467.0] - 2026-10-26
+
+### Added
+- **Avro lint pack (MFI-12.5, #3786)** — new `app.avro_hygiene` checks the parsed Avro document (`.avsc` and IDL)
+  as written, since union order, raw defaults, `.avsc` aliases and misplaced docs are not in the canonical model:
+  defaults that are not values of their type (a union's must match its first branch; enum defaults must be symbols;
+  int/long ranges, fixed sizes, nested record/array/map values; unknown references are not judged), nested or
+  repeated union branches, two-branch optional unions written `[T, "null"]` without a default or `["null", T]`
+  without `"default": null`, invalid / conflicting / redundant field and type aliases, and `doc`s that are not
+  strings or sit on anonymous types. IDL message parameters are checked too. The normalizer records
+  `avro_lint_issues` (`rule`, `path`, `message`; capped at 50) and `avro_lint_issue_count`, omitted when clean (corpus
+  goldens unchanged). New `app.avro_lint` pack (`avro`): `avro.invalid-default`, `avro.invalid-union`,
+  `avro.invalid-alias`, `avro.alias-conflict` (errors, with blocking-rule transparency entries and evaluation
+  fixtures), `avro.optional-union-null-first`, `avro.optional-union-missing-default`, `avro.doc-ignored` (warnings),
+  `avro.redundant-alias` (info); seeded into the built-in style guide by V325. Avro leaves the planned-pack list.
+  OpenAPI 1.331.0.
+
 ## [1.466.0] - 2026-10-26
 
 ### Added

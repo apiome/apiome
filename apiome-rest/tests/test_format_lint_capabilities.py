@@ -21,7 +21,6 @@ def test_matrix_covers_planned_formats_with_linked_issues():
         ("smithy", RELATED_FORMAT_LINT_ISSUES["smithy"]),
         ("raml", RELATED_FORMAT_LINT_ISSUES["raml"]),
         ("typespec", RELATED_FORMAT_LINT_ISSUES["typespec"]),
-        ("avro", RELATED_FORMAT_LINT_ISSUES["avro"]),
         ("apiblueprint", RELATED_FORMAT_LINT_ISSUES["apiblueprint"]),
         ("wsdl", RELATED_FORMAT_LINT_ISSUES["wsdl"]),
     ):
@@ -38,6 +37,14 @@ def test_odata_has_a_native_pack_since_mfi_11_1():
     row = {r.format: r for r in build_format_lint_capabilities()}["odata"]
     assert row.mode == MODE_NATIVE
     assert row.native_pack == "odata"
+    assert row.related_issues == ()
+
+
+def test_avro_has_a_native_pack_since_mfi_12_5():
+    # MFI-12.5 (#3786) registered the `avro` pack, so no planned-pack issue is linked any more.
+    row = {r.format: r for r in build_format_lint_capabilities()}["avro"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "avro"
     assert row.related_issues == ()
 
 

@@ -125,6 +125,29 @@ item's gate on upgrade. A tenant that wants a data contract **required before pu
 enables the `data-contract.*` ids in a style guide at `error`, and assigns that guide to the
 project — re-scoring under the guide is what makes the requirement binding.
 
+### Avro schemas are checked as written
+
+An Avro schema (`.avsc` or IDL `.avdl`) is linted by the `avro` pack, which checks the schema
+**as written**: the order of a union's branches, the exact default, and aliases, which the
+catalog's common model does not keep. Missing docs are still the common pack's
+`common.*-missing-description` rules.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| [`avro.invalid-default`](./lint-rules.md#avro-invalid-default) | error | A default that is not a value of its type, such as `"default": "zero"` on a `long`, or an enum default that is not a symbol. A union's default must match its **first** branch. |
+| [`avro.invalid-union`](./lint-rules.md#avro-invalid-union) | error | A union inside a union, or a union that lists the same type twice. |
+| [`avro.invalid-alias`](./lint-rules.md#avro-invalid-alias) | error | An alias that is not an Avro name, such as `account-id`. |
+| [`avro.alias-conflict`](./lint-rules.md#avro-alias-conflict) | error | An alias that is also another field's (or named type's) name or alias. |
+| [`avro.optional-union-null-first`](./lint-rules.md#avro-optional-union-null-first) | warning | An optional field written `["string", "null"]` with no default. It cannot default to `null`; write `["null", "string"]` with `"default": null`. |
+| [`avro.optional-union-missing-default`](./lint-rules.md#avro-optional-union-missing-default) | warning | An optional field `["null", "string"]` with no `"default": null`, so readers of older data cannot fill it in. |
+| [`avro.doc-ignored`](./lint-rules.md#avro-doc-ignored) | warning | A `doc` that is not a string, or one on an anonymous type (`{"type": "string", "doc": "…"}`) rather than on the field, where tools drop it. |
+| [`avro.redundant-alias`](./lint-rules.md#avro-redundant-alias) | info | An alias equal to the name it aliases. |
+
+The import never fails on these: each problem is recorded on the catalog item (`avro_lint_issues`,
+up to 50, with `avro_lint_issue_count`) and reported at a path such as
+`avro:/com.acme.Account/fields/balance/default`. IDL message parameters are checked too
+(`avro:/messages/open/request/limit`).
+
 ### Inferred sources can block publish
 
 The `provenance` pack has one rule, `provenance.inferred-construct-ratio`. It reports what share

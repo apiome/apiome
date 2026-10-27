@@ -497,6 +497,34 @@
       "expected_blocking_rule_ids": [
         "odata.entity-key"
       ]
+    },
+    {
+      "id": "catalog/avro-invalid-default",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "avro.invalid-default"
+      ]
+    },
+    {
+      "id": "catalog/avro-invalid-union",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "avro.invalid-union"
+      ]
+    },
+    {
+      "id": "catalog/avro-invalid-alias",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "avro.invalid-alias"
+      ]
+    },
+    {
+      "id": "catalog/avro-alias-conflict",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "avro.alias-conflict"
+      ]
     }
   ]
 }

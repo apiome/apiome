@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
+from .avro_hygiene import check_avro_document
 from .avro_parser import AvroDocument, AvroNamedSchema
 from .canonical_model import (
     ApiIdentity,
@@ -639,6 +640,13 @@ class AvroNormalizer(Normalizer, register=True):
             extras["avro_protocol"] = _qualified_name(protocol.name, protocol.namespace)
             if protocol.properties:
                 extras["avro_protocol_properties"] = dict(protocol.properties)
+        # MFI-12.5: hygiene issues read from the schema as written (union order, defaults,
+        # aliases, docs the canonical form does not keep). Omitted when clean, so a clean
+        # schema's model is unchanged.
+        hygiene, hygiene_total = check_avro_document(source)
+        if hygiene_total:
+            extras["avro_lint_issues"] = [issue.as_dict() for issue in hygiene]
+            extras["avro_lint_issue_count"] = hygiene_total
 
         identity_name = protocol.name if protocol is not None else root.name
         identity_namespace = (
