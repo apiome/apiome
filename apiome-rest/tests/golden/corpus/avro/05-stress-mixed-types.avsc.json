@@ -4,7 +4,31 @@
     "channels": [],
     "description": "A telemetry envelope exercising unions, maps, fixed, aliases, and logical types.",
     "extras": {
-      "avro_root": "com.example.telemetry.TelemetryEnvelope"
+      "avro_pcf": {
+        "com.example.telemetry.Md5": {
+          "crc64": "049c1904bda3b6d8",
+          "sha256": "0879eda1309a3981c7d002f875c84b72dde2019a1f1bf46780035ae6d54b9a64"
+        },
+        "com.example.telemetry.TelemetryEnvelope": {
+          "crc64": "fbc8f2f83603e50c",
+          "sha256": "eb7c90924dd909cb1231ab258d569b217d7acf5830ce9ff8f40c3274a346a610"
+        },
+        "com.example.telemetry.readings.CounterReading": {
+          "crc64": "6d884f98a3036cf0",
+          "sha256": "e901dcad6b4ab954c5498de7b149ef742e0593729ae09684611ce4b192aa9030"
+        },
+        "com.example.telemetry.readings.GaugeReading": {
+          "crc64": "132d12c193f0da50",
+          "sha256": "c207d6217f7ef473acee7854c168cb9a7511d7129884307faa4c83417df4ec55"
+        }
+      },
+      "avro_root": "com.example.telemetry.TelemetryEnvelope",
+      "avro_semantic_hashes": {
+        "com.example.telemetry.Md5": "c161715c7beb6bcfb5d643539971fd7f7ddff3f26aeb45899ccdbe343c25e3b5",
+        "com.example.telemetry.TelemetryEnvelope": "a58db23d5012d4be07ab589b96c263f49706a37fbd330653a7806cf94dc026ad",
+        "com.example.telemetry.readings.CounterReading": "ba30c0c3946bef59c55c7320323572456ff967f8190fe69b3e0d56e4f97f3f8d",
+        "com.example.telemetry.readings.GaugeReading": "6f75240c35994dbfd0211dc25975b67db1b07058819d54ea91890292eea27aa5"
+      }
     },
     "format": "avro",
     "identity": {
@@ -427,7 +451,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:1ab9c04a8ae9d9fe77a350765087643290bb6e0c9065cc1c3f5bee44ad9243f1",
+  "fingerprint": "sha256:b5519524e4ccce87c59747b6b89b410707e7dae4e7d5a62e201bcad1f2f06b28",
   "lint": {
     "findings": 8,
     "grade": "B",

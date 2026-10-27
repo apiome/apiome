@@ -234,6 +234,13 @@ step's OpenAPI compatibility grade (`app.typespec_versioning`, `typespec_version
 MFI-15.4 (#3802) is built: the `raml` breaking-change classifier (`app.raml_breaking`) grades parameter, property and
 enum moves and applied resource-type / trait changes with a custom ruleset (RAML has no official one).
 
+MFI-12.1 (#3782) is built: `app.avro_fingerprint` computes the Parsing Canonical Form of every named Avro type
+(references inlined at first use; CRC-64-AVRO and SHA-256, matching fastavro on the corpus) and a semantic SHA-256
+that keeps `doc` / `default` / `aliases` / `order` / `logicalType`. They are recorded in extras `avro_pcf` and
+`avro_semantic_hashes`; the latter is in `fingerprint.UNHASHED_EXTRAS`, so a doc-only edit mints no version.
+`AvroPcfHasher` fills `FingerprintResult.format_hash` with the root's PCF SHA-256 (none for an IDL protocol). The
+schema registry still keys on the canonical-model fingerprint.
+
 MFI-17.4 (#3811) is built: the `smithy` breaking-change classifier (`app.smithy_breaking`, id `smithy-diff`) runs
 `smithy diff --format csv` (`app.smithy_ast.run_smithy_diff`) and maps ERROR / DANGER / WARNING / NOTE to breaking /
 dangerous / dangerous / safe on the change each finding's shape joins; findings that join no change land in the new
@@ -243,8 +250,7 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 
 **Breaking-change rules:** every planned format classifier has shipped.
 
-**Avro:** PCF fingerprint [#3782](https://github.com/apiome/apiome/issues/3782) and the
-compatibility engine [#3785](https://github.com/apiome/apiome/issues/3785)
+**Avro:** the compatibility engine [#3785](https://github.com/apiome/apiome/issues/3785)
 (`schema_registry.COMPATIBILITY_RULES_SHIPPED` is empty).
 
 **Other:** JSON:API / HAL / Hydra convention tagging and lint

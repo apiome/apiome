@@ -1,0 +1,18 @@
+---
+slug: avro-pcf-fingerprints
+title: Avro Parsing Canonical Form fingerprints
+description: Avro schemas record their PCF hashes and a semantic hash that keeps docs and defaults.
+authors: [apiome]
+---
+
+Every Avro schema in the catalog now carries Avro's own identity, the Parsing Canonical Form,
+alongside a richer semantic hash. [Import an Apache Avro schema](/bring-in/avro-import).
+
+{/* truncate */}
+
+- **PCF hashes.** Each named type in a `.avsc` or `.avdl` document records the CRC-64-AVRO and
+  SHA-256 of its Parsing Canonical Form, the same values Avro libraries compute.
+- **Semantic hash.** A SHA-256 that also keeps `doc`, `default`, `aliases`, `order` and
+  `logicalType`, which PCF strips, so it changes whenever anything in the schema does.
+- **Doc-only edits.** A `doc`-only edit changes the semantic hash but not the PCF, and creates no
+  new catalog version.

@@ -4,8 +4,42 @@
     "channels": [],
     "description": "Root of the set: imports another IDL file and a generated .avsc schema, then uses\ntypes from both. The adapter must resolve both import kinds across the fileset.",
     "extras": {
+      "avro_pcf": {
+        "com.example.common.Address": {
+          "crc64": "fbd13f2ccdc9fcfe",
+          "sha256": "b078cf612d684a4db54ecb9d6067a4cfe9473c2863738664d2f855c479f22097"
+        },
+        "com.example.common.Money": {
+          "crc64": "ec28f399d0a615c7",
+          "sha256": "c67e07794a275f555c355f787391f220a9b10a20e1635edc2b89239f9999efa0"
+        },
+        "com.example.common.Weight": {
+          "crc64": "bbf5e7279486a706",
+          "sha256": "b4c4bd0a6325e3186a83b066c607af4ed31697ce3e7d4bd62b78dffd6935a8fe"
+        },
+        "com.example.shipping.Parcel": {
+          "crc64": "e5e9c0a9e4bc5caa",
+          "sha256": "11c6a8fb9e5675ea7465b67d61fb44e62ade95c4d06fd14233f093163dda7e38"
+        },
+        "com.example.shipping.ShipmentRequest": {
+          "crc64": "01d1abe62ca1e681",
+          "sha256": "8fbd30932839028a04f1eb7d3c6d9c7f1c275ef5ac11f7f62a13ad7e6316ce76"
+        },
+        "com.example.shipping.ShipmentResponse": {
+          "crc64": "f33a590510422d96",
+          "sha256": "bf3f9d628e4c07d390dc8eb20fcbee233f27484783230b6127052854df50de24"
+        }
+      },
       "avro_protocol": "com.example.shipping.ShippingService",
       "avro_root": "com.example.shipping.ShipmentRequest",
+      "avro_semantic_hashes": {
+        "com.example.common.Address": "e033ff19953d865c78d2cd75268923ab1414b39f0dfe924fa517c99efc5b702b",
+        "com.example.common.Money": "7a140af95681b82593e9095629017b94be0b7aaf6851c8dddb9a6ca85207f049",
+        "com.example.common.Weight": "937f9204300c14cf1f0a7d2c07a656ea8bd6a1f336cc707c65ed4fe8af14ff58",
+        "com.example.shipping.Parcel": "572b0da76424ea4bdd521920cb5a6cba2e1a48226109f8dfd268f493c8b383f3",
+        "com.example.shipping.ShipmentRequest": "b486008b00ca485c190f61457bddae0a77c8f05ad39f853f503bd97839073c11",
+        "com.example.shipping.ShipmentResponse": "8416c94c03488b729db71aad958e5902892d7409d05c31d7d1712e55e0887151"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -563,7 +597,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:3629a10840845158e8dd2ffb745b3ec50f19b6245b9581f78ec339898de8fd72",
+  "fingerprint": "sha256:9765d5646e42921e3ac690eadfbde1f4710afde3ad493b28332a66341ad9264d",
   "lint": {
     "findings": 28,
     "grade": "F",

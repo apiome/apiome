@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.342.0
+  version: 1.343.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -131434,7 +131434,7 @@ components:
         fingerprintKind:
           type: string
           title: Fingerprintkind
-          description: '`canonical-model` today; `avro-pcf` once MFI-12.1 ships.'
+          description: '`canonical-model` today; `avro-pcf` is reserved for Avro Parsing Canonical Form identity.'
           example: a1b2c3d4e5f6789012345678901234ab
         references:
           items: {}

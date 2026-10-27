@@ -4,11 +4,40 @@
     "channels": [],
     "description": "Grammar corners: every annotation, logical type, and declaration form the IDL admits.",
     "extras": {
+      "avro_pcf": {
+        "com.example.stress.Corners": {
+          "crc64": "001423774e58b0bd",
+          "sha256": "320ea1b2638488c845cb871f5b56c42cb3f4b6868cd3aea8630c4e0b71ce1335"
+        },
+        "com.example.stress.Digest": {
+          "crc64": "144680c2013ba3ec",
+          "sha256": "da57a5b760f110501e4cd90f172f3cb17cb0de10374facdf6b792d689f2946df"
+        },
+        "com.example.stress.Priority": {
+          "crc64": "13e94034a856fbf6",
+          "sha256": "7d601cb28bd6f05e8d88f15a59265ba9a67d637a92246980fd065eab175ae080"
+        },
+        "com.example.stress.StressError": {
+          "crc64": "429d4c1305890984",
+          "sha256": "d05708a5bc4d7a7a7d066d6237fb14ba11ef64ecfdcd69cdb03a17c6a7181a44"
+        },
+        "com.example.stress.Temporal": {
+          "crc64": "04e1937837a1b591",
+          "sha256": "b0229e68d15f09a10c0d6aaa4008943c7dade72446a25e177737c399ccc91160"
+        }
+      },
       "avro_protocol": "com.example.stress.StressProtocol",
       "avro_protocol_properties": {
         "version": "3"
       },
       "avro_root": "com.example.stress.Digest",
+      "avro_semantic_hashes": {
+        "com.example.stress.Corners": "3aea572e3181b28e81557a6b87f29612cfbdb886da10be239ca3b9f464292332",
+        "com.example.stress.Digest": "c5b9cb3154a3b792ee26fb7a470c256cc2cc4887f9df8fa851f7e1a8610de281",
+        "com.example.stress.Priority": "1123cf16f0550bd12fdbb95c804ef1b83053aad68682c51913d65754f8d6f237",
+        "com.example.stress.StressError": "fdbd79f7d0c02021281f618881c891a7ed97d42af7c9795db8aea1443521257a",
+        "com.example.stress.Temporal": "95058b4b66bd52976fa37d003988a5b20ceecdc3058ac5679a1e9095107c239b"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -823,7 +852,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:fc71f4825ff8d86d3df3eb8b857a76a5fa3f2a4c0c222817e18c6bbaab7eb436",
+  "fingerprint": "sha256:a6835f5feafd1d1678ae96b4ba1b44934f7acc255706581f9e78cd02412218b5",
   "lint": {
     "findings": 27,
     "grade": "F",

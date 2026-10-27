@@ -4,7 +4,21 @@
     "channels": [],
     "description": "A customer order.",
     "extras": {
-      "avro_root": "com.example.order.Order"
+      "avro_pcf": {
+        "com.example.order.LineItem": {
+          "crc64": "32f5929c40749ed8",
+          "sha256": "c497922bbe50255fcaf10de585a420de14fb493e0a261421f89ba4664cc4a455"
+        },
+        "com.example.order.Order": {
+          "crc64": "3e671c271877dace",
+          "sha256": "ae43e10bbf739970a1c02b18d88417236d4644d6fa7aacd340c59d60c52e6853"
+        }
+      },
+      "avro_root": "com.example.order.Order",
+      "avro_semantic_hashes": {
+        "com.example.order.LineItem": "d05532f7cebe4934bea4a4cfe4951243c649c5ca751a96aa20741a3948639538",
+        "com.example.order.Order": "64a0cffaa03ef63391f0a256de72622aef9ff7e4190bf0fddb64fd4663e286e6"
+      }
     },
     "format": "avro",
     "identity": {
@@ -246,7 +260,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:e7db1a32a7873381d5d5a188eace1b6c323b90b15e4553fe7d603ca5b40c6a08",
+  "fingerprint": "sha256:8df3844278ad9cb54c5bff479cbbfbcc4b188d06354f7558b64e1df6cd428eb3",
   "lint": {
     "findings": 0,
     "grade": "A",

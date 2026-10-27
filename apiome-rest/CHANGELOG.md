@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.479.0] - 2026-10-27
+
+### Added
+- **Avro Parsing Canonical Form fingerprints (MFI-12.1, #3782)** — new `app.avro_fingerprint`. Every named type of an
+  Avro document (`.avsc` or IDL) is fingerprinted with the named types it references inlined at first use: its
+  Parsing Canonical Form (`parsing_canonical_form`, the Avro 1.12 transformations; matches fastavro on the corpus)
+  hashed with CRC-64-AVRO (`crc64_avro`) and SHA-256, and a semantic SHA-256 over the same normalization that keeps
+  `doc`, `default`, `aliases`, `order`, `logicalType` and custom attributes (`semantic_form`). The Avro normalizer
+  records them in extras `avro_pcf` (`{full name: {crc64, sha256}}`) and `avro_semantic_hashes`
+  (`{full name: sha256}`). A doc-only edit flips the semantic hash but not the PCF.
+- **`AvroPcfHasher`** — the `avro` `FingerprintHasher`: `FingerprintResult.format_hash` is the root schema's PCF
+  SHA-256 (`format_algorithm` `avro-parsing-canonical-form-sha256`); an IDL protocol has none.
+- **`fingerprint.UNHASHED_EXTRAS`** — top-level extras recorded on the model but left out of the version fingerprint
+  and the diff (`avro_semantic_hashes`), so a doc-only Avro edit mints no new version.
+
+### Changed
+- `FingerprintHasher.hash` may return `None` for an artifact with no format hash; `format_hash` and
+  `format_algorithm` then stay unset.
+- Avro catalog items gain the `avro_pcf` extras, so each one's canonical fingerprint changes once: its first
+  re-import after this release records a new version.
+- The schema registry's `fingerprintKind` description no longer promises `avro-pcf` with this release; registration
+  still keys on the canonical-model fingerprint.
+
 ## [1.478.0] - 2026-10-26
 
 ### Added

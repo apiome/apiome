@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
+from .avro_fingerprint import fingerprint_types
 from .avro_hygiene import check_avro_document
 from .avro_parser import AvroDocument, AvroNamedSchema
 from .canonical_model import (
@@ -640,6 +641,13 @@ class AvroNormalizer(Normalizer, register=True):
             extras["avro_protocol"] = _qualified_name(protocol.name, protocol.namespace)
             if protocol.properties:
                 extras["avro_protocol_properties"] = dict(protocol.properties)
+        # MFI-12.1: Parsing Canonical Form hashes and the semantic hash of every named type,
+        # keyed by full name; the document's own are its root's (``avro_root``). The semantic
+        # hashes flip on a doc-only edit, so they are kept out of the version fingerprint
+        # (``app.fingerprint.UNHASHED_EXTRAS``) and a doc-only edit mints no version.
+        type_fingerprints = fingerprint_types(source)
+        extras["avro_pcf"] = {fp.name: fp.pcf_dict() for fp in type_fingerprints}
+        extras["avro_semantic_hashes"] = {fp.name: fp.semantic_sha256 for fp in type_fingerprints}
         # MFI-12.5: hygiene issues read from the schema as written (union order, defaults,
         # aliases, docs the canonical form does not keep). Omitted when clean, so a clean
         # schema's model is unchanged.
