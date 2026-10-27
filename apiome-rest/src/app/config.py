@@ -1664,6 +1664,72 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Catalog item refresh (MFI-31.1, #4398). A background async loop (app.catalog_refresh_sweep)
+    # re-discovers the live source of every catalog item whose cadence (hourly/daily/weekly) has
+    # elapsed, and records the outcome on apiome.catalog_item_refresh.
+    # catalog_refresh_enabled             Global kill switch: False halts every scheduled and
+    #                                     manual check (the tenant switch is
+    #                                     tenants.catalog_refresh_enabled).
+    # catalog_refresh_tick_seconds        How often the sweep looks for due items; 0 disables the
+    #                                     loop entirely.
+    # catalog_refresh_max_concurrency     Global cap on checks running at once in one tick.
+    # catalog_refresh_host_delay_seconds  Politeness: the minimum gap between two checks against
+    #                                     the same host, so items sharing a server are spaced out.
+    # catalog_refresh_timeout_seconds     Wall-clock ceiling on one check; an overrun is a failure.
+    # catalog_refresh_backoff_base_seconds / _max_seconds
+    #                                     Exponential backoff after a failed check: the Nth
+    #                                     consecutive failure defers the item by
+    #                                     base * 2**(N-1), capped at the max.
+    catalog_refresh_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_ENABLED",
+            "catalog_refresh_enabled",
+        ),
+    )
+    catalog_refresh_tick_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_TICK",
+            "catalog_refresh_tick_seconds",
+        ),
+    )
+    catalog_refresh_max_concurrency: int = Field(
+        default=4,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_MAX_CONCURRENCY",
+            "catalog_refresh_max_concurrency",
+        ),
+    )
+    catalog_refresh_host_delay_seconds: float = Field(
+        default=2.0,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_HOST_DELAY",
+            "catalog_refresh_host_delay_seconds",
+        ),
+    )
+    catalog_refresh_timeout_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_TIMEOUT",
+            "catalog_refresh_timeout_seconds",
+        ),
+    )
+    catalog_refresh_backoff_base_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_BACKOFF_BASE",
+            "catalog_refresh_backoff_base_seconds",
+        ),
+    )
+    catalog_refresh_backoff_max_seconds: int = Field(
+        default=86400,  # 1 day
+        validation_alias=AliasChoices(
+            "APIOME_CATALOG_REFRESH_BACKOFF_MAX",
+            "catalog_refresh_backoff_max_seconds",
+        ),
+    )
+
     # Scheduled catalog digest reports (V2-MCP-33.5 / MCAT-19.5, #4654). A background async loop
     # (app.mcp_catalog_digest_sweep) compiles a periodic per-tenant digest — new endpoints, grade
     # movements, breaking changes, discovery-health problems — over the window since the tenant's

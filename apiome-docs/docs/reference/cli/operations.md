@@ -1,7 +1,7 @@
 ---
 title: "apiome operations"
 description: "Inspect OpenAPI operations for a project version."
-sidebar_position: 24
+sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

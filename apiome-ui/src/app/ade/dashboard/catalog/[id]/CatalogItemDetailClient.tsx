@@ -107,6 +107,7 @@ import {
   CatalogConvertedStrip,
   CatalogItemOverview,
   CatalogItemProvenance,
+  CatalogItemRefreshCard,
   catalogDetailActions,
   catalogDetailBreadcrumb,
   catalogDetailIdLine,
@@ -822,6 +823,11 @@ export function CatalogItemDetailClient({
             createdAt={item.created_at}
             updatedAt={item.updated_at}
             publishable={item.publishable ?? false}
+          />
+          <CatalogItemRefreshCard
+            item={{ id: item.id, name: item.name }}
+            active={activeTab === 'provenance'}
+            canEdit={actions.refresh.shown}
           />
         </TabPanel>
 

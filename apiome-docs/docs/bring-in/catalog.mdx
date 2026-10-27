@@ -102,7 +102,7 @@ Eight tabs follow:
 | **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot. An entity Apiome inferred or synthesized carries a badge, and a **Provenance** filter narrows the entities to one kind — see [Declared, inferred and synthesized](./inference-provenance.mdx). A source that carries its own tests, such as a [SoapUI project](./soapui-import.md), adds a **Declared tests** group |
 | **Format details** | The payload's native structure in its own vocabulary — see [Catalog format details](./catalog-format-details.md) |
 | **Source & code** | The raw imported source, read-only, with **“Download raw source”** |
-| **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item), **Secret scrub** (what intake redacted — see [Secrets in collections and captures](./collection-secret-scrubbing.md)) and **Routing**, why the import stored it in the catalog |
+| **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item), **Secret scrub** (what intake redacted — see [Secrets in collections and captures](./collection-secret-scrubbing.md)) and **Routing**, why the import stored it in the catalog. Under them, the **Live refresh** card re-checks a GraphQL or gRPC item against its live endpoint — see [Keep a catalog item fresh](./catalog-refresh.mdx) |
 | **Conversions** | Every conversion to OpenAPI, with its evidence |
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
@@ -242,11 +242,16 @@ Every control on the list and on an item's page works from the keyboard.
   and `convention`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
   (the count per value), `PUT /v1/catalog/{tenant}/{item}/categories` (`{ "domain", "tags" }`),
   `GET /v1/catalog/{tenant}/{item}`,
-  `GET …/{item}/analysis|lint|source`, `POST …/{item}/convert`, `GET …/{item}/conversions` — see the
+  `GET …/{item}/analysis|lint|source`, `POST …/{item}/convert`, `GET …/{item}/conversions`,
+  `GET|PUT|DELETE …/{item}/refresh` and `POST …/{item}/refresh/check` — see the
   [API reference](../reference/api-reference.md).
+- Live refresh: `apiome catalog refresh show|set|check|off <item-id>` and
+  `apiome catalog refresh-policy show|set` — see [Keep a catalog item fresh](./catalog-refresh.mdx).
 
 ## Where next
 
+- [Keep a catalog item fresh](./catalog-refresh.mdx) — re-check a GraphQL or gRPC item against its
+  live endpoint on a schedule
 - [Search across formats](./search-across-formats.md) — find an operation, type or message in
   every catalog item and Project at once
 - [Import wizard](./import-wizard.mdx)

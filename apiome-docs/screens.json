@@ -424,6 +424,26 @@
       "scrollTo": "[data-testid=\"catalog-detail-secret-scrub\"]"
     },
     {
+      "id": "catalog-item-refresh",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/provenance-refresh.html",
+      "scrollTo": "[data-testid=\"catalog-detail-refresh\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/detail/CatalogItemRefreshCard.tsx",
+        "apiome-ui/src/app/components/ade/catalog/detail/catalogRefreshModel.ts"
+      ]
+    },
+    {
+      "id": "catalog-item-refresh-dialog",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/refresh-dialog.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/detail/CatalogRefreshDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-item-x12",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",

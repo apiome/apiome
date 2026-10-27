@@ -11,3 +11,5 @@ export * from './catalogItemView';
 export * from './CatalogItemOverview';
 export * from './CatalogItemProvenance';
 export * from './CatalogConvertedStrip';
+export * from './CatalogItemRefreshCard';
+export * from './catalogRefreshModel';

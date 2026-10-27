@@ -1,7 +1,7 @@
 ---
 title: "apiome login"
 description: "Sign the CLI in through the browser and save a 14-day API key."
-sidebar_position: 20
+sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

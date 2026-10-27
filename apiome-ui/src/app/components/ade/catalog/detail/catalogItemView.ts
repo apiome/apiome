@@ -174,6 +174,8 @@ export interface CatalogDetailActions {
   viewCode: { shown: boolean };
   /** Categorize… / Edit categories — hidden once the item is deleted. */
   categorize: { shown: boolean };
+  /** Live refresh's Set up / Edit / Check now / Turn off (MFI-31.1) — hidden once the item is deleted. */
+  refresh: { shown: boolean };
 }
 
 /**
@@ -206,6 +208,7 @@ export function catalogDetailActions(
     export: { shown: live },
     viewCode: { shown: true },
     categorize: { shown: live && can('projects:edit') },
+    refresh: { shown: live && can('projects:edit') },
   };
 }
 

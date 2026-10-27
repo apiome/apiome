@@ -10,6 +10,7 @@ from apiome_cli.client.errors import handle_cli_failure, is_verbose
 from apiome_cli.commands import (
     auth,
     browse,
+    catalog,
     checks,
     classes,
     compat,
@@ -97,6 +98,7 @@ app.add_typer(compat.app, name="compat")
 app.add_typer(contract.app, name="contract")
 app.add_typer(verify.app, name="verify")
 app.add_typer(checks.app, name="checks")
+app.add_typer(catalog.app, name="catalog")
 app.add_typer(connectors.app, name="connectors")
 app.add_typer(teams.app, name="teams")
 app.add_typer(graph.app, name="graph")
