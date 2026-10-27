@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.349.0
+  version: 1.350.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5258,20 +5258,23 @@ paths:
       - primitives
       summary: Import Primitives
       description: "Import primitives from a JSON Schema document or an Apiome type-def\
-        \ bundle.\n\nFor ``source_kind='json-schema'`` (the default) and ``'openapi'``,\
-        \ type definitions are\nextracted from the document's ``$defs`` / ``definitions``\
-        \ and each becomes a primitive.\nFor ``source_kind='type-def-bundle'`` (#3462),\
-        \ the request ``schema`` is expanded as an\nApiome type-definition bundle\
-        \ — its ``types`` (or ``$defs`` / ``definitions``)\ncontainer is read into\
-        \ many interlinked types, each committed as a primitive with its\ninter-type\
-        \ ``$ref`` edges captured in the ``refs`` JSONB column for the rewrite stage\n\
-        (#3463). A bundle of N types imports N rows; a malformed bundle is rejected\
-        \ with a clear\n400 error.\n\nSupports authentication via JWT token or API\
-        \ key.\nWhen using JWT, the created_by field will be set to the authenticated\
-        \ user.\n\nArgs:\n    tenant_slug: The tenant slug\n    request: Import request\
-        \ with the JSON Schema document or bundle\n    auth_data: Authentication data\
-        \ (injected by dependency)\n\nReturns:\n    Summary of imported primitives\
-        \ plus the id of the recorded provenance row."
+        \ bundle.\n\nFor ``source_kind='json-schema'`` (the default), type definitions\
+        \ are extracted from the\ndocument's root schema and its ``$defs`` / ``definitions``,\
+        \ and each becomes a primitive.\nFor ``source_kind='openapi'`` (#3465), each\
+        \ OpenAPI 3.1 ``components.schemas`` entry becomes\na primitive, and its ``#/components/schemas/X``\
+        \ refs are rewritten to relative registry refs\n(``./x``) stored in the ``refs``\
+        \ JSONB column.\nFor ``source_kind='type-def-bundle'`` (#3462), the request\
+        \ ``schema`` is expanded as an\nApiome type-definition bundle — its ``types``\
+        \ (or ``$defs`` / ``definitions``)\ncontainer is read into many interlinked\
+        \ types, each committed as a primitive with its\ninter-type ``$ref`` edges\
+        \ captured in the ``refs`` JSONB column for the rewrite stage\n(#3463). A\
+        \ bundle of N types imports N rows; a malformed bundle is rejected with a\
+        \ clear\n400 error.\n\nSupports authentication via JWT token or API key.\n\
+        When using JWT, the created_by field will be set to the authenticated user.\n\
+        \nArgs:\n    tenant_slug: The tenant slug\n    request: Import request with\
+        \ the JSON Schema document or bundle\n    auth_data: Authentication data (injected\
+        \ by dependency)\n\nReturns:\n    Summary of imported primitives plus the\
+        \ id of the recorded provenance row."
       operationId: import_primitives_v1_primitives__tenant_slug__import_post
       parameters:
       - name: tenant_slug

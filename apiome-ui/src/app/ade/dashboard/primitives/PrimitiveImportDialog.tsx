@@ -133,7 +133,7 @@ const SOURCE_KIND_CARDS: Array<{ kind: SourceKind; title: string; description: s
   {
     kind: 'openapi',
     title: 'OpenAPI',
-    description: 'Reuse component schemas from an OpenAPI document’s $defs / definitions.',
+    description: 'The reusable types under an OpenAPI 3.1 document’s components/schemas.',
     icon: FileText,
   },
 ];

@@ -59,10 +59,16 @@ __all__ = [
 ]
 
 # Document pointer prefixes that name a sibling definition in an import source. ``$defs`` is
-# the draft 2020-12 keyword, ``definitions`` the pre-2020 equivalent, and ``types`` the
-# Apiome bundle container (#3462). A ``$ref`` under any of these targets a sibling that
-# becomes its own primitive, so it is rewritten to that sibling's relative registry ref.
-_INTERNAL_PREFIXES: Tuple[str, ...] = ("#/$defs/", "#/definitions/", "#/types/")
+# the draft 2020-12 keyword, ``definitions`` the pre-2020 equivalent, ``types`` the
+# Apiome bundle container (#3462), and ``components/schemas`` the OpenAPI 3.1 container
+# (#3465). A ``$ref`` under any of these targets a sibling that becomes its own primitive,
+# so it is rewritten to that sibling's relative registry ref.
+_INTERNAL_PREFIXES: Tuple[str, ...] = (
+    "#/$defs/",
+    "#/definitions/",
+    "#/types/",
+    "#/components/schemas/",
+)
 
 # Namespace the seeded core ``std/v0`` derived types live under (#3449). A recognized
 # ``format`` maps to ``<this>/<leaf>`` — e.g. ``email`` → ``std/v0/types/email``.
@@ -131,7 +137,7 @@ def rewrite_internal_ref(ref: str) -> Optional[str]:
     """Rewrite an intra-source document pointer into a relative registry ref, or ``None``.
 
     A ``$ref`` at a sibling definition (``#/$defs/Money``, ``#/definitions/Money``,
-    ``#/types/Money``) is rewritten to ``./<slug(name)>`` — the sibling's committed ``$id``
+    ``#/types/Money``, ``#/components/schemas/Money``) is rewritten to ``./<slug(name)>`` — the sibling's committed ``$id``
     leaf, matching :func:`app.schema_validation.derive_schema_id`. Any JSON Pointer beyond the
     type name is preserved as a fragment (``#/$defs/Money/properties/c`` → ``./money#/properties/c``).
     A ref that is not an intra-source pointer (a registry-relative ref, an absolute URL, a bare

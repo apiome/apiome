@@ -222,6 +222,25 @@ describe('extractDefinitions', () => {
     expect(Object.keys(defs)).toEqual(['email']);
   });
 
+  it('reads components.schemas for an OpenAPI document and never its root', () => {
+    const doc = {
+      openapi: '3.1.0',
+      info: { title: 'Petstore', version: '1' },
+      paths: {},
+      $defs: { Ignored: { type: 'string' } },
+      components: {
+        schemas: { Pet: { type: 'object' }, Tag: { type: 'string' } },
+        parameters: { limit: { name: 'limit', in: 'query' } },
+      },
+    };
+    expect(Object.keys(extractDefinitions(doc, 'openapi', 'petstore.yaml'))).toEqual(['Pet', 'Tag']);
+  });
+
+  it('yields no definitions for an OpenAPI document without components.schemas', () => {
+    expect(extractDefinitions({ openapi: '3.1.0', info: { title: 'x' } }, 'openapi')).toEqual({});
+    expect(extractDefinitions({ openapi: '3.1.0', components: 'x' }, 'openapi')).toEqual({});
+  });
+
   it('does not treat a standalone document as a bundle member', () => {
     // A bundle is expected to be a container; a bare type yields no definitions.
     expect(extractDefinitions({ type: 'string' }, 'type-def-bundle')).toEqual({});
@@ -472,6 +491,22 @@ describe('extractTargetNamespace', () => {
 
     expect(result.namespace).toBe('tenant/acme/v1/types');
     expect(result.detail).toMatch(/extracted tenant\/acme\/v1\/types/i);
+  });
+
+  it('reads it from the component schemas of an OpenAPI document', () => {
+    const result = extractTargetNamespace(
+      {
+        openapi: '3.1.0',
+        components: {
+          schemas: {
+            Money: { $id: 'https://api.apiome.dev/types/std/v0/types/money', type: 'object' },
+          },
+        },
+      },
+      'openapi'
+    );
+
+    expect(result.namespace).toBe('std/v0/types');
   });
 
   it('reads it from the definitions of a container document', () => {
