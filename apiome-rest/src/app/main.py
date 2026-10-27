@@ -32,6 +32,7 @@ from .catalog_connector_routes import router as catalog_connector_router
 from .catalog_agent_routes import router as catalog_agent_router
 from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_routes import router as catalog_router
+from .model_search_routes import router as model_search_router
 from .change_report_routes import router as change_report_router
 from .change_report_template_routes import router as change_report_template_router
 from .classes_routes import router as classes_router
@@ -373,6 +374,7 @@ app.include_router(sdk_regen_router)
 # `/{tenant}/entities` is not read as `/{tenant}/{item_id}`.
 app.include_router(catalog_entity_router)
 app.include_router(catalog_router)
+app.include_router(model_search_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.
 app.include_router(catalog_connector_router)
 app.include_router(shadow_api_router)

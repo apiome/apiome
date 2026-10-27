@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.348.0
+  version: 1.349.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -12154,6 +12154,174 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for recordaprivacysafecataloganalysismetricresponse422.
+  /v1/search/{tenant_slug}/model:
+    get:
+      tags:
+      - search
+      summary: Search Normalized Model
+      description: "Search the tenant's normalized model across every format (MFI-6.2,\
+        \ #3754).\n\nMatches operations, types and messages of catalog items and Projects\
+        \ alike. Values within one\nfacet OR together and facets AND; each facet's counts\
+        \ are computed over the matches every\n*other* facet keeps, so ticking a value\
+        \ shows exactly that many. An unknown facet value narrows\nto nothing rather\
+        \ than failing. Matches are ranked by full-text relevance; at most 2 000 are\n\
+        considered, and ``truncated`` says when that cap was reached.\n\nArgs:\n   \
+        \ tenant_slug: The tenant slug.\n    q: The search text (1–200 characters after\
+        \ trimming).\n    kind: Element kinds to keep.\n    protocol: Paradigms to keep.\n\
+        \    format_: Source formats to keep.\n    grade: Grades to keep.\n    all_versions:\
+        \ Search every live revision.\n    limit: Page size.\n    offset: Matches to\
+        \ skip.\n    auth_data: Authentication data (injected by dependency).\n\nReturns:\n\
+        \    The page of matches, the totals and the four facets.\n\nRaises:\n    HTTPException:\
+        \ 422 when ``q`` is blank or longer than 200 characters."
+      operationId: search_normalized_model_v1_search__tenant_slug__model_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          description: 'Search text: words AND together, "quoted phrases" match in order,
+            ''or'' alternates and -word excludes (Postgres websearch syntax, English
+            stemming).'
+          title: Q
+        description: 'Search text: words AND together, "quoted phrases" match in order,
+          ''or'' alternates and -word excludes (Postgres websearch syntax, English stemming).'
+      - name: kind
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Search Normalized Modelkind schema.
+          - type: 'null'
+            description: Search Normalized Modelkind schema.
+          description: 'Element kind, repeatable: operation, type, message.'
+          title: Kind
+        description: 'Element kind, repeatable: operation, type, message.'
+      - name: protocol
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Search Normalized Modelprotocol schema.
+          - type: 'null'
+            description: Search Normalized Modelprotocol schema.
+          description: 'Paradigm, repeatable: rest, rpc, event, graph, data_schema,
+            agent (aliases such as grpc and graphql work).'
+          title: Protocol
+        description: 'Paradigm, repeatable: rest, rpc, event, graph, data_schema, agent
+          (aliases such as grpc and graphql work).'
+      - name: format
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Search Normalized Modelformat schema.
+          - type: 'null'
+            description: Search Normalized Modelformat schema.
+          description: Source-format key, repeatable (openapi-3.1, protobuf, …).
+          title: Format
+        description: Source-format key, repeatable (openapi-3.1, protobuf, …).
+      - name: grade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Search Normalized Modelgrade schema.
+          - type: 'null'
+            description: Search Normalized Modelgrade schema.
+          description: 'Captured quality grade, repeatable: A, B, C, D, F or ungraded.'
+          title: Grade
+        description: 'Captured quality grade, repeatable: A, B, C, D, F or ungraded.'
+      - name: all_versions
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Search every live revision instead of each project's latest.
+          default: false
+          title: All Versions
+        description: Search every live revision instead of each project's latest.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Page size.
+          default: 25
+          title: Limit
+        description: Page size.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Matches to skip.
+          default: 0
+          title: Offset
+        description: Matches to skip.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Search Normalized Modelauthorization schema.
+          - type: 'null'
+            description: Search Normalized Modelauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Search Normalized Model Xapikey schema.
+          - type: 'null'
+            description: Search Normalized Model Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for search normalized model.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelSearchResponse'
+                description: Response payload for search normalized modelresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for search normalized modelresponse422.
   /v1/tenants/{tenant_slug}/connectors:
     get:
       tags:
@@ -154921,6 +155089,257 @@ components:
         \ the bundle, and not missing: the format's own toolchain supplies it\n  \
         \  (protobuf well-known types, Cap'n Proto builtins).\n``UNRESOLVED``\n  \
         \  Nothing was found. The edge carries every search path that was tried."
+    ModelSearchFacets:
+      properties:
+        kinds:
+          items:
+            $ref: '#/components/schemas/CatalogFacetBucket'
+          type: array
+          title: Kinds
+          description: operation / type / message.
+          maxItems: 1000
+        protocols:
+          items:
+            $ref: '#/components/schemas/CatalogFacetBucket'
+          type: array
+          title: Protocols
+          description: Paradigm.
+          maxItems: 1000
+        formats:
+          items:
+            $ref: '#/components/schemas/CatalogFacetBucket'
+          type: array
+          title: Formats
+          description: Source format.
+          maxItems: 1000
+        grades:
+          items:
+            $ref: '#/components/schemas/CatalogFacetBucket'
+          type: array
+          title: Grades
+          description: Captured grade A–F, or 'ungraded'.
+          maxItems: 1000
+      type: object
+      title: ModelSearchFacets
+      description: The four cross-protocol search facets (MFI-6.2). Counts follow the
+        catalog facet rule.
+    ModelSearchHit:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: operation, type or message.
+          example: example
+        element_id:
+          type: string
+          title: Element Id
+          description: Id of the matched row in its store.
+          example: element_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: The element's name (an operation id, type name or message name).
+          example: Pet
+        key:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Key
+          description: The element's stable key within its API.
+        detail:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Detail
+          description: Operation kind (request_response, subscribe, …), type kind (record,
+            enum, …) or message role (request, response, error, event).
+        method:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Method
+          description: HTTP method, for an HTTP operation or its message.
+        path:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Path
+          description: HTTP path, for an HTTP operation or its message.
+        parent:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Parent
+          description: The service (operation), namespace (type) or operation (message)
+            it sits in.
+        snippet:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Snippet
+          description: Start of its description (at most 400 characters).
+        paradigm:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Paradigm
+          description: The API's paradigm (rest, rpc, event, graph, data_schema, agent).
+        format:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Format
+          description: The API's source format key (openapi-3.1, protobuf, …).
+        format_label:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Format Label
+          description: Display label for the format.
+        quality_grade:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Quality Grade
+          description: The revision's captured grade (A–F), or null.
+        store:
+          type: string
+          title: Store
+          description: '''canonical'' (the normalized model of any format) or ''openapi''
+            (an OpenAPI Project''s operations and schemas).'
+          example: example
+        rank:
+          type: number
+          title: Rank
+          description: Full-text relevance; results are ordered by it.
+          example: 1.0
+        project_id:
+          type: string
+          title: Project Id
+          description: The catalog item or Project the element belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        project_slug:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Project Slug
+          description: Project Slug.
+        project_name:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Project Name
+          description: Project Name.
+        publishable:
+          type: boolean
+          title: Publishable
+          description: True for a Project, false for a catalog item.
+          example: false
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The revision searched (versions.id).
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Model Search Hit schema.
+          - type: 'null'
+            description: Model Search Hit schema.
+          title: Version Label
+          description: The revision's version label (1.0.0).
+      type: object
+      required:
+      - kind
+      - element_id
+      - name
+      - store
+      - rank
+      - project_id
+      - publishable
+      - version_record_id
+      title: ModelSearchHit
+      description: 'One operation, type or message matched by the cross-protocol search
+        (MFI-6.2, #3754).'
+    ModelSearchResponse:
+      properties:
+        query:
+          type: string
+          title: Query
+          description: The search text as received (trimmed).
+          example: example
+        total:
+          type: integer
+          title: Total
+          description: Matches before any facet is applied (at most the cap).
+          example: 1
+        matched:
+          type: integer
+          title: Matched
+          description: Matches the selected facets keep.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the search hit its cap; counts then cover the best-ranked
+            matches only.
+          example: false
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        hits:
+          items:
+            $ref: '#/components/schemas/ModelSearchHit'
+          type: array
+          title: Hits
+          description: This page of matches, best first.
+          maxItems: 1000
+        facets:
+          $ref: '#/components/schemas/ModelSearchFacets'
+          description: Facets.
+      type: object
+      required:
+      - query
+      - total
+      - matched
+      - truncated
+      - offset
+      - limit
+      - facets
+      title: ModelSearchResponse
+      description: '``GET /v1/search/{tenant}/model`` (MFI-6.2): matches across every
+        format, with facets.'
     ModelsImportResolution:
       properties:
         action:

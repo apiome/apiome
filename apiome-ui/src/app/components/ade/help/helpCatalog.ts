@@ -847,6 +847,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['avsc', 'avdl', 'pcf', 'crc-64', 'fingerprint', 'semantic hash', 'kafka', 'backward', 'forward', 'transitive', 'breaking'],
   },
   {
+    id: 'search-across-formats',
+    title: 'Search across formats',
+    summary: 'Find an operation, type or message in every API, whatever its format.',
+    page: 'apiome-docs/docs/bring-in/search-across-formats.md',
+    section: 'reference',
+    keywords: ['createorder', 'full-text', 'operation', 'type', 'message', 'grpc', 'graphql', 'asyncapi', 'facet', 'grade', 're-index'],
+  },
+  {
     id: 'rest-hypermedia-conventions',
     title: 'REST hypermedia conventions',
     summary: 'How JSON:API, HAL, HAL-FORMS, JSON-LD and Hydra APIs are tagged and linted.',

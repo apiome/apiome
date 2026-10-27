@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.485.0] - 2026-10-27
+
+### Added
+- **Cross-protocol search over the normalized model (MFI-6.2, #3754)** — new
+  `GET /v1/search/{tenant_slug}/model?q=…` (`app.model_search`, `app.model_search_routes`) finds every operation,
+  type and message whose name, key, path or description matches, across every format the tenant imported: gRPC
+  services, GraphQL fields, AsyncAPI operations and messages, Avro records, and OpenAPI Projects. `q` uses Postgres
+  websearch syntax with English stemming (`createOrder` matches `CreateOrder`; `"quoted phrase"`, `or`, `-word`).
+  The canonical model is matched through V135's GIN indexes (`idx_api_operations_fts`, `idx_api_types_fts`,
+  `idx_api_messages_fts`); an OpenAPI Project's `path_operation` rows and `classes` are searched for revisions
+  with no canonical artifact, so nothing is reported twice. Repeatable `kind` (operation / type / message),
+  `protocol` (paradigm, aliases such as `grpc` work), `format` and `grade` (A–F or `ungraded`) facets compose:
+  values OR within a facet, facets AND, and each facet is counted over what the others keep. Each project's latest
+  revision is searched unless `all_versions=true`; `limit` (≤ 100) / `offset` page the ranked hits and `truncated`
+  flags a search that reached its 2 000-row cap. Response `ModelSearchResponse` (`ModelSearchHit`,
+  `ModelSearchFacets`). API 1.349.0.
+
+### Changed
+- **Every import persists its canonical model (MFI-6.2, #3754)** — `persist_adapter_import` now writes the
+  MFI-2.2 tables for every format, not only AsyncAPI, agent descriptors and Arazzo, so the search can find them.
+  For the formats that newly persist, a failed write is logged and the import carries on; AsyncAPI and agent
+  descriptors still fail the import as before. Arazzo is still written once, by its workflow persistence.
+- **Re-index existing catalog items** — `scripts/backfill_canonical_models.py` (`app.canonical_model_reindex`)
+  rebuilds the canonical model of every catalog item whose latest revision has none, from its captured source,
+  with the convert flow's `build_conversion_source`. Run it once after deploying; it is safe to re-run, and
+  reports items without a captured source as skipped.
+
 ## [1.484.0] - 2026-10-27
 
 ### Added

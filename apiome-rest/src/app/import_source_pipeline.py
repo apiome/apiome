@@ -1128,6 +1128,47 @@ def _persist_arazzo_workflows(
         )
 
 
+def _persist_canonical_model(
+    db: Any,
+    *,
+    tenant_id: str,
+    creator_id: str,
+    version_record_id: str,
+    model: CanonicalApi,
+    required: bool,
+) -> None:
+    """Persist an import's canonical model in the MFI-2.2 tables (MFI-6.2, #3754).
+
+    Args:
+        db: The database handle.
+        tenant_id: Owning tenant UUID.
+        creator_id: User the artifact is attributed to.
+        version_record_id: Target ``versions.id`` UUID.
+        model: The normalized canonical model.
+        required: Raise on failure (formats whose import depends on the rows) instead of logging
+            and carrying on (formats for which the rows only feed the search).
+
+    Raises:
+        Exception: Whatever the write raised, when ``required`` is set.
+    """
+    try:
+        db.persist_canonical_api(
+            tenant_id=tenant_id,
+            creator_id=creator_id,
+            version_id=version_record_id,
+            model=model,
+        )
+    except Exception as exc:
+        if required:
+            raise
+        logger.warning(
+            "Canonical model persistence failed for version %s (%s): %s",
+            version_record_id,
+            model.format,
+            exc,
+        )
+
+
 def format_profile_metadata(model: CanonicalApi) -> Optional[Dict[str, Any]]:
     """Return the dialect profile a model was read with, for the revision's provenance (FMT-6.5).
 
@@ -1362,27 +1403,27 @@ def persist_adapter_import(
         format_metadata=format_metadata,
     )
 
-    # REPO-3.3 (#2772): AsyncAPI imports also land Channels/Operations/Messages in the
-    # MFI-2.2 tables and promote message payloads/headers into designer Classes.
-    if model.format in {"asyncapi-2", "asyncapi-3"} and creator_id:
+    # REPO-3.3 (#2772): AsyncAPI imports also promote message payloads/headers into designer
+    # Classes (their Channels/Operations/Messages land in the MFI-2.2 tables just below).
+    is_asyncapi = model.format in {"asyncapi-2", "asyncapi-3"}
+    if is_asyncapi and creator_id:
         from .asyncapi_class_promotion import promote_asyncapi_message_classes
 
         promote_asyncapi_message_classes(db, version_record_id, model)
-        db.persist_canonical_api(
-            tenant_id=tenant_id,
-            creator_id=creator_id,
-            version_id=version_record_id,
-            model=model,
-        )
 
-    # MFI-18.4 (#3977): an agent-descriptor import (A2A card, ACP listing) lands its agents and
-    # skills — beside their service / operation projection — in the MFI-2.2 tables.
-    if model.agents and creator_id:
-        db.persist_canonical_api(
+    # MFI-6.2 (#3754): every import lands its canonical model in the MFI-2.2 tables, so the
+    # cross-protocol search finds its operations, types and messages whatever the format. An
+    # Arazzo import writes it inside _persist_arazzo_workflows (its workflows hang off it).
+    if creator_id and model.format not in ARAZZO_WORKFLOW_FORMATS:
+        _persist_canonical_model(
+            db,
             tenant_id=tenant_id,
             creator_id=creator_id,
-            version_id=version_record_id,
+            version_record_id=version_record_id,
             model=model,
+            # AsyncAPI (REPO-3.3) and agent descriptors (MFI-18.4) always required these rows;
+            # for every other format they are a search enrichment, so a failure is only logged.
+            required=is_asyncapi or bool(model.agents),
         )
 
     # REPO-3.4 (#2773): an Arazzo import lands its orchestration as Workflow/WorkflowStep rows

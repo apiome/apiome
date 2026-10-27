@@ -485,14 +485,35 @@ def test_agent_descriptor_import_persists_canonical(monkeypatch) -> None:
     assert fake.persisted_canonical["operation_count"] == len(model.operations())
 
 
-def test_non_asyncapi_skips_canonical_persist(monkeypatch) -> None:
+def test_every_format_persists_its_canonical_model(monkeypatch) -> None:
+    """MFI-6.2 (#3754): a gRPC import lands in the MFI-2.2 tables too (for the search), but only
+    AsyncAPI promotes message classes."""
     fake = _FakeDb()
     monkeypatch.setattr("app.database.db", fake)
 
     persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
 
-    assert fake.persisted_canonical is None
+    assert fake.persisted_canonical is not None
+    assert fake.persisted_canonical["format"] == "protobuf"
     assert fake.created_classes == []
+
+
+def test_a_failed_canonical_write_does_not_fail_a_non_asyncapi_import(monkeypatch) -> None:
+    """For formats that newly persist their model, the rows only feed the search: log, carry on."""
+    fake = _FakeDb()
+
+    def _fail(**_kwargs: Any) -> str:
+        raise RuntimeError("constraint violation")
+
+    fake.persist_canonical_api = _fail  # type: ignore[method-assign]
+    monkeypatch.setattr("app.database.db", fake)
+
+    result = persist_adapter_import(
+        _payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing()
+    )
+
+    assert result is not None
+    assert fake.persisted_canonical is None
 
 
 # ---------------------------------------------------------------------------
