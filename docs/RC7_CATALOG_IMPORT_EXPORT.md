@@ -105,7 +105,7 @@ handle these.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | All five are built on the Projects path; the Catalog side of OA3, OA5 and OA6 is still open (notes below) |
+| [#3497](https://github.com/apiome/apiome/issues/3497) | Epic for the above | **Closed.** All five are built on the Projects path; the Catalog side of OA3, OA5 and OA6 is still open (notes below) |
 
 OA3 (#3500) is built on the Projects path: `itemSchema` elements of JSON Lines, JSON text
 sequences and SSE import as classes tagged `x-apiome-stream-kind`, and **Analyze** lists the
