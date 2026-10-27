@@ -15,16 +15,17 @@ from app.format_lint_capabilities import (
 from app.lint_evidence import NATIVE_SCANNER_ID
 
 
-def test_matrix_covers_planned_formats_with_linked_issues():
-    rows = {r.format: r for r in build_format_lint_capabilities()}
-    for fmt, issues in (
-        ("smithy", RELATED_FORMAT_LINT_ISSUES["smithy"]),
-    ):
-        assert fmt in rows
-        row = rows[fmt]
-        assert row.mode == MODE_UNSUPPORTED
-        assert row.related_issues == issues
-        assert all("github.com/apiome/apiome/issues/" in u for u in row.related_issues)
+def test_every_planned_native_pack_has_shipped():
+    # The planned-pack links (CLX-2.4) are gone once each format's pack ships; MFI-17.3 (#3810, Smithy)
+    # was the last of them.
+    assert RELATED_FORMAT_LINT_ISSUES == {}
+    assert all(row.related_issues == () for row in build_format_lint_capabilities())
+
+
+def test_smithy_has_a_native_pack_since_mfi_17_3():
+    row = {r.format: r for r in build_format_lint_capabilities()}["smithy"]
+    assert row.mode == MODE_NATIVE
+    assert row.native_pack == "smithy"
 
 
 def test_odata_has_a_native_pack_since_mfi_11_1():

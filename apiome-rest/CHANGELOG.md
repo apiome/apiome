@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.472.0] - 2026-10-26
+
+### Added
+- **Smithy lint pack: `smithy-linters` (MFI-17.3, #3810)** — the bundled Smithy CLI 1.53.0 does not ship
+  `smithy-linters`, so the image now keeps `smithy-linters`, `smithy-model` and `smithy-utils` 1.53.0 in an offline
+  Maven-layout folder (`<prefix>/lib/smithy-m2`; `APIOME_SMITHY_LINTERS_REPO` overrides). New in `app.smithy_ast`:
+  `validate_smithy_members` stages the model plus a generated `metadata validators` file enabling `SMITHY_LINTERS`
+  (AbbreviationName, CamelCase, InputOutputStructureReuse, MissingPaginatedTrait, MissingSensitiveTrait,
+  NoninclusiveTerms, RepeatedShapeName, ShouldHaveUsedTimestamp, StutteredShapeName, each at WARNING), writes a
+  `smithy-build.json` naming only that `file://` repository, and runs `smithy validate --format csv --severity NOTE
+  --allow-unknown-traits` in the toolchain sandbox (outbound HTTP pointed at a closed port; `-Duser.home` set to the
+  scratch directory because the sandbox user's home is `/nonexistent`); `read_validation_events` reads the CSV
+  (suppressed events and the generated file's events dropped). Best effort: without the CLI or on any failure the
+  import is unchanged; without the repository only core validators run. `SmithyImportSource` attaches the events to
+  every input (single file, JSON AST, assembled set) as `SmithyDocument.validation_events`; the normalizer records
+  `smithy_validation_events` (capped at 50) and `smithy_validation_event_count` when present. New `app.smithy_lint`
+  pack (`smithy`): `smithy.linter` (warning), `smithy.validation-error` (error, transparency entry +
+  `catalog_smithy_validate` evaluation fixture with a captured CLI result), `smithy.validation-warning`,
+  `smithy.validation-note`; seeded by V330. Smithy leaves the planned-pack list, which is now empty. Real CLI
+  recordings (`smithy_lint/recordings`). OpenAPI 1.336.0.
+
 ## [1.471.0] - 2026-10-26
 
 ### Added

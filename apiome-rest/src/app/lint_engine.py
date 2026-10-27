@@ -434,6 +434,9 @@ def load_format_rule_packs() -> None:
     # API Blueprint lint pack (MFI-16.3): registers under ``apiblueprint`` (drafter annotations).
     from . import apiblueprint_lint as _apiblueprint_lint  # noqa: F401
 
+    # Smithy lint pack (MFI-17.3): registers under ``smithy`` (smithy validate + smithy-linters).
+    from . import smithy_lint as _smithy_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.

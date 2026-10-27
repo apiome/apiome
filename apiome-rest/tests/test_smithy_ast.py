@@ -57,6 +57,9 @@ def _replay(monkeypatch: pytest.MonkeyPatch, stdout: str = _AST_TEXT) -> List[Di
     calls: List[Dict[str, Any]] = []
 
     def _fake(key: str, args: List[str], **kwargs: Any) -> ToolRunResult:
+        if args[0] != "ast":
+            # MFI-17.3's `smithy validate` (run when the CLI is installed) is not under test here.
+            return ToolRunResult(key=key, argv=[key, *args], exit_code=0, stdout="", stderr="", duration_ms=1)
         files = [Path(a) for a in args[2:]]
         calls.append(
             {

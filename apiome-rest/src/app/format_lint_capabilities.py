@@ -49,7 +49,6 @@ GRAPHQL_ESLINT_SCANNER_ID = "graphql.eslint"
 #: GitHub issues for planned native lint packs (CLX-2.4). Do not invent new
 #: parser/normalizer tickets — link the existing MFI issues.
 RELATED_FORMAT_LINT_ISSUES: Dict[str, Tuple[str, ...]] = {
-    "smithy": ("https://github.com/apiome/apiome/issues/3810",),
 }
 
 #: Formats that always receive native OpenAPI ``schema_lint`` (not a RulePack key).

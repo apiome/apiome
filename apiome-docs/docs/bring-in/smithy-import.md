@@ -66,6 +66,46 @@ The catalog item records the model's identity:
 
 A set that holds a single model file is read like that one file.
 
+## Lint: Smithy validation and smithy-linters
+
+On a server with the Smithy CLI, every Smithy import (one `.smithy` file, a JSON AST or a
+multi-file model) is also run through `smithy validate`, with these validators from Smithy's
+`smithy-linters` package switched on:
+
+| Validator | What it catches |
+| --- | --- |
+| `CamelCase` | Member names that are not lower camel case (`pet_id`), shape names that are not upper camel case. |
+| `MissingPaginatedTrait` | A `List…` / `Search…` operation that returns a list but is not `@paginated`. |
+| `AbbreviationName` | Names with all-caps abbreviations (`URLValue` should be `UrlValue`). |
+| `ShouldHaveUsedTimestamp` | A member named like a time (`adoptedAt`) whose type is not a `timestamp`. |
+| `MissingSensitiveTrait` | A member that looks like sensitive data (`password`) without `@sensitive`. |
+| `InputOutputStructureReuse` | An operation input or output structure that is shared or not marked `@input` / `@output`. |
+| `NoninclusiveTerms` | Non-inclusive words in shape or member names and documentation. |
+| `RepeatedShapeName` | A member name that repeats its structure's name (`Pet$petName`). |
+| `StutteredShapeName` | A shape name that repeats its namespace. |
+
+`ReservedWords` and `StandardOperationVerb` need lists only you can provide, so they are not switched
+on. A model can still configure them, or any other validator, with its own `metadata validators`.
+
+Each event is a lint finding at `smithy:<file>:<line>:<column>`, its message starting with the
+validator name:
+
+```text
+smithy.linter  smithy:model.smithy:13:1  MissingPaginatedTrait: The verb of this operation, `list`, requires that the operation is marked with the `paginated` trait. …
+```
+
+| Rule | Severity | Reports |
+| --- | --- | --- |
+| [`smithy.linter`](../build/lint-rules.md#smithy-linter) | warning | The `smithy-linters` validators above. |
+| [`smithy.validation-error`](../build/lint-rules.md#smithy-validation-error) | error | An `ERROR` event, such as a member targeting a shape that does not exist. A single `.smithy` file the built-in reader imported can have one; a multi-file model with errors is refused at import. |
+| [`smithy.validation-warning`](../build/lint-rules.md#smithy-validation-warning) | warning | `DANGER` and `WARNING` events from Smithy's built-in validators or your own `metadata validators`. |
+| [`smithy.validation-note`](../build/lint-rules.md#smithy-validation-note) | info | `NOTE` events. |
+
+Suppressions in the model (`@suppress`, `metadata suppressions`) are honored. The events are listed
+on the catalog item (`smithy_validation_events`, up to 50, with `smithy_validation_event_count`).
+Without the Smithy CLI the model imports the same way, with no Smithy lint findings. The linters
+ship with the server, so validation never fetches anything from the network.
+
 ## From the CLI
 
 Point `apiome import smithy` at a model file, a JSON AST, an archive or a model directory:

@@ -974,6 +974,38 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Every uriParameters entry should appear in its resource path.
 
 
+## Pack: `smithy`
+
+### `smithy.linter` {#smithy-linter}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** A Smithy model should pass the smithy-linters validators (CamelCase, MissingPaginatedTrait, …).
+
+### `smithy.validation-error` {#smithy-validation-error}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A Smithy model must validate: the Smithy CLI reports no ERROR events.
+- **Reference:** https://smithy.io/2.0/spec/model-validation.html
+- **Remediation:** Fix the shape the event names at its file and line — define the missing shape, or correct the trait — then re-import.
+- **False-positive guidance:** Not a false positive: ERROR events mark a model the Smithy specification rejects. Only servers with the bundled Smithy CLI report it.
+- **Fixture:** `catalog/smithy-validation-error`
+- **Scan modes:** `lint`
+
+### `smithy.validation-note` {#smithy-validation-note}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A NOTE event from Smithy's validators.
+
+### `smithy.validation-warning` {#smithy-validation-warning}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A Smithy model should have no DANGER or WARNING validation events.
+
+
 ## Pack: `thrift`
 
 ### `thrift.enum-explicit-values` {#thrift-enum-explicit-values}

@@ -1,0 +1,19 @@
+---
+slug: smithy-lint-pack
+title: Smithy lint pack with smithy-linters
+description: Smithy imports are validated with the smithy-linters validators and reported in lint.
+authors: [apiome]
+---
+
+Smithy models are now validated on import by the Smithy CLI, with the `smithy-linters` validators
+switched on. Every event is a lint finding with its file and line.
+[Lint: Smithy validation and smithy-linters](/bring-in/smithy-import#lint-smithy-validation-and-smithy-linters).
+
+{/* truncate */}
+
+- **Naming and design.** `CamelCase`, `AbbreviationName`, `RepeatedShapeName` and
+  `StutteredShapeName` catch names that break Smithy's conventions.
+- **API hygiene.** `MissingPaginatedTrait`, `ShouldHaveUsedTimestamp` and `MissingSensitiveTrait`
+  catch unpaginated list operations, times stored as numbers and unmarked secrets.
+- **Invalid models.** A single `.smithy` file Smithy rejects is reported as a `smithy.validation-error`.
+- **Offline.** The linters ship with the server; validation never reaches the network.

@@ -1,0 +1,18 @@
+{
+  "kind": "catalog_smithy_validate",
+  "id": "catalog/smithy-validation-error",
+  "source_format": "smithy",
+  "description": "Smithy IDL model with exactly one blocking defect: member Pet$owner targets example.shelter#Person, which is not defined. validation_events is what the real Smithy CLI 1.53.0 `validate` reported for this document.",
+  "document": "$version: \"2\"\n\nnamespace example.shelter\n\nstructure Pet {\n    owner: Person\n}\n",
+  "validation_events": [
+    {
+      "severity": "ERROR",
+      "id": "Target.UnresolvedShape",
+      "shape": "example.shelter#Pet$owner",
+      "file": "model.smithy",
+      "message": "member shape targets an unresolved shape `example.shelter#Person`",
+      "line": 6,
+      "column": 5
+    }
+  ]
+}

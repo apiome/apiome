@@ -23,12 +23,23 @@ This module is the Python seam over that CLI, run through the polyglot toolchain
 
 A JSON AST uploaded on its own needs no CLI: :func:`parse_smithy_ast_text` reads it directly.
 Every failure is an :class:`~app.import_source.ImportSourceError` with an intake-taxonomy code.
+
+**Lint (MFI-17.3, #3810).** :func:`validate_smithy_members` runs ``smithy validate --format csv`` on
+the model with the ``smithy-linters`` validators (:data:`SMITHY_LINTERS`) switched on. The CLI does not
+ship those linters, so the image keeps the ``smithy-linters`` jar (and the two artifacts it depends
+on) in a local Maven-layout folder (:func:`smithy_linters_repo`), and Apiome writes its own
+``smithy-build.json`` naming only that ``file://`` repository — no network: outbound HTTP is also
+pointed at a closed local port for the run. The events become lint findings (:mod:`app.smithy_lint`).
 """
 
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
+import logging
+import os
 import posixpath
 import re
 import shutil
@@ -57,7 +68,12 @@ __all__ = [
     "model_members",
     "parse_smithy_ast_text",
     "run_smithy_ast",
+    "SMITHY_LINTERS",
+    "SMITHY_LINTERS_REPO_ENV",
+    "read_validation_events",
     "smithy_cli_available",
+    "smithy_linters_repo",
+    "validate_smithy_members",
     "stage_smithy_members",
 ]
 
@@ -73,6 +89,41 @@ _MAX_REPORTED_EVENTS = 10
 #: A Smithy validation event line (``ERROR: ns#Shape: message`` / ``── ERROR ──``), and an
 #: error-severity marker in either of the CLI's output styles.
 _EVENT_RE = re.compile(r"\b(ERROR|DANGER)\b")
+
+
+logger = logging.getLogger(__name__)
+
+#: The ``smithy-linters`` validators every lint run enables (MFI-17.3), each at ``WARNING``. The
+#: two the package also has need configuration Apiome cannot guess: ``ReservedWords`` (the word
+#: lists) and ``StandardOperationVerb`` (the allowed verbs).
+SMITHY_LINTERS = (
+    "AbbreviationName",
+    "CamelCase",
+    "InputOutputStructureReuse",
+    "MissingPaginatedTrait",
+    "MissingSensitiveTrait",
+    "NoninclusiveTerms",
+    "RepeatedShapeName",
+    "ShouldHaveUsedTimestamp",
+    "StutteredShapeName",
+)
+
+#: The ``smithy-linters`` Maven coordinate (same version as the bundled CLI).
+_LINTERS_COORDINATE = "software.amazon.smithy:smithy-linters:1.53.0"
+_LINTERS_JAR = Path("software/amazon/smithy/smithy-linters/1.53.0/smithy-linters-1.53.0.jar")
+
+#: Environment variable naming the local Maven repository that holds ``smithy-linters``.
+SMITHY_LINTERS_REPO_ENV = "APIOME_SMITHY_LINTERS_REPO"
+
+#: Name of the generated model file that switches the linters on (staged next to the model).
+_VALIDATORS_FILE = "__apiome_lint_validators.smithy"
+
+#: Makes any HTTP(S) the CLI attempts fail at once: the linters resolve from the local repository.
+_NO_NETWORK = (
+    "-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=9 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=9"
+)
+
+_SEVERITIES = ("ERROR", "DANGER", "WARNING", "NOTE")
 
 
 def smithy_cli_available() -> bool:
@@ -225,6 +276,146 @@ def run_smithy_ast(files: List[Path], *, staging_dir: Path, work_dir: Path) -> D
             "The Smithy CLI did not return a JSON AST model.", code="INPUT_MALFORMED"
         )
     return ast
+
+
+def smithy_linters_repo() -> Optional[Path]:
+    """The local Maven repository holding ``smithy-linters``, or ``None`` when there is none.
+
+    Taken from :data:`SMITHY_LINTERS_REPO_ENV` when set, otherwise found beside the CLI: the image
+    keeps it at ``<prefix>/lib/smithy-m2`` (the CLI is ``<prefix>/lib/smithy/bin/smithy``, linked
+    from ``<prefix>/bin/smithy``).
+    """
+    override = os.environ.get(SMITHY_LINTERS_REPO_ENV)
+    candidates: List[Path] = [Path(override)] if override else []
+    from .toolchain_packaging import probe_tool, register_bundled_tools
+
+    register_bundled_tools()
+    probe = probe_tool(SMITHY_TOOL_KEY)
+    if probe is not None and probe.resolved_path:
+        for executable in (Path(probe.resolved_path), Path(probe.resolved_path).resolve()):
+            # <prefix>/lib/smithy/bin/smithy → <prefix>/lib/smithy-m2
+            candidates.append(executable.parent.parent.parent / "smithy-m2")
+            # <prefix>/bin/smithy → <prefix>/lib/smithy-m2
+            candidates.append(executable.parent.parent / "lib" / "smithy-m2")
+    for candidate in candidates:
+        if (candidate / _LINTERS_JAR).is_file():
+            return candidate
+    return None
+
+
+def _validators_model() -> str:
+    """The generated model file that enables :data:`SMITHY_LINTERS` at ``WARNING``."""
+    entries = "\n".join(f'    {{ name: "{name}", severity: "WARNING" }}' for name in SMITHY_LINTERS)
+    return f'$version: "2"\n\nmetadata validators = [\n{entries}\n]\n'
+
+
+def read_validation_events(output: Optional[str], staging_dir: Path) -> Optional[List[Dict[str, Any]]]:
+    """Read ``smithy validate --format csv`` output.
+
+    Args:
+        output: The CLI's stdout.
+        staging_dir: Where the model was staged (scrubbed from file paths).
+
+    Returns:
+        One dict per event, in output order: ``severity`` (``ERROR`` / ``DANGER`` / ``WARNING`` /
+        ``NOTE``), ``id`` (the validator, ``CamelCase``), ``shape``, ``file`` (relative to the
+        set), 1-based ``line`` / ``column`` and ``message``. Suppressed events and events on
+        Apiome's generated validators file are left out. ``None`` when the output has no CSV header.
+    """
+    text = output or ""
+    start = text.find("severity,id,shape,")
+    if start < 0:
+        return None
+    events: List[Dict[str, Any]] = []
+    for row in csv.DictReader(io.StringIO(text[start:])):
+        severity = (row.get("severity") or "").upper()
+        if severity not in _SEVERITIES:
+            continue
+        file = _scrub(row.get("file") or "", staging_dir).lstrip("/")
+        if file == _VALIDATORS_FILE:
+            continue
+        event: Dict[str, Any] = {
+            "severity": severity,
+            "id": row.get("id") or "",
+            "shape": row.get("shape") or None,
+            "file": file or None,
+            "message": (row.get("message") or "").strip(),
+        }
+        for key in ("line", "column"):
+            value = (row.get(key) or "").strip()
+            event[key] = int(value) if value.isdigit() else None
+        events.append(event)
+    return events
+
+
+def validate_smithy_members(members: Mapping[str, str]) -> List[Dict[str, Any]]:
+    """Run ``smithy validate`` (with the ``smithy-linters`` validators) over a model (MFI-17.3).
+
+    Best effort: the import never depends on it, so a missing CLI, a timeout or unreadable output
+    yields no events. Without the linters repository the core validators still run.
+
+    Args:
+        members: The model files, path → text (``.smithy`` or JSON AST ``.json``; others ignored).
+
+    Returns:
+        The validation events (:func:`read_validation_events`).
+    """
+    models = model_members(members)
+    if not models:
+        return []
+    staging_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-models-"))
+    work_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-work-"))
+    try:
+        files = stage_smithy_members(models, staging_dir)
+        args = ["validate", "--format", "csv", "--severity", "NOTE", "--allow-unknown-traits"]
+        repo = smithy_linters_repo()
+        if repo is not None:
+            validators = staging_dir / _VALIDATORS_FILE
+            validators.write_text(_validators_model(), encoding="utf-8")
+            files.append(validators)
+            config = work_dir / "smithy-build.json"
+            config.write_text(
+                json.dumps(
+                    {
+                        "version": "1.0",
+                        "maven": {
+                            "dependencies": [_LINTERS_COORDINATE],
+                            "repositories": [{"url": repo.resolve().as_uri()}],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args += ["-c", str(config)]
+        else:
+            args.append("--no-config")
+        try:
+            result = run_tool_blocking(
+                SMITHY_TOOL_KEY,
+                [*args, *[str(path) for path in files]],
+                timeout=SMITHY_TIMEOUT_SECONDS,
+                thread_name="smithy-validate",
+                cwd=str(work_dir),
+                # The sandbox may run the CLI as a user whose home is `/nonexistent`; the JVM reads
+                # `user.home` from the user database, not `$HOME`, and the Maven resolver keeps its
+                # local cache there, so point it at the scratch directory too.
+                extra_env={"HOME": str(work_dir), "JAVA_TOOL_OPTIONS": f"{_NO_NETWORK} -Duser.home={work_dir}"},
+            )
+            stdout = result.stdout
+        except ToolExecutionError as exc:
+            # The CLI exits non-zero when an event is DANGER or ERROR; the CSV is still on stdout.
+            stdout = exc.stdout
+        except ToolchainError as exc:
+            logger.warning("smithy validate did not run; the model is imported without lint events: %s", exc)
+            return []
+        events = read_validation_events(stdout, staging_dir)
+        if events is None:
+            logger.warning("smithy validate printed no events table; the model is imported without lint events")
+            return []
+        return events
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
+        shutil.rmtree(work_dir, ignore_errors=True)
 
 
 def _source_files(members: Mapping[str, str]) -> Tuple[str, ...]:

@@ -14,7 +14,8 @@ importable into the catalog (store-raw). Three inputs (MFI-17.1, #3808):
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from dataclasses import replace
+from typing import Any, Mapping, Optional
 
 from . import smithy_normalizer  # noqa: F401 — self-registers the normalizer
 from .canonical_model import ApiParadigm, CanonicalApi
@@ -27,10 +28,32 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
-from .smithy_ast import assemble_smithy_set, is_smithy_ast_text, model_members, parse_smithy_ast_text
+from .smithy_ast import (
+    assemble_smithy_set,
+    is_smithy_ast_text,
+    model_members,
+    parse_smithy_ast_text,
+    smithy_cli_available,
+    validate_smithy_members,
+)
 from .smithy_parser import SmithyDocument, SmithyParseError, is_smithy, parse_smithy
 
 __all__ = ["SmithyImportSource"]
+
+
+def _with_validation(document: SmithyDocument, members: Mapping[str, str]) -> SmithyDocument:
+    """Attach ``smithy validate`` events when the Smithy CLI is available (MFI-17.3, #3810).
+
+    Args:
+        document: The parsed model.
+        members: The model files it was read from, path → text.
+
+    Returns:
+        The document with ``validation_events`` set; unchanged without the CLI.
+    """
+    if not smithy_cli_available():
+        return document
+    return replace(document, validation_events=tuple(validate_smithy_members(members)))
 
 
 class SmithyImportSource(ImportSource, register=True):
@@ -76,13 +99,19 @@ class SmithyImportSource(ImportSource, register=True):
         return NO_MATCH
 
     def parse(self, raw: str, *, source_label: Optional[str] = None) -> SmithyDocument:
-        """Parse one model: a JSON AST directly, IDL text with the built-in reader."""
+        """Parse one model: a JSON AST directly, IDL text with the built-in reader.
+
+        With the Smithy CLI available, the model is also validated with the ``smithy-linters``
+        validators (MFI-17.3, :func:`_with_validation`).
+        """
         if is_smithy_ast_text(raw):
-            return parse_smithy_ast_text(raw, source_label=source_label)
+            document = parse_smithy_ast_text(raw, source_label=source_label)
+            return _with_validation(document, {"model.json": raw})
         try:
-            return parse_smithy(raw, source_label=source_label)
+            document = parse_smithy(raw, source_label=source_label)
         except SmithyParseError as exc:
             raise ImportSourceError(str(exc)) from exc
+        return _with_validation(document, {"model.smithy": raw})
 
     def parse_fileset(
         self,
@@ -99,7 +128,8 @@ class SmithyImportSource(ImportSource, register=True):
             raise ImportSourceError("Smithy fileset is missing its root document")
         if len(model_members(fileset.members)) <= 1:
             return self.parse(fileset.members[root], source_label=root or source_label)
-        return assemble_smithy_set(dict(fileset.members), root, source_label=root or source_label)
+        document = assemble_smithy_set(dict(fileset.members), root, source_label=root or source_label)
+        return _with_validation(document, model_members(fileset.members))
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, SmithyDocument):

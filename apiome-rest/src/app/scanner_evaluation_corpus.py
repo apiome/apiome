@@ -349,6 +349,23 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
         findings = [f.as_dict() for f in lint_canonical_model(model).findings]
         return _blocking_rule_ids(findings), findings
 
+    if kind == "catalog_smithy_validate":
+        # Smithy with captured `smithy validate` events (MFI-17.3): the Smithy CLI and its linters are
+        # not installed in the evaluation environment, so the fixture carries the events the real CLI
+        # reported for its document, and exercises the lint surface they feed.
+        from dataclasses import replace
+
+        from .lint_engine import lint_canonical_model
+        from .smithy_import_source import SmithyImportSource
+        from .smithy_parser import parse_smithy
+
+        adapter = SmithyImportSource()
+        document = parse_smithy(str(data.get("document") or ""), source_label=str(data.get("id") or "fixture"))
+        captured = [dict(item) for item in (data.get("validation_events") or []) if isinstance(item, dict)]
+        model = adapter.normalize(replace(document, validation_events=tuple(captured)))
+        findings = [f.as_dict() for f in lint_canonical_model(model).findings]
+        return _blocking_rule_ids(findings), findings
+
     if kind == "catalog_pointer_index":
         # Inventory-only fixture: multi-format pointers validated in tests by path existence.
         return set(), []
