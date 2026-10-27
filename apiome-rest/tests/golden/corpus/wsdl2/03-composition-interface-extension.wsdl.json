@@ -20,9 +20,14 @@
     "servers": [
       {
         "description": "CatalogueService/Main",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "CatalogueBinding",
+          "wsdl_port_type": "ReadWriteCatalogue",
+          "wsdl_service": "CatalogueService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "Main",
+        "protocol": "soap12",
         "url": "https://api.example.com/catalogue",
         "variables": []
       }
@@ -44,6 +49,24 @@
             "key": "http://example.com/catalogue.ReadCatalogue.getProduct",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/catalogue.ReadCatalogue.getProduct#fault.NotFound",
+                "name": "NotFound",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -104,6 +127,24 @@
             "key": "http://example.com/catalogue.ReadWriteCatalogue.getProduct",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/catalogue.ReadWriteCatalogue.getProduct#fault.NotFound",
+                "name": "NotFound",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -364,15 +405,15 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:dea95fc2fe1866fb54709c3a2ee812b9ee28d0f3a42be7b16f070528129f59a8",
+  "fingerprint": "sha256:d821f8a99efd89311b2fbb9519739b707c6fa88ed9bf33edae947a4cc0d04df4",
   "lint": {
-    "findings": 18,
+    "findings": 20,
     "grade": "D",
-    "report_fingerprint": "133056115ced3a78537bde2156ae70ef647ef80c24abdedde8475ecd97e0bb82",
-    "score": 67,
+    "report_fingerprint": "38caca0edae26383d20c700ae701188c240a6dbbacbce81921ebf82be1152be2",
+    "score": 65,
     "severity_counts": {
       "error": 0,
-      "info": 13,
+      "info": 15,
       "warning": 5
     }
   },

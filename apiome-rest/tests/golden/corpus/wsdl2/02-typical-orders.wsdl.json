@@ -20,9 +20,14 @@
     "servers": [
       {
         "description": "OrderService/SoapEndpoint",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "OrderSoapBinding",
+          "wsdl_port_type": "OrderInterface",
+          "wsdl_service": "OrderService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "SoapEndpoint",
+        "protocol": "soap12",
         "url": "https://api.example.com/orders",
         "variables": []
       }
@@ -83,6 +88,24 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
+                "key": "http://example.com/orders.OrderInterface.getOrder#fault.OrderFault",
+                "name": "OrderFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/orders.orderFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
                 "key": "http://example.com/orders.OrderInterface.getOrder#request",
                 "name": null,
                 "payload": {
@@ -130,6 +153,24 @@
             "key": "http://example.com/orders.OrderInterface.placeOrder",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/orders.OrderInterface.placeOrder#fault.OrderFault",
+                "name": "OrderFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/orders.orderFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -597,15 +638,15 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:b86f4c37173519416344f1db8c8ccaa7f5120ad8980caa96913d00550513a026",
+  "fingerprint": "sha256:f333f54b2ad1a24c5d3fcf56bcabf1cb1cf9e70a657c7765d08a61c0f4ccbf25",
   "lint": {
-    "findings": 31,
+    "findings": 33,
     "grade": "F",
-    "report_fingerprint": "bfadd335e9faf3d9a41bd34cfa76fb35fc01e001223f485122ffc6364fd204ed",
-    "score": 47,
+    "report_fingerprint": "cd7c29b09a086030ed8b82c311d785497e87d6c930058db330d7837e98f62839",
+    "score": 45,
     "severity_counts": {
       "error": 0,
-      "info": 21,
+      "info": 23,
       "warning": 10
     }
   },

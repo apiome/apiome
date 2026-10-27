@@ -17,14 +17,21 @@ in all but two places, and both are additive:
   ``REQUEST_RESPONSE`` this normalizer has always produced and its canonical shape is
   untouched.
 
-Faults are deliberately *not* projected: the canonical model has no fault construct, and
-the 1.1 path has never carried ``wsdl:fault``, so mapping 2.0's ``outfault`` would make a
-2.0 document normalize differently from the 1.1 document that means the same thing.
+MFI-13.2 (#3789) completes the projection:
+
+* **faults** — a 1.1 ``wsdl:fault`` and a 2.0 ``outfault`` both become an ``error``-role message
+  keyed ``<operation>#fault.<name>``, its payload resolved like any other message's;
+* **multi-part messages** — a 1.1 message with several parts (rpc style) becomes a synthesized
+  record type (``extras["wsdl_kind"] == "message"``) with one field per part, instead of only its
+  first part;
+* **ports and bindings** — each port with an address is a :class:`~app.canonical_model.Server`
+  named after the port, whose ``protocol`` is its binding's (``soap11`` / ``soap12`` / ``http``)
+  and whose extras name the WSDL service, binding, port type and transport.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -184,6 +191,7 @@ def _operation_payload(
     namespace: Optional[str],
     element_to_type: Dict[str, str],
     type_names: frozenset[str],
+    message_types: Optional[Dict[str, str]] = None,
 ) -> Optional[TypeRef]:
     """Resolve one side of an operation to its canonical payload reference.
 
@@ -197,10 +205,13 @@ def _operation_payload(
         namespace: The document's target namespace.
         element_to_type: Global element name -> declared type expression.
         type_names: Names of the document's complex types.
+        message_types: Multi-part message name -> its synthesized type key (MFI-13.2).
 
     Returns:
         The payload reference, or ``None`` when this side carries no resolvable payload.
     """
+    if message is not None and len(message.parts) > 1 and message_types and message.name in message_types:
+        return TypeRef(name=message_types[message.name])
     if message is not None and message.parts:
         part = message.parts[0]
         resolved = _element_payload(
@@ -284,6 +295,111 @@ def _version_extras(source: WsdlDocument) -> Dict[str, Any]:
     return {"wsdl_version": source.version}
 
 
+def _message_types(
+    source: WsdlDocument,
+    *,
+    namespace: Optional[str],
+    element_to_type: Dict[str, str],
+    type_names: frozenset[str],
+) -> Tuple[List[Type], Dict[str, str]]:
+    """A synthesized record type for every multi-part 1.1 message (MFI-13.2).
+
+    Each part is one field: an ``element`` part takes the element's type (``wsdl_part_element``
+    names the element), a ``type`` part its type (``wsdl_part_type``). The type is named after the
+    message (``<Message>Message`` when a complex type already has that name).
+
+    Returns:
+        ``(types, message name → type key)``.
+    """
+    types: List[Type] = []
+    keys: Dict[str, str] = {}
+    for message in source.messages:
+        if len(message.parts) < 2:
+            continue
+        name = message.name if message.name not in type_names else f"{message.name}Message"
+        type_key = _type_key(name, namespace)
+        fields = []
+        for index, part in enumerate(message.parts, start=1):
+            if part.element:
+                ref = _element_payload(
+                    part.element, namespace=namespace, element_to_type=element_to_type, type_names=type_names
+                ) or _type_ref_from_expr(part.element, namespace=namespace, type_names=type_names)
+                extras: Dict[str, Any] = {"wsdl_part_element": part.element}
+            else:
+                ref = _type_ref_from_expr(part.type_name or "string", namespace=namespace, type_names=type_names)
+                extras = {"wsdl_part_type": part.type_name}
+            fields.append(
+                CanonicalField(
+                    key=Keys.field(type_key, part.name), name=part.name, type=ref, field_number=index, extras=extras
+                )
+            )
+        types.append(
+            Type(
+                key=type_key,
+                name=name,
+                kind=TypeKind.RECORD,
+                namespace=namespace,
+                fields=fields,
+                extras={"wsdl_kind": "message", "wsdl_message": message.name},
+            )
+        )
+        keys[message.name] = type_key
+    return types, keys
+
+
+def _fault_messages(
+    operation: WsdlOperation,
+    op_key: str,
+    *,
+    messages_by_name: Dict[str, WsdlMessage],
+    namespace: Optional[str],
+    element_to_type: Dict[str, str],
+    type_names: frozenset[str],
+    message_types: Dict[str, str],
+) -> List[Message]:
+    """An operation's faults as ``error`` messages keyed ``<operation>#fault.<name>`` (MFI-13.2)."""
+    faults: List[Message] = []
+    for fault in operation.faults:
+        payload = _operation_payload(
+            messages_by_name.get(fault.message or ""),
+            fault.element,
+            namespace=namespace,
+            element_to_type=element_to_type,
+            type_names=type_names,
+            message_types=message_types,
+        )
+        faults.append(
+            Message(key=f"{op_key}#fault.{fault.name}", role=MessageRole.ERROR, name=fault.name, payload=payload)
+        )
+    return faults
+
+
+def _servers(source: WsdlDocument) -> List[Server]:
+    """Each port with an address, named after it, with its binding's protocol and topology (MFI-13.2)."""
+    bindings = {binding.name: binding for binding in source.bindings}
+    servers: List[Server] = []
+    for service in source.services:
+        for port in service.ports:
+            if not port.location:
+                continue
+            binding = bindings.get(port.binding)
+            extras: Dict[str, Any] = {"wsdl_service": service.name, "wsdl_binding": port.binding}
+            if binding is not None:
+                extras["wsdl_port_type"] = binding.port_type
+                if binding.transport:
+                    extras["wsdl_transport"] = binding.transport
+            servers.append(
+                Server(
+                    url=port.location,
+                    name=port.name,
+                    description=f"{service.name}/{port.name}",
+                    protocol=binding.protocol if binding is not None else None,
+                    extras=extras,
+                )
+            )
+    return servers
+
+
 class WsdlNormalizer(Normalizer, register=True):
     """Normalize a parsed WSDL document into a :class:`CanonicalApi`."""
 
@@ -323,6 +439,11 @@ class WsdlNormalizer(Normalizer, register=True):
                 )
             )
 
+        message_type_list, message_types = _message_types(
+            source, namespace=namespace, element_to_type=element_to_type, type_names=type_names
+        )
+        types.extend(message_type_list)
+
         services: List[Service] = []
         for port_type in source.port_types:
             service_key = Keys.type(port_type.name, namespace)
@@ -338,6 +459,7 @@ class WsdlNormalizer(Normalizer, register=True):
                     namespace=namespace,
                     element_to_type=element_to_type,
                     type_names=type_names,
+                    message_types=message_types,
                 )
                 if request_payload is not None:
                     messages.append(
@@ -354,6 +476,7 @@ class WsdlNormalizer(Normalizer, register=True):
                     namespace=namespace,
                     element_to_type=element_to_type,
                     type_names=type_names,
+                    message_types=message_types,
                 )
                 if response_payload is not None:
                     messages.append(
@@ -363,6 +486,17 @@ class WsdlNormalizer(Normalizer, register=True):
                             payload=response_payload,
                         )
                     )
+                messages.extend(
+                    _fault_messages(
+                        operation,
+                        op_key,
+                        messages_by_name=messages_by_name,
+                        namespace=namespace,
+                        element_to_type=element_to_type,
+                        type_names=type_names,
+                        message_types=message_types,
+                    )
+                )
                 operations.append(
                     Operation(
                         key=op_key,
@@ -375,16 +509,7 @@ class WsdlNormalizer(Normalizer, register=True):
                 )
             services.append(Service(key=service_key, name=port_type.name, operations=operations))
 
-        servers: List[Server] = []
-        for service in source.services:
-            for port in service.ports:
-                if port.location:
-                    servers.append(
-                        Server(
-                            url=port.location,
-                            description=f"{service.name}/{port.name}",
-                        )
-                    )
+        servers = _servers(source)
 
         identity_name = _identity_name(source, [service.name for service in services])
         api = CanonicalApi(

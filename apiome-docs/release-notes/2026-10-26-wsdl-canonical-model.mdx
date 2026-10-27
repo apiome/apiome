@@ -1,0 +1,18 @@
+---
+slug: wsdl-canonical-model
+title: Fuller WSDL catalog items
+description: WSDL imports keep faults, every message part, and each port's SOAP binding.
+authors: [apiome]
+---
+
+A SOAP service imported from WSDL now keeps more of its description in the catalog.
+[What the catalog item records](/bring-in/wsdl-import#what-the-catalog-item-records).
+
+{/* truncate */}
+
+- **Faults.** Each `wsdl:fault` (or WSDL 2.0 `outfault`) is an error message on its operation.
+- **Multi-part messages.** An `rpc`-style message with several parts keeps every part, as a type
+  named after the message, instead of only the first part.
+- **Ports and bindings.** Each port is a server named after it, with its binding's protocol (SOAP
+  1.1, SOAP 1.2 or HTTP), so services with both SOAP versions keep both.
+- **Export.** Exporting the item to WSDL writes all of it back.

@@ -56,9 +56,14 @@
     "servers": [
       {
         "description": "CatalogueService/CatalogueServicePort",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "CatalogueServiceSoapBinding",
+          "wsdl_port_type": "CatalogueServicePortType",
+          "wsdl_service": "CatalogueService",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "CatalogueServicePort",
+        "protocol": "soap11",
         "url": "https://api.example.com/catalogue",
         "variables": []
       }
@@ -272,7 +277,7 @@
     "confidence": 0.97,
     "format": "soapui"
   },
-  "fingerprint": "sha256:f2265a1d7a66818e811e1cb010c39aed22e782788bca6f7486126a5392da5e43",
+  "fingerprint": "sha256:240ad22455abc4820dcdcd90819775ad918d0cc07e5af62a6462818a324f95d5",
   "lint": {
     "findings": 11,
     "grade": "B",

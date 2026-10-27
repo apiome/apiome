@@ -20,9 +20,14 @@
     "servers": [
       {
         "description": "PingService/PingEndpoint",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "PingSoapBinding",
+          "wsdl_port_type": "PingInterface",
+          "wsdl_service": "PingService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "PingEndpoint",
+        "protocol": "soap12",
         "url": "https://api.example.com/ping",
         "variables": []
       }
@@ -105,7 +110,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:b165530c750d5815751fb8d3f5aecf933e1f6f8c8944d8ecfd6052bfc8396963",
+  "fingerprint": "sha256:cbb3f192bd3bc1e7fc79f5728c7e83454edaf3d844bc6336919413f282e41e30",
   "lint": {
     "findings": 4,
     "grade": "A",

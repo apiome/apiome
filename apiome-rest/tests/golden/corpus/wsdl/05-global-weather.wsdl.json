@@ -19,9 +19,14 @@
     "servers": [
       {
         "description": "GlobalWeather/GlobalWeatherSoap",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "GlobalWeatherSoapBinding",
+          "wsdl_port_type": "GlobalWeatherSoap",
+          "wsdl_service": "GlobalWeather",
+          "wsdl_transport": "http://schemas.xmlsoap.org/soap/http"
+        },
+        "name": "GlobalWeatherSoap",
+        "protocol": "soap11",
         "url": "https://weather.example.com/globalweather.asmx",
         "variables": []
       }
@@ -327,7 +332,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:e82598d0c853717cd93b0bec26f9158a63d65e372a40d40fdbd08837ba9bba7c",
+  "fingerprint": "sha256:82eca0a657d4b8499a4bedcb374912fba38b40096eef5d0f160866a0760df303",
   "lint": {
     "findings": 16,
     "grade": "D",

@@ -20,17 +20,27 @@
     "servers": [
       {
         "description": "TrackingService/Production",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "TrackingSoapBinding",
+          "wsdl_port_type": "TrackingInterface",
+          "wsdl_service": "TrackingService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "Production",
+        "protocol": "soap12",
         "url": "https://api.example.com/shipping/tracking/v2",
         "variables": []
       },
       {
         "description": "TrackingService/Sandbox",
-        "extras": {},
-        "name": null,
-        "protocol": null,
+        "extras": {
+          "wsdl_binding": "TrackingSoapBinding",
+          "wsdl_port_type": "TrackingInterface",
+          "wsdl_service": "TrackingService",
+          "wsdl_transport": "http://www.w3.org/2003/05/soap/bindings/HTTP/"
+        },
+        "name": "Sandbox",
+        "protocol": "soap12",
         "url": "https://sandbox.example.com/shipping/tracking/v2",
         "variables": []
       }
@@ -91,6 +101,24 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
+                "key": "http://example.com/shipping/tracking/v2.TrackingInterface.rate#fault.TrackingFault",
+                "name": "TrackingFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/shipping/tracking/v2.trackingFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
                 "key": "http://example.com/shipping/tracking/v2.TrackingInterface.rate#request",
                 "name": null,
                 "payload": {
@@ -138,6 +166,24 @@
             "key": "http://example.com/shipping/tracking/v2.TrackingInterface.track",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "http://example.com/shipping/tracking/v2.TrackingInterface.track#fault.TrackingFault",
+                "name": "TrackingFault",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "http://example.com/shipping/tracking/v2.trackingFault",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -975,15 +1021,15 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:ec4573e9da91bdc1938c2b215634c119c6ee93eb2501d51bec1e6adb189ae2fd",
+  "fingerprint": "sha256:3e93e6a1ab4802c4c47fc9146e15a59f1306c6d3e50b7a599c672cb4adb0ac17",
   "lint": {
-    "findings": 48,
+    "findings": 50,
     "grade": "F",
-    "report_fingerprint": "974d42bd3062c15476b7513cab552d7d356bb2491d57fd628874505833b3c0b2",
-    "score": 42,
+    "report_fingerprint": "7377488289418b0131d7354902bd3f3a21813d002d463ce2c6454f2469d9e7df",
+    "score": 40,
     "severity_counts": {
       "error": 0,
-      "info": 36,
+      "info": 38,
       "warning": 12
     }
   },
