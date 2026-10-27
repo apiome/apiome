@@ -59,6 +59,8 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Bug Fixes
 
+- Browse:
+  - Versions created before Apiome recorded each version's format now show under the **format** and **paradigm** filters too: OpenAPI versions as `openapi` (or their exact version, such as `openapi-3.1`, when Apiome knows it) and Arazzo versions as `arazzo`, both under **REST**. Before, they matched no format or paradigm filter
 - Sign-in:
   - Confirming a new account no longer flashes *We could not sign you in automatically* before the **Let's set up your first workspace** screen
   - **Sign In** stays disabled while you are being signed in, instead of turning back on and inviting a second click; it comes back only if the attempt fails
