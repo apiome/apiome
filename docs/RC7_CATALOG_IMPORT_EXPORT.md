@@ -227,8 +227,12 @@ MFI-13.5 (#3792) is built: the WSDL importer records soapAction / rpc style per 
 nillable, default and simple-type facets (written back by the WSDL emitter), and the `wsdl` breaking-change classifier
 (`app.wsdl_breaking`) grades MEP / soapAction / style and XSD occurs / facet moves with strict-receiver rules.
 
+MFI-14.4 (#3797) is built: a `@versioned` TypeSpec service compiles to one OpenAPI document per version
+(`output-file: openapi.{version}.json`); the catalog item is the newest version and records every version plus each
+step's OpenAPI compatibility grade (`app.typespec_versioning`, `typespec_version_changes`).
+
 **Breaking-change rules** (the generic classifier applies today):
-TypeSpec versioning [#3797](https://github.com/apiome/apiome/issues/3797), RAML [#3802](https://github.com/apiome/apiome/issues/3802),
+RAML [#3802](https://github.com/apiome/apiome/issues/3802),
 Smithy [#3811](https://github.com/apiome/apiome/issues/3811).
 
 **Avro:** PCF fingerprint [#3782](https://github.com/apiome/apiome/issues/3782) and the

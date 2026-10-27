@@ -87,7 +87,7 @@ def test_everything_else_is_ignored_and_named():
         "emit: only @typespec/openapi3 runs on import",
         "output-dir: output stays in Apiome's scratch directory",
         'options."@typespec/openapi3".openapi-versions: only the first version (3.1.0) is emitted',
-        'options."@typespec/openapi3".output-file: Apiome reads one openapi.json it names itself',
+        'options."@typespec/openapi3".output-file: Apiome names the emitted documents itself (one per version)',
         'options."@typespec/json-schema": only @typespec/openapi3 runs on import',
         "linter: Apiome runs the bundled libraries' built-in linter rulesets itself",
     )
@@ -125,13 +125,14 @@ def test_an_empty_config_applies_nothing():
     assert resolve_tspconfig("# only a comment\n").applied == {}
 
 
-def test_the_built_config_always_emits_one_openapi_json():
+def test_the_built_config_names_the_emitted_documents_per_version():
     built = yaml.safe_load(build_tspconfig({"options": {"@typespec/openapi3": {"output-file": "../x.json"}}}))
     assert built["emit"] == ["@typespec/openapi3"]
-    assert built["options"]["@typespec/openapi3"]["output-file"] == "openapi.json"
+    # MFI-14.4: `{version}` — openapi.json for an unversioned service, one file per version otherwise.
+    assert built["options"]["@typespec/openapi3"]["output-file"] == "openapi.{version}.json"
     assert yaml.safe_load(OPENAPI_TSPCONFIG) == {
         "emit": ["@typespec/openapi3"],
-        "options": {"@typespec/openapi3": {"output-file": "openapi.json"}},
+        "options": {"@typespec/openapi3": {"output-file": "openapi.{version}.json"}},
         # MFI-14.3: the bundled libraries' built-in linter rulesets run on every compile.
         "linter": {"extends": ["@typespec/http/all"]},
     }
