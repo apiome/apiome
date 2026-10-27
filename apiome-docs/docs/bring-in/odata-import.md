@@ -2,7 +2,7 @@
 title: "Import an OData service"
 description: "Catalog OData CSDL XML or JSON, validate it, or discover a live service."
 sidebar_position: 43
-tags: [import, odata, csdl, edmx, validation]
+tags: [import, odata, csdl, edmx, validation, breaking-changes]
 ---
 
 The **OData** importer (`odata`) reads an OData service's metadata into the
@@ -112,6 +112,41 @@ Lint reports each problem at its path: `csdl:<path>` for JSON schema, reference 
 and `xml:<path>` for XML schema problems. To stop services that do not match the OASIS schemas
 from being published, raise `odata.csdl-schema` and `odata.csdl-xsd` to `error` in a copy of your
 [style guide](../build/lint-and-quality.md).
+
+## Breaking changes between versions
+
+OData defines which model changes a service may make without breaking its clients: *OData 4.01
+Protocol*, section 5.2
+[Model Versioning](https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_ModelVersioning).
+When you compare two versions of an OData catalog item, each change is graded by those rules:
+
+| Change | Severity | Rule |
+| --- | --- | --- |
+| A nullable property added | Safe | `odata.property-added-nullable` |
+| A non-nullable property added with a default value | Safe | `odata.property-added-with-default` |
+| A non-nullable property added with no default | Breaking | `odata.property-added-required` |
+| A property's type changed | Breaking | `odata.property-type-changed` |
+| A property made non-nullable | Breaking | `odata.property-made-non-nullable` |
+| A property made nullable | Dangerous | `odata.property-made-nullable` |
+| An entity type's key changed | Breaking | `odata.key-changed` |
+| A collection-valued or nullable navigation property added | Safe | `odata.navigation-added` |
+| A single-valued, non-nullable navigation property added | Breaking | `odata.navigation-added-required` |
+| A single-valued navigation property added whose nullability is not recorded | Dangerous | `odata.navigation-added-unknown` |
+| A navigation property removed | Breaking | `odata.navigation-removed` |
+| A navigation property's target type changed | Breaking | `odata.navigation-type-changed` |
+| A navigation property's partner changed | Dangerous | `odata.navigation-partner-changed` |
+| Annotations added | Safe | `odata.annotation-added` |
+| An annotation changed or removed | Dangerous | `odata.annotation-changed` |
+
+New entity types, complex types, enumerations and entity sets are safe; anything removed is
+breaking. Every other change is graded by the standard rules. A v2 or v3 navigation property's
+nullability comes from its association end (`0..1` is nullable, `1` is not).
+
+**Schema version.** Section 5.2 asks a service that makes a breaking change to version its metadata
+with the `Core.SchemaVersion` annotation, so clients can still ask for the old model with
+`$schemaversion`. Each breaking change says whether the schema's `Core.SchemaVersion` moved between the
+two versions (for example `Core.SchemaVersion moved (Shop: '1' → '2')`), or that it did not and should
+have. The grade itself does not change. The schema version is read from v4 metadata.
 
 ## When the import refuses a document
 

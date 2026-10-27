@@ -348,6 +348,9 @@ def load_format_breaking_change_classifiers() -> None:
     # OpenRPC breaking-change classifier (MFI-19.1): registers under ``openrpc`` and grades
     # parameter position, name and requiredness against ``paramStructure``.
     from . import openrpc_breaking as _openrpc_breaking  # noqa: F401
+    # OData breaking-change classifier (MFI-11.5): registers under ``odata`` and grades by OData
+    # §5.2 Model Versioning, noting the Core.SchemaVersion ($schemaversion) story on breaks.
+    from . import odata_breaking as _odata_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(
