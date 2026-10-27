@@ -332,6 +332,23 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
         findings = [f.as_dict() for f in lint_canonical_model(model).findings]
         return _blocking_rule_ids(findings), findings
 
+    if kind == "catalog_apiblueprint_drafter":
+        # API Blueprint with captured drafter annotations (MFI-16.3): drafter is a native tool the
+        # evaluation environment does not build, so the fixture carries the annotations the real
+        # drafter 4.0.0 reported for its document, and exercises the lint surface they feed.
+        from dataclasses import replace
+
+        from .apiblueprint_import_source import ApiblueprintImportSource
+        from .apiblueprint_parser import parse_apiblueprint
+        from .lint_engine import lint_canonical_model
+
+        adapter = ApiblueprintImportSource()
+        document = parse_apiblueprint(str(data.get("document") or ""), source_label=str(data.get("id") or "fixture"))
+        captured = [dict(item) for item in (data.get("drafter_annotations") or []) if isinstance(item, dict)]
+        model = adapter.normalize(replace(document, drafter_annotations=tuple(captured)))
+        findings = [f.as_dict() for f in lint_canonical_model(model).findings]
+        return _blocking_rule_ids(findings), findings
+
     if kind == "catalog_pointer_index":
         # Inventory-only fixture: multi-format pointers validated in tests by path existence.
         return set(), []

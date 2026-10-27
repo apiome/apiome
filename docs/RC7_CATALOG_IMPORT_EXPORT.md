@@ -203,8 +203,12 @@ JSON-LD SHACL report); a self-contained document AMF refuses imports through the
 findings. The `raml` lint pack (`app.raml_lint`, seven rules, V328) reports `raml.shacl-*` plus hygiene
 (`app.raml_hygiene`: undeclared security schemes, unused base-URI / URI parameters, methods without responses).
 
+MFI-16.3 (#3806) is built: with the bundled drafter, every API Blueprint import is also run through `drafter -f json`
+(`app.apiblueprint_drafter`, best effort — the built-in reader still does the import), and the `apiblueprint` lint
+pack (`app.apiblueprint_lint`, V329) reports drafter's annotations as `apiblueprint.drafter-warning` /
+`apiblueprint.drafter-error`.
+
 **Lint packs** (only the cross-format pack applies today; `format_lint_capabilities.RELATED_FORMAT_LINT_ISSUES` already names these):
-API Blueprint [#3806](https://github.com/apiome/apiome/issues/3806),
 Smithy [#3810](https://github.com/apiome/apiome/issues/3810).
 
 **Breaking-change rules** (the generic classifier applies today):

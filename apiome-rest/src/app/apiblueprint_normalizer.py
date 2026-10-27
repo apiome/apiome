@@ -120,6 +120,20 @@ def _response_type_name(type_name: str) -> str:
     return array_inner or type_name
 
 
+
+#: Most drafter annotations recorded on a catalog item (the rest are counted, not listed).
+MAX_RECORDED_ANNOTATIONS = 50
+
+
+def _drafter_extras(source: ApiblueprintDocument) -> Dict[str, Any]:
+    """drafter's annotations (MFI-16.3); empty when there are none, so a clean model is unchanged."""
+    if not source.drafter_annotations:
+        return {}
+    return {
+        "apib_drafter_annotations": [dict(a) for a in source.drafter_annotations[:MAX_RECORDED_ANNOTATIONS]],
+        "apib_drafter_annotation_count": len(source.drafter_annotations),
+    }
+
 class ApiblueprintNormalizer(Normalizer, register=True):
     """Normalize a parsed API Blueprint document into a :class:`CanonicalApi`."""
 
@@ -253,6 +267,8 @@ class ApiblueprintNormalizer(Normalizer, register=True):
             extras={
                 "apib_format_version": source.format_version,
                 "apib_host": source.host,
+                # MFI-16.3: drafter's annotations, for the `apiblueprint` lint pack (omitted when none).
+                **_drafter_extras(source),
             },
         )
         return normalize_ordering(api)

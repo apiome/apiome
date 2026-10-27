@@ -407,6 +407,21 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/raml-shacl-violation",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "apiblueprint.drafter-error": _meta(
+        "apiblueprint.drafter-error",
+        ENGINE_SCHEMA,
+        rationale="drafter, the reference API Blueprint parser, reports an error when it cannot build a correct "
+        "model of the blueprint (an undefined or circular base type, tabs in the source); other API Blueprint "
+        "tools (Apiary, Dredd, aglio) reject or misread it.",
+        reference="https://github.com/apiaryio/drafter",
+        remediation="Fix the line drafter names: define the missing data structure, break the inheritance cycle, "
+        "or indent with spaces.",
+        false_positive_guidance="Not a false positive: drafter reports errors only for blueprints it cannot "
+        "parse correctly. Only servers with the bundled drafter report it.",
+        scan_modes=("lint",),
+        fixture_id="catalog/apiblueprint-drafter-error",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
         ENGINE_SCHEMA,

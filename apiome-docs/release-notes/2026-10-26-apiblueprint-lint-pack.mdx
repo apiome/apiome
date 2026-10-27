@@ -1,0 +1,18 @@
+---
+slug: apiblueprint-lint-pack
+title: API Blueprint lint pack with drafter
+description: API Blueprint imports report drafter's warnings and errors in lint.
+authors: [apiome]
+---
+
+API Blueprint documents are now checked by drafter, the reference API Blueprint parser, when the
+server has it. Every warning and error drafter reports is a lint finding with its line.
+[API Blueprint: drafter's warnings](/build/lint-and-quality#api-blueprint-drafters-warnings).
+
+{/* truncate */}
+
+- **Warnings.** A parameter missing from the URI template, a resource defined twice, an empty
+  request body or an action with no response is an `apiblueprint.drafter-warning`.
+- **Errors.** A data structure that inherits from an undefined type, or tabs in the source, is an
+  `apiblueprint.drafter-error`.
+- **No new dependency for import.** Blueprints import the same way on servers without drafter.

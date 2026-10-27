@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 __all__ = [
     "ApiblueprintParseError",
@@ -100,6 +100,9 @@ class ApiblueprintDocument:
     types: Tuple[ApiblueprintType, ...]
     operations: Tuple[ApiblueprintOperation, ...]
     raw: str
+    #: drafter's annotations of the document (MFI-16.3, :func:`app.apiblueprint_drafter.run_drafter`):
+    #: ``{"severity", "code", "message", "line"?, "column"?}``; empty without drafter.
+    drafter_annotations: Tuple[Dict[str, Any], ...] = ()
 
 
 def is_apiblueprint(content: str) -> bool:

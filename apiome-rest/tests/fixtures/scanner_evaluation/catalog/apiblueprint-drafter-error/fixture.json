@@ -1,0 +1,16 @@
+{
+  "kind": "catalog_apiblueprint_drafter",
+  "id": "catalog/apiblueprint-drafter-error",
+  "source_format": "apiblueprint",
+  "description": "API Blueprint document with exactly one blocking defect: data structure Pet inherits from Animal, which is not defined. drafter_annotations is what the real drafter 4.0.0 reported for this document.",
+  "document": "FORMAT: 1A\n\n# Shelter API\n\n## Data Structures\n\n### Pet (Animal)\n\n+ name: Rex (string)\n\n## Pets [/pets]\n\n### List pets [GET]\n\n+ Response 200 (application/json)\n\n    + Attributes (array[Pet])\n",
+  "drafter_annotations": [
+    {
+      "severity": "error",
+      "code": 4,
+      "message": "base type 'Animal' is not defined in the document",
+      "line": 7,
+      "column": 1
+    }
+  ]
+}

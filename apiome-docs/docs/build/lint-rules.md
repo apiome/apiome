@@ -211,6 +211,26 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Scan modes:** `lint`
 
 
+## Pack: `apiblueprint`
+
+### `apiblueprint.drafter-error` {#apiblueprint-drafter-error}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** drafter, the reference API Blueprint parser, should report no errors.
+- **Reference:** https://github.com/apiaryio/drafter
+- **Remediation:** Fix the line drafter names: define the missing data structure, break the inheritance cycle, or indent with spaces.
+- **False-positive guidance:** Not a false positive: drafter reports errors only for blueprints it cannot parse correctly. Only servers with the bundled drafter report it.
+- **Fixture:** `catalog/apiblueprint-drafter-error`
+- **Scan modes:** `lint`
+
+### `apiblueprint.drafter-warning` {#apiblueprint-drafter-warning}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** drafter, the reference API Blueprint parser, should report no warnings.
+
+
 ## Pack: `arazzo`
 
 ### `arazzo.async-source-before-1-1` {#arazzo-async-source-before-1-1}

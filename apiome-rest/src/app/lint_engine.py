@@ -431,6 +431,9 @@ def load_format_rule_packs() -> None:
     # RAML lint pack (MFI-15.3): registers under ``raml`` (AMF SHACL validation + hygiene).
     from . import raml_lint as _raml_lint  # noqa: F401
 
+    # API Blueprint lint pack (MFI-16.3): registers under ``apiblueprint`` (drafter annotations).
+    from . import apiblueprint_lint as _apiblueprint_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.
