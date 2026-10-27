@@ -37,7 +37,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/quotes/AcceptQuote"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/quotes.QuotePort.AcceptQuote",
@@ -89,7 +91,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/quotes/RequestQuote"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/quotes.QuotePort.RequestQuote",
@@ -578,7 +582,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:cec7f70ccc68007196867056f7cba5320eef92ad7d40a1908f5d46128df00e51",
+  "fingerprint": "sha256:4d57b141761e9890e4331d04ecd867c19510178aabbd2401baa567a698c40f6f",
   "lint": {
     "findings": 30,
     "grade": "F",

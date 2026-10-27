@@ -37,7 +37,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/orders/CancelOrder"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/orders.OrderPort.CancelOrder",
@@ -89,7 +91,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/orders/CreateOrder"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/orders.OrderPort.CreateOrder",
@@ -141,7 +145,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/orders/GetOrder"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/orders.OrderPort.GetOrder",
@@ -228,6 +234,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 2,
@@ -320,6 +327,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
               "xsd_type": "OrderLine"
             },
             "field_number": 2,
@@ -486,6 +494,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
               "xsd_type": "OrderLine"
             },
             "field_number": 4,
@@ -704,7 +713,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:a0ec50674e72d7195458d1e00b311d9331613eee72b7f60be7e5a0c14ec9b78e",
+  "fingerprint": "sha256:3e7c98bf301d219d7a8916d492bf61addeca2855202aa7ddbfa888fca9319389",
   "lint": {
     "findings": 37,
     "grade": "F",

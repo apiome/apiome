@@ -37,7 +37,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/calculator/Add"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/calculator.CalculatorPort.Add",
@@ -197,7 +199,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:03d0d7baa150e8fc5876f142dd33944a9a4a8dc870d896ffbef2e9abafe9b78e",
+  "fingerprint": "sha256:1e802c2066d4c118a8438ae9dcd5c1d622fec86b70d2d7df16920889012a8178",
   "lint": {
     "findings": 9,
     "grade": "B",

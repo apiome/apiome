@@ -255,6 +255,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 2,
@@ -291,6 +292,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 4,
@@ -364,6 +366,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 4,
@@ -419,6 +422,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
               "xsd_type": "rateResponseQuote"
             },
             "field_number": 1,
@@ -565,6 +569,17 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "enumeration": [
+                  "LABEL_CREATED",
+                  "IN_TRANSIT",
+                  "OUT_FOR_DELIVERY",
+                  "DELIVERED",
+                  "EXCEPTION"
+                ]
+              },
+              "xsd_simple_type": "ShipmentStatus",
               "xsd_type": "ShipmentStatus"
             },
             "field_number": 2,
@@ -583,6 +598,13 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "pattern": [
+                  "[0-9]{12,22}"
+                ]
+              },
+              "xsd_simple_type": "TrackingNumber",
               "xsd_type": "TrackingNumber"
             },
             "field_number": 1,
@@ -620,6 +642,8 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_default": "false",
+              "xsd_min_occurs": "0",
               "xsd_type": "boolean"
             },
             "field_number": 2,
@@ -638,6 +662,13 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "pattern": [
+                  "[0-9]{12,22}"
+                ]
+              },
+              "xsd_simple_type": "TrackingNumber",
               "xsd_type": "TrackingNumber"
             },
             "field_number": 1,
@@ -693,6 +724,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "date"
             },
             "field_number": 3,
@@ -711,6 +743,8 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
               "xsd_type": "trackResponseEvent"
             },
             "field_number": 5,
@@ -729,6 +763,17 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "enumeration": [
+                  "LABEL_CREATED",
+                  "IN_TRANSIT",
+                  "OUT_FOR_DELIVERY",
+                  "DELIVERED",
+                  "EXCEPTION"
+                ]
+              },
+              "xsd_simple_type": "ShipmentStatus",
               "xsd_type": "ShipmentStatus"
             },
             "field_number": 2,
@@ -747,6 +792,13 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "pattern": [
+                  "[0-9]{12,22}"
+                ]
+              },
+              "xsd_simple_type": "TrackingNumber",
               "xsd_type": "TrackingNumber"
             },
             "field_number": 1,
@@ -784,6 +836,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 3,
@@ -820,6 +873,17 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "enumeration": [
+                  "LABEL_CREATED",
+                  "IN_TRANSIT",
+                  "OUT_FOR_DELIVERY",
+                  "DELIVERED",
+                  "EXCEPTION"
+                ]
+              },
+              "xsd_simple_type": "ShipmentStatus",
               "xsd_type": "ShipmentStatus"
             },
             "field_number": 2,
@@ -911,7 +975,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:21631353a72f853be874401f2cbcd130ef01e9cd7c543c20ea012a1db0624a2d",
+  "fingerprint": "sha256:ec4573e9da91bdc1938c2b215634c119c6ee93eb2501d51bec1e6adb189ae2fd",
   "lint": {
     "findings": 48,
     "grade": "F",

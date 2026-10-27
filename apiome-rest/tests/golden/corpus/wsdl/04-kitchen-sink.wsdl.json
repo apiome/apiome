@@ -91,7 +91,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/telemetry/RaiseAlarm"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/telemetry.AlarmPort.RaiseAlarm",
@@ -133,7 +135,10 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/telemetry/GetSensorStatus",
+              "wsdl_soap_style": "rpc"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/telemetry.IngestionPort.GetSensorStatus",
@@ -185,7 +190,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/telemetry/SubmitBatch"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/telemetry.IngestionPort.SubmitBatch",
@@ -290,6 +297,16 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_base": "string",
+              "xsd_facets": {
+                "enumeration": [
+                  "debug",
+                  "info",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "xsd_simple_type": "Severity",
               "xsd_type": "Severity"
             },
             "field_number": 2,
@@ -418,6 +435,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 4,
@@ -473,6 +491,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
               "xsd_type": "Reading"
             },
             "field_number": 1,
@@ -509,7 +528,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:c492d39bf2d993867ad6295482895334473070f250f19ceb8f602b6a23fd7fa4",
+  "fingerprint": "sha256:0cb48ecd83be1eb7af8be17a8587e04687d0cac7ed7fc1b4303e55b3d2bddc6c",
   "lint": {
     "findings": 30,
     "grade": "F",

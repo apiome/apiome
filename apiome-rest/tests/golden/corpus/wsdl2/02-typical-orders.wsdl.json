@@ -211,6 +211,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 2,
@@ -303,6 +304,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_max_occurs": "unbounded",
               "xsd_type": "orderLine"
             },
             "field_number": 4,
@@ -595,7 +597,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:c19c342b6aebbdaed1d68e6ea5c1ff876318d57f0cf675f2607ff8b30394b0f8",
+  "fingerprint": "sha256:b86f4c37173519416344f1db8c8ccaa7f5120ad8980caa96913d00550513a026",
   "lint": {
     "findings": 31,
     "grade": "F",

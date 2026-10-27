@@ -37,7 +37,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/banking/GetBalance"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/banking.TransferPort.GetBalance",
@@ -89,7 +91,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/banking/TransferFunds"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/banking.TransferPort.TransferFunds",
@@ -395,6 +399,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 5,
@@ -504,7 +509,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:d8684ff9d598c2afe0b6976a65403cde71d01c25a1b64c7201cb86e58ac20406",
+  "fingerprint": "sha256:7aa96ef4789e6ea0f44db8f4ebbaae242eaca30bd558e33fb21812efe5a65782",
   "lint": {
     "findings": 26,
     "grade": "F",
