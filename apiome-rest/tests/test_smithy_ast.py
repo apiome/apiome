@@ -331,7 +331,9 @@ def test_detects_a_json_ast():
     assert (result.format, result.confidence) == ("smithy", 0.97)
 
 
-def test_a_single_idl_file_keeps_the_built_in_reader(monkeypatch):
+def test_without_the_cli_a_single_idl_file_keeps_the_built_in_reader(monkeypatch):
+    # With the CLI, one file is assembled through it too (MFI-17.4, tests/test_smithy_breaking.py).
+    monkeypatch.setattr(smithy_import_source_module, "smithy_cli_available", lambda: False)
     calls = _replay(monkeypatch)
     doc = SmithyImportSource().parse(_members()["main.smithy"], source_label="main.smithy")
     assert calls == []
@@ -339,7 +341,8 @@ def test_a_single_idl_file_keeps_the_built_in_reader(monkeypatch):
     assert doc.namespace == "example.weather"
 
 
-def test_a_fileset_with_one_model_file_is_read_without_the_cli(monkeypatch):
+def test_a_fileset_with_one_model_file_is_read_like_that_one_file(monkeypatch):
+    monkeypatch.setattr(smithy_import_source_module, "smithy_cli_available", lambda: False)
     calls = _replay(monkeypatch)
     members = {"main.smithy": _members()["main.smithy"], "smithy-build.json": "{}"}
     SmithyImportSource().parse_fileset(IntakeFileset.from_members(members, root="main.smithy"))

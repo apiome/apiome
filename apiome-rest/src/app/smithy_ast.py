@@ -30,6 +30,10 @@ ship those linters, so the image keeps the ``smithy-linters`` jar (and the two a
 on) in a local Maven-layout folder (:func:`smithy_linters_repo`), and Apiome writes its own
 ``smithy-build.json`` naming only that ``file://`` repository — no network: outbound HTTP is also
 pointed at a closed local port for the run. The events become lint findings (:mod:`app.smithy_lint`).
+
+**Diff (MFI-17.4, #3811).** :func:`run_smithy_diff` runs ``smithy diff --format csv`` on two
+versions of a model and returns its evaluator events (``NOTE`` / ``WARNING`` / ``DANGER`` /
+``ERROR``), which :mod:`app.smithy_breaking` maps onto breaking-change severities.
 """
 
 from __future__ import annotations
@@ -44,6 +48,7 @@ import posixpath
 import re
 import shutil
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -71,6 +76,7 @@ __all__ = [
     "SMITHY_LINTERS",
     "SMITHY_LINTERS_REPO_ENV",
     "read_validation_events",
+    "run_smithy_diff",
     "smithy_cli_available",
     "smithy_linters_repo",
     "validate_smithy_members",
@@ -418,6 +424,58 @@ def validate_smithy_members(members: Mapping[str, str]) -> List[Dict[str, Any]]:
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
+def _model_file_name(text: str) -> str:
+    """The file name a single model is staged under: ``model.json`` for a JSON AST, else ``model.smithy``."""
+    return "model.json" if is_smithy_ast_text(text) else "model.smithy"
+
+
+def run_smithy_diff(old_text: str, new_text: str) -> Optional[List[Dict[str, Any]]]:
+    """Compare two versions of a model with ``smithy diff`` (MFI-17.4, #3811).
+
+    Best effort: a missing CLI, a timeout, a model the CLI cannot load or unreadable output yields
+    ``None``, and the caller keeps its own grades.
+
+    Args:
+        old_text: The old model (Smithy IDL or a JSON AST).
+        new_text: The new model (Smithy IDL or a JSON AST).
+
+    Returns:
+        The diff's events (:func:`read_validation_events`, every severity from ``NOTE``), their
+        ``file`` relative to the staging folder (``old/model.smithy`` / ``new/model.smithy``);
+        ``None`` when the diff did not run.
+    """
+    staging_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-diff-"))
+    work_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-work-"))
+    try:
+        (old_file,) = stage_smithy_members({f"old/{_model_file_name(old_text)}": old_text}, staging_dir)
+        (new_file,) = stage_smithy_members({f"new/{_model_file_name(new_text)}": new_text}, staging_dir)
+        args = ["diff", "--no-config", "--format", "csv", "--severity", "NOTE", "--allow-unknown-traits"]
+        try:
+            result = run_tool_blocking(
+                SMITHY_TOOL_KEY,
+                [*args, "--old", str(old_file), "--new", str(new_file)],
+                timeout=SMITHY_TIMEOUT_SECONDS,
+                thread_name="smithy-diff",
+                cwd=str(work_dir),
+                # See validate_smithy_members: the JVM's home and no network.
+                extra_env={"HOME": str(work_dir), "JAVA_TOOL_OPTIONS": f"{_NO_NETWORK} -Duser.home={work_dir}"},
+            )
+            stdout = result.stdout
+        except ToolExecutionError as exc:
+            # The CLI exits non-zero when an event is DANGER or ERROR; the CSV is still on stdout.
+            stdout = exc.stdout
+        except ToolchainError as exc:
+            logger.warning("smithy diff did not run; the baseline grades stand: %s", exc)
+            return None
+        events = read_validation_events(stdout, staging_dir)
+        if events is None:
+            logger.warning("smithy diff printed no events table (a model may not load); the baseline grades stand")
+        return events
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
 def _source_files(members: Mapping[str, str]) -> Tuple[str, ...]:
     """The model files' normalized paths, sorted."""
     return tuple(sorted(filter(None, (normalize_member_path(m) for m in members))))
@@ -460,13 +518,14 @@ def assemble_smithy_set(
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
         shutil.rmtree(work_dir, ignore_errors=True)
-    return document_from_ast(
+    document = document_from_ast(
         ast,
         raw=members[root],
         model_sha256=ast_sha256(ast),
         source_files=_source_files(models),
         source_label=source_label or root,
     )
+    return replace(document, ast=ast)
 
 
 def parse_smithy_ast_text(text: str, *, source_label: Optional[str] = None) -> SmithyDocument:

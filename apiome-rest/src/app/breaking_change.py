@@ -61,6 +61,7 @@ __all__ = [
     "Severity",
     "ChangeClassification",
     "ClassificationResult",
+    "UnattributedFinding",
     "BreakingChangeClassifier",
     "BuiltinBreakingChangeClassifier",
     "classify",
@@ -145,6 +146,21 @@ class ChangeClassification(BaseModel):
     )
 
 
+class UnattributedFinding(BaseModel):
+    """A finding from a format's own diff tool that no canonical change carries.
+
+    A tool such as ``smithy diff`` (MFI-17.4) can report something the canonical diff does not
+    model (a trait, a member's order, a resource binding). The finding is kept here instead of
+    being dropped, and its severity counts toward :attr:`ClassificationResult.overall_severity`,
+    so a publish gate never misses a tool-reported break.
+    """
+
+    severity: Severity = Field(description="The finding's severity, mapped from the tool's own scale.")
+    rule_id: str = Field(description="Stable identifier of the tool rule that fired.")
+    rationale: str = Field(description="The tool's message.")
+    shape: Optional[str] = Field(default=None, description="The tool's identifier of what changed, when it gives one.")
+
+
 class ClassificationResult(BaseModel):
     """The breaking-change grading of a whole :class:`~app.diff.ModelDiff`.
 
@@ -152,8 +168,11 @@ class ClassificationResult(BaseModel):
     :attr:`app.diff.ModelDiff.changes`, so the two zip together for a diff view.
     :attr:`overall_severity` is the worst per-change severity (``SAFE`` for an empty
     diff), and :attr:`breaking` is the convenience boolean a version-roll / publish gate
-    keys on. :attr:`counts_by_severity` tallies the grades. Plain Pydantic, so it
-    round-trips losslessly to JSONB for persistence alongside the version diff (MFI-3.4).
+    keys on. :attr:`counts_by_severity` tallies the grades. :attr:`unattributed` holds
+    findings from a format's own diff tool that join no change; they count toward
+    :attr:`overall_severity` but not toward :attr:`counts_by_severity` (which stays per
+    change). Plain Pydantic, so it round-trips losslessly to JSONB for persistence alongside
+    the version diff (MFI-3.4).
     """
 
     format: str = Field(description="The artifact's source format key (``target.format``).")
@@ -172,6 +191,10 @@ class ClassificationResult(BaseModel):
         default_factory=dict,
         description="Number of changes at each severity (only non-zero tiers present).",
     )
+    unattributed: List[UnattributedFinding] = Field(
+        default_factory=list,
+        description="Tool findings that join no change; they count toward overall_severity.",
+    )
 
     @property
     def breaking(self) -> bool:
@@ -188,6 +211,7 @@ def _assemble_result(
     classifier: "BreakingChangeClassifier",
     target: CanonicalApi,
     classifications: List[ChangeClassification],
+    unattributed: Optional[List[UnattributedFinding]] = None,
 ) -> ClassificationResult:
     """Assemble a :class:`ClassificationResult` from per-change grades.
 
@@ -195,22 +219,26 @@ def _assemble_result(
         classifier: The classifier that produced the grades (for its id).
         target: The "to" model (for its format key).
         classifications: The per-change grades, in the diff's stable order.
+        unattributed: Tool findings that join no change (counted toward the overall severity).
 
     Returns:
-        The aggregated result: worst-of overall severity and per-severity counts.
+        The aggregated result: worst-of overall severity (changes and unattributed findings)
+        and per-change severity counts.
     """
+    unattributed = list(unattributed or [])
     counts: Dict[str, int] = {}
     for classification in classifications:
         counts[classification.severity.value] = (
             counts.get(classification.severity.value, 0) + 1
         )
-    overall = _worst([c.severity for c in classifications])
+    overall = _worst([c.severity for c in classifications] + [f.severity for f in unattributed])
     return ClassificationResult(
         format=target.format,
         classifier=_classifier_id(classifier),
         overall_severity=overall,
         classifications=classifications,
         counts_by_severity=counts,
+        unattributed=unattributed,
     )
 
 
@@ -357,6 +385,9 @@ def load_format_breaking_change_classifiers() -> None:
     # RAML breaking-change classifier (MFI-15.4): registers under ``raml`` and grades parameter,
     # property, enum and applied-reuse moves (RAML has no official ruleset).
     from . import raml_breaking as _raml_breaking  # noqa: F401
+    # Smithy breaking-change classifier (MFI-17.4): registers under ``smithy`` and overlays the
+    # ``smithy diff`` evaluators (NOTE / WARNING / DANGER / ERROR) on the baseline grades.
+    from . import smithy_breaking as _smithy_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

@@ -1,0 +1,94 @@
+{
+    "smithy": "2.0",
+    "shapes": {
+        "example.shelter#GetPet": {
+            "type": "operation",
+            "input": {
+                "target": "example.shelter#GetPetInput"
+            },
+            "output": {
+                "target": "example.shelter#GetPetOutput"
+            },
+            "traits": {
+                "smithy.api#readonly": {}
+            }
+        },
+        "example.shelter#GetPetInput": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                },
+                "region": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#input": {}
+            }
+        },
+        "example.shelter#GetPetOutput": {
+            "type": "structure",
+            "members": {
+                "name": {
+                    "target": "smithy.api#String"
+                },
+                "extra": {
+                    "target": "smithy.api#String"
+                }
+            },
+            "traits": {
+                "smithy.api#output": {}
+            }
+        },
+        "example.shelter#Pet": {
+            "type": "structure",
+            "members": {
+                "id": {
+                    "target": "smithy.api#String",
+                    "traits": {
+                        "smithy.api#required": {}
+                    }
+                },
+                "status": {
+                    "target": "example.shelter#Status"
+                },
+                "size": {
+                    "target": "smithy.api#Long"
+                }
+            }
+        },
+        "example.shelter#Shelter": {
+            "type": "service",
+            "version": "2",
+            "operations": [
+                {
+                    "target": "example.shelter#GetPet"
+                }
+            ]
+        },
+        "example.shelter#Status": {
+            "type": "enum",
+            "members": {
+                "OPEN": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "OPEN"
+                    }
+                },
+                "HELD": {
+                    "target": "smithy.api#Unit",
+                    "traits": {
+                        "smithy.api#enumValue": "HELD"
+                    }
+                }
+            }
+        }
+    }
+}

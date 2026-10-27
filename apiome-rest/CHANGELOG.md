@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.478.0] - 2026-10-26
+
+### Added
+- **Smithy breaking-change classifier (MFI-17.4, #3811)** — new `app.smithy_breaking.SmithyBreakingChangeClassifier`
+  (`smithy`, id `smithy-diff`) runs `smithy diff --format csv` through the bundled Smithy CLI
+  (`app.smithy_ast.run_smithy_diff`, sandboxed, no network) and maps its evaluators' severities onto Apiome's:
+  `ERROR` → breaking, `DANGER` / `WARNING` → dangerous, `NOTE` → safe. Each finding's shape id joins the canonical
+  change on the same entity (member → field, else its shape; shape → type, service or operation), the worst finding
+  replaces the baseline grade (`rule_id` `smithy-diff.<evaluator id>`), and changes no finding joins keep the
+  baseline. Without the CLI, or when a model cannot be loaded, the baseline grades stand.
+- **`ClassificationResult.unattributed`** — findings from a format's own diff tool that join no canonical change
+  (`UnattributedFinding`: severity, rule id, rationale, shape). They count toward `overall_severity` / `breaking`
+  but not toward `counts_by_severity`, so a gate never misses a tool-reported break.
+
+### Changed
+- **Smithy single-file import** — with the Smithy CLI available, one `.smithy` file is assembled through
+  `smithy ast` like a multi-file set (inline `:=` input / output members are now read); the built-in reader is the
+  fallback when the CLI cannot load it. A multi-file set keeps its assembled JSON AST on `raw["smithy_ast"]` so
+  `smithy diff` compares whole models.
+
 ## [1.477.0] - 2026-10-26
 
 ### Added

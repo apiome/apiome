@@ -7,6 +7,7 @@ Maps a parsed :class:`~app.smithy_parser.SmithyDocument` into a
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional, Set
 
 from .canonical_model import (
@@ -128,6 +129,18 @@ def _canonical_field(
 
 #: Most ``smithy validate`` events recorded on a catalog item (the rest are counted, not listed).
 MAX_RECORDED_EVENTS = 50
+
+
+def _raw(source: SmithyDocument) -> Dict[str, str]:
+    """The model's raw text: the root file, plus the assembled JSON AST for a multi-file set.
+
+    ``smithy diff`` (MFI-17.4, :mod:`app.smithy_breaking`) compares whole models, and the root file
+    alone is not the whole model when the set has several files.
+    """
+    raw = {"smithy": source.raw}
+    if source.ast is not None and len(source.source_files) > 1:
+        raw["smithy_ast"] = json.dumps(source.ast, sort_keys=True, ensure_ascii=False)
+    return raw
 
 
 def _validation_extras(source: SmithyDocument) -> Dict[str, Any]:
@@ -350,7 +363,7 @@ class SmithyNormalizer(Normalizer, register=True):
             title=title,
             services=services,
             types=types,
-            raw={"smithy": source.raw} if include_raw else None,
+            raw=_raw(source) if include_raw else None,
             extras={
                 "smithy_version": source.version,
                 "smithy_namespace": namespace,

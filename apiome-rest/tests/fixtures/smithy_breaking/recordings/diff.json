@@ -1,0 +1,19 @@
+{
+  "tool": "smithy 1.53.0",
+  "command": "smithy diff --no-config --format csv --severity NOTE --allow-unknown-traits --old old/model.smithy --new new/model.smithy",
+  "stdout": "severity,id,shape,file,line,column,message,hint,suppressionReason\n\"ERROR\",\"RemovedOperationBinding.FromService.DeletePet\",\"example.shelter#Shelter\",\"/__STAGING__/new/model.smithy\",3,1,\"Operation binding of `example.shelter#DeletePet` was removed from service shape, `example.shelter#Shelter`\",\"\",\"\"\n\"DANGER\",\"ChangedMemberOrder\",\"example.shelter#GetPetInput\",\"/__STAGING__/new/model.smithy\",5,29,\"structure shape members were reordered. This can cause ABI compatibility issues in languages like C and C++ where the layout and alignment of a data structure matters.\",\"\",\"\"\n\"ERROR\",\"AddedRequiredMember\",\"example.shelter#GetPetInput$region\",\"/__STAGING__/new/model.smithy\",5,63,\"Adding a new member with the `required` trait but not the `default` trait is backwards-incompatible.\",\"\",\"\"\n\"NOTE\",\"AddedShape\",\"example.shelter#GetPetInput$region\",\"/__STAGING__/new/model.smithy\",5,63,\"Added member `example.shelter#GetPetInput$region`\",\"\",\"\"\n\"DANGER\",\"ChangedMemberOrder\",\"example.shelter#GetPetOutput\",\"/__STAGING__/new/model.smithy\",5,90,\"structure shape members were reordered. This can cause ABI compatibility issues in languages like C and C++ where the layout and alignment of a data structure matters.\",\"\",\"\"\n\"NOTE\",\"AddedShape\",\"example.shelter#GetPetOutput$extra\",\"/__STAGING__/new/model.smithy\",5,106,\"Added member `example.shelter#GetPetOutput$extra`\",\"\",\"\"\n\"NOTE\",\"ChangedEnumTrait.Appended.1\",\"example.shelter#Status\",\"/__STAGING__/new/model.smithy\",6,1,\"Enum value `HELD` was appended\",\"\",\"\"\n\"NOTE\",\"AddedShape\",\"example.shelter#Status$HELD\",\"/__STAGING__/new/model.smithy\",6,20,\"Added member `example.shelter#Status$HELD`\",\"\",\"\"\n\"ERROR\",\"ChangedMemberTarget\",\"example.shelter#Pet$size\",\"/__STAGING__/new/model.smithy\",7,55,\"The shape targeted by the member `example.shelter#Pet$size` changed from `smithy.api#Integer` (integer) to `smithy.api#Long` (long). The type of the targeted shape changed from integer to long.\",\"\",\"\"\n\"ERROR\",\"RemovedShape\",\"example.shelter#GetPetInput$filter\",\"/__STAGING__/old/model.smithy\",5,53,\"Removed member `example.shelter#GetPetInput$filter`\",\"\",\"\"\n\"ERROR\",\"RemovedShape\",\"example.shelter#GetPetOutput$tag\",\"/__STAGING__/old/model.smithy\",5,96,\"Removed member `example.shelter#GetPetOutput$tag`\",\"\",\"\"\n\"ERROR\",\"RemovedShape\",\"example.shelter#DeletePet\",\"/__STAGING__/old/model.smithy\",6,1,\"Removed operation `example.shelter#DeletePet`\",\"\",\"\"\n\"ERROR\",\"RemovedShape\",\"example.shelter#DeletePetInput\",\"/__STAGING__/old/model.smithy\",6,32,\"Removed structure `example.shelter#DeletePetInput`\",\"\",\"\"\n\"ERROR\",\"ChangedEnumTrait.Removed.1\",\"example.shelter#Status\",\"/__STAGING__/old/model.smithy\",7,1,\"Enum value `CLOSED` was removed\",\"\",\"\"\n\"ERROR\",\"RemovedShape\",\"example.shelter#Status$CLOSED\",\"/__STAGING__/old/model.smithy\",7,20,\"Removed member `example.shelter#Status$CLOSED`\",\"\",\"\"\n",
+  "exit_code": 1,
+  "args": [
+    "diff",
+    "--no-config",
+    "--format",
+    "csv",
+    "--severity",
+    "NOTE",
+    "--allow-unknown-traits",
+    "--old",
+    "/__STAGING__/old/model.smithy",
+    "--new",
+    "/__STAGING__/new/model.smithy"
+  ]
+}
