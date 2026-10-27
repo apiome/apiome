@@ -62,7 +62,11 @@ import {
   type ConversionDryRunResult,
   type Loss,
 } from '../../../../utils/conversion-fidelity';
-import { convertPreviewDialogTitle } from '../../../../utils/catalog-conversion';
+import {
+  convertCommitLabel,
+  convertPreviewDialogTitle,
+  type CatalogConversion,
+} from '../../../../utils/catalog-conversion';
 import { ConversionProjectionGraphPanel } from './ConversionProjectionGraphPanel';
 import { CODE_BLOCK_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
 import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
@@ -107,6 +111,11 @@ interface ConversionPreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Called after a successful commit, with the conversion result, so the parent can refresh. */
   onConverted?: () => void;
+  /**
+   * The item's existing conversion, or `null`/absent when it was never converted. Only labels the
+   * confirm button: "Convert & create Project" first, "Re-convert" after (MFI-27.1).
+   */
+  conversion?: CatalogConversion | null;
 }
 
 /** One checklist row rendered as a compact card: construct name, coverage badge, count, reason, examples. */
@@ -159,6 +168,7 @@ export function ConversionPreviewDialog({
   open,
   onOpenChange,
   onConverted,
+  conversion = null,
 }: ConversionPreviewDialogProps) {
   // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
   // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
@@ -628,7 +638,7 @@ export function ConversionPreviewDialog({
                   disabled={convertDisabled}
                   data-testid="conversion-convert-btn"
                 >
-                  {committing ? 'Converting…' : 'Convert'}
+                  {committing ? 'Converting…' : convertCommitLabel(conversion)}
                 </Button>
               </div>
             </div>

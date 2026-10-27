@@ -101,6 +101,22 @@ export function convertActionLabel(
 }
 
 /**
+ * The conversion preview dialog's confirm button (MFI-27.1, #4099).
+ *
+ * A first conversion names its outcome — **"Convert & create Project"** — because that click is
+ * what mints a publishable Project. Once the item has a conversion, the button reads
+ * **"Re-convert"**, matching the header action ({@link convertActionLabel}): a re-convert adds a
+ * version to the Project it already produced rather than creating another (MFI-22.5), so "create
+ * Project" would promise the wrong thing.
+ *
+ * @param conversion The item's conversion record, or `null`/absent when it was never converted.
+ * @returns The button's label (the in-flight "Converting…" state is the dialog's own).
+ */
+export function convertCommitLabel(conversion: CatalogConversion | null | undefined): string {
+  return conversion ? 'Re-convert' : 'Convert & create Project';
+}
+
+/**
  * Title for the conversion preview dialog — mirrors {@link convertActionLabel} without the
  * Re-convert variant.
  */

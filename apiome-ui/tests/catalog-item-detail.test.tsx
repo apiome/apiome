@@ -37,6 +37,7 @@ jest.mock('@monaco-editor/react', () => ({
 }));
 
 import { CatalogItemDetailClient } from '../src/app/ade/dashboard/catalog/[id]/CatalogItemDetailClient';
+import { isPrimaryButton } from './helpers/page-gates';
 
 // These suites cover the screen as an Owner; what each role is offered is
 // tests/permission-matrix-ui.test.tsx (RC6-H5, #6212).
@@ -346,6 +347,58 @@ describe('CatalogItemDetailClient', () => {
     expect(link).toHaveAttribute('href', '/ade/dashboard/versions?projectId=proj-openapi');
     // The convert action relabels to Re-convert (re-convert is always allowed).
     expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Re-convert to OpenAPI Project');
+  });
+
+  /**
+   * Serve the item and the convert dialog's dry run (MFI-27.1): the primary header CTA must open
+   * the existing conversion preview, whose confirm button names what it will do.
+   */
+  function mockFetchItemAndPreview(item: unknown) {
+    global.fetch = jest.fn((input: unknown) => {
+      const url = String(input);
+      if (url.includes('/convert?dryRun=true')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            report: { score: 96, grade: 'A', tier: 'high', penalty: 4, coverage_counts: {}, items: [], losses: [] },
+            openapi: { openapi: '3.1.0', info: { title: 'x' } },
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, item }) });
+    }) as unknown as typeof fetch;
+  }
+
+  it('opens the conversion preview from the primary Convert CTA, labelled "Convert & create Project" (MFI-27.1)', async () => {
+    mockFetchItemAndPreview(RICH_ITEM);
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    const convert = await screen.findByTestId('catalog-detail-convert');
+    // It is the header's primary action (MFI-25.1).
+    expect(isPrimaryButton(convert)).toBe(true);
+    expect(screen.queryByTestId('conversion-convert-btn')).not.toBeInTheDocument();
+
+    fireEvent.click(convert);
+    const commit = await screen.findByTestId('conversion-convert-btn');
+    expect(commit).toHaveTextContent(/^Convert & create Project$/);
+    expect(global.fetch).toHaveBeenCalledWith(
+      `/api/catalog/${encodeURIComponent(RICH_ITEM.id)}/convert?dryRun=true`,
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('opens the preview from the Re-convert CTA with a "Re-convert" confirm button (MFI-27.1)', async () => {
+    mockFetchItemAndPreview({
+      ...RICH_ITEM,
+      conversion: { projectId: 'proj-openapi', projectName: 'Acme OpenAPI', reconverted: false },
+    });
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    const convert = await screen.findByTestId('catalog-detail-convert');
+    expect(convert).toHaveTextContent('Re-convert to OpenAPI Project');
+    fireEvent.click(convert);
+    expect(await screen.findByTestId('conversion-convert-btn')).toHaveTextContent(/^Re-convert$/);
   });
 
   it('jumps from the converted banner into the Conversions tab (CPDO-3.3)', async () => {

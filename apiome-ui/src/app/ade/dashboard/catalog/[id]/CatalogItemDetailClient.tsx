@@ -918,6 +918,7 @@ export function CatalogItemDetailClient({
         open={convertOpen}
         onOpenChange={setConvertOpen}
         onConverted={handleConverted}
+        conversion={item.conversion ?? null}
       />
 
       {categorizeOpen ? (

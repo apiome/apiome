@@ -276,7 +276,6 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 | Ticket | Work | Priority |
 | --- | --- | --- |
 | [#6321](https://github.com/apiome/apiome/issues/6321) IXH-3.7 | Import a new version into a project: a **Changes** step comparing the incoming spec with the latest version | P1 |
-| [#4099](https://github.com/apiome/apiome/issues/4099) MFI-27.1 | Convert CTA copy and wiring | P2 |
 | [#4100](https://github.com/apiome/apiome/issues/4100) MFI-27.2 | Cross-surface polish (remaining: catalog search placeholder) | P2 |
 | [#3758](https://github.com/apiome/apiome/issues/3758) MFI-7.3 | Backfill format/protocol on existing rows | P2 |
 | [#3754](https://github.com/apiome/apiome/issues/3754) MFI-6.2 | Cross-protocol full-text search over the normalized model | P2 |
@@ -294,6 +293,11 @@ beyond File / URL / Clipboard, and **Import to catalog** draws it as a card (`al
 is registered for its kind (`CATALOG_ALTERNATE_INTAKE_PANELS`). Both are empty: `supports_live_discovery` alone does
 not qualify, since the import pipeline runs no adapter's `introspect` / `discover` yet (that is #4399's re-discovery
 work). A live-discovery card is then a server flag plus one panel, with no dialog change.
+
+MFI-27.1 (#4099) is built: the conversion preview's confirm button reads **Convert & create Project**, or
+**Re-convert** when the item already has a conversion (`convertCommitLabel`; `ConversionPreviewDialog` takes the
+item's `conversion` from the detail page and the Catalog list). The detail header's primary Convert / Re-convert CTA
+(25.1) opens it; the acknowledgement gate and preview are unchanged.
 
 Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives)
 belongs to the gated `primitives` feature.

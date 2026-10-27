@@ -13,6 +13,8 @@ We continue to improve the platform based on your feedback with improvements and
 - Import:
   - Changes step — importing a spec whose slug matches an existing project now stops at **Changes** before **Import**: added, changed, removed and breaking counts against the project's latest version, a filterable list of every changed path, operation, schema and property (breaking first), and a **Side-by-side spec** tab with the latest version on the left and the incoming spec on the right. Breaking changes are a warning, never a block — **Continue to import** is always available, for a dry run too
   - Catalog dry run — **Import to catalog** has a **Dry run** button on the **Options** step: it shows the detected format, where the import would land and why, the catalog item's name and slug, its contents, quality score and fingerprint, and saves nothing. **Continue** still goes on to **Quality** and **Import**
+- Catalog:
+  - Convert button — the conversion preview's button now says what it does: **Convert & create Project** on a first conversion, **Re-convert** when the item has been converted before (a re-convert adds a version to the same project). The item's primary **Convert to OpenAPI Project** action opens the preview
 - API Formats:
   - Adds formats:
     - Bruno collection import — a Bruno collection folder (`bruno.json` and its `.bru` files) imports as one REST API from an archive or straight from git, with the same result either way: folders as operation groups, requests as operations with inferred body schemas, `{{baseUrl}}` as a server variable and whole-variable parameters with their value as default; credentials and secret variables are never kept, and scripts and tests are listed in the coverage ledger
