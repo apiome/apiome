@@ -1,0 +1,139 @@
+---
+title: Keep a catalog item fresh
+description: Re-check a catalog item against its live GraphQL or gRPC endpoint.
+sidebar_position: 1.15
+tags: [catalog, refresh, graphql, grpc]
+---
+
+<Route path="/ade/dashboard/catalog/[id]" />
+
+A catalog item describes an API that keeps running after you import it. **Live refresh**
+re-discovers that API from its live endpoint on a schedule you choose, and tells you whether it
+has changed since the last check. A check that fails is reported on the item. It never changes
+the item or its versions.
+
+Live refresh works for two kinds of source:
+
+| Discover with | Endpoint | What the endpoint must allow |
+| --- | --- | --- |
+| **GraphQL introspection** | An `http://` or `https://` URL, such as `https://api.example.com/graphql` | Introspection queries |
+| **gRPC server reflection** | `host:port`, such as `grpc.example.com:443` | The server reflection service. Tick **Use TLS** for a TLS port |
+
+Refresh is **off** for every item until you set it up.
+
+## Set up refresh
+
+You need `projects:edit` (an **Editor** or **Owner**).
+
+1. **Open the catalog item** from **Bring in → Catalog**.
+2. **Click the Provenance tab.** The **Live refresh** card is under the provenance steps.
+3. **Click “Set up refresh…”.**
+4. In **Discover with**, choose **GraphQL introspection** or **gRPC server reflection**.
+5. In **Endpoint**, enter the live endpoint.
+6. In **Cadence**, choose how often Apiome checks it (see [Cadences](#cadences)).
+7. If the endpoint needs a credential, choose it in **Credential** and enter the token or header.
+8. **Click “Save”.**
+
+<Screenshot id="catalog-item-refresh-dialog" alt="The Live refresh dialog: Discover with GraphQL introspection, the endpoint URL, a Daily cadence and Keep current credential" />
+
+To run the first check straight away, **click “Check now”** on the card.
+
+### Cadences
+
+| Cadence | When Apiome checks |
+| --- | --- |
+| **Off** | Never. The setting is kept, so you can turn it back on later |
+| **Manual only** | Only when you click **“Check now”** |
+| **Hourly** | About once an hour |
+| **Daily** | About once a day |
+| **Weekly** | About once a week |
+
+A scheduled check runs once the time since the last check exceeds the cadence. To be polite to
+your servers, Apiome limits how many checks run at once and spaces out checks against the same
+host.
+
+### Credentials
+
+| Credential | What you enter | What Apiome sends |
+| --- | --- | --- |
+| **None** | Nothing | No credential |
+| **Bearer token** | The token | `Authorization: Bearer <token>` |
+| **Custom header** | A header name and value | That header |
+| **OAuth access token** | An access token you already have | `Authorization: Bearer <token>` |
+
+Apiome encrypts the credential when you save it and never shows it again. The card only says
+**Stored (encrypted)**. When you edit the setting, **Credential** starts on **Keep current
+credential**: pick another option only to replace or remove it.
+
+## Read the card
+
+<Screenshot id="catalog-item-refresh" alt="The Live refresh card: status Source changed, GraphQL introspection, the endpoint, Daily cadence, a stored credential, and the last and next check" />
+
+| Status | Meaning |
+| --- | --- |
+| **Not checked yet** | Refresh is set up but has not run yet |
+| **Up to date** | The live API matches the last check |
+| **Source changed** | The live API differs from the last check |
+| **Last check failed** | The endpoint could not be reached or refused discovery. **Last failure** gives the reason |
+| **Off** | Refresh is not set up, or its cadence is **Off** |
+| **Paused for workspace** | An administrator switched catalog refresh off for the workspace |
+
+The card also shows the method, endpoint, cadence, credential, when the item was **Last
+checked**, and the **Next check**.
+
+The first successful check records a baseline, so it always reads **Up to date**.
+
+### When a check fails
+
+A failed check does not change the item: its versions, format details and fingerprint stay as
+they were. Each failure in a row delays the next scheduled check: by 5 minutes after the first,
+then 10, 20 and so on, up to one day. The card shows how many checks have failed in a row. The
+next successful check clears the failure.
+
+**Check now** always runs straight away, even while scheduled checks are delayed.
+
+## Change or stop refresh
+
+- To change the endpoint, cadence or credential, **click “Edit refresh…”**. A new endpoint or
+  method starts a fresh history.
+- To pause without losing the setting, set **Cadence** to **Off**.
+- To remove the setting and its stored credential, **click “Turn off”**.
+
+## Switch refresh off for the workspace
+
+An administrator with `imports:edit` can stop every check in the workspace at once. Each item
+keeps its setting and shows **Paused for workspace**. Checks resume when the switch is turned back
+on.
+
+```bash
+apiome catalog refresh-policy set --disabled
+apiome catalog refresh-policy set --enabled
+```
+
+The operator of a self-hosted deployment can also stop every check in every workspace with
+`APIOME_CATALOG_REFRESH_ENABLED=false`.
+
+## With the CLI or the API
+
+The CLI has the same actions as the card. Pass the credential in a file (or `-` for standard
+input), never on the command line:
+
+```bash
+apiome catalog refresh set <item-id> --adapter graphql \
+  --endpoint https://api.example.com/graphql --cadence daily \
+  --auth-type bearer --credentials-file token.json   # {"token": "…"}
+apiome catalog refresh show <item-id>
+apiome catalog refresh check <item-id>   # exits 7 when the check failed
+apiome catalog refresh off <item-id> --yes
+```
+
+See [`apiome catalog`](../reference/cli/catalog.md) for every option.
+
+REST: `GET`, `PUT` and `DELETE /v1/catalog/{tenant}/{item}/refresh`,
+`POST /v1/catalog/{tenant}/{item}/refresh/check`, and `GET` and `PUT
+/v1/catalog/{tenant}/refresh-policy`. See the [Catalog refresh reference](../reference/rest/catalog-refresh.md).
+
+## Where next
+
+- [Catalog](./catalog.mdx) — the item page and its other tabs
+- [Roles](../workspace/roles.mdx) — who can set up refresh

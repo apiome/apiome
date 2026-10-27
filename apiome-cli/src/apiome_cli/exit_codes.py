@@ -157,3 +157,9 @@ EXIT_COMPAT_UNAVAILABLE = 8
 #: (Apiome could not be reached) and :data:`EXIT_USAGE` (a rejected request) so a pipeline can
 #: gate on the run's outcome. Another per-command use of 7.
 EXIT_SYNC_FAILED = 7
+
+#: ``apiome catalog refresh check`` (MFI-31.1): the live check **ran and failed** — the endpoint
+#: was unreachable or refused discovery; the item is unchanged and its next scheduled check backs
+#: off. Distinct from :data:`EXIT_ERROR` (Apiome could not be reached) and :data:`EXIT_USAGE` (a
+#: rejected request) so a pipeline can gate on the check itself. Another per-command use of 7.
+EXIT_REFRESH_CHECK_FAILED = 7

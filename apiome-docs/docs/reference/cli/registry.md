@@ -1,7 +1,7 @@
 ---
 title: "apiome registry"
 description: "Schema registry: subjects, versions, registration, compatibility and settings."
-sidebar_position: 28
+sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

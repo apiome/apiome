@@ -23689,6 +23689,61 @@ button.cid-entity__head {
   color: var(--fg-muted);
 }
 
+/* ---- Live refresh (MFI-31.1) --------------------------------------------
+   The card under Provenance: title and actions on one row (wrapping on a
+   narrow page), the facts in the shared `.cid-kv` list, and the dialog's
+   stacked form. */
+.cid-refresh__head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cid-refresh__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cid-refresh__endpoint {
+  overflow-wrap: anywhere;
+}
+
+/* A failure reason. The tone lives on the ground and the edge mark, never on
+   the words: tone inks miss AA on the surface in some appearances (see the
+   contrast note above), so the text stays --fg. */
+.cid-refresh__error {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-inline-start: 2px solid var(--danger);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.cid-refresh__error + .cid-quiet,
+.cid-kv + .cid-refresh__error {
+  flex-basis: 100%;
+  margin-block-start: var(--space-2);
+}
+
+.cid-refresh-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cid-refresh-form__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
 /* ---- The converted strip ------------------------------------------------ */
 .cid-converted__title {
   font-weight: 600;

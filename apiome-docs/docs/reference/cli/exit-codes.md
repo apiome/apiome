@@ -1,7 +1,7 @@
 ---
 title: "Exit codes"
 description: "What each apiome exit code means, for scripts and CI pipelines."
-sidebar_position: 39
+sidebar_position: 40
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
@@ -43,5 +43,6 @@ Failed import/export **jobs** reuse codes 1–3 via `apiome_cli.taxonomy_exit` (
 | `7` | `EXIT_PROPERTY_INVALID` | `apiome properties create` (CLI 6.3): the new property is **invalid** — a field-level problem such as an unknown primitive or an example its schema rejects; one line per field on stderr, nothing was created. Another per-command use of 7. |
 | `7` | `EXIT_PRIMITIVE_MISSING` | `apiome properties copy` (CLI 6.6): a property to copy has a `$ref` to a **primitive the tenant does not have**; each property and reference is listed and nothing was copied. Import the primitives first. Another per-command use of 7. |
 | `7` | `EXIT_SYNC_FAILED` | `apiome connectors sync --wait` (CDG-1.7): the sync **ran and failed** — the provider refused or the import broke; the run is printed with its error class. Distinct from `EXIT_ERROR` (Apiome could not be reached) and `EXIT_USAGE` (a rejected request) so a pipeline can gate on the run's outcome. Another per-command use of 7. |
+| `7` | `EXIT_REFRESH_CHECK_FAILED` | `apiome catalog refresh check` (MFI-31.1): the live check **ran and failed** — the endpoint was unreachable or refused discovery; the item is unchanged and its next scheduled check backs off. Distinct from `EXIT_ERROR` (Apiome could not be reached) and `EXIT_USAGE` (a rejected request) so a pipeline can gate on the check itself. Another per-command use of 7. |
 | `8` | `EXIT_CHECK_PENDING` | `apiome checks run` / `checks show` (GNC-3.1): the suite has **no verdict yet** — a required component is waiting on evidence (a contract run of this draft), or the commit is ahead of the draft the suite judges. Neither a pass nor a failure, so neither `0` nor `7`: a pipeline decides whether "not yet" blocks it. |
 | `8` | `EXIT_COMPAT_UNAVAILABLE` | `apiome versions compatibility` (CLI 4.8): the server could not be reached, or failed fetching either side of the comparison — no verdict, so neither `0` nor `6`. Another per-command use of 8. |

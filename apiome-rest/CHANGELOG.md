@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.487.0] - 2026-10-27
+
+### Added
+- **Catalog item refresh: scheduler and per-item cadence (MFI-31.1, #4398)** — a catalog item can be re-checked
+  against its live source. `GET` / `PUT` / `DELETE /v1/catalog/{tenant_slug}/{item_id}/refresh` read, store and
+  remove the setting: a cadence (`off` by default, `manual`, `hourly`, `daily`, `weekly`), the adapter (`graphql`
+  introspection or `grpc` reflection — adapters that declare `supports_live_discovery` and have a runner), the
+  endpoint (SSRF URL policy on save, the adapter's guarded client on every call), options (gRPC `secure`) and an
+  optional credential sealed with the MCP credential envelope and never returned (`hasCredential` only).
+  `POST …/refresh/check` runs one check now. A background sweep (`app.catalog_refresh_sweep`, single-flight
+  advisory lock) checks due items under a global concurrency cap and a per-host politeness delay; a failed check
+  is recorded as `status: failed` with `lastError` and backs off exponentially, and never creates a version. A
+  successful check records the fingerprint and `unchanged` / `changed`; the import-pipeline apply hook arrives
+  with MFI-31.2 (#4399). `GET` / `PUT /v1/catalog/{tenant_slug}/refresh-policy` is the tenant kill switch
+  (`imports:edit`); `APIOME_CATALOG_REFRESH_ENABLED` is the deployment one. New settings:
+  `APIOME_CATALOG_REFRESH_TICK`, `_MAX_CONCURRENCY`, `_HOST_DELAY`, `_TIMEOUT`, `_BACKOFF_BASE`, `_BACKOFF_MAX`.
+  Migration V333. API 1.351.0.
+
 ## [1.486.0] - 2026-10-27
 
 ### Added

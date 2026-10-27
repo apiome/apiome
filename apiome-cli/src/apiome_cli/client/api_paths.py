@@ -182,6 +182,21 @@ def catalog_projection(tenant_slug: str, item_id: str) -> str:
     return f"{V1}/catalog/{tenant_slug}/{item_id}/projection"
 
 
+def catalog_refresh(tenant_slug: str, item_id: str) -> str:
+    """A catalog item's live-source refresh setting (MFI-31.1): GET / PUT / DELETE."""
+    return f"{V1}/catalog/{tenant_slug}/{item_id}/refresh"
+
+
+def catalog_refresh_check(tenant_slug: str, item_id: str) -> str:
+    """Run one live check of a catalog item now (MFI-31.1): POST."""
+    return f"{V1}/catalog/{tenant_slug}/{item_id}/refresh/check"
+
+
+def catalog_refresh_policy(tenant_slug: str) -> str:
+    """The workspace kill switch for catalog item refresh (MFI-31.1): GET / PUT."""
+    return f"{V1}/catalog/{tenant_slug}/refresh-policy"
+
+
 def tenant_repositories(tenant_slug: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/repositories"
 

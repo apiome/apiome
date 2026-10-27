@@ -162,6 +162,40 @@
       ]
     },
     {
+      "id": "catalog.refresh",
+      "surface": "Catalog",
+      "label": "Set up live refresh",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "PUT",
+          "path": "/v1/catalog/{tenant}/{item}/refresh",
+          "body": {
+            "cadence": "daily",
+            "adapter": "graphql",
+            "endpoint": "https://api.example.com/graphql"
+          },
+          "stub": "catalog_item"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/catalog/{tenant}/{item}/refresh/check",
+          "stub": "catalog_item"
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/catalog/{tenant}/{item}/refresh",
+          "stub": "catalog_item"
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog-detail",
+          "testid": "catalog-detail-refresh-edit"
+        }
+      ]
+    },
+    {
       "id": "catalog.convert",
       "surface": "Catalog",
       "label": "Convert to project",

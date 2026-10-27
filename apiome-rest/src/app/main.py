@@ -31,6 +31,7 @@ from .bulk_import_routes import router as bulk_import_router
 from .catalog_connector_routes import router as catalog_connector_router
 from .catalog_agent_routes import router as catalog_agent_router
 from .catalog_entity_routes import router as catalog_entity_router
+from .catalog_refresh_routes import router as catalog_refresh_router
 from .catalog_routes import router as catalog_router
 from .model_search_routes import router as model_search_router
 from .change_report_routes import router as change_report_router
@@ -193,7 +194,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.350.0",
+    version="1.351.0",
 )
 
 
@@ -373,6 +374,8 @@ app.include_router(sdk_regen_router)
 # The unified entity list (CDG-5.1, #5979) shares `/v1/catalog` and goes first, so
 # `/{tenant}/entities` is not read as `/{tenant}/{item_id}`.
 app.include_router(catalog_entity_router)
+# Before catalog_router: its GET /{tenant_slug}/{item_id} would otherwise capture /refresh-policy.
+app.include_router(catalog_refresh_router)
 app.include_router(catalog_router)
 app.include_router(model_search_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.
@@ -588,6 +591,7 @@ _repository_file_scan_task: asyncio.Task | None = None
 _repository_refresh_task: asyncio.Task | None = None
 _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
+_catalog_refresh_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
 _catalog_graph_task: asyncio.Task | None = None
 _usage_sweep_task: asyncio.Task | None = None
@@ -796,6 +800,30 @@ async def startup_event():
                 raise
             except Exception:
                 log.exception("mcp discovery sweep")
+
+    async def _catalog_refresh_sweep(tick_seconds: int) -> None:
+        """Periodically re-check catalog items whose refresh cadence has elapsed (MFI-31.1).
+
+        Ticks every ``APIOME_CATALOG_REFRESH_TICK`` seconds; due-selection in
+        ``catalog_refresh_store.list_due`` decides which items are checked. Like the MCP sweep the
+        tick runs on the event loop and pushes blocking work to worker threads, and it awaits its
+        checks, so the next tick starts only after this one drains.
+        """
+        log = logging.getLogger(__name__)
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+                from .catalog_refresh_sweep import process_catalog_refresh_sweep
+
+                thread_db = Database()
+                try:
+                    await process_catalog_refresh_sweep(thread_db)
+                finally:
+                    thread_db.close()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("catalog refresh sweep")
 
     async def _mcp_catalog_digest_sweep() -> None:
         """Periodically compile and deliver per-tenant catalog digests (MCAT-19.5).
@@ -1100,6 +1128,11 @@ async def startup_event():
     _repository_quality_task = asyncio.create_task(_repository_quality_sweep())
     global _mcp_discovery_task
     _mcp_discovery_task = asyncio.create_task(_mcp_discovery_sweep())
+    global _catalog_refresh_task
+    if int(settings.catalog_refresh_tick_seconds) > 0:
+        _catalog_refresh_task = asyncio.create_task(
+            _catalog_refresh_sweep(int(settings.catalog_refresh_tick_seconds))
+        )
     global _mcp_catalog_digest_task
     _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
     global _catalog_graph_task
@@ -1168,6 +1201,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _mcp_discovery_task = None
+    global _catalog_refresh_task
+    if _catalog_refresh_task is not None:
+        _catalog_refresh_task.cancel()
+        try:
+            await _catalog_refresh_task
+        except asyncio.CancelledError:
+            pass
+        _catalog_refresh_task = None
     global _mcp_catalog_digest_task
     if _mcp_catalog_digest_task is not None:
         _mcp_catalog_digest_task.cancel()

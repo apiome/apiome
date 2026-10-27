@@ -195,6 +195,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['x12', 'edifact', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
   {
+    id: 'catalog-refresh',
+    title: 'Keep a catalog item fresh',
+    summary:
+      'Re-check a GraphQL or gRPC catalog item against its live endpoint hourly, daily or weekly, and see whether it changed.',
+    page: 'apiome-docs/docs/bring-in/catalog-refresh.mdx',
+    section: 'spine',
+    keywords: ['refresh', 'live', 'cadence', 'introspection', 'reflection', 'graphql', 'grpc', 'drift', 'schedule'],
+  },
+  {
     id: 'convert-to-openapi',
     title: 'Convert a catalog item to OpenAPI',
     summary:

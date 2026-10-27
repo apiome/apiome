@@ -1,7 +1,7 @@
 ---
 title: "apiome connectors"
 description: "Catalog connectors: sync gateway APIs into the catalog and compare what they serve."
-sidebar_position: 8
+sidebar_position: 9
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

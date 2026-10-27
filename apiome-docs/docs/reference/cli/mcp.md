@@ -1,7 +1,7 @@
 ---
 title: "apiome mcp"
 description: "MCP catalog endpoints and tenant governance."
-sidebar_position: 22
+sidebar_position: 23
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

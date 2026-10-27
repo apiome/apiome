@@ -310,7 +310,7 @@ Imports that come from a URL or discovery can be refreshed. Connector-driven ref
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#4398](https://github.com/apiome/apiome/issues/4398) MFI-31.1 | Per-artifact refresh cadence | Partly built (connector cadence only) |
+| [#4398](https://github.com/apiome/apiome/issues/4398) MFI-31.1 | Per-artifact refresh cadence | Built: per-item cadence (GraphQL / gRPC live source), sweep with concurrency cap, per-host delay and backoff, tenant kill switch; Live refresh card, `apiome catalog refresh` |
 | [#4399](https://github.com/apiome/apiome/issues/4399) MFI-31.2 | Re-discovery through the import pipeline for discovery adapters (gRPC reflection, GraphQL introspection) | Partly built |
 | [#4400](https://github.com/apiome/apiome/issues/4400) MFI-31.3 | Drift badge and breaking-change notification | Partly built (change report only) |
 | [#4401](https://github.com/apiome/apiome/issues/4401) MFI-31.4 | Crawl checkpoint for resume | Partly built |

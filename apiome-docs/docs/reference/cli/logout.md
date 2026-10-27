@@ -1,7 +1,7 @@
 ---
 title: "apiome logout"
 description: "Revoke the key apiome login saved and remove it from the config file."
-sidebar_position: 21
+sidebar_position: 22
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

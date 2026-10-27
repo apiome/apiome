@@ -135,10 +135,35 @@ const ITEM = {
   relatedArtifacts: [],
 };
 
-/** Route every read this screen makes; only `/api/catalog/{id}` returns anything. */
-function mockReads(item: unknown, ok = true) {
+/** The Live refresh card's answer for an item with no refresh setting (MFI-31.1). */
+const REFRESH_OFF = {
+  itemId: ITEM.id,
+  configured: false,
+  cadence: 'off',
+  adapter: null,
+  endpoint: null,
+  options: {},
+  authType: 'none',
+  hasCredential: false,
+  status: 'never',
+  lastCheckedAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
+  lastError: null,
+  lastFingerprint: null,
+  consecutiveFailures: 0,
+  nextCheckAt: null,
+  tenantEnabled: true,
+  adapters: ['graphql', 'grpc'],
+};
+
+/** Route every read this screen makes; `/api/catalog/{id}`, its lint and its refresh answer. */
+function mockReads(item: unknown, ok = true, refresh: unknown = REFRESH_OFF) {
   global.fetch = jest.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
+    if (url === `/api/catalog/${encodeURIComponent(ITEM.id)}/refresh`) {
+      return { ok: true, status: 200, json: async () => refresh } as Response;
+    }
     if (url === `/api/catalog/${encodeURIComponent(ITEM.id)}`) {
       return {
         ok,
@@ -836,6 +861,64 @@ describe('the browser fixtures', () => {
     // The docs screenshot shows the sites expanded.
     (sites.closest('details') as HTMLDetailsElement).open = true;
     write('provenance-secret-scrub', page().outerHTML);
+  });
+
+  /**
+   * MFI-31.1 (#4398): the Provenance tab of a GraphQL item that is re-checked daily against its
+   * live endpoint, and the dialog that sets it up. The docs page on keeping an item fresh
+   * (screenshots `catalog-item-refresh` and `catalog-item-refresh-dialog`) shows both.
+   */
+  it('writes the Live refresh card and its dialog (MFI-31.1)', async () => {
+    mockReads(
+      {
+        ...ITEM,
+        name: 'Countries GraphQL',
+        slug: 'countries-graphql',
+        description: 'The public countries API, introspected from its live endpoint.',
+        sourceFormat: 'graphql',
+        protocol: 'graphql',
+        paradigm: 'graph',
+        formatMetadata: {
+          ...ITEM.formatMetadata,
+          sourceLabel: 'countries.graphql',
+          inputKind: 'url',
+          routingReason: 'graphql is OpenAPI-worthy but not OpenAPI (3 operation(s), 9 type(s), 0 channel(s)) → catalog item.',
+        },
+        toolVersions: { graphql: '16.9.0' },
+        source: { ...ITEM.source, kind: 'url', label: 'countries.graphql', uri: 'https://countries.example.com/graphql' },
+        conversion: null,
+      },
+      true,
+      {
+        ...REFRESH_OFF,
+        configured: true,
+        cadence: 'daily',
+        adapter: 'graphql',
+        endpoint: 'https://countries.example.com/graphql',
+        authType: 'bearer',
+        hasCredential: true,
+        status: 'changed',
+        lastCheckedAt: '2026-10-27T06:00:00.000Z',
+        lastSuccessAt: '2026-10-27T06:00:00.000Z',
+        lastFingerprint: 'sha256:4be1c2d9e07a',
+        nextCheckAt: '2026-10-28T06:00:00.000Z',
+      },
+    );
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1, name: /Countries GraphQL/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByTestId('catalog-detail-tab-provenance'));
+    await waitFor(() =>
+      expect(screen.getByTestId('catalog-detail-refresh-status')).toHaveTextContent('Source changed'),
+    );
+    expect(screen.getByTestId('catalog-detail-refresh-facts')).toHaveTextContent('Stored (encrypted)');
+    write('provenance-refresh', page().outerHTML);
+
+    fireEvent.click(screen.getByTestId('catalog-detail-refresh-edit'));
+    const dialog = await screen.findByTestId('catalog-refresh-dialog');
+    expect(within(dialog).getByTestId('catalog-refresh-auth')).toHaveTextContent('Keep current credential');
+    write('refresh-dialog', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
