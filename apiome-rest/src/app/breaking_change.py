@@ -351,6 +351,9 @@ def load_format_breaking_change_classifiers() -> None:
     # OData breaking-change classifier (MFI-11.5): registers under ``odata`` and grades by OData
     # §5.2 Model Versioning, noting the Core.SchemaVersion ($schemaversion) story on breaks.
     from . import odata_breaking as _odata_breaking  # noqa: F401
+    # WSDL / XSD breaking-change classifier (MFI-13.5): registers under ``wsdl`` and grades MEP,
+    # soapAction / style and XSD occurs / nillable / facet moves (strict receivers: additive ≠ safe).
+    from . import wsdl_breaking as _wsdl_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

@@ -21,7 +21,7 @@ The version is resolved from the root element's *namespace*
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
@@ -65,8 +65,35 @@ class WsdlParseError(ValueError):
 
 @dataclass(frozen=True)
 class WsdlField:
+    """One element particle of a complex type.
+
+    The XSD details below (MFI-13.5) are recorded as the document writes them, and stay
+    ``None`` / empty when the document does not state them, so the breaking-change classifier
+    (:mod:`app.wsdl_breaking`) can grade a move and a document that never stated a detail keeps
+    the model it always had.
+
+    Attributes:
+        name: The element name.
+        type_expr: Its type (local part); for an inline simple type, the restriction's base.
+        min_occurs: ``minOccurs`` as written (XSD default ``1``).
+        max_occurs: ``maxOccurs`` as written (``unbounded`` or a number; default ``1``).
+        nillable: ``nillable`` as written (``true`` / ``false``).
+        default: The element's ``default`` value.
+        simple_type: The named ``xs:simpleType`` the element's type refers to, when it is one.
+        base: The simple type's restriction ``base`` (local part).
+        facets: The simple type's restriction facets, ``(facet, value)`` in document order
+            (``enumeration`` and ``pattern`` may repeat).
+    """
+
     name: str
     type_expr: str
+    min_occurs: Optional[str] = None
+    max_occurs: Optional[str] = None
+    nillable: Optional[str] = None
+    default: Optional[str] = None
+    simple_type: Optional[str] = None
+    base: Optional[str] = None
+    facets: Tuple[Tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -112,6 +139,10 @@ class WsdlOperation:
             so a 1.1 operation always leaves this ``None``.
         input_element: 2.0 input payload element name (local part), if any.
         output_element: 2.0 output payload element name (local part), if any.
+        soap_action: The ``soapAction`` (1.1 ``soap:operation`` / 2.0 ``wsoap:action``) the
+            document's SOAP binding gives the operation (MFI-13.5); ``None`` when unstated.
+        soap_style: The binding's effective style for the operation (``rpc`` / ``document``),
+            when the document has a SOAP 1.1 binding for it.
 
     Faults are read past rather than recorded: the canonical model has no fault construct,
     and the 1.1 path has never carried ``wsdl:fault``, so keeping 2.0's ``outfault`` here
@@ -124,6 +155,8 @@ class WsdlOperation:
     pattern: Optional[str] = None
     input_element: Optional[str] = None
     output_element: Optional[str] = None
+    soap_action: Optional[str] = None
+    soap_style: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -323,6 +356,48 @@ def _content_particles(node: ET.Element) -> List[ET.Element]:
     return particles
 
 
+#: XSD restriction facets recorded on a field (MFI-13.5).
+_FACETS = (
+    "enumeration",
+    "pattern",
+    "length",
+    "minLength",
+    "maxLength",
+    "minInclusive",
+    "maxInclusive",
+    "minExclusive",
+    "maxExclusive",
+    "totalDigits",
+    "fractionDigits",
+)
+
+
+def _element_details(element: ET.Element) -> Dict[str, Optional[str]]:
+    """An element particle's ``minOccurs`` / ``maxOccurs`` / ``nillable`` / ``default``, as written."""
+    return {
+        "min_occurs": element.get("minOccurs"),
+        "max_occurs": element.get("maxOccurs"),
+        "nillable": element.get("nillable"),
+        "default": element.get("default"),
+    }
+
+
+def _restriction(simple_type: ET.Element) -> Tuple[Optional[str], Tuple[Tuple[str, str], ...]]:
+    """A ``simpleType``'s restriction ``base`` (local part) and facets, or ``(None, ())``.
+
+    A ``list`` or ``union`` simple type has no restriction to grade and reads as ``(None, ())``.
+    """
+    restriction = next(iter(_children(simple_type, "restriction")), None)
+    if restriction is None:
+        return None, ()
+    facets = tuple(
+        (_local(child.tag), child.get("value", ""))
+        for child in restriction
+        if _local(child.tag) in _FACETS and child.get("value") is not None
+    )
+    return _attr_local(restriction.get("base")), facets
+
+
 def _particle_fields(
     particle: ET.Element,
     *,
@@ -354,15 +429,24 @@ def _particle_fields(
         field_name = child.get("name")
         if not field_name:
             continue
+        details = _element_details(child)
         type_expr = child.get("type")
         if type_expr:
-            fields.append(WsdlField(name=field_name, type_expr=_attr_local(type_expr) or type_expr))
+            fields.append(WsdlField(name=field_name, type_expr=_attr_local(type_expr) or type_expr, **details))
+            continue
+        simple = next(iter(_children(child, "simpleType")), None)
+        if simple is not None:
+            # MFI-13.5: an element restricting a built-in type inline (`<xs:simpleType><xs:restriction
+            # base="xs:string"><xs:maxLength value="10"/>`) is a field of the base type with facets.
+            base, facets = _restriction(simple)
+            if base:
+                fields.append(WsdlField(name=field_name, type_expr=base, base=base, facets=facets, **details))
             continue
         inline = next(iter(_children(child, "complexType")), None)
         if inline is None:
             continue
         nested_name = _unique_type_name(_nested_type_name(owner, field_name), taken)
-        fields.append(WsdlField(name=field_name, type_expr=nested_name))
+        fields.append(WsdlField(name=field_name, type_expr=nested_name, **details))
         nested.append((inline, nested_name))
     return fields
 
@@ -395,6 +479,21 @@ def _read_complex_type(
         _read_complex_type(inline, name=nested_name, collected=collected, taken=taken)
 
 
+def _with_simple_types(
+    complex_type: WsdlComplexType,
+    simple_types: Mapping[str, Tuple[Optional[str], Tuple[Tuple[str, str], ...]]],
+) -> WsdlComplexType:
+    """Attach each named simple type's restriction to the fields typed by it (MFI-13.5)."""
+    fields = []
+    for field in complex_type.fields:
+        if field.type_expr in simple_types and field.simple_type is None:
+            base, facets = simple_types[field.type_expr]
+            if base is not None:  # a list / union simple type has no restriction to record
+                field = replace(field, simple_type=field.type_expr, base=base, facets=facets)
+        fields.append(field)
+    return replace(complex_type, fields=tuple(fields))
+
+
 def _read_schemas(
     schemas: List[ET.Element],
 ) -> Tuple[Tuple[WsdlComplexType, ...], Tuple[WsdlElementDecl, ...]]:
@@ -415,6 +514,11 @@ def _read_schemas(
     complex_types: List[WsdlComplexType] = []
     elements: List[WsdlElementDecl] = []
     taken: Set[str] = set()
+    simple_types: Dict[str, Tuple[Optional[str], Tuple[Tuple[str, str], ...]]] = {}
+    for schema in schemas:
+        for simple_type in _children(schema, "simpleType"):
+            if simple_type.get("name"):
+                simple_types[simple_type.get("name") or ""] = _restriction(simple_type)
 
     for schema in schemas:
         for complex_type in _children(schema, "complexType"):
@@ -444,6 +548,8 @@ def _read_schemas(
             elements.append(WsdlElementDecl(name=name, type_expr=inline_name))
             _read_complex_type(inline, name=inline_name, collected=complex_types, taken=taken)
 
+    if simple_types:
+        complex_types = [_with_simple_types(complex_type, simple_types) for complex_type in complex_types]
     return tuple(complex_types), tuple(elements)
 
 
@@ -646,6 +752,82 @@ def _parse_services(root: ET.Element) -> Tuple[WsdlService, ...]:
             ports.append(WsdlPort(name=port_name, binding=binding, location=location))
         services.append(WsdlService(name=name, ports=tuple(ports)))
     return tuple(services)
+
+
+_SOAP_BINDING_NAMESPACES = frozenset(
+    {"http://schemas.xmlsoap.org/wsdl/soap/", "http://schemas.xmlsoap.org/wsdl/soap12/"}
+)
+_WSDL_2_SOAP_NAMESPACE = "http://www.w3.org/ns/wsdl/soap"
+
+
+def _soap_children(element: ET.Element, local_name: str) -> List[ET.Element]:
+    """The SOAP 1.1 / 1.2 binding extension children of ``element`` named ``local_name``."""
+    return [
+        child
+        for child in element
+        if _local(child.tag) == local_name and _namespace(child.tag) in _SOAP_BINDING_NAMESPACES
+    ]
+
+
+def _binding_details(
+    roots: Sequence[ET.Element], version: str
+) -> Dict[Tuple[str, str], Tuple[Optional[str], Optional[str]]]:
+    """``(port type, operation) → (soapAction, style)`` from the documents' SOAP bindings (MFI-13.5).
+
+    When several bindings cover one port type (SOAP 1.1 and 1.2 side by side), the first binding
+    in document order that states a value wins, per value.
+
+    Args:
+        roots: The root ``definitions`` / ``description`` and any it imported.
+        version: The WSDL version.
+
+    Returns:
+        The details per operation; an operation no SOAP binding covers is absent.
+    """
+    details: Dict[Tuple[str, str], Tuple[Optional[str], Optional[str]]] = {}
+    for root in roots:
+        for binding in _children(root, "binding"):
+            if version == VERSION_2_0:
+                port_type = _attr_local(binding.get("interface")) or ""
+                default_style = None
+                soap = binding.get("type") == _WSDL_2_SOAP_NAMESPACE
+            else:
+                port_type = _attr_local(binding.get("type")) or ""
+                soap_binding = next(iter(_soap_children(binding, "binding")), None)
+                soap = soap_binding is not None
+                default_style = (soap_binding.get("style") if soap_binding is not None else None) or "document"
+            if not soap:
+                continue
+            for operation in _children(binding, "operation"):
+                if version == VERSION_2_0:
+                    name = _attr_local(operation.get("ref")) or ""
+                    action = operation.get(f"{{{_WSDL_2_SOAP_NAMESPACE}}}action")
+                    style = None
+                else:
+                    name = operation.get("name") or ""
+                    soap_operation = next(iter(_soap_children(operation, "operation")), None)
+                    action = soap_operation.get("soapAction") if soap_operation is not None else None
+                    style = (soap_operation.get("style") if soap_operation is not None else None) or default_style
+                key = (port_type, name)
+                known_action, known_style = details.get(key, (None, None))
+                details[key] = (known_action or (action or None), known_style or style)
+    return details
+
+
+def _with_binding_details(
+    port_types: Sequence[WsdlPortType], details: Mapping[Tuple[str, str], Tuple[Optional[str], Optional[str]]]
+) -> Tuple[WsdlPortType, ...]:
+    """Attach each operation's SOAP binding ``soapAction`` and style (MFI-13.5)."""
+    if not details:
+        return tuple(port_types)
+    updated = []
+    for port_type in port_types:
+        operations = []
+        for operation in port_type.operations:
+            action, style = details.get((port_type.name, operation.name), (None, None))
+            operations.append(replace(operation, soap_action=action, soap_style=style))
+        updated.append(replace(port_type, operations=tuple(operations)))
+    return tuple(updated)
 
 
 # ---------------------------------------------------------------------------
@@ -896,7 +1078,7 @@ def parse_wsdl(
             complex_types=complex_types,
             elements=elements,
             messages=(),
-            port_types=port_types,
+            port_types=_with_binding_details(port_types, _binding_details([root], VERSION_2_0)),
             services=_parse_endpoints(root),
             raw=content,
             version=VERSION_2_0,
@@ -908,7 +1090,10 @@ def parse_wsdl(
         complex_types=complex_types,
         elements=elements,
         messages=tuple(m for definition in roots for m in _parse_messages(definition)),
-        port_types=tuple(p for definition in roots for p in _parse_port_types(definition)),
+        port_types=_with_binding_details(
+            tuple(p for definition in roots for p in _parse_port_types(definition)),
+            _binding_details(roots, VERSION_1_1),
+        ),
         services=tuple(s for definition in roots for s in _parse_services(definition)),
         raw=content,
         version=VERSION_1_1,

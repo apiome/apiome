@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.474.0] - 2026-10-26
+
+### Added
+- **WSDL / XSD breaking changes (MFI-13.5, #3792)** — the WSDL importer now records what a SOAP compatibility check
+  needs (the part of MFI-13.2 #3789 this ticket depends on): `WsdlOperation.soap_action` / `soap_style` from the
+  document's SOAP bindings (WSDL 1.1 `soap:` / `soap12:` operation `soapAction` and the effective `style`; WSDL 2.0
+  `wsoap:action`; the first binding that states a value wins), and per element particle `min_occurs`, `max_occurs`,
+  `nillable`, `default` and its simple-type restriction (`simple_type`, `base`, `facets`: enumeration, pattern, length,
+  min/maxLength, min/max Inclusive/Exclusive, totalDigits, fractionDigits) for named and inline simple types (an
+  element restricting a built-in type inline, previously dropped, is now a field). The normalizer records them as field
+  extras `xsd_min_occurs` / `xsd_max_occurs` / `xsd_nillable` / `xsd_default` / `xsd_simple_type` / `xsd_base` /
+  `xsd_facets` and operation extras `wsdl_soap_action` / `wsdl_soap_style` (`rpc` only), each only when the document
+  states it; the WSDL emitter writes all of them back (named simple types once at schema level, inline restrictions
+  inline; the recorded soapAction instead of a synthesized `{namespace}/{operation}`, empty when none). New
+  `app.wsdl_breaking.WsdlBreakingChangeClassifier` (`wsdl`, id `wsdl-xsd`): MEP, soapAction and style changes,
+  required elements added, type changes, `minOccurs` raised, `maxOccurs` lowered, made non-nillable and narrowed
+  facets are breaking; optional elements added (strict receivers: XSD is not additive-safe), `minOccurs` lowered,
+  `maxOccurs` raised, made nillable, default changes and widened facets are dangerous; a spelling-only move is safe.
+  Corpus goldens for the WSDL / WSDL 2.0 / SoapUI WSDL fixtures gain the new extras. OpenAPI 1.338.0.
+
 ## [1.473.0] - 2026-10-26
 
 ### Added

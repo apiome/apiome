@@ -37,7 +37,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/globalweather/GetCitiesByCountry"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/globalweather.GlobalWeatherSoap.GetCitiesByCountry",
@@ -89,7 +91,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/globalweather/GetWeather"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/globalweather.GlobalWeatherSoap.GetWeather",
@@ -323,7 +327,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:ca10989cc3094e96ac0a0bfe1021f8cd31759b93cf97a7e1c09adf3f72e0ed50",
+  "fingerprint": "sha256:e82598d0c853717cd93b0bec26f9158a63d65e372a40d40fdbd08837ba9bba7c",
   "lint": {
     "findings": 16,
     "grade": "D",

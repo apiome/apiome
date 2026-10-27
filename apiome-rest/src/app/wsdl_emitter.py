@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -178,6 +178,7 @@ class _WsdlWriter:
         )
 
         record_types = [t for t in self._api.types if t.kind is TypeKind.RECORD]
+        self._simple_types_written: set = set()
         for type_ in record_types:
             self._append_complex_type(schema_el, type_)
             element_el = ET.SubElement(
@@ -255,11 +256,12 @@ class _WsdlWriter:
                     ET.QName(_WSDL_NS, "operation"),
                     {"name": operation.name},
                 )
-                ET.SubElement(
-                    bind_op,
-                    ET.QName(_SOAP_NS, "operation"),
-                    {"soapAction": f"{self._target_ns}/{operation.name}"},
-                )
+                # MFI-13.5: the operation's recorded soapAction (empty when the source stated none),
+                # and an `rpc` style when the source's binding used one, so a re-import grades alike.
+                soap_operation = {"soapAction": str(operation.extras.get("wsdl_soap_action") or "")}
+                if operation.extras.get("wsdl_soap_style") == "rpc":
+                    soap_operation["style"] = "rpc"
+                ET.SubElement(bind_op, ET.QName(_SOAP_NS, "operation"), soap_operation)
                 ET.SubElement(
                     ET.SubElement(bind_op, ET.QName(_WSDL_NS, "input")),
                     ET.QName(_SOAP_NS, "body"),
@@ -311,15 +313,43 @@ class _WsdlWriter:
         )
         sequence_el = ET.SubElement(complex_el, ET.QName(_XSD_NS, "sequence"))
         for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
-            ET.SubElement(
-                sequence_el,
-                ET.QName(_XSD_NS, "element"),
-                {
-                    "name": field.name,
-                    "type": self._xsd_type(field.type),
-                },
-            )
+            extras = field.extras or {}
+            attributes = {"name": field.name}
+            facets = extras.get("xsd_facets")
+            simple_type = extras.get("xsd_simple_type")
+            base = extras.get("xsd_base")
+            if base and simple_type:
+                # A named simple type: written once at schema level, referenced by name.
+                attributes["type"] = f"{_TNS_PREFIX}:{simple_type}"
+                if simple_type not in self._simple_types_written:
+                    self._simple_types_written.add(simple_type)
+                    named = ET.SubElement(schema_el, ET.QName(_XSD_NS, "simpleType"), {"name": simple_type})
+                    self._append_restriction(named, base, facets)
+            elif not base:
+                attributes["type"] = self._xsd_type(field.type)
+            # MFI-13.5: the element's occurrence, nillability and default, as the source stated them.
+            for key, attribute in (
+                ("xsd_min_occurs", "minOccurs"),
+                ("xsd_max_occurs", "maxOccurs"),
+                ("xsd_nillable", "nillable"),
+                ("xsd_default", "default"),
+            ):
+                if extras.get(key) is not None:
+                    attributes[attribute] = str(extras[key])
+            element_el = ET.SubElement(sequence_el, ET.QName(_XSD_NS, "element"), attributes)
+            if base and not simple_type:
+                # An inline restriction of a built-in type.
+                inline = ET.SubElement(element_el, ET.QName(_XSD_NS, "simpleType"))
+                self._append_restriction(inline, base, facets)
             self.tracker.record(field.key, Provenance.SOURCE)
+
+    @staticmethod
+    def _append_restriction(simple_type_el: ET.Element, base: str, facets: Any) -> None:
+        """Write ``<xs:restriction base="xs:<base>">`` with its facets under a ``simpleType``."""
+        restriction = ET.SubElement(simple_type_el, ET.QName(_XSD_NS, "restriction"), {"base": f"{_XSD_PREFIX}:{base}"})
+        for facet, value in (facets or {}).items():
+            for item in value if isinstance(value, list) else [value]:
+                ET.SubElement(restriction, ET.QName(_XSD_NS, facet), {"value": str(item)})
 
     def _message_element(self, root: ET.Element, name: str, type_name: str) -> ET.Element:
         message_el = ET.SubElement(root, ET.QName(_WSDL_NS, "message"), {"name": name})

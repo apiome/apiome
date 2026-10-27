@@ -1,0 +1,19 @@
+---
+slug: wsdl-breaking-changes
+title: WSDL and XML Schema breaking changes
+description: SOAP version diffs grade soapAction, message patterns and XML Schema changes element by element.
+authors: [apiome]
+---
+
+Comparing two versions of a SOAP / WSDL service now grades the changes that break SOAP clients:
+`soapAction`, binding style and message-pattern changes, and XML Schema changes element by element.
+[Breaking changes between versions](/bring-in/wsdl-import#breaking-changes-between-versions).
+
+{/* truncate */}
+
+- **Operations.** A changed `soapAction`, a move between `rpc` and `document` style, or a changed
+  message exchange pattern is breaking.
+- **Elements.** A new required element, a raised `minOccurs`, a lowered `maxOccurs`, a changed type
+  or a tightened restriction (an enumeration value removed, a shorter `maxLength`) is breaking.
+- **Strict receivers.** A new optional element or a looser restriction is dangerous, not safe: SOAP
+  services that validate against the old schema reject the new messages.

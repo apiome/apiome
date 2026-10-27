@@ -2,7 +2,7 @@
 title: "Import a SOAP / WSDL service"
 description: "Catalog a WSDL file, a WSDL split across files, or a live SOAP service."
 sidebar_position: 44
-tags: [import, wsdl, soap, xsd, singlewsdl]
+tags: [import, wsdl, soap, xsd, singlewsdl, breaking-changes]
 ---
 
 The **WSDL** importer (`wsdl`) reads a SOAP service description, WSDL 1.1 or 2.0, into the
@@ -77,6 +77,38 @@ import rules apply.
 A single `.wsdl` uploaded without the schemas it imports reports each of them as
 `wsi.unresolved-import`. Upload the files together, use `?singleWsdl`, or discover the live service,
 and import it again.
+
+## Breaking changes between versions
+
+When you compare two versions of a WSDL catalog item, each change is graded by SOAP and XML
+Schema compatibility. The import records what these rules need: each operation's message exchange
+pattern and its SOAP binding's `soapAction` and style, and each element's `minOccurs`, `maxOccurs`,
+`nillable`, `default` and simple-type restrictions (`enumeration`, `pattern`, `length`,
+`minLength` / `maxLength`, `minInclusive` / `maxInclusive`, `minExclusive` / `maxExclusive`,
+`totalDigits`, `fractionDigits`).
+
+SOAP services validate messages strictly: a receiver that does not know an element rejects the
+message. So in XML Schema, **adding is not automatically safe**: a new optional element is
+dangerous, and a looser restriction is dangerous too.
+
+| Change | Severity | Rule |
+| --- | --- | --- |
+| An operation's message exchange pattern changed | Breaking | `wsdl.mep-changed` |
+| An operation's `soapAction` changed | Breaking | `wsdl.soap-action-changed` |
+| An operation moved between `rpc` and `document` style | Breaking | `wsdl.soap-style-changed` |
+| A required element added (`minOccurs` 1 or more) | Breaking | `wsdl.element-added-required` |
+| An optional element added (`minOccurs="0"`) | Dangerous | `wsdl.element-added-optional` |
+| An element's type changed | Breaking | `wsdl.element-type-changed` |
+| `minOccurs` raised / lowered | Breaking / Dangerous | `wsdl.min-occurs-raised` / `wsdl.min-occurs-lowered` |
+| `maxOccurs` lowered / raised | Breaking / Dangerous | `wsdl.max-occurs-lowered` / `wsdl.max-occurs-raised` |
+| `nillable` turned off / on | Breaking / Dangerous | `wsdl.made-non-nillable` / `wsdl.made-nillable` |
+| An element's `default` changed | Dangerous | `wsdl.default-changed` |
+| A restriction tightened: an enumeration value removed, a facet added, a bound tightened, a `pattern` or base type changed | Breaking | `wsdl.facet-narrowed` |
+| A restriction loosened: an enumeration value added, a facet removed, a bound loosened | Dangerous | `wsdl.facet-widened` |
+| Only the spelling changed (`maxOccurs="1"` written out) | Safe | `wsdl.element-unchanged-on-the-wire` |
+
+New operations and types are safe, and anything removed is breaking. Standalone `.xsd` catalog
+items are graded by the standard rules.
 
 ## Related
 

@@ -74,7 +74,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "wsdl_soap_action": "http://example.com/catalogue/GetProduct"
+            },
             "http_method": null,
             "http_path": null,
             "key": "http://example.com/catalogue.CatalogueServicePortType.GetProduct",
@@ -270,7 +272,7 @@
     "confidence": 0.97,
     "format": "soapui"
   },
-  "fingerprint": "sha256:1869038ee7419bd524a037c1e1124cb8fa208cd02fa8cdc1905f67ca5714abf1",
+  "fingerprint": "sha256:f2265a1d7a66818e811e1cb010c39aed22e782788bca6f7486126a5392da5e43",
   "lint": {
     "findings": 11,
     "grade": "B",

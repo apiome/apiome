@@ -42,7 +42,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
-from .wsdl_parser import WsdlDocument, WsdlField, WsdlMessage
+from .wsdl_parser import WsdlDocument, WsdlField, WsdlMessage, WsdlOperation
 from .wsdl_versions import VERSION_2_0, operation_kind_for_pattern
 
 __all__ = ["WsdlNormalizer"]
@@ -102,8 +102,52 @@ def _canonical_field(
         name=field.name,
         type=_type_ref_from_expr(field.type_expr, namespace=namespace, type_names=type_names),
         field_number=field_number,
-        extras={"xsd_type": field.type_expr},
+        extras={"xsd_type": field.type_expr, **xsd_field_extras(field)},
     )
+
+
+def xsd_facet_map(facets: Any) -> Dict[str, Any]:
+    """Restriction facets as ``{facet: value}``; ``enumeration`` and ``pattern`` collect lists."""
+    mapped: Dict[str, Any] = {}
+    for facet, value in facets:
+        if facet in ("enumeration", "pattern"):
+            mapped.setdefault(facet, []).append(value)
+        else:
+            mapped[facet] = value
+    return mapped
+
+
+def xsd_field_extras(field: WsdlField) -> Dict[str, Any]:
+    """The XSD details a field's element declares (MFI-13.5), keyed ``xsd_*``.
+
+    Only details the document states are recorded, so a schema that states none keeps the model it
+    always had; the WSDL emitter writes each one back (:mod:`app.wsdl_emitter`).
+    """
+    extras: Dict[str, Any] = {}
+    for key, value in (
+        ("xsd_min_occurs", field.min_occurs),
+        ("xsd_max_occurs", field.max_occurs),
+        ("xsd_nillable", field.nillable),
+        ("xsd_default", field.default),
+        ("xsd_simple_type", field.simple_type),
+        ("xsd_base", field.base),
+    ):
+        if value is not None:
+            extras[key] = value
+    if field.facets:
+        extras["xsd_facets"] = xsd_facet_map(field.facets)
+    return extras
+
+
+def soap_operation_extras(operation: WsdlOperation) -> Dict[str, Any]:
+    """An operation's SOAP binding details (MFI-13.5): ``wsdl_soap_action`` when stated, and
+    ``wsdl_soap_style`` only for ``rpc`` (``document`` is the SOAP default)."""
+    extras: Dict[str, Any] = {}
+    if operation.soap_action:
+        extras["wsdl_soap_action"] = operation.soap_action
+    if operation.soap_style == "rpc":
+        extras["wsdl_soap_style"] = "rpc"
+    return extras
 
 
 def _element_payload(
@@ -326,6 +370,7 @@ class WsdlNormalizer(Normalizer, register=True):
                         kind=operation_kind_for_pattern(operation.pattern),
                         streaming=StreamingMode.NONE,
                         messages=messages,
+                        extras=soap_operation_extras(operation),
                     )
                 )
             services.append(Service(key=service_key, name=port_type.name, operations=operations))
