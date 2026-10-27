@@ -1,6 +1,6 @@
 ---
 title: "Spec import"
-description: "REST endpoints tagged spec-import: 14 operations."
+description: "REST endpoints tagged spec-import: 15 operations."
 sidebar_position: 85
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.346.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.347.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `spec-import` · 14 operations
+Tag: `spec-import` · 15 operations
 
 ## `POST /v1/tenants/{tenant_slug}/import/bulk` {#start-bulk-import-v1-tenants-tenant-slug-import-bulk-post}
 
@@ -250,6 +250,40 @@ Request body for preview manifest for a candidate document (entity tree + covera
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for preview manifest for a candidate document (entity tree + coverage ledger, no write). | `application/json` [`ImportPreviewManifestResponse`](#schema-importpreviewmanifestresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/import/project-delta` {#preview-project-delta-v1-tenants-tenant-slug-import-project-delta-post}
+
+**Compare an incoming spec with the target project's latest version (no write)**
+
+Answer **what a new version would change** before the import commits it (IXH-3.7). The target is resolved the way the commit resolves it — an explicit `project_id`, otherwise `project_slug` trimmed and lower-cased — and compared with the project's **latest** revision, whose OpenAPI is rebuilt from the database with the generator Versions → Compare and the compatibility gate use (so OpenAPI projects that keep no captured source work too).
+
+The response carries the compatibility engine's overall verdict and findings (the same safe / breaking / unknown rules as Versions → Compare), summary counts (added / changed / removed / breaking), a ranked structural change list over `paths`, `webhooks` and `components` (breaking first; each row graded by the findings that cover it, or ungraded), and both documents for a side-by-side view.
+
+**204** when the import is not a new version of an existing Project: nothing matches, the match is a catalog item (see the preview manifest's re-import delta), or the project has no revision yet. Nothing is persisted.
+
+Operation id: `preview_project_delta_v1_tenants__tenant_slug__import_project_delta_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for compare an incoming spec with the target project's latest version (no write).
+
+- `application/json` — [`ProjectDeltaRequest`](#schema-projectdeltarequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for compare an incoming spec with the target project's latest version (no write). | `application/json` [`ProjectDeltaResponse`](#schema-projectdeltaresponse) |
+| 204 | Not a new version of an existing Project — skip the Changes step. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/imports` {#list-spec-import-jobs-v1-tenants-tenant-slug-imports-get}
@@ -656,6 +690,36 @@ model to describe, and the pre-flight's ``error`` says why.
 | `preflight` | [`ImportPreflightReport`](#schema-importpreflightreport) | yes | The full IXH-2.1 pre-flight report for the same run — detection, routing decision, entity counts, ranked lint, policy verdict, and the intake-taxonomy error when the candidate is not importable. |
 | `manifest` | `ImportPreviewManifest` or null | no | The requested manifest page; null when the candidate is not importable. |
 | `reimport` | `ImportReimportDelta` or null | no | The IXH-3.4 re-import delta against the targeted catalog item's current revision; null for a first-time import (no existing item under the request's `project_slug`), when no slug was sent, for non-catalog routing, or when the current revision's source cannot be reconstructed. |
+
+### `ProjectDeltaRequest` {#schema-projectdeltarequest}
+
+What the wizard sends: the incoming document and the project the commit would target.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `document` | object | yes | The incoming OpenAPI document, parsed (the wizard's analyzed document). |
+| `project_slug` | string or null | no | The slug the commit would use; trimmed and lower-cased like the commit. |
+| `project_id` | string or null | no | An explicitly targeted project id; wins over `project_slug` when both are set. |
+| `include_documents` | boolean | no | Return both documents for the side-by-side view (false for counts only). |
+
+### `ProjectDeltaResponse` {#schema-projectdeltaresponse}
+
+The Changes step's payload.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project_id` | string | yes | Project identifier the resource belongs to. |
+| `project_slug` | string | yes | Project Slug. |
+| `project_name` | string | yes | Project Name. |
+| `base_revision_id` | string | yes | The latest revision (`versions.id`) compared against. |
+| `base_version_label` | string | yes | Its version label, e.g. `2.4.0`. |
+| `overall` | enum `"breaking"`, `"unknown"`, `"safe"` | yes | The compatibility engine's overall verdict. |
+| `counts` | `ProjectDeltaCounts` | yes | Counts. |
+| `changes` | array of `ProjectDeltaChange` | no | Ranked: breaking first, then unknown, safe, ungraded. |
+| `truncated` | boolean | no | True when more than 5000 changes were cut. |
+| `findings` | array of `CompatibilityFindingOut` | no | The compatibility engine's findings, as Compare reports them. |
+| `base_document` | object or null | no | The latest version's OpenAPI (left side of the diff). |
+| `incoming_document` | object or null | no | The incoming spec (right side of the diff). |
 
 ### `SpecImportCommitResponse` {#schema-specimportcommitresponse}
 

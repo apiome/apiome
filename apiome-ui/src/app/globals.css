@@ -18661,6 +18661,156 @@ button.tfa-reset-notice__close > svg {
   flex-shrink: 0;
 }
 
+/* --- The Changes step (IXH-3.7, #6321) ---------------------------------- */
+
+/*
+   What a new version of an existing Project would change. Each count and each
+   row's kind is a chip on its tone's `-soft` fill with the matching `-fg` ink —
+   the pair the token layer calibrates in every theme (see `.imp-log__level`) —
+   and always spells its kind out next to the symbol, so colour is never the
+   only signal.
+*/
+.imp-changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.imp-changes .imp-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.imp-changes .imp-heading > svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.imp-changes__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.imp-changes__count,
+.imp-changes__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-xs);
+  background: var(--neutral-soft);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--neutral-fg);
+  white-space: nowrap;
+}
+
+.imp-changes__count-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.imp-changes__count[data-kind="added"],
+.imp-changes__row[data-kind="added"] .imp-changes__kind {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+
+.imp-changes__count[data-kind="changed"],
+.imp-changes__row[data-kind="changed"] .imp-changes__kind {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.imp-changes__count[data-kind="removed"],
+.imp-changes__count[data-kind="breaking"],
+.imp-changes__row[data-kind="removed"] .imp-changes__kind {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.imp-changes__list-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.imp-changes__filters {
+  display: grid;
+  gap: var(--space-2);
+  inline-size: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.imp-changes__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.imp-changes__list {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-block-size: 22rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.imp-changes__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid transparent;
+  font-size: var(--fs-xs);
+}
+
+.imp-changes__row + .imp-changes__row {
+  border-block-start: 1px solid var(--border);
+}
+
+/* A breaking row carries a rule down its leading edge as well as its badge. */
+.imp-changes__row[data-severity="breaking"] {
+  border-inline-start-color: var(--danger);
+}
+
+.imp-changes__kind {
+  flex-shrink: 0;
+  min-inline-size: 6rem;
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+}
+
+.imp-changes__label {
+  min-inline-size: 0;
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.imp-changes__values,
+.imp-changes__note {
+  color: var(--fg-muted);
+}
+
+.imp-changes__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+}
+
 /* --- The import log and the live checklist ------------------------------- */
 
 /*

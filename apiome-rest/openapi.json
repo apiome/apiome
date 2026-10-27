@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.346.0",
+    "version": "1.347.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -78845,6 +78845,108 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for previewmanifestforacandidatedocumententiresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/import/project-delta": {
+      "post": {
+        "tags": [
+          "spec-import"
+        ],
+        "summary": "Compare an incoming spec with the target project's latest version (no write)",
+        "description": "Answer **what a new version would change** before the import commits it (IXH-3.7). The target is resolved the way the commit resolves it \u2014 an explicit `project_id`, otherwise `project_slug` trimmed and lower-cased \u2014 and compared with the project's **latest** revision, whose OpenAPI is rebuilt from the database with the generator Versions \u2192 Compare and the compatibility gate use (so OpenAPI projects that keep no captured source work too).\n\nThe response carries the compatibility engine's overall verdict and findings (the same safe / breaking / unknown rules as Versions \u2192 Compare), summary counts (added / changed / removed / breaking), a ranked structural change list over `paths`, `webhooks` and `components` (breaking first; each row graded by the findings that cover it, or ungraded), and both documents for a side-by-side view.\n\n**204** when the import is not a new version of an existing Project: nothing matches, the match is a catalog item (see the preview manifest's re-import delta), or the project has no revision yet. Nothing is persisted.",
+        "operationId": "preview_project_delta_v1_tenants__tenant_slug__import_project_delta_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compareanincomingspecwiththetargetprojecauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compareanincomingspecwiththetargetprojecauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compareanincomingspecwiththetargetprojec Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compareanincomingspecwiththetargetprojec Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDeltaRequest",
+                "description": "Request body for compareanincomingspecwiththetargetprojecrequest."
+              }
+            }
+          },
+          "description": "Request body for compare an incoming spec with the target project's latest version (no write)."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for compare an incoming spec with the target project's latest version (no write).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDeltaResponse",
+                  "description": "Response payload for compareanincomingspecwiththetargetprojecresponse200."
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Not a new version of an existing Project \u2014 skip the Changes step."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for compareanincomingspecwiththetargetprojecresponse422."
                 }
               }
             }
@@ -162645,6 +162747,315 @@
         ],
         "title": "ProjectCreateRequest",
         "description": "Request model for creating a project."
+      },
+      "ProjectDeltaChange": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "added",
+              "changed",
+              "removed"
+            ],
+            "title": "Kind",
+            "description": "added, changed or removed.",
+            "example": "added"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "document / path / operation / component / schema (source-review scope).",
+            "example": "example"
+          },
+          "entity": {
+            "type": "string",
+            "title": "Entity",
+            "description": "Stable group key, e.g. `DELETE /refunds/{id}` or `Refund`.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Human label, e.g. `schema Refund.amount minimum`.",
+            "example": "example"
+          },
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "RFC 6901 pointer of the change in the documents.",
+            "example": "example"
+          },
+          "before": {
+            "title": "Before",
+            "description": "Old value when scalar; a `{n keys}` / `[n items]` preview for containers."
+          },
+          "after": {
+            "title": "After",
+            "description": "New value when scalar; a `{n keys}` / `[n items]` preview for containers."
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "breaking",
+                  "unknown",
+                  "safe"
+                ],
+                "description": "Project Delta Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Project Delta Change schema."
+              }
+            ],
+            "title": "Severity",
+            "description": "Worst compatibility category among the findings covering this pointer; null when no compatibility rule grades it (ungraded \u2014 not implied safe)."
+          },
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "Compatibility rule ids covering this change.",
+            "maxItems": 1000
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Project Delta Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Project Delta Change schema."
+              }
+            ],
+            "title": "Message",
+            "description": "The first covering finding's message, when graded."
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "scope",
+          "entity",
+          "label",
+          "pointer"
+        ],
+        "title": "ProjectDeltaChange",
+        "description": "One structural change between the latest version and the incoming spec."
+      },
+      "ProjectDeltaCounts": {
+        "properties": {
+          "added": {
+            "type": "integer",
+            "title": "Added",
+            "default": 0,
+            "description": "Added.",
+            "example": 1
+          },
+          "changed": {
+            "type": "integer",
+            "title": "Changed",
+            "default": 0,
+            "description": "Changed.",
+            "example": 1
+          },
+          "removed": {
+            "type": "integer",
+            "title": "Removed",
+            "default": 0,
+            "description": "Removed.",
+            "example": 1
+          },
+          "breaking": {
+            "type": "integer",
+            "title": "Breaking",
+            "description": "Breaking compatibility findings (the Versions \u2192 Compare / gate count).",
+            "default": 0,
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Every structural change, before any truncation.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "type": "object",
+        "title": "ProjectDeltaCounts",
+        "description": "The summary bar's numbers."
+      },
+      "ProjectDeltaRequest": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "The incoming OpenAPI document, parsed (the wizard's analyzed document)."
+          },
+          "project_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for project delta."
+              },
+              {
+                "type": "null",
+                "description": "Request body for project delta."
+              }
+            ],
+            "title": "Project Slug",
+            "description": "The slug the commit would use; trimmed and lower-cased like the commit."
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for project delta."
+              },
+              {
+                "type": "null",
+                "description": "Request body for project delta."
+              }
+            ],
+            "title": "Project Id",
+            "description": "An explicitly targeted project id; wins over `project_slug` when both are set."
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "description": "Return both documents for the side-by-side view (false for counts only).",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "ProjectDeltaRequest",
+        "description": "What the wizard sends: the incoming document and the project the commit would target."
+      },
+      "ProjectDeltaResponse": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_slug": {
+            "type": "string",
+            "title": "Project Slug",
+            "description": "Project Slug.",
+            "example": "example-resource"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name",
+            "description": "Project Name.",
+            "example": "Example"
+          },
+          "base_revision_id": {
+            "type": "string",
+            "title": "Base Revision Id",
+            "description": "The latest revision (`versions.id`) compared against.",
+            "example": "base_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "base_version_label": {
+            "type": "string",
+            "title": "Base Version Label",
+            "description": "Its version label, e.g. `2.4.0`.",
+            "example": "1.0.0"
+          },
+          "overall": {
+            "type": "string",
+            "enum": [
+              "breaking",
+              "unknown",
+              "safe"
+            ],
+            "title": "Overall",
+            "description": "The compatibility engine's overall verdict.",
+            "example": "breaking"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ProjectDeltaCounts",
+            "description": "Counts."
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectDeltaChange"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Ranked: breaking first, then unknown, safe, ungraded.",
+            "maxItems": 1000
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when more than 5000 changes were cut.",
+            "default": false,
+            "example": false
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/CompatibilityFindingOut"
+            },
+            "type": "array",
+            "title": "Findings",
+            "description": "The compatibility engine's findings, as Compare reports them.",
+            "maxItems": 1000
+          },
+          "base_document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Response payload for project delta."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for project delta."
+              }
+            ],
+            "title": "Base Document",
+            "description": "The latest version's OpenAPI (left side of the diff)."
+          },
+          "incoming_document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Response payload for project delta."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for project delta."
+              }
+            ],
+            "title": "Incoming Document",
+            "description": "The incoming spec (right side of the diff)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project_slug",
+          "project_name",
+          "base_revision_id",
+          "base_version_label",
+          "overall",
+          "counts"
+        ],
+        "title": "ProjectDeltaResponse",
+        "description": "The Changes step's payload."
       },
       "ProjectPinRecord": {
         "properties": {

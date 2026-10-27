@@ -10,6 +10,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
+- Import:
+  - Changes step — importing a spec whose slug matches an existing project now stops at **Changes** before **Import**: added, changed, removed and breaking counts against the project's latest version, a filterable list of every changed path, operation, schema and property (breaking first), and a **Side-by-side spec** tab with the latest version on the left and the incoming spec on the right. Breaking changes are a warning, never a block — **Continue to import** is always available, for a dry run too
 - API Formats:
   - Adds formats:
     - Bruno collection import — a Bruno collection folder (`bruno.json` and its `.bru` files) imports as one REST API from an archive or straight from git, with the same result either way: folders as operation groups, requests as operations with inferred body schemas, `{{baseUrl}}` as a server variable and whole-variable parameters with their value as default; credentials and secret variables are never kept, and scripts and tests are listed in the coverage ledger

@@ -1,0 +1,24 @@
+---
+slug: import-new-version-changes
+title: See what a new version changes before you import it
+description: Importing into an existing project now shows its changes against the latest version.
+authors: [apiome]
+---
+
+Importing a spec into a project you already have now shows what the new version changes before
+anything is written. [Import a new version of an existing project](/bring-in/import-wizard#import-a-new-version-of-an-existing-project).
+
+{/* truncate */}
+
+- **A Changes step.** When the **Slug** on Preview matches an existing project, the Import wizard
+  stops at **Changes** between **Preview** and **Import**. First-time imports and Catalog imports
+  skip it.
+- **Counts and a ranked list.** Added, changed, removed and breaking counts against the project's
+  latest version, then every changed path, operation, schema and property, breaking first, with the
+  same safe / breaking / unknown grades as **Compare** on Versions. Filter by kind or by text.
+- **Side by side.** The **Side-by-side spec** tab shows the latest version on the left and the
+  incoming spec on the right.
+- **Never a block.** Breaking changes are a warning; **Continue to import** is always available, even
+  when the comparison fails, and for a dry run.
+- **REST.** `POST /v1/tenants/{tenant}/import/project-delta` returns the comparison, or `204` when
+  the import is not a new version of an existing project.

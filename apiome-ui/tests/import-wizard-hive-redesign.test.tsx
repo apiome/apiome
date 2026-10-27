@@ -212,6 +212,10 @@ function stubRegistry() {
     if (String(input).includes('/api/import/sources')) {
       return Promise.resolve({ ok: true, json: async () => REGISTRY_SOURCES });
     }
+    // A first-time import: no existing Project, so no Changes step (IXH-3.7).
+    if (String(input).includes('/api/import/project-delta')) {
+      return Promise.resolve({ ok: true, json: async () => ({ success: true, delta: null }) });
+    }
     return Promise.resolve({ ok: true, json: async () => ({}) });
   }) as never);
 }

@@ -18,6 +18,7 @@
 
 import { FALLBACK_IMPORT_FILE_EXTENSIONS } from '../dashboard/importSourceCatalog';
 import type { ImportSourceCard, ImportPanelId } from '../dashboard/importSourceCatalog';
+import type { ProjectDeltaState } from '../../../utils/import-project-delta';
 
 /* -------------------------------------------------------------------------
    Steps
@@ -26,7 +27,10 @@ import type { ImportSourceCard, ImportPanelId } from '../dashboard/importSourceC
 /**
  * The wizard's internal position.
  *
- * Six values for five stepper stops: `source` (the card grid) and `file-upload` (the chosen
+ * `changes` (IXH-3.7, #6321) sits between Preview and Import and is reached only when the import
+ * lands as a new version of an existing Project — see {@link showsChangesStep}.
+ *
+ * Seven values for five (or six) stepper stops: `source` (the card grid) and `file-upload` (the chosen
  * source's intake) are both *Source*, because picking a card and filling its form is one
  * decision made in two screens. The names are the pre-redesign ones — every caller and every
  * existing test branches on them, and renaming them would have been a migration rather than a
@@ -37,11 +41,12 @@ export type ImportWizardStep =
   | 'file-upload'
   | 'analysis'
   | 'preview'
+  | 'changes'
   | 'import'
   | 'done';
 
 /** The id of one stop on the visible stepper. */
-export type ImportStepperId = 'source' | 'analyze' | 'preview' | 'import' | 'done';
+export type ImportStepperId = 'source' | 'analyze' | 'preview' | 'changes' | 'import' | 'done';
 
 /** The five stops, in order, as `ui/Stepper` wants them. */
 export const IMPORT_WIZARD_STEPS: ReadonlyArray<{ id: ImportStepperId; label: string }> = [
@@ -52,12 +57,47 @@ export const IMPORT_WIZARD_STEPS: ReadonlyArray<{ id: ImportStepperId; label: st
   { id: 'done', label: 'Done' },
 ];
 
+/**
+ * The rail for one import: the five stops, plus *Changes* between Preview and Import when the
+ * import lands as a new version of an existing Project (IXH-3.7, #6321).
+ *
+ * @param withChanges Whether the Changes stop applies — {@link showsChangesStep}.
+ * @returns The stops, in order, as `ui/Stepper` wants them.
+ */
+export function importWizardStepsFor(
+  withChanges: boolean,
+): ReadonlyArray<{ id: ImportStepperId; label: string }> {
+  if (!withChanges) return IMPORT_WIZARD_STEPS;
+  const at = IMPORT_WIZARD_STEPS.findIndex((s) => s.id === 'import');
+  return [
+    ...IMPORT_WIZARD_STEPS.slice(0, at),
+    { id: 'changes', label: 'Changes' },
+    ...IMPORT_WIZARD_STEPS.slice(at),
+  ];
+}
+
+/**
+ * Whether the Changes step is part of this import.
+ *
+ * Shown when the comparison found an existing Project (`ready`) — and also when the comparison
+ * *failed* (`error`), because then nobody knows whether it is a new version, and the step is where
+ * the retry and the "Continue to import" way out live. Skipped while nothing has been asked
+ * (`idle`), for a first-time or Catalog import (`skip`), and while the question is in flight.
+ *
+ * @param delta Where the comparison stands.
+ * @returns `true` when the wizard stops at Changes on its way to Import.
+ */
+export function showsChangesStep(delta: ProjectDeltaState): boolean {
+  return delta.status === 'ready' || delta.status === 'error';
+}
+
 /** Which stop on the visible stepper an internal step sits at. */
 const STEPPER_ID: Readonly<Record<ImportWizardStep, ImportStepperId>> = {
   source: 'source',
   'file-upload': 'source',
   analysis: 'analyze',
   preview: 'preview',
+  changes: 'changes',
   import: 'import',
   done: 'done',
 };
@@ -142,6 +182,8 @@ export interface ImportFooterState {
   analysisImportable?: boolean;
   /** At least one schema is selected on Preview. */
   hasSelection?: boolean;
+  /** Preview is asking whether the import is a new version of an existing Project (IXH-3.7). */
+  checkingChanges?: boolean;
   /** The MCP form validates. */
   mcpReady?: boolean;
   /** An MCP endpoint registration is in flight. */
@@ -263,7 +305,20 @@ export function importFooterFor(state: ImportFooterState): ImportFooter {
     return {
       back: { label: '← Back', disabled: false },
       cancel: { label: 'Cancel', disabled: false },
-      primary: { label: 'Import →', disabled: !state.hasSelection },
+      primary: state.checkingChanges
+        ? { label: 'Checking for changes…', disabled: true }
+        : { label: 'Import →', disabled: !state.hasSelection },
+      keepAnyway: null,
+    };
+  }
+
+  if (step === 'changes') {
+    // Never refused: breaking changes are a warning here, and blocking on them is the
+    // compatibility gate's job. A failed comparison must not block the import either.
+    return {
+      back: { label: '← Back', disabled: false },
+      cancel: { label: 'Cancel', disabled: false },
+      primary: { label: 'Continue to import', disabled: false },
       keepAnyway: null,
     };
   }
@@ -554,7 +609,32 @@ export const IMPORT_WIZARD_COPY = {
   jobsDrawerTitle: 'Recent import jobs',
   jobsDrawerNote: 'Shared async job store — survives round-robin REST replicas.',
   closeWarning: 'Close (rolls back a running job)',
+  /** The Changes step (IXH-3.7, #6321). */
+  changesHeadingPrefix: 'Changes vs.',
+  changesSummaryTab: 'Summary',
+  changesSideBySideTab: 'Side-by-side spec',
+  changesLatestBadge: 'latest',
+  changesBreakingTitle: 'This version has breaking changes',
+  changesBreakingBody:
+    'Consumers of the latest version may break. You can still import — the compatibility gate decides whether it can merge or publish.',
+  changesErrorTitle: 'Changes could not be computed',
+  changesFilterLabel: 'Show',
+  changesSearchLabel: 'Filter changes',
+  changesShowMore: 'Show more',
+  changesBeforeLabel: 'Latest version',
+  changesAfterLabel: 'Incoming specification',
+  changesTruncated: 'Only the first changes are listed; the counts cover all of them.',
 } as const;
+
+/**
+ * The Changes step's empty state title.
+ *
+ * @param versionLabel The latest version's label, e.g. `2.4.0`.
+ * @returns e.g. `No changes from v2.4.0`.
+ */
+export function noChangesTitle(versionLabel: string): string {
+  return `No changes from ${versionLabel ? `v${versionLabel}` : 'the latest version'}`;
+}
 
 /**
  * The offline fallback accept list (FMT-1.1, #5412).
