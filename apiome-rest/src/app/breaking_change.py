@@ -354,6 +354,9 @@ def load_format_breaking_change_classifiers() -> None:
     # WSDL / XSD breaking-change classifier (MFI-13.5): registers under ``wsdl`` and grades MEP,
     # soapAction / style and XSD occurs / nillable / facet moves (strict receivers: additive ≠ safe).
     from . import wsdl_breaking as _wsdl_breaking  # noqa: F401
+    # RAML breaking-change classifier (MFI-15.4): registers under ``raml`` and grades parameter,
+    # property, enum and applied-reuse moves (RAML has no official ruleset).
+    from . import raml_breaking as _raml_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

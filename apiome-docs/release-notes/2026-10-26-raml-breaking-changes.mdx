@@ -1,0 +1,18 @@
+---
+slug: raml-breaking-changes
+title: RAML breaking changes
+description: RAML version diffs grade parameter, property and enum changes individually.
+authors: [apiome]
+---
+
+Comparing two versions of a RAML API now grades each change with a RAML ruleset, instead of marking
+every parameter or enum change as merely dangerous.
+[Breaking changes between versions](/bring-in/raml-import#breaking-changes-between-versions).
+
+{/* truncate */}
+
+- **Breaking:** a new required parameter or property, a changed type, a parameter or property made
+  required, a removed enum value.
+- **Safe:** a new optional parameter or property (`name?`), a parameter made optional, a reordered
+  enum, a change to the applied traits or resource type on its own.
+- **Dangerous:** a removed parameter, a property made optional, a new enum value.

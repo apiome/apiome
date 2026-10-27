@@ -2,7 +2,7 @@
 title: "Import a RAML API"
 description: "Catalog a RAML 1.0 API with includes, libraries, resource types and traits resolved."
 sidebar_position: 39
-tags: [import, raml, amf, includes, libraries]
+tags: [import, raml, amf, includes, libraries, breaking-changes]
 ---
 
 The **RAML** importer (`raml`) reads a RAML 1.0 REST API definition into the [Catalog](./catalog.mdx).
@@ -150,6 +150,29 @@ The hygiene checks read the root document as written: a scheme or parameter decl
 
 Every problem is listed on the catalog item (`raml_lint_issues`, up to 50, with
 `raml_lint_issue_count`), each with its rule, path and message.
+
+## Breaking changes between versions
+
+RAML has no official compatibility rules, so Apiome grades the changes between two versions of a
+RAML catalog item with its own. Resource types and traits are already applied, so a trait that adds
+a parameter is graded as that parameter.
+
+| Change | Severity | Rule |
+| --- | --- | --- |
+| A required parameter added to a method | Breaking | `raml.parameter-added-required` |
+| An optional parameter added | Safe | `raml.parameter-added-optional` |
+| A parameter removed | Dangerous | `raml.parameter-removed` |
+| A parameter made required / optional | Breaking / Safe | `raml.parameter-made-required` / `raml.parameter-made-optional` |
+| A parameter's type changed | Breaking | `raml.parameter-type-changed` |
+| A required property added to a type | Breaking | `raml.property-added-required` |
+| An optional property (`name?`) added | Safe | `raml.property-added-optional` |
+| A property's type changed | Breaking | `raml.property-type-changed` |
+| A property made required / optional | Breaking / Dangerous | `raml.property-made-required` / `raml.property-made-optional` |
+| An enum value removed / added | Breaking / Dangerous | `raml.enum-value-removed` / `raml.enum-value-added` |
+| Only an enum's order changed | Safe | `raml.enum-reordered` |
+| Only the applied resource type or traits changed | Safe | `raml.reuse-changed` |
+
+A removed resource, method, response or type is breaking; a new one is safe.
 
 ## Move to OpenAPI
 
