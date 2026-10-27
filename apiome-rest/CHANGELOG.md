@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.477.0] - 2026-10-26
+
+### Added
+- **RAML breaking-change classifier (MFI-15.4, #3802)** — RAML has no official compatibility rules, so new
+  `app.raml_breaking.RamlBreakingChangeClassifier` (`raml`, id `raml-resources`) grades the resolved model with a
+  custom ruleset instead of the baseline's folded "dangerous": method parameters (`raml.parameter-added-required` /
+  `-made-required` / `-type-changed` breaking, `-added-optional` / `-made-optional` safe, `-removed` dangerous), type
+  properties (`raml.property-added-required` / `-made-required` / `-type-changed` breaking, `-added-optional` safe,
+  `-made-optional` dangerous), enum values (`raml.enum-value-removed` breaking, `-added` dangerous, `raml.enum-reordered`
+  safe) and applied resource types / traits (`raml.reuse-changed` safe; their effects are graded where they land).
+  Removed resources, methods, responses and types stay breaking and additions safe (baseline). OpenAPI 1.341.0.
+
 ## [1.476.0] - 2026-10-26
 
 ### Added

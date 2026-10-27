@@ -231,8 +231,10 @@ MFI-14.4 (#3797) is built: a `@versioned` TypeSpec service compiles to one OpenA
 (`output-file: openapi.{version}.json`); the catalog item is the newest version and records every version plus each
 step's OpenAPI compatibility grade (`app.typespec_versioning`, `typespec_version_changes`).
 
+MFI-15.4 (#3802) is built: the `raml` breaking-change classifier (`app.raml_breaking`) grades parameter, property and
+enum moves and applied resource-type / trait changes with a custom ruleset (RAML has no official one).
+
 **Breaking-change rules** (the generic classifier applies today):
-RAML [#3802](https://github.com/apiome/apiome/issues/3802),
 Smithy [#3811](https://github.com/apiome/apiome/issues/3811).
 
 **Avro:** PCF fingerprint [#3782](https://github.com/apiome/apiome/issues/3782) and the
