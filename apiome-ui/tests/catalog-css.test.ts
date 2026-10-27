@@ -79,6 +79,7 @@ const CATALOG_PRELUDES = [
   '.cat-deleted-switch label',
   '.cat-chip-glyph',
   '.cat-filter',
+  '.cat-search',
   '.cat-filter[data-active]',
   '.cat-facet__trigger[data-active]',
   '.cat-facet__count',
@@ -482,6 +483,10 @@ describe('density and font-scale independence', () => {
   it('sizes the toolbar’s three quick filters in rem, not the mockup’s 116–136px', () => {
     expect(declaration('.cat-filter', 'inline-size')).toBe('9.5rem');
     expect(declaration('.cat-filter', 'block-size')).toBe('var(--control-h-sm)');
+  });
+
+  it('sizes the search box in rem, wide enough for its placeholder (MFI-27.2)', () => {
+    expect(declaration('.cat-search', 'inline-size')).toBe('21rem');
   });
 });
 

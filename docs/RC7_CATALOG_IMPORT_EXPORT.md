@@ -276,7 +276,6 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 | Ticket | Work | Priority |
 | --- | --- | --- |
 | [#6321](https://github.com/apiome/apiome/issues/6321) IXH-3.7 | Import a new version into a project: a **Changes** step comparing the incoming spec with the latest version | P1 |
-| [#4100](https://github.com/apiome/apiome/issues/4100) MFI-27.2 | Cross-surface polish (remaining: catalog search placeholder) | P2 |
 | [#3758](https://github.com/apiome/apiome/issues/3758) MFI-7.3 | Backfill format/protocol on existing rows | P2 |
 | [#3754](https://github.com/apiome/apiome/issues/3754) MFI-6.2 | Cross-protocol full-text search over the normalized model | P2 |
 | [#4079](https://github.com/apiome/apiome/issues/4079), [#4080](https://github.com/apiome/apiome/issues/4080), [#3715](https://github.com/apiome/apiome/issues/3715) | Epics — close when their open children close | — |
@@ -298,6 +297,10 @@ MFI-27.1 (#4099) is built: the conversion preview's confirm button reads **Conve
 **Re-convert** when the item already has a conversion (`convertCommitLabel`; `ConversionPreviewDialog` takes the
 item's `conversion` from the detail page and the Catalog list). The detail header's primary Convert / Re-convert CTA
 (25.1) opens it; the acknowledgement gate and preview are unchanged.
+
+MFI-27.2 (#4100) is built: the Catalog search placeholder reads **Search name, slug, format, protocol…  ( / )**
+(`CatalogClient`; the mockup `sources/catalog.html` matches), in a box widened to 21rem (`.cat-search`) so the text
+and the `/` hint fit. Average quality already read "letter · score" (`catalogModel.ts`).
 
 Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives)
 belongs to the gated `primitives` feature.

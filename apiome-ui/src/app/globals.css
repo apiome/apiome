@@ -21447,6 +21447,14 @@ html[data-motion='reduce'] .prm-spin {
   font-size: var(--fs-xs);
 }
 
+/* The search box names what it matches — "Search name, slug, format,
+   protocol…  ( / )" (MFI-27.2) — so it is wider than the toolbar default and the
+   `/` hint is not cut off. Still `max-inline-size: 100%` from the component, so a
+   narrow viewport shrinks it; the toolbar wraps before it overflows. */
+.cat-search {
+  inline-size: 21rem;
+}
+
 /* A filter that is narrowing the list must not look like one that is not. The
    accent hairline is the same mark `DataTableFilterChip` uses for an active
    facet, at the weight a field can carry without becoming a second primary. */
