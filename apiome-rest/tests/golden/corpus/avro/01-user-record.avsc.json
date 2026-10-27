@@ -4,7 +4,21 @@
     "channels": [],
     "description": "A registered user of the system.",
     "extras": {
-      "avro_root": "com.example.user.User"
+      "avro_pcf": {
+        "com.example.user.Status": {
+          "crc64": "cae1d6be3a7ca2b8",
+          "sha256": "713493957d9f1d5f49bf0b2256d24cd0d2dd8618bf9bf81056ca86a871e5838e"
+        },
+        "com.example.user.User": {
+          "crc64": "8882b9dda4425463",
+          "sha256": "a8ee5eb16181be344d01d86d9b6b8a66832b9ebd4385113f431fb2212cdececa"
+        }
+      },
+      "avro_root": "com.example.user.User",
+      "avro_semantic_hashes": {
+        "com.example.user.Status": "d34819aa70ab752e6dbe29eab313a8aafcb98c8138c172dd71c1bd9ac3cfc7b9",
+        "com.example.user.User": "1a9ba7853b493a3fb92cfaeee937e184471790ea356a69f1ddeb1f6f36837462"
+      }
     },
     "format": "avro",
     "identity": {
@@ -222,7 +236,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:396d1162b310a068d2ba7d52cf77aa2056bad9a7d6a2a13882c5dc8858b67506",
+  "fingerprint": "sha256:0246fa3e355a5d23226680a8d0026efc8a30c68c872f87825b35fece2e561018",
   "lint": {
     "findings": 1,
     "grade": "A",

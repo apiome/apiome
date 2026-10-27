@@ -839,6 +839,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['jsonrpc', 'rpc.discover', 'web3', 'ethereum', 'discover', 'endpoint', 'paramStructure'],
   },
   {
+    id: 'avro-import',
+    title: 'Import an Apache Avro schema',
+    summary: 'Catalog .avsc schemas and .avdl IDL, with Parsing Canonical Form fingerprints.',
+    page: 'apiome-docs/docs/bring-in/avro-import.md',
+    section: 'reference',
+    keywords: ['avsc', 'avdl', 'pcf', 'crc-64', 'fingerprint', 'semantic hash', 'kafka'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

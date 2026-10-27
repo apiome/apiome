@@ -4,7 +4,16 @@
     "channels": [],
     "description": "A single record, no protocol — the schema-only form of Avro IDL.",
     "extras": {
+      "avro_pcf": {
+        "com.example.ping.Beacon": {
+          "crc64": "0f08ecb15df90e77",
+          "sha256": "a4661358daaa48bf22f90efa798dcbfbb8b863b0c9b243a525b561f8bf00f50b"
+        }
+      },
       "avro_root": "com.example.ping.Beacon",
+      "avro_semantic_hashes": {
+        "com.example.ping.Beacon": "68c1d986963c25821c4dbb69322b1fb69360796b40471d11962de461aff41039"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -87,7 +96,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:0deea3887abc5434f0caac7f75698518e86934ab3d78b7a4cb4d5d2e206939b4",
+  "fingerprint": "sha256:cdfc93ab99f79f394f5581c0526b618089164e080576866813f026f046ad5753",
   "lint": {
     "findings": 3,
     "grade": "A",

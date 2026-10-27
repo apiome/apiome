@@ -4,7 +4,16 @@
     "channels": [],
     "description": null,
     "extras": {
-      "avro_root": "Ping"
+      "avro_pcf": {
+        "Ping": {
+          "crc64": "eee14308135f408b",
+          "sha256": "914dc093406e16f8e569b08d4b7d78e2795e9e44850df11ca01d8cb4b64b1a59"
+        }
+      },
+      "avro_root": "Ping",
+      "avro_semantic_hashes": {
+        "Ping": "021615958240192a22b9bc5491fcc938ff3db0f2465ee55caf69bf977b9b89e9"
+      }
     },
     "format": "avro",
     "identity": {
@@ -70,7 +79,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:cc2ac8aa638df28a20bf937f8be878a7ee47a29b9ec4481c2eb1bfcaeedaee75",
+  "fingerprint": "sha256:b7be653f595470057e7f9595f2ec10d557f653b713fe43c7afb997263cc3f4ed",
   "lint": {
     "findings": 3,
     "grade": "A",

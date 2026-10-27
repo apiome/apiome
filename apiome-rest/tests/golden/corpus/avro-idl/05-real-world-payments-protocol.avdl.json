@@ -4,8 +4,72 @@
     "channels": [],
     "description": "Payment authorization service in the shape a payments platform publishes:\na schema-heavy protocol with money as decimal, enumerated result codes,\nan error hierarchy, and both request/response and one-way messages.",
     "extras": {
+      "avro_pcf": {
+        "com.example.payments.v3.AuthResult": {
+          "crc64": "81b91bdde739ac84",
+          "sha256": "54c2ad4aee2b69fbd0a079cb712fbcc6c303653346737011a8085ea9865f7a7f"
+        },
+        "com.example.payments.v3.AuthorizationRequest": {
+          "crc64": "d85d5006974e563e",
+          "sha256": "63ceb7d718e7c9c9822276cf0feeb3bf64858bb2dd4f14e2c856a613ca02003e"
+        },
+        "com.example.payments.v3.AuthorizationResponse": {
+          "crc64": "061377627571f22e",
+          "sha256": "cfe96813960dde3f3f7d27fe0653323088ff1790c345e76bcc8904bdda80c646"
+        },
+        "com.example.payments.v3.CaptureMode": {
+          "crc64": "27b812eb82401033",
+          "sha256": "55a4fcdbf52a77fb43c3303709c304d95b8c1fb276f0ef8f100b907d5d2d2249"
+        },
+        "com.example.payments.v3.CaptureRequest": {
+          "crc64": "3d1b3f6b0d63f128",
+          "sha256": "64ccd8bf2e9cabf6238e1bc4a020a8f26b5b476ab24d09fd59089c02741de64b"
+        },
+        "com.example.payments.v3.CardReference": {
+          "crc64": "7f6d252ed4f8cf36",
+          "sha256": "83aecbc2f34339c7c8b01084d5a6caaca48ea18bd07469721f43eee79250ca14"
+        },
+        "com.example.payments.v3.Currency": {
+          "crc64": "1e6bf8d85a8d7391",
+          "sha256": "2d67aaf8ba0549c9c3b6b4a6dde8eda544c7dc9f5d09f88d8d249eb2ffabcd0a"
+        },
+        "com.example.payments.v3.Money": {
+          "crc64": "81303f6f2b246621",
+          "sha256": "0d537b6e06b428a3d54eff66c6a638ad632c6924292385172e821ad530f9f199"
+        },
+        "com.example.payments.v3.PaymentRejected": {
+          "crc64": "0ac33cbce9add947",
+          "sha256": "f518b04b5357c0117ce9616cdcec785b112e903efdc26709232a1c5165052783"
+        },
+        "com.example.payments.v3.RiskSignals": {
+          "crc64": "f4120df259dae6ce",
+          "sha256": "3cb4c04ad0d8480e8327b3bf08d2c4e1ab7237a79c3ba17db2e7c07fa7271db3"
+        },
+        "com.example.payments.v3.SettlementNotice": {
+          "crc64": "5da8068bb09c698b",
+          "sha256": "35228bab213c3d77169dff8dc8864c2cb5c52e547ebcfe7ddcd53dbe046fff90"
+        },
+        "com.example.payments.v3.SystemUnavailable": {
+          "crc64": "144e0a56eaf4740f",
+          "sha256": "b16c6f70885731a5b6736d668ba651399e7ae2a91407542c8d1f064473ce0cfd"
+        }
+      },
       "avro_protocol": "com.example.payments.v3.PaymentService",
       "avro_root": "com.example.payments.v3.Currency",
+      "avro_semantic_hashes": {
+        "com.example.payments.v3.AuthResult": "69446bd9a209d22127927d024d97b18d497bc770aae814dd19b545b29ad880d1",
+        "com.example.payments.v3.AuthorizationRequest": "d1643fd7164fdbdfb8be78d078e1fc32b520380841d85b03e64bc59ca8572be9",
+        "com.example.payments.v3.AuthorizationResponse": "ab1f384f12a083b34dd51db6b5aa3638ee1079591bd10fbb875ee227be1cc22c",
+        "com.example.payments.v3.CaptureMode": "9fd28883bbd570016769cce2193bdb70fa780e19805c143f5b0227bbe5f9f320",
+        "com.example.payments.v3.CaptureRequest": "a413f7abe95c2cece145a2a45c6eb3df3ab3509df59218ecffced511214164c7",
+        "com.example.payments.v3.CardReference": "2bc53405fde5897eb83382ee297108f7c54f8810e3a3f2da4736daba65662041",
+        "com.example.payments.v3.Currency": "dd4b4f18321733db3083814a1721786abb091bfad66425aefd8e8d0eceeaa4f5",
+        "com.example.payments.v3.Money": "4a30ca72d82685d94966b7a603d0d2297c97f73d4935ae6d526624f803da139c",
+        "com.example.payments.v3.PaymentRejected": "fe2d6590270f09f69a4b7def9596f445e4c51ee96ca66493e5800bfd8450e963",
+        "com.example.payments.v3.RiskSignals": "2f957d47b7531c3d80b8fbbd20840ffb60495b5f9e8d2e83985099e7b4848517",
+        "com.example.payments.v3.SettlementNotice": "779f8e3281c7ca16eb34466ec7879f3569bdba654fc5a487ecb57fb05b554240",
+        "com.example.payments.v3.SystemUnavailable": "cb435620e25e8b7bcb283eeeb26473c9f88ff8c6b5082da3cf6db14fe72e7d43"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -1365,7 +1429,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:368d04eae327db51da76dc955b3e3c97bc003340d4bbb317d8bfa79146218ac4",
+  "fingerprint": "sha256:ceb42c84607a51ee2edcf3e5844b899c04cd8ef455bf4c480fa5ebb49b19c5a8",
   "lint": {
     "findings": 56,
     "grade": "F",

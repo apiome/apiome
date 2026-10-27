@@ -542,7 +542,7 @@ def test_avsc_import_carries_no_idl_extras():
     assert api.paradigm is ApiParadigm.DATA_SCHEMA
     assert api.identity.name == "User"
     assert api.description == "A user."
-    assert set(api.extras) == {"avro_root"}
+    assert set(api.extras) == {"avro_root", "avro_pcf", "avro_semantic_hashes"}
     user = api.type_by_key("com.acme.User")
     assert user.extras == {"avro_kind": "record"}
     assert all("avro_properties" not in f.extras for f in user.fields)
@@ -648,6 +648,13 @@ def _corpus_idl_entries():
     ]
 
 
+#: Corpus entries whose generated IDL loses wire detail the canonical model cannot hold: an
+#: anonymous union branch (``array<bytes>``) has no type key and degrades (see
+#: ``avro_normalizer``). The canonical diff is still empty; the Parsing Canonical Form
+#: (MFI-12.1, #3782) is what sees the loss, so their fingerprints differ.
+_PCF_LOSSY_ROUND_TRIPS = frozenset({"avro-idl/04-stress-grammar-corners.avdl"})
+
+
 @pytest.mark.parametrize(
     "entry", _corpus_idl_entries(), ids=lambda entry: entry.path
 )
@@ -667,7 +674,11 @@ def test_generated_idl_round_trips_for_every_corpus_entry(entry):
         adapter.parse(emitted, source_label="roundtrip.avdl"), include_raw=False
     )
     delta = diff(api, reimported)
-    assert delta.identical, f"{entry.path} did not round-trip: {delta.changes}"
+    assert not delta.changes, f"{entry.path} did not round-trip: {delta.changes}"
+    if entry.path in _PCF_LOSSY_ROUND_TRIPS:
+        assert reimported.extras["avro_pcf"] != api.extras["avro_pcf"]
+    else:
+        assert delta.identical, f"{entry.path} did not round-trip its PCF"
 
 
 def test_generated_idl_is_deterministic():

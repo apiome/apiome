@@ -4,7 +4,36 @@
     "channels": [],
     "description": "Composition: named types declared once and referenced from several records,\nincluding a self-referential type and a record reused inside a map and an array.",
     "extras": {
+      "avro_pcf": {
+        "com.example.crm.Address": {
+          "crc64": "35ce9a16c83b1233",
+          "sha256": "2c0e2d4cda9778df895876bcddca09c3433602d5ddb1fc36860eaa266312ce03"
+        },
+        "com.example.crm.Channel": {
+          "crc64": "10a53a031f9aa4ff",
+          "sha256": "71953c4aa7e55f99da3efe455aea219b8798773aba8d6bb7dcee63668817f490"
+        },
+        "com.example.crm.ContactPoint": {
+          "crc64": "c01646187aa62b17",
+          "sha256": "60085994423c52999462d2c3187087014ddcbaeb554a1cedc7b9e808ed5e24f2"
+        },
+        "com.example.crm.Node": {
+          "crc64": "1a37b1f106d2a7f6",
+          "sha256": "f9eb95649946c2f18c9ed6390175557e268f0c1f0562f0cb8df28198f8fadc32"
+        },
+        "com.example.crm.Party": {
+          "crc64": "3ce707e4c1811192",
+          "sha256": "4f8d779f367c605beee814c41faaa970ff09ecd69269f1f4a4401bbfebab7d3e"
+        }
+      },
       "avro_root": "com.example.crm.Channel",
+      "avro_semantic_hashes": {
+        "com.example.crm.Address": "10a2c567c7c2aac909406edee5a7e4285d883c45d5c867a76c0dabf990d1112d",
+        "com.example.crm.Channel": "daf05eb341c741bc8f3e64afae9d7ce924ecae37f335311e14fa8387a43ff5b6",
+        "com.example.crm.ContactPoint": "d4e0478b02bebcf01935cb7a0085f29ec761adc369e1dbaaa25e2b6436f12cf6",
+        "com.example.crm.Node": "30396e24142282828f12cde66890865a19f3f5a09767b746aca5f6a3cb716034",
+        "com.example.crm.Party": "020b6848e854120d87327516b14606e6081ce509bf32be8223bd4a34bac09e8f"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -460,7 +489,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:7b1b036418871cfda19a67bcef225fc384443e33025f3d183665d42fd4559a74",
+  "fingerprint": "sha256:75c06b8060180ca62445dd3bffc7bf5772f9d0bbdd5eb7d6f7194ca1401258e7",
   "lint": {
     "findings": 22,
     "grade": "D",

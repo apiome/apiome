@@ -299,6 +299,39 @@ def test_per_format_hasher_dispatch(monkeypatch):
     assert result.fingerprint == canonical_fingerprint(avro_api)
 
 
+def test_a_hasher_with_no_hash_for_the_artifact_leaves_format_hash_empty(monkeypatch):
+    """A hasher returning ``None`` (an Avro IDL protocol, #3782) sets neither hash nor label."""
+    import app.fingerprint as fp
+
+    monkeypatch.setattr(fp, "_HASHER_REGISTRY", {}, raising=True)
+
+    class _NoHash(FingerprintHasher):
+        format = "avro"
+        algorithm = "avro-parsing-canonical-form-sha256"
+
+        def hash(self, api):  # noqa: D401 - test stub
+            return None
+
+    register_fingerprint_hasher(_NoHash)
+    avro_api = _sample_api()
+    avro_api.format = "avro"
+    result = fp.fingerprint(avro_api)
+    assert result.format_hash is None
+    assert result.format_algorithm is None
+
+
+def test_unhashed_extras_are_recorded_but_not_hashed():
+    """``UNHASHED_EXTRAS`` keys stay on the model but never reach the hash (#3782)."""
+    from app.fingerprint import UNHASHED_EXTRAS
+
+    key = next(iter(UNHASHED_EXTRAS))
+    base = _sample_api()
+    edited = _sample_api()
+    edited.extras = {**(edited.extras or {}), key: {"T": "changed"}}
+    assert canonical_fingerprint(base) == canonical_fingerprint(edited)
+    assert key not in canonical_payload(edited).get("extras", {})
+
+
 def test_register_rejects_missing_format_or_algorithm():
     """A hasher must declare both a format key and an algorithm label."""
 

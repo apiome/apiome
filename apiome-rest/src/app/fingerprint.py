@@ -49,6 +49,7 @@ from .normalizer import normalize_ordering
 
 __all__ = [
     "FINGERPRINT_ALGORITHM",
+    "UNHASHED_EXTRAS",
     "canonical_payload",
     "canonical_fingerprint",
     "FingerprintResult",
@@ -82,6 +83,12 @@ _DESCRIPTIVE_KEYS = frozenset({"description", "title", "raw"})
 _OPAQUE_KEYS = frozenset(
     {"extras", "bindings", "payload_schema", "default", "value", "enum"}
 )
+
+# Top-level ``CanonicalApi.extras`` keys recorded on the model but kept out of the hash (and so
+# out of the diff, which reads the same projection). They hold values that change on doc-only
+# edits — Avro's semantic hashes (MFI-12.1), which keep ``doc`` by design — and would otherwise
+# mint a version for an edit the fingerprint is meant to ignore.
+UNHASHED_EXTRAS = frozenset({"avro_semantic_hashes"})
 
 
 def _scrub(node: Any) -> Any:
@@ -119,9 +126,10 @@ def canonical_payload(api: CanonicalApi) -> Dict[str, Any]:
 
     The projection is the model with (1) its identity-keyed collections sorted by
     :func:`~app.normalizer.normalize_ordering` and (2) descriptive/presentation
-    keys removed by :func:`_scrub`. It is returned (rather than only its digest)
-    so callers — and tests — can inspect exactly what the fingerprint is taken
-    over, and so MFI-3.2's diff can reuse the same canonical view.
+    keys removed by :func:`_scrub` (and the :data:`UNHASHED_EXTRAS` keys). It is
+    returned (rather than only its digest) so callers — and tests — can inspect
+    exactly what the fingerprint is taken over, and so MFI-3.2's diff can reuse the
+    same canonical view.
 
     Args:
         api: The canonical model to project. Not mutated (ordering deep-copies).
@@ -130,7 +138,11 @@ def canonical_payload(api: CanonicalApi) -> Dict[str, Any]:
         A JSON-serializable dict: the structural contract of the artifact, free of
         documentation and declaration-order noise.
     """
-    return _scrub(normalize_ordering(api).model_dump())
+    payload = _scrub(normalize_ordering(api).model_dump())
+    extras = payload.get("extras")
+    if isinstance(extras, dict) and UNHASHED_EXTRAS.intersection(extras):
+        payload["extras"] = {k: v for k, v in extras.items() if k not in UNHASHED_EXTRAS}
+    return payload
 
 
 def canonical_fingerprint(api: CanonicalApi) -> str:
@@ -204,7 +216,7 @@ class FingerprintHasher(ABC):
             register_fingerprint_hasher(cls)
 
     @abstractmethod
-    def hash(self, api: CanonicalApi) -> str:
+    def hash(self, api: CanonicalApi) -> Optional[str]:
         """Return this format's special hash of ``api`` as a hex string.
 
         Args:
@@ -212,7 +224,9 @@ class FingerprintHasher(ABC):
                 :attr:`format`.
 
         Returns:
-            A hex digest under this hasher's :attr:`algorithm`.
+            A hex digest under this hasher's :attr:`algorithm`, or ``None`` when this
+            artifact has no such hash (an Avro IDL protocol has no single schema to
+            take a Parsing Canonical Form of).
         """
         raise NotImplementedError
 
@@ -325,7 +339,8 @@ def fingerprint(api: CanonicalApi) -> FingerprintResult:
     )
     hasher_cls = get_fingerprint_hasher(api.format)
     if hasher_cls is not None:
-        hasher = hasher_cls()
-        result.format_hash = hasher.hash(api)
-        result.format_algorithm = hasher_cls.algorithm
+        format_hash = hasher_cls().hash(api)
+        if format_hash is not None:
+            result.format_hash = format_hash
+            result.format_algorithm = hasher_cls.algorithm
     return result

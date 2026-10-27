@@ -133,9 +133,13 @@ So the two are complementary and are surfaced side by side:
 | **Semantic fingerprint** (`fingerprint`) | no | no | yes | did the contract change? (versioning/diff) |
 | **Avro PCF** (`format_hash`, when registered) | yes | yes | yes | are these schemas parse-compatible? |
 
-A future Avro format epic registers an `FingerprintHasher` that emits the PCF
-hash as `format_hash`; the semantic fingerprint continues to drive
-version-on-change. The same pattern applies to a protobuf `FileDescriptorSet`
+MFI-12.1 (#3782) registers `AvroPcfHasher` (`app.avro_fingerprint`), which emits
+the root schema's PCF SHA-256 as `format_hash` (none for an IDL protocol); the
+semantic fingerprint continues to drive version-on-change. The Avro normalizer also
+records each type's PCF (`avro_pcf`) and an Avro *semantic* hash that keeps `doc`,
+`default`, `aliases` and `order` (`avro_semantic_hashes`). The semantic hashes are
+listed in `UNHASHED_EXTRAS`: they stay on the model but are left out of the
+fingerprint and the diff, so a doc-only edit mints no version. The same pattern applies to a protobuf `FileDescriptorSet`
 hash and XSD QName canonicalization.
 
 ## Reuse note

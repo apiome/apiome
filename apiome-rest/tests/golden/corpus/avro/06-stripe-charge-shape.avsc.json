@@ -4,7 +4,36 @@
     "channels": [],
     "description": "A card charge, shaped like the Stripe Charge resource.",
     "extras": {
-      "avro_root": "com.example.payments.stripe.Charge"
+      "avro_pcf": {
+        "com.example.payments.stripe.BillingDetails": {
+          "crc64": "02a4630a0d718db3",
+          "sha256": "856d9a057cf07f835aed8f0de2dd6a4a91cd96e6d09f15677be509b964dccafb"
+        },
+        "com.example.payments.stripe.Charge": {
+          "crc64": "8f44a60d31d7a351",
+          "sha256": "215c7e6a720fac8ee66fc5affc52d1fb864ce5d5c961f4b503014486a632d699"
+        },
+        "com.example.payments.stripe.ChargeOutcome": {
+          "crc64": "5508f81353ca46ec",
+          "sha256": "81ae5cd1f76563df8ca35447417c281b917d1c27619752907f464e3b580465ed"
+        },
+        "com.example.payments.stripe.ChargeStatus": {
+          "crc64": "5cc358ebaa5c486c",
+          "sha256": "4d506e3d3ccc353fe9644ddbf7271fa4b723d26af6e75f5bfadbb0a24a5bf293"
+        },
+        "com.example.payments.stripe.PostalAddress": {
+          "crc64": "92528787ef5706bd",
+          "sha256": "81826f51e5ae7278f2c10b57933fc62f1487774bed65aff3336917924cab3413"
+        }
+      },
+      "avro_root": "com.example.payments.stripe.Charge",
+      "avro_semantic_hashes": {
+        "com.example.payments.stripe.BillingDetails": "bec54c9805ba4b335398d640a4a5c3871504868f2520e4f4a744822b3a6d7970",
+        "com.example.payments.stripe.Charge": "276b9ec32ca3317e2f5d16f7035757ac3294115002f1853ea5d8d614fb89e835",
+        "com.example.payments.stripe.ChargeOutcome": "f51971a69be92069f85a6c5bc76743f8aa9e2135147364baa460cda5ae651448",
+        "com.example.payments.stripe.ChargeStatus": "53dc60c0cd10c91e86180efb238077bdcefc0414d28bad883e8cbd5b8c128ad4",
+        "com.example.payments.stripe.PostalAddress": "0cd041e3fff9a909ee939ff8187e9f3c87b6959c1e4f21c5c57cca0a5fc7a167"
+      }
     },
     "format": "avro",
     "identity": {
@@ -741,7 +770,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:574663968ccc37a9b59dfd229ecf662a02caa2a3ae5befe8035771c21252fe5f",
+  "fingerprint": "sha256:5bea900acf60308bfd5e0742b45f30baa7b3ebd9d8e15988ac6e1535c6d12c86",
   "lint": {
     "findings": 14,
     "grade": "B",

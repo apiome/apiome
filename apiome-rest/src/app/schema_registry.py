@@ -9,9 +9,10 @@ the Avro emitter (MFX-19.3), which import source reads which schema type, and th
 
 Fingerprint. A schema's identity is the import pipeline's **canonical-model fingerprint**
 (:meth:`app.import_source.ImportSource.fingerprint`): the same schema, however its keys are
-ordered, yields the same fingerprint, so registering it twice returns the same id. Avro's Parsing
-Canonical Form replaces it for Avro once MFI-12.1 (#3782) ships, as a *new* fingerprint kind
-(``avro-pcf``) — never silently substituted, so lookups always compare like with like.
+ordered, yields the same fingerprint, so registering it twice returns the same id. MFI-12.1 (#3782)
+computes Avro's Parsing Canonical Form (:mod:`app.avro_fingerprint`); registration has not switched
+to it yet. When it does, it is a *new* fingerprint kind (``avro-pcf``) — never silently substituted,
+so lookups always compare like with like.
 
 :mod:`app.schema_registry_store` reads and writes the rows; :mod:`app.schema_registry_service`
 runs registration and attach; :mod:`app.schema_registry_routes` serves them.

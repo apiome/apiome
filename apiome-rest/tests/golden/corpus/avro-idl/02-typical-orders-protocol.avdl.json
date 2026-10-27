@@ -4,8 +4,32 @@
     "channels": [],
     "description": "Order service: the protocol form, whose messages become RPC operations.",
     "extras": {
+      "avro_pcf": {
+        "com.example.orders.Order": {
+          "crc64": "28f45319bfe997c2",
+          "sha256": "f639f90a4002e900f733dbb2182a12790e975e3d365bf26ea0c70859fe3e0528"
+        },
+        "com.example.orders.OrderLine": {
+          "crc64": "6b5fd9010946a123",
+          "sha256": "be567255c9bfa97de7b19edd8b4bceb3c203c256d3b5437b45a946e79283c82f"
+        },
+        "com.example.orders.OrderNotFound": {
+          "crc64": "a6a38d5540768255",
+          "sha256": "f987c8e9a7191069f8e61c29693001347ef848e211b70710ebad441a7d772f90"
+        },
+        "com.example.orders.OrderStatus": {
+          "crc64": "34a06c3fc3a19733",
+          "sha256": "014d86db58b105486590609160d7e2885952d2f2d755626a6e662a1b892982b1"
+        }
+      },
       "avro_protocol": "com.example.orders.OrderService",
       "avro_root": "com.example.orders.OrderStatus",
+      "avro_semantic_hashes": {
+        "com.example.orders.Order": "f33d8c8590b34c52690adc908d2867137b7990cb0fdfa9da41cd0c5758175fbc",
+        "com.example.orders.OrderLine": "7d46b211ed7a7719d9ea93fbf634c0fe9a1343a1362714209fec71845390d975",
+        "com.example.orders.OrderNotFound": "788d8003e93742bf8ccd23a457b0288769f60bc5e12948860bca34cafec6f3e2",
+        "com.example.orders.OrderStatus": "3e061fd8fba4c9d190e90a5252fcde1047f5c381e0710030ce5bfa7f90536c54"
+      },
       "avro_syntax": "avdl"
     },
     "format": "avro",
@@ -520,7 +544,7 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:1747ac15b602efd929e070b5bcd918bbb15fb2c8eda4643ac9fd5ea31d45d720",
+  "fingerprint": "sha256:62350640194fce5acb6fbb73f91cadaceaa5178982e5d2d7ba4a701652041d48",
   "lint": {
     "findings": 21,
     "grade": "D",

@@ -168,7 +168,9 @@ class SchemaByIdOut(_CamelModel):
     id: int
     schema_type: str
     fingerprint: str
-    fingerprint_kind: str = Field(description="`canonical-model` today; `avro-pcf` once MFI-12.1 ships.")
+    fingerprint_kind: str = Field(
+        description="`canonical-model` today; `avro-pcf` is reserved for Avro Parsing Canonical Form identity."
+    )
     references: List[Any] = Field(default_factory=list)
     project_id: str
     version_record_id: str

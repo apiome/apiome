@@ -4,7 +4,26 @@
     "channels": [],
     "description": "An invoice whose monetary fields all reuse one shared Money record.",
     "extras": {
-      "avro_root": "com.example.billing.Invoice"
+      "avro_pcf": {
+        "com.example.billing.Currency": {
+          "crc64": "5d3b13c54e2a345a",
+          "sha256": "6565bcd537eef155e68dff172cb1d674534123a200b912a76c133493d7ef8757"
+        },
+        "com.example.billing.Invoice": {
+          "crc64": "1ea9cdfbeaa8dfb4",
+          "sha256": "bce927325bd9cfe18cd8c0d28b50d0ec7dffee3a006233ff2ad2b4d1dcb02544"
+        },
+        "com.example.billing.Money": {
+          "crc64": "a8ad53acb738c26a",
+          "sha256": "ed047ebc4981f2c5362f4bd749eb089ed5aaa6e2bdf85043b6b71117680a5de1"
+        }
+      },
+      "avro_root": "com.example.billing.Invoice",
+      "avro_semantic_hashes": {
+        "com.example.billing.Currency": "590f1dc7889c5eb4991b02f5415ce8a677ee2acfef0309076e3454e5986af798",
+        "com.example.billing.Invoice": "22264ee059d8874729b633b00b5f115b680f468a33c080cf2e93bb848b9083a7",
+        "com.example.billing.Money": "67d4f4da2fa4e02dc8aef950752bf70b08cdffc731f50e4113f0a5765f0794c9"
+      }
     },
     "format": "avro",
     "identity": {
@@ -306,7 +325,7 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:ae439911348460ffd555d3e8a26a59a901689267c04b9ce73d6e0800cd00d713",
+  "fingerprint": "sha256:1ab3dce447c0fedc1e9f670bd6afb2c7a9b6561aa8ddacb6f0d58738538e079a",
   "lint": {
     "findings": 1,
     "grade": "A",
