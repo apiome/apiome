@@ -32,7 +32,10 @@ from .typespec_compile import TypeSpecCompiled, compile_typespec_set, typespec_m
 from .typespec_config import find_tspconfig
 from .typespec_parser import TypeSpecDocument, TypeSpecParseError, is_typespec, parse_typespec
 
-__all__ = ["TypeSpecImportSource"]
+__all__ = ["MAX_RECORDED_DIAGNOSTICS", "TypeSpecImportSource"]
+
+#: Most compile diagnostics recorded on a catalog item (the rest are counted, not listed).
+MAX_RECORDED_DIAGNOSTICS = 50
 
 
 class TypeSpecImportSource(ImportSource, register=True):
@@ -124,7 +127,8 @@ class TypeSpecImportSource(ImportSource, register=True):
 
         Returns:
             The canonical model, labelled ``typespec``, with ``extras`` naming the OpenAPI it
-            was built from, the source files, namespaces and the emitted document's hash.
+            was built from, the source files, namespaces, the emitted document's hash and the
+            compile's warnings.
         """
         api = self._normalize_via_registry("openapi-3.1", compiled.openapi, include_raw=False)
         extras = {
@@ -140,5 +144,11 @@ class TypeSpecImportSource(ImportSource, register=True):
             extras["typespec_tspconfig"] = compiled.config.path
             extras["typespec_tspconfig_applied"] = compiled.config.applied
             extras["typespec_tspconfig_ignored"] = list(compiled.config.ignored)
+        if compiled.diagnostics:
+            # MFI-14.3: the compile's warnings (compiler, library and built-in linter rules), for the
+            # `typespec` lint pack; omitted when there are none so a clean project's model is unchanged.
+            listed = compiled.diagnostics[:MAX_RECORDED_DIAGNOSTICS]
+            extras["typespec_diagnostics"] = [diagnostic.as_dict() for diagnostic in listed]
+            extras["typespec_diagnostic_count"] = len(compiled.diagnostics)
         raw = {"typespec": compiled.root_text, "openapi": compiled.openapi} if include_raw else None
         return api.model_copy(update={"format": "typespec", "extras": extras, "raw": raw})

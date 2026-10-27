@@ -425,6 +425,9 @@ def load_format_rule_packs() -> None:
     # WS-I lint pack (MFI-13.4): registers under ``wsdl`` (WS-I Basic Profile).
     from . import wsdl_lint as _wsdl_lint  # noqa: F401
 
+    # TypeSpec lint pack (MFI-14.3): registers under ``typespec`` (compiler + built-in linter warnings).
+    from . import typespec_lint as _typespec_lint  # noqa: F401
+
     # Kubernetes CRD lint pack (IXH-7.2): registers under ``k8s-crd``.
     from . import k8s_crd_lint as _k8s_crd_lint  # noqa: F401
     # LLM tool-bundle lint pack (IXH-7.3): registers under ``llm-tools``.

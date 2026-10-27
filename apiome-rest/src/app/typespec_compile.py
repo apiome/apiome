@@ -19,8 +19,11 @@ the OpenAPI ones (see :mod:`app.typespec_import_source`).
 4. runs ``tsp compile <root> --output-dir <out>`` and reads the emitted OpenAPI
    (:func:`read_typespec_openapi_output`).
 
-Compile diagnostics (``models/pets.tsp:9:11 - error invalid-ref: Unknown identifier``) become
-``INPUT_SEMANTIC_INVALID`` with each diagnostic quoted.
+Compile errors (``models/pets.tsp:9:11 - error invalid-ref: Unknown identifier``) become
+``INPUT_SEMANTIC_INVALID`` with each diagnostic quoted. The *warnings* of a successful compile —
+the compiler's own (``deprecated``), the libraries', and the built-in linter rules Apiome enables
+(``@typespec/http/op-reference-container-route``, MFI-14.3) — are kept on
+:attr:`TypeSpecCompiled.diagnostics` for the ``typespec`` lint pack (:mod:`app.typespec_lint`).
 """
 
 from __future__ import annotations
@@ -53,11 +56,13 @@ __all__ = [
     "TSP_TIMEOUT_SECONDS",
     "TSP_TOOL_KEY",
     "TypeSpecCompiled",
+    "TypeSpecDiagnostic",
     "check_import_targets",
     "compile_typespec_set",
     "find_import_targets",
     "link_typespec_libraries",
     "openapi_sha256",
+    "parse_diagnostics",
     "read_typespec_openapi_output",
     "typespec_node_modules",
     "typespec_members",
@@ -78,7 +83,14 @@ OPENAPI_TSPCONFIG = build_tspconfig()
 
 _IMPORT_RE = re.compile(r"""^\s*import\s+["']([^"']+)["']\s*;""", re.MULTILINE)
 _NAMESPACE_RE = re.compile(r"^\s*namespace\s+([A-Za-z_][\w.]*)", re.MULTILINE)
-_DIAGNOSTIC_RE = re.compile(r"^\S.*:\d+:\d+ - (error|warning) [\w-]+: .*$", re.MULTILINE)
+#: One diagnostic line: an optional ``file:line:column - `` location, the severity, the code (a
+#: library's codes are prefixed with its name: ``@typespec/http/op-reference-container-route``) and
+#: the message.
+_DIAGNOSTIC_RE = re.compile(
+    r"^(?:(?P<file>\S.*?):(?P<line>\d+):(?P<column>\d+) - )?(?P<severity>error|warning) "
+    r"(?P<code>[\w@./-]+): (?P<message>.*)$",
+    re.MULTILINE,
+)
 _MAX_REPORTED_DIAGNOSTICS = 10
 
 
@@ -94,6 +106,8 @@ class TypeSpecCompiled:
         openapi_sha256: SHA-256 of the emitted document (sorted-key JSON).
         config: The uploaded ``tspconfig.yaml`` as Apiome read it (MFI-14.5); ``None`` when the
             project had none.
+        diagnostics: The warnings the compile reported (MFI-14.3): compiler, library and built-in
+            linter diagnostics, in the order reported.
     """
 
     openapi: Dict[str, Any]
@@ -102,6 +116,62 @@ class TypeSpecCompiled:
     namespaces: Tuple[str, ...]
     openapi_sha256: str
     config: Optional[TypeSpecConfig] = None
+    diagnostics: Tuple[TypeSpecDiagnostic, ...] = ()
+
+
+@dataclass(frozen=True)
+class TypeSpecDiagnostic:
+    """One diagnostic the TypeSpec compiler reported.
+
+    Attributes:
+        severity: ``warning`` or ``error``.
+        code: The diagnostic code (``deprecated``, ``@typespec/http/op-reference-container-route``).
+        message: The compiler's message.
+        file: The ``.tsp`` file, relative to the project (``None`` when the diagnostic has no location).
+        line: 1-based line, or ``None``.
+        column: 1-based column, or ``None``.
+    """
+
+    severity: str
+    code: str
+    message: str
+    file: Optional[str] = None
+    line: Optional[int] = None
+    column: Optional[int] = None
+
+    def as_dict(self) -> Dict[str, Any]:
+        """The diagnostic as a JSON-ready dict (location keys only when located)."""
+        data: Dict[str, Any] = {"severity": self.severity, "code": self.code, "message": self.message}
+        if self.file is not None:
+            data.update(file=self.file, line=self.line, column=self.column)
+        return data
+
+
+def parse_diagnostics(output: str) -> List[TypeSpecDiagnostic]:
+    """Read the diagnostics out of ``tsp compile`` output.
+
+    The code-frame lines the compiler prints under each diagnostic (``> 19 | …``) and its summary
+    (``Found 2 warnings.``) are not diagnostics and are skipped; a repeated diagnostic is kept once.
+
+    Args:
+        output: The compiler's stdout and stderr, already scrubbed of the staging path.
+
+    Returns:
+        The diagnostics, in the order the compiler reported them.
+    """
+    found: List[TypeSpecDiagnostic] = []
+    for match in _DIAGNOSTIC_RE.finditer(output):
+        diagnostic = TypeSpecDiagnostic(
+            severity=match["severity"],
+            code=match["code"],
+            message=match["message"].strip(),
+            file=match["file"],
+            line=int(match["line"]) if match["line"] else None,
+            column=int(match["column"]) if match["column"] else None,
+        )
+        if diagnostic not in found:
+            found.append(diagnostic)
+    return found
 
 
 def typespec_members(members: Mapping[str, str]) -> Dict[str, str]:
@@ -256,17 +326,20 @@ def _scrub(text: str, directory: Path) -> str:
 def _diagnostics(output: str, staging_dir: Path) -> List[str]:
     """The compiler's error/warning lines, scrubbed of the staging path."""
     scrubbed = _scrub(output, staging_dir)
-    lines = [m.group(0).strip() for m in _DIAGNOSTIC_RE.finditer(scrubbed)]
-    errors = [line for line in lines if " - error " in line] or lines
+    matches = list(_DIAGNOSTIC_RE.finditer(scrubbed))
+    lines = [m.group(0).strip() for m in matches]
+    errors = [m.group(0).strip() for m in matches if m["severity"] == "error"] or lines
     if not errors:
         errors = [line.strip() for line in scrubbed.splitlines() if line.strip()][-3:]
     return errors[:_MAX_REPORTED_DIAGNOSTICS]
 
 
-def _run_compile(root: str, staging_dir: Path, output_dir: Path, home: Path) -> Dict[str, Any]:
-    """Run ``tsp compile`` and return the emitted OpenAPI (see :func:`compile_typespec_set`)."""
+def _run_compile(
+    root: str, staging_dir: Path, output_dir: Path, home: Path
+) -> Tuple[Dict[str, Any], List[TypeSpecDiagnostic]]:
+    """Run ``tsp compile``; return the emitted OpenAPI and the warnings the compile reported."""
     try:
-        run_tool_blocking(
+        result = run_tool_blocking(
             TSP_TOOL_KEY,
             ["compile", root, "--output-dir", str(output_dir)],
             timeout=TSP_TIMEOUT_SECONDS,
@@ -300,7 +373,8 @@ def _run_compile(root: str, staging_dir: Path, output_dir: Path, home: Path) -> 
         raise ImportSourceError(
             "The TypeSpec compiler emitted no OpenAPI document.", code="INPUT_MALFORMED"
         )
-    return document
+    output = _scrub(f"{result.stdout}\n{result.stderr}", staging_dir)
+    return document, parse_diagnostics(output)
 
 
 def compile_typespec_set(
@@ -355,7 +429,7 @@ def compile_typespec_set(
             build_tspconfig(config.applied if config else None), encoding="utf-8"
         )
         link_typespec_libraries(staging_dir)
-        document = _run_compile(staged_paths[root], staging_dir, scratch / "out", scratch)
+        document, diagnostics = _run_compile(staged_paths[root], staging_dir, scratch / "out", scratch)
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
         shutil.rmtree(scratch, ignore_errors=True)
@@ -368,4 +442,5 @@ def compile_typespec_set(
         namespaces=tuple(namespaces),
         openapi_sha256=openapi_sha256(document),
         config=config,
+        diagnostics=tuple(diagnostics),
     )

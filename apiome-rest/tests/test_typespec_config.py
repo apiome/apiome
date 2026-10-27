@@ -89,7 +89,7 @@ def test_everything_else_is_ignored_and_named():
         'options."@typespec/openapi3".openapi-versions: only the first version (3.1.0) is emitted',
         'options."@typespec/openapi3".output-file: Apiome reads one openapi.json it names itself',
         'options."@typespec/json-schema": only @typespec/openapi3 runs on import',
-        "linter: lint is applied by Apiome to the cataloged API",
+        "linter: Apiome runs the bundled libraries' built-in linter rulesets itself",
     )
 
 
@@ -132,6 +132,8 @@ def test_the_built_config_always_emits_one_openapi_json():
     assert yaml.safe_load(OPENAPI_TSPCONFIG) == {
         "emit": ["@typespec/openapi3"],
         "options": {"@typespec/openapi3": {"output-file": "openapi.json"}},
+        # MFI-14.3: the bundled libraries' built-in linter rulesets run on every compile.
+        "linter": {"extends": ["@typespec/http/all"]},
     }
 
 

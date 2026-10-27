@@ -20,7 +20,8 @@ Everything else is ignored and named, with the reason, on the catalog item: emit
 other emitters' options (only ``@typespec/openapi3`` runs), output locations (``output-dir``,
 ``emitter-output-dir``, ``output-file``, ``file-type``, ``new-line`` — Apiome reads one JSON
 document from its own scratch directory), ``imports`` and ``linter`` (a project's ``.tsp`` files
-are its imports, and lint is Apiome's), ``parameters`` / ``environment-variables`` (no
+are its imports, and Apiome enables the bundled libraries' built-in linter rulesets itself —
+:data:`BUILTIN_LINTER_RULESETS`, MFI-14.3), ``parameters`` / ``environment-variables`` (no
 interpolation is performed), and any value of the wrong type.
 """
 
@@ -35,6 +36,7 @@ import yaml
 from .import_source import ImportSourceError
 
 __all__ = [
+    "BUILTIN_LINTER_RULESETS",
     "OPENAPI3_EMITTER",
     "TSPCONFIG_NAMES",
     "TypeSpecConfig",
@@ -45,6 +47,11 @@ __all__ = [
 
 #: The emitter Apiome compiles with.
 OPENAPI3_EMITTER = "@typespec/openapi3"
+
+#: The built-in ``tsp`` linter rulesets every compile enables (MFI-14.3, #3796): every rule the
+#: bundled TypeSpec libraries define (``@typespec/http``'s, at 0.65). Their warnings are recorded
+#: on the catalog item and reported by the ``typespec`` lint pack (:mod:`app.typespec_lint`).
+BUILTIN_LINTER_RULESETS = ("@typespec/http/all",)
 
 #: File names a project's configuration may have.
 TSPCONFIG_NAMES = ("tspconfig.yaml", "tspconfig.yml")
@@ -70,7 +77,7 @@ _TOP_LEVEL_IGNORED = {
     "emit": f"only {OPENAPI3_EMITTER} runs on import",
     "output-dir": "output stays in Apiome's scratch directory",
     "imports": "a project's .tsp files are its imports",
-    "linter": "lint is applied by Apiome to the cataloged API",
+    "linter": "Apiome runs the bundled libraries' built-in linter rulesets itself",
     "parameters": "no parameter interpolation is performed",
     "environment-variables": "no environment interpolation is performed",
     "extends": "only the uploaded project's own settings are read",
@@ -209,7 +216,8 @@ def build_tspconfig(applied: Optional[Mapping[str, Any]] = None) -> str:
         applied: :attr:`TypeSpecConfig.applied` (``None`` for no uploaded configuration).
 
     Returns:
-        ``tspconfig.yaml`` text emitting ``@typespec/openapi3`` to ``openapi.json``.
+        ``tspconfig.yaml`` text emitting ``@typespec/openapi3`` to ``openapi.json``, with the
+        :data:`BUILTIN_LINTER_RULESETS` enabled.
     """
     applied = dict(applied or {})
     openapi3 = dict((applied.get("options") or {}).get(OPENAPI3_EMITTER) or {})
@@ -217,4 +225,5 @@ def build_tspconfig(applied: Optional[Mapping[str, Any]] = None) -> str:
     config: Dict[str, Any] = {"emit": [OPENAPI3_EMITTER], "options": {OPENAPI3_EMITTER: openapi3}}
     if "warn-as-error" in applied:
         config["warn-as-error"] = applied["warn-as-error"]
+    config["linter"] = {"extends": list(BUILTIN_LINTER_RULESETS)}
     return yaml.safe_dump(config, sort_keys=False)

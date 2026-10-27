@@ -947,6 +947,15 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Scan modes:** `lint`
 
 
+## Pack: `typespec`
+
+### `typespec.compiler-diagnostic` {#typespec-compiler-diagnostic}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A TypeSpec project should compile without warnings from the compiler or its built-in linter rules.
+
+
 ## Pack: `wsi`
 
 ### `wsi.binding-style` {#wsi-binding-style}

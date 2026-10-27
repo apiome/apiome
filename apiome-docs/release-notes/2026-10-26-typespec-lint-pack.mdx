@@ -1,0 +1,18 @@
+---
+slug: typespec-lint-pack
+title: TypeSpec compiler and linter warnings in lint
+description: Compiled TypeSpec projects report the compiler's and built-in linter's warnings.
+authors: [apiome]
+---
+
+A compiled TypeSpec project now keeps what the TypeSpec compiler says about it. Every compile runs
+TypeSpec's built-in linter rules, and each warning is reported by lint with its file and line.
+[Compiler and linter warnings](/bring-in/typespec-import#compiler-and-linter-warnings).
+
+{/* truncate */}
+
+- **Built-in linter.** The `@typespec/http/all` ruleset runs on every compile, catching issues such
+  as an `op is` reference that drops its interface's route prefix.
+- **Compiler warnings.** Warnings such as `deprecated` are kept too, instead of being discarded.
+- **One rule.** Each warning is a `typespec.compiler-diagnostic` finding at
+  `tsp:<file>:<line>:<column>`, its message starting with the TypeSpec diagnostic code.

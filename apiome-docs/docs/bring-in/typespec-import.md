@@ -58,6 +58,33 @@ The catalog item records how it was built:
 
 **Convert to OpenAPI** on a compiled item uses the OpenAPI the compiler emitted at import.
 
+## Compiler and linter warnings
+
+Every compile runs the TypeSpec libraries' built-in linter rules (the `@typespec/http/all`
+ruleset). The warnings the compile reports are kept with the catalog item: the compiler's own,
+such as `deprecated`, and the linter's, such as `@typespec/http/op-reference-container-route`.
+
+```text
+ops/legacy.tsp:15:18 - warning deprecated: Deprecated: Use Pet instead.
+main.tsp:22:4 - warning @typespec/http/op-reference-container-route: Operation adoptable references an operation which has a @route prefix …
+```
+
+Lint reports each warning under the
+[`typespec.compiler-diagnostic`](../build/lint-rules.md#typespec-compiler-diagnostic) rule, at
+`tsp:<file>:<line>:<column>` (for example `tsp:main.tsp:22:4`). The message starts with the
+diagnostic code, so you can look it up in the [TypeSpec docs](https://typespec.io/docs/). The
+catalog item's own OpenAPI lint still applies to the emitted API.
+
+| Field | What it holds |
+| --- | --- |
+| `typespec_diagnostics` | Up to 50 warnings, each a `severity`, `code`, `message`, and the `file`, `line` and `column` when the compiler gave one |
+| `typespec_diagnostic_count` | How many warnings there were in all |
+
+Both fields are present only when the compile reported a warning. A compile **error** refuses the
+import (see [below](#when-the-import-refuses-a-project)), and `warn-as-error: true` in your
+`tspconfig.yaml` turns these warnings into errors. A single `.tsp` file without a `tspconfig.yaml`
+is read without compiling, so it has no compiler warnings.
+
 ## `tspconfig.yaml`
 
 A `tspconfig.yaml` (or `tspconfig.yml`) in the same folder as the root `.tsp` marks a TypeSpec
@@ -86,7 +113,8 @@ Every other setting is ignored, and the catalog item lists each one with the rea
 - `output-dir`, `emitter-output-dir`, `output-file`, `file-type`, `new-line`: Apiome reads one JSON
   document from its own working folder.
 - `imports`, `linter`, `extends`, `parameters`, `environment-variables`, `trace`: the project's
-  `.tsp` files are its imports, lint is Apiome's, and no interpolation is performed.
+  `.tsp` files are its imports, Apiome runs the built-in linter rulesets itself (see
+  [Compiler and linter warnings](#compiler-and-linter-warnings)), and no interpolation is performed.
 - A value of the wrong type, such as `omit-unreachable-types: "yes"`.
 
 | Field | What it holds |
