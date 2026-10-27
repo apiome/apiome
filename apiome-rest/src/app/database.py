@@ -15554,6 +15554,82 @@ class Database:
 
         return _load(self, tenant_id=tenant_id, version_id=version_id)
 
+    def search_normalized_model(
+        self,
+        *,
+        tenant_id: str,
+        query: str,
+        all_versions: bool = False,
+        cap: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Full-text search a tenant's normalized model across every format (MFI-6.2, #3754).
+
+        Runs the statement :func:`app.model_search.build_model_search_sql` builds: canonical
+        operations, types and messages (V135's GIN indexes) plus the classic OpenAPI operations and
+        schemas of revisions that have no canonical artifact.
+
+        Args:
+            tenant_id: The tenant searched.
+            query: The search text (``websearch_to_tsquery`` syntax).
+            all_versions: Search every live revision, not just each project's latest.
+            cap: Maximum rows; defaults to :data:`app.model_search.SEARCH_HIT_CAP`.
+
+        Returns:
+            Matching rows, best-ranked first.
+        """
+        from .model_search import SEARCH_HIT_CAP, build_model_search_sql
+
+        sql, params = build_model_search_sql(
+            tenant_id=tenant_id,
+            query=query,
+            all_versions=all_versions,
+            cap=cap if cap is not None else SEARCH_HIT_CAP,
+        )
+        return self.execute_query(sql, params)
+
+    def list_catalog_versions_needing_canonical_reindex(
+        self, *, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """Catalog items whose latest revision has no live canonical artifact (MFI-6.2, #3754).
+
+        Before MFI-6.2 only AsyncAPI, Arazzo and agent-descriptor imports persisted their canonical
+        model, so most catalog items are invisible to the cross-protocol search.
+        :func:`app.canonical_model_reindex.reindex_catalog_canonical_models` re-parses each one's
+        captured source; these are its candidates. The latest revision is chosen exactly as the
+        catalog detail chooses it, so the source it reads is the one this revision captured.
+
+        Args:
+            limit: Optional cap on the number of candidates.
+
+        Returns:
+            Rows with ``tenant_id``, ``project_id``, ``version_id`` (the revision's ``versions.id``)
+            and ``creator_id``, oldest project first.
+        """
+        query = """
+            SELECT p.tenant_id::text AS tenant_id, p.id::text AS project_id,
+                   lv.id::text AS version_id, lv.creator_id::text AS creator_id
+            FROM apiome.projects p
+            JOIN LATERAL (
+                SELECT v.id, v.creator_id
+                FROM apiome.versions v
+                WHERE v.project_id = p.id AND v.deleted_at IS NULL
+                ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+                LIMIT 1
+            ) lv ON TRUE
+            WHERE p.publishable = false
+              AND p.deleted_at IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM apiome.api_artifacts a
+                  WHERE a.version_id = lv.id AND a.deleted_at IS NULL
+              )
+            ORDER BY p.created_at ASC, p.id ASC
+        """
+        params: tuple = ()
+        if limit is not None:
+            query += " LIMIT %s"
+            params = (int(limit),)
+        return self.execute_query(query, params)
+
     def get_scan_path_operation_index(
         self,
         *,

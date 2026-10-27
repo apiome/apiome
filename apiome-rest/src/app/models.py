@@ -2828,6 +2828,67 @@ class CatalogFacetsResponse(BaseModel):
     facets: CatalogFacets
 
 
+class ModelSearchHit(BaseModel):
+    """One operation, type or message matched by the cross-protocol search (MFI-6.2, #3754)."""
+
+    kind: str = Field(description="operation, type or message.")
+    element_id: str = Field(description="Id of the matched row in its store.")
+    name: str = Field(description="The element's name (an operation id, type name or message name).")
+    key: Optional[str] = Field(None, description="The element's stable key within its API.")
+    detail: Optional[str] = Field(
+        None,
+        description="Operation kind (request_response, subscribe, …), type kind (record, enum, …) "
+        "or message role (request, response, error, event).",
+    )
+    method: Optional[str] = Field(None, description="HTTP method, for an HTTP operation or its message.")
+    path: Optional[str] = Field(None, description="HTTP path, for an HTTP operation or its message.")
+    parent: Optional[str] = Field(
+        None, description="The service (operation), namespace (type) or operation (message) it sits in."
+    )
+    snippet: Optional[str] = Field(None, description="Start of its description (at most 400 characters).")
+    paradigm: Optional[str] = Field(None, description="The API's paradigm (rest, rpc, event, graph, data_schema, agent).")
+    format: Optional[str] = Field(None, description="The API's source format key (openapi-3.1, protobuf, …).")
+    format_label: Optional[str] = Field(None, description="Display label for the format.")
+    quality_grade: Optional[str] = Field(None, description="The revision's captured grade (A–F), or null.")
+    store: str = Field(
+        description="'canonical' (the normalized model of any format) or 'openapi' (an OpenAPI "
+        "Project's operations and schemas)."
+    )
+    rank: float = Field(description="Full-text relevance; results are ordered by it.")
+    project_id: str = Field(description="The catalog item or Project the element belongs to.")
+    project_slug: Optional[str] = None
+    project_name: Optional[str] = None
+    publishable: bool = Field(description="True for a Project, false for a catalog item.")
+    version_record_id: str = Field(description="The revision searched (versions.id).")
+    version_label: Optional[str] = Field(None, description="The revision's version label (1.0.0).")
+
+
+class ModelSearchFacets(BaseModel):
+    """The four cross-protocol search facets (MFI-6.2). Counts follow the catalog facet rule."""
+
+    kinds: List[CatalogFacetBucket] = Field(default_factory=list, description="operation / type / message.")
+    protocols: List[CatalogFacetBucket] = Field(default_factory=list, description="Paradigm.")
+    formats: List[CatalogFacetBucket] = Field(default_factory=list, description="Source format.")
+    grades: List[CatalogFacetBucket] = Field(
+        default_factory=list, description="Captured grade A–F, or 'ungraded'."
+    )
+
+
+class ModelSearchResponse(BaseModel):
+    """``GET /v1/search/{tenant}/model`` (MFI-6.2): matches across every format, with facets."""
+
+    query: str = Field(description="The search text as received (trimmed).")
+    total: int = Field(description="Matches before any facet is applied (at most the cap).")
+    matched: int = Field(description="Matches the selected facets keep.")
+    truncated: bool = Field(
+        description="True when the search hit its cap; counts then cover the best-ranked matches only."
+    )
+    offset: int
+    limit: int
+    hits: List[ModelSearchHit] = Field(default_factory=list, description="This page of matches, best first.")
+    facets: ModelSearchFacets
+
+
 class CatalogNormalizedSummary(BaseModel):
     """Normalized-content summary for a catalog item (MFI-23.9): how many services, operations,
     types and event channels the imported source normalized to.
