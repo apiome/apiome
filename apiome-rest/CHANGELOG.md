@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.470.0] - 2026-10-26
+
+### Added
+- **RAML lint pack: AMF SHACL validation + hygiene (MFI-15.3, #3801)** — `app.raml_amf` gains `run_amf_validate` /
+  `validate_raml_set_with_amf` (`amf validate <root> -in <RAML profile> -mime-in application/yaml -p <profile>`; the
+  CLI exits 1 for a non-conforming set with the report still on stdout) and `read_validation_report`, which reads
+  AMF's JSON-LD `sh:ValidationReport` into results (severity, constraint, message, file, 1-based line / column).
+  With AMF, `RamlImportSource` validates every set it parses (`RamlDocument.shacl_results`); `amf parse` builds no
+  model for a non-conforming document, so a **self-contained** document AMF refuses is now validated and read by the
+  YAML reader instead — it imports, with each violation as a finding — while a set that includes or uses other files
+  is still refused (`INPUT_SEMANTIC_INVALID`). New `app.raml_hygiene`: undeclared `securedBy` schemes, unused
+  `baseUriParameters`, unused resource `uriParameters` (read from the root as written; `!include`d and
+  library-qualified names not judged) and methods without responses. The normalizer records `raml_lint_issues`
+  (capped at 50) and `raml_lint_issue_count` when there are any. New `app.raml_lint` pack (`raml`):
+  `raml.shacl-violation` (error, transparency entry + `catalog_raml_amf` evaluation fixture carrying a captured AMF
+  result), `raml.shacl-warning`, `raml.shacl-info`, `raml.undeclared-security-scheme`,
+  `raml.unused-base-uri-parameter`, `raml.unused-uri-parameter`, `raml.method-without-responses`; seeded by V328.
+  RAML leaves the planned-pack list. New AMF 5.7.1 recordings (`lint-parse`, `lint-validate`, `petstore-validate`).
+  OpenAPI 1.334.0.
+
 ## [1.469.0] - 2026-10-26
 
 ### Added

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -32,7 +32,7 @@ from app.raml_amf import (
 from app.raml_amf_mapper import document_from_amf_model
 from app.raml_import_source import RamlImportSource
 from app.raml_normalizer import RamlNormalizer
-from app.toolchain_runner import ToolNotAvailableError, ToolRunResult, ToolTimeoutError
+from app.toolchain_runner import ToolExecutionError, ToolNotAvailableError, ToolRunResult, ToolTimeoutError
 
 _FIXTURES = Path(__file__).resolve().parent / "fixtures" / "raml_amf"
 _SET_DIR = _FIXTURES / "petstore"
@@ -54,21 +54,30 @@ def _recording(name: str) -> Dict[str, str]:
     return json.loads((_RECORDINGS / f"{name}.json").read_text(encoding="utf-8"))
 
 
-def _replay(monkeypatch: pytest.MonkeyPatch, name: str) -> List[Dict[str, Any]]:
-    """Make ``run_tool_blocking`` replay a recording, and return the calls it receives."""
+def _replay(monkeypatch: pytest.MonkeyPatch, name: str, *, validate: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Make ``run_tool_blocking`` replay recordings, and return the calls it receives.
+
+    ``amf parse`` replays ``name``. ``amf validate`` (MFI-15.3) replays ``validate`` when given,
+    else ``<name>-validate`` when recorded, else the conforming ``petstore-validate`` report. A
+    recording with a non-zero ``exit_code`` raises :class:`ToolExecutionError`, as the runner does.
+    """
     calls: List[Dict[str, Any]] = []
-    recorded = _recording(name)
 
     def _fake(key: str, args: List[str], **kwargs: Any) -> ToolRunResult:
         calls.append({"key": key, "args": list(args), **kwargs})
         staging = kwargs["cwd"]
+        if args[0] == "validate":
+            fallback = f"{name}-validate" if (_RECORDINGS / f"{name}-validate.json").exists() else "petstore-validate"
+            recorded = _recording(validate or fallback)
+        else:
+            recorded = _recording(name)
+        stdout = recorded["stdout"].replace(_PLACEHOLDER, staging)
+        stderr = recorded["stderr"].replace(_PLACEHOLDER, staging)
+        exit_code = int(recorded.get("exit_code", 0))
+        if exit_code:
+            raise ToolExecutionError(key, exit_code, stdout, stderr)
         return ToolRunResult(
-            key=key,
-            argv=[key, *args],
-            exit_code=0,
-            stdout=recorded["stdout"].replace(_PLACEHOLDER, staging),
-            stderr=recorded["stderr"].replace(_PLACEHOLDER, staging),
-            duration_ms=1,
+            key=key, argv=[key, *args], exit_code=0, stdout=stdout, stderr=stderr, duration_ms=1
         )
 
     monkeypatch.setattr(raml_amf, "run_tool_blocking", _fake)

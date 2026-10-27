@@ -316,6 +316,22 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
         ]
         return _blocking_rule_ids(findings), findings
 
+    if kind == "catalog_raml_amf":
+        # RAML with a captured `amf validate` result (MFI-15.3): AMF is a JVM tool the evaluation
+        # environment does not install, so the fixture carries the SHACL results the real CLI
+        # reported for its document, and exercises the lint surface they feed.
+        from dataclasses import replace
+
+        from .lint_engine import lint_canonical_model
+        from .raml_import_source import RamlImportSource
+
+        adapter = RamlImportSource()
+        document = adapter.parse(str(data.get("document") or ""), source_label=str(data.get("id") or "fixture"))
+        captured = [dict(item) for item in (data.get("amf_validation") or []) if isinstance(item, dict)]
+        model = adapter.normalize(replace(document, shacl_results=tuple(captured)))
+        findings = [f.as_dict() for f in lint_canonical_model(model).findings]
+        return _blocking_rule_ids(findings), findings
+
     if kind == "catalog_pointer_index":
         # Inventory-only fixture: multi-format pointers validated in tests by path existence.
         return set(), []

@@ -133,6 +133,9 @@ class RamlDocument:
     traits: Tuple[str, ...] = ()
     #: The resource types the document declares (library ones as ``alias.name``), MFI-15.2.
     resource_types: Tuple[str, ...] = ()
+    #: AMF's SHACL validation results (MFI-15.3, :func:`app.raml_amf.read_validation_report`):
+    #: ``{"severity", "constraint", "message", "file"?, "line"?, "column"?}``; empty without AMF.
+    shacl_results: Tuple[Dict[str, Any], ...] = ()
 
 
 def is_raml(content: str) -> bool:

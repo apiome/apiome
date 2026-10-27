@@ -1,0 +1,17 @@
+{
+  "kind": "catalog_raml_amf",
+  "id": "catalog/raml-shacl-violation",
+  "source_format": "raml",
+  "description": "RAML 1.0 document with exactly one blocking defect: the Pet example's id is a string where the type says integer. amf_validation is what the real amf 5.7.1 `validate` reported for this document.",
+  "document": "#%RAML 1.0\ntitle: Shelter API\nversion: v1\ntypes:\n  Pet:\n    type: object\n    properties:\n      id: integer\n    example:\n      id: \"not-a-number\"\n/pets:\n  get:\n    responses:\n      200:\n        body:\n          application/json:\n            type: Pet[]\n",
+  "amf_validation": [
+    {
+      "severity": "Violation",
+      "constraint": "example-validation-error",
+      "message": "/id expected type: Integer, found: String",
+      "file": "api.raml",
+      "line": 10,
+      "column": 1
+    }
+  ]
+}

@@ -50,7 +50,6 @@ GRAPHQL_ESLINT_SCANNER_ID = "graphql.eslint"
 #: parser/normalizer tickets — link the existing MFI issues.
 RELATED_FORMAT_LINT_ISSUES: Dict[str, Tuple[str, ...]] = {
     "smithy": ("https://github.com/apiome/apiome/issues/3810",),
-    "raml": ("https://github.com/apiome/apiome/issues/3801",),
     "api-blueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apiblueprint": ("https://github.com/apiome/apiome/issues/3806",),
     "apib": ("https://github.com/apiome/apiome/issues/3806",),

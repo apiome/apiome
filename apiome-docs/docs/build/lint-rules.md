@@ -904,6 +904,56 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Reports the share of constructs Apiome inferred rather than read from a declaration; raise it to error in a style guide to keep inferred APIs from being published.
 
 
+## Pack: `raml`
+
+### `raml.method-without-responses` {#raml-method-without-responses}
+
+- **Category:** documentation
+- **Default severity:** warning
+- **Rationale:** Every RAML method should declare at least one response.
+
+### `raml.shacl-info` {#raml-shacl-info}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** AMF's RAML validation reported a note.
+
+### `raml.shacl-violation` {#raml-shacl-violation}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A RAML API should conform to AMF's SHACL validation of the RAML profile.
+- **Reference:** https://a.ml/docs/related-docs/validation_profile_dialect/
+- **Remediation:** Fix the value AMF names at the reported file and line so it conforms to its declared type or facet, then re-import.
+- **False-positive guidance:** Not a false positive: AMF reports violations only for documents that break the RAML specification's constraints. Only servers with the bundled AMF toolchain report it.
+- **Fixture:** `catalog/raml-shacl-violation`
+- **Scan modes:** `lint`
+
+### `raml.shacl-warning` {#raml-shacl-warning}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** AMF's RAML validation reported a warning.
+
+### `raml.undeclared-security-scheme` {#raml-undeclared-security-scheme}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every securedBy scheme should be declared in securitySchemes.
+
+### `raml.unused-base-uri-parameter` {#raml-unused-base-uri-parameter}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every baseUriParameters entry should appear in baseUri.
+
+### `raml.unused-uri-parameter` {#raml-unused-uri-parameter}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every uriParameters entry should appear in its resource path.
+
+
 ## Pack: `thrift`
 
 ### `thrift.enum-explicit-values` {#thrift-enum-explicit-values}

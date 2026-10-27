@@ -4,11 +4,13 @@ The :class:`~app.import_source.ImportSource` adapter that makes RAML REST API
 definitions importable into the catalog (store-raw, MFI-23.7). Parsing goes through AMF
 when the toolchain has it, so ``!include`` fragments and ``uses`` libraries resolve
 (MFI-15.1, :mod:`app.raml_amf`); otherwise the YAML reader handles self-contained documents.
+With AMF, the set is also SHACL-validated and the results are kept for lint (MFI-15.3).
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from typing import Any, Mapping, Optional
 
 from . import raml_normalizer  # noqa: F401 — self-registers the normalizer
@@ -22,7 +24,12 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
-from .raml_amf import amf_available, parse_raml_set_with_amf, references_other_files
+from .raml_amf import (
+    amf_available,
+    parse_raml_set_with_amf,
+    references_other_files,
+    validate_raml_set_with_amf,
+)
 from .raml_parser import RamlDocument, RamlParseError, is_raml, parse_raml
 
 __all__ = ["RamlImportSource"]
@@ -53,7 +60,7 @@ def _parse_members(members: Mapping[str, str], root: str, *, source_label: Optio
         ImportSourceError: On any parse, resolution or availability failure.
     """
     if amf_available():
-        return parse_raml_set_with_amf(members, root, source_label=source_label)
+        return _parse_and_validate_with_amf(members, root, source_label=source_label)
     if references_other_files(members):
         raise ImportSourceError(
             "This RAML document includes or uses other files (`!include` / `uses`), which "
@@ -65,6 +72,44 @@ def _parse_members(members: Mapping[str, str], root: str, *, source_label: Optio
         return parse_raml(members[root], source_label=source_label)
     except RamlParseError as exc:
         raise ImportSourceError(str(exc)) from exc
+
+
+def _parse_and_validate_with_amf(
+    members: Mapping[str, str], root: str, *, source_label: Optional[str]
+) -> RamlDocument:
+    """Parse through AMF and attach AMF's SHACL validation results (MFI-15.3, #3801).
+
+    ``amf parse`` builds no model for a document that does not conform, so:
+
+    * a set AMF parses is validated as well, keeping the warnings and infos the parse does not
+      print;
+    * a **self-contained** document AMF refuses for SHACL violations is validated, then read by
+      the YAML reader, so it imports and each violation becomes a lint finding;
+    * a set that includes or uses other files has no other reader, so it is still refused.
+
+    Args:
+        members: The set's members, path → text.
+        root: The root document's path.
+        source_label: Label used in error messages.
+
+    Returns:
+        The parsed document with ``shacl_results`` set.
+
+    Raises:
+        ImportSourceError: When the set cannot be parsed or validated.
+    """
+    try:
+        document = parse_raml_set_with_amf(members, root, source_label=source_label)
+    except ImportSourceError as exc:
+        if exc.code != "INPUT_SEMANTIC_INVALID" or references_other_files(members):
+            raise
+        results = validate_raml_set_with_amf(members, root)
+        try:
+            document = parse_raml(members[root], source_label=source_label)
+        except RamlParseError:
+            raise exc from None
+        return replace(document, shacl_results=tuple(results))
+    return replace(document, shacl_results=tuple(validate_raml_set_with_amf(members, root)))
 
 
 class RamlImportSource(ImportSource, register=True):
