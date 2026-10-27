@@ -8,6 +8,7 @@ import {
   Clipboard,
   FileCode,
   FileUp,
+  FlaskConical,
   GitBranch,
   Link2,
   SlidersHorizontal,
@@ -35,6 +36,7 @@ import {
   ImportWizardFooter,
   ImportWizardHead,
   ImportWizardSteps,
+  catalogImportDryRunFor,
   catalogImportFooterFor,
   catalogRoutingTone,
 } from '../../import';
@@ -68,6 +70,13 @@ import {
   readImportQualityPreferences,
 } from '../../../../utils/import-quality-preferences';
 import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
+import {
+  buildCatalogPreflightRequest,
+  fetchImportPreflight,
+  type PreflightRequest,
+} from '../../../../utils/import-preflight';
+import { predictCatalogImport, type CatalogDryRunPrediction } from './catalogImportDryRun';
+import { CatalogImportDryRunPanel } from './CatalogImportDryRunPanel';
 
 interface CatalogImportDialogProps {
   open: boolean;
@@ -179,6 +188,20 @@ function formatChoiceLabel(format: string): string {
   return resolveCatalogFormat(format)?.label ?? format;
 }
 
+/**
+ * One **Dry run** (MFI-26.4, #4097), tagged with the pre-flight request it ran. A result is shown
+ * only while its request is still the one the commit would send, so a changed root or JSON Schema
+ * choice can never leave a stale prediction on screen.
+ */
+interface DryRunOutcome {
+  request: PreflightRequest | null;
+  running: boolean;
+  prediction: CatalogDryRunPrediction | null;
+  error: string | null;
+}
+
+const NO_DRY_RUN: DryRunOutcome = { request: null, running: false, prediction: null, error: null };
+
 export function CatalogImportDialog({
   open,
   onClose,
@@ -232,6 +255,9 @@ export function CatalogImportDialog({
   // step. Read once per opening so a change made mid-wizard cannot retroactively skip the step the
   // user is standing on.
   const [skipQualityStep, setSkipQualityStep] = useState(false);
+  const [dryRun, setDryRun] = useState<DryRunOutcome>(NO_DRY_RUN);
+  // The in-flight dry run, so closing the wizard or leaving the step can abandon it.
+  const dryRunAbort = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const availability = useCatalogImportAvailability(open);
   // The source grid is data-driven from `GET /v1/import/sources` (MFI-26.1). We render the
@@ -321,6 +347,28 @@ export function CatalogImportDialog({
     }
     return null;
   }, [adapter, jsonSchemaChoice, routing.destination]);
+  // The pre-flight `input_kind` for this source. A git selection is a multi-file `fileset`; a
+  // Compass export never reaches a pre-flight (it is staged, not stored).
+  const preflightInputKind =
+    sourceMethod === 'git' ? 'fileset' : sourceMethod === 'compass' ? 'file' : sourceMethod;
+  // What a dry run sends: the candidate the commit would store, scored exactly as the quality
+  // step scores it. Null where nothing would be written to the catalog.
+  const dryRunRequest = useMemo<PreflightRequest | null>(
+    () =>
+      commitSourceKind
+        ? buildCatalogPreflightRequest({
+            documentBase64: documentBase64 ?? toBase64(content),
+            sourceKind: commitSourceKind,
+            label: fileName || 'Imported source',
+            inputKind: preflightInputKind,
+            archiveRoot,
+            url: sourceMethod === 'url' ? fileName : null,
+          })
+        : null,
+    [archiveRoot, commitSourceKind, content, documentBase64, fileName, preflightInputKind, sourceMethod],
+  );
+  // The dry run on record belongs to the candidate in hand; anything else is stale and not shown.
+  const dryRunCurrent = dryRun.request !== null && dryRun.request === dryRunRequest;
 
   useEffect(() => {
     if (!open) return;
@@ -328,6 +376,9 @@ export function CatalogImportDialog({
   }, [open]);
 
   const reset = useCallback(() => {
+    dryRunAbort.current?.abort();
+    dryRunAbort.current = null;
+    setDryRun(NO_DRY_RUN);
     setRetryRead(null);
     setStep('source');
     setSourceMethod('file');
@@ -749,6 +800,50 @@ export function CatalogImportDialog({
     void storeCatalog(commitSourceKind);
   }, [commitSourceKind, storeCatalog]);
 
+  /**
+   * Run a **Dry run** (MFI-26.4, #4097): ask the server what Import would do, writing nothing.
+   *
+   * It is the pre-flight (`POST /api/import/preflight`), which runs the commit's own importer with
+   * `dry_run` forced on — no catalog item, version or import job is created. The import job
+   * endpoint (`/api/catalog/import`) is never called here; only the quality step's Import does that.
+   */
+  const runDryRun = useCallback(async () => {
+    const request = dryRunRequest;
+    if (!request) return;
+    dryRunAbort.current?.abort();
+    const controller = new AbortController();
+    dryRunAbort.current = controller;
+    setDryRun({ request, running: true, prediction: null, error: null });
+    try {
+      const report = await fetchImportPreflight(request, controller.signal);
+      if (controller.signal.aborted) return;
+      setDryRun({
+        request,
+        running: false,
+        prediction: predictCatalogImport(report, { name: importName, slug: importSlug }),
+        error: null,
+      });
+    } catch (e) {
+      if (controller.signal.aborted) {
+        // Abandoned (closed, or the step was left): drop it rather than leave "Running…" behind.
+        setDryRun((current) => (current.request === request ? NO_DRY_RUN : current));
+        return;
+      }
+      setDryRun({
+        request,
+        running: false,
+        prediction: null,
+        error: e instanceof Error ? e.message : 'Could not run the dry run.',
+      });
+    }
+  }, [dryRunRequest, importName, importSlug]);
+
+  // A dry run belongs to the Options step: leaving it, or unmounting, abandons one in flight.
+  useEffect(() => {
+    if (step !== 'options') dryRunAbort.current?.abort();
+  }, [step]);
+  useEffect(() => () => dryRunAbort.current?.abort(), []);
+
   const handleSkipPreferenceChange = useCallback((value: boolean) => {
     setSkipQualityStep(value);
     persistImportQualityPreferences({ skipQualityStep: value });
@@ -781,6 +876,17 @@ export function CatalogImportDialog({
     adapterUnavailable,
     destination: routing.destination,
     canStoreCatalog,
+  });
+
+  // The Options step's Dry run button. The JSON Schema → Catalog choice commits through the
+  // `json-schema` importer, which is always present, so only the adapter routes can be refused.
+  const dryRunAction = catalogImportDryRunFor({
+    step,
+    storing: state === 'storing',
+    writesCatalogItem: commitSourceKind !== null,
+    canCommit: routing.destination === 'catalog' ? canStoreCatalog : true,
+    running: dryRunCurrent && dryRun.running,
+    unavailableReason,
   });
 
   /** Back goes one stop up the rail; the rail is the array, so this is its index minus one. */
@@ -1267,6 +1373,16 @@ export function CatalogImportDialog({
                   data-testid="catalog-import-no-options"
                 />
               )}
+
+              {/* Dry run (MFI-26.4): what Import would do, shown only for the candidate in hand. */}
+              {commitSourceKind !== null && dryRunCurrent && (
+                <CatalogImportDryRunPanel
+                  running={dryRun.running}
+                  prediction={dryRun.prediction}
+                  error={dryRun.error}
+                  onRetry={() => void runDryRun()}
+                />
+              )}
             </div>
           )}
 
@@ -1276,7 +1392,7 @@ export function CatalogImportDialog({
               label={fileName || 'Imported source'}
               sourceKind={commitSourceKind}
               // A Compass export never reaches the quality step (it is staged, not stored).
-              inputKind={sourceMethod === 'git' ? 'fileset' : sourceMethod === 'compass' ? 'file' : sourceMethod}
+              inputKind={preflightInputKind}
               archiveRoot={archiveRoot}
               onArchiveRootChange={handleArchiveRootChange}
               url={sourceMethod === 'url' ? fileName : null}
@@ -1348,18 +1464,37 @@ export function CatalogImportDialog({
                  too fast to uncheck — the preference would otherwise be a one-way switch.
                  Options is the last stop before the quality step on every catalog route, so it
                  is where the preference can always be turned back off. Hidden on the JSON
-                 Schema → Types hand-off, which never reaches the quality step at all. */
+                 Schema → Types hand-off, which never reaches the quality step at all.
+                 Dry run (MFI-26.4) sits beside Continue: it predicts the commit without making it. */
               step === 'options' && commitSourceKind !== null ? (
-                <label className="cat-imp-skip">
-                  <input
-                    type="checkbox"
-                    className="imp-check"
-                    checked={skipQualityStep}
-                    onChange={(event) => handleSkipPreferenceChange(event.target.checked)}
-                    data-testid="catalog-import-options-skip-preference"
-                  />
-                  Skip the quality step for clean imports
-                </label>
+                <>
+                  <label className="cat-imp-skip">
+                    <input
+                      type="checkbox"
+                      className="imp-check"
+                      checked={skipQualityStep}
+                      onChange={(event) => handleSkipPreferenceChange(event.target.checked)}
+                      data-testid="catalog-import-options-skip-preference"
+                    />
+                    Skip the quality step for clean imports
+                  </label>
+                  {dryRunAction && (
+                    <Button
+                      variant="outline"
+                      onClick={() => void runDryRun()}
+                      disabled={dryRunAction.disabled}
+                      title={dryRunAction.reason ?? undefined}
+                      data-testid="catalog-import-dry-run-button"
+                    >
+                      {dryRunCurrent && dryRun.running ? (
+                        <Spinner aria-hidden />
+                      ) : (
+                        <FlaskConical aria-hidden />
+                      )}
+                      {dryRunAction.label}
+                    </Button>
+                  )}
+                </>
               ) : undefined
             }
           />

@@ -835,6 +835,55 @@ export function catalogImportFooterFor(state: CatalogImportFooterState): ImportF
   };
 }
 
+/** What the Catalog importer needs to know to offer its **Dry run** (MFI-26.4, #4097). */
+export interface CatalogImportDryRunState {
+  /** Which stop it is on. */
+  step: CatalogImportStepId;
+  /** A commit is in flight. */
+  storing: boolean;
+  /** The options step leads to a catalog write — false for the JSON Schema → Types hand-off. */
+  writesCatalogItem: boolean;
+  /** The commit could run now: its importer is known and available in this runtime. */
+  canCommit: boolean;
+  /** A dry run is in flight. */
+  running: boolean;
+  /** Why the commit could not run, when {@link canCommit} is false (e.g. the adapter is missing). */
+  unavailableReason?: string | null;
+}
+
+/** The **Dry run** button: its verb, whether it is enabled, and why not when it is refused. */
+export interface CatalogImportDryRunAction extends ImportFooterAction {
+  /** Shown as the button's tooltip while it is disabled; `null` when it is enabled. */
+  reason: string | null;
+}
+
+/**
+ * The Catalog importer's **Dry run** button, or `null` where it is not offered.
+ *
+ * Offered on the Options step only — the last stop before the quality step, and the one where
+ * the routing is final (the JSON Schema fork is answered here). A dry run predicts what the
+ * commit would write, so it is withheld where no catalog item would be written at all (the
+ * Types hand-off), and refused — drawn but disabled — while the commit could not run either or
+ * a dry run is already in flight.
+ *
+ * @param state Where the wizard is and what it holds — see {@link CatalogImportDryRunState}.
+ * @returns The button's label, whether it is enabled and why not, or `null` when it is not drawn.
+ */
+export function catalogImportDryRunFor(state: CatalogImportDryRunState): CatalogImportDryRunAction | null {
+  if (state.step !== 'options' || !state.writesCatalogItem) return null;
+  let reason: string | null = null;
+  if (state.running) reason = 'A dry run is already running.';
+  else if (state.storing) reason = 'The import is already running.';
+  else if (!state.canCommit) {
+    reason = state.unavailableReason || 'This format cannot be imported in this deployment.';
+  }
+  return {
+    label: state.running ? 'Running dry run…' : 'Dry run',
+    disabled: reason !== null,
+    reason,
+  };
+}
+
 // ---------------------------------------------------------------------------------------
 // Number keys on the Source step
 // ---------------------------------------------------------------------------------------

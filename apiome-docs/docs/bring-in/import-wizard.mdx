@@ -144,10 +144,38 @@ Options → Quality → Import**.
    it goes. OpenAPI and Swagger are routed to Projects; choose **Import as format** if the
    detection is ambiguous.
 3. **Options** — for JSON Schema, choose to keep it in the catalog for later conversion or to use it
-   as types. **Skip the quality step for clean imports** saves a step.
+   as types. **Skip the quality step for clean imports** saves a step. **Click “Dry run”** to see
+   what **Import** would do without saving anything — see [Dry run a catalog
+   import](#dry-run-a-catalog-import).
 4. **Quality** — a pre-flight lint. **“Import”** when it is clean, or **“Import anyway”**.
 5. **Import** — the item is stored in its original format. Use **Convert to OpenAPI** when you are
    ready.
+
+### Dry run a catalog import
+
+A dry run runs the same importer as **Import**, then stops before anything is written. It creates
+no catalog item, version or import job.
+
+1. On **Options**, **click “Dry run”** beside **Continue**.
+2. Read the result under **Dry run complete. Nothing was saved.**:
+
+   | Row | What it tells you |
+   | --- | --- |
+   | **Format** | The format the importer recognized, and its paradigm. |
+   | **Destination** | Where **Import** would put it: a **Catalog item**, a **Project** or **Types**. A warning says so when it would not be the catalog. |
+   | **Why** | The importer's reason for that destination. |
+   | **Catalog item** | The name and slug **Import** would use. An existing item with that slug gets a new revision. |
+   | **Contents** | The services, operations, types and channels it would hold. |
+   | **Quality** | The lint score and grade. |
+   | **Fingerprint** | The revision fingerprint **Import** would record. Hover for the full value. |
+
+   If the source could not be imported, **Import would fail** gives the reason and how to fix it.
+3. **Click “Continue”** to go on to **Quality** and **Import** as usual, or **“← Back”** to change
+   the source.
+
+<Screenshot id="catalog-import-dry-run" alt="The Options step after a dry run: Dry run complete. Nothing was saved., then Format GraphQL, Destination Catalog item, the catalog item's name and slug, its contents, quality and fingerprint, with Dry run and Continue in the footer" />
+
+The dry run is the import pre-flight. From the CLI, `apiome import preflight` gives the same answer.
 
 ## With the CLI or the API
 

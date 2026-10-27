@@ -1,0 +1,18 @@
+---
+slug: catalog-import-dry-run
+title: Dry run a catalog import
+description: Import to catalog shows what an import would do, without saving anything.
+authors: [apiome]
+---
+
+**Import to catalog** now has a **Dry run**: see what **Import** would do with a source before
+anything is written. [Dry run a catalog import](/bring-in/import-wizard#dry-run-a-catalog-import).
+
+{/* truncate */}
+
+- **On the Options step.** **Dry run** sits beside **Continue**. It runs the same importer as
+  **Import** and stops before the write: no catalog item, version or import job is created.
+- **What it shows.** The format and paradigm, where the import would land and why, the catalog
+  item's name and slug, what it would hold, its quality score and its revision fingerprint. A
+  source that would fail says so, with the importer's fix.
+- **Continue still imports.** **Continue** goes on to **Quality** and **Import** as before.

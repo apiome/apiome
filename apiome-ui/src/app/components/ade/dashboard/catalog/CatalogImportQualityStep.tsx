@@ -53,6 +53,7 @@ import { gaugeDashOffset } from '@/app/utils/catalog-lint-panel';
 import { STATUS_TONE_SOFT_CLASS, statusTone } from '../../../ui/statusVocabulary';
 import { gradeBand } from '../../../ui/statusVocabulary';
 import {
+  buildCatalogPreflightRequest,
   buildImportQualityWaiver,
   decidePreflightGate,
   fetchImportPreflight,
@@ -327,15 +328,15 @@ export function CatalogImportQualityStep({
   const committed = useRef(false);
 
   const request = useMemo<PreflightRequest>(
-    () => ({
-      document_base64: documentBase64,
-      source_kind: sourceKind ?? undefined,
-      filename: label || undefined,
-      url: inputKind === 'url' ? url ?? undefined : undefined,
-      input_kind: inputKind,
-      archive_root: archiveRoot ?? undefined,
-      import_target: 'catalog',
-    }),
+    () =>
+      buildCatalogPreflightRequest({
+        documentBase64,
+        sourceKind,
+        label,
+        inputKind,
+        archiveRoot: archiveRoot ?? null,
+        url: url ?? null,
+      }),
     [archiveRoot, documentBase64, inputKind, label, sourceKind, url],
   );
 
