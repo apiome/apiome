@@ -195,6 +195,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-kinds.html'] },
   },
   {
+    // MFI-21.2 (#3992): a z/OS Connect descriptor's copybook ↔ REST binding panel, dumped by
+    // `tests/catalog-zosconnect-binding.test.tsx`.
+    id: 'catalog-zosconnect-binding',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['catalog-zosconnect-binding.html'] },
+  },
+  {
     // CDG-5.2 (#5980): an agent's page and a model's page, dumped by `tests/catalog-agents-ui.test.tsx`.
     id: 'catalog-agents',
     mockup: null,

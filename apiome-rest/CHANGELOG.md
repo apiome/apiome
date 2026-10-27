@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.482.0] - 2026-10-27
+
+### Added
+- **z/OS Connect copybook ↔ REST binding (MFI-21.2, #3992)** — new `app.zosconnect_binding`. A z/OS Connect
+  descriptor revision records `format_metadata.zosConnectBinding` (its kind, target API and each operation's key,
+  `operationId`, request / response structure and program); a COBOL copybook revision records
+  `format_metadata.cobolRecords`, every 01-level record it declares (the copybook model itself keeps only the first).
+- **Identity suggestions** pair a descriptor with the copybooks that declare its structures ("binds COBOL
+  structure(s) …") and with the OpenAPI its target API title names ("z/OS Connect target API"), in both directions.
+- **`GET /v1/identity/{tenant_slug}/projects/{project_id}/zosconnect-binding`** — the descriptor's binding joined to
+  the catalog: per operation its request / response structures with the copybook items that declare them and the
+  OpenAPI items that define the operation, each marked `linked` when in the descriptor's identity group
+  (`ZosConnectBindingResponse`; 404 for an item without a binding). Backed by
+  `Database.get_cobol_record_holders`.
+
 ## [1.481.0] - 2026-10-27
 
 ### Added

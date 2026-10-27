@@ -1,0 +1,47 @@
+openapi: 3.0.3
+info:
+  title: Inventory API
+  version: 1.0.0
+  description: The REST face of the inventory service a CICS program calls through z/OS Connect.
+servers:
+  - url: https://api.example.com/inventory
+paths:
+  /items/{sku}/stock:
+    get:
+      operationId: getStockLevel
+      parameters:
+        - {name: sku, in: path, required: true, schema: {type: string, maxLength: 12}}
+      responses:
+        "200":
+          description: The stock level.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sku: {type: string}
+                  onHand: {type: integer}
+                  reserved: {type: integer}
+  /items/{sku}/reservations:
+    post:
+      operationId: reserveStock
+      parameters:
+        - {name: sku, in: path, required: true, schema: {type: string, maxLength: 12}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity: {type: integer}
+      responses:
+        "200":
+          description: The reservation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId: {type: string}
+                  status: {type: string}

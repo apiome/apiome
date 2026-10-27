@@ -10,6 +10,7 @@ import re
 from typing import Any, Dict, List, Optional, Set
 
 from .models import IdentitySuggestionRef, RelatedArtifactRef
+from .zosconnect_binding import matches_api_title, shared_cobol_structures
 
 
 def _normalize_title(value: Optional[str]) -> str:
@@ -119,6 +120,21 @@ def rank_identity_suggestions(
         if shared_msg_types:
             score += min(40, 20 * len(shared_msg_types))
             reasons.append(f"shared FIX message type(s) {', '.join(shared_msg_types)}")
+
+        # MFI-21.2: a z/OS Connect descriptor and the copybooks that declare the structures it
+        # binds; a descriptor and the OpenAPI its target API title names.
+        candidate_meta = row.get("format_metadata") if isinstance(row.get("format_metadata"), dict) else None
+        shared_structures = shared_cobol_structures(
+            anchor_meta if isinstance(anchor_meta, dict) else None, candidate_meta
+        )
+        if shared_structures:
+            score += min(60, 30 * len(shared_structures))
+            reasons.append(f"binds COBOL structure(s) {', '.join(shared_structures)}")
+        if matches_api_title(anchor_meta if isinstance(anchor_meta, dict) else None, row) or matches_api_title(
+            candidate_meta, anchor
+        ):
+            score += 30
+            reasons.append("z/OS Connect target API")
 
         overlap = anchor_ops.intersection(candidate_ops.get(pid, set()))
         if overlap:

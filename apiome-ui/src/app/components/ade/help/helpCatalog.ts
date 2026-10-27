@@ -855,6 +855,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['jsonapi', 'json:api', 'hal-forms', 'hydra', 'json-ld', 'media type', 'jtd', 'facet'],
   },
   {
+    id: 'zos-connect-binding',
+    title: 'Link z/OS Connect to its copybooks',
+    summary: 'Keep a z/OS Connect API, its copybooks and its OpenAPI linked in the catalog.',
+    page: 'apiome-docs/docs/bring-in/zos-connect-binding.md',
+    section: 'reference',
+    keywords: ['zosconnect', 'cics', 'ims', 'mainframe', 'cobol', 'api requester', 'api provider', 'structure'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

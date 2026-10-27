@@ -1,0 +1,20 @@
+---
+slug: zos-connect-binding
+title: z/OS Connect, its copybooks and its OpenAPI, linked
+description: A z/OS Connect descriptor now links to its COBOL copybooks and its OpenAPI.
+authors: [apiome]
+---
+
+The copybook ↔ REST binding a z/OS Connect descriptor declares is now kept in the catalog.
+[Link z/OS Connect to its copybooks](/bring-in/zos-connect-binding).
+
+{/* truncate */}
+
+- **Suggested links.** A descriptor is suggested the copybooks that declare its request and
+  response structures, and the OpenAPI document it targets; a copybook is suggested its
+  descriptor.
+- **Every 01-level record counts.** A copybook that declares several 01-level records, such as a
+  request and its response, binds all of them.
+- **A binding panel.** The descriptor's catalog item lists each operation with its COBOL
+  structures, the copybook items that declare them, and the OpenAPI that defines it, marking
+  which are linked.
