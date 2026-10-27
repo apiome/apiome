@@ -85,11 +85,44 @@ import (see [below](#when-the-import-refuses-a-project)), and `warn-as-error: tr
 `tspconfig.yaml` turns these warnings into errors. A single `.tsp` file without a `tspconfig.yaml`
 is read without compiling, so it has no compiler warnings.
 
+## Versioned services
+
+A service that uses `@typespec/versioning` describes several versions of one API:
+
+```typespec
+@versioned(Versions)
+namespace PetStore;
+
+enum Versions {
+  v1: "2023-01-01",
+  v2: "2023-06-01",
+}
+
+model Pet {
+  id: string;
+  @added(Versions.v2) tag?: string;
+}
+```
+
+Apiome compiles every version, each to its own OpenAPI document. The catalog item is the
+**newest** version: its operations, types, diff and lint are that version's. The item also records:
+
+| Field | What it holds |
+| --- | --- |
+| `typespec_versions` | Every version, oldest first (the enum's order), with a hash of its OpenAPI |
+| `typespec_latest_version` | The version the catalog item describes |
+| `typespec_version_changes` | One entry per step from a version to the next: `from`, `to`, an `overall` grade (`breaking`, `safe` or `unknown`), counts per grade, and up to 50 findings such as `property_removed` at `components.schemas.Pet.properties.legacyCode` |
+
+The steps are graded by the same OpenAPI compatibility check Apiome runs when you compare two
+OpenAPI revisions. A version is named by its enum member's value (`2023-01-01` above), or by the
+member's name when it has no value.
+
 ## `tspconfig.yaml`
 
 A `tspconfig.yaml` (or `tspconfig.yml`) in the same folder as the root `.tsp` marks a TypeSpec
 project: it compiles even when it holds only one `.tsp` file. Apiome always compiles with the
-`@typespec/openapi3` emitter into one OpenAPI document, and applies these settings from your file:
+`@typespec/openapi3` emitter into one OpenAPI document per version (see
+[Versioned services](#versioned-services)), and applies these settings from your file:
 
 | Setting | Values | Effect |
 | --- | --- | --- |
@@ -110,8 +143,8 @@ options:
 Every other setting is ignored, and the catalog item lists each one with the reason:
 
 - `emit` and other emitters' options: only `@typespec/openapi3` runs on import.
-- `output-dir`, `emitter-output-dir`, `output-file`, `file-type`, `new-line`: Apiome reads one JSON
-  document from its own working folder.
+- `output-dir`, `emitter-output-dir`, `output-file`, `file-type`, `new-line`: Apiome names and reads the
+  JSON documents (one per version) in its own working folder.
 - `imports`, `linter`, `extends`, `parameters`, `environment-variables`, `trace`: the project's
   `.tsp` files are its imports, Apiome runs the built-in linter rulesets itself (see
   [Compiler and linter warnings](#compiler-and-linter-warnings)), and no interpolation is performed.

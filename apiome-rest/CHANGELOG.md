@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.476.0] - 2026-10-26
+
+### Added
+- **TypeSpec versioning: per-version emit and diff (MFI-14.4, #3797)** — Apiome's compile configuration now writes
+  `output-file: openapi.{version}.json` (`app.typespec_config.OPENAPI_OUTPUT_FILE`): a `@versioned` service
+  (`@typespec/versioning`) emits one OpenAPI document per version — previously each version overwrote the last and
+  only the newest survived — while an unversioned service still emits `openapi.json`.
+  `app.typespec_compile.read_typespec_openapi_outputs` reads every emitted document; new `app.typespec_versioning`
+  orders them by the versions enum's declaration order (`declared_versions` parses `@versioned(X)` and `enum X`,
+  member values or names, comments and decorators skipped; unmatched versions follow in natural order) and grades
+  each step from one version to the next with the OpenAPI compatibility analysis
+  (`schema_compatibility.analyze_schema_compatibility`, `version_changes`). `TypeSpecCompiled.versions` holds every
+  version oldest-first and `openapi` is the newest. The catalog item records `typespec_versions` (version + OpenAPI
+  hash), `typespec_latest_version` and `typespec_version_changes` (`from`, `to`, `overall`, `counts`, up to 50
+  findings, `finding_count`), and keeps each version's document as `raw["openapi_versions"]` — only for versioned
+  services, so unversioned items are unchanged. New recorded fixture `typespec_compile/versioned` (real compiler
+  0.65.0, three versions). OpenAPI 1.340.0.
+
 ## [1.475.0] - 2026-10-26
 
 ### Added

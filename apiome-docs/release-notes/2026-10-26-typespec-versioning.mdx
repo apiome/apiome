@@ -1,0 +1,16 @@
+---
+slug: typespec-versioning
+title: Versioned TypeSpec services
+description: TypeSpec services using @typespec/versioning compile every version and grade each step.
+authors: [apiome]
+---
+
+A TypeSpec service that uses `@typespec/versioning` now compiles every version it declares, not
+only the last one. [Versioned services](/bring-in/typespec-import#versioned-services).
+
+{/* truncate */}
+
+- **Newest version in the catalog.** The catalog item describes the newest version.
+- **Every version recorded.** The item lists each version in the order the versions enum declares.
+- **Breaking or safe.** Each step from one version to the next is graded by Apiome's OpenAPI
+  compatibility check, with the findings that explain it (a removed property, an added path).

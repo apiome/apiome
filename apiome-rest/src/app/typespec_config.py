@@ -1,8 +1,9 @@
 """A TypeSpec project's ``tspconfig.yaml`` — MFI-14.5 (#3798).
 
 A TypeSpec project carries a ``tspconfig.yaml`` beside its main file. On import Apiome always
-compiles with its own configuration — the ``@typespec/openapi3`` emitter writing one
-``openapi.json`` (:data:`app.typespec_compile.OPENAPI_TSPCONFIG`) — and applies only the uploaded
+compiles with its own configuration — the ``@typespec/openapi3`` emitter writing
+``openapi.json``, or one ``openapi.<version>.json`` per version of a ``@versioned`` service
+(:data:`OPENAPI_OUTPUT_FILE`, MFI-14.4) — and applies only the uploaded
 settings that shape the emitted API and are safe to honor:
 
 ==================================================  ==========================================
@@ -37,6 +38,7 @@ from .import_source import ImportSourceError
 
 __all__ = [
     "BUILTIN_LINTER_RULESETS",
+    "OPENAPI_OUTPUT_FILE",
     "OPENAPI3_EMITTER",
     "TSPCONFIG_NAMES",
     "TypeSpecConfig",
@@ -47,6 +49,11 @@ __all__ = [
 
 #: The emitter Apiome compiles with.
 OPENAPI3_EMITTER = "@typespec/openapi3"
+
+#: The emitted file name: ``openapi.json``, or ``openapi.<version>.json`` for each version of a
+#: ``@versioned`` service (``@typespec/versioning``; MFI-14.4) — a fixed name would let each version
+#: overwrite the last, leaving only the newest.
+OPENAPI_OUTPUT_FILE = "openapi.{version}.json"
 
 #: The built-in ``tsp`` linter rulesets every compile enables (MFI-14.3, #3796): every rule the
 #: bundled TypeSpec libraries define (``@typespec/http``'s, at 0.65). Their warnings are recorded
@@ -66,7 +73,7 @@ _OPENAPI3_OPTIONS: Dict[str, Tuple[Any, ...]] = {
 
 #: ``@typespec/openapi3`` options Apiome sets itself, and why an uploaded value is ignored.
 _OPENAPI3_OWNED = {
-    "output-file": "Apiome reads one openapi.json it names itself",
+    "output-file": "Apiome names the emitted documents itself (one per version)",
     "file-type": "Apiome reads the document as JSON",
     "new-line": "line endings do not change the API",
     "emitter-output-dir": "output stays in Apiome's scratch directory",
@@ -216,12 +223,12 @@ def build_tspconfig(applied: Optional[Mapping[str, Any]] = None) -> str:
         applied: :attr:`TypeSpecConfig.applied` (``None`` for no uploaded configuration).
 
     Returns:
-        ``tspconfig.yaml`` text emitting ``@typespec/openapi3`` to ``openapi.json``, with the
+        ``tspconfig.yaml`` text emitting ``@typespec/openapi3`` to :data:`OPENAPI_OUTPUT_FILE`, with the
         :data:`BUILTIN_LINTER_RULESETS` enabled.
     """
     applied = dict(applied or {})
     openapi3 = dict((applied.get("options") or {}).get(OPENAPI3_EMITTER) or {})
-    openapi3["output-file"] = "openapi.json"
+    openapi3["output-file"] = OPENAPI_OUTPUT_FILE
     config: Dict[str, Any] = {"emit": [OPENAPI3_EMITTER], "options": {OPENAPI3_EMITTER: openapi3}}
     if "warn-as-error" in applied:
         config["warn-as-error"] = applied["warn-as-error"]

@@ -31,6 +31,7 @@ from .import_source import (
 from .typespec_compile import TypeSpecCompiled, compile_typespec_set, typespec_members
 from .typespec_config import find_tspconfig
 from .typespec_parser import TypeSpecDocument, TypeSpecParseError, is_typespec, parse_typespec
+from .typespec_versioning import version_changes
 
 __all__ = ["MAX_RECORDED_DIAGNOSTICS", "TypeSpecImportSource"]
 
@@ -128,7 +129,8 @@ class TypeSpecImportSource(ImportSource, register=True):
         Returns:
             The canonical model, labelled ``typespec``, with ``extras`` naming the OpenAPI it
             was built from, the source files, namespaces, the emitted document's hash and the
-            compile's warnings.
+            compile's warnings and, for a ``@versioned`` service, its versions and the changes
+            between them.
         """
         api = self._normalize_via_registry("openapi-3.1", compiled.openapi, include_raw=False)
         extras = {
@@ -150,5 +152,15 @@ class TypeSpecImportSource(ImportSource, register=True):
             listed = compiled.diagnostics[:MAX_RECORDED_DIAGNOSTICS]
             extras["typespec_diagnostics"] = [diagnostic.as_dict() for diagnostic in listed]
             extras["typespec_diagnostic_count"] = len(compiled.diagnostics)
+        if compiled.versions:
+            # MFI-14.4: a @versioned service — every version, and what each step to the next changed
+            # (OpenAPI compatibility analysis); the item itself is the newest version.
+            extras["typespec_versions"] = [
+                {"version": v.version, "openapi_sha256": v.openapi_sha256} for v in compiled.versions
+            ]
+            extras["typespec_latest_version"] = compiled.versions[-1].version
+            extras["typespec_version_changes"] = version_changes(compiled.versions)
         raw = {"typespec": compiled.root_text, "openapi": compiled.openapi} if include_raw else None
+        if raw is not None and compiled.versions:
+            raw["openapi_versions"] = {v.version: v.openapi for v in compiled.versions}
         return api.model_copy(update={"format": "typespec", "extras": extras, "raw": raw})

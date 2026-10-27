@@ -49,6 +49,7 @@ from .toolchain_runner import (
     run_tool_blocking,
 )
 from .typespec_config import TypeSpecConfig, build_tspconfig, find_tspconfig, resolve_tspconfig
+from .typespec_versioning import TypeSpecVersion, declared_versions, order_versions
 
 __all__ = [
     "OPENAPI_TSPCONFIG",
@@ -64,6 +65,7 @@ __all__ = [
     "openapi_sha256",
     "parse_diagnostics",
     "read_typespec_openapi_output",
+    "read_typespec_openapi_outputs",
     "typespec_node_modules",
     "typespec_members",
 ]
@@ -108,6 +110,8 @@ class TypeSpecCompiled:
             project had none.
         diagnostics: The warnings the compile reported (MFI-14.3): compiler, library and built-in
             linter diagnostics, in the order reported.
+        versions: For a ``@versioned`` service, every version's emitted OpenAPI, oldest first
+            (MFI-14.4); :attr:`openapi` is the newest. Empty for an unversioned service.
     """
 
     openapi: Dict[str, Any]
@@ -117,6 +121,7 @@ class TypeSpecCompiled:
     openapi_sha256: str
     config: Optional[TypeSpecConfig] = None
     diagnostics: Tuple[TypeSpecDiagnostic, ...] = ()
+    versions: Tuple[TypeSpecVersion, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -273,6 +278,33 @@ def _is_openapi3(document: Any) -> bool:
     return isinstance(version, str) and version.startswith("3.")
 
 
+def read_typespec_openapi_outputs(output_dir: Path) -> List[Dict[str, Any]]:
+    """Every OpenAPI 3 document ``@typespec/openapi3`` emitted under ``output_dir`` (MFI-14.4).
+
+    A ``@versioned`` service emits one ``openapi.<version>.json`` per version; any other service one
+    ``openapi.json``.
+
+    Args:
+        output_dir: The compile's ``--output-dir``.
+
+    Returns:
+        The documents, in file-name order (the caller orders versions).
+    """
+    if not output_dir.is_dir():
+        return []
+    documents: List[Dict[str, Any]] = []
+    for path in sorted(output_dir.rglob("*.json")):
+        if not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _is_openapi3(data):
+            documents.append(data)
+    return documents
+
+
 def read_typespec_openapi_output(output_dir: Path) -> Optional[Dict[str, Any]]:
     """Find and parse the OpenAPI JSON/YAML ``@typespec/openapi3`` emitted under ``output_dir``.
 
@@ -336,8 +368,8 @@ def _diagnostics(output: str, staging_dir: Path) -> List[str]:
 
 def _run_compile(
     root: str, staging_dir: Path, output_dir: Path, home: Path
-) -> Tuple[Dict[str, Any], List[TypeSpecDiagnostic]]:
-    """Run ``tsp compile``; return the emitted OpenAPI and the warnings the compile reported."""
+) -> Tuple[List[Dict[str, Any]], List[TypeSpecDiagnostic]]:
+    """Run ``tsp compile``; return the emitted OpenAPI document(s) and the compile's warnings."""
     try:
         result = run_tool_blocking(
             TSP_TOOL_KEY,
@@ -368,13 +400,16 @@ def _run_compile(
         raise ImportSourceError(
             f"The TypeSpec compiler failed: {_scrub(str(exc), staging_dir)}", code="INPUT_MALFORMED"
         ) from exc
-    document = read_typespec_openapi_output(output_dir)
-    if document is None:
+    documents = read_typespec_openapi_outputs(output_dir)
+    if not documents:
+        document = read_typespec_openapi_output(output_dir)
+        documents = [document] if document is not None else []
+    if not documents:
         raise ImportSourceError(
             "The TypeSpec compiler emitted no OpenAPI document.", code="INPUT_MALFORMED"
         )
     output = _scrub(f"{result.stdout}\n{result.stderr}", staging_dir)
-    return document, parse_diagnostics(output)
+    return documents, parse_diagnostics(output)
 
 
 def compile_typespec_set(
@@ -429,12 +464,24 @@ def compile_typespec_set(
             build_tspconfig(config.applied if config else None), encoding="utf-8"
         )
         link_typespec_libraries(staging_dir)
-        document, diagnostics = _run_compile(staged_paths[root], staging_dir, scratch / "out", scratch)
+        documents, diagnostics = _run_compile(staged_paths[root], staging_dir, scratch / "out", scratch)
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
         shutil.rmtree(scratch, ignore_errors=True)
 
     namespaces = sorted({ns for text in sources.values() for ns in _NAMESPACE_RE.findall(text)})
+    versions: Tuple[TypeSpecVersion, ...] = ()
+    if len(documents) > 1:
+        # MFI-14.4: a @versioned service — one document per version, oldest first; the catalog
+        # item is the newest.
+        ordered = order_versions(documents, declared_versions(sources))
+        versions = tuple(
+            TypeSpecVersion(version=version, openapi=doc, openapi_sha256=openapi_sha256(doc))
+            for version, doc in ordered
+        )
+        document = versions[-1].openapi
+    else:
+        document = documents[0]
     return TypeSpecCompiled(
         openapi=document,
         root_text=sources[root],
@@ -443,4 +490,5 @@ def compile_typespec_set(
         openapi_sha256=openapi_sha256(document),
         config=config,
         diagnostics=tuple(diagnostics),
+        versions=versions,
     )
