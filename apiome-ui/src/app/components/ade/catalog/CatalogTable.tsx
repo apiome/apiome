@@ -151,6 +151,7 @@ export default function CatalogTable({
   onOpenVersions,
   onOpenLint,
   onExport,
+  onExportStudio,
   onConvert,
   onDelete,
   onRestore,
@@ -335,6 +336,7 @@ export default function CatalogTable({
               onOpenVersions={onOpenVersions}
               onOpenLint={onOpenLint}
               onExport={onExport}
+              onExportStudio={onExportStudio}
               onConvert={onConvert}
               onDelete={onDelete}
               onRestore={onRestore}
@@ -353,6 +355,7 @@ export default function CatalogTable({
       onConvert,
       onDelete,
       onExport,
+      onExportStudio,
       onOpenDetail,
       onOpenLint,
       onOpenQuality,

@@ -129,8 +129,18 @@ describe('parseExportStudioOptions', () => {
 describe('resolveStudioBack', () => {
   it('returns the Catalog screen for a catalog origin', () => {
     expect(resolveStudioBack('catalog')).toEqual({ href: '/ade/dashboard/catalog', label: 'Catalog' });
-    // CDG-5.3: a push-back started on a gateway config returns to the connectors.
-    expect(resolveStudioBack('gateway-config')).toEqual({ href: '/ade/dashboard/connectors', label: 'Connectors' });
+    // CDG-5.3: a push-back started on a gateway config returns to the connectors, once released.
+    expect(resolveStudioBack('gateway-config', (f) => f === 'connectors')).toEqual({
+      href: '/ade/dashboard/connectors',
+      label: 'Connectors',
+    });
+  });
+
+  it('never links back into a still-gated feature (E1-1, #6217)', () => {
+    // `connectors` is held back in this build: the gateway-config origin returns to Versions.
+    expect(resolveStudioBack('gateway-config')).toEqual({ href: '/ade/dashboard/versions', label: 'Versions' });
+    expect(resolveStudioBack('gateway-config', () => false)).toEqual({ href: '/ade/dashboard/versions', label: 'Versions' });
+    expect(resolveStudioBack('catalog', () => false)).toEqual({ href: '/ade/dashboard/catalog', label: 'Catalog' });
   });
 
   it('returns the Versions screen for a versions origin', () => {

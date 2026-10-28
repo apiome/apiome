@@ -12,6 +12,7 @@
  * it — and the two links are the two Ship surfaces a project's revisions end up on.
  */
 
+import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
 import * as React from 'react';
 import Link from 'next/link';
 import { Globe, PackageOpen } from 'lucide-react';
@@ -87,7 +88,15 @@ export default function ProjectFactsCard({
         </Button>
         {isFeatureReleased('export-studio') ? (
           <Button variant="outline" size="sm" asChild>
-            <Link href={EXPORT_STUDIO_ROUTE}>
+            <Link
+              href={exportStudioHref({
+                artifact: project.id,
+                version: headRevisionId,
+                label: project.name,
+                origin: 'versions',
+              })}
+              data-testid="versions-facts-export-studio"
+            >
               <PackageOpen aria-hidden />
               Export studio
             </Link>

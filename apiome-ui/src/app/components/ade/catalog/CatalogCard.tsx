@@ -53,7 +53,11 @@ import { Button } from '@/app/components/ui/Button';
 import { Checkbox } from '@/app/components/ui/Checkbox';
 import { Ring } from '@/app/components/ui/metrics';
 import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history-dag';
-import { CATALOG_EXPORT_VS_CONVERT_COPY, convertActionLabel } from '@/app/utils/catalog-conversion';
+import {
+  CATALOG_EXPORT_STUDIO_COPY,
+  CATALOG_EXPORT_VS_CONVERT_COPY,
+  convertActionLabel,
+} from '@/app/utils/catalog-conversion';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 import { cn } from '@lib/utils';
 
@@ -82,8 +86,13 @@ export interface CatalogItemHandlers {
   onOpenVersions: (item: CatalogItem) => void;
   /** Open the server-backed lint report. */
   onOpenLint: (item: CatalogItem) => void;
-  /** Open the Export Studio scoped to it. */
+  /** Export it in place, through the Export dialog. */
   onExport: (item: CatalogItem) => void;
+  /**
+   * Open Export studio with it as the source (E1-1, #6217). Offered only while the studio is
+   * released; absent, the menu has no **Export to another format…** row.
+   */
+  onExportStudio?: (item: CatalogItem) => void;
   /** Open the conversion preview. */
   onConvert: (item: CatalogItem) => void;
   /** Soft-delete it. */
@@ -134,6 +143,7 @@ export default function CatalogCard({
   onOpenVersions,
   onOpenLint,
   onExport,
+  onExportStudio,
   onConvert,
   onDelete,
   onRestore,
@@ -318,6 +328,7 @@ export default function CatalogCard({
             onOpenVersions={onOpenVersions}
             onOpenLint={onOpenLint}
             onExport={onExport}
+            onExportStudio={onExportStudio}
             onConvert={onConvert}
             onDelete={onDelete}
             onRestore={onRestore}
@@ -420,6 +431,7 @@ export function CatalogRowMenu({
   onOpenVersions,
   onOpenLint,
   onExport,
+  onExportStudio,
   onConvert,
   onDelete,
   onRestore,
@@ -500,6 +512,19 @@ export function CatalogRowMenu({
               onSelect={queue(() => onExport(item))}
             >
               <FileOutput aria-hidden />
+              {/* Before the studio's release this row is the only export verb and reads as it did in
+                  RC6; once the studio row below exists, it is plain "Export" (E1-1, #6217). */}
+              {actions.exportStudio && onExportStudio ? 'Export' : 'Export to another format…'}
+            </DropdownMenu.Item>
+          ) : null}
+          {actions.exportStudio && onExportStudio ? (
+            <DropdownMenu.Item
+              className={MENU_ITEM_CLASS}
+              title={CATALOG_EXPORT_STUDIO_COPY}
+              data-testid="catalog-action-export-studio"
+              onSelect={queue(() => onExportStudio(item))}
+            >
+              <PanelsTopLeft aria-hidden />
               Export to another format…
             </DropdownMenu.Item>
           ) : null}

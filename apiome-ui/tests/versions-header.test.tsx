@@ -24,6 +24,8 @@ function context(over: Partial<VersionsOverflowContext> = {}): VersionsOverflowC
     projectId: 'p1',
     branchCount: 2,
     exportStudioReleased: true,
+    projectName: 'Pets',
+    headRevisionId: 'rev-9',
     onOpenMerge: jest.fn(),
     onCopyLink: jest.fn(),
     ...over,
@@ -40,7 +42,18 @@ describe('versionsOverflowItems', () => {
     expect(row(context(), 'copy-link').separatorBefore).toBe(true);
     expect(row(context(), 'sunset-timeline').href).toBe('/ade/dashboard/versions/sunset-timeline');
     expect(row(context(), 'published').href).toBe('/ade/dashboard/published');
-    expect(row(context(), 'export-studio').href).toBe('/ade/dashboard/export/studio');
+    expect(row(context(), 'export-studio').href).toBe(
+      '/ade/dashboard/export/studio?artifact=p1&version=rev-9&label=Pets&from=versions',
+    );
+  });
+
+  it('scopes Export studio to the selected project, and offers it disabled before one is chosen (E1-1)', () => {
+    expect(row(context({ headRevisionId: null }), 'export-studio').href).toBe(
+      '/ade/dashboard/export/studio?artifact=p1&label=Pets&from=versions',
+    );
+    const none = row(context({ projectId: null }), 'export-studio');
+    expect(none.href).toBeUndefined();
+    expect(none.disabledReason).toBe(NEEDS_PROJECT);
   });
 
   it('hides Merge branches in a production build without the flag, and Export studio before its release', () => {

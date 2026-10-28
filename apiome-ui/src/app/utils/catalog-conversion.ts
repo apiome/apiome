@@ -131,6 +131,13 @@ export function convertPreviewDialogTitle(
 }
 
 /**
+ * The tooltip of **Export to another format…** (E1-1, #6217): the studio path, next to the in-place
+ * **Export** dialog.
+ */
+export const CATALOG_EXPORT_STUDIO_COPY =
+  'Open Export studio with this item as the source: verify, compare and generate in any format. Never turns the item into a project.';
+
+/**
  * Copy stating the Export-vs-Convert distinction on catalog surfaces (MFX-41.2, #4349): Export
  * emits a document in another format and never mutates the catalog item or mints a Project;
  * Convert is the one action that turns the item into an OpenAPI Project. Shown wherever both

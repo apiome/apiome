@@ -536,6 +536,7 @@ describe('row verbs', () => {
       versions: true,
       lint: true,
       export: true,
+      exportStudio: false, // E1-1: only once the studio is released
       convert: true,
       delete: true,
       undelete: false,
@@ -550,12 +551,25 @@ describe('row verbs', () => {
       versions: false,
       lint: false,
       export: false,
+      exportStudio: false,
       convert: false,
       delete: false,
       undelete: true,
       permanentDelete: true,
       categorize: false,
     });
+  });
+
+  it('offers Export to another format… only once Export studio is released (E1-1, #6217)', () => {
+    const before = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    try {
+      process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+      expect(catalogRowActions(LEDGER)).toMatchObject({ export: true, exportStudio: true });
+      expect(catalogRowActions(RETIRED).exportStudio).toBe(false);
+    } finally {
+      if (before === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = before;
+    }
   });
 
   it('offers a Viewer only the reads (RC6-H5)', () => {

@@ -3395,6 +3395,8 @@ const Versions = () => {
       projectId: selectedProjectId || null,
       branchCount: versionBranches.length,
       exportStudioReleased: isFeatureReleased('export-studio'),
+      projectName: selectedProject?.name ?? null,
+      headRevisionId,
       onOpenMerge: handleVersionsOpenMerge,
       onCopyLink: copyProjectLink,
     }),
