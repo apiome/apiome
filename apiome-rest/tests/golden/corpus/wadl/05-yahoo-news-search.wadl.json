@@ -85,7 +85,141 @@
               }
             ],
             "name": "search",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /newsSearch#query.appid",
+                "location": "query",
+                "name": "appid",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /newsSearch#query.language",
+                "location": "query",
+                "name": "language",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /newsSearch#query.query",
+                "location": "query",
+                "name": "query",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "int"
+                },
+                "key": "GET /newsSearch#query.results",
+                "location": "query",
+                "name": "results",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /newsSearch#query.sort",
+                "location": "query",
+                "name": "sort",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "int"
+                },
+                "key": "GET /newsSearch#query.start",
+                "location": "query",
+                "name": "start",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /newsSearch#query.type",
+                "location": "query",
+                "name": "type",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           }
@@ -328,7 +462,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:1948d38092fee0819c8e86b3b747f086f439a371dc2c0206def10ce517c6a01d",
+  "fingerprint": "sha256:672a42daf2561174bad99790d1e9ae8e5389dfad4e0ac4a8c29a24e95a413a44",
   "lint": {
     "findings": 15,
     "grade": "C",

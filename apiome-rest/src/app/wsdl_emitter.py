@@ -7,7 +7,7 @@ the :class:`app.emitter.Emitter` SPI.
 bindings, services) and ``<Name>.xsd`` (the types), joined by an ``xsd:import`` in ``wsdl:types``.
 ``layout="single"`` inlines the schema in the WSDL instead.
 
-**Types → XSD** (:mod:`app.xsd_types`):
+**Types → XSD** (the shared writer, :mod:`app.xsd_schema`, also used by WADL):
 
 * records → ``complexType`` with a ``sequence`` (and a global element of the same name);
 * lists → ``maxOccurs="unbounded"`` (or the source's ``minItems``/``maxItems``);
@@ -29,12 +29,11 @@ reported. The HTTP method and path of a REST operation are not carried (reported
 
 from __future__ import annotations
 
-import math
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import Dict, List, Literal, Optional, Set, Tuple, Union
 
 from pydantic import Field
 
@@ -42,7 +41,6 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
-    Constraints,
     Message,
     MessageRole,
     Operation,
@@ -50,7 +48,6 @@ from .canonical_model import (
     Server,
     Service,
     Type,
-    TypeKind,
     TypeRef,
 )
 from .emitter import (
@@ -66,7 +63,15 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
 from .lossiness import LossinessKind, LossinessSeverity
-from .xsd_types import ncname, xsd_builtin, xsd_pattern
+from .xsd_schema import (
+    NameScope,
+    XsdSchemaWriter,
+    comment_safe,
+    schema_field_verdicts,
+    schema_type_verdict,
+    target_namespace_verdicts,
+)
+from .xsd_types import ncname, xsd_builtin
 
 __all__ = ["WsdlEmitOptions", "WsdlEmitter", "WsdlFidelityRulePack"]
 
@@ -87,17 +92,6 @@ _WSDL_FORMAT = "wsdl"
 
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
-#: XSD built-ins that take length facets, and those that take range facets.
-_LENGTH_BASES = frozenset({"string", "normalizedString", "token", "anyURI", "base64Binary", "hexBinary"})
-_RANGE_BASES = frozenset(
-    {
-        "decimal", "integer", "long", "int", "short", "byte", "unsignedLong", "unsignedInt",
-        "unsignedShort", "unsignedByte", "float", "double", "dateTime", "date", "time",
-        "nonNegativeInteger", "positiveInteger", "nonPositiveInteger", "negativeInteger",
-    }
-)
-
-
 class WsdlFidelityRulePack(CapabilityRulePack):
     """Fidelity rules for WSDL export.
 
@@ -116,26 +110,12 @@ class WsdlFidelityRulePack(CapabilityRulePack):
         ``<namespace>.Money``), so the report says which namespace was used — and that it was
         invented when the source gave none. A WSDL source already has one: nothing changes.
         """
-        if api.format == _WSDL_FORMAT and api.extras.get("wsdl_target_namespace"):
-            return []
-        namespace = _target_namespace(api)
-        if api.identity.namespace:
-            return [
-                FidelityVerdict.approx(
-                    message=f"WSDL qualifies every type, element and operation by a target namespace; "
-                    f"the source namespace {namespace!r} is used",
-                    severity=LossinessSeverity.INFO,
-                    target_mapping=f"names → {namespace}",
-                )
-            ]
-        return [
-            FidelityVerdict.synth(
-                message=f"WSDL requires a target namespace and the source has none; {namespace!r} is used, "
-                "and every type, element and operation is qualified by it",
-                severity=LossinessSeverity.INFO,
-                target_mapping=f"targetNamespace → {namespace}",
-            )
-        ]
+        return target_namespace_verdicts(
+            api,
+            target_label=self.target_label,
+            namespace=_target_namespace(api),
+            source_has_own=api.format == _WSDL_FORMAT and bool(api.extras.get("wsdl_target_namespace")),
+        )
 
     def event_verdict(self, event) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -164,51 +144,10 @@ class WsdlFidelityRulePack(CapabilityRulePack):
         verdict = super().type_verdict(type_)
         if verdict.kind is not LossinessKind.OK:
             return verdict
-        if type_.kind is TypeKind.MAP:
-            return FidelityVerdict.approx(
-                message="XSD has no map type; the map is written as a list of key/value entry elements",
-                severity=LossinessSeverity.INFO,
-                target_mapping="map → sequence of entry",
-            )
-        return (
-            rename_verdict(
-                type_.name, ncname(type_.name, pascal=True, fallback="Type"),
-                target_label=self.target_label, noun="type",
-            )
-            or verdict
-        )
+        return schema_type_verdict(type_, target_label=self.target_label) or verdict
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        verdicts = super().field_verdicts(field)
-        renamed = rename_verdict(
-            field.name, ncname(field.name, fallback="field"), target_label=self.target_label, noun="element"
-        )
-        if renamed:
-            verdicts.append(renamed)
-        if field.type.name is None and field.type.item is None:
-            verdicts.append(
-                FidelityVerdict.approx(
-                    message="The field has no declared type; it is written as xs:anyType",
-                    severity=LossinessSeverity.INFO,
-                    target_mapping="untyped → xs:anyType",
-                )
-            )
-        unsupported = _unsupported_facets(field.constraints)
-        if unsupported:
-            verdicts.append(
-                FidelityVerdict.approx(
-                    message=f"XSD has no facet for {', '.join(unsupported)}; the rule is not written",
-                    target_mapping=f"{', '.join(unsupported)} → dropped",
-                )
-            )
-        if field.deprecated:
-            verdicts.append(
-                FidelityVerdict.drop(
-                    message="XSD has no deprecation marker; the field's deprecated flag is dropped",
-                    severity=LossinessSeverity.INFO,
-                )
-            )
-        return verdicts
+        return [*super().field_verdicts(field), *schema_field_verdicts(field, target_label=self.target_label)]
 
 
 class WsdlEmitOptions(EmitOptions):
@@ -292,20 +231,6 @@ class _WrappedOperation:
     faults: List[Tuple[str, str]] = dataclass_field(default_factory=list)
 
 
-class _NameScope:
-    """Names already used in one XML symbol space; later claimants get a numeric suffix."""
-
-    def __init__(self) -> None:
-        self._taken: Set[str] = set()
-
-    def claim(self, name: str) -> str:
-        candidate, suffix = name, 2
-        while candidate in self._taken:
-            candidate, suffix = f"{name}{suffix}", suffix + 1
-        self._taken.add(candidate)
-        return candidate
-
-
 class _WsdlWriter:
     def __init__(self, api: CanonicalApi, options: WsdlEmitOptions) -> None:
         self._api = api
@@ -319,9 +244,14 @@ class _WsdlWriter:
         self._target_ns = _target_namespace(api)
         #: A WSDL source keeps its own messages, parts and topology; everything else is wrapped.
         self._wsdl_source = api.format == _WSDL_FORMAT
-        self._type_scope = _NameScope()
-        self._element_scope = _NameScope()
-        self._type_names: Dict[str, str] = {}
+        self._schema = XsdSchemaWriter(
+            api,
+            target_namespace=self._target_ns,
+            target_label="WSDL",
+            losses=self.losses,
+            tracker=self.tracker,
+            skip_types=frozenset(self._message_types),
+        )
         self._service_names: Dict[str, str] = {}
         self._operation_names: Dict[str, str] = {}
         self._wrapped: Dict[str, _WrappedOperation] = {}
@@ -331,25 +261,9 @@ class _WsdlWriter:
     # Names
     # ------------------------------------------------------------------
 
-    def _rename(self, source: str, emitted: str, pointer: str, noun: str) -> str:
-        """Report ``source`` → ``emitted`` when they differ, and return ``emitted``."""
-        if source != emitted:
-            self.losses.record(
-                LossKind.INFERRED,
-                "renamed-identifier",
-                f"WSDL {noun} names must be XML NCNames; {source!r} is written as {emitted!r}.",
-                pointer=pointer,
-            )
-        return emitted
-
     def _plan_names(self) -> None:
-        """Give every type, port type and operation a legal, unique name before writing."""
-        for type_ in self._api.types:
-            if type_.key in self._message_types:
-                continue
-            name = self._type_scope.claim(ncname(type_.name, pascal=True, fallback="Type"))
-            self._type_names[type_.key] = self._rename(type_.name, name, type_.key, "type")
-        service_scope = _NameScope()
+        """Give every port type and operation a legal, unique name (types: the schema writer)."""
+        service_scope = NameScope()
         for service in self._api.services:
             for operation in service.operations:
                 if operation.kind in _EVENT_OPERATION_KINDS and not self._wsdl_source:
@@ -360,11 +274,11 @@ class _WsdlWriter:
                         pointer=operation.key,
                     )
             name = service_scope.claim(ncname(service.name, pascal=True, fallback="Service"))
-            self._service_names[service.key] = self._rename(service.name, name, service.key, "port type")
-            operation_scope = _NameScope()
+            self._service_names[service.key] = self._schema.rename(service.name, name, service.key, "port type")
+            operation_scope = NameScope()
             for operation in self._operations(service):
                 name = operation_scope.claim(ncname(operation.name or operation.key, fallback="operation"))
-                self._operation_names[operation.key] = self._rename(
+                self._operation_names[operation.key] = self._schema.rename(
                     operation.name, name, operation.key, "operation"
                 )
 
@@ -456,7 +370,7 @@ class _WsdlWriter:
         header = ""
         if self._options.include_comments:
             title = self._api.identity.name or "Exported service"
-            header = f"<!-- Generated WSDL for {_comment_safe(title)} -->\n"
+            header = f"<!-- Generated WSDL for {comment_safe(title)} -->\n"
         wsdl_text = f"{header}{ET.tostring(root, encoding='unicode')}\n"
         schema_text = None
         if bundle:
@@ -470,25 +384,9 @@ class _WsdlWriter:
 
     def _build_schema(self) -> ET.Element:
         """The ``xsd:schema`` holding every type and element of the export."""
-        schema_el = ET.Element(
-            ET.QName(_XSD_NS, "schema"),
-            {"targetNamespace": self._target_ns, f"xmlns:{_TNS_PREFIX}": self._target_ns},
-        )
-        #: Where an XSD-sourced field's named simple type is written (once, at schema level).
-        self._schema_el = schema_el
-        self._simple_types_written: Set[str] = set()
-        elements_written: Set[str] = set()
-        for type_ in self._api.types:
-            if type_.key in self._message_types:
-                continue
-            complex_type = self._append_type(schema_el, type_)
-            if complex_type:
-                name = self._type_names[type_.key]
-                element = self._element_scope.claim(name)
-                ET.SubElement(
-                    schema_el, ET.QName(_XSD_NS, "element"), {"name": element, "type": f"{_TNS_PREFIX}:{name}"}
-                )
-                elements_written.add(element)
+        schema_el = self._schema.new_schema()
+        self._schema.append_types(schema_el)
+        elements_written: Set[str] = set(self._schema.type_elements.values())
         # MFI-13.2: a multi-part message's parts that name elements.
         for type_ in self._message_types.values():
             for field in type_.fields:
@@ -497,332 +395,19 @@ class _WsdlWriter:
                     ET.SubElement(
                         schema_el,
                         ET.QName(_XSD_NS, "element"),
-                        {"name": element, "type": self._xsd_type(field.type, hint=field.extras.get("xsd_type"))},
+                        {
+                            "name": element,
+                            "type": self._schema.source_type_qname(field.type, hint=field.extras.get("xsd_type")),
+                        },
                     )
                     elements_written.add(element)
-                    self._element_scope.claim(element)
+                    self._schema.element_scope.claim(element)
             self.tracker.record(type_.key, Provenance.SOURCE)
         if not self._wsdl_source:
             for service in self._api.services:
                 for operation in self._operations(service):
                     self._append_wrapper_elements(schema_el, operation)
         return schema_el
-
-    def _append_type(self, schema_el: ET.Element, type_: Type) -> bool:
-        """Write one named type; return whether it is a complex type (and so gets an element)."""
-        name = self._type_names[type_.key]
-        self.tracker.record(type_.key, Provenance.SOURCE)
-        if type_.kind is TypeKind.ENUM:
-            self._append_enum(schema_el, type_, name)
-            return False
-        if type_.kind is TypeKind.SCALAR:
-            fmt = type_.constraints.format if type_.constraints is not None else None
-            base = xsd_builtin(type_.name, fmt) or "string"
-            simple = ET.SubElement(schema_el, ET.QName(_XSD_NS, "simpleType"), {"name": name})
-            _annotate(simple, type_.description)
-            self._append_facets(
-                ET.SubElement(simple, ET.QName(_XSD_NS, "restriction"), {"base": f"{_XSD_PREFIX}:{base}"}),
-                type_.constraints,
-                base,
-                pointer=type_.key,
-            )
-            return False
-        if type_.kind is TypeKind.ALIAS and type_.aliased is not None:
-            return self._append_alias(schema_el, type_, name)
-        complex_el = ET.SubElement(schema_el, ET.QName(_XSD_NS, "complexType"), {"name": name})
-        _annotate(complex_el, type_.description)
-        if type_.kind is TypeKind.UNION:
-            choice = ET.SubElement(complex_el, ET.QName(_XSD_NS, "choice"))
-            self._append_union_members(choice, type_)
-        elif type_.kind is TypeKind.MAP:
-            self._append_map_body(complex_el, type_)
-        else:
-            sequence_el = ET.SubElement(complex_el, ET.QName(_XSD_NS, "sequence"))
-            scope = _NameScope()
-            for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
-                self._append_field(sequence_el, field, scope)
-        return True
-
-    def _append_enum(self, schema_el: ET.Element, type_: Type, name: str) -> None:
-        """An enum: a ``simpleType`` restricting ``xs:int`` (all-integer values) or ``xs:string``."""
-        values = [v.value if v.value is not None else v.name for v in type_.enum_values]
-        integral = bool(values) and all(isinstance(v, int) and not isinstance(v, bool) for v in values)
-        simple = ET.SubElement(schema_el, ET.QName(_XSD_NS, "simpleType"), {"name": name})
-        _annotate(simple, type_.description)
-        restriction = ET.SubElement(
-            simple, ET.QName(_XSD_NS, "restriction"), {"base": f"{_XSD_PREFIX}:{'int' if integral else 'string'}"}
-        )
-        for value in values:
-            ET.SubElement(restriction, ET.QName(_XSD_NS, "enumeration"), {"value": _literal(value)})
-
-    def _append_alias(self, schema_el: ET.Element, type_: Type, name: str) -> bool:
-        """An alias: a derived simple type, a list wrapper, or an extension of a complex type."""
-        aliased = type_.aliased
-        target = self._types_by_key.get(aliased.name or "") if aliased.item is None else None
-        builtin = None if target is not None or aliased.item is not None else xsd_builtin(aliased.name)
-        if builtin is not None or (target is not None and self._is_simple(target)):
-            simple = ET.SubElement(schema_el, ET.QName(_XSD_NS, "simpleType"), {"name": name})
-            _annotate(simple, type_.description)
-            base = f"{_XSD_PREFIX}:{builtin}" if builtin else f"{_TNS_PREFIX}:{self._type_names[target.key]}"
-            ET.SubElement(simple, ET.QName(_XSD_NS, "restriction"), {"base": base})
-            return False
-        complex_el = ET.SubElement(schema_el, ET.QName(_XSD_NS, "complexType"), {"name": name})
-        _annotate(complex_el, type_.description)
-        if target is not None:
-            content = ET.SubElement(complex_el, ET.QName(_XSD_NS, "complexContent"))
-            ET.SubElement(
-                content, ET.QName(_XSD_NS, "extension"), {"base": f"{_TNS_PREFIX}:{self._type_names[target.key]}"}
-            )
-        else:
-            sequence_el = ET.SubElement(complex_el, ET.QName(_XSD_NS, "sequence"))
-            self._append_value(sequence_el, "item", aliased, pointer=type_.key, optional=False)
-        return True
-
-    def _append_union_members(self, choice: ET.Element, type_: Type) -> None:
-        """A union's ``xs:choice``: its fields (a oneof), else one element per member type."""
-        scope = _NameScope()
-        if type_.fields:
-            for field in type_.fields:
-                self._append_field(choice, field, scope, in_choice=True)
-            return
-        for member in type_.union_members:
-            target = self._types_by_key.get(member)
-            local = target.name if target is not None else member.split(".")[-1]
-            element = scope.claim(ncname(local[:1].lower() + local[1:], fallback="variant"))
-            self._append_value(choice, element, TypeRef(name=member), pointer=type_.key, optional=False)
-
-    def _append_map_body(self, complex_el: ET.Element, type_: Type) -> None:
-        """A map: a sequence of ``entry`` elements, each a ``key`` and a ``value``."""
-        self.losses.record(
-            LossKind.INFERRED,
-            "map-as-entry-list",
-            f"Map {type_.key!r} is written as a list of key/value entry elements.",
-            pointer=type_.key,
-        )
-        sequence_el = ET.SubElement(complex_el, ET.QName(_XSD_NS, "sequence"))
-        entry = ET.SubElement(
-            sequence_el, ET.QName(_XSD_NS, "element"), {"name": "entry", "minOccurs": "0", "maxOccurs": "unbounded"}
-        )
-        entry_sequence = _anonymous_sequence(entry)
-        self._append_value(
-            entry_sequence, "key", type_.key_type or TypeRef(name="string"), pointer=type_.key, optional=False
-        )
-        self._append_value(
-            entry_sequence, "value", type_.value_type or TypeRef(name="string"), pointer=type_.key, optional=False
-        )
-
-    # ------------------------------------------------------------------
-    # Fields and values
-    # ------------------------------------------------------------------
-
-    def _append_field(
-        self, parent: ET.Element, field: CanonicalField, scope: _NameScope, *, in_choice: bool = False
-    ) -> None:
-        """Write one record (or union) field as an element."""
-        extras = field.extras or {}
-        name = scope.claim(ncname(field.name, fallback="field"))
-        self._rename(field.name, name, field.key, "element")
-        if field.deprecated:
-            self.losses.record(
-                LossKind.NA, "deprecated-dropped",
-                f"XSD has no deprecation marker; {field.key!r} is written without one.", pointer=field.key,
-            )
-        unsupported = _unsupported_facets(field.constraints)
-        if unsupported:
-            self.losses.record(
-                LossKind.NA, "unsupported-facet",
-                f"XSD has no facet for {', '.join(unsupported)}; the rule on {field.key!r} is not written.",
-                pointer=field.key,
-            )
-        self.tracker.record(field.key, Provenance.SOURCE)
-        if "xsd_type" in extras:
-            self._append_xsd_source_field(parent, field, name)
-            return
-        fmt = field.constraints.format if field.constraints is not None else None
-        self._append_value(
-            parent,
-            name,
-            field.type,
-            fmt=fmt,
-            constraints=field.constraints,
-            default=field.default,
-            description=field.description,
-            optional=field.type.nullable and not in_choice,
-            pointer=field.key,
-        )
-
-    def _append_xsd_source_field(self, parent: ET.Element, field: CanonicalField, name: str) -> None:
-        """A field imported from XSD: written back with the occurrence and facets it was read with."""
-        extras = field.extras
-        attributes = {"name": name}
-        facets = extras.get("xsd_facets")
-        simple_type = extras.get("xsd_simple_type")
-        base = extras.get("xsd_base")
-        if base and simple_type:
-            # A named simple type: written once at schema level, referenced by name.
-            attributes["type"] = f"{_TNS_PREFIX}:{simple_type}"
-            if simple_type not in self._simple_types_written:
-                self._simple_types_written.add(simple_type)
-                named = ET.SubElement(self._schema_el, ET.QName(_XSD_NS, "simpleType"), {"name": simple_type})
-                self._append_restriction(named, base, facets)
-        elif not base:
-            attributes["type"] = self._xsd_type(field.type, hint=extras.get("xsd_type"))
-        # MFI-13.5: the element's occurrence, nillability and default, as the source stated them.
-        for key, attribute in (
-            ("xsd_min_occurs", "minOccurs"),
-            ("xsd_max_occurs", "maxOccurs"),
-            ("xsd_nillable", "nillable"),
-            ("xsd_default", "default"),
-        ):
-            if extras.get(key) is not None:
-                attributes[attribute] = str(extras[key])
-        element_el = ET.SubElement(parent, ET.QName(_XSD_NS, "element"), attributes)
-        if base and not simple_type:
-            # An inline restriction of a built-in type.
-            inline = ET.SubElement(element_el, ET.QName(_XSD_NS, "simpleType"))
-            self._append_restriction(inline, base, facets)
-
-    def _append_value(
-        self,
-        parent: ET.Element,
-        name: str,
-        ref: TypeRef,
-        *,
-        pointer: str,
-        optional: bool,
-        fmt: Optional[str] = None,
-        constraints: Optional[Constraints] = None,
-        default: Any = None,
-        description: Optional[str] = None,
-    ) -> ET.Element:
-        """Write ``ref`` as an element named ``name``: lists repeat, scalars keep facets.
-
-        Args:
-            parent: The ``sequence`` / ``choice`` the element joins.
-            name: The element's (legal) name.
-            ref: Its type.
-            pointer: The construct key, for loss records.
-            optional: Write ``minOccurs="0" nillable="true"`` (a nullable value).
-            fmt: The ``format`` that picks a scalar's XSD type.
-            constraints: Facets to write (and, for lists, ``minItems``/``maxItems``).
-            default: A scalar default (``default`` attribute).
-            description: Written as ``xs:annotation``.
-
-        Returns:
-            The element written.
-        """
-        attributes: Dict[str, str] = {"name": name}
-        if ref.item is not None:
-            attributes["minOccurs"] = str(constraints.min_items) if constraints and constraints.min_items else "0"
-            attributes["maxOccurs"] = (
-                str(constraints.max_items) if constraints and constraints.max_items else "unbounded"
-            )
-            if ref.item.item is not None:
-                # A list of lists: XSD has no nested occurrence, so the inner list gets a wrapper.
-                element = ET.SubElement(parent, ET.QName(_XSD_NS, "element"), attributes)
-                _annotate(element, description)
-                inner = _anonymous_sequence(element)
-                self._append_value(inner, "item", ref.item, pointer=pointer, optional=False, fmt=fmt)
-                return element
-            attributes["type"] = self._type_qname(ref.item, fmt, pointer)
-            element = ET.SubElement(parent, ET.QName(_XSD_NS, "element"), attributes)
-            _annotate(element, description)
-            return element
-        if optional:
-            attributes["minOccurs"] = "0"
-            attributes["nillable"] = "true"
-        builtin = self._builtin(ref, fmt)
-        if default is not None and builtin is not None and not isinstance(default, (dict, list)):
-            attributes["default"] = _literal(default)
-        if builtin is not None and _has_facets(constraints, builtin):
-            element = ET.SubElement(parent, ET.QName(_XSD_NS, "element"), attributes)
-            _annotate(element, description)
-            restriction = ET.SubElement(
-                ET.SubElement(element, ET.QName(_XSD_NS, "simpleType")),
-                ET.QName(_XSD_NS, "restriction"),
-                {"base": f"{_XSD_PREFIX}:{builtin}"},
-            )
-            self._append_facets(restriction, constraints, builtin, pointer=pointer)
-            return element
-        attributes["type"] = self._type_qname(ref, fmt, pointer)
-        element = ET.SubElement(parent, ET.QName(_XSD_NS, "element"), attributes)
-        _annotate(element, description)
-        return element
-
-    def _append_facets(
-        self, restriction: ET.Element, constraints: Optional[Constraints], base: str, *, pointer: str
-    ) -> None:
-        """Write the restriction facets ``base`` accepts; the order is free in XSD 1.0."""
-        if constraints is None:
-            return
-        for facet, value in _facets(constraints, base):
-            ET.SubElement(restriction, ET.QName(_XSD_NS, facet), {"value": _literal(value)})
-
-    @staticmethod
-    def _append_restriction(simple_type_el: ET.Element, base: str, facets: Any) -> None:
-        """Write ``<xs:restriction base="xs:<base>">`` with its facets under a ``simpleType``."""
-        restriction = ET.SubElement(simple_type_el, ET.QName(_XSD_NS, "restriction"), {"base": f"{_XSD_PREFIX}:{base}"})
-        for facet, value in (facets or {}).items():
-            for item in value if isinstance(value, list) else [value]:
-                ET.SubElement(restriction, ET.QName(_XSD_NS, facet), {"value": str(item)})
-
-    # ------------------------------------------------------------------
-    # Type references
-    # ------------------------------------------------------------------
-
-    def _is_simple(self, type_: Type) -> bool:
-        """Whether a named type is written as an XSD ``simpleType``."""
-        if type_.kind in (TypeKind.ENUM, TypeKind.SCALAR):
-            return True
-        if type_.kind is TypeKind.ALIAS and type_.aliased is not None and type_.aliased.item is None:
-            target = self._types_by_key.get(type_.aliased.name or "")
-            if target is None:
-                return xsd_builtin(type_.aliased.name) is not None
-            return target is not type_ and self._is_simple(target)
-        return False
-
-    def _builtin(self, ref: TypeRef, fmt: Optional[str]) -> Optional[str]:
-        """The XSD built-in ``ref`` maps to, or ``None`` for a named type."""
-        if not ref.name or ref.name in self._type_names:
-            return None
-        return xsd_builtin(ref.name, fmt)
-
-    def _type_qname(self, ref: TypeRef, fmt: Optional[str], pointer: str) -> str:
-        """The ``type=`` value for ``ref``: ``tns:<Type>``, ``xsd:<builtin>`` or a fallback."""
-        if ref.item is not None:
-            # Only reached for a list nested where XSD has no slot; carried as any content.
-            return f"{_XSD_PREFIX}:anyType"
-        if not ref.name:
-            self.losses.record(
-                LossKind.INFERRED, "untyped-value",
-                f"{pointer!r} has no declared type; it is written as xs:anyType.", pointer=pointer,
-            )
-            return f"{_XSD_PREFIX}:anyType"
-        if ref.name in self._type_names:
-            return f"{_TNS_PREFIX}:{self._type_names[ref.name]}"
-        builtin = xsd_builtin(ref.name, fmt)
-        if builtin is not None:
-            return f"{_XSD_PREFIX}:{builtin}"
-        self.losses.record(
-            LossKind.INFERRED, "unmapped-type",
-            f"{ref.name!r} is not an XSD type or a type in this model; it is written as xs:string.",
-            pointer=pointer,
-        )
-        return f"{_XSD_PREFIX}:string"
-
-    def _xsd_type(self, ref: TypeRef, *, hint: Optional[str] = None) -> str:
-        """The ``type=`` value for a field or part imported from WSDL (keeps imported names)."""
-        if ref.name:
-            mapped = xsd_builtin(ref.name, xsd_hint=hint) if hint else None
-            if mapped:
-                return f"{_XSD_PREFIX}:{mapped}"
-            if ref.name in self._type_names:
-                return f"{_TNS_PREFIX}:{self._type_names[ref.name]}"
-            mapped = xsd_builtin(ref.name)
-            if mapped:
-                return f"{_XSD_PREFIX}:{mapped}"
-            return f"{_TNS_PREFIX}:{ref.name.split('.')[-1]}"
-        return f"{_XSD_PREFIX}:string"
 
     # ------------------------------------------------------------------
     # Operations (document/literal wrapped, for non-WSDL sources)
@@ -841,18 +426,18 @@ class _WsdlWriter:
             )
         plan = _WrappedOperation(
             name=name,
-            request_element=self._element_scope.claim(name),
-            response_element=self._element_scope.claim(f"{name}Response"),
+            request_element=self._schema.element_scope.claim(name),
+            response_element=self._schema.element_scope.claim(f"{name}Response"),
         )
 
         request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
-        request_sequence = self._wrapper(schema_el, plan.request_element)
-        scope = _NameScope()
+        request_sequence = self._schema.wrapper(schema_el, plan.request_element)
+        scope = NameScope()
         for parameter in operation.parameters:
             element = scope.claim(ncname(parameter.name, fallback="param"))
-            self._rename(parameter.name, element, parameter.key, "element")
+            self._schema.rename(parameter.name, element, parameter.key, "element")
             fmt = parameter.constraints.format if parameter.constraints is not None else None
-            self._append_value(
+            self._schema.append_value(
                 request_sequence,
                 element,
                 parameter.type,
@@ -864,7 +449,7 @@ class _WsdlWriter:
                 pointer=parameter.key,
             )
         if request is not None and request.payload is not None:
-            self._append_value(
+            self._schema.append_value(
                 request_sequence, scope.claim("body"), request.payload,
                 optional=not request.required, pointer=request.key,
             )
@@ -874,17 +459,19 @@ class _WsdlWriter:
                 f"The request body of {operation.key!r} is an inline schema; it is written as xs:anyType.",
                 pointer=request.key,
             )
-            self._append_value(
+            self._schema.append_value(
                 request_sequence, scope.claim("body"), TypeRef(), optional=not request.required, pointer=request.key
             )
 
-        response_sequence = self._wrapper(schema_el, plan.response_element)
+        response_sequence = self._schema.wrapper(schema_el, plan.response_element)
         responses = [m for m in operation.messages if m.role is MessageRole.RESPONSE]
         response = next((m for m in responses if m.payload is not None), None)
         if response is not None:
-            self._append_value(response_sequence, "result", response.payload, optional=False, pointer=response.key)
+            self._schema.append_value(
+                response_sequence, "result", response.payload, optional=False, pointer=response.key
+            )
 
-        fault_scope = _NameScope()
+        fault_scope = NameScope()
         for message in operation.messages:
             if message.role is not MessageRole.ERROR:
                 continue
@@ -892,17 +479,12 @@ class _WsdlWriter:
             raw = message.name or (f"Status{message.status_code}" if message.status_code else "Fault")
             label = ncname(raw, pascal=True, fallback="Fault")
             fault = fault_scope.claim(label)
-            element = self._element_scope.claim(f"{name}{fault[:1].upper()}{fault[1:]}Fault")
-            detail = self._wrapper(schema_el, element)
+            element = self._schema.element_scope.claim(f"{name}{fault[:1].upper()}{fault[1:]}Fault")
+            detail = self._schema.wrapper(schema_el, element)
             if message.payload is not None:
-                self._append_value(detail, "detail", message.payload, optional=False, pointer=message.key)
+                self._schema.append_value(detail, "detail", message.payload, optional=False, pointer=message.key)
             plan.faults.append((fault, element))
         self._wrapped[operation.key] = plan
-
-    @staticmethod
-    def _wrapper(schema_el: ET.Element, name: str) -> ET.Element:
-        """A global element with an anonymous ``complexType``; returns its ``sequence``."""
-        return _anonymous_sequence(ET.SubElement(schema_el, ET.QName(_XSD_NS, "element"), {"name": name}))
 
     # ------------------------------------------------------------------
     # WSDL messages, port types, bindings
@@ -1084,7 +666,7 @@ class _WsdlWriter:
                 if field.extras.get("wsdl_part_element"):
                     part["element"] = f"{_TNS_PREFIX}:{field.extras['wsdl_part_element']}"
                 else:
-                    part["type"] = self._xsd_type(field.type, hint=field.extras.get("xsd_type"))
+                    part["type"] = self._schema.source_type_qname(field.type, hint=field.extras.get("xsd_type"))
                 ET.SubElement(message_el, ET.QName(_WSDL_NS, "part"), part)
             return message_el
         if message.payload is not None and message.payload.name and message.payload.name not in self._types_by_key:
@@ -1109,83 +691,9 @@ class _WsdlWriter:
     def _payload_type_name(self, ref: TypeRef) -> Optional[str]:
         if not ref.name:
             return None
-        if ref.name in self._type_names:
-            return self._type_names[ref.name]
+        if ref.name in self._schema.type_names:
+            return self._schema.type_names[ref.name]
         return ref.name.split(".")[-1]
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _unsupported_facets(constraints: Optional[Constraints]) -> List[str]:
-    """Constraint keywords XSD has no facet for."""
-    if constraints is None:
-        return []
-    names = []
-    if constraints.multiple_of is not None:
-        names.append("multipleOf")
-    if constraints.unique_items:
-        names.append("uniqueItems")
-    if constraints.pattern and xsd_pattern(constraints.pattern) is None:
-        names.append(f"the pattern {constraints.pattern!r}")
-    return names
-
-
-def _facets(constraints: Constraints, base: str) -> List[Tuple[str, Any]]:
-    """The ``(facet, value)`` pairs ``constraints`` maps to on a restriction of ``base``."""
-    pairs: List[Tuple[str, Any]] = []
-    if base in _LENGTH_BASES:
-        if constraints.min_length is not None:
-            pairs.append(("minLength", constraints.min_length))
-        if constraints.max_length is not None:
-            pairs.append(("maxLength", constraints.max_length))
-    if base in _RANGE_BASES:
-        for facet, value in (
-            ("minInclusive", constraints.minimum),
-            ("maxInclusive", constraints.maximum),
-            ("minExclusive", constraints.exclusive_minimum),
-            ("maxExclusive", constraints.exclusive_maximum),
-        ):
-            if value is not None:
-                pairs.append((facet, value))
-    if constraints.pattern and xsd_pattern(constraints.pattern) is not None:
-        pairs.append(("pattern", xsd_pattern(constraints.pattern)))
-    for value in constraints.enum or []:
-        if value is not None and not isinstance(value, (dict, list)):
-            pairs.append(("enumeration", value))
-    return pairs
-
-
-def _has_facets(constraints: Optional[Constraints], base: str) -> bool:
-    return constraints is not None and bool(_facets(constraints, base))
-
-
-def _literal(value: Any) -> str:
-    """A facet, enumeration or default value as XSD writes it (``true``, ``5``, ``2.5``)."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
-        return str(int(value))
-    return str(value)
-
-
-def _anonymous_sequence(element: ET.Element) -> ET.Element:
-    """Give ``element`` an anonymous ``complexType`` and return that type's ``sequence``."""
-    return ET.SubElement(ET.SubElement(element, ET.QName(_XSD_NS, "complexType")), ET.QName(_XSD_NS, "sequence"))
-
-
-def _annotate(element: ET.Element, description: Optional[str]) -> None:
-    """Add ``<xs:annotation><xs:documentation>`` (it must be the element's first child)."""
-    if description:
-        annotation = ET.SubElement(element, ET.QName(_XSD_NS, "annotation"))
-        ET.SubElement(annotation, ET.QName(_XSD_NS, "documentation")).text = description
-
-
-def _comment_safe(text: str) -> str:
-    """Text that cannot end an XML comment early (``--`` is not allowed inside one)."""
-    return text.replace("--", "- -")
 
 
 #: The target namespace written when the source has none (reported as synthesized).

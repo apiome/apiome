@@ -44,7 +44,19 @@
     {
       "description": "Full-text search with paging and optional filters.\n\nReturns http://example.com/search.SearchResult.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "lang": {
+            "type": "string"
+          },
+          "page": {},
+          "pageSize": {},
+          "q": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q"
+        ],
         "type": "object"
       },
       "name": "search",
@@ -64,7 +76,11 @@
     {
       "description": "Returns with no body.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "priority": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "name": "reindex",

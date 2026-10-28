@@ -420,9 +420,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -916,9 +922,15 @@
     },
     {
       "family": "acp",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -1408,9 +1420,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -2003,9 +2021,9 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 4,
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -2585,9 +2603,15 @@
     },
     {
       "family": "apigee",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -3101,9 +3125,15 @@
     },
     {
       "family": "arazzo",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -3622,9 +3652,9 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 7,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -4138,9 +4168,9 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 12,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 13,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -4625,7 +4655,7 @@
     {
       "family": "asyncapi",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -5141,9 +5171,9 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -5673,9 +5703,9 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 10,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 14,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -6263,9 +6293,9 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 0,
-        "synth": 6
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -6834,9 +6864,15 @@
     },
     {
       "family": "azure-apim",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -7413,9 +7449,9 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 3,
+        "approx": 2,
         "drop": 0,
-        "synth": 3
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -7942,9 +7978,15 @@
     },
     {
       "family": "capnproto",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "capnproto",
@@ -8461,9 +8503,9 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 18,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 19,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -8977,9 +9019,9 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 12,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -9481,9 +9523,9 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 2,
-        "synth": 6
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -9974,9 +10016,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 7,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -10504,9 +10546,9 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 19,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -11073,9 +11115,15 @@
     },
     {
       "family": "consul",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -11600,9 +11648,9 @@
     {
       "family": "corbaidl",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 10,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -12127,9 +12175,9 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 19,
+        "approx": 1,
         "drop": 0,
-        "synth": 13
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -12642,9 +12690,9 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 0,
-        "synth": 8
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -13163,9 +13211,9 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 13,
+        "approx": 1,
         "drop": 0,
-        "synth": 13
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -13679,9 +13727,9 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 36,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 36,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -14263,9 +14311,9 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 1,
+        "approx": 6,
         "drop": 0,
-        "synth": 12
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -14779,9 +14827,9 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 15,
-        "drop": 0,
-        "synth": 0
+        "approx": 11,
+        "drop": 15,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -15311,9 +15359,9 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 49,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 49,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -15842,9 +15890,9 @@
     {
       "family": "edix12",
       "loss_counts": {
-        "approx": 23,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 23,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -16416,9 +16464,15 @@
     },
     {
       "family": "envoy-xds",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -16997,9 +17051,9 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 9,
-        "drop": 0,
-        "synth": 0
+        "approx": 5,
+        "drop": 9,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -17506,9 +17560,9 @@
     {
       "family": "fix",
       "loss_counts": {
-        "approx": 21,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 21,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -18020,9 +18074,9 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 13,
-        "drop": 0,
-        "synth": 2
+        "approx": 2,
+        "drop": 13,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -18532,9 +18586,15 @@
     },
     {
       "family": "flatbuffers",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 12,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "flatbuffers",
@@ -19103,9 +19163,15 @@
     },
     {
       "family": "gateway-api",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -19615,9 +19681,9 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 10,
-        "drop": 0,
-        "synth": 16
+        "approx": 1,
+        "drop": 2,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -20190,9 +20256,15 @@
     },
     {
       "family": "haproxy",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -20771,9 +20843,9 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 13,
+        "approx": 6,
         "drop": 0,
-        "synth": 20
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -21300,9 +21372,9 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 49,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 49,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -21815,9 +21887,9 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 72,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 132,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -22401,9 +22473,9 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 2,
+        "approx": 5,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -22987,9 +23059,9 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -23525,9 +23597,9 @@
     {
       "family": "idoc",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 34,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -24043,9 +24115,9 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 34,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 19,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -24629,9 +24701,9 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 3,
+        "approx": 6,
         "drop": 0,
-        "synth": 3
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -25167,9 +25239,9 @@
     {
       "family": "iso20022",
       "loss_counts": {
-        "approx": 36,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 36,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -25707,9 +25779,9 @@
     {
       "family": "iso8583",
       "loss_counts": {
-        "approx": 22,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 22,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -26284,9 +26356,15 @@
     },
     {
       "family": "istio",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -26435,7 +26513,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 2cffc1dc-a503-433a-8b21-111eeeeb1829",
+        "added operation 114c63ac-1b75-42eb-a8c3-b164ec90d325",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -26778,9 +26856,9 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 3,
+        "approx": 1,
         "drop": 0,
-        "synth": 7
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -27287,9 +27365,9 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 3,
+        "approx": 2,
         "drop": 0,
-        "synth": 14
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -27443,7 +27521,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation ea8adc4e-c7eb-4b1e-947d-cf09723f6901",
+        "added operation 50a1e975-e2bd-4577-aae4-05777b9ebfa9",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -27796,9 +27874,9 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 7,
+        "approx": 0,
         "drop": 0,
-        "synth": 11
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -27959,7 +28037,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 3de5e164-9783-4801-9f5a-391e258cfe61",
+        "added operation 247b0e23-ed55-49f4-a218-1d21aa4aef1e",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -28304,9 +28382,9 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 4,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -28806,9 +28884,9 @@
     {
       "family": "kafka-connect",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 8,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -29379,9 +29457,15 @@
     },
     {
       "family": "kong",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -29892,9 +29976,9 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 5
+        "approx": 1,
+        "drop": 2,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -30427,9 +30511,9 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 7,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -30967,9 +31051,9 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 15,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -31493,9 +31577,9 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 12,
-        "drop": 0,
-        "synth": 9
+        "approx": 1,
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -32039,9 +32123,9 @@
     {
       "family": "nacha",
       "loss_counts": {
-        "approx": 62,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 62,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -32557,9 +32641,9 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 20,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 12,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -33089,9 +33173,9 @@
     {
       "family": "ncpdp",
       "loss_counts": {
-        "approx": 84,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 92,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -33658,9 +33742,15 @@
     },
     {
       "family": "nginx",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -34239,9 +34329,9 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
-        "synth": 0
+        "approx": 5,
+        "drop": 5,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -34831,9 +34921,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "approx": 11,
+        "drop": 12,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -34986,7 +35076,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation fe9154a0-1d3b-47ad-81b7-d86861e5dab4",
+        "added operation 46843fb1-edd0-4994-8acc-2858955d2151",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -35331,9 +35421,9 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 6,
+        "approx": 2,
         "drop": 0,
-        "synth": 6
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -35846,9 +35936,9 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 8,
-        "drop": 1,
-        "synth": 0
+        "approx": 2,
+        "drop": 7,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -36370,9 +36460,9 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 4
+        "approx": 2,
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -36884,9 +36974,9 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 6,
+        "approx": 2,
         "drop": 0,
-        "synth": 6
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -37402,9 +37492,9 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
-        "synth": 6
+        "approx": 1,
+        "drop": 2,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -37564,7 +37654,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 94ab3e55-eb15-4b69-b5f4-af925c8299e2",
+        "added operation 567dbf95-845a-4578-b67c-2074620d39ab",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -37910,9 +38000,9 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 9
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -38433,9 +38523,9 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 19,
+        "approx": 1,
         "drop": 0,
-        "synth": 14
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -38949,9 +39039,9 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 32,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 19,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -39527,9 +39617,9 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
-        "synth": 3
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -40111,9 +40201,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 5,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -40643,9 +40733,9 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 18,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -41184,8 +41274,8 @@
       "family": "protobuf-editions",
       "loss_counts": {
         "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "drop": 12,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -41711,9 +41801,9 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 23,
+        "approx": 1,
         "drop": 0,
-        "synth": 16
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -42302,9 +42392,9 @@
     {
       "family": "raml",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 8,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -42818,9 +42908,9 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 10,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -42973,7 +43063,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation eb16cd86-a5aa-45c0-b127-dc98f4c692de",
+        "added operation 2bdabcf3-8d2b-4a45-be9f-241d048139c3",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -43323,9 +43413,9 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 1,
         "drop": 0,
-        "synth": 14
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -43862,9 +43952,9 @@
     {
       "family": "sepa",
       "loss_counts": {
-        "approx": 59,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 59,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -44374,9 +44464,9 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 9,
+        "approx": 1,
         "drop": 0,
-        "synth": 8
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -44895,9 +44985,9 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 11
+        "approx": 2,
+        "drop": 2,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -45489,9 +45579,9 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 2,
+        "approx": 6,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -45645,7 +45735,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 89d5b7f7-0c9d-4b32-adcc-e630713e318a",
+        "added operation 7ca8e88a-1c72-40a0-9062-fa34c8221fc8",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -46001,9 +46091,9 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 8,
         "drop": 2,
-        "synth": 7
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -46515,9 +46605,9 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 22,
+        "approx": 1,
         "drop": 0,
-        "synth": 21
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -47095,9 +47185,9 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 28,
+        "approx": 9,
         "drop": 0,
-        "synth": 36
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -47674,9 +47764,9 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 5,
         "drop": 0,
-        "synth": 12
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -48206,9 +48296,9 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 17,
-        "drop": 0,
-        "synth": 0
+        "approx": 15,
+        "drop": 36,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -48732,9 +48822,9 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 12,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -49326,9 +49416,9 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 2,
+        "approx": 5,
         "drop": 0,
-        "synth": 2
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -49849,9 +49939,9 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 18,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 18,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -50423,9 +50513,15 @@
     },
     {
       "family": "traefik",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -50936,9 +51032,9 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 42,
-        "drop": 0,
-        "synth": 28
+        "approx": 1,
+        "drop": 4,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -51517,9 +51613,15 @@
     },
     {
       "family": "tyk",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -51676,7 +51778,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation e9667231-e7b9-49da-b0dc-9a93eaf88958",
+        "added operation 147c7aff-9304-4db4-9a5e-1c96c7f55ef5",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -52034,9 +52136,9 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 22,
+        "approx": 1,
         "drop": 0,
-        "synth": 25
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -52622,9 +52724,15 @@
     },
     {
       "family": "typespec",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -53134,8 +53242,8 @@
       "family": "vsam-idcams",
       "loss_counts": {
         "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -53728,9 +53836,15 @@
     },
     {
       "family": "wadl",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "wadl",
@@ -54243,9 +54357,9 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 3,
-        "drop": 1,
-        "synth": 3
+        "approx": 2,
+        "drop": 2,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -54778,9 +54892,15 @@
     },
     {
       "family": "wsdl",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 21,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "wsdl",
@@ -55316,9 +55436,15 @@
     },
     {
       "family": "wsdl2",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 18,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "wsdl2",
@@ -55840,9 +55966,9 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 1,
+        "drop": 3,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -56350,9 +56476,9 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 7,
+        "approx": 1,
         "drop": 4,
-        "synth": 5
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -56866,9 +56992,9 @@
     {
       "family": "xsd",
       "loss_counts": {
-        "approx": 15,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 14,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -57386,9 +57512,9 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 27,
+        "approx": 1,
         "drop": 0,
-        "synth": 16
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -57979,9 +58105,15 @@
     },
     {
       "family": "zosconnect",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "wadl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "wadl",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -58034,8 +58166,8 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3192,
-    "ok": 98,
+    "lossy": 3214,
+    "ok": 76,
     "refused": 1828,
     "silent-loss": 606,
     "skipped": 0

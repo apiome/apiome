@@ -5,6 +5,37 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.505.0] - 2026-10-28
+
+### Added
+- **WADL emitter with linked XSD grammars (MFX-29.1, #4173).** The `wadl` target is multi-file: `<Name>.wadl`
+  links `<Name>.xsd` with `<grammars><include href>` (option `layout: bundle | single`; no grammar at all when the model
+  has no types or bodies). Output validates against the W3C WADL submission schema, vendored as
+  `app/data/wadl_2009_02.xsd`.
+  - Resources nest by path segment (root-path operations get `<resource path="/">`, previously dropped); methods carry
+    the verb, `doc` and an `id` when the source names the operation; path params are `template` params on the
+    resource that names them; query/header params are request params with XSD type, `required` (always explicit),
+    `default`, `repeating` and `doc`; request and response bodies are representations with the message's media type
+    and the grammar element of their type (list/scalar bodies get a wrapper element); statuses from
+    `Message.status_code`.
+  - Reported (emit losses and `WadlFidelityRulePack`): operations with no HTTP binding (dropped, not written as
+    `GET /`), events, cookie params, status ranges (`4XX`), servers beyond the first, a synthesized base URI and target
+    namespace, services/version/description/document extras, and operation extras (gateway routes, backends, hosts …).
+- **`app/xsd_schema.py`:** the XSD writer from the WSDL emitter (#3889), extracted and shared by WSDL and WADL, with
+  the matching verdict helpers (`schema_type_verdict`, `schema_field_verdicts`, `target_namespace_verdicts`). WSDL
+  output is byte-identical (checked on 136 corpus exports). A WADL import's `wadl_type` is honoured as an XSD hint.
+
+### Changed
+- WADL capability profile: `unions`, `nullability` and `constraints` `True`, `field_identity` `False`.
+- Goldens: `wadl → wadl` round trip passes (xfail removed); the 22 WADL conformance cells that were `ok` only because the
+  export could not be re-imported are now checked and `lossy`, with no new silent loss; WADL import goldens and MCP
+  toolset goldens gain the request params now imported.
+
+### Fixed
+- **WADL import:** a prefixed `<wadl:application>` root is recognised (every WADL export was rejected); method-level
+  `<request><param>` query/header params are read (they were skipped); `parse_fileset` resolves `<grammars><include>`
+  grammars from the set; a field typed by an inline `simpleType` restriction keeps its base type.
+
 ## [1.504.0] - 2026-10-28
 
 ### Added

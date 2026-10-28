@@ -3694,7 +3694,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('wadl', 'thunder-client'): "unexplained: added service 'WADL API', removed service 'http://example.com/bookstore.WADL API', added type 'PostBookRequest'",
     ('wadl', 'traefik'): "unexplained: added service 'WADL-API', removed service 'http://example.com/bookstore.WADL API'",
     ('wadl', 'typespec'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
-    ('wadl', 'wadl'): 'Re-import failed: Content does not appear to be a WADL document',
     ("wadl", "wit"): "unexplained: removed operation 'GET /books', removed operation 'GET /books/{bookId}', removed operation 'POST /books', added operation 'http-example-com-bookstore:wadl-api.wadl-api.create-book', added operation 'http-example-com-bookstore:wadl-api.wadl-api.get-book', added operation 'http-example-com-bookstore:wadl-api.wadl-api.list-books', changed root '', added service 'http-example-com-bookstore:wadl-api.wadl-api', added service 'http-example-com-bookstore:wadl-api.wadl-api-world', removed service 'http://example.com/bookstore.WADL API', added type 'http-example-com-bookstore:wadl-api.types.book'; overclaim: OK 'http://example.com/bookstore.Book'",
     ('wadl', 'wsdl'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('wadl', 'xmlrpc'): 'XML-RPC export requires at least one RPC operation',
