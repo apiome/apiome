@@ -10,6 +10,9 @@ Registry REST API in three flavours, matching what each product answers:
   answers ``404`` (error code 40408) for a subject with no level of its own, whatever
   ``defaultToGlobal`` says, so the client must read ``GET /config``.
 
+``GET /schemas/ids/{id}/versions`` (the MFI-31.4 incremental probe) is answered by the Confluent and
+Karapace flavours and refused (``404``) by Apicurio.
+
 Errors use Confluent's ``{"error_code", "message"}`` body. Every request is recorded.
 """
 
@@ -125,6 +128,19 @@ class FakeUpstreamRegistry:
             if entry is None:
                 return self._error(404, 40402, f"Version {parts[3]} not found.")
             return httpx.Response(200, json=self._version_body(parts[1], int(parts[3]), entry))
+        if len(parts) == 4 and parts[:2] == ["schemas", "ids"] and parts[3] == "versions":
+            # MFI-31.4's incremental probe. Apicurio's compatibility API does not answer it.
+            if self.flavor == APICURIO or not parts[2].isdigit():
+                return self._error(404, 404, "HTTP 404 Not Found")
+            found = [
+                {"subject": subject, "version": version}
+                for subject, versions in sorted(self.subjects.items())
+                for version, entry in sorted(versions.items())
+                if entry["id"] == int(parts[2])
+            ]
+            if not found:
+                return self._error(404, 40403, f"Schema {parts[2]} not found")
+            return httpx.Response(200, json=found)
         if len(parts) == 3 and parts[:2] == ["schemas", "ids"]:
             for versions in self.subjects.values():
                 for entry in versions.values():

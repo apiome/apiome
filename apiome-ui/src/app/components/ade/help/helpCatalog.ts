@@ -984,6 +984,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['agent communication protocol', 'beeai', '/agents', 'capabilities', 'discover'],
   },
   {
+    id: 'schema-registry-connector',
+    title: 'Mirror a schema registry',
+    summary:
+      "Sync a Confluent-compatible schema registry's subjects into the catalog, within a crawl budget that resumes where it stopped.",
+    page: 'apiome-docs/docs/bring-in/schema-registry-connector.md',
+    section: 'reference',
+    keywords: ['confluent', 'karapace', 'apicurio', 'kafka', 'subjects', 'crawl budget', 'incremental', 'connector'],
+  },
+  {
     id: 'xregistry-import',
     title: 'Import a CNCF xRegistry',
     summary: 'Catalog CloudEvents schemas, message definitions and endpoints from an xRegistry.',

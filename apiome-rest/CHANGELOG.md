@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.490.0] - 2026-10-28
+
+### Added
+- **Registry-crawl throttling and incremental resume (MFI-31.4, #4401)** — new `app.crawl_budget`: a per-crawl
+  budget (`requestsPerSecond`, `maxRequests`, `maxPages`, `maxBytes` scope keys, validated against per-family
+  defaults and ceilings), a `CrawlMeter` that rate-limits per host and stops a crawl cleanly when the request or
+  byte budget is spent (`CrawlBudgetExceededError`, error class `budget-exceeded`), and a per-connector crawl
+  checkpoint (V335 `catalog_connector_crawl_state`). The `schema-registry` connector now accepts those keys plus
+  `fullPassHours` (default 24): a **full pass** lists subjects in pages of 100 from the checkpoint cursor, using
+  at most half the request budget for listing, and records the cursor as each subject settles, so a sync that is
+  killed or runs out of budget resumes after the last finished subject; a spent budget defers the rest and the
+  run still succeeds. Between full passes an **incremental pass** probes `GET /schemas/ids/{id}/versions` above
+  the stored schema-id watermark (tolerating id gaps) and reads only the subjects that changed; a registry that
+  does not answer the probe (Apicurio ccompat) falls back to full passes. Only full passes mark subjects
+  missing. Each run summary carries a `crawl` block (mode, requests/pages/bytes used, budget, `exhaustedBy`,
+  `partial`, `resumesAfter`, `watermark`, `lastFullPassAt`). The connector engine gained the source hooks
+  `bind_db`, `live_remote_ids`, `candidate_settled`, `budget_exhausted` and `crawl_report`. `registry` crawl
+  connectors (xRegistry, A2A, FHIR) accept the same budget keys and now cap total response bytes per sync.
+  `MAX_SUBJECTS` rises to 100,000. Migration V335. API 1.354.0.
+
 ## [1.489.0] - 2026-10-28
 
 ### Added

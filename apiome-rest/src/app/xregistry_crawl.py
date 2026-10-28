@@ -129,7 +129,7 @@ class XRegistryCrawl(RegistryCrawl):
             items = [(str(k), v) for k, v in body.items() if isinstance(v, Mapping)]
             return Page(items=items, next_token=link_next(response))
 
-        return list(paginate(page, what=what))
+        return list(paginate(page, max_pages=http.max_pages, what=what))
 
     @classmethod
     def _optional_map_pages(

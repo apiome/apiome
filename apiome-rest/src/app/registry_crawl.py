@@ -35,8 +35,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import threading
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Tuple
@@ -46,6 +44,18 @@ import httpx
 
 from .catalog_connector_sync import ConnectorRefreshSource, register_connector_source
 from .catalog_connectors import CODE_INVALID, ConnectorError, build_connector_http_client
+from .crawl_budget import (
+    BUDGET_SCOPE_KEYS,
+    BudgetLimits,
+    CrawlBudget,
+    CrawlMeter,
+    HostRateLimiter,
+    budget_from_scope,
+    validate_budget_scope,
+)
+from .crawl_budget import (
+    ERROR_CLASS_BUDGET as CRAWL_ERROR_CLASS_BUDGET,
+)
 from .refresh_source import (
     ERROR_CLASS_UNEXPECTED,
     FetchedDocument,
@@ -92,15 +102,35 @@ MAX_ENTRIES = 5000
 #: The largest response body accepted (a registry page or one artifact).
 MAX_RESPONSE_BYTES = 5_000_000
 
-#: Scope keys every registry connector accepts; a crawl adds its own.
-COMMON_SCOPE_KEYS = ("protocol", "requestsPerSecond")
+#: Response bytes one sync may read in total (MFI-31.4 byte budget; scope ``maxBytes``).
+MAX_CRAWL_BYTES = 200_000_000
+
+#: The budget limits of a registry crawl (MFI-31.4): the defaults above, and the ceilings a scope
+#: may raise them to.
+REGISTRY_BUDGET_LIMITS = BudgetLimits(
+    default=CrawlBudget(
+        requests_per_second=DEFAULT_REQUESTS_PER_SECOND,
+        max_requests=MAX_REQUESTS,
+        max_pages=MAX_PAGES,
+        max_bytes=MAX_CRAWL_BYTES,
+    ),
+    ceiling=CrawlBudget(
+        requests_per_second=MAX_REQUESTS_PER_SECOND,
+        max_requests=20_000,
+        max_pages=1000,
+        max_bytes=1_000_000_000,
+    ),
+)
+
+#: Scope keys every registry connector accepts; a crawl adds its own (MFI-31.4 adds the budget keys).
+COMMON_SCOPE_KEYS = ("protocol", *BUDGET_SCOPE_KEYS)
 
 #: Error class for a scope or base URL that cannot address a registry.
 ERROR_CLASS_INVALID_CONFIGURATION = "invalid-configuration"
 #: Error class for a request the SSRF guard refused.
 ERROR_CLASS_ADDRESS_REFUSED = "address-refused"
-#: Error class for a sync that ran out of its request budget.
-ERROR_CLASS_BUDGET = "budget-exceeded"
+#: Error class for a sync that ran out of its budget (shared with :mod:`app.crawl_budget`).
+ERROR_CLASS_BUDGET = CRAWL_ERROR_CLASS_BUDGET
 
 _ERROR_DETAIL_MAX = 300
 
@@ -262,43 +292,6 @@ def _load_builtin_crawls() -> None:
 # ---------------------------------------------------------------------------------------
 
 
-class HostRateLimiter:
-    """Space requests to each host at least ``1 / rate`` seconds apart.
-
-    Args:
-        requests_per_second: The most requests per second to one host.
-        clock: Monotonic clock (tests).
-        sleep: Sleep function (tests).
-    """
-
-    def __init__(
-        self,
-        requests_per_second: float,
-        *,
-        clock: Callable[[], float] = time.monotonic,
-        sleep: Callable[[float], None] = time.sleep,
-    ) -> None:
-        self._interval = 1.0 / requests_per_second
-        self._clock = clock
-        self._sleep = sleep
-        self._next: Dict[str, float] = {}
-        self._lock = threading.Lock()
-
-    def wait(self, host: str) -> None:
-        """Block until a request to ``host`` is allowed, then claim the slot.
-
-        Args:
-            host: The request's host (``netloc``).
-        """
-        with self._lock:
-            now = self._clock()
-            due = self._next.get(host, now)
-            delay = max(0.0, due - now)
-            self._next[host] = max(due, now) + self._interval
-        if delay:
-            self._sleep(delay)
-
-
 @dataclass(frozen=True)
 class Page:
     """One page a crawl's listing returned.
@@ -315,12 +308,17 @@ class Page:
 class RegistryHttp:
     """The HTTP surface a crawl gets: guarded, rate-limited, budgeted and size-capped GETs.
 
+    The limits are one :class:`app.crawl_budget.CrawlMeter` (MFI-31.4): per-host rate, total
+    requests and total response bytes for the sync, besides the per-response size cap.
+
     Args:
         headers: Headers sent on every request (accept, auth).
         requests_per_second: Per-host rate.
         max_requests: Request budget for this sync.
         transport: An httpx transport override (tests).
         limiter: A rate limiter override (tests).
+        max_bytes: Response-byte budget for this sync.
+        max_pages: Listing pages one sync may read (:attr:`max_pages`, for :func:`paginate`).
     """
 
     def __init__(
@@ -331,17 +329,35 @@ class RegistryHttp:
         max_requests: int = MAX_REQUESTS,
         transport: Optional[httpx.BaseTransport] = None,
         limiter: Optional[HostRateLimiter] = None,
+        max_bytes: int = MAX_CRAWL_BYTES,
+        max_pages: int = MAX_PAGES,
     ) -> None:
         kwargs: Dict[str, Any] = {"headers": dict(headers or {}), "timeout": 30.0}
         if transport is not None:
             kwargs["transport"] = transport
         self._client = build_connector_http_client(**kwargs)
-        self._limiter = limiter or HostRateLimiter(requests_per_second)
-        self._remaining = max_requests
-        self.request_count = 0
+        self.meter = CrawlMeter(
+            CrawlBudget(
+                requests_per_second=requests_per_second,
+                max_requests=max_requests,
+                max_pages=max_pages,
+                max_bytes=max_bytes,
+            ),
+            limiter=limiter,
+        )
         #: Per-sync notes a crawl records about entries it left out (``{remoteId, reason}``); the
         #: engine copies them into the run summary's ``findings``.
         self.findings: List[Dict[str, Any]] = []
+
+    @property
+    def max_pages(self) -> int:
+        """The listing-page budget a crawl hands :func:`paginate`."""
+        return self.meter.budget.max_pages
+
+    @property
+    def request_count(self) -> int:
+        """Requests made so far this sync."""
+        return self.meter.requests
 
     def close(self) -> None:
         """Close the underlying client."""
@@ -370,15 +386,7 @@ class RegistryHttp:
             RefreshSourceError: The budget is spent, the SSRF guard refused the address, the
                 registry did not answer, answered non-2xx, or sent too large a body.
         """
-        if self._remaining <= 0:
-            raise RefreshSourceError(
-                "The registry crawl used its whole request budget; narrow the scope or lower the "
-                "page count.",
-                error_class=ERROR_CLASS_BUDGET,
-            )
-        self._remaining -= 1
-        self.request_count += 1
-        self._limiter.wait(urlsplit(url).netloc.lower())
+        self.meter.claim_request(urlsplit(url).netloc.lower())
         headers = {"Accept": accept} if accept else None
         try:
             # Only pass params when there are some: an empty mapping would drop the query string a
@@ -395,6 +403,7 @@ class RegistryHttp:
                             error_class=ERROR_CLASS_UNEXPECTED,
                         )
                 status = response.status_code
+                self.meter.add_bytes(len(body))
                 result = httpx.Response(
                     status, headers=response.headers, content=bytes(body), request=response.request
                 )
@@ -504,7 +513,8 @@ def validate_registry_scope(scope: Mapping[str, Any], base_url: Optional[str]) -
     """Check a ``registry`` connector: a base URL, a known ``protocol`` and the crawl's own keys.
 
     Args:
-        scope: ``{"protocol": "<crawl>", "requestsPerSecond"?: number, …crawl keys}``.
+        scope: ``{"protocol": "<crawl>", "requestsPerSecond"?, "maxRequests"?, "maxPages"?,
+            "maxBytes"?, …crawl keys}`` (the budget keys: MFI-31.4).
         base_url: The registry root URL.
 
     Raises:
@@ -522,11 +532,10 @@ def validate_registry_scope(scope: Mapping[str, Any], base_url: Optional[str]) -
     unknown = sorted(set(scope) - set(COMMON_SCOPE_KEYS) - set(crawl.scope_keys))
     if unknown:
         raise _scope_error(f"Unknown scope key(s) for the {protocol} crawl: {', '.join(unknown)}.")
-    rate = scope.get("requestsPerSecond")
-    if rate is not None and (
-        isinstance(rate, bool) or not isinstance(rate, (int, float)) or not 0 < rate <= MAX_REQUESTS_PER_SECOND
-    ):
-        raise _scope_error(f"requestsPerSecond must be a number above 0 and at most {MAX_REQUESTS_PER_SECOND:g}.")
+    try:
+        validate_budget_scope(scope, REGISTRY_BUDGET_LIMITS)
+    except ValueError as exc:
+        raise _scope_error(str(exc)) from exc
     crawl.validate_scope(scope)
 
 
@@ -603,10 +612,13 @@ class RegistryConnectorSource(ConnectorRefreshSource):
     def http(self) -> RegistryHttp:
         """The sync's HTTP surface: one request budget spans the listing and every fetch."""
         if self._http is None:
-            rate = self.scope.get("requestsPerSecond")
+            budget = budget_from_scope(self.scope, REGISTRY_BUDGET_LIMITS)
             self._http = RegistryHttp(
                 headers=self._headers(),
-                requests_per_second=float(rate) if isinstance(rate, (int, float)) else DEFAULT_REQUESTS_PER_SECOND,
+                requests_per_second=budget.requests_per_second,
+                max_requests=budget.max_requests,
+                max_bytes=budget.max_bytes,
+                max_pages=budget.max_pages,
                 transport=self._transport,
                 limiter=self._limiter,
             )

@@ -60,6 +60,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import quote
 
@@ -68,6 +69,18 @@ import httpx
 from . import schema_registry_store as subject_store
 from .catalog_connector_sync import ConnectorRefreshSource, ItemSyncOutcome, register_connector_source
 from .catalog_connectors import CODE_INVALID, ConnectorError, build_connector_http_client, connector_provenance_metadata
+from .crawl_budget import (
+    BUDGET_SCOPE_KEYS,
+    BudgetLimits,
+    CrawlBudget,
+    CrawlBudgetExceededError,
+    CrawlMeter,
+    CrawlState,
+    budget_from_scope,
+    load_crawl_state,
+    save_crawl_state,
+    validate_budget_scope,
+)
 from .refresh_source import ERROR_CLASS_UNEXPECTED, FetchedDocument, RefreshCandidate, RefreshSourceError
 from .schema_registry import (
     COMPATIBILITY_LEVELS,
@@ -105,8 +118,40 @@ __all__ = [
 
 KIND = "schema-registry"
 
-#: The most subjects one sync lists; a larger registry fails the listing rather than syncing part of it.
-MAX_SUBJECTS = 10_000
+#: The most subjects a registry may hold; a larger one fails the listing. Since MFI-31.4 a sync lists
+#: only as many subjects as its budget allows and the next one resumes, so this bounds the name list
+#: held in memory, not the work of one sync.
+MAX_SUBJECTS = 100_000
+
+#: Subjects per listing page (MFI-31.4): a full pass reads the name list once, then lists subject
+#: details a page at a time; ``maxPages`` bounds how many pages one sync lists.
+PAGE_SIZE = 100
+
+#: The share of the request budget the listing may use; the rest is kept for mirroring what it listed,
+#: so every sync makes progress.
+LISTING_SHARE = 0.5
+
+#: Consecutive unknown schema ids an incremental probe tolerates before it stops (Confluent allocates
+#: ids in blocks, so a gap does not mean the end).
+PROBE_GAP_TOLERANCE = 20
+
+#: Hours between full passes, by default and at the extremes (scope ``fullPassHours``).
+DEFAULT_FULL_PASS_HOURS = 24
+MAX_FULL_PASS_HOURS = 720
+
+#: Crawl modes reported on the run summary.
+MODE_FULL = "full"
+MODE_INCREMENTAL = "incremental"
+
+#: The crawl budget of a schema-registry sync (MFI-31.4): defaults, and the ceilings scope may raise
+#: them to.
+SCHEMA_REGISTRY_BUDGET_LIMITS = BudgetLimits(
+    default=CrawlBudget(requests_per_second=10.0, max_requests=5000, max_pages=50, max_bytes=500_000_000),
+    ceiling=CrawlBudget(requests_per_second=50.0, max_requests=100_000, max_pages=2000, max_bytes=2_000_000_000),
+)
+
+#: Scope keys a schema-registry connector accepts (all optional).
+SCOPE_KEYS = (*BUDGET_SCOPE_KEYS, "fullPassHours")
 
 #: The media type Confluent-compatible registries answer with (plain JSON is accepted too).
 ACCEPT = "application/vnd.schemaregistry.v1+json, application/vnd.schemaregistry+json, application/json"
@@ -135,14 +180,16 @@ _PROTO_MESSAGE = re.compile(r"^\s*message\s+([A-Za-z_]\w*)", re.MULTILINE)
 
 
 def validate_schema_registry_scope(scope: Mapping[str, Any], base_url: Optional[str]) -> None:
-    """Check a ``schema-registry`` connector: a base URL and no scope keys.
+    """Check a ``schema-registry`` connector: a base URL and, optionally, its crawl budget.
 
     Args:
-        scope: The connector scope; this kind takes none.
+        scope: The connector scope: only the budget keys (``requestsPerSecond``, ``maxRequests``,
+            ``maxPages``, ``maxBytes``) and ``fullPassHours`` (MFI-31.4).
         base_url: The registry URL (for Apicurio, its ``/apis/ccompat/v7`` compatibility API).
 
     Raises:
-        ConnectorError: ``connector-invalid`` for a missing base URL or any scope key.
+        ConnectorError: ``connector-invalid`` for a missing base URL, an unknown scope key or an
+            out-of-range value.
     """
     if not (base_url or "").strip():
         raise ConnectorError(
@@ -150,9 +197,26 @@ def validate_schema_registry_scope(scope: Mapping[str, Any], base_url: Optional[
             "A schema registry connector needs a base URL: the registry's REST address, for example "
             "https://psrc-123.eu-west-1.aws.confluent.cloud or https://apicurio.example.com/apis/ccompat/v7.",
         )
-    if scope:
+    unknown = sorted(set(scope) - set(SCOPE_KEYS))
+    if unknown:
         raise ConnectorError(
-            CODE_INVALID, f"A schema-registry connector takes no scope; got {', '.join(sorted(scope))}."
+            CODE_INVALID,
+            f"Unknown scope key(s) for a schema-registry connector: {', '.join(unknown)}; "
+            f"it accepts {', '.join(SCOPE_KEYS)}.",
+        )
+    try:
+        validate_budget_scope(scope, SCHEMA_REGISTRY_BUDGET_LIMITS)
+    except ValueError as exc:
+        raise ConnectorError(CODE_INVALID, str(exc)) from exc
+    hours = scope.get("fullPassHours")
+    if hours is not None and (
+        isinstance(hours, bool)
+        or not isinstance(hours, (int, float))
+        or not float(hours).is_integer()
+        or not 1 <= hours <= MAX_FULL_PASS_HOURS
+    ):
+        raise ConnectorError(
+            CODE_INVALID, f"fullPassHours must be a whole number from 1 to {MAX_FULL_PASS_HOURS}."
         )
 
 
@@ -326,6 +390,11 @@ def _error_detail(response: httpx.Response) -> str:
     return ": ".join(dict.fromkeys(parts))[:_ERROR_DETAIL_MAX]
 
 
+def _aware(value: datetime) -> datetime:
+    """``value`` as an aware UTC datetime (a naive one is taken to be UTC)."""
+    return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+
+
 def _subject_path(subject: str) -> str:
     return f"/subjects/{quote(subject, safe='')}"
 
@@ -357,6 +426,8 @@ class SchemaRegistrySource(ConnectorRefreshSource):
         connector: The connector row.
         credentials: ``{"username", "password"}`` and/or ``{"token"}``, or ``None``.
         transport: An httpx transport override (tests drive a fake registry through it).
+        limiter: A :class:`~app.crawl_budget.HostRateLimiter` override (tests use one that never
+            sleeps).
     """
 
     #: Schema subjects are not APIs a gateway serves: no shadow-API notification for new subjects.
@@ -368,6 +439,7 @@ class SchemaRegistrySource(ConnectorRefreshSource):
         credentials: Optional[Dict[str, str]] = None,
         *,
         transport: Optional[httpx.BaseTransport] = None,
+        limiter: Any = None,
     ) -> None:
         super().__init__(connector, credentials)
         self._transport = transport
@@ -375,6 +447,20 @@ class SchemaRegistrySource(ConnectorRefreshSource):
         self._by_schema_id: Dict[int, _MirroredSchema] = {}
         self._texts: Dict[int, str] = {}
         self.findings: List[Dict[str, Any]] = []
+        # MFI-31.4 crawl state: the budget, the checkpoint, and what this run listed and settled.
+        scope = connector.get("scope") if isinstance(connector.get("scope"), Mapping) else {}
+        self._scope: Mapping[str, Any] = scope
+        self.meter = CrawlMeter(budget_from_scope(scope, SCHEMA_REGISTRY_BUDGET_LIMITS), limiter=limiter)
+        self._db: Any = None
+        self._checkpoint = CrawlState()
+        self._mode = MODE_FULL
+        self._live_names: Optional[List[str]] = None
+        self._listed: List[str] = []
+        self._settled: set = set()
+        self._listing_complete = False
+        self._probe_ids: List[Tuple[int, Tuple[str, ...]]] = []
+        self._max_schema_id: Optional[int] = None
+        self._fallback: Optional[str] = None
 
     @property
     def registry_url(self) -> str:
@@ -417,17 +503,21 @@ class SchemaRegistrySource(ConnectorRefreshSource):
             allow_404: Return ``None`` instead of raising when the registry answers ``404``.
 
         Raises:
+            CrawlBudgetExceededError: The crawl budget is spent (MFI-31.4); nothing was sent.
             RefreshSourceError: The registry answered non-2xx, did not answer, the SSRF guard
                 refused the address, or the body is not JSON.
         """
+        url = f"{self.registry_url}{path}"
+        self.meter.claim_request(httpx.URL(url).host)
         try:
-            response = client.get(f"{self.registry_url}{path}", params=dict(params or {}))
+            response = client.get(url, params=dict(params or {}))
         except SSRFError as exc:
             raise RefreshSourceError(
                 f"Request to the schema registry refused: {exc}", error_class=ERROR_CLASS_ADDRESS_REFUSED
             ) from exc
         except httpx.HTTPError as exc:
             raise RefreshSourceError(f"The schema registry did not answer GET {path}: {type(exc).__name__}") from exc
+        self.meter.add_bytes(len(response.content))
         if response.status_code == 404 and allow_404:
             return None
         if not 200 <= response.status_code < 300:
@@ -449,46 +539,335 @@ class SchemaRegistrySource(ConnectorRefreshSource):
     # --- listing ------------------------------------------------------------------------
 
     def list_candidates(self) -> List[RefreshCandidate]:
-        """List every subject with its versions and compatibility level (see the module docstring)."""
+        """List subjects with their versions and compatibility level, within the crawl budget.
+
+        MFI-31.4: a **full pass** reads ``GET /subjects`` and lists subject details a page at a time
+        from the checkpoint cursor on; an **incremental** run probes the schema ids above the
+        watermark and lists only the subjects they belong to (see :meth:`_choose_mode`). Listing stops
+        when it has used :data:`LISTING_SHARE` of the request budget, the page budget, or the byte
+        budget; the subjects it listed are synced and the next sync resumes after them.
+        """
         if not self.registry_url:
             raise RefreshSourceError(
                 "A schema registry connector needs a base URL.", error_class=ERROR_CLASS_INVALID_CONFIGURATION
             )
         self.findings = []
+        self._choose_mode()
         client = self._client()
         try:
-            names = self._get_json(client, "/subjects")
-            if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
-                raise RefreshSourceError(
-                    "The schema registry answered GET /subjects with an unexpected body (not a list of names).",
-                    error_class=ERROR_CLASS_UNEXPECTED,
-                )
-            if len(names) > MAX_SUBJECTS:
-                raise RefreshSourceError(
-                    f"The schema registry lists {len(names)} subjects; a connector syncs at most {MAX_SUBJECTS}.",
-                    error_class=ERROR_CLASS_UNEXPECTED,
-                )
-            global_level: List[Optional[str]] = []  # read lazily, at most once
-            states: Dict[str, SubjectState] = {}
-            for name in dict.fromkeys(n for n in names if n.strip()):
-                versions = self._get_json(client, f"{_subject_path(name)}/versions", allow_404=True)
-                if versions is None:
-                    continue  # deleted between the two calls
-                if not isinstance(versions, list):
-                    raise RefreshSourceError(
-                        f"The schema registry answered GET /subjects/{name}/versions with an unexpected body.",
-                        error_class=ERROR_CLASS_UNEXPECTED,
-                    )
-                # ``type(v) is int``: JSON ``true`` would pass ``isinstance(v, int)`` as version 1.
-                numbers = tuple(sorted({v for v in versions if type(v) is int and v >= 1}))
-                if not numbers:
-                    continue
-                level = self._subject_level(client, name, global_level)
-                states[name] = SubjectState(name=name, versions=numbers, compatibility_level=level)
+            names: List[str] = []
+            if self._mode == MODE_INCREMENTAL:
+                names = self._probe_changed_subjects(client)
+            if self._mode == MODE_FULL:
+                names = self._full_pass_names(client)
+            states = self._list_details(client, names)
         finally:
             client.close()
         self._subjects = states
+        self._advance()
         return [build_candidate(state, registry_url=self.registry_url) for state in states.values()]
+
+    # --- crawl modes and checkpoint (MFI-31.4) ------------------------------------------------
+
+    def bind_db(self, db: Any) -> None:
+        """Load the connector's crawl checkpoint; the engine calls this before listing.
+
+        A checkpoint that cannot be read leaves the crawl without one: it runs a full pass and keeps
+        no cursor, which costs requests but never skips a subject.
+        """
+        try:
+            self._checkpoint = load_crawl_state(db, self.connector_id)
+            self._db = db
+        except Exception:  # noqa: BLE001 - a missing checkpoint is a slower crawl, not a failed one
+            _logger.warning("schema registry crawl checkpoint unavailable connector_id=%s", self.connector_id)
+            self._db = None
+            self._checkpoint = CrawlState()
+
+    @property
+    def budget_exhausted(self) -> bool:
+        """Whether the crawl's request or byte budget is spent (the engine defers the rest)."""
+        return self.meter.exhausted
+
+    def _full_pass_hours(self) -> int:
+        hours = self._scope.get("fullPassHours")
+        if isinstance(hours, (int, float)) and not isinstance(hours, bool):
+            return int(hours)
+        return DEFAULT_FULL_PASS_HOURS
+
+    def _choose_mode(self) -> None:
+        """Pick this sync's mode from the checkpoint.
+
+        Full when there is no checkpoint (a dry run), a full pass is in progress, there has never
+        been one, there is no watermark, the registry does not answer the probe, or the last full
+        pass is older than ``fullPassHours``. Incremental otherwise. A new full pass is recorded as
+        started before anything is listed, so a run killed at once still resumes it.
+        """
+        state = self._checkpoint
+        now = datetime.now(timezone.utc)
+        incremental = (
+            self._db is not None
+            and state.pass_started_at is None
+            and state.last_full_pass_at is not None
+            and state.watermark is not None
+            and state.probe_supported is not False
+            and now - _aware(state.last_full_pass_at) < timedelta(hours=self._full_pass_hours())
+        )
+        self._mode = MODE_INCREMENTAL if incremental else MODE_FULL
+        if self._mode == MODE_FULL and self._db is not None and state.pass_started_at is None:
+            self._save(state.with_changes(pass_started_at=now, cursor=None))
+
+    def _start_full_pass_instead(self, reason: str) -> None:
+        """Switch an incremental run to a full pass (the probe is not answered)."""
+        self._fallback = reason
+        self._mode = MODE_FULL
+        self._save(
+            self._checkpoint.with_changes(
+                probe_supported=False, pass_started_at=datetime.now(timezone.utc), cursor=None
+            )
+        )
+
+    def _full_pass_names(self, client: httpx.Client) -> List[str]:
+        """``GET /subjects``: every live subject; returns those after the checkpoint cursor, sorted."""
+        names = self._get_json(client, "/subjects")
+        if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
+            raise RefreshSourceError(
+                "The schema registry answered GET /subjects with an unexpected body (not a list of names).",
+                error_class=ERROR_CLASS_UNEXPECTED,
+            )
+        if len(names) > MAX_SUBJECTS:
+            raise RefreshSourceError(
+                f"The schema registry lists {len(names)} subjects; a connector syncs at most {MAX_SUBJECTS}.",
+                error_class=ERROR_CLASS_UNEXPECTED,
+            )
+        ordered = sorted({n for n in names if n.strip()})
+        self._live_names = ordered
+        cursor = self._checkpoint.cursor
+        return [n for n in ordered if cursor is None or n > cursor]
+
+    def _probe_changed_subjects(self, client: httpx.Client) -> List[str]:
+        """The subjects that gained (or lost) versions since the watermark, by probing schema ids.
+
+        ``GET /schemas/ids/{id}/versions?deleted=true`` names the subject versions that use a schema
+        id. The watermark id itself is asked first: a registry that does not answer it does not
+        support the probe, and the run becomes a full pass. Ids above it are probed in order until
+        :data:`PROBE_GAP_TOLERANCE` in a row are unknown, or the listing share of the budget is used.
+        """
+        watermark = int(self._checkpoint.watermark or 0)
+        if not self._probe_answered(client, watermark):
+            self._start_full_pass_instead("probe-unsupported")
+            return []
+        if self._checkpoint.probe_supported is not True:
+            self._save(self._checkpoint.with_changes(probe_supported=True))
+        changed: Dict[str, None] = {}
+        misses = 0
+        schema_id = watermark + 1
+        while misses < PROBE_GAP_TOLERANCE and not self._listing_share_used():
+            try:
+                body = self._get_json(
+                    client, f"/schemas/ids/{schema_id}/versions", {"deleted": "true"}, allow_404=True
+                )
+            except CrawlBudgetExceededError:
+                break
+            if not isinstance(body, list):
+                misses += 1
+            else:
+                misses = 0
+                subjects = tuple(
+                    sorted(
+                        {
+                            str(entry["subject"])
+                            for entry in body
+                            if isinstance(entry, Mapping) and isinstance(entry.get("subject"), str)
+                        }
+                    )
+                )
+                self._probe_ids.append((schema_id, subjects))
+                self._note_schema_id(schema_id)
+                changed.update(dict.fromkeys(subjects))
+            schema_id += 1
+        return sorted(changed)
+
+    def _probe_answered(self, client: httpx.Client, schema_id: int) -> bool:
+        """Whether the registry answers ``GET /schemas/ids/{id}/versions`` (the incremental probe).
+
+        A list answers it. So does Confluent's ``40403`` *schema not found* — the id was hard-deleted,
+        but the route exists. Any other refusal (a plain ``404`` for an unknown route, ``405``, …)
+        means the registry does not support it.
+
+        Raises:
+            CrawlBudgetExceededError: The budget is spent.
+            RefreshSourceError: The registry could not be reached.
+        """
+        url = f"{self.registry_url}/schemas/ids/{int(schema_id)}/versions"
+        self.meter.claim_request(httpx.URL(url).host)
+        try:
+            response = client.get(url, params={"deleted": "true"})
+        except SSRFError as exc:
+            raise RefreshSourceError(
+                f"Request to the schema registry refused: {exc}", error_class=ERROR_CLASS_ADDRESS_REFUSED
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise RefreshSourceError(
+                f"The schema registry did not answer GET /schemas/ids/{schema_id}/versions: {type(exc).__name__}"
+            ) from exc
+        self.meter.add_bytes(len(response.content))
+        try:
+            body = response.json()
+        except ValueError:
+            body = None
+        if 200 <= response.status_code < 300:
+            return isinstance(body, list)
+        return response.status_code == 404 and isinstance(body, Mapping) and body.get("error_code") == 40403
+
+    def _listing_share_used(self) -> bool:
+        """Whether the listing has used its share of the request budget, or the budget is spent."""
+        allowance = max(1, int(self.meter.budget.max_requests * LISTING_SHARE))
+        return self.meter.exhausted or self.meter.requests >= allowance
+
+    def _list_details(self, client: httpx.Client, names: Sequence[str]) -> Dict[str, SubjectState]:
+        """List each subject's versions and level, a page of :data:`PAGE_SIZE` at a time, within budget."""
+        global_level: List[Optional[str]] = []  # read lazily, at most once
+        states: Dict[str, SubjectState] = {}
+        complete = True
+        for start in range(0, len(names), PAGE_SIZE):
+            if self._listing_share_used():
+                complete = False
+                break
+            try:
+                self.meter.claim_page()
+            except CrawlBudgetExceededError:
+                complete = False
+                break
+            stopped = False
+            for name in names[start : start + PAGE_SIZE]:
+                if self._listing_share_used():
+                    stopped = True
+                    break
+                try:
+                    state = self._list_subject(client, name, global_level)
+                except CrawlBudgetExceededError:
+                    stopped = True
+                    break
+                self._listed.append(name)
+                if state is None:
+                    self._settled.add(name)  # deleted between the two calls: nothing to sync
+                    continue
+                states[name] = state
+            if stopped:
+                complete = False
+                break
+        self._listing_complete = complete
+        return states
+
+    def _list_subject(
+        self, client: httpx.Client, name: str, global_level: List[Optional[str]]
+    ) -> Optional[SubjectState]:
+        """One subject's live versions and level, or ``None`` when it has none (deleted meanwhile)."""
+        versions = self._get_json(client, f"{_subject_path(name)}/versions", allow_404=True)
+        if versions is None:
+            return None
+        if not isinstance(versions, list):
+            raise RefreshSourceError(
+                f"The schema registry answered GET /subjects/{name}/versions with an unexpected body.",
+                error_class=ERROR_CLASS_UNEXPECTED,
+            )
+        # ``type(v) is int``: JSON ``true`` would pass ``isinstance(v, int)`` as version 1.
+        numbers = tuple(sorted({v for v in versions if type(v) is int and v >= 1}))
+        if not numbers:
+            return None
+        level = self._subject_level(client, name, global_level)
+        return SubjectState(name=name, versions=numbers, compatibility_level=level)
+
+    def _note_schema_id(self, schema_id: int) -> None:
+        """Remember the highest global schema id this sync saw (the next watermark)."""
+        if self._max_schema_id is None or schema_id > self._max_schema_id:
+            self._max_schema_id = schema_id
+
+    def live_remote_ids(self) -> Optional[List[str]]:
+        """Every subject the registry lists, for missing-marking; ``None`` on an incremental run."""
+        if self._mode != MODE_FULL:
+            return None
+        return list(self._live_names) if self._live_names is not None else None
+
+    def candidate_settled(self, candidate: RefreshCandidate) -> None:
+        """The engine is done with a subject this run: advance the checkpoint past it."""
+        self._settled.add(candidate.remote_id)
+        self._advance()
+
+    def _advance(self) -> None:
+        """Move the checkpoint as far as every listed subject before it is settled.
+
+        Full pass: the cursor moves to the last subject of the settled prefix of this run's listing;
+        when the listing reached the end and everything is settled the pass is complete (cursor
+        cleared, ``last_full_pass_at`` stamped, the watermark raised to the highest schema id seen).
+        Incremental: the watermark moves to the highest probed id whose subjects are all settled.
+        """
+        if self._db is None:
+            return
+        state = self._checkpoint
+        if self._mode == MODE_FULL:
+            if state.pass_started_at is None:
+                return  # no pass in progress (it just finished, or there is no checkpoint)
+            cursor = state.cursor
+            done = 0
+            for name in self._listed:
+                if name not in self._settled:
+                    break
+                cursor = name
+                done += 1
+            if self._listing_complete and done == len(self._listed):
+                watermark = state.watermark
+                if self._max_schema_id is not None:
+                    watermark = max(watermark or 0, self._max_schema_id)
+                self._save(
+                    state.with_changes(
+                        cursor=None,
+                        pass_started_at=None,
+                        last_full_pass_at=datetime.now(timezone.utc),
+                        watermark=watermark,
+                    )
+                )
+            elif cursor != state.cursor:
+                self._save(state.with_changes(cursor=cursor))
+            return
+        watermark = state.watermark
+        for schema_id, subjects in self._probe_ids:
+            # Settled = listed and done with (a subject deleted meanwhile is settled when listed).
+            if any(subject not in self._settled for subject in subjects):
+                break
+            watermark = max(watermark or 0, schema_id)
+        if watermark != state.watermark:
+            self._save(state.with_changes(watermark=watermark))
+
+    def _save(self, state: CrawlState) -> None:
+        """Keep and write the checkpoint (a write failure is logged; the crawl goes on)."""
+        self._checkpoint = state
+        if self._db is None:
+            return
+        try:
+            save_crawl_state(self._db, self.connector_id, state)
+        except Exception:  # noqa: BLE001 - the next run redoes what this one could not record
+            _logger.warning("schema registry crawl checkpoint write failed connector_id=%s", self.connector_id)
+
+    def crawl_report(self) -> Dict[str, Any]:
+        """The run summary's ``crawl`` block: mode, budget use, and where the next sync resumes."""
+        self._advance()
+        state = self._checkpoint
+        unsettled = [name for name in self._listed if name not in self._settled]
+        report: Dict[str, Any] = {
+            "mode": self._mode,
+            **self.meter.report(),
+            "listed": len(self._listed),
+            "settled": len(self._listed) - len(unsettled),
+            "partial": not self._listing_complete or bool(unsettled),
+            "resumesAfter": state.cursor,
+            "fullPassInProgress": state.pass_started_at is not None,
+            "watermark": state.watermark,
+            "lastFullPassAt": state.last_full_pass_at.isoformat() if state.last_full_pass_at else None,
+        }
+        if self._fallback:
+            report["fallback"] = self._fallback
+        return report
 
     def _subject_level(self, client: httpx.Client, subject: str, global_level: List[Optional[str]]) -> Optional[str]:
         """A subject's effective level: its own, else the registry's global level."""
@@ -545,6 +924,7 @@ class SchemaRegistrySource(ConnectorRefreshSource):
                 f"The schema registry answered GET /subjects/{subject}/versions/{version} with no schema id.",
                 error_class=ERROR_CLASS_UNEXPECTED,
             )
+        self._note_schema_id(int(body["id"]))
         return dict(body)
 
     def _schema_text(self, client: httpx.Client, schema_id: int, body: Mapping[str, Any]) -> Tuple[str, int]:

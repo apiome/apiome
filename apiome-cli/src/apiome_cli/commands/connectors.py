@@ -266,7 +266,11 @@ def add_connector(
     scope: str | None = typer.Option(
         None,
         "--scope",
-        help='What to sync, as a JSON object or @file (for example \'{"region": "eu"}\').',
+        help=(
+            'What to sync, as a JSON object or @file (for example \'{"region": "eu"}\'). A schema-registry or '
+            "registry connector's scope may set its crawl budget: requestsPerSecond, maxRequests, maxPages, "
+            "maxBytes (schema-registry also fullPassHours)."
+        ),
     ),
     credentials_file: str | None = typer.Option(
         None,
