@@ -523,6 +523,84 @@ describe('ExportDialog — emitted-artifact preview + download (MFX-6.3)', () =>
     fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
     expect(downloads).toEqual(['petstore.json', 'petstore.zip']);
   });
+
+  /**
+   * A multi-file target (E1-4): the document endpoint returns only the primary file, so the zip
+   * is the export job's MFX-4.2 bundle — every emitted file plus `manifest.json`.
+   */
+  function mockMultiFileFetch(jobState: 'completed' | 'failed' = 'completed') {
+    const base = mockFetch();
+    const posted: Record<string, unknown>[] = [];
+    const bundle = new Blob(['PK-bundle'], { type: 'application/zip' });
+    const fetchMock = jest.fn(((input: unknown, init?: { method?: string; body?: string }) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const json = (payload: unknown) =>
+        Promise.resolve({ ok: true, headers: new Headers(), json: () => Promise.resolve(payload) });
+      if (url.includes('/api/export/targets')) {
+        const targets = TARGETS.targets.map((t) =>
+          t.descriptor.key === 'proto' ? { ...t, descriptor: { ...t.descriptor, multi_file: true } } : t,
+        );
+        return json({ success: true, ...TARGETS, targets });
+      }
+      if (url === '/api/export/jobs' && init?.method === 'POST') {
+        posted.push(JSON.parse(init.body ?? '{}'));
+        return json({ success: true, job_id: 'job-b', status_path: '/x' });
+      }
+      if (url.endsWith('/api/export/jobs/job-b/download')) {
+        return Promise.resolve({
+          ok: true,
+          headers: new Headers({ 'content-disposition': 'attachment; filename="petstore-proto.zip"' }),
+          blob: () => Promise.resolve(bundle),
+        });
+      }
+      if (url.endsWith('/api/export/jobs/job-b')) {
+        return json({
+          success: true,
+          job_id: 'job-b',
+          state: jobState,
+          percent: 100,
+          events: [],
+          error: jobState === 'failed' ? { code: 'EMIT_FAILED', message: 'The emitter failed' } : null,
+        });
+      }
+      return base(input, init);
+    }) as never) as unknown as jest.Mock;
+    return { fetchMock, posted, bundle };
+  }
+
+  it('downloads every file of a multi-file target from the export bundle (E1-4)', async () => {
+    const { fetchMock, posted, bundle } = mockMultiFileFetch();
+    await renderAtPreview(fetchMock, 'proto');
+
+    expect(screen.getByTestId('export-dialog-emitted')).toHaveTextContent('This target writes several files');
+    fireEvent.click(screen.getByRole('button', { name: /download all files \(\.zip\)/i }));
+    await waitFor(() => expect(downloads).toEqual(['petstore-proto.zip']));
+    // The served bundle, not a client-built zip of the primary file.
+    expect(blobs[0]).toBe(bundle);
+    expect(posted).toEqual([
+      expect.objectContaining({ artifact: 'proj-petstore', target: 'proto', confirm: true }),
+    ]);
+    expect(posted[0]).not.toHaveProperty('targets');
+  });
+
+  it('reports a failed bundle export instead of downloading (E1-4)', async () => {
+    const { fetchMock } = mockMultiFileFetch('failed');
+    await renderAtPreview(fetchMock, 'proto');
+
+    fireEvent.click(screen.getByRole('button', { name: /download all files \(\.zip\)/i }));
+    expect(await screen.findByText(/The emitter failed/)).toBeInTheDocument();
+    expect(downloads).toEqual([]);
+  });
+
+  it('keeps the client-built zip and the plain label for a single-file target (E1-4)', async () => {
+    const { fetchMock, posted } = mockMultiFileFetch();
+    await renderAtPreview(fetchMock, 'openapi');
+
+    expect(screen.queryByRole('button', { name: /download all files/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /download \.zip/i }));
+    expect(downloads).toEqual(['petstore.zip']);
+    expect(posted).toEqual([]);
+  });
 });
 
 describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => {

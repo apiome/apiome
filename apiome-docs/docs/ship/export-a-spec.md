@@ -39,6 +39,11 @@ you download anything.
    **click the "Download" button that names the file**, or **"Download .zip"** for everything in one
    archive.
 
+   A format that writes several files (an Avro or Protobuf schema set, for example) previews its
+   main file, and the zip button reads **"Download all files (.zip)"**. It runs the export as a job
+   and downloads the job's bundle: every emitted file plus a `manifest.json` that lists them. The
+   download starts when the job finishes; if the job fails, the dialog shows why.
+
 <Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
 
 <Screenshot id="export-dialog-fidelity" alt="The Export dialog's fidelity report for Protobuf: what is kept, approximated and dropped, and the acknowledgement" />
