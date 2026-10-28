@@ -17,6 +17,7 @@
 /playwright-report/
 /playwright-report-journey/
 /playwright-report-catalog-journey/
+/playwright-report-catalog-exporter-journey/
 /playwright-report-a11y/
 /playwright-report-visual/
 /playwright/.cache/

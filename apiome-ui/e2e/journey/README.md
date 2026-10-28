@@ -103,11 +103,39 @@ CI: `.github/workflows/e2e-catalog-journey.yml`, on every pull request that touc
 `apiome-rest` or `apiome-db`. It picks free host ports and a per-run compose project, so it can
 share the self-hosted runner.
 
+## Catalog Exporter journey (X2, #6223)
+
+`catalog-exporter-journey.spec.ts` walks the export path, one serial step per screen:
+
+1. the Export studio opens and **Connectors** is still gated (only `export-studio` is previewed);
+2. three RAML specs (retitled per run) are imported into the Catalog;
+3. the first item is exported to Avro through the **Export** dialog, and **Download all files
+   (.zip)** yields every `.avsc` plus `manifest.json`;
+4. **Export to another format…** opens the studio: Protobuf → verify → generate → **Download .zip**
+   yields a `.proto`;
+5. the three items are ticked and exported to GraphQL from the bulk bar; `export-batch.zip`'s
+   manifest lists three completed items.
+
+Its config, `playwright.catalog-exporter-journey.config.ts`, starts the server with
+`catalogExporterJourneyServerEnv()`: the override is `CATALOG_EXPORTER_PREVIEW` — `export-studio`
+while the studio is in `UNRELEASED_FEATURE_IDS`, empty after. The shared steps (import, loss
+acknowledgement, reading a downloaded archive) live in `support/catalog-export.ts`.
+
+```bash
+yarn test:e2e:catalog-exporter-journey
+# production build, as CI does
+NEXT_PUBLIC_APIOME_PREVIEW_FEATURES=export-studio yarn build
+CATALOG_EXPORTER_JOURNEY_USE_BUILD=1 yarn test:e2e:catalog-exporter-journey
+```
+
+CI: the `exporter` job of `.github/workflows/e2e-catalog-journey.yml`.
+
 ## Suite layout
 
 - `oauth-onboarding-journey.spec.ts` — the eleven-step journey (serial): four OAuth providers,
   invariants, onboarding, license, switcher, credentials sign-in, and the 2FA legs.
 - `catalog-project-journey.spec.ts` — the RC6-H1 Catalog → Project journey (above), own config.
+- `catalog-exporter-journey.spec.ts` — the X2 Catalog Exporter journey (above), own config.
 - `provider-config-precedence.spec.ts` — the OLO-8.9 DB-over-`.env` provider-config story (above).
 - `support/env.ts` — ports, URLs, and the app-under-test environment (the four provider mock
   overrides, plus the OLO-8.9 database-config-source variables).

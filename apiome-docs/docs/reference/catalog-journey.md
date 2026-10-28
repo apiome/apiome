@@ -54,9 +54,40 @@ NEXT_PUBLIC_APIOME_PREVIEW_FEATURES= yarn build
 CATALOG_JOURNEY_USE_BUILD=1 yarn test:e2e:catalog-journey
 ```
 
+## The Catalog Exporter journey
+
+A second test in the same workflow walks the export path from import to download (X2,
+[#6223](https://github.com/apiome/apiome/issues/6223)):
+
+| Step | Screen | What must happen |
+| --- | --- | --- |
+| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is opened early |
+| 2 | Catalog → **Import to catalog** | Three RAML specs, titled per run, are stored in the catalog |
+| 3 | Catalog item → **Export** | Exporting to Avro and clicking **Download all files (.zip)** gives an archive with every `.avsc` file and `manifest.json` |
+| 4 | Item **⋯** → **Export to another format…** | In the Export studio, Protobuf is chosen, verified, generated, and **Download .zip** gives a `.proto` file |
+| 5 | Catalog → tick three items → **Export 3…** | One GraphQL batch job downloads `export-batch.zip`; its manifest lists all three items as completed |
+
+It runs with the Export studio opened early (`NEXT_PUBLIC_APIOME_PREVIEW_FEATURES=export-studio`)
+while the studio is held back, and with no override once it ships. The value follows the release
+gate by itself, and a unit test fails if the workflow builds with a different one.
+
+To run it locally, from `apiome-ui/`:
+
+```bash
+yarn test:e2e:catalog-exporter-journey
+```
+
+To test a production build, as CI does:
+
+```bash
+NEXT_PUBLIC_APIOME_PREVIEW_FEATURES=export-studio yarn build
+CATALOG_EXPORTER_JOURNEY_USE_BUILD=1 yarn test:e2e:catalog-exporter-journey
+```
+
 ## When a screen changes
 
 The test waits for elements by `data-testid`, never for a fixed time. If you rename or remove a
 `data-testid` the journey waits on, the unit test `tests/catalog-journey-config.test.ts` fails and
 names it, so you find out before the journey runs. Update the spec,
-`apiome-ui/e2e/journey/catalog-project-journey.spec.ts`, in the same pull request.
+`apiome-ui/e2e/journey/catalog-project-journey.spec.ts` or
+`apiome-ui/e2e/journey/catalog-exporter-journey.spec.ts`, in the same pull request.
