@@ -131,7 +131,7 @@ class A2aRegistryCrawl(RegistryCrawl):
             token_next = body.get("nextPageToken")
             return Page(items=body["agents"], next_token=token_next if isinstance(token_next, str) else None)
 
-        entries = (parse_registry_entry(item) for item in paginate(page, what="agents"))
+        entries = (parse_registry_entry(item) for item in paginate(page, max_pages=http.max_pages, what="agents"))
         return [entry for entry in entries if entry is not None]
 
     def fetch_entry(self, http: RegistryHttp, entry: RegistryEntry) -> FetchedDocument:

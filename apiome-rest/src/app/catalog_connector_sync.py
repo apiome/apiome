@@ -100,6 +100,7 @@ from .catalog_connectors import (
     connector_provenance_metadata,
     revision_label,
 )
+from .crawl_budget import CrawlBudgetExceededError
 from .refresh_source import (
     ERROR_CLASS_UNEXPECTED,
     FetchedDocument,
@@ -565,6 +566,26 @@ def _note_unchanged(summary: Dict[str, Any], source: Any, candidate: RefreshCand
     )
 
 
+def _budget_spent(source: Any) -> bool:
+    """Whether the source's crawl budget is spent (MFI-31.4); sources without one never are."""
+    return bool(getattr(source, "budget_exhausted", False))
+
+
+def _settle(source: Any, candidate: RefreshCandidate) -> None:
+    """Tell the source a candidate is done this run, whatever the outcome (MFI-31.4).
+
+    A crawl that checkpoints advances its cursor here. Deferred candidates are not settled, so a
+    resumed run picks them up. Never raises.
+    """
+    settled = getattr(source, "candidate_settled", None)
+    if not callable(settled):
+        return
+    try:
+        settled(candidate)
+    except Exception:  # noqa: BLE001 - a checkpoint write must not end the run
+        _logger.warning("connector crawl checkpoint failed remote_id=%s", candidate.remote_id)
+
+
 def _sync_item_with_source(
     db: Any,
     source: Any,
@@ -871,6 +892,10 @@ def run_connector_sync(
                 error_class=ERROR_CLASS_CREDENTIALS_UNREADABLE,
             )
         source = factory(connector, credentials)
+        # MFI-31.4: a source that keeps a crawl checkpoint gets the database before it lists.
+        bind_db = getattr(source, "bind_db", None)
+        if callable(bind_db):
+            bind_db(db)
         candidates = list(source.list_candidates())
         summary["candidates"] = len(candidates)
         findings = [dict(f) for f in (getattr(source, "findings", None) or [])]
@@ -883,107 +908,133 @@ def run_connector_sync(
             rows[candidate.remote_id] = store.upsert_seen_item(db, connector_id, candidate)
             if rows[candidate.remote_id].get("inserted"):
                 new_rows.append(rows[candidate.remote_id])
-        summary["missing"] = store.mark_missing_items(db, connector_id, rows.keys())
+        # MFI-31.4: a source whose listing covers part of the inventory (a resumed or budgeted crawl)
+        # names the remote ids that still exist (``live_remote_ids``), or ``None`` when it cannot tell
+        # (an incremental pass), in which case nothing is marked missing.
+        live_ids = getattr(source, "live_remote_ids", None)
+        seen_ids = live_ids() if callable(live_ids) else rows.keys()
+        if seen_ids is not None:
+            summary["missing"] = store.mark_missing_items(db, connector_id, seen_ids)
         if hasattr(source, "attach_inventory"):
             source.attach_inventory(rows)
 
         for candidate in candidates:
-            row = rows[candidate.remote_id]
-            forced = only is not None
-            if forced and candidate.remote_id not in only:
-                continue
-            if not forced and row.get("status") == ITEM_IGNORED:
-                summary["ignored"] += 1
-                continue
-            should_import = getattr(source, "should_import", None)
-            if not forced and callable(should_import) and not should_import(candidate):
-                # Recorded (``discovered``) but not imported: the source says so (CDG-1.4).
-                summary["discovered"] = int(summary.get("discovered", 0)) + 1
-                continue
-            decision = None if forced else decide_refresh(source, candidate)
-            if decision is not None and not decision.should_refresh:
-                summary["unchanged"] += 1
-                _note_unchanged(summary, source, candidate, decision.reason.value)
-                continue
-            if max_pulls is not None and pulls >= max_pulls:
-                summary["deferred"] += 1
-                continue
-            if callable(getattr(source, "sync_item", None)):
-                # CDG-4.4: the source turns the candidate into its own catalog object (an MCP server).
+            deferred = False
+            try:
+                row = rows[candidate.remote_id]
+                forced = only is not None
+                if forced and candidate.remote_id not in only:
+                    deferred = True  # not looked at: a checkpointing crawl must not move past it
+                    continue
+                if not forced and row.get("status") == ITEM_IGNORED:
+                    summary["ignored"] += 1
+                    continue
+                should_import = getattr(source, "should_import", None)
+                if not forced and callable(should_import) and not should_import(candidate):
+                    # Recorded (``discovered``) but not imported: the source says so (CDG-1.4).
+                    summary["discovered"] = int(summary.get("discovered", 0)) + 1
+                    continue
+                decision = None if forced else decide_refresh(source, candidate)
+                if decision is not None and not decision.should_refresh:
+                    summary["unchanged"] += 1
+                    _note_unchanged(summary, source, candidate, decision.reason.value)
+                    continue
+                if (max_pulls is not None and pulls >= max_pulls) or _budget_spent(source):
+                    # Quota or crawl budget (MFI-31.4) spent: a later run picks it up.
+                    deferred = True
+                    summary["deferred"] += 1
+                    continue
+                if callable(getattr(source, "sync_item", None)):
+                    # CDG-4.4: the source turns the candidate into its own catalog object (an MCP server).
+                    try:
+                        outcome = _sync_item_with_source(db, source, candidate, row, actor_id, summary)
+                    except CrawlBudgetExceededError:
+                        # MFI-31.4: the crawl ran out mid-item; what it mirrored stays, the rest waits.
+                        deferred = True
+                        summary["deferred"] += 1
+                        continue
+                    except RefreshSourceError as exc:
+                        failures.append((exc.error_class, exc.http_status, str(exc)))
+                        summary["failed"] += 1
+                        continue
+                    except Exception as exc:  # noqa: BLE001 - one bad entry must not end the run
+                        failures.append((ERROR_CLASS_IMPORT_FAILED, None, f"{type(exc).__name__}: {exc}"))
+                        summary["failed"] += 1
+                        continue
+                    pulls += outcome.pull_count()
+                    summary["fetched"] += outcome.pull_count()
+                    rows[candidate.remote_id] = {
+                        **rows[candidate.remote_id],
+                        "mcp_endpoint_id": outcome.mcp_endpoint_id,
+                    }
+                    if outcome.project_id:
+                        rows[candidate.remote_id]["project_id"] = outcome.project_id
+                    settled += 1
+                    continue
                 try:
-                    outcome = _sync_item_with_source(db, source, candidate, row, actor_id, summary)
+                    document = source.fetch(candidate)
                 except RefreshSourceError as exc:
                     failures.append((exc.error_class, exc.http_status, str(exc)))
                     summary["failed"] += 1
                     continue
-                except Exception as exc:  # noqa: BLE001 - one bad entry must not end the run
-                    failures.append((ERROR_CLASS_IMPORT_FAILED, None, f"{type(exc).__name__}: {exc}"))
+                pulls += 1
+                summary["fetched"] += 1
+                digest = hashlib.sha256(document.content).hexdigest()
+                revision = document.revision or candidate.revision
+                if row.get("project_id") and row.get("imported_sha256") == digest:
+                    # Revision marker moved but the content did not: re-anchor, import nothing.
+                    store.mark_item_imported(
+                        db,
+                        str(row["id"]),
+                        project_id=str(row["project_id"]),
+                        revision=revision,
+                        remote_updated_at=candidate.updated_at,
+                        content_sha256=digest,
+                    )
+                    summary["unchanged"] += 1
+                    settled += 1
+                    _after_import(db, source, candidate, str(row["project_id"]), summary)
+                    continue
+                catalog_key = (candidate.deployment or {}).get("catalogKey")
+                if catalog_key and not row.get("project_id"):
+                    # CDG-1.5: rows that are one API in several environments share one catalog item.
+                    sibling = next(
+                        (
+                            other
+                            for other in rows.values()
+                            if other is not row
+                            and other.get("project_id")
+                            and (other.get("deployment") or {}).get("catalogKey") == catalog_key
+                        ),
+                        None,
+                    )
+                    if sibling is not None:
+                        row = {**row, "project_id": sibling["project_id"]}
+                try:
+                    project_id = importer(connector, candidate, document, row, actor_id)
+                except Exception as exc:  # noqa: BLE001 - one bad document must not end the run
+                    failures.append((ERROR_CLASS_IMPORT_FAILED, None, str(exc)))
                     summary["failed"] += 1
                     continue
-                pulls += outcome.pull_count()
-                summary["fetched"] += outcome.pull_count()
-                rows[candidate.remote_id] = {**rows[candidate.remote_id], "mcp_endpoint_id": outcome.mcp_endpoint_id}
-                if outcome.project_id:
-                    rows[candidate.remote_id]["project_id"] = outcome.project_id
-                settled += 1
-                continue
-            try:
-                document = source.fetch(candidate)
-            except RefreshSourceError as exc:
-                failures.append((exc.error_class, exc.http_status, str(exc)))
-                summary["failed"] += 1
-                continue
-            pulls += 1
-            summary["fetched"] += 1
-            digest = hashlib.sha256(document.content).hexdigest()
-            revision = document.revision or candidate.revision
-            if row.get("project_id") and row.get("imported_sha256") == digest:
-                # Revision marker moved but the content did not: re-anchor, import nothing.
                 store.mark_item_imported(
                     db,
                     str(row["id"]),
-                    project_id=str(row["project_id"]),
+                    project_id=project_id,
                     revision=revision,
                     remote_updated_at=candidate.updated_at,
                     content_sha256=digest,
                 )
-                summary["unchanged"] += 1
+                rows[candidate.remote_id] = {**rows[candidate.remote_id], "project_id": project_id}
+                summary["imported"] += 1
                 settled += 1
-                _after_import(db, source, candidate, str(row["project_id"]), summary)
-                continue
-            catalog_key = (candidate.deployment or {}).get("catalogKey")
-            if catalog_key and not row.get("project_id"):
-                # CDG-1.5: rows that are one API in several environments share one catalog item.
-                sibling = next(
-                    (
-                        other
-                        for other in rows.values()
-                        if other is not row
-                        and other.get("project_id")
-                        and (other.get("deployment") or {}).get("catalogKey") == catalog_key
-                    ),
-                    None,
-                )
-                if sibling is not None:
-                    row = {**row, "project_id": sibling["project_id"]}
-            try:
-                project_id = importer(connector, candidate, document, row, actor_id)
-            except Exception as exc:  # noqa: BLE001 - one bad document must not end the run
-                failures.append((ERROR_CLASS_IMPORT_FAILED, None, str(exc)))
-                summary["failed"] += 1
-                continue
-            store.mark_item_imported(
-                db,
-                str(row["id"]),
-                project_id=project_id,
-                revision=revision,
-                remote_updated_at=candidate.updated_at,
-                content_sha256=digest,
-            )
-            rows[candidate.remote_id] = {**rows[candidate.remote_id], "project_id": project_id}
-            summary["imported"] += 1
-            settled += 1
-            _after_import(db, source, candidate, project_id, summary)
+                _after_import(db, source, candidate, project_id, summary)
+            except BaseException:
+                # Interrupted mid-candidate (the run is ending): it was not settled.
+                deferred = True
+                raise
+            finally:
+                if not deferred:
+                    _settle(source, candidate)
 
         _record_owner_suggestions(connector, candidates, rows, summary)
 
@@ -1035,6 +1086,16 @@ def run_connector_sync(
             error_class=ERROR_CLASS_UNEXPECTED,
             error_message=_redact(f"{type(exc).__name__}: {exc}", credentials),
         )
+
+    crawl_report = getattr(source, "crawl_report", None)
+    if callable(crawl_report):
+        # MFI-31.4: what the crawl spent of its budget, its mode and where the next run resumes.
+        try:
+            report = crawl_report()
+            if report:
+                summary["crawl"] = report
+        except Exception:  # noqa: BLE001 - a report must never change the run's outcome
+            _logger.warning("connector crawl report failed connector_id=%s", connector_id)
 
     close = getattr(source, "close", None)
     if callable(close):

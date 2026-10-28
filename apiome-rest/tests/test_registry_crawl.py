@@ -709,3 +709,22 @@ def test_bearer_and_api_key_credentials_are_sent(registry) -> None:
     source.list_candidates()
     assert seen[0]["authorization"] == "Bearer t0k" and seen[0]["x-api-key"] == "k3y"
 
+
+
+def test_the_crawl_byte_and_page_budgets_mfi_31_4() -> None:
+    """MFI-31.4: a registry crawl's scope sets its byte and page budgets as well as its rate."""
+    fake = FakeRegistry()
+    fake.routes["https://r.example/x"] = "y" * 40
+    with RegistryHttp(transport=fake.transport(), limiter=_NoWait(), max_bytes=50) as http:
+        http.get("https://r.example/x")
+        http.get("https://r.example/x")  # 80 bytes read: the budget is spent after this response
+        with pytest.raises(RefreshSourceError) as excinfo:
+            http.get("https://r.example/x")
+        assert excinfo.value.error_class == rc.ERROR_CLASS_BUDGET and "byte budget" in str(excinfo.value)
+    rc.validate_registry_scope(
+        {"protocol": "a2a-registry", "maxRequests": 5000, "maxPages": 10, "maxBytes": 1000}, "https://r.example"
+    )
+    with pytest.raises(ConnectorError, match="maxPages must be a whole number"):
+        rc.validate_registry_scope({"protocol": "a2a-registry", "maxPages": 0}, "https://r.example")
+    with RegistryHttp(transport=fake.transport(), limiter=_NoWait(), max_pages=3) as http:
+        assert http.max_pages == 3

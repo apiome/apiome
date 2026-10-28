@@ -47,7 +47,9 @@ apiome import xregistry --url https://example.com/registry.json --dry-run
 `--dry-run` previews the import without saving. See [`apiome import`](../reference/cli/import.md).
 
 **From a live registry:** add a **Registry crawl** connector with the protocol **CNCF xRegistry
-(schemas, messages, endpoints)** — see [Registry crawl](../reference/rest/connectors.md).
+(schemas, messages, endpoints)** — see [Registry crawl](../reference/rest/connectors.md). Its scope
+takes the crawl budget keys `requestsPerSecond`, `maxRequests`, `maxPages` and `maxBytes` — see
+[The crawl budget](./schema-registry-connector.md#the-crawl-budget).
 
 ## What Apiome reads
 

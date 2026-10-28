@@ -35,6 +35,7 @@ from app.catalog_connector_sync import (
 )
 from app.catalog_connectors import ConnectorError
 from app.config import settings
+from app.crawl_budget import HostRateLimiter
 from app.mcp_credential_crypto import seal_credential_payload
 from app.schema_registry import SchemaRegistryError
 from tests.schema_registry_fakes import FakeCatalog, FakeStore
@@ -112,10 +113,20 @@ def subjects(monkeypatch, db):
     return FakeStore(db).install(monkeypatch)
 
 
+class _NoWait(HostRateLimiter):
+    """A rate limiter that never sleeps (the rate itself is pinned in test_crawl_budget)."""
+
+    def __init__(self) -> None:
+        super().__init__(1.0)
+
+    def wait(self, host: str) -> None:
+        del host
+
+
 def _use(fake: FakeUpstreamRegistry) -> None:
     register_connector_source(
         src.KIND,
-        lambda c, creds: src.SchemaRegistrySource(c, creds, transport=fake.transport()),
+        lambda c, creds: src.SchemaRegistrySource(c, creds, transport=fake.transport(), limiter=_NoWait()),
         scope_validator=src.validate_schema_registry_scope,
     )
 
@@ -454,7 +465,7 @@ def test_the_kind_is_syncable_and_validates_its_scope():
     assert missing.value.code == "connector-invalid" and "base URL" in str(missing.value)
     with pytest.raises(ConnectorError) as scoped:
         validate_connector_scope(src.KIND, {"subjects": ["a"]}, "https://sr.example.test")
-    assert "takes no scope" in str(scoped.value)
+    assert "Unknown scope key(s)" in str(scoped.value) and "subjects" in str(scoped.value)
 
 
 def test_item_projection_carries_the_discovered_reason():
