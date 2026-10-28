@@ -42,6 +42,7 @@ from .catalog_categories import (
     normalize_tags,
 )
 from .catalog_conversion import build_conversion_source
+from .catalog_drift_routes import drift_badges
 from .catalog_detail import (
     derive_catalog_source,
     derive_catalog_summary,
@@ -289,10 +290,13 @@ async def list_catalog_items(
     kept = filter_catalog_items(
         items, tags_by_item, _facet_filters(protocol, format_, domain, tag, convention)
     )
+    # MFI-31.3: each item's newest undismissed drift, for the card badge.
+    drift = drift_badges(tenant_id, [str(item["id"]) for item in kept])
     return [
         CatalogItemSchema(
             **item,
             conversion=_build_conversion_ref(item),
+            drift=drift.get(str(item["id"])),
             **_category_fields(item, tags_by_item.get(str(item["id"]), [])),
         )
         for item in kept
@@ -453,6 +457,7 @@ async def get_catalog_item(
     return CatalogItemDetailSchema(
         **item,
         conversion=_build_conversion_ref(item),
+        drift=drift_badges(tenant_id, [item_id]).get(item_id),
         **_category_fields(item, tags),
         related_artifacts=_build_related_artifacts(tenant_id, item_id),
         summary=CatalogNormalizedSummary(**summary),

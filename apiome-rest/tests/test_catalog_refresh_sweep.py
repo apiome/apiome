@@ -248,3 +248,33 @@ def test_the_sweep_spaces_items_that_share_a_host(store, calls):
         store.add(_item(n), _TENANT, endpoint=f"https://shared.example.com/graphql?n={n}")
     assert _tick(store, politeness=gate) == 3
     assert clock.sleeps == [2.0, 2.0]
+
+
+# --- MFI-31.3: the tick sends due drift digests -----------------------------------------------
+
+
+def test_the_tick_sends_digests_after_its_checks_and_when_nothing_is_due(store, calls):
+    sent: List[Any] = []
+
+    def _digest(db):
+        sent.append(list(calls))  # what had been checked when the digest ran
+        return 1
+
+    store.add(_item(1), _TENANT, cadence="daily", endpoint="https://a.example.com")
+    assert _tick(store, send_digests=_digest) == 1
+    assert _tick(store, send_digests=_digest) == 0
+    assert sent == [["https://a.example.com"], ["https://a.example.com"]]
+
+
+def test_a_failing_digest_pass_never_fails_the_tick(store, calls):
+    def _boom(db):
+        raise RuntimeError("digest down")
+
+    store.add(_item(1), _TENANT, cadence="daily", endpoint="https://a.example.com")
+    assert _tick(store, send_digests=_boom) == 1
+
+
+def test_a_locked_sweep_sends_no_digest(store, calls):
+    sent: List[Any] = []
+    assert _tick(store, db=_LockDb(locked=False), send_digests=lambda db: sent.append(db)) is None
+    assert sent == []

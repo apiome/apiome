@@ -192,6 +192,21 @@ def catalog_refresh_check(tenant_slug: str, item_id: str) -> str:
     return f"{V1}/catalog/{tenant_slug}/{item_id}/refresh/check"
 
 
+def catalog_drift_alerts(tenant_slug: str) -> str:
+    """The workspace's catalog drift alert settings (MFI-31.3): GET / PUT."""
+    return f"{V1}/catalog/{tenant_slug}/drift-notifications"
+
+
+def catalog_drift_events(tenant_slug: str, item_id: str) -> str:
+    """A catalog item's drift events (MFI-31.3): GET."""
+    return f"{V1}/catalog/{tenant_slug}/{item_id}/drift"
+
+
+def catalog_drift_dismiss(tenant_slug: str, item_id: str, event_id: str) -> str:
+    """Dismiss one drift event's badge and banner (MFI-31.3): POST."""
+    return f"{V1}/catalog/{tenant_slug}/{item_id}/drift/{event_id}/dismiss"
+
+
 def catalog_refresh_policy(tenant_slug: str) -> str:
     """The workspace kill switch for catalog item refresh (MFI-31.1): GET / PUT."""
     return f"{V1}/catalog/{tenant_slug}/refresh-policy"

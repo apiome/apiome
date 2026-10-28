@@ -394,6 +394,26 @@
       ]
     },
     {
+      "id": "catalog-drift-badge",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog/drift.html",
+      "scrollTo": "[data-testid=\"catalog-drift-badge\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogBadges.tsx",
+        "apiome-ui/src/app/components/ade/catalog/catalogDriftModel.ts"
+      ]
+    },
+    {
+      "id": "catalog-drift-alerts",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog/drift-alerts.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogDriftAlertsDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-item",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",
@@ -441,6 +461,27 @@
       "data": "fixture:hive-catalog-item/refresh-dialog.html",
       "sources": [
         "apiome-ui/src/app/components/ade/catalog/detail/CatalogRefreshDialog.tsx"
+      ]
+    },
+    {
+      "id": "catalog-item-drift-banner",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/drift-banner.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/detail/CatalogDriftBanner.tsx",
+        "apiome-ui/src/app/components/ade/catalog/catalogDriftModel.ts"
+      ]
+    },
+    {
+      "id": "catalog-item-drift-changes",
+      "route": "/ade/dashboard/catalog/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog-item/tab-versions-drift.html",
+      "scrollTo": "[data-testid=\"catalog-drift-panel\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/detail/CatalogDriftPanel.tsx",
+        "apiome-ui/src/app/components/ade/catalog/catalogDriftModel.ts"
       ]
     },
     {

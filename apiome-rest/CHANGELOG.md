@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.489.0] - 2026-10-28
+
+### Added
+- **Catalog drift and breaking-change notifications (MFI-31.3, #4400)** — when a live refresh adds a version over
+  an earlier one, the refresh apply hook classifies the change with the MFI-3.3 breaking-change engine
+  (`breaking_change.classify_models`, format packs included) and records a drift event (`app.catalog_drift_service`,
+  V334 `catalog_drift_events`): worst severity (`safe` / `dangerous` / `breaking`), per-severity counts and the
+  classified changes worst first (capped at 200). The catalog list and detail carry the newest undismissed event as
+  `drift`. New routes: `GET /v1/catalog/{tenant_slug}/{item_id}/drift` (`projects:view`),
+  `POST …/{item_id}/drift/{event_id}/dismiss` (`projects:edit`, idempotent), and `GET` / `PUT
+  /v1/catalog/{tenant_slug}/drift-notifications` (`projects:view` / `imports:edit`; V334 `catalog_drift_settings`):
+  which severities are announced (default breaking + dangerous; safe only badges), `immediate` or `daily_digest`
+  delivery, `breakingImmediate`, and a stored `emailEnabled` opt-in (no email is sent yet). A sweep-created drift is
+  announced as a `catalog.drift.detected` push-webhook event (artifact, versions, severity, counts, top five findings,
+  app link) through the existing signed retry pipeline and routed to the item's owner team as an
+  `owner_breaking_change` finding; a `Check now` drift is recorded but never announced. Digest mode holds events
+  (`pending_digest`) for one `catalog.drift.digest` webhook per tenant per day, sent from the refresh sweep tick.
+  Migration V334. API 1.353.0.
+
 ## [1.488.0] - 2026-10-27
 
 ### Added

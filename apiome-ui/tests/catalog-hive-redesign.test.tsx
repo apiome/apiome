@@ -1094,6 +1094,52 @@ describe('the browser fixtures', () => {
     write('categorize', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
+  /**
+   * MFI-31.3 (#4400): a card carrying drift a live refresh found, and the workspace's Drift alerts
+   * dialog the header opens (docs screenshots `catalog-drift-badge` / `catalog-drift-alerts`).
+   */
+  it('writes the drift chip and the Drift alerts dialog (MFI-31.3)', async () => {
+    const drift = {
+      eventId: 'd1f7e000-0000-4000-8000-000000000001',
+      severity: 'breaking',
+      versionId: 'v-orders-3',
+      versionLabel: '2026-10-28T06:00Z',
+      changeCount: 3,
+      counts: { safe: 2, dangerous: 0, breaking: 1 },
+      trigger: 'sweep',
+      detectedAt: '2026-10-28T06:00:00Z',
+      link: `/ade/dashboard/catalog/${ORDERS.id}?tab=versions&drift=d1f7e000-0000-4000-8000-000000000001`,
+    };
+    await renderCatalog([LEDGER, { ...ORDERS, drift }, EVENTS]);
+    await screen.findByText('Orders RPC');
+    fireEvent.click(within(screen.getByRole('note')).getByRole('button', { name: 'Got it' }));
+    const chip = await screen.findByTestId('catalog-drift-badge');
+    expect(chip).toHaveTextContent('Breaking drift');
+    write('drift', page().outerHTML);
+
+    const listFetch = global.fetch;
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) !== '/api/catalog/drift-notifications') return (listFetch as typeof fetch)(input, init);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          notifyBreaking: true,
+          notifyDangerous: true,
+          notifySafe: false,
+          delivery: 'daily_digest',
+          breakingImmediate: true,
+          emailEnabled: false,
+          configured: true,
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+    fireEvent.click(screen.getByTestId('catalog-drift-alerts'));
+    const dialog = await screen.findByTestId('catalog-drift-alerts-dialog');
+    await within(dialog).findByTestId('catalog-drift-alerts-summary');
+    write('drift-alerts', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
+  });
+
   it('writes the empty state', async () => {
     await renderCatalog([]);
     await screen.findByText('Your catalog is empty');

@@ -29,6 +29,7 @@ import {
   type CatalogConversion,
 } from '@/app/utils/catalog-conversion';
 
+import { driftBadgeLabel, driftBadgeTitle, DRIFT_SEVERITY_VIEW, type CatalogDriftBadgeData } from './catalogDriftModel';
 import { catalogItemSource, type CatalogItem } from './catalogModel';
 
 export interface ConvertedBadgeProps {
@@ -139,6 +140,39 @@ export function RegistryBadge({ itemId, subjects }: RegistryBadgeProps) {
     >
       <Badge variant="accent" square>
         Registry
+      </Badge>
+    </Link>
+  );
+}
+
+export interface DriftBadgeProps {
+  /** The item's newest undismissed drift, or `null`/absent for none. */
+  drift?: CatalogDriftBadgeData | null;
+}
+
+/**
+ * The **drift** chip (MFI-31.3, #4400): a live refresh added a version whose changes graded
+ * breaking (danger), dangerous (warn) or safe (ok). It opens the item's Versions tab on that
+ * drift, and stays until someone dismisses the drift on the item page.
+ *
+ * @param props See {@link DriftBadgeProps}.
+ * @returns The chip, or `null` for an item without open drift.
+ */
+export function DriftBadge({ drift }: DriftBadgeProps) {
+  if (!drift) return null;
+  const title = driftBadgeTitle(drift);
+  return (
+    <Link
+      href={drift.link}
+      className="cat-drift"
+      data-testid="catalog-drift-badge"
+      data-severity={drift.severity}
+      title={title}
+      aria-label={`${driftBadgeLabel(drift.severity)}. ${title}`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <Badge variant={DRIFT_SEVERITY_VIEW[drift.severity].tone} dot>
+        {driftBadgeLabel(drift.severity)}
       </Badge>
     </Link>
   );

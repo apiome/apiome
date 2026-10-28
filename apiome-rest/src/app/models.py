@@ -2699,6 +2699,22 @@ class UnlinkArtifactsRequest(BaseModel):
     )
 
 
+class CatalogDriftBadge(BaseModel):
+    """An item's newest undismissed drift (MFI-31.3), as the catalog card badge and the item banner show it."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    event_id: str = Field(alias="eventId")
+    severity: Literal["safe", "dangerous", "breaking"]
+    version_id: str = Field(alias="versionId")
+    version_label: str = Field(alias="versionLabel")
+    change_count: int = Field(alias="changeCount")
+    counts: Dict[str, int] = Field(default_factory=dict)
+    trigger: Literal["sweep", "manual"]
+    detected_at: Optional[str] = Field(default=None, alias="detectedAt")
+    link: str = Field(description="The item's Versions tab, opened on this drift.")
+
+
 class CatalogItemSchema(BaseModel):
     """A catalog item (MFI-23.1): an OpenAPI-worthy non-OpenAPI import that is *not* a publishable
     Project.
@@ -2740,6 +2756,8 @@ class CatalogItemSchema(BaseModel):
     # The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted into a
     # publishable Project, so the card/detail can show "Converted → {project}". None until converted.
     conversion: Optional[CatalogConversionRef] = None
+    # MFI-31.3 (#4400): the newest undismissed drift a live refresh recorded, for the card badge.
+    drift: Optional[CatalogDriftBadge] = None
     # Cross-format identity group (MFI-6.4, #4410): present when this artifact is linked to others.
     identity_group_id: Optional[str] = Field(None, serialization_alias="identityGroupId")
     related_artifacts: List["RelatedArtifactRef"] = Field(

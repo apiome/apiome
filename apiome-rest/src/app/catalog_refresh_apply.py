@@ -22,6 +22,9 @@ hit behave exactly like a manual re-import of the discovered document, with no p
    both revisions' stored sources. Since the report reads only those sources, a refresh and a
    manual re-import of the same document get the same report. It is best-effort, like every
    change report: a report failure never undoes the version.
+4. **Drift (MFI-31.3).** The change is classified safe / dangerous / breaking and recorded as a
+   drift event (:mod:`app.catalog_drift_service`): the catalog badge and banner show it, and the
+   tenant's drift alert settings decide whether it is announced now, in the daily digest, or not.
 
 An item that was deleted, or is not a catalog item, fails the check (``item-unavailable``) and
 nothing is written. A failure anywhere before the pipeline commits fails the check the same way, so
@@ -273,6 +276,22 @@ def apply_refresh_to_catalog(
             parent_version_id=str(revisions[0]["id"]),
             actor_id=actor,
             action=AUDIT_CHANGE_REPORT,
+        )
+    if previous is not None and previous.model is not None:
+        # MFI-31.3: classify the drift, badge it and announce it per the tenant's settings.
+        from .catalog_drift_service import record_refresh_drift
+
+        record_refresh_drift(
+            db,
+            item={**item, "tenant_id": tenant_id},
+            previous_model=previous.model,
+            new_model=result.model,
+            version_id=version_id,
+            version_label=str(final.result.version_id),
+            parent_version_id=str(revisions[0]["id"]),
+            parent_version_label=previous.version_tag or None,
+            trigger=trigger,
+            actor_id=actor,
         )
     _logger.info(
         "catalog refresh created version project_id=%s version=%s trigger=%s",
