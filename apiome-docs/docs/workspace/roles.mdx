@@ -86,11 +86,18 @@ means a tenant administrator; **Admin** has the same rights in these areas.
 | Versions | Publish | `versions:publish` | — | — | ✓ |
 | Versions | Unpublish | `versions:publish` | — | — | ✓ |
 | Versions | Export a version | any member | ✓ | ✓ | ✓ |
+| Export studio | Preview, verify and generate an export | any member | ✓ | ✓ | ✓ |
+| Export studio | Export several catalog items at once | any member | ✓ | ✓ | ✓ |
+| Export studio | See, download or cancel any member's export job | any member | ✓ | ✓ | ✓ |
+| Export studio | Test-drive an export on a mock server | any member | ✓ | ✓ | ✓ |
 
 Publishing and unpublishing also need you to be the revision's creator or a tenant administrator.
 Restoring a project needs `projects:edit`, the same as editing it. Version tags, forking, freezing
 and deleting a revision follow the same rule (`versions:create`, `versions:edit`,
 `versions:delete`), but the app does not offer them in this release.
+
+Export jobs belong to the workspace, not to whoever started them, and are never visible from
+another workspace. The full table is on [Export studio](../ship/export-studio.mdx#who-can-export).
 
 A custom role gets exactly what its matrix grants. For example, a role with `projects:view` and
 `projects:create` can create and convert projects, but can't delete them.

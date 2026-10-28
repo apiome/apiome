@@ -1487,6 +1487,72 @@
       "tags": [
         "legacy"
       ]
+    },
+    {
+      "id": "export-studio",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "[data-testid=\"export-studio\"]",
+      "mask": [
+        "time"
+      ],
+      "data": "golden-path",
+      "fallback": "fixture:hive-export-studio/target-ready.html"
+    },
+    {
+      "id": "export-studio-source",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/source-ready.html"
+    },
+    {
+      "id": "export-verify",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/export-verify.html"
+    },
+    {
+      "id": "export-studio-job",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/job.html"
+    },
+    {
+      "id": "export-studio-failure",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/failure.html"
+    },
+    {
+      "id": "export-studio-gate",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/gate.html"
+    },
+    {
+      "id": "mock-test-drive",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/mock-test-drive.html"
+    },
+    {
+      "id": "export-studio-multi-verify",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/multi-verify.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/MultiExportRun.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/MultiTargetChecklist.tsx"
+      ]
+    },
+    {
+      "id": "catalog-bulk-export",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/bulk-export.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogBulkExportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/MultiExportRun.tsx"
+      ]
     }
   ]
 }

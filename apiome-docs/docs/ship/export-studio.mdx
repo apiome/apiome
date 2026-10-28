@@ -14,10 +14,6 @@ main button at the foot move between them.
 
 <Screenshot id="export-studio" alt="Export studio on the Target step: target cards grouped by family, each with its fidelity tier" />
 
-Two tabs sit under the header: **Export**, the steps below, and **SDK & branding**, where the
-[SDK settings](./sdk-settings.mdx) for generated packages live. Switching tabs keeps your source,
-target, options and step, so **Export** brings you back to where you were.
-
 ## Open the studio
 
 The studio always exports a specific source, so open it from one:
@@ -41,7 +37,6 @@ Opened without a source — from **Export studio** in the rail or the command pa
    Catalog items are not listed here: they stay catalog items until you convert them.
 
 The studio then opens on that source at **2. Target**, and the address is a link you can share.
-The **SDK & branding** tab is still one click away.
 
 The trail above the title reads *your workspace › Ship › Export studio*. **“Back to Versions”** (or
 **“Back to Catalog”**, when you came from the Catalog) sits beside **“Copy link”** at the top right
@@ -109,14 +104,10 @@ to go back to choosing one card.
 
 ### Gateway targets
 
-**Kong Declarative Config** and **Gateway API** write a gateway's own format. A gateway config's
-**Push back** ([Environments](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway)) opens the
-studio on the gateway's target at **4. Verify**, so the fidelity report is the first thing you see;
-the target is offered even when the catalog item was imported from that same gateway. A gateway
-configuration carries no request/response schemas, so schemas are reported as dropped. AWS API
-Gateway, Azure API Management and Apigee targets are still to come (FMT-7.7).
-
-<Screenshot id="export-studio-gateway" alt="Pushing a catalog item back to Kong: the fidelity report for Kong Declarative Config before export" />
+**Kong Declarative Config**, **Gateway API HTTPRoute**, Envoy, Istio, Traefik, AWS API Gateway,
+Azure API Management and Apigee write a gateway's own configuration and sit under **REST & HTTP**.
+Most of them carry routes but no request or response schemas, so schemas are reported as dropped.
+See [Export to an API gateway](./export-to-a-gateway.md) for what each one writes.
 
 ## 3. Options
 
@@ -187,18 +178,10 @@ to request a waiver.
 
 ## Export several catalog items at once
 
-On the [Catalog](../bring-in/catalog.mdx), tick the items you want, then **click “Export *n*…”** in
-the bulk bar.
+The Catalog's bulk bar exports several items to one format in one `.zip`, without the studio — see
+[Export several items at once](./export-catalog-items.mdx#export-several-items-at-once).
 
-1. **Choose a target.** The list shows the targets the first ticked item can export to.
-2. **Click “Generate”.** One job exports every item, each at its latest version.
-3. A table lists each item with its outcome: the fidelity tier, or why it failed. An item that fails
-   does not stop the others.
-4. **Click “Download .zip”.** Each item's files sit in a folder named after the item.
-
-<Screenshot id="catalog-bulk-export" alt="Export 3 catalog items to OpenAPI 3.1: two completed with their tiers, one failed with its reason" />
-
-One export takes at most 100 items. The studio is not involved, and no item becomes a project.
+## Recent export jobs
 
 **Recent export jobs**, under every step, lists earlier jobs with their state, target and progress.
 
@@ -267,5 +250,6 @@ Every step, the source picker, the target grid and the bulk dialog are checked b
 
 ## Where next
 
+- [Export catalog items](./export-catalog-items.mdx) — the dialog, the studio, bulk export and the
+  CLI side by side, with every target's fidelity tier
 - [Understand export fidelity](./export-fidelity.md)
-- [SDK settings](./sdk-settings.mdx)

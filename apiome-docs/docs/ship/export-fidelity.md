@@ -72,7 +72,8 @@ see [Import a specification](../bring-in/import-a-spec.md) for how the same poli
 
 ## The projection map (graph + table)
 
-The **Export** dialog's Fidelity step renders a **Projection map**: a three-column
+The quick **Export** dialog (Fidelity step) and **Export studio → Verify**
+(`/ade/dashboard/export/studio`) both render a **Projection map**: a three-column
 diagram from **source/native construct → canonical model → destination location**,
 banded into *in-destination*, *omitted*, and *unavailable* lanes, with a synchronized
 table underneath. Graph and table are rendered from the same server evidence, so their
@@ -319,6 +320,8 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 ## Related
 
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
+- [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
+- [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference
 - [`apiome-rest/docs/export_projection_author_guide.md`](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_projection_author_guide.md)
