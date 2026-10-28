@@ -25,6 +25,8 @@ import {
   driftCountsText,
   DRIFT_NOTIFICATION_LABEL,
   DRIFT_SEVERITY_VIEW,
+  driftComparePair,
+  driftPrunedNote,
   fetchDriftEvents,
   selectDriftEvent,
   type CatalogDriftEvent,
@@ -88,9 +90,10 @@ export function CatalogDriftPanel({ itemId, active, requestedEventId, dismissedE
   React.useEffect(() => {
     const event = shown.event;
     if (autoCompared.current || !event || !requestedEventId || event.eventId !== requestedEventId) return;
-    if (!event.parentVersionId) return;
+    const pair = driftComparePair(event);
+    if (!pair) return;
     autoCompared.current = true;
-    onCompare({ base: event.parentVersionId, head: event.versionId });
+    onCompare(pair);
   }, [shown.event, requestedEventId, onCompare]);
 
   if (error) {
@@ -104,6 +107,8 @@ export function CatalogDriftPanel({ itemId, active, requestedEventId, dismissedE
   if (!event) return null;
   const view = DRIFT_SEVERITY_VIEW[event.severity];
   const truncated = event.changeCount > event.changes.length;
+  const pair = driftComparePair(event);
+  const prunedNote = driftPrunedNote(event);
 
   return (
     <Card className="cid-panel cid-drift-panel" data-testid="catalog-drift-panel">
@@ -114,11 +119,11 @@ export function CatalogDriftPanel({ itemId, active, requestedEventId, dismissedE
             Each version a live refresh adds is compared with the one before it. The worst change sets the grade.
           </div>
         </div>
-        {event.parentVersionId ? (
+        {pair ? (
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onCompare({ base: event.parentVersionId as string, head: event.versionId })}
+            onClick={() => onCompare(pair)}
             data-testid="catalog-drift-compare"
           >
             Compare these versions
@@ -158,7 +163,8 @@ export function CatalogDriftPanel({ itemId, active, requestedEventId, dismissedE
         <div>
           <dt>Versions</dt>
           <dd className="mono">
-            {event.parentVersionLabel ?? '—'} → {event.versionLabel}
+            {event.parentVersionLabel ?? '—'}
+            {event.parentVersionPruned ? ' (pruned)' : ''} → {event.versionLabel}
           </dd>
         </div>
         <div>
@@ -180,6 +186,12 @@ export function CatalogDriftPanel({ itemId, active, requestedEventId, dismissedE
           </div>
         ) : null}
       </dl>
+
+      {prunedNote ? (
+        <div className="cid-drift-panel__pruned" data-testid="catalog-drift-pruned">
+          {prunedNote}
+        </div>
+      ) : null}
 
       {event.changes.length ? (
         <table className="cid-drift-panel__changes" data-testid="catalog-drift-changes">

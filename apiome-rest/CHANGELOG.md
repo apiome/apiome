@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.491.0] - 2026-10-28
+
+### Added
+- **Version retention for live refresh (MFI-31.5, #4402)** — each catalog item's refresh setting has `keepVersions`
+  (`PUT …/{item_id}/refresh`, 1–1000, default 50; V336 `catalog_item_refresh.keep_versions`). After each
+  refresh-created version (and after its drift is recorded) `app.version_retention` keeps the newest N versions a
+  live refresh created (provenance `refreshTrigger`) and soft-deletes the older ones with `versions.pruned_at`
+  (V336), audited as `catalog.refresh.versions_pruned`. Always kept: tagged versions, conversion-source versions
+  (`conversion_provenance.source_version_id`), breaking-drift versions and their baselines, locked revisions and the
+  item's newest version; hand imports are never pruned. A pruned version answers **410** `version-pruned`
+  (`{code, message, versionId, versionLabel, prunedAt}`) on `GET /v1/versions/{tenant}/{project}/{version}` and
+  `POST /v1/diff/{tenant}/classified` instead of 404. Drift events gain `parentVersionPruned`,
+  `compareBaseVersionId` and `compareBaseVersionLabel` (the nearest kept earlier version when the baseline was
+  pruned). Migration V336. API 1.355.0.
+
 ## [1.490.0] - 2026-10-28
 
 ### Added

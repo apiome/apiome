@@ -211,8 +211,24 @@ describe('CatalogRefreshDialog', () => {
       adapter: 'graphql',
       endpoint: 'https://countries.example.com/graphql',
       options: {},
+      keepVersions: 50,
       credential: null,
     });
+  });
+
+  it('sends Keep versions and refuses one out of range (MFI-31.5)', async () => {
+    const calls = mockFetch({ [`PUT ${URL}`]: () => ({ body: DAILY }) });
+    renderDialog({ ...DAILY, keepVersions: 30 });
+    const keep = screen.getByTestId('catalog-refresh-keep-versions');
+    expect(keep).toHaveValue(30);
+    fireEvent.change(keep, { target: { value: '0' } });
+    fireEvent.click(screen.getByTestId('catalog-refresh-save'));
+    expect(await screen.findByTestId('catalog-refresh-error')).toHaveTextContent('Keep versions must be a whole number');
+    expect(calls).toHaveLength(0);
+    fireEvent.change(keep, { target: { value: '12' } });
+    fireEvent.click(screen.getByTestId('catalog-refresh-save'));
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0].body).toMatchObject({ keepVersions: 12 });
   });
 
   it('keeps a stored credential unless a new one is typed', async () => {

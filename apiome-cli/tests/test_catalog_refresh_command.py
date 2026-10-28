@@ -216,3 +216,23 @@ def test_policy_show_and_set(httpx_mock: HTTPXMock) -> None:
     result = runner.invoke(app, ["catalog", "refresh-policy", "set", "--disabled"])
     assert "Catalog refresh: off" in result.output
     assert json.loads(httpx_mock.get_requests()[-1].content) == {"enabled": False}
+
+
+def test_set_sends_keep_versions_and_show_prints_it(httpx_mock: HTTPXMock) -> None:
+    """MFI-31.5: --keep-versions caps the versions a refresh keeps."""
+    httpx_mock.add_response(method="PUT", url=_REFRESH, json=_refresh(keepVersions=12))
+    result = runner.invoke(
+        app,
+        ["catalog", "refresh", "set", _ITEM, "--endpoint", "https://api.example.com/graphql", "--keep-versions", "12"],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    sent = json.loads(httpx_mock.get_requests(method="PUT")[0].content)
+    assert sent["keepVersions"] == 12 and "credential" not in sent
+    assert "the last 12 refresh versions" in strip_ansi(result.output)
+
+
+def test_set_refuses_keep_versions_out_of_range() -> None:
+    result = runner.invoke(
+        app, ["catalog", "refresh", "set", _ITEM, "--endpoint", "https://x.example/graphql", "--keep-versions", "0"]
+    )
+    assert result.exit_code == EXIT_USAGE

@@ -47,6 +47,7 @@ class FakeRefreshStore:
             "last_fingerprint": None,
             "consecutive_failures": 0,
             "next_check_after": None,
+            "keep_versions": 50,
             "created_at": self.now,
             "updated_at": self.now,
         }
@@ -85,6 +86,7 @@ class FakeRefreshStore:
         options,
         credential=catalog_refresh_store.KEEP_CREDENTIAL,
         user_id=None,
+        keep_versions=None,
     ) -> Dict[str, Any]:
         row = self.rows.get(project_id) or self.add(project_id, tenant_id, adapter_key=adapter_key, endpoint=endpoint)
         if (row["adapter_key"], row["endpoint"]) != (adapter_key, endpoint):
@@ -97,6 +99,8 @@ class FakeRefreshStore:
             consecutive_failures=0,
             next_check_after=None,
         )
+        if keep_versions is not None:
+            row["keep_versions"] = keep_versions
         if credential is not catalog_refresh_store.KEEP_CREDENTIAL:
             if credential is None:
                 row.update(auth_type="none", encrypted_payload=None, key_version=None)

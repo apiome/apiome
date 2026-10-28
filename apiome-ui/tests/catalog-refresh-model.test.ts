@@ -47,6 +47,7 @@ const FORM: RefreshForm = {
   authType: 'keep',
   secret: '',
   headerName: '',
+  keepVersions: '50',
 };
 
 describe('refreshStatusView', () => {
@@ -100,6 +101,10 @@ describe('refreshFormFrom', () => {
     const form = refreshFormFrom({ ...BASE, adapter: 'grpc', endpoint: 'h:443', options: { secure: true }, hasCredential: true });
     expect(form).toMatchObject({ adapter: 'grpc', endpoint: 'h:443', secure: true, authType: 'keep', secret: '' });
   });
+  it('starts Keep versions at the stored value, else 50 (MFI-31.5)', () => {
+    expect(refreshFormFrom({ ...BASE, keepVersions: 12 }).keepVersions).toBe('12');
+    expect(refreshFormFrom({ ...BASE, configured: false }).keepVersions).toBe('50');
+  });
 });
 
 describe('refreshFormError', () => {
@@ -112,6 +117,9 @@ describe('refreshFormError', () => {
     [{ endpoint: 'ftp://x' }, /http/],
     [{ authType: 'bearer' }, /credential/],
     [{ authType: 'header', secret: 'v' }, /header name/],
+    [{ keepVersions: '0' }, /Keep versions must be a whole number from 1 to 1000/],
+    [{ keepVersions: '1001' }, /1 to 1000/],
+    [{ keepVersions: '2.5' }, /whole number/],
   ] as const)('%j is refused', (patch, message) => {
     expect(refreshFormError({ ...FORM, ...patch })).toMatch(message);
   });
@@ -124,6 +132,7 @@ describe('refreshPayload', () => {
       adapter: 'graphql',
       endpoint: 'https://api.example.com/graphql',
       options: {},
+      keepVersions: 50,
     });
   });
   it('sends null to clear it', () => {

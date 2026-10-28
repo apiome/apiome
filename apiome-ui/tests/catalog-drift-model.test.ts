@@ -8,7 +8,9 @@ import {
   driftBadgeLabel,
   driftBadgeTitle,
   driftBannerTitle,
+  driftComparePair,
   driftCountsText,
+  driftPrunedNote,
   driftSettingsSummary,
   driftVersionsSearch,
   DRIFT_SEVERITY_VIEW,
@@ -142,5 +144,23 @@ describe('BFF calls', () => {
       'breakingImmediate',
       'emailEnabled',
     ]);
+  });
+});
+
+
+describe('pruned baselines (MFI-31.5)', () => {
+  it('compares against the version REST names, else the parent', () => {
+    expect(driftComparePair(event('e-1'))).toEqual({ base: 'v-1', head: 'v-2' });
+    expect(driftComparePair({ ...event('e-1'), compareBaseVersionId: 'v-0' })).toEqual({ base: 'v-0', head: 'v-2' });
+    expect(driftComparePair({ ...event('e-1'), compareBaseVersionId: null })).toBeNull();
+  });
+
+  it('explains a pruned baseline', () => {
+    expect(driftPrunedNote(event('e-1'))).toBeNull();
+    const pruned = { ...event('e-1'), parentVersionPruned: true, compareBaseVersionId: 'v-0', compareBaseVersionLabel: '0.9.0' };
+    expect(driftPrunedNote(pruned)).toBe('Version 1.0.0 was pruned by version retention; comparing with 0.9.0.');
+    expect(driftPrunedNote({ ...pruned, compareBaseVersionId: null, compareBaseVersionLabel: null })).toBe(
+      'Version 1.0.0 was pruned by version retention, and no earlier version is kept to compare with.',
+    );
   });
 });

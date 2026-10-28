@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.354.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.355.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-refresh` · 6 operations
 
@@ -216,6 +216,7 @@ An item's refresh setting and the outcome of its last check. Never carries a cre
 | `lastFingerprint` | string or null | no | Last Fingerprint. |
 | `consecutiveFailures` | integer | no | Consecutive Failures. |
 | `nextCheckAt` | string or null | no | When the sweep next checks the item (null for off / manual). |
+| `keepVersions` | integer | no | Refresh-created versions kept; older ones are pruned (MFI-31.5). |
 | `tenantEnabled` | boolean | no | Tenant Enabled. |
 | `cadences` | array of string | no | Cadences. |
 | `adapters` | array of string | no | Adapters that can be refreshed. |
@@ -243,6 +244,7 @@ to replace it.
 | `endpoint` | string | yes | An http(s) URL for GraphQL; a `host:port` target for gRPC. |
 | `options` | object | no | Adapter options; gRPC reads `secure` (TLS, default false). |
 | `credential` | `CatalogRefreshCredential` or null | no | Credential. |
+| `keepVersions` | integer or null | no | How many refresh-created versions to keep (MFI-31.5); older ones are pruned unless tagged, a conversion source, breaking drift or its baseline, locked, or the newest. Leave out to keep the stored value (50 for a new setting). |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

@@ -31,6 +31,7 @@ import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 import {
   REFRESH_AUTH_OPTIONS,
   REFRESH_CADENCE_OPTIONS,
+  REFRESH_KEEP_VERSIONS_MAX,
   refreshAdapterLabel,
   refreshEndpointHint,
   refreshFormError,
@@ -57,6 +58,7 @@ const FIELD = {
   adapter: 'catalog-refresh-adapter',
   endpoint: 'catalog-refresh-endpoint',
   cadence: 'catalog-refresh-cadence',
+  keep: 'catalog-refresh-keep-versions',
   secure: 'catalog-refresh-secure',
   auth: 'catalog-refresh-auth',
   header: 'catalog-refresh-header-name',
@@ -115,7 +117,7 @@ export function CatalogRefreshDialog({ open, item, refresh, onOpenChange, onSave
         <DialogHeader>
           <DialogTitle>Live refresh for {item.name}</DialogTitle>
           <DialogDescription>
-            Apiome re-discovers the live source on this cadence and records whether it changed. A failed
+            Apiome re-discovers the live source on this cadence and adds a version when it changed. A failed
             check is shown on the card and never changes the item.
           </DialogDescription>
         </DialogHeader>
@@ -172,6 +174,23 @@ export function CatalogRefreshDialog({ open, item, refresh, onOpenChange, onSave
                 ))}
               </SelectContent>
             </Select>
+          </FormField>
+
+          <FormField
+            label="Keep versions"
+            htmlFor={FIELD.keep}
+            helperText="Keeps the newest versions refresh adds; older ones are pruned. Tagged, breaking and converted versions are always kept."
+          >
+            <Input
+              id={FIELD.keep}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={REFRESH_KEEP_VERSIONS_MAX}
+              value={form.keepVersions}
+              onChange={(event) => update({ keepVersions: event.target.value })}
+              data-testid="catalog-refresh-keep-versions"
+            />
           </FormField>
 
           <FormField label="Credential" htmlFor={FIELD.auth}>

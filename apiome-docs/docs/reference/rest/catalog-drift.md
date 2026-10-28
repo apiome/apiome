@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.354.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.355.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-drift` · 4 operations
 
@@ -146,6 +146,9 @@ One drift event with its classified changes.
 | `notification` | enum `"none"`, `"sent"`, `"pending_digest"`, `"digested"` | yes | Notification. |
 | `notifiedAt` | string or null | no | Notified At. |
 | `dismissedAt` | string or null | no | Dismissed At. |
+| `parentVersionPruned` | boolean | no | The version it was compared with was pruned by version retention (MFI-31.5). |
+| `compareBaseVersionId` | string or null | no | The version to diff against: the compared version while it is kept, else the newest kept version before this one; null when there is none. |
+| `compareBaseVersionLabel` | string or null | no | Compare Base Version Label. |
 | `changes` | array of `CatalogDriftChange` | no | Worst first; at most 200 (changeCount is the full count). |
 
 ### `CatalogDriftEventList` {#schema-catalogdrifteventlist}

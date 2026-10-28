@@ -32,6 +32,7 @@ from .catalog_drift import (
 from .database import db
 from .models import CatalogDriftBadge
 from .permissions import Action, Resource, enforce_permission
+from .version_retention import nearest_live_earlier_version
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,20 @@ class CatalogDriftEvent(CatalogDriftBadge):
     notification: Literal["none", "sent", "pending_digest", "digested"]
     notified_at: Optional[str] = Field(default=None, alias="notifiedAt")
     dismissed_at: Optional[str] = Field(default=None, alias="dismissedAt")
+    parent_version_pruned: bool = Field(
+        default=False,
+        alias="parentVersionPruned",
+        description="The version it was compared with was pruned by version retention (MFI-31.5).",
+    )
+    compare_base_version_id: Optional[str] = Field(
+        default=None,
+        alias="compareBaseVersionId",
+        description=(
+            "The version to diff against: the compared version while it is kept, else the newest kept "
+            "version before this one; null when there is none."
+        ),
+    )
+    compare_base_version_label: Optional[str] = Field(default=None, alias="compareBaseVersionLabel")
     changes: List[CatalogDriftChange] = Field(
         default_factory=list, description="Worst first; at most 200 (changeCount is the full count)."
     )
@@ -131,9 +146,29 @@ def _badge_fields(row: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _compare_base(row: Mapping[str, Any]) -> Dict[str, Any]:
+    """The diff baseline of an event: its compared version while kept, else the nearest kept earlier one."""
+    parent_id = row.get("parent_version_id")
+    gone = bool(row.get("parent_deleted")) or bool(row.get("parent_pruned"))
+    if parent_id and not gone:
+        return {"id": str(parent_id), "label": row.get("parent_version_label")}
+    if not row.get("version_id"):
+        return {"id": None, "label": None}
+    try:
+        nearest = nearest_live_earlier_version(db, str(row["project_id"]), str(row["version_id"]))
+    except Exception:  # noqa: BLE001 - a missing fallback only hides the compare button
+        logger.warning("drift compare fallback failed event=%s", row.get("id"), exc_info=True)
+        nearest = None
+    return {"id": str(nearest["id"]), "label": nearest.get("version_id")} if nearest else {"id": None, "label": None}
+
+
 def _event_out(row: Mapping[str, Any]) -> CatalogDriftEvent:
     """An event row as the API returns it."""
+    base = _compare_base(row)
     return CatalogDriftEvent(
+        parent_version_pruned=bool(row.get("parent_pruned")),
+        compare_base_version_id=base["id"],
+        compare_base_version_label=base["label"],
         **_badge_fields(row),
         parent_version_id=str(row["parent_version_id"]) if row.get("parent_version_id") else None,
         parent_version_label=row.get("parent_version_label"),

@@ -166,11 +166,18 @@ def latest_open_events(db: Any, tenant_id: str, project_ids: Iterable[str]) -> D
 
 
 def list_events(db: Any, tenant_id: str, project_id: str, *, limit: int = 50) -> List[Dict[str, Any]]:
-    """An item's drift events, newest first, with their changes."""
+    """An item's drift events, newest first, with their changes.
+
+    Each row also says whether the version it was compared with is gone (MFI-31.5:
+    ``parent_deleted``, ``parent_pruned``), so a diff can fall back to a version still kept.
+    """
     rows = db.execute_query(
         f"""
-        SELECT {_EVENT_COLUMNS}
+        SELECT {_EVENT_COLUMNS},
+               (pv.id IS NOT NULL AND pv.deleted_at IS NOT NULL) AS parent_deleted,
+               (pv.pruned_at IS NOT NULL) AS parent_pruned
         FROM apiome.catalog_drift_events e
+        LEFT JOIN apiome.versions pv ON pv.id = e.parent_version_id
         WHERE e.tenant_id = %s::uuid AND e.project_id = %s::uuid
         ORDER BY e.created_at DESC, e.id DESC
         LIMIT %s

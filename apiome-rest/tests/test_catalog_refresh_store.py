@@ -76,7 +76,7 @@ def test_upsert_keeps_the_credential_by_default():
     assert "IS DISTINCT FROM (EXCLUDED.adapter_key, EXCLUDED.endpoint)" in sql
     assert "next_check_after = NULL" in sql
     # keep flags (three CASEs) are True; the inserted credential is empty.
-    assert params[11:14] == (True, True, True)
+    assert params[13:16] == (True, True, True)
     assert params[6:9] == ("none", None, None)
 
 
@@ -95,7 +95,7 @@ def test_upsert_replaces_with_a_sealed_credential():
     params = db.calls[0][1]
     assert params[5] == '{"a": 1}'
     assert params[6] == "bearer" and bytes(params[7].adapted) == b"blob" and params[8] == 2
-    assert params[11:14] == (False, False, False)
+    assert params[13:16] == (False, False, False)
 
 
 def test_upsert_clears_the_credential_with_none():
@@ -111,7 +111,7 @@ def test_upsert_clears_the_credential_with_none():
         credential=None,
     )
     params = db.calls[0][1]
-    assert params[6:9] == ("none", None, None) and params[11:14] == (False, False, False)
+    assert params[6:9] == ("none", None, None) and params[13:16] == (False, False, False)
 
 
 def test_failure_increments_and_backs_off_without_touching_the_fingerprint():
@@ -169,3 +169,30 @@ def test_the_migration_vocabulary_matches_the_app(repo_root: Path):
     text = (repo_root / _MIGRATION).read_text()
     for value in (*CADENCES, *AUTH_TYPES):
         assert f"'{value}'" in text
+
+
+def test_upsert_sets_or_keeps_keep_versions():
+    """MFI-31.5: ``keep_versions`` defaults to 50 for a new setting and is kept when left out."""
+    db = _RecordingDb([{"project_id": _ITEM}])
+    store.upsert_refresh(
+        db,
+        project_id=_ITEM,
+        tenant_id=_TENANT,
+        cadence="daily",
+        adapter_key="graphql",
+        endpoint="https://x.example/graphql",
+        options={},
+        keep_versions=12,
+    )
+    sql, params = db.calls[0]
+    assert "COALESCE(%s, 50)" in sql and "keep_versions = COALESCE(%s, r.keep_versions)" in sql
+    assert params[11:13] == (12, 12)
+    assert "r.keep_versions" in sql.split("SELECT", 1)[1]
+
+
+def test_the_v336_migration_adds_retention_columns():
+    migration = "apiome-db/scripts/V336__refresh_version_retention_4402.sql"
+    sql = (Path(__file__).resolve().parents[2] / migration).read_text()
+    assert "ADD COLUMN IF NOT EXISTS keep_versions INTEGER NOT NULL DEFAULT 50" in sql
+    assert "CHECK (keep_versions BETWEEN 1 AND 1000)" in sql
+    assert "ADD COLUMN IF NOT EXISTS pruned_at TIMESTAMPTZ" in sql

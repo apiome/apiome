@@ -276,3 +276,22 @@ def test_the_tenant_switch_round_trips_and_is_audited(store, audits):
     assert audits[-1]["action"] == AUDIT_POLICY and audits[-1]["detail"] == {"enabled": False}
     store.add(_ITEM, _TENANT)
     assert client.get(_URL).json()["tenantEnabled"] is False
+
+
+# --- MFI-31.5: version retention -------------------------------------------------------------
+
+
+def test_keep_versions_defaults_to_50_and_round_trips(store, audits):
+    with patch("app.catalog_refresh_routes.enforce_permission", return_value=_ACTOR):
+        created = _put()
+        assert created.json()["keepVersions"] == 50
+        changed = _put({**_BODY, "keepVersions": 12}).json()
+        kept = _put().json()  # left out: the stored value stays
+    assert changed["keepVersions"] == 12 and kept["keepVersions"] == 12
+    assert store.rows[_ITEM]["keep_versions"] == 12
+
+
+@pytest.mark.parametrize("value", [0, 1001, "many"])
+def test_keep_versions_out_of_range_is_refused(store, value):
+    with patch("app.catalog_refresh_routes.enforce_permission", return_value=_ACTOR):
+        assert _put({**_BODY, "keepVersions": value}).status_code == 422
