@@ -247,11 +247,14 @@ Every control on the list and on an item's page works from the keyboard.
   [API reference](../reference/api-reference.md).
 - Live refresh: `apiome catalog refresh show|set|check|off <item-id>` and
   `apiome catalog refresh-policy show|set` — see [Keep a catalog item fresh](./catalog-refresh.mdx).
+- Drift: `apiome catalog drift list|dismiss` and `apiome catalog drift-alerts show|set` — see
+  [Drift](./catalog-refresh.mdx#drift).
 
 ## Where next
 
 - [Keep a catalog item fresh](./catalog-refresh.mdx) — re-check a GraphQL or gRPC item against its
-  live endpoint on a schedule
+  live endpoint on a schedule, and hear about drift: a card with a **Breaking**, **Dangerous** or
+  **Safe drift** badge has a new version from its live source
 - [Search across formats](./search-across-formats.md) — find an operation, type or message in
   every catalog item and Project at once
 - [Import wizard](./import-wizard.mdx)

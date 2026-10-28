@@ -94,6 +94,18 @@ def _try_lock(db: Any) -> bool:
     return bool(rows and rows[0].get("locked"))
 
 
+async def _digests(db: Any, send_digests: Optional[Callable[[Any], int]]) -> None:
+    """Send the due drift digests (MFI-31.3); a failure is logged, never raised."""
+    if send_digests is None:
+        from .catalog_drift_service import send_due_digests as send_digests
+    try:
+        sent = await asyncio.to_thread(send_digests, db)
+        if sent:
+            _logger.info("catalog refresh sweep sent %d drift digest(s)", sent)
+    except Exception:  # noqa: BLE001 - digests never fail the tick
+        _logger.warning("catalog drift digest pass failed", exc_info=True)
+
+
 def _unlock(db: Any) -> None:
     """Release the sweep's session advisory lock."""
     db.execute_query("SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked", (SWEEP_LOCK_KEY,))
@@ -104,14 +116,18 @@ async def process_catalog_refresh_sweep(
     *,
     politeness: Optional[AsyncHostPoliteness] = None,
     store: Any = catalog_refresh_store,
+    send_digests: Optional[Callable[[Any], int]] = None,
 ) -> Optional[int]:
-    """Run one sweep tick: check every due catalog item, bounded.
+    """Run one sweep tick: check every due catalog item, bounded, then send due drift digests.
 
     Args:
         db: Database handle for this tick. Blocking queries run in worker threads.
         politeness: The per-host gate (tests inject one with a fake clock); a fresh one per tick
             by default.
         store: The storage module (tests inject a fake).
+        send_digests: Sends the tenants' due drift digests (MFI-31.3); defaults to
+            :func:`app.catalog_drift_service.send_due_digests`. It runs under the sweep lock, after
+            the checks, so a tick's breaking drift is in a digest no later than the next tick.
 
     Returns:
         The number of checks run, ``0`` when the global kill switch is off or nothing is due, or
@@ -128,6 +144,7 @@ async def process_catalog_refresh_sweep(
     try:
         due = await asyncio.to_thread(store.list_due, db, limit=MAX_ITEMS_PER_TICK)
         if not due:
+            await _digests(db, send_digests)
             return 0
 
         gate = politeness or AsyncHostPoliteness(float(settings.catalog_refresh_host_delay_seconds))
@@ -154,6 +171,7 @@ async def process_catalog_refresh_sweep(
             if isinstance(result, BaseException):
                 _logger.error("catalog refresh check crashed project_id=%s", row.get("project_id"), exc_info=result)
         _logger.info("catalog refresh sweep checked %d due item(s)", len(due))
+        await _digests(db, send_digests)
         return len(due)
     finally:
         await asyncio.to_thread(_unlock, db)

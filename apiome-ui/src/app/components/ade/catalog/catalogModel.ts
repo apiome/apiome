@@ -25,6 +25,7 @@
  */
 
 import { isFeatureReleased } from '@lib/feature-release';
+import type { CatalogDriftBadgeData } from './catalogDriftModel';
 import { allowEverything, type PermissionCheck } from '../access/permissionCheck';
 import type { EntityOwner } from '@lib/owners';
 import { dataTableRangeLabel, type DataTableSortState } from '@/app/components/ui/DataTable';
@@ -93,6 +94,8 @@ export interface CatalogItem {
   identityGroupId?: string | null;
   /** The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted. */
   conversion?: CatalogConversion | null;
+  /** The newest undismissed drift a live refresh recorded (MFI-31.3); absent or null for none. */
+  drift?: CatalogDriftBadgeData | null;
   /** Auto-derived paradigm — the latest revision's protocol (MFI-6.3). */
   paradigm?: string | null;
   /** Manual domain id (`finance`, `iot`, …), or null when none is set (MFI-6.3). */

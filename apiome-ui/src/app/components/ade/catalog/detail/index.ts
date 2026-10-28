@@ -13,3 +13,5 @@ export * from './CatalogItemProvenance';
 export * from './CatalogConvertedStrip';
 export * from './CatalogItemRefreshCard';
 export * from './catalogRefreshModel';
+export * from './CatalogDriftBanner';
+export * from './CatalogDriftPanel';

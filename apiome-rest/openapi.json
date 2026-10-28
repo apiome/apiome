@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.352.0",
+    "version": "1.353.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15317,6 +15317,397 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for check catalog item refreshresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/catalog/{tenant_slug}/drift-notifications": {
+      "get": {
+        "tags": [
+          "catalog-drift"
+        ],
+        "summary": "Get Catalog Drift Settings",
+        "description": "Read the tenant's catalog drift alert settings (``projects:view``).",
+        "operationId": "get_catalog_drift_settings_v1_catalog__tenant_slug__drift_notifications_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Catalog Drift Settingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Catalog Drift Settingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Catalog Drift Settings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Catalog Drift Settings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get catalog drift settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDriftSettingsOut",
+                  "description": "Response payload for get catalog drift settingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get catalog drift settingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "catalog-drift"
+        ],
+        "summary": "Put Catalog Drift Settings",
+        "description": "Replace the tenant's catalog drift alert settings (``imports:edit``).\n\nWhich severities are announced (the rest only badge), immediate or daily-digest delivery,\nwhether breaking drift skips the digest, and the stored email opt-in. Announcements go to the\ntenant's push-webhook subscriptions and the item's owner team; a version created by **Check\nnow** is never announced.",
+        "operationId": "put_catalog_drift_settings_v1_catalog__tenant_slug__drift_notifications_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Catalog Drift Settingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Catalog Drift Settingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Catalog Drift Settings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Catalog Drift Settings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogDriftSettings",
+                "description": "Request body for put catalog drift settingsrequest."
+              }
+            }
+          },
+          "description": "Request body for put catalog drift settings."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put catalog drift settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDriftSettingsOut",
+                  "description": "Response payload for put catalog drift settingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put catalog drift settingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/catalog/{tenant_slug}/{item_id}/drift": {
+      "get": {
+        "tags": [
+          "catalog-drift"
+        ],
+        "summary": "List Catalog Item Drift",
+        "description": "List the item's drift events, newest first, with their classified changes (``projects:view``).",
+        "operationId": "list_catalog_item_drift_v1_catalog__tenant_slug___item_id__drift_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id",
+              "description": "Item Id schema."
+            },
+            "description": "Catalog item identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Catalog Item Driftauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Catalog Item Driftauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Catalog Item Drift Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Catalog Item Drift Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list catalog item drift.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDriftEventList",
+                  "description": "Response payload for list catalog item driftresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list catalog item driftresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/catalog/{tenant_slug}/{item_id}/drift/{event_id}/dismiss": {
+      "post": {
+        "tags": [
+          "catalog-drift"
+        ],
+        "summary": "Dismiss Catalog Item Drift",
+        "description": "Dismiss a drift event: its badge and banner go away; the event and its changes stay (``projects:edit``).\n\nDismissing an already-dismissed event changes nothing.\n\nRaises:\n    HTTPException: 404 when the item or the event is not found.",
+        "operationId": "dismiss_catalog_item_drift_v1_catalog__tenant_slug___item_id__drift__event_id__dismiss_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id",
+              "description": "Item Id schema."
+            },
+            "description": "Catalog item identifier."
+          },
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id",
+              "description": "Event Id schema."
+            },
+            "description": "Path parameter identifying the event id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Dismiss Catalog Item Driftauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Dismiss Catalog Item Driftauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Dismiss Catalog Item Drift Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Dismiss Catalog Item Drift Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for dismiss catalog item drift.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDriftEvent",
+                  "description": "Response payload for dismiss catalog item driftresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for dismiss catalog item driftresponse422."
                 }
               }
             }
@@ -33032,7 +33423,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-27T23:55:57Z"
+                          "example": "2026-10-28T01:06:37Z"
                         },
                         "method": {
                           "type": "string",
@@ -113949,6 +114340,516 @@
         "title": "CatalogConversionRef",
         "description": "The latest catalog \u2192 OpenAPI conversion of a catalog item (MFI-23.11), or absent when it has\nnever been converted.\n\nProjected from the ``apiome.conversion_provenance`` ledger (MFI-22.5): once a catalog item has been\nconverted it carries a back-link to the publishable **Project** the convert job produced, so the\nCatalog card/detail can show **\"Converted \u2192 {project}\"**. ``reconverted`` is ``True`` when the\nlatest conversion superseded a prior one (the source changed and was re-converted, appending a new\nversion rather than minting a duplicate Project). ``projectName`` / ``projectSlug`` come from the\ntarget Project row (``None`` if it was since deleted, which ``projectDeleted`` flags), so the UI can\nrender a friendly label and decide whether the link is still live."
       },
+      "CatalogDriftBadge": {
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "title": "Eventid",
+            "description": "Event ID.",
+            "example": "example"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "safe",
+              "dangerous",
+              "breaking"
+            ],
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "safe"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "type": "string",
+            "title": "Versionlabel",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          },
+          "changeCount": {
+            "type": "integer",
+            "title": "Changecount",
+            "description": "Number of change.",
+            "example": 1
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "sweep",
+              "manual"
+            ],
+            "title": "Trigger",
+            "description": "Trigger.",
+            "example": "sweep"
+          },
+          "detectedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Badge schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Badge schema."
+              }
+            ],
+            "title": "Detectedat",
+            "description": "Detected At."
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "description": "The item's Versions tab, opened on this drift.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eventId",
+          "severity",
+          "versionId",
+          "versionLabel",
+          "changeCount",
+          "trigger",
+          "link"
+        ],
+        "title": "CatalogDriftBadge",
+        "description": "An item's newest undismissed drift (MFI-31.3), as the catalog card badge and the item banner show it."
+      },
+      "CatalogDriftChange": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "safe",
+              "dangerous",
+              "breaking"
+            ],
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "safe"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Change schema."
+              }
+            ],
+            "title": "Category",
+            "description": "Classification category for the primitive type."
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Change schema."
+              }
+            ],
+            "title": "Kind",
+            "description": "Kind."
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Change schema."
+              }
+            ],
+            "title": "Key",
+            "description": "Key."
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Change schema."
+              }
+            ],
+            "title": "Ruleid",
+            "description": "Rule ID."
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Change schema."
+              }
+            ],
+            "title": "Rationale",
+            "description": "Rationale."
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity"
+        ],
+        "title": "CatalogDriftChange",
+        "description": "One classified change."
+      },
+      "CatalogDriftEvent": {
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "title": "Eventid",
+            "description": "Event ID.",
+            "example": "example"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "safe",
+              "dangerous",
+              "breaking"
+            ],
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "safe"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "type": "string",
+            "title": "Versionlabel",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          },
+          "changeCount": {
+            "type": "integer",
+            "title": "Changecount",
+            "description": "Number of change.",
+            "example": 1
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "sweep",
+              "manual"
+            ],
+            "title": "Trigger",
+            "description": "Trigger.",
+            "example": "sweep"
+          },
+          "detectedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Event schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Event schema."
+              }
+            ],
+            "title": "Detectedat",
+            "description": "Detected At."
+          },
+          "link": {
+            "type": "string",
+            "title": "Link",
+            "description": "The item's Versions tab, opened on this drift.",
+            "example": "example"
+          },
+          "parentVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Event schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Event schema."
+              }
+            ],
+            "title": "Parentversionid",
+            "description": "Parent Version ID."
+          },
+          "parentVersionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Event schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Event schema."
+              }
+            ],
+            "title": "Parentversionlabel",
+            "description": "Parent Version Label."
+          },
+          "notification": {
+            "type": "string",
+            "enum": [
+              "none",
+              "sent",
+              "pending_digest",
+              "digested"
+            ],
+            "title": "Notification",
+            "description": "Notification.",
+            "example": "none"
+          },
+          "notifiedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Event schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Event schema."
+              }
+            ],
+            "title": "Notifiedat",
+            "description": "Notified At."
+          },
+          "dismissedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Catalog Drift Event schema."
+              },
+              {
+                "type": "null",
+                "description": "Catalog Drift Event schema."
+              }
+            ],
+            "title": "Dismissedat",
+            "description": "Dismissed At."
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogDriftChange"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Worst first; at most 200 (changeCount is the full count).",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "eventId",
+          "severity",
+          "versionId",
+          "versionLabel",
+          "changeCount",
+          "trigger",
+          "link",
+          "notification"
+        ],
+        "title": "CatalogDriftEvent",
+        "description": "One drift event with its classified changes."
+      },
+      "CatalogDriftEventList": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogDriftEvent"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Events.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "CatalogDriftEventList",
+        "description": "An item's drift events, newest first."
+      },
+      "CatalogDriftSettings": {
+        "properties": {
+          "notifyBreaking": {
+            "type": "boolean",
+            "title": "Notifybreaking",
+            "description": "Announce breaking drift.",
+            "default": true,
+            "example": false
+          },
+          "notifyDangerous": {
+            "type": "boolean",
+            "title": "Notifydangerous",
+            "description": "Announce dangerous drift.",
+            "default": true,
+            "example": false
+          },
+          "notifySafe": {
+            "type": "boolean",
+            "title": "Notifysafe",
+            "description": "Announce safe drift. Off: safe drift only shows a badge.",
+            "default": false,
+            "example": false
+          },
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "immediate",
+              "daily_digest"
+            ],
+            "title": "Delivery",
+            "description": "immediate: one webhook per drift; daily_digest: one webhook a day listing it all.",
+            "default": "immediate",
+            "example": "immediate"
+          },
+          "breakingImmediate": {
+            "type": "boolean",
+            "title": "Breakingimmediate",
+            "description": "With daily_digest, still send breaking drift right away.",
+            "default": true,
+            "example": false
+          },
+          "emailEnabled": {
+            "type": "boolean",
+            "title": "Emailenabled",
+            "description": "Opt in to drift email. Stored for a later email channel; no email is sent yet.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CatalogDriftSettings",
+        "description": "The tenant's drift alert settings."
+      },
+      "CatalogDriftSettingsOut": {
+        "properties": {
+          "notifyBreaking": {
+            "type": "boolean",
+            "title": "Notifybreaking",
+            "description": "Announce breaking drift.",
+            "default": true,
+            "example": false
+          },
+          "notifyDangerous": {
+            "type": "boolean",
+            "title": "Notifydangerous",
+            "description": "Announce dangerous drift.",
+            "default": true,
+            "example": false
+          },
+          "notifySafe": {
+            "type": "boolean",
+            "title": "Notifysafe",
+            "description": "Announce safe drift. Off: safe drift only shows a badge.",
+            "default": false,
+            "example": false
+          },
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "immediate",
+              "daily_digest"
+            ],
+            "title": "Delivery",
+            "description": "immediate: one webhook per drift; daily_digest: one webhook a day listing it all.",
+            "default": "immediate",
+            "example": "immediate"
+          },
+          "breakingImmediate": {
+            "type": "boolean",
+            "title": "Breakingimmediate",
+            "description": "With daily_digest, still send breaking drift right away.",
+            "default": true,
+            "example": false
+          },
+          "emailEnabled": {
+            "type": "boolean",
+            "title": "Emailenabled",
+            "description": "Opt in to drift email. Stored for a later email channel; no email is sent yet.",
+            "default": false,
+            "example": false
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "False when the tenant uses the defaults.",
+            "example": false
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for catalog drift settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for catalog drift settings."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "lastDigestAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for catalog drift settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for catalog drift settings."
+              }
+            ],
+            "title": "Lastdigestat",
+            "description": "Last Digest At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "configured"
+        ],
+        "title": "CatalogDriftSettingsOut",
+        "description": "The settings plus when they last changed and when the last digest went out."
+      },
       "CatalogEntity": {
         "properties": {
           "kind": {
@@ -114613,6 +115514,18 @@
             ],
             "description": "Conversion."
           },
+          "drift": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogDriftBadge"
+              },
+              {
+                "type": "null",
+                "description": "Catalog Item Detail schema."
+              }
+            ],
+            "description": "Drift."
+          },
           "identityGroupId": {
             "anyOf": [
               {
@@ -115002,6 +115915,18 @@
               }
             ],
             "description": "Conversion."
+          },
+          "drift": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogDriftBadge"
+              },
+              {
+                "type": "null",
+                "description": "Catalog Item schema."
+              }
+            ],
+            "description": "Drift."
           },
           "identityGroupId": {
             "anyOf": [
@@ -116809,7 +117734,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "completed_at": {
             "anyOf": [
@@ -118405,7 +119330,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           }
         },
         "type": "object",
@@ -118461,7 +119386,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "workspaces": {
             "items": {
@@ -119065,7 +119990,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "comment_count": {
             "type": "integer",
@@ -119293,7 +120218,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "comment_count": {
             "type": "integer",
@@ -120060,14 +120985,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -123353,7 +124278,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "b5099785-2bae-40a5-aec0-312e3668db25"
+            "example": "db0a9f5e-8026-466a-9968-023e01f12895"
           },
           "method": {
             "type": "string",
@@ -125880,7 +126805,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -127776,7 +128701,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "browse_url": {
             "anyOf": [
@@ -175009,7 +175934,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           }
         },
         "additionalProperties": false,
@@ -187464,13 +188389,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           }
         },
         "additionalProperties": false,
@@ -188974,7 +189899,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:36Z"
           },
           "detected_by": {
             "anyOf": [
@@ -197289,14 +198214,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:37Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-27T23:55:57Z"
+            "example": "2026-10-28T01:06:37Z"
           },
           "outcome": {
             "anyOf": [

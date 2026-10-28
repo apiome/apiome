@@ -22,6 +22,7 @@ import { IMPORT_REPORTS_ROUTE } from '@lib/catalog-migrations';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeftRight,
+  BellRing,
   CircleHelp,
   LayoutGrid,
   Link2,
@@ -95,6 +96,7 @@ import {
   CATALOG_SORT_OPTIONS,
   catalogSourceOptions,
   CatalogAboutDialog,
+  CatalogDriftAlertsDialog,
   CatalogBulkConvertDialog,
   CatalogCategoriesDialog,
   CatalogBulkFailureList,
@@ -245,6 +247,8 @@ export default function CatalogClient() {
   /* What the viewer's role may write (RC6-H5): a control the API would refuse is not offered. */
   const permissions = useMyPermissions(Boolean(currentTenantId));
   const importControl = controlState(permissions, 'imports:create');
+  // MFI-31.3: the workspace's drift alert settings are saved with `imports:edit`, like the refresh switch.
+  const driftAlertsControl = controlState(permissions, 'imports:edit');
 
   // ---- the list ---------------------------------------------------------------------------
 
@@ -521,6 +525,7 @@ export default function CatalogClient() {
   const [importOpen, setImportOpen] = React.useState(false);
   /** "How the catalog works" — the explainer and the supported-formats list. */
   const [aboutOpen, setAboutOpen] = React.useState(false);
+  const [driftAlertsOpen, setDriftAlertsOpen] = React.useState(false);
   const [primitiveSource, setPrimitiveSource] =
     React.useState<PrimitiveImportInitialSource | null>(null);
 
@@ -1121,6 +1126,19 @@ export default function CatalogClient() {
                 <Link href={IMPORT_REPORTS_ROUTE}>Import reports</Link>
               </Button>
             ) : null}
+            {/* MFI-31.3: who hears about drift a scheduled live refresh finds, and when. */}
+            {currentTenantId && driftAlertsControl !== 'hidden' ? (
+              <Button
+                variant="outline"
+                disabled={driftAlertsControl === 'disabled'}
+                title={driftAlertsControl === 'disabled' ? PERMISSIONS_PENDING_TITLE : undefined}
+                onClick={() => setDriftAlertsOpen(true)}
+                data-testid="catalog-drift-alerts"
+              >
+                <BellRing aria-hidden />
+                Drift alerts
+              </Button>
+            ) : null}
             {currentUserId && importControl !== 'hidden' ? (
               <Button
                 kbd="I"
@@ -1434,6 +1452,7 @@ export default function CatalogClient() {
       ) : null}
 
       <CatalogAboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      {driftAlertsOpen ? <CatalogDriftAlertsDialog open onOpenChange={setDriftAlertsOpen} /> : null}
 
       {/* The catalog importer (MFI-23.12): store-raw intake — the source is kept in its
           original format and converted only when the user is ready, not at import time. */}

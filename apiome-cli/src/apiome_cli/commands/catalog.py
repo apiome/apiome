@@ -8,6 +8,10 @@ check now and exits ``7`` when it failed, so a pipeline can gate on it.
 
 ``apiome catalog refresh-policy show|set`` read and flip the workspace kill switch.
 
+``apiome catalog drift list|dismiss`` read an item's drift — the classified change (safe, dangerous,
+breaking) each refresh-created version brought — and clear its badge; ``apiome catalog drift-alerts
+show|set`` read and change who hears about drift and when (MFI-31.3, #4400).
+
 A credential never travels on the command line: ``--credentials-file`` names a JSON file (or
 ``-`` for standard input) with the type's fields. ``--format json`` (or the global ``--json``)
 prints the API response.
@@ -22,6 +26,13 @@ import httpx
 import typer
 
 from apiome_cli.client import api_paths
+from apiome_cli.client.catalog_drift import (
+    DELIVERIES,
+    alerts_body,
+    alerts_rows,
+    change_rows,
+    event_rows,
+)
 from apiome_cli.client.catalog_refresh import (
     AUTH_TYPES,
     CADENCES,
@@ -38,7 +49,7 @@ from apiome_cli.terminal import confirm_action
 
 app = typer.Typer(
     name="catalog",
-    help="Catalog items: keep an item fresh from its live source.",
+    help="Catalog items: keep an item fresh from its live source and watch its drift.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -57,8 +68,24 @@ policy_app = typer.Typer(
     add_completion=False,
 )
 
+drift_app = typer.Typer(
+    name="drift",
+    help="What a live refresh changed in an item: classified drift and its badge.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+
+alerts_app = typer.Typer(
+    name="drift-alerts",
+    help="Who hears about catalog drift, and when: the workspace's drift alert settings.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+
 app.add_typer(refresh_app, name="refresh")
 app.add_typer(policy_app, name="refresh-policy")
+app.add_typer(drift_app, name="drift")
+app.add_typer(alerts_app, name="drift-alerts")
 
 _ROW_COLUMNS = (("Field", "field", None), ("Value", "value", None))
 _FORMATS = ("table", "json")
@@ -79,6 +106,18 @@ def refresh_group(ctx: typer.Context) -> None:
 @policy_app.callback(invoke_without_command=True)
 def policy_group(ctx: typer.Context) -> None:
     """Catalog refresh policy command group."""
+    group_callback_without_subcommand(ctx)
+
+
+@drift_app.callback(invoke_without_command=True)
+def drift_group(ctx: typer.Context) -> None:
+    """Catalog drift command group."""
+    group_callback_without_subcommand(ctx)
+
+
+@alerts_app.callback(invoke_without_command=True)
+def alerts_group(ctx: typer.Context) -> None:
+    """Catalog drift alerts command group."""
     group_callback_without_subcommand(ctx)
 
 
@@ -250,3 +289,125 @@ def set_policy(
         emit_json(body)
     else:
         typer.echo(f"Catalog refresh: {'on' if body.get('enabled') else 'off'}")
+
+
+# ---------------------------------------------------------------------------------------
+# Drift (MFI-31.3)
+# ---------------------------------------------------------------------------------------
+
+_EVENT_COLUMNS = (
+    ("Event", "id", None),
+    ("Severity", "severity", None),
+    ("Versions", "versions", None),
+    ("Changes", "changes", None),
+    ("Trigger", "trigger", None),
+    ("State", "state", None),
+)
+_CHANGE_COLUMNS = (("Severity", "severity", None), ("Change", "key", None), ("Why", "rationale", None))
+
+
+@drift_app.command("list")
+def list_drift(
+    ctx: typer.Context,
+    item_id: str = typer.Argument(..., help="Catalog item id."),
+    changes: bool = typer.Option(False, "--changes", help="Also list the newest event's classified changes."),
+    output_format: str = _format_option(),
+) -> None:
+    """List an item's drift events, newest first (GET …/drift).
+
+    Each event is a version a live refresh added, graded by its worst change: safe, dangerous or
+    breaking.
+    """
+    fmt = _format(ctx, output_format)
+    client, tenant = tenant_scoped_client(ctx)
+    body = _expect(client.get_raw(api_paths.catalog_drift_events(tenant, item_id))).json()
+    if fmt == "json":
+        emit_json(body)
+        return
+    events = body.get("events") or []
+    emit_list_table(
+        event_rows(events), _EVENT_COLUMNS, empty_message="No drift recorded for this item.", min_width=140
+    )
+    if changes and events:
+        typer.echo("")
+        emit_list_table(
+            change_rows(events[0]), _CHANGE_COLUMNS, empty_message="No classified changes.", min_width=140
+        )
+
+
+@drift_app.command("dismiss")
+def dismiss_drift(
+    ctx: typer.Context,
+    item_id: str = typer.Argument(..., help="Catalog item id."),
+    event_id: str = typer.Argument(..., help="Drift event id (from `apiome catalog drift list`)."),
+    output_format: str = _format_option(),
+) -> None:
+    """Clear a drift event's badge and banner (POST …/drift/{event}/dismiss; projects:edit).
+
+    The event and its changes are kept. Dismissing twice changes nothing.
+    """
+    fmt = _format(ctx, output_format)
+    client, tenant = tenant_scoped_client(ctx)
+    body = _expect(client.post_raw(api_paths.catalog_drift_dismiss(tenant, item_id, event_id))).json()
+    if fmt == "json":
+        emit_json(body)
+    else:
+        typer.echo(f"Dismissed drift {event_id} ({body.get('severity')}, {body.get('versionLabel')}).")
+
+
+def _print_alerts(body: dict, fmt: str) -> None:
+    """Print the drift alert settings as JSON or a field table."""
+    if fmt == "json":
+        emit_json(body)
+    else:
+        emit_list_table(alerts_rows(body), _ROW_COLUMNS)
+
+
+@alerts_app.command("show")
+def show_alerts(ctx: typer.Context, output_format: str = _format_option()) -> None:
+    """Show the workspace's drift alert settings (GET …/drift-notifications)."""
+    fmt = _format(ctx, output_format)
+    client, tenant = tenant_scoped_client(ctx)
+    _print_alerts(_expect(client.get_raw(api_paths.catalog_drift_alerts(tenant))).json(), fmt)
+
+
+@alerts_app.command("set")
+def set_alerts(
+    ctx: typer.Context,
+    breaking: bool | None = typer.Option(None, "--breaking/--no-breaking", help="Announce breaking drift."),
+    dangerous: bool | None = typer.Option(None, "--dangerous/--no-dangerous", help="Announce dangerous drift."),
+    safe: bool | None = typer.Option(None, "--safe/--no-safe", help="Announce safe drift (off: badge only)."),
+    delivery: str | None = typer.Option(
+        None, "--delivery", help=f"How to send: {', '.join(DELIVERIES)} (one webhook a day listing it all)."
+    ),
+    breaking_immediate: bool | None = typer.Option(
+        None,
+        "--breaking-immediate/--breaking-in-digest",
+        help="With daily_digest: send breaking drift right away, or hold it for the digest too.",
+    ),
+    email: bool | None = typer.Option(
+        None, "--email/--no-email", help="Opt in to drift email (stored; email is not sent yet)."
+    ),
+    output_format: str = _format_option(),
+) -> None:
+    """Change the workspace's drift alert settings (PUT …/drift-notifications; imports:edit).
+
+    Options left out keep their current value. Announcements go to the workspace's webhooks and
+    the item's owner team; a version made by `apiome catalog refresh check` is never announced.
+    """
+    fmt = _format(ctx, output_format)
+    client, tenant = tenant_scoped_client(ctx)
+    current = _expect(client.get_raw(api_paths.catalog_drift_alerts(tenant))).json()
+    try:
+        body = alerts_body(
+            current,
+            notifyBreaking=breaking,
+            notifyDangerous=dangerous,
+            notifySafe=safe,
+            delivery=delivery,
+            breakingImmediate=breaking_immediate,
+            emailEnabled=email,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--delivery") from exc
+    _print_alerts(_expect(client.put_raw(api_paths.catalog_drift_alerts(tenant), json=body)).json(), fmt)

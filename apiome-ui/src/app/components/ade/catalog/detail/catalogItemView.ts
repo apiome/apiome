@@ -176,6 +176,8 @@ export interface CatalogDetailActions {
   categorize: { shown: boolean };
   /** Live refresh's Set up / Edit / Check now / Turn off (MFI-31.1) — hidden once the item is deleted. */
   refresh: { shown: boolean };
+  /** Dismiss the item's drift banner and badge (MFI-31.3; `projects:edit`). */
+  dismissDrift: { shown: boolean };
 }
 
 /**
@@ -209,6 +211,7 @@ export function catalogDetailActions(
     viewCode: { shown: true },
     categorize: { shown: live && can('projects:edit') },
     refresh: { shown: live && can('projects:edit') },
+    dismissDrift: { shown: live && can('projects:edit') },
   };
 }
 
@@ -478,6 +481,8 @@ export function catalogFormatNodeHref(itemId: string, nodeId: string): string {
 const PANE_SCOPED_PARAMS: Readonly<Partial<Record<CatalogDetailTabId, readonly string[]>>> = {
   source: ['sourcePath', 'line'],
   format: ['node'],
+  // MFI-31.3: the drift event the Versions pane's "What changed" opens on.
+  versions: ['drift'],
 };
 
 /**

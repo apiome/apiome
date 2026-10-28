@@ -57,7 +57,7 @@ import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { ProtocolPill } from '@/app/components/ui/catalog/ProtocolPill';
 import { SourceBadge } from '@/app/components/ui/catalog/SourceBadge';
 
-import { ConvertedBadge, RegistryBadge } from './CatalogBadges';
+import { ConvertedBadge, DriftBadge, RegistryBadge } from './CatalogBadges';
 import { CatalogRowMenu, type CatalogItemHandlers } from './CatalogCard';
 import {
   CATALOG_LIFECYCLE_LABEL,
@@ -183,6 +183,7 @@ export default function CatalogTable({
               <DataTableCellSub className="mono">{item.slug || '—'}</DataTableCellSub>
               {item.conversion ? <ConvertedBadge conversion={item.conversion} /> : null}
               <RegistryBadge itemId={item.id} subjects={item.registrySubjects} />
+              <DriftBadge drift={item.drift} />
             </span>
           </div>
         ),

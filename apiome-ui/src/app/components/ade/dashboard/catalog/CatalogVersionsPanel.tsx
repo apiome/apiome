@@ -61,6 +61,11 @@ interface CatalogVersionsPanelProps {
   active: boolean;
   /** Report how many revisions this item has, for the shell's tab count (HIVE-7.2). */
   onCountChange?: (count: number) => void;
+  /**
+   * Two revisions (`versions.id`) to tick for the inline diff, as "What changed" asks (MFI-31.3).
+   * Applied once both are loaded; the reader can change the selection afterwards.
+   */
+  requestedPair?: { base: string; head: string } | null;
 }
 
 /** The fetch lifecycle of the version list (`idle`/`loading` render the spinner). */
@@ -165,6 +170,7 @@ export function CatalogVersionsPanel({
   itemMetadata,
   active,
   onCountChange,
+  requestedPair,
 }: CatalogVersionsPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState<VersionsStatus>('idle');
@@ -247,6 +253,15 @@ export function CatalogVersionsPanel({
     fetchStartedRef.current = false;
     void loadVersions();
   }, [loadVersions]);
+
+  // MFI-31.3: tick the pair "What changed" asked for, once the revisions are in.
+  useEffect(() => {
+    if (!requestedPair || status !== 'loaded') return;
+    const ids = new Set(revisions.map((revision) => revision.id));
+    if (ids.has(requestedPair.base) && ids.has(requestedPair.head)) {
+      setSelected([requestedPair.base, requestedPair.head]);
+    }
+  }, [requestedPair, status, revisions]);
 
   const toggle = useCallback((id: string) => {
     setSelected((prev) => toggleRevisionSelection(prev, id));

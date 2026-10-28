@@ -196,6 +196,42 @@
       ]
     },
     {
+      "id": "catalog.drift.dismiss",
+      "surface": "Catalog",
+      "label": "Dismiss drift",
+      "permission": "projects:edit",
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/v1/catalog/{tenant}/{item}/drift/00000000-0000-4000-8000-000000000001/dismiss",
+          "stub": "catalog_item"
+        }
+      ],
+      "ui": [],
+      "ui_note": "Dismiss is on the catalog item's drift banner, which shows only while the item has undismissed drift (catalog-drift-dismiss)."
+    },
+    {
+      "id": "catalog.drift.alerts",
+      "surface": "Catalog",
+      "label": "Set drift alerts",
+      "permission": "imports:edit",
+      "rest": [
+        {
+          "method": "PUT",
+          "path": "/v1/catalog/{tenant}/drift-notifications",
+          "body": {
+            "delivery": "daily_digest"
+          }
+        }
+      ],
+      "ui": [
+        {
+          "screen": "catalog",
+          "testid": "catalog-drift-alerts"
+        }
+      ]
+    },
+    {
       "id": "catalog.convert",
       "surface": "Catalog",
       "label": "Convert to project",

@@ -1,6 +1,6 @@
 ---
 title: Keep a catalog item fresh
-description: Re-check a catalog item against its live GraphQL or gRPC endpoint.
+description: Re-check a catalog item against its live endpoint and hear about drift.
 sidebar_position: 1.15
 tags: [catalog, refresh, graphql, grpc]
 ---
@@ -111,11 +111,87 @@ or reformatting it is not a change.
 
 A failed check does not change the item: no version is added, and its versions, format details
 and fingerprint stay as they were. A check also fails, without adding a version, when the item was
-deleted or the discovered schema cannot be imported. Each failure in a row delays the next scheduled check: by 5 minutes after the first,
-then 10, 20 and so on, up to one day. The card shows how many checks have failed in a row. The
+deleted or the discovered schema cannot be imported. Each failure in a row delays the next
+scheduled check: by 5 minutes after the first, then 10, 20 and so on, up to one day. The card shows how many checks have failed in a row. The
 next successful check clears the failure.
 
 **Check now** always runs straight away, even while scheduled checks are delayed.
+
+## Drift
+
+Each version a check adds over an earlier one is **drift**: the live API moved. Apiome grades every
+change in it, and the drift takes its worst grade:
+
+| Grade | Meaning | Example |
+| --- | --- | --- |
+| **Breaking** | Existing callers can break | A field or an operation was removed, or a type narrowed |
+| **Dangerous** | Compatible, but worth a review | A default changed, or an enum value was added |
+| **Safe** | Existing callers keep working | An operation or an optional field was added |
+
+### See drift on the catalog
+
+The catalog card (and the table row) shows a drift badge until someone dismisses it. Its colour is
+the grade. Hover over it for the version and the counts; click it to open what changed.
+
+<Screenshot id="catalog-drift-badge" alt="A catalog card with a red Breaking drift badge beside its format pills" />
+
+### See what changed
+
+The item page shows a banner above the tabs while it has drift:
+
+<Screenshot id="catalog-item-drift-banner" alt="The drift banner on a catalog item: Live refresh found breaking changes in version 2026-10-28T06:00Z, with See what changed and Dismiss" />
+
+1. **Click “See what changed”.** The **Versions** tab opens on **What changed**.
+2. Read the **Grade**, the two **Versions**, the **Changes** by grade, what **Found by** (a
+   **Scheduled check** or **Check now**) and whether **Alerts** went out.
+3. Read the table: every change, worst first, with why it got its grade.
+4. The two versions are already ticked in the timeline below, so their inline diff is open. To
+   compare them again later, **click “Compare these versions”**.
+
+<Screenshot id="catalog-item-drift-changes" alt="What changed on the Versions tab: Breaking drift from 1.4.0 to 2026-10-28T06:00Z, one breaking and two safe changes with their reasons" />
+
+When an item has drifted more than once, pick a version from the row above the facts to see that
+drift. The link in an alert opens the same view.
+
+### Dismiss drift
+
+**Click “Dismiss”** on the banner to clear the banner and the badge for everyone. The drift and its
+changes stay on **What changed**. You need `projects:edit` (an **Editor** or **Owner**).
+
+## Drift alerts
+
+A scheduled check that finds drift tells two places:
+
+- **The workspace's webhooks.** Every active push-webhook subscription gets a
+  `catalog.drift.detected` event: the item, both versions, the grade, the counts and the top five
+  findings, with a link to **What changed**. Deliveries are signed and retried with backoff, like
+  every other Apiome webhook.
+- **The item's owner team.** Each member gets a notification in their inbox, and the team's chat
+  channel gets a post. An item with no confirmed owner lands in the **Unowned findings** report
+  instead.
+
+A version added with **“Check now”** is never announced: you are looking at the result.
+
+### Choose what is announced
+
+You need `imports:edit` (an **Editor** or **Owner**).
+
+1. **Open Bring in → Catalog.**
+2. **Click “Drift alerts”** in the page header.
+3. Under **Announce**, tick the grades to announce. By default **Breaking drift** and **Dangerous
+   drift** are announced, and safe drift only shows its badge.
+4. In **Delivery**, choose **Right away** or **Daily digest**.
+5. With **Daily digest**, leave **Send breaking drift right away, not in the digest** ticked to keep
+   breaking drift immediate.
+6. **Click “Save”.**
+
+<Screenshot id="catalog-drift-alerts" alt="The Drift alerts dialog: Breaking and Dangerous ticked, Safe unticked, Daily digest delivery with breaking drift sent right away" />
+
+The daily digest is one `catalog.drift.digest` webhook a day listing every drift since the last
+one, with totals by grade. Each item's worst drift is also sent to its owner team. Drift that is not
+announced still shows its badge.
+
+**Email me about drift too** is saved for later: drift email is not sent yet.
 
 ## Change or stop refresh
 
@@ -150,6 +226,11 @@ apiome catalog refresh set <item-id> --adapter graphql \
 apiome catalog refresh show <item-id>
 apiome catalog refresh check <item-id>   # exits 7 when the check failed
 apiome catalog refresh off <item-id> --yes
+
+apiome catalog drift list <item-id> --changes          # drift events, and the newest one's changes
+apiome catalog drift dismiss <item-id> <event-id>
+apiome catalog drift-alerts show
+apiome catalog drift-alerts set --delivery daily_digest --safe   # options left out keep their value
 ```
 
 See [`apiome catalog`](../reference/cli/catalog.md) for every option.
@@ -158,7 +239,12 @@ REST: `GET`, `PUT` and `DELETE /v1/catalog/{tenant}/{item}/refresh`,
 `POST /v1/catalog/{tenant}/{item}/refresh/check`, and `GET` and `PUT
 /v1/catalog/{tenant}/refresh-policy`. See the [Catalog refresh reference](../reference/rest/catalog-refresh.md).
 
+Drift: `GET /v1/catalog/{tenant}/{item}/drift`, `POST
+/v1/catalog/{tenant}/{item}/drift/{event}/dismiss`, and `GET` and `PUT
+/v1/catalog/{tenant}/drift-notifications`. The catalog list and item carry the newest open drift as
+`drift`. See the [Catalog drift reference](../reference/rest/catalog-drift.md).
+
 ## Where next
 
 - [Catalog](./catalog.mdx) — the item page and its other tabs
-- [Roles](../workspace/roles.mdx) — who can set up refresh
+- [Roles](../workspace/roles.mdx) — who can set up refresh, dismiss drift and set drift alerts

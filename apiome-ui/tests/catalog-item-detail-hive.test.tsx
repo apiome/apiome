@@ -921,6 +921,86 @@ describe('the browser fixtures', () => {
     write('refresh-dialog', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
+  /**
+   * MFI-31.3 (#4400): an item a scheduled live refresh found drifted — the banner above the panes,
+   * then "What changed" on the Versions pane it opens (docs screenshots `catalog-item-drift-banner`
+   * and `catalog-item-drift-changes`). No conversion, so the banner is the page's one banner.
+   */
+  it('writes the drift banner and the What changed panel (MFI-31.3)', async () => {
+    const eventId = 'd1f7e000-0000-4000-8000-000000000002';
+    const drift = {
+      eventId,
+      severity: 'breaking',
+      versionId: 'ver_9a1f00',
+      versionLabel: '2026-10-28T06:00Z',
+      changeCount: 3,
+      counts: { safe: 2, dangerous: 0, breaking: 1 },
+      trigger: 'sweep',
+      detectedAt: '2026-10-28T06:00:00Z',
+      link: `/ade/dashboard/catalog/${ITEM.id}?tab=versions&drift=${eventId}`,
+    };
+    await renderDetail({ ...ITEM, conversion: null, drift });
+    const banner = await screen.findByTestId('catalog-drift-banner');
+    expect(banner).toHaveTextContent('Live refresh found breaking changes in version 2026-10-28T06:00Z');
+    write('drift-banner', page().outerHTML);
+
+    const reads = global.fetch as unknown as (input: unknown) => Promise<Response>;
+    global.fetch = jest.fn(async (input: unknown) => {
+      if (String(input) === `/api/catalog/${encodeURIComponent(ITEM.id)}/drift`) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            events: [
+              {
+                ...drift,
+                parentVersionId: 'ver_5c0d21',
+                parentVersionLabel: '1.4.0',
+                notification: 'sent',
+                notifiedAt: '2026-10-28T06:00:00Z',
+                dismissedAt: null,
+                changes: [
+                  {
+                    severity: 'breaking',
+                    category: 'field',
+                    kind: 'removed',
+                    key: 'Claim.patientId',
+                    ruleId: 'removed-entity',
+                    rationale: "field 'Claim.patientId' was removed; callers that depend on it break",
+                  },
+                  {
+                    severity: 'safe',
+                    category: 'operation',
+                    kind: 'added',
+                    key: 'Query.claimsByProvider',
+                    ruleId: 'added-entity',
+                    rationale: "operation 'Query.claimsByProvider' was added; existing callers are unaffected",
+                  },
+                  {
+                    severity: 'safe',
+                    category: 'field',
+                    kind: 'added',
+                    key: 'Claim.submittedAt',
+                    ruleId: 'added-entity',
+                    rationale: "field 'Claim.submittedAt' was added; existing callers are unaffected",
+                  },
+                ],
+              },
+            ],
+          }),
+        } as Response;
+      }
+      return reads(input);
+    }) as unknown as typeof fetch;
+    fireEvent.click(screen.getByTestId('catalog-drift-open'));
+    await waitFor(() => expect(screen.getByTestId('catalog-detail-pane-versions')).toBeVisible());
+    await screen.findByTestId('catalog-drift-changes');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    write('tab-versions-drift', page().outerHTML);
+  });
+
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
     await renderDetail({
       ...ITEM,

@@ -21,8 +21,13 @@ export type { CatalogCardProps, CatalogItemHandlers, CatalogRowMenuProps } from 
 export { default as CatalogTable, catalogTableStamp } from './CatalogTable';
 export type { CatalogTableProps } from './CatalogTable';
 
-export { CatalogFormatRow, ConvertedBadge } from './CatalogBadges';
-export type { CatalogFormatRowProps, ConvertedBadgeProps } from './CatalogBadges';
+export { CatalogFormatRow, ConvertedBadge, DriftBadge } from './CatalogBadges';
+export type { CatalogFormatRowProps, ConvertedBadgeProps, DriftBadgeProps } from './CatalogBadges';
+
+export * from './catalogDriftModel';
+
+export { CatalogDriftAlertsDialog } from './CatalogDriftAlertsDialog';
+export type { CatalogDriftAlertsDialogProps } from './CatalogDriftAlertsDialog';
 
 export { CatalogStatsRow } from './CatalogStatsRow';
 export type { CatalogStatsRowProps } from './CatalogStatsRow';

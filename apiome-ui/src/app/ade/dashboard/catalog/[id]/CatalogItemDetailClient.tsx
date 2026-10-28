@@ -107,6 +107,8 @@ import {
   CatalogConvertedStrip,
   CatalogItemOverview,
   CatalogItemProvenance,
+  CatalogDriftBanner,
+  CatalogDriftPanel,
   CatalogItemRefreshCard,
   catalogDetailActions,
   catalogDetailBreadcrumb,
@@ -124,6 +126,7 @@ import {
   type CatalogNormalizedSummary,
   type CatalogSourceDescriptor,
 } from '@/app/components/ade/catalog/detail';
+import { driftVersionsSearch, type CatalogDriftBadgeData } from '@/app/components/ade/catalog/catalogDriftModel';
 import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
 import { CATALOG_EXPORT_VS_CONVERT_COPY, type CatalogConversion } from '@/app/utils/catalog-conversion';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
@@ -168,6 +171,8 @@ interface CatalogItemDetail {
   source?: CatalogSourceDescriptor;
   /** The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted. */
   conversion?: CatalogConversion | null;
+  /** The newest undismissed drift a live refresh recorded (MFI-31.3); null for none. */
+  drift?: CatalogDriftBadgeData | null;
   /** Cross-format identity group (MFI-6.4, #4410). */
   identityGroupId?: string | null;
   relatedArtifacts?: RelatedArtifact[];
@@ -348,6 +353,29 @@ export function CatalogItemDetailClient({
       // The address is a convenience; the pane has already switched.
     }
   }, []);
+
+  /**
+   * The banner's "See what changed" (MFI-31.3): open the Versions pane on one drift event and
+   * record it in the address, so the link a teammate is sent opens the same drift.
+   *
+   * @param eventId The drift event.
+   */
+  const openDrift = useCallback((eventId: string) => {
+    setActiveTab('versions');
+    try {
+      const url = `${window.location.pathname}${driftVersionsSearch(window.location.search, eventId)}${window.location.hash}`;
+      window.history.replaceState(window.history.state, '', url);
+    } catch {
+      // The address is a convenience; the pane has already switched.
+    }
+  }, []);
+
+  /** The drift event the address names (`?drift=`), for the Versions pane's "What changed". */
+  const requestedDriftId = searchParams.get('drift');
+  /** The two versions "What changed" asked the timeline to diff. */
+  const [driftPair, setDriftPair] = useState<{ base: string; head: string } | null>(null);
+  /** The drift the reader dismissed on this visit, so the banner and the panel agree at once. */
+  const [dismissedDriftId, setDismissedDriftId] = useState<string | null>(null);
 
   /** "View code" (and any deep link into the raw source) jumps to the Source & code pane. */
   const showSourceTab = useCallback(() => selectTab('source'), [selectTab]);
@@ -736,6 +764,13 @@ export function CatalogItemDetailClient({
             "Adds" note puts it: both are facts about the item as a whole, not about one pane. */}
         <div className="cid-top">
           <div className="cid-top__main">
+            <CatalogDriftBanner
+              itemId={item.id}
+              drift={item.drift && item.drift.eventId !== dismissedDriftId ? item.drift : null}
+              canDismiss={actions.dismissDrift.shown}
+              onOpen={openDrift}
+              onDismissed={setDismissedDriftId}
+            />
             <CatalogConvertedStrip
               conversion={item.conversion}
               conversionCount={tabCounts.conversions ?? 0}
@@ -868,12 +903,20 @@ export function CatalogItemDetailClient({
         </TabPanel>
 
         <TabPanel id="versions" active={activeTab}>
+          <CatalogDriftPanel
+            itemId={item.id}
+            active={activeTab === 'versions'}
+            requestedEventId={requestedDriftId}
+            dismissedEventId={dismissedDriftId}
+            onCompare={setDriftPair}
+          />
           <CatalogVersionsPanel
             itemId={item.id}
             itemName={item.name}
             itemMetadata={item.metadata}
             active={activeTab === 'versions'}
             onCountChange={setVersionsCount}
+            requestedPair={driftPair}
           />
         </TabPanel>
         {hasDependencies ? (

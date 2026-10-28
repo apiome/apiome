@@ -1,6 +1,6 @@
 ---
 title: "apiome catalog"
-description: "Catalog items: keep an item fresh from its live source."
+description: "Catalog items: keep an item fresh from its live source and watch its drift."
 sidebar_position: 4
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,115 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome catalog {#catalog}
 
-Catalog items: keep an item fresh from its live source.
+Catalog items: keep an item fresh from its live source and watch its drift.
 
 ```text
 apiome catalog [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`refresh`](#catalog-refresh), [`refresh-policy`](#catalog-refresh-policy).
+Subcommands: [`drift`](#catalog-drift), [`drift-alerts`](#catalog-drift-alerts), [`refresh`](#catalog-refresh), [`refresh-policy`](#catalog-refresh-policy).
+
+## apiome catalog drift {#catalog-drift}
+
+What a live refresh changed in an item: classified drift and its badge.
+
+```text
+apiome catalog drift [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`dismiss`](#catalog-drift-dismiss), [`list`](#catalog-drift-list).
+
+## apiome catalog drift dismiss {#catalog-drift-dismiss}
+
+Clear a drift event's badge and banner (POST …/drift/{event}/dismiss; projects:edit).
+
+The event and its changes are kept. Dismissing twice changes nothing.
+
+```text
+apiome catalog drift dismiss [OPTIONS] ITEM_ID EVENT_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ITEM_ID` | text | yes | Catalog item id. |
+| `EVENT_ID` | text | yes | Drift event id (from `apiome catalog drift list`). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome catalog drift list {#catalog-drift-list}
+
+List an item's drift events, newest first (GET …/drift).
+
+Each event is a version a live refresh added, graded by its worst change: safe, dangerous or breaking.
+
+```text
+apiome catalog drift list [OPTIONS] ITEM_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ITEM_ID` | text | yes | Catalog item id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--changes` | flag |  |  | Also list the newest event's classified changes. |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome catalog drift-alerts {#catalog-drift-alerts}
+
+Who hears about catalog drift, and when: the workspace's drift alert settings.
+
+```text
+apiome catalog drift-alerts [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`set`](#catalog-drift-alerts-set), [`show`](#catalog-drift-alerts-show).
+
+## apiome catalog drift-alerts set {#catalog-drift-alerts-set}
+
+Change the workspace's drift alert settings (PUT …/drift-notifications; imports:edit).
+
+Options left out keep their current value. Announcements go to the workspace's webhooks and the item's owner team; a version made by `apiome catalog refresh check` is never announced.
+
+```text
+apiome catalog drift-alerts set [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--breaking` / `--no-breaking` | flag | `--no-breaking` |  | Announce breaking drift. |
+| `--dangerous` / `--no-dangerous` | flag | `--no-dangerous` |  | Announce dangerous drift. |
+| `--safe` / `--no-safe` | flag | `--no-safe` |  | Announce safe drift (off: badge only). |
+| `--delivery` | text |  |  | How to send: immediate, daily_digest (one webhook a day listing it all). |
+| `--breaking-immediate` / `--breaking-in-digest` | flag | `--breaking-in-digest` |  | With daily_digest: send breaking drift right away, or hold it for the digest too. |
+| `--email` / `--no-email` | flag | `--no-email` |  | Opt in to drift email (stored; email is not sent yet). |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome catalog drift-alerts show {#catalog-drift-alerts-show}
+
+Show the workspace's drift alert settings (GET …/drift-notifications).
+
+```text
+apiome catalog drift-alerts show [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
 
 ## apiome catalog refresh {#catalog-refresh}
 

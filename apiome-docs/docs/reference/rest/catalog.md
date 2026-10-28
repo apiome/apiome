@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.352.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.353.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -728,6 +728,7 @@ analysed reports a declared ``unavailable`` status with a reason code, never a f
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
 | `conversion` | `CatalogConversionRef` or null | no | Conversion. |
+| `drift` | `CatalogDriftBadge` or null | no | Drift. |
 | `identityGroupId` | string or null | no | Identity Group ID. |
 | `relatedArtifacts` | array of `RelatedArtifactRef` | no | Related Artifacts. |
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
@@ -777,6 +778,7 @@ latest revision (MFI-7.1/7.2): ``sourceFormat``, ``protocol``, ``formatMetadata`
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
 | `conversion` | `CatalogConversionRef` or null | no | Conversion. |
+| `drift` | `CatalogDriftBadge` or null | no | Drift. |
 | `identityGroupId` | string or null | no | Identity Group ID. |
 | `relatedArtifacts` | array of `RelatedArtifactRef` | no | Related Artifacts. |
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |

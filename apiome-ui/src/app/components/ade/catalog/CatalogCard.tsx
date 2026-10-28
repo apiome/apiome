@@ -57,7 +57,7 @@ import { CATALOG_EXPORT_VS_CONVERT_COPY, convertActionLabel } from '@/app/utils/
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 import { cn } from '@lib/utils';
 
-import { CatalogFormatRow, ConvertedBadge, RegistryBadge } from './CatalogBadges';
+import { CatalogFormatRow, ConvertedBadge, DriftBadge, RegistryBadge } from './CatalogBadges';
 import {
   CATALOG_LIFECYCLE_LABEL,
   catalogItemHref,
@@ -214,6 +214,11 @@ export default function CatalogCard({
           {item.registrySubjects && item.registrySubjects.length > 0 ? (
             <span className="cat-card__above">
               <RegistryBadge itemId={item.id} subjects={item.registrySubjects} />
+            </span>
+          ) : null}
+          {item.drift ? (
+            <span className="cat-card__above">
+              <DriftBadge drift={item.drift} />
             </span>
           ) : null}
         </div>

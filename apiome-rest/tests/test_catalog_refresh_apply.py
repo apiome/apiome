@@ -405,3 +405,32 @@ def test_the_check_records_changed_and_the_version_through_the_real_hook(monkeyp
     assert (outcome.status, outcome.version_id) == ("changed", "rev-new")
     assert store.rows[_ITEM]["status"] == "changed"
     assert pipeline.calls[0]["payload"]["user_id"] == "u-creator"
+
+
+# --- MFI-31.3: drift is recorded for a version with a baseline -------------------------------
+
+
+@pytest.fixture
+def drift(monkeypatch) -> List[Dict[str, Any]]:
+    calls: List[Dict[str, Any]] = []
+    monkeypatch.setattr("app.catalog_drift_service.record_refresh_drift", lambda db, **kw: calls.append(kw))
+    return calls
+
+
+def test_a_changed_source_records_drift_against_the_current_version(monkeypatch, pipeline, reports, drift):
+    db = _FakeDb(_item(), [_revision(_SDL_V1)])
+    result = _discover_graphql(_SDL_V2, monkeypatch)
+    _apply(db, result, trigger=TRIGGER_SWEEP)
+    [call] = drift
+    assert call["item"]["id"] == _ITEM and call["item"]["tenant_id"] == _TENANT
+    assert (call["version_id"], call["version_label"]) == ("rev-new", "2026-10-27T12:00Z")
+    assert (call["parent_version_id"], call["parent_version_label"]) == ("rev-1", "1.0.0")
+    assert call["new_model"] is result.model and call["previous_model"] is not None
+    assert (call["trigger"], call["actor_id"]) == ("sweep", "u-editor")
+
+
+def test_no_drift_without_a_baseline_or_without_a_change(monkeypatch, pipeline, reports, drift):
+    _apply(_FakeDb(_item(), []), _discover_graphql(_SDL_V1, monkeypatch))  # first version
+    _apply(_FakeDb(_item(), [_revision(None)]), _discover_graphql(_SDL_V1, monkeypatch))  # unreadable baseline
+    _apply(_FakeDb(_item(), [_revision(_SDL_V1)]), _discover_graphql(_SDL_V1, monkeypatch))  # unchanged
+    assert drift == []
