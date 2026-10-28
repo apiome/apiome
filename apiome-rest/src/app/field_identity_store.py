@@ -1,6 +1,7 @@
-"""Persisted field-identity store for export targets — MFX-12.2 (#3880).
+"""Persisted field-identity store for export targets — MFX-12.2 (#3880), MFX-25.2 (#4152).
 
-Protobuf (and later FlatBuffers, Iceberg, FIX Orchestra) require stable positional field numbers.
+Protobuf and Thrift (and later FlatBuffers, Iceberg, FIX Orchestra) require stable positional field
+numbers.
 Sources converted from OpenAPI, GraphQL, and other formats often lack them. The proto emitter
 synthesizes numbers on first export; this module **persists** those assignments per
 ``(tenant, artifact/project, target, field_key)`` so re-exports reuse them and new fields receive
@@ -20,6 +21,7 @@ from .database import db
 
 __all__ = [
     "PROTO3_TARGET",
+    "THRIFT_TARGET",
     "field_number_in_reserved",
     "FieldNumberAllocator",
     "load_persisted_field_numbers",
@@ -27,6 +29,9 @@ __all__ = [
 ]
 
 PROTO3_TARGET = "proto3"
+#: The store key for Thrift field ids. Separate from Protobuf's: the two formats number a model
+#: independently, so a Thrift export never inherits (or claims) a Protobuf field's number.
+THRIFT_TARGET = "thrift"
 _PROTO_MAX_FIELD_NUMBER = 536_870_911
 
 
@@ -51,7 +56,14 @@ def field_number_in_reserved(number: int, ranges: Any, *, enum: bool = False) ->
 
 
 class FieldNumberAllocator:
-    """Assign protobuf field numbers honouring source, persisted, and reserved constraints."""
+    """Assign Protobuf / Thrift field numbers honouring source, persisted, and reserved constraints.
+
+    A source number always wins. A field without one reuses the number stored for it by an earlier
+    export, unless the source has since given that number to another field (or another stored entry
+    already took it) — then it gets a fresh number, written back as a new assignment, so a struct
+    never holds the same number twice. A fresh number is never one stored for a field the message
+    has since lost.
+    """
 
     def __init__(
         self,
@@ -62,16 +74,26 @@ class FieldNumberAllocator:
         reserved_ranges = type_.extras.get("reserved_ranges") or []
         self._reserved_ranges = reserved_ranges
         self._persisted = dict(persisted or {})
-        self._used: set[int] = {
+        self._explicit: set[int] = {
             f.field_number
             for f in type_.fields
             if isinstance(f.field_number, int)
         }
+        self._used: set[int] = set(self._explicit)
+        #: Numbers already handed out by :meth:`allocate` (source, stored or fresh).
+        self._claimed: set[int] = set()
         for field in type_.fields:
             if field.field_number is None:
                 stored = self._persisted.get(field.key)
                 if isinstance(stored, int):
                     self._used.add(stored)
+        # A number stored for a field this message no longer has stays retired: reusing it would
+        # give an old reader's field a new meaning on the wire (MFX-25.2). Field keys are
+        # ``<type key>.<field name>``, so the message's own rows share its key as a prefix.
+        prefix = f"{type_.key}."
+        for key, stored in self._persisted.items():
+            if key.startswith(prefix) and "." not in key[len(prefix):] and isinstance(stored, int):
+                self._used.add(stored)
         self._next = 1
         self.assignments: Dict[str, int] = {}
         self.new_assignments: Dict[str, int] = {}
@@ -80,14 +102,17 @@ class FieldNumberAllocator:
         """Return ``(field_number, synthesized)`` for ``field``."""
         if isinstance(field.field_number, int):
             self.assignments[field.key] = field.field_number
+            self._claimed.add(field.field_number)
             return field.field_number, False
 
         stored = self._persisted.get(field.key)
-        if isinstance(stored, int):
+        if isinstance(stored, int) and stored not in self._explicit and stored not in self._claimed:
             self.assignments[field.key] = stored
+            self._claimed.add(stored)
             return stored, True
 
         number = self._next_free()
+        self._claimed.add(number)
         self._used.add(number)
         self.assignments[field.key] = number
         self.new_assignments[field.key] = number

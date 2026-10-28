@@ -387,7 +387,7 @@ Out of scope, noted: GraphQL refuses a type named `../../evil` (its sanitised na
 
 | Ticket | Work |
 | --- | --- |
-| [#6278](https://github.com/apiome/apiome/issues/6278) ✅ | Protobuf and Thrift from OpenAPI don't compile: JSON Schema scalar names reach the IDL; Thrift field ids are all `1` (`thrift_emitter.py`), see also MFX-25.2 [#4152](https://github.com/apiome/apiome/issues/4152). Fixed emitter-side (`app/scalar_aliases.py`); stored canonical models unchanged. Same leak still in asn1, corbaidl, flatbuffers, typespec, wsdl, xsd (and Avro narrows `int64` to `int`) — follow-up needed |
+| [#6278](https://github.com/apiome/apiome/issues/6278) ✅ | Protobuf and Thrift from OpenAPI don't compile: JSON Schema scalar names reach the IDL; Thrift field ids are all `1` (`thrift_emitter.py`), see also MFX-25.2 [#4152](https://github.com/apiome/apiome/issues/4152) ✅ (Thrift ids now persisted per item like Protobuf's). Fixed emitter-side (`app/scalar_aliases.py`); stored canonical models unchanged. Same leak still in asn1, corbaidl, flatbuffers, typespec, wsdl, xsd (and Avro narrows `int64` to `int`) — follow-up needed |
 | _new ticket needed_ | Cap'n Proto: every slot is `@0` and no file `@0x` id is generated (`capnproto_emitter.py`) — same class of bug as #6278 (MFX-30.2 [#4179](https://github.com/apiome/apiome/issues/4179)) |
 | _new tickets from X1_ | Re-import failures by target: wadl 105, asn1 85, asyncapi 78, postman 76, oncrpc 70, protobuf 67, connectrpc 67, corbaidl 56 cells; emitter crashes (e.g. "LossKind has no DROP", "'Type' object has no attribute 'scalar'"). Triage per target: fix, or downgrade the pair to types-only / refused with a reason |
 

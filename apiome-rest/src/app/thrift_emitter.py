@@ -17,7 +17,7 @@ recorded as :class:`~app.emitter.Loss` entries rather than silently dropped.
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from pydantic import Field
 
@@ -104,6 +104,10 @@ class ThriftEmitOptions(EmitOptions):
         default=True,
         description="Emit brief generated-file header comments.",
     )
+    persisted_field_numbers: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Pre-loaded stable field ids keyed by canonical field key (MFX-25.2).",
+    )
 
 
 class ThriftEmitter(Emitter, register=True):
@@ -158,6 +162,7 @@ class ThriftEmitter(Emitter, register=True):
             media_type=self.OUTPUT_MEDIA_TYPE,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
+            field_identity_assignments=writer.field_identity_assignments,
         )
 
 
@@ -171,6 +176,9 @@ class _ThriftWriter:
         self.losses = LossTracker()
         self._types_by_key = {t.key: t for t in api.types}
         self.output_path = _output_path(api)
+        #: Field ids assigned on this export that were not stored before, for the caller to
+        #: persist so the next export reuses them (MFX-25.2).
+        self.field_identity_assignments: Dict[str, int] = {}
 
     def render(self) -> str:
         lines: List[str] = []
@@ -238,12 +246,24 @@ class _ThriftWriter:
 
     def _render_struct(self, type_: Type, *, keyword: str) -> List[str]:
         lines = [f"{keyword} {type_.name} {{"]
-        # A field without a ``field_number`` (an OpenAPI or JSON Schema source) gets the next free
-        # id in declaration order, so ids stay unique within the struct (#6278).
-        allocator = FieldNumberAllocator(type_)
-        numbered = [(allocator.allocate(field)[0], field) for field in type_.fields]
+        # A field without a ``field_number`` (an OpenAPI or JSON Schema source) gets the id stored
+        # for it by an earlier export, else the next free id in declaration order, so ids stay
+        # unique within the struct (#6278) and stable across re-exports (MFX-25.2).
+        allocator = FieldNumberAllocator(type_, persisted=self._options.persisted_field_numbers)
+        numbered: List[Tuple[int, CanonicalField]] = []
+        for field in type_.fields:
+            number, synthesized = allocator.allocate(field)
+            if synthesized:
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "synthesized-field-number",
+                    f"Field {field.key!r} had no source field id; assigned {number}.",
+                    pointer=field.key,
+                )
+            numbered.append((number, field))
         for number, field in sorted(numbered, key=lambda pair: pair[0]):
             lines.append(f"  {self._render_field(field, number)},")
+        self.field_identity_assignments.update(allocator.new_assignments)
         lines.append("}")
         self.tracker.record(type_.key, Provenance.SOURCE)
         return lines
@@ -266,7 +286,10 @@ class _ThriftWriter:
         type_expr = self._render_type_ref(field.type, fmt)
         default = field.extras.get("thrift_default")
         default_suffix = f" = {default}" if default else ""
-        self.tracker.record(field.key, Provenance.SOURCE)
+        if field.field_number is None:
+            self.tracker.record(field.key, Provenance.INFERRED, "synthesized field id")
+        else:
+            self.tracker.record(field.key, Provenance.SOURCE)
         return f"{number}: {modifier}{type_expr} {field.name}{default_suffix}"
 
     def _render_type_ref(self, ref: TypeRef, fmt: Optional[str] = None) -> str:

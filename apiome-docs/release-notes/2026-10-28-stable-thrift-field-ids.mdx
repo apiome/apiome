@@ -1,0 +1,18 @@
+---
+slug: stable-thrift-field-ids
+title: Thrift field ids stay the same on every export
+description: Re-exporting to Thrift keeps each field's id, as Protobuf already did.
+authors: [apiome]
+---
+
+Exporting an item to **Apache Thrift** again now gives every field the same id it had the first time,
+so code generated from an earlier export keeps reading the new one.
+[How fields are numbered](/ship/export-a-spec#protobuf-and-thrift-from-an-openapi-source).
+
+{/* truncate */}
+
+- **Same ids every time.** The first export numbers the fields of a source with no ids of its own, such
+  as an OpenAPI schema. Apiome remembers those ids for the item, per format, and reuses them.
+- **New fields get new ids.** A field added later gets the next id never used, even if a field was
+  removed in between, so an old id is never given a new meaning. The same now holds for Protobuf.
+- **Listed as synthesized.** The fidelity report lists every id Apiome assigned as *synthesized*.

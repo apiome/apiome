@@ -35,11 +35,12 @@ from .emitter import (
 )
 from .field_identity_store import (
     PROTO3_TARGET,
+    THRIFT_TARGET,
     load_persisted_field_numbers,
-    merge_persisted_into_options,
     persist_field_number_assignments,
 )
-from .proto_emitter import ProtoEmitOptions, ProtoEmitter
+from .proto_emitter import ProtoEmitter
+from .thrift_emitter import ThriftEmitter
 
 __all__ = [
     "ExportError",
@@ -61,12 +62,53 @@ class ExportError(Exception):
 
 
 class ExportPersistenceContext(BaseModel):
-    """Optional tenant/artifact coordinates for persisting synthesized field identities (MFX-12.2)."""
+    """Optional tenant/artifact coordinates for persisting synthesized field identities.
+
+    Used by the targets that number fields positionally: Protobuf (MFX-12.2) and Thrift (MFX-25.2).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     tenant_id: str = Field(description="Owning tenant id.")
     artifact_id: str = Field(description="The artifact (project) id being exported.")
+
+
+def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
+    """The field-identity store key for an emitter whose synthesized field numbers persist.
+
+    Args:
+        emitter_cls: The resolved emitter class.
+
+    Returns:
+        :data:`~app.field_identity_store.PROTO3_TARGET` for Protobuf,
+        :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift, ``None`` for every other target.
+    """
+    if issubclass(emitter_cls, ProtoEmitter):
+        return PROTO3_TARGET
+    if issubclass(emitter_cls, ThriftEmitter):
+        return THRIFT_TARGET
+    return None
+
+
+def _with_persisted_field_numbers(
+    emitter_cls: type[Emitter], options: Optional[EmitOptions], persisted: Dict[str, int]
+) -> EmitOptions:
+    """Return the emitter's options with stored field numbers merged under ``persisted_field_numbers``.
+
+    Numbers already in the options (a caller's override) are kept unless the store has the same
+    field, in which case the stored number wins — it is what earlier exports wrote.
+
+    Args:
+        emitter_cls: The resolved emitter class; its ``options_model`` declares the field.
+        options: The validated options, or ``None``.
+        persisted: ``field_key → number`` loaded from the store.
+
+    Returns:
+        A fresh ``emitter_cls.options_model`` instance.
+    """
+    raw = options.model_dump() if isinstance(options, EmitOptions) else {}
+    merged = {**(raw.get("persisted_field_numbers") or {}), **persisted}
+    return emitter_cls.options_model.model_validate({**raw, "persisted_field_numbers": merged})
 
 
 def _available_target_labels() -> list[str]:
@@ -212,8 +254,8 @@ def emit_canonical(
         target: Emitter key or format key.
         opts: Optional per-target emit options — a validated :class:`EmitOptions`
             instance or a raw ``dict`` validated against the target's schema.
-        persistence: When provided for a proto3 export, load and persist stable
-            synthesized field numbers (MFX-12.2).
+        persistence: When provided for a Protobuf or Thrift export, load and persist stable
+            synthesized field numbers (MFX-12.2, MFX-25.2).
 
     Returns:
         The emitter's :class:`~app.emitter.EmitResult`.
@@ -230,20 +272,14 @@ def emit_canonical(
         raise ExportError(unsupported, status_code=422)
     options = _normalize_opts(emitter_cls, opts)
 
-    if persistence is not None and issubclass(emitter_cls, ProtoEmitter):
+    identity_target = _field_identity_target(emitter_cls) if persistence is not None else None
+    if persistence is not None and identity_target is not None:
         persisted = load_persisted_field_numbers(
             persistence.tenant_id,
             persistence.artifact_id,
-            PROTO3_TARGET,
+            identity_target,
         )
-        if isinstance(options, ProtoEmitOptions):
-            options = merge_persisted_into_options(options, persisted)
-        else:
-            raw = options.model_dump() if isinstance(options, EmitOptions) else {}
-            merged = {**(raw.get("persisted_field_numbers") or {}), **persisted}
-            options = ProtoEmitOptions.model_validate(
-                {**raw, "persisted_field_numbers": merged}
-            )
+        options = _with_persisted_field_numbers(emitter_cls, options, persisted)
 
     try:
         result = emitter.emit(api, opts=options)
@@ -252,11 +288,11 @@ def emit_canonical(
         # reason (422), never a crash. `source_unsupported_reason` catches most of these first.
         raise ExportError(str(exc), status_code=422) from exc
 
-    if persistence is not None and result.field_identity_assignments:
+    if persistence is not None and identity_target is not None and result.field_identity_assignments:
         persist_field_number_assignments(
             persistence.tenant_id,
             persistence.artifact_id,
-            PROTO3_TARGET,
+            identity_target,
             result.field_identity_assignments,
         )
 
