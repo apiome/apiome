@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.504.0] - 2026-10-28
+
+### Added
+- **WSDL 1.1 + XSD emitter, document/literal (MFX-14.1, #3889).** The `wsdl` target is now multi-file: `<Name>.wsdl`
+  imports `<Name>.xsd` (`xsd:import` in an import-only `wsdl:types` schema, WS-I R2105). New option
+  `layout: bundle | single` (default `bundle`; `single` inlines the schema).
+  - New `app/xsd_types.py`: canonical scalar + `format` → XSD built-in (`integer`+`int64` → `long`, `date-time` →
+    `dateTime`, `decimal`, `anyURI`, `base64Binary`; an imported `xsd_type` hint wins), `ncname()` for legal XML names,
+    and `xsd_pattern()` translating ECMA-262 patterns to XSD (anchors removed or padded; lookaround, lazy quantifiers,
+    `\b`, backreferences and anything the XSD regex grammar rejects are dropped and reported; `\/` becomes `/`).
+  - Types: records → `complexType`/`sequence` + global element; lists → `maxOccurs` (from `minItems`/`maxItems`);
+    nullable → `minOccurs="0" nillable="true"`; constraints → length/range/pattern/enumeration facets; enums →
+    `simpleType`; unions → `xs:choice`; maps → `entry` lists; aliases and named scalars → derived types; descriptions →
+    `xs:annotation`; defaults.
+  - Non-WSDL sources are written document/literal wrapped: a request element per operation (parameters + body), a
+    `<op>Response` element and one element per fault (`<op>Status404Fault`). WSDL sources keep their own messages,
+    parts and topology, and now also their recorded `xsd_type` (`dateTime`, `decimal`).
+  - Names are made legal NCNames and de-duplicated; every rename, dropped HTTP binding, event operation, map,
+    untyped value, unsupported facet and deprecated flag is recorded as an emit loss.
+
+### Changed
+- **WSDL capability profile and rule pack.** `unions`, `nullability` and `constraints` are now `True` and
+  `field_identity` `False` (WSDL writes no field numbers). `WsdlFidelityRulePack` reports the target namespace (SYNTH
+  when invented, info when taken from the source), renames, maps, untyped values, `multipleOf`/`uniqueItems`/
+  untranslatable patterns, deprecated fields and REST operations losing their HTTP method and path.
+- `fidelity_rulepack.rename_verdict` is now shared (lifted from the Cap'n Proto pack; same wording).
+- Goldens: the `wsdl → wsdl` round trip now passes (xfail removed); the 22 WSDL silent-loss ledger pairs are cleared
+  (ledger 628 → 606).
+
+### Fixed
+- WSDL output declares `xmlns:tns`, writes lists as repeated elements (not `xsd:string`), carries operation
+  parameters, and maps OpenAPI `integer`/`number`/`boolean` to XSD built-ins instead of `tns:integer`.
+
 ## [1.503.0] - 2026-10-28
 
 ### Added

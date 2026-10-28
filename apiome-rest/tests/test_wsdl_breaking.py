@@ -13,6 +13,7 @@ import pytest
 
 from app.breaking_change import classify, get_breaking_change_classifier
 from app.diff import diff
+from app.roundtrip_matrix import reimport_emitted
 from app.wsdl_breaking import WsdlBreakingChangeClassifier
 from app.wsdl_emitter import WsdlEmitter
 from app.wsdl_import_source import WsdlImportSource
@@ -66,15 +67,6 @@ def _grades(base_parts: Dict[str, str], head_parts: Dict[str, str]) -> Dict[str,
     result = classify(diff(base, head), base, head)
     assert result.classifier == "wsdl-xsd"
     return {c.key: (c.severity.value, c.rule_id, c.rationale) for c in result.classifications}
-
-
-def _emitted_text(result: Any) -> str:
-    """The WSDL text of an emit result (one file)."""
-    files = getattr(result, "files", None)
-    if files:
-        first = files[0]
-        return first.content if hasattr(first, "content") else str(first)
-    return getattr(result, "content", result)
 
 
 def _field(model, name: str) -> Any:
@@ -163,8 +155,7 @@ def test_a_list_simple_type_records_nothing():
 
 def test_the_emitter_writes_the_details_back():
     model = _model(style="rpc")
-    emitted = _emitted_text(WsdlEmitter().emit(model))
-    again = WsdlImportSource().normalize(WsdlImportSource().parse(emitted))
+    again = reimport_emitted(WsdlImportSource(), WsdlEmitter().emit(model), multi_file=True)
     for name in ("status", "note", "lines", "id"):
         assert _field(again, name).extras == _field(model, name).extras
     assert again.services[0].operations[0].extras == model.services[0].operations[0].extras

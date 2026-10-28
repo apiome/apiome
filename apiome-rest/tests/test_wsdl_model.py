@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 
 from app.canonical_model import MessageRole
+from app.roundtrip_matrix import reimport_emitted
 from app.wsdl_emitter import WsdlEmitter
 from app.wsdl_import_source import WsdlImportSource
 from app.wsdl_parser import parse_wsdl
@@ -26,8 +27,9 @@ def _model(text: str):
 
 
 def _reimport(model) -> Any:
+    """Export ``model`` (the default WSDL + XSD bundle) and re-import it as a fileset."""
     result = WsdlEmitter().emit(model)
-    return _model(result.files[0].content)
+    return reimport_emitted(WsdlImportSource(), result, multi_file=True)
 
 
 def _operation(model, name: str):

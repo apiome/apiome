@@ -286,21 +286,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation f01584fe-55ed-4ed1-b10e-cd43b209dce1; changed roo',
+        'added channel com.example.product; added operation 2cffc1dc-a503-433a-8b21-111eeeeb1829; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation f9427382-ca11-47fd-a30f-e45556e630cb; changed root; ',
+        'added channel com.example.user; added operation ea8adc4e-c7eb-4b1e-947d-cf09723f6901; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation 22a4994d-fe74-43c1-aee5-cea626f1a0a9; changed ',
+        'added channel com.example.cronwidget; added operation 3de5e164-9783-4801-9f5a-391e258cfe61; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 4cb4f980-aabd-46a3-86dd-cb6fb850a233; changed root',
+        'added channel com.example.orders; added operation fe9154a0-1d3b-47ad-81b7-d86861e5dab4; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation ceafb57c-5144-401c-a8d1-a443081e1f73; c',
+        'added channel com.example.commerce.ontology; added operation 94ab3e55-eb15-4b69-b5f4-af925c8299e2; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 5bfc8e35-b8e5-4bc2-bd6e-49766e6415c9',
+        'added channel com.example.typicalsensormessage; added operation eb16cd86-a5aa-45c0-b127-dc98f4c692de',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 0bda6614-d0a5-427f-8d68-ec',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 89d5b7f7-0c9d-4b32-adcc-e6',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation f6fa0a45-fd51-4466-91bc-cf2d250f136a; changed r',
+        'added channel com.example.orderline; added operation e9667231-e7b9-49da-b0dc-9a93eaf88958; changed r',
     # --- connectrpc (16) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
@@ -1192,51 +1192,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation example-weather:weather-service.weather-service.get-current-conditions; added operat',
     ('typescript-types', 'wit'):
         'changed root; removed type NewOrder; removed type NewOrder_lines_item; removed type Order; removed t',
-    # --- wsdl (22) ---
-    ('a2a', 'wsdl'):
-        'removed agent Travel Concierge; added operation Example Travel Co..Travel Concierge.Build itinerary;',
-    ('acp', 'wsdl'):
-        'removed agent research-assistant; added operation http://example.com/service.research-assistant.Cite',
-    ('agents-manifest', 'wsdl'):
-        'removed operation a2a.https://returns.northwind.example/.well-known/agent-card.json; removed operati',
-    ('apigee', 'wsdl'):
-        'removed operation GET /v2/orders/orders; removed operation GET /v2/orders/orders/{segment1}; removed',
-    ('arazzo', 'wsdl'):
-        'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
-    ('azure-apim', 'wsdl'):
-        'removed operation GET /orders; removed operation GET /orders/{orderId}; added operation http://examp',
-    ('capnproto', 'wsdl'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation http://example.',
-    ('consul', 'wsdl'):
-        'removed operation ANY /v2/orders; added operation http://example.com/service.orders.ANY /v2/orders; ',
-    ('envoy-xds', 'wsdl'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
-    ('flatbuffers', 'wsdl'):
-        'changed root; removed type example.game.Color; changed type example.game.Monster; changed type examp',
-    ('gateway-api', 'wsdl'):
-        'removed operation GET /users; removed operation GET /users/{userId}; removed operation POST /users; ',
-    ('haproxy', 'wsdl'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /metrics; removed ope',
-    ('istio', 'wsdl'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; removed',
-    ('kong', 'wsdl'):
-        'removed operation DELETE /users/{userId}; removed operation GET /users; removed operation GET /users',
-    ('nginx', 'wsdl'):
-        'removed operation ANY /; removed operation ANY /#api.example.com:80@return; removed operation ANY /h',
-    ('traefik', 'wsdl'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
-    ('tyk', 'wsdl'):
-        'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
-    ('typespec', 'wsdl'):
-        'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
-    ('wadl', 'wsdl'):
-        'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
-    ('wsdl', 'wsdl'):
-        'changed type http://example.com/orders.Order; changed type http://example.com/orders.OrderLine',
-    ('wsdl2', 'wsdl'):
-        'changed operation http://example.com/orders.OrderInterface.cancelOrder; changed type http://example.',
-    ('zosconnect', 'wsdl'):
-        'removed operation GET /items/{sku}/stock; added operation InventoryRequester.InventoryRequester.getS',
     # --- xmlrpc (15) ---
     ('a2a', 'xmlrpc'):
         'removed agent Travel Concierge; added operation Build itinerary.Build itinerary; removed operation T',

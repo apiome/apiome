@@ -4518,8 +4518,8 @@
         {
           "source_format": "wsdl",
           "emit_key": "wsdl",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         },
         {
           "source_format": "wsdl2",

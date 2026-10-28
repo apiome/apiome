@@ -31,8 +31,10 @@ operation. You can then search, version, diff and convert it like any other cata
 
 Each server also records its WSDL service, binding, port type and SOAP transport, so a description
 with SOAP 1.1 and SOAP 1.2 ports keeps both. When you export the item to WSDL (see
-[Export a specification](../ship/export-a-spec.md)), its bindings, services, ports, faults and
-multi-part messages are written out again.
+[Export a specification](../ship/export-a-spec.md#wsdl-and-xsd-from-any-source)), its bindings,
+services, ports, faults, multi-part messages and XSD types — with each element's occurrence,
+`nillable`, default, restrictions and original XSD type such as `dateTime` or `decimal` — are written
+out again, so a re-import of the export matches the item.
 
 ## A description split across files
 
