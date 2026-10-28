@@ -67,3 +67,14 @@ describe('Export studio', () => {
     expect(screen.queryByTestId('export-studio-error')).not.toBeInTheDocument();
   });
 });
+
+describe('Export studio header (HIVE-11.11b)', () => {
+  it('draws Back to Versions as a ghost action and names the workspace first', async () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch;
+    render(<ExportStudio artifact="item-1" artifactLabel="Orders RPC" version={null} workspaceName="Acme Corp" />);
+    const back = screen.getByTestId('export-studio-back');
+    expect(back).toHaveTextContent('Back to Versions');
+    expect(back.className).toContain('bg-transparent text-fg-muted');
+    expect(screen.getByRole('link', { name: 'Acme Corp' })).toHaveAttribute('href', '/ade/dashboard');
+  });
+});
