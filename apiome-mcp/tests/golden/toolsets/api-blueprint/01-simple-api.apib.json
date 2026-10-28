@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns application/json (Task).",
+      "description": "Returns HTTP 200 application/json (array of Task).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -12,32 +12,36 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "done": {},
-            "dueDate": {
-              "description": "Due date (ISO 8601).",
-              "type": "string"
+          "items": {
+            "properties": {
+              "done": {},
+              "dueDate": {
+                "description": "Due date (ISO 8601).",
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique task identifier.",
+                "type": "string"
+              },
+              "title": {
+                "description": "Short summary of the task.",
+                "type": "string"
+              }
             },
-            "id": {
-              "description": "Unique task identifier.",
-              "type": "string"
-            },
-            "title": {
-              "description": "Short summary of the task.",
-              "type": "string"
-            }
+            "required": [
+              "id",
+              "title"
+            ],
+            "type": "object"
           },
-          "required": [
-            "id",
-            "title"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "Task"
+        "shape": "array of Task",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Task).",
+      "description": "Returns HTTP 200 application/json (Task).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -76,11 +80,12 @@
           ],
           "type": "object"
         },
-        "shape": "Task"
+        "shape": "Task",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Task).",
+      "description": "Returns HTTP 201 application/json (Task).",
       "inputSchema": {
         "properties": {
           "dueDate": {
@@ -123,7 +128,8 @@
           ],
           "type": "object"
         },
-        "shape": "Task"
+        "shape": "Task",
+        "status": "201"
       }
     }
   ]

@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns application/json (Question).",
+      "description": "Returns HTTP 200 application/json (array of Question).",
       "inputSchema": {
         "properties": {
           "page": {
@@ -19,34 +19,38 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "choices": {},
-            "published_at": {
-              "description": "Publication timestamp.",
-              "type": "string"
+          "items": {
+            "properties": {
+              "choices": {},
+              "published_at": {
+                "description": "Publication timestamp.",
+                "type": "string"
+              },
+              "question": {
+                "description": "The question text.",
+                "type": "string"
+              },
+              "url": {
+                "description": "Canonical URL of the question.",
+                "type": "string"
+              }
             },
-            "question": {
-              "description": "The question text.",
-              "type": "string"
-            },
-            "url": {
-              "description": "Canonical URL of the question.",
-              "type": "string"
-            }
+            "required": [
+              "choices",
+              "published_at",
+              "question",
+              "url"
+            ],
+            "type": "object"
           },
-          "required": [
-            "choices",
-            "published_at",
-            "question",
-            "url"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "Question"
+        "shape": "array of Question",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Question).",
+      "description": "Returns HTTP 200 application/json (Question).",
       "inputSchema": {
         "properties": {
           "question_id": {
@@ -86,11 +90,12 @@
           ],
           "type": "object"
         },
-        "shape": "Question"
+        "shape": "Question",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Question).",
+      "description": "Returns HTTP 201 application/json (Question).",
       "inputSchema": {
         "properties": {
           "choices": {},
@@ -137,11 +142,12 @@
           ],
           "type": "object"
         },
-        "shape": "Question"
+        "shape": "Question",
+        "status": "201"
       }
     },
     {
-      "description": "Returns application/json (Choice).",
+      "description": "Returns HTTP 201 application/json (Choice).",
       "inputSchema": {
         "properties": {
           "choice_id": {
@@ -180,7 +186,8 @@
           ],
           "type": "object"
         },
-        "shape": "Choice"
+        "shape": "Choice",
+        "status": "201"
       }
     }
   ]

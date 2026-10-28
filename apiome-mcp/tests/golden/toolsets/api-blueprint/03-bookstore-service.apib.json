@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {
           "id": {
@@ -17,10 +17,12 @@
       },
       "name": "Remove_a_book",
       "operation": "DELETE /books/{id}",
-      "output": {}
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "Returns application/json (Book).",
+      "description": "Returns HTTP 200 application/json (array of Book).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -30,35 +32,39 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "author": {
-              "description": "Author name.",
-              "type": "string"
+          "items": {
+            "properties": {
+              "author": {
+                "description": "Author name.",
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique book identifier.",
+                "type": "string"
+              },
+              "inStock": {},
+              "price": {},
+              "title": {
+                "description": "Book title.",
+                "type": "string"
+              }
             },
-            "id": {
-              "description": "Unique book identifier.",
-              "type": "string"
-            },
-            "inStock": {},
-            "price": {},
-            "title": {
-              "description": "Book title.",
-              "type": "string"
-            }
+            "required": [
+              "author",
+              "id",
+              "price",
+              "title"
+            ],
+            "type": "object"
           },
-          "required": [
-            "author",
-            "id",
-            "price",
-            "title"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "Book"
+        "shape": "array of Book",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Book).",
+      "description": "Returns HTTP 200 application/json (Book).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -100,11 +106,12 @@
           ],
           "type": "object"
         },
-        "shape": "Book"
+        "shape": "Book",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Book).",
+      "description": "Returns HTTP 201 application/json (Book).",
       "inputSchema": {
         "properties": {
           "author": {
@@ -153,7 +160,8 @@
           ],
           "type": "object"
         },
-        "shape": "Book"
+        "shape": "Book",
+        "status": "201"
       }
     }
   ]

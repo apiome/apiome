@@ -312,6 +312,9 @@ SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
     "callable": (
         lambda api: any(True for _ in api.operations()) or _has_record_type(api),
         "{label} export needs at least one operation or record type; this source has neither.",
+    ),    "http-operation-or-type": (
+        lambda api: _has_http_operation(api) or bool(api.types),
+        "{label} export needs at least one HTTP operation or one type; this source has neither.",
     ),
 }
 
@@ -563,8 +566,9 @@ class Emitter(ABC):
     required_source_extras: ClassVar[Tuple[str, ...]] = ()
     #: What the source must contain for this target to write anything (X1, #6222): an
     #: ``"http-operation"`` for a gateway config or a request collection, a ``"record-type"`` for a
-    #: data contract, a ``"callable"`` (operation or record) for an agent tool array. Empty for an
-    #: emitter that writes something for any source. See :data:`SOURCE_REQUIREMENTS`.
+    #: data contract, a ``"callable"`` (operation or record) for an agent tool array, an
+    #: ``"http-operation-or-type"`` for a document format that can describe either (API Blueprint).
+    #: Empty for an emitter that writes something for any source. See :data:`SOURCE_REQUIREMENTS`.
     requires_source: ClassVar[Tuple[str, ...]] = ()
     #: Pydantic model describing this emitter's per-target options (MFX-1.4).
     options_model: ClassVar[type[EmitOptions]] = EmitOptions

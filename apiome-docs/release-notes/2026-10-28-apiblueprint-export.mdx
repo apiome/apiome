@@ -1,0 +1,25 @@
+---
+slug: apiblueprint-export
+title: API Blueprint export reads as documentation, from any source
+description: API Blueprint exports carry resources, parameters, bodies and MSON data structures.
+authors: [apiome]
+---
+
+Exporting an item to **API Blueprint** now writes a complete API Blueprint 1A document, meant to be
+read as documentation, from an OpenAPI or any other source.
+[How the API Blueprint is written](/ship/export-a-spec#api-blueprint-from-any-source).
+
+{/* truncate */}
+
+- **Valid.** The `FORMAT: 1A` line comes first, as API Blueprint tools expect. Before, a comment came
+  first.
+- **Complete actions.** Each operation keeps its description, its query parameters in the URI
+  (`{?limit}`), path parameters with their types, a request body with its media type, and one
+  response per status code.
+- **Data structures.** Fields stay in order with `required`, descriptions and defaults; enums, aliases,
+  unions and maps are written as named types; names MSON cannot use are made safe.
+- **Nothing silent.** Validation rules MSON cannot express, operations API Blueprint cannot carry,
+  header and cookie parameters, status ranges, extra servers, the version and renamed types are listed
+  in the fidelity report. A source with no HTTP operation and no type is refused with the reason.
+- **Checked.** Each export is validated with drafter when the server has it, and read back otherwise.
+  An item imported from API Blueprint exports and re-imports unchanged.

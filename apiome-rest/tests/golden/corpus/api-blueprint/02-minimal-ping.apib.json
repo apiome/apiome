@@ -40,9 +40,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /ping#response.200",
                 "name": null,
@@ -50,7 +48,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "Check liveness",
@@ -77,7 +75,7 @@
     "confidence": 0.98,
     "format": "api-blueprint"
   },
-  "fingerprint": "sha256:4d4b1a2821193fc11d9b527bd3ccf5119305af0020ef54bc2cd9848a1ec4cd37",
+  "fingerprint": "sha256:c46ec7cc0952dcbd0a81ce72d80419c85f4ab3718533a7abfc75a1465de10315",
   "lint": {
     "findings": 2,
     "grade": "A",

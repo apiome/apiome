@@ -5,6 +5,51 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.507.0] - 2026-10-28
+
+### Added
+- **API Blueprint emitter (MFX-18.1, #3905).** The `apiblueprint` target is rebuilt as a human-readable documentation
+  export: API Blueprint 1A (Markdown + MSON).
+  - Document: `FORMAT: 1A` and `HOST` (an API Blueprint source's own, else the first server) are the first lines —
+    the old generated comment came first, so drafter did not read the metadata — then `# <title>` (synthesized from
+    the name when missing, reported), the generated comment (option `include_comments`) and the description.
+  - Resources: one `## <name> [<path>]` per path, sorted; path parameters named by the template on the resource,
+    `required` / `optional` written explicitly; one `### <name> [<METHOD>]` action per operation with its
+    description, query parameters in the action URI template (`[GET /pets{?limit}]`) and its own `+ Parameters`, a
+    `+ Request (<media type>)` (option `media_type` when the source names none) and one `+ Response <status>` per
+    status code, each with `+ Attributes (<type>)` or, for an inline schema, a `+ Schema` section. Parameter
+    defaults are nested `+ Default:` lines.
+  - Data structures: records in field-number order as MSON properties (`required`, escaped names, descriptions,
+    nested `+ Default:`); enums; aliases, named scalars, maps (`object`) and unions (an enum of types) as named
+    types; MSON-safe unique type names (`ApibNames`). `mson_scalar` maps canonical scalars to MSON's `string` /
+    `number` / `boolean`. An API Blueprint source's own type expressions, samples and inheritance bases are written
+    back.
+  - Reported (emit losses and the rebuilt `ApiblueprintFidelityRulePack`, from the same helpers): validation
+    constraints (`DROP` — MSON has no facets), operations with no HTTP binding, events and channels, a second
+    operation on one method and path, conflicting path-parameter definitions, header and cookie parameters, status
+    ranges, duplicate statuses, response headers and descriptions, extra servers, server variables, the version,
+    merged services, the source identity, agents, widened scalars, unions, maps, aliases, renamed types and
+    namespaces, enum numbers and value docs, descriptions that do not read back as written, structured defaults,
+    deprecation flags, tags, streaming, field numbers that are not property positions, and source-specific details.
+  - A source with no HTTP operation and no type is refused (`422`, new source requirement `http-operation-or-type`;
+    the targets list marks the card unavailable with the reason).
+- **Emitted-output validation for `apiblueprint`** (`app.export_validation`): drafter's annotations when the
+  `drafter` toolchain is present (an `error` fails the export, warnings do not), else a re-parse through the
+  API Blueprint reader.
+
+### Changed
+- API Blueprint import reads what the emitter writes: action descriptions, the URI template's query expansion
+  (`{?limit,offset}` → query parameters, removed from the path), data-structure descriptions, nested `+ Default:`
+  values (typed by the member's MSON type), backtick-escaped property names and enum members, colon-less MSON
+  properties; one-line HTML comments are not part of the API description, and a parameter line must be nested under
+  `+ Parameters`. `array[T]` bodies are arrays of `T` (was `T` with an `apib_response_array` extra) and a response's
+  status is its `status_code` (was an `http_status` extra).
+- API Blueprint capability profile: `constraints` `False` reported as `DROP`, `field_identity` `False`.
+- Goldens: `api-blueprint`, `postman`, `postman-v2` and `xmlrpc` → `apiblueprint` round trips pass (xfails removed);
+  the `apiblueprint` silent-loss ledger goes from 49 pairs to 0; the round-trip, export-conformance, parity,
+  conversion-pack and API Blueprint corpus goldens are regenerated.
+- `main.py`'s OpenAPI version is back in step with `openapi.json` (it had stayed at 1.362.0).
+
 ## [1.506.0] - 2026-10-28
 
 ### Added

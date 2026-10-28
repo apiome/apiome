@@ -3,12 +3,19 @@
 Parses API Blueprint markdown into a typed :class:`ApiblueprintDocument` AST using
 a lightweight line-oriented parser so catalog imports do not depend on the
 external ``drafter`` CLI.
+
+What it reads: the ``FORMAT`` / ``HOST`` metadata, the API title and description (HTML comments
+skipped), resources and actions (an action may override the URI), the URI template's query
+expansion (``/books{?limit,offset}`` → query parameters), ``+ Parameters``, request and response
+``+ Attributes``, action descriptions, and the ``# Data Structures`` section: named types with their
+description and MSON members (``+ name: sample (type, required) - description``, a backtick-escaped
+name, an optional nested ``+ Default: value``) or enum members.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Optional, Tuple
 
 __all__ = [
@@ -20,6 +27,7 @@ __all__ = [
     "ApiblueprintDocument",
     "is_apiblueprint",
     "parse_apiblueprint",
+    "split_uri_template",
 ]
 
 _FORMAT_RE = re.compile(r"^\s*FORMAT\s*:\s*(\S+)\s*$", re.IGNORECASE | re.MULTILINE)
@@ -38,14 +46,23 @@ _HOST_RE = re.compile(r"^\s*HOST\s*:\s*(\S+)\s*$", re.IGNORECASE | re.MULTILINE)
 _RESOURCE_RE = re.compile(r"^##\s+(.+?)\s+\[([^\]]+)\]\s*$")
 _ACTION_RE = re.compile(r"^###\s+(.+?)\s+\[([A-Z]+)(?:\s+([^\]]+))?\]\s*$")
 _TYPE_DEF_RE = re.compile(r"^##\s+(\w+)\s*\((\w+)\)\s*$")
+#: An MSON property: ``+ name: sample (type, required) - description``. The name may be escaped in
+#: backticks (``+ `order-id` (string)``); the ``:`` and sample are optional.
 _FIELD_RE = re.compile(
-    r"^\s*\+\s+(\w+):\s*(?:(?:`([^`]*)`)|(\S+))?\s*\(([^)]+)\)\s*(?:-\s*(.*))?$"
+    r"^\s*\+\s+(\w+|`[^`]+`)(?::\s*(?:(?:`([^`]*)`)|([^\s(]\S*))?)?\s*\(([^)]+)\)\s*(?:-\s*(.*))?$"
 )
-_PARAM_RE = re.compile(r"^\s*\+\s+(\w+)\s*\(([^)]+)\)\s*(?:-\s*(.*))?$")
+#: A parameter, nested under ``+ Parameters`` (indented, so ``+ Request (…)`` never reads as one).
+_PARAM_RE = re.compile(r"^\s+\+\s+([\w.\-]+)\s*\(([^)]+)\)\s*(?:-\s*(.*))?$")
+#: A nested ``+ Default: value`` under a property or parameter (indented below it).
+_DEFAULT_RE = re.compile(r"^\s+\+\s+Default\s*:\s*(?:`([^`]*)`|(.*?))\s*$")
+#: A URI template's query expansion: ``{?limit,offset}`` or ``{&page}``.
+_QUERY_EXPANSION_RE = re.compile(r"\{[?&]([^}]*)\}")
+#: A one-line HTML comment (``<!-- … -->``): markup, not description.
+_HTML_COMMENT_RE = re.compile(r"^<!--.*-->$")
 _ATTRIBUTES_RE = re.compile(r"^\s*\+\s+Attributes\s*\(([^)]+)\)\s*$")
 _REQUEST_RE = re.compile(r"^\s*\+\s+Request\s*\(([^)]+)\)\s*$")
 _RESPONSE_RE = re.compile(r"^\s*\+\s+Response\s+(\d{3})(?:\s*\(([^)]+)\))?\s*$")
-_ENUM_MEMBER_RE = re.compile(r"^\s*\+\s+(\w+)\s*$")
+_ENUM_MEMBER_RE = re.compile(r"^\s*\+\s+(?:`([^`]+)`|([^\s`()]+))\s*$")
 _DATA_STRUCTURES_RE = re.compile(r"^#\s+Data Structures\s*$", re.IGNORECASE)
 
 
@@ -60,6 +77,8 @@ class ApiblueprintField:
     required: bool
     sample: Optional[str]
     description: Optional[str]
+    #: The nested ``+ Default:`` value, as written.
+    default: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -77,6 +96,10 @@ class ApiblueprintParameter:
     type_expr: str
     required: bool
     description: Optional[str] = None
+    #: ``path``, or ``query`` for a name in the URI template's query expansion (``{?limit}``).
+    location: str = "path"
+    #: The nested ``+ Default:`` value, as written.
+    default: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -154,9 +177,28 @@ def _join_paths(base: str, suffix: Optional[str]) -> str:
     return _normalize_path(base_path + suffix)
 
 
+def split_uri_template(path: str) -> Tuple[str, List[str]]:
+    """Split a URI template into its path and the names of its query expansion.
+
+    Args:
+        path: The resource or action URI template (``/books{?limit,offset}``).
+
+    Returns:
+        The path without the query expansion (``/books``) and the query names (``["limit", "offset"]``),
+        explode modifiers (``*``) removed.
+    """
+    names = [
+        name.strip().rstrip("*")
+        for group in _QUERY_EXPANSION_RE.findall(path)
+        for name in group.split(",")
+        if name.strip()
+    ]
+    return _QUERY_EXPANSION_RE.sub("", path), names
+
+
 def _path_parameters(path: str) -> List[ApiblueprintParameter]:
     params: List[ApiblueprintParameter] = []
-    for name in re.findall(r"\{([^}]+)\}", path):
+    for name in re.findall(r"\{([^}?&]+)\}", path):
         params.append(
             ApiblueprintParameter(
                 name=name,
@@ -188,7 +230,7 @@ def _parse_field_line(line: str) -> Optional[ApiblueprintField]:
     sample = match.group(2) if match.group(2) is not None else match.group(3)
     type_expr, required = _parse_type_modifiers(match.group(4))
     return ApiblueprintField(
-        name=match.group(1),
+        name=match.group(1).strip("`"),
         type_expr=type_expr,
         required=required,
         sample=sample,
@@ -201,22 +243,24 @@ def _finalize_operation(
     name: str,
     method: str,
     path: str,
+    description: Optional[str],
     resource_params: List[ApiblueprintParameter],
     action_params: List[ApiblueprintParameter],
     request_media_type: Optional[str],
     request_type: Optional[str],
     responses: List[Tuple[str, Optional[str], Optional[str]]],
 ) -> ApiblueprintOperation:
+    path, query_names = split_uri_template(path)
     params_by_name = {param.name: param for param in _path_parameters(path)}
-    for param in resource_params:
-        params_by_name[param.name] = param
-    for param in action_params:
-        params_by_name[param.name] = param
+    for name_ in query_names:
+        params_by_name[name_] = ApiblueprintParameter(name=name_, type_expr="string", required=False, location="query")
+    for param in [*resource_params, *action_params]:
+        params_by_name[param.name] = replace(param, location="query") if param.name in query_names else param
     return ApiblueprintOperation(
         name=name,
         method=method,
         path=path,
-        description=None,
+        description=description,
         parameters=tuple(params_by_name.values()),
         request_media_type=request_media_type,
         request_type=request_type,
@@ -280,6 +324,12 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
     responses: List[Tuple[str, Optional[str], Optional[str]]] = []
     pending_response_status: Optional[str] = None
     pending_response_media: Optional[str] = None
+    #: Description lines of the current action (before its first ``+`` section) and type.
+    action_description: List[str] = []
+    action_body_started = False
+    type_description: List[str] = []
+    #: Where a nested ``+ Default:`` line lands: ``("field", index)`` or ``("param", list, index)``.
+    default_target: Optional[Tuple[Any, ...]] = None
 
     def flush_pending_response() -> None:
         nonlocal pending_response_status, pending_response_media
@@ -291,7 +341,7 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
         pending_response_media = None
 
     def flush_type() -> None:
-        nonlocal current_type, type_fields, type_enum_values
+        nonlocal current_type, type_fields, type_enum_values, type_description
         if current_type is None:
             return
         types.append(
@@ -300,17 +350,32 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
                 kind=current_type.kind,
                 fields=tuple(type_fields),
                 enum_values=tuple(type_enum_values),
-                description=current_type.description,
+                description="\n".join(type_description).strip() or None,
             )
         )
         current_type = None
         type_fields = []
         type_enum_values = []
+        type_description = []
+
+    def apply_default(value: str) -> None:
+        """Attach a nested ``+ Default:`` value to the member it is indented under."""
+        if default_target is None:
+            return
+        if default_target[0] == "field":
+            type_fields[default_target[1]] = replace(type_fields[default_target[1]], default=value)
+        else:
+            owner, at = default_target[1], default_target[2]
+            owner[at] = replace(owner[at], default=value)
 
     def flush_operation() -> None:
         nonlocal action_name, action_method, action_path, action_params
         nonlocal request_media_type, request_type, responses
         nonlocal pending_response_status, pending_response_media
+        nonlocal action_description, action_body_started
+        description = "\n".join(action_description).strip() or None
+        action_description = []
+        action_body_started = False
         if action_name is None or action_method is None or action_path is None:
             flush_pending_response()
             action_name = None
@@ -329,6 +394,7 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
                 name=action_name,
                 method=action_method,
                 path=action_path,
+                description=description,
                 resource_params=resource_params,
                 action_params=action_params,
                 request_media_type=request_media_type,
@@ -364,6 +430,7 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
             type_match = _TYPE_DEF_RE.match(stripped)
             if type_match:
                 flush_type()
+                default_target = None
                 current_type = ApiblueprintType(
                     name=type_match.group(1),
                     kind=type_match.group(2).lower(),
@@ -373,16 +440,31 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
                 index += 1
                 continue
             if current_type is not None:
+                default_match = _DEFAULT_RE.match(line)
+                if default_match:
+                    apply_default(default_match.group(1) if default_match.group(1) is not None
+                                  else default_match.group(2))
+                    index += 1
+                    continue
                 field = _parse_field_line(line)
                 if field is not None:
                     type_fields.append(field)
+                    default_target = ("field", len(type_fields) - 1)
                     index += 1
                     continue
                 enum_member = _ENUM_MEMBER_RE.match(stripped)
                 if enum_member and current_type.kind == "enum":
-                    type_enum_values.append(enum_member.group(1))
+                    type_enum_values.append(enum_member.group(1) or enum_member.group(2))
                     index += 1
                     continue
+                if (
+                    stripped
+                    and not type_fields
+                    and not type_enum_values
+                    and not stripped.startswith(("+", "#"))
+                    and not _HTML_COMMENT_RE.match(stripped)
+                ):
+                    type_description.append(stripped)
             index += 1
             continue
 
@@ -406,18 +488,26 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
             index += 1
             continue
 
+        if action_name is not None and stripped.startswith("+"):
+            action_body_started = True
+
         if stripped == "+ Parameters":
             in_parameters_block = True
             index += 1
             continue
 
         if in_parameters_block:
+            default_match = _DEFAULT_RE.match(line)
+            if default_match:
+                apply_default(default_match.group(1) if default_match.group(1) is not None
+                              else default_match.group(2))
+                index += 1
+                continue
             param = _parse_parameter_line(line)
             if param is not None:
-                if action_name is not None:
-                    action_params.append(param)
-                else:
-                    resource_params.append(param)
+                owner = action_params if action_name is not None else resource_params
+                owner.append(param)
+                default_target = ("param", owner, len(owner) - 1)
                 index += 1
                 continue
             if stripped.startswith("+") or stripped.startswith("#"):
@@ -457,13 +547,15 @@ def parse_apiblueprint(content: str, *, source_label: Optional[str] = None) -> A
             continue
 
         if (
-            action_name is None
-            and current_resource_path is None
-            and stripped
+            stripped
             and not stripped.startswith("+")
             and not stripped.startswith("#")
+            and not _HTML_COMMENT_RE.match(stripped)
         ):
-            description_lines.append(stripped)
+            if action_name is None and current_resource_path is None:
+                description_lines.append(stripped)
+            elif action_name is not None and not action_body_started:
+                action_description.append(stripped)
 
         index += 1
 
