@@ -96,6 +96,7 @@ from .export_delivery_gate import (
 )
 from .export_fidelity import ExportFidelity, build_export_fidelity
 from .export_fidelity_rollup import ExportFidelityRollup, build_fidelity_rollup
+from .export_job_health import export_job_health
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
@@ -2156,6 +2157,8 @@ def _record_terminal_export_metrics(job_id: str) -> None:
             duration_ms=duration_ms,
             bytes_out=bytes_out,
         )
+        # X8 (#6229): the whole-job duration histogram and the failure-rate alert window.
+        export_job_health.observe(outcome=outcome, duration_ms=duration_ms)
     except Exception:  # noqa: BLE001 - metrics must never affect the job
         logger.debug("Failed to record terminal export metrics", exc_info=True)
 

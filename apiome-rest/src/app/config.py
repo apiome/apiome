@@ -1064,6 +1064,32 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Export failure-rate alert (X8, #6229; ``app.export_job_health``). Fires when the last
+    # ``export_failure_alert_window_seconds`` hold at least ``export_failure_alert_min_jobs``
+    # completed-or-failed export jobs and at least ``export_failure_alert_rate`` of them failed.
+    # Per replica, like the rest of the metrics plane. A rate of ``0`` or less turns it off.
+    export_failure_alert_rate: float = Field(
+        default=0.2,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_FAILURE_ALERT_RATE",
+            "export_failure_alert_rate",
+        ),
+    )
+    export_failure_alert_min_jobs: int = Field(
+        default=10,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_FAILURE_ALERT_MIN_JOBS",
+            "export_failure_alert_min_jobs",
+        ),
+    )
+    export_failure_alert_window_seconds: int = Field(
+        default=900,  # 15 minutes
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_FAILURE_ALERT_WINDOW_SECONDS",
+            "export_failure_alert_window_seconds",
+        ),
+    )
+
     # Async job row retention (IXH-6.3, #5122). Terminal jobs older than these windows
     # (measured from updated_at) are claimed by the scheduled sweep, summarized into
     # async_job_history, then deleted (export artifacts CASCADE). ``0`` disables reap for

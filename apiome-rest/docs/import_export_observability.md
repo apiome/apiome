@@ -106,6 +106,30 @@ So: `X-Request-ID` on the 202 == `correlation_id` on every subsequent poll == th
   kind × outcome, byte totals) and *Import/Export failures* (top taxonomy codes) — polling
   `/v1/ops/status` every 5 s.
 
+## Export health (X8, #6229)
+
+`app/export_job_health.py` adds what the three families cannot answer before Export studio's gate
+opens, fed from the same terminal-export seam (`_record_terminal_export_metrics`):
+
+- **Whole-job duration histogram** for completed and failed exports. Bucket upper bounds (ms):
+  1000, 2500, 5000, 10000, 30000, 60000, 120000, 300000, 600000, 1800000 (the default job cap),
+  then `inf`. p50 and p95 are reported as the upper bound of the bucket that holds them;
+  `p95_over_last_bucket` is `true` when p95 lies in `inf`.
+- **Summary** (`export_health` on `/v1/ops/metrics`, `/v1/ops/status` and
+  `/v1/ops/import-export`): `totals` by outcome, `success_rate` and `failure_rate` over
+  completed + failed (canceled counts in neither), `per_target` (most failures first, with
+  failure rate and taxonomy codes), `job_duration_ms` and `alert`.
+- **Failure-rate alert** over a rolling window of terminal exports (timestamp + failed flag only,
+  at most 10,000 kept). `firing` when the window holds at least
+  `APIOME_EXPORT_FAILURE_ALERT_MIN_JOBS` (10) completed-or-failed jobs and at least
+  `APIOME_EXPORT_FAILURE_ALERT_RATE` (0.2) of them failed, over
+  `APIOME_EXPORT_FAILURE_ALERT_WINDOW_SECONDS` (900); `no-data` below the minimum; `off` when the
+  rate is `0` or less. Each change of state logs one `export.failure_rate_alert` line (`warning`
+  when it fires, `info` when it clears) — the hook for a log-based pager.
+- `GET /v1/ops/dashboard` draws it as the **Export health** card.
+
+Same posture as everything above: per replica, reset on restart, no tenant, job or user tag.
+
 ## Log grep recipes
 
 ```sh
@@ -114,6 +138,9 @@ grep '"request_id": "<the X-Request-ID>"' rest.log
 
 # Stage timings as structured events:
 grep '"event": "import_export.stage"' rest.log | jq '{kind, stage, duration_ms, outcome}'
+
+# Export failure-rate alert transitions (X8):
+grep '"event": "export.failure_rate_alert"' rest.log | jq '{state, window_failed, window_jobs}'
 
 # Failure distribution by taxonomy code (log-side; the counters are the same numbers):
 grep '"event": "import_export.failure"' rest.log | jq -r '.code' | sort | uniq -c

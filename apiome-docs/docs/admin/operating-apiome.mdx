@@ -220,6 +220,49 @@ It prints how many revisions it scanned and repaired, and how many it could not 
 (`unverifiable`, `no_copy`), with one outcome per revision. Each repaired revision records where its
 source came from in `sourceBackfilledFrom`. It is safe to run again.
 
+## Watch exports
+
+Before Export studio opens to everyone, watch how exports are doing. Sign in as a platform
+administrator and **open `/v1/ops/dashboard`** on the REST API. The **Export health** card refreshes
+every 5 seconds and shows:
+
+| Row | Means |
+| --- | --- |
+| *n%* **failed** | Failed export jobs as a share of completed + failed ones. Canceled jobs count in neither. |
+| **alert** | `ok`, `firing`, `no-data` (too few jobs in the window to judge) or `off` |
+| **success rate** | Completed jobs as a share of completed + failed ones |
+| **last 15 min** | How many of the jobs in the alert window failed |
+| **alert at** | The failure rate and the fewest jobs the alert needs to fire (*20% of 10+ jobs*) |
+| **p95 job time** | 95% of export jobs finished within this time (*≤ 30 s*), from when the job started running to its end. *> 1800 s* means the slowest jobs ran past the 30-minute job cap. |
+| *target* **failed** | The five targets with the most failed jobs, with each one's failure rate |
+
+`GET /v1/ops/import-export` returns the same numbers under `export_health`, with every target, its
+failure codes and the duration histogram. The numbers are kept per server process and start again
+from zero when it restarts, so with several replicas, check each one.
+
+### The failure-rate alert
+
+The alert **fires** when, over the last 15 minutes, at least 10 export jobs completed or failed and
+at least 20% of them failed. It clears when the rate drops back under 20%, or when fewer than 10 jobs
+remain in the window. Each time it fires or clears, the REST API logs one `export.failure_rate_alert`
+line (a warning when it fires), so a log-based alert rule can page on it:
+
+```sh
+grep '"event": "export.failure_rate_alert"' rest.log | jq '{state, window_failed, window_jobs, window_failure_rate}'
+```
+
+Change the thresholds on the REST API:
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_EXPORT_FAILURE_ALERT_RATE` | `0.2` | Share of failed jobs that fires the alert. `0` turns the alert off. |
+| `APIOME_EXPORT_FAILURE_ALERT_MIN_JOBS` | `10` | Fewest completed or failed jobs in the window before the alert can fire |
+| `APIOME_EXPORT_FAILURE_ALERT_WINDOW_SECONDS` | `900` | How far back the alert looks |
+
+When it fires, the **Export health** card names the targets that fail most, and
+`GET /v1/ops/import-export` gives each one's failure codes. The codes are explained in
+[Export a spec](../ship/export-a-spec.md).
+
 ## The operator screens
 
 - [The admin console](./admin-console.mdx) — signing in, and the overview.

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.363.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.364.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `ops` · 9 operations
 
@@ -125,9 +125,10 @@ Import/export pipeline observability aggregates (IXH-6.6). Platform-admin only.
 The full operator view of the three metric families — per-stage duration histograms
 and byte totals, terminal job totals keyed by adapter/target × format × outcome, and
 failure counters keyed by the IXH-6.4 taxonomy code — plus the complete documented
-tag set every key is drawn from. Aggregates are in-process: per replica, reset on
-restart (same posture as ``/v1/ops/metrics``); durable per-job timing evidence lives
-in each job's ``PHASE_TIMING`` events in the shared job store.
+tag set every key is drawn from, and the export health summary (X8) — success and failure
+rate, per-target failures, the whole-job p95 and the failure-rate alert. Aggregates are
+in-process: per replica, reset on restart (same posture as ``/v1/ops/metrics``); durable
+per-job timing evidence lives in each job's ``PHASE_TIMING`` events in the shared job store.
 
 Operation id: `ops_import_export_v1_ops_import_export_get`
 
