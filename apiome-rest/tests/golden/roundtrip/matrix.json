@@ -34641,7 +34641,7 @@
       "emit_format": "apiblueprint",
       "emit_key": "apiblueprint",
       "loss_approx": 10,
-      "loss_drop": 1,
+      "loss_drop": 2,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 7,
@@ -57974,12 +57974,12 @@
       "emit_format": "apiblueprint",
       "emit_key": "apiblueprint",
       "loss_approx": 12,
-      "loss_drop": 3,
+      "loss_drop": 11,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 10,
       "overclaims": [],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'DICOM CT Image Storage', added type 'CS', added type 'CTImageStorage', added type 'DA', removed type 'DICOM.CS', removed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'DICOM CT Image Storage', added type 'CS', added type 'CTImageStorage', added type 'DA', removed type 'DICOM.CTImageStorage', removed type 'DICOM.US', added type 'DS', added type 'IS', added type 'LO', added type 'PN', added type 'SH', added type 'TM', added type 'UI', added type 'US')",
       "source_format": "dicom",
       "status": "xfail",
       "unexplained": [
@@ -58006,47 +58006,7 @@
         {
           "change": "removed",
           "entity": "type",
-          "key": "DICOM.CS"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
           "key": "DICOM.CTImageStorage"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.DA"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.DS"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.IS"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.LO"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.SH"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.TM"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "DICOM.UI"
         },
         {
           "change": "removed",
@@ -201573,7 +201533,7 @@
       "emit_format": "apiblueprint",
       "emit_key": "apiblueprint",
       "loss_approx": 4,
-      "loss_drop": 8,
+      "loss_drop": 9,
       "loss_ok": 5,
       "loss_synth": 0,
       "matched_count": 5,
@@ -248418,7 +248378,7 @@
       "emit_format": "apiblueprint",
       "emit_key": "apiblueprint",
       "loss_approx": 19,
-      "loss_drop": 23,
+      "loss_drop": 28,
       "loss_ok": 8,
       "loss_synth": 0,
       "matched_count": 15,
@@ -253861,7 +253821,7 @@
       "emit_format": "apiblueprint",
       "emit_key": "apiblueprint",
       "loss_approx": 7,
-      "loss_drop": 6,
+      "loss_drop": 7,
       "loss_ok": 4,
       "loss_synth": 0,
       "matched_count": 8,

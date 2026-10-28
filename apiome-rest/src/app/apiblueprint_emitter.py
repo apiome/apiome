@@ -241,6 +241,10 @@ class ApibNames:
         return "string"
 
 
+#: The subject of a constraint note: MSON writes no validation facet, so it is reported as a ``DROP``.
+_CONSTRAINTS_DROPPED = "constraints-dropped"
+
+
 def _constraint_notes(constraints: Optional[Constraints], owner: str) -> List[Note]:
     """MSON has no validation facets: every set constraint is a note (``DROP``)."""
     if constraints is None:
@@ -248,7 +252,7 @@ def _constraint_notes(constraints: Optional[Constraints], owner: str) -> List[No
     facets = sorted(constraints.model_dump(exclude={"extras"}, exclude_none=True, exclude_defaults=True))
     if not facets:
         return []
-    return [Note("constraints-dropped", f"MSON has no validation facets; the {owner}'s {', '.join(facets)} "
+    return [Note(_CONSTRAINTS_DROPPED, f"MSON has no validation facets; {', '.join(facets)} of the {owner} "
                  "not written", severity=LossinessSeverity.WARN)]
 
 
@@ -532,8 +536,7 @@ def _type_notes(type_: Type, names: ApibNames, apib_source: bool) -> List[Note]:
     elif type_.kind is TypeKind.SCALAR:
         base = (mson_scalar(type_.name) or ("string", False))[0]
         notes.append(Note("scalar-as-named-type", f"the scalar is written as a named {base} type", dropped=False))
-    if type_.kind is not TypeKind.RECORD:
-        notes.extend(_constraint_notes(type_.constraints, "type"))
+    notes.extend(_constraint_notes(type_.constraints, "type"))
     if type_.kind is TypeKind.RECORD and apib_source is False and type_.extras:
         notes.append(Note("type-details-dropped",
                           f"source-specific details ({', '.join(sorted(type_.extras))}) are not written"))
@@ -625,6 +628,36 @@ def _verdict(notes: Sequence[Note], target_mapping: str) -> Optional[FidelityVer
     )
 
 
+def _verdicts(notes: Sequence[Note], target_mapping: str) -> List[FidelityVerdict]:
+    """The verdicts for one construct's notes (MFX-18.2, #3906).
+
+    Constraint notes become one ``DROP`` (MSON has no validation facets, so nothing of them is
+    written); every other note is folded into one ``APPROX`` (:func:`_verdict`).
+
+    Args:
+        notes: What the construct loses, from the shared helpers.
+        target_mapping: How the construct is written (``operation → resource action``).
+
+    Returns:
+        Zero, one or two verdicts: the ``APPROX`` first, then the ``DROP``.
+    """
+    dropped = [note for note in notes if note.subject == _CONSTRAINTS_DROPPED]
+    approx = _verdict([note for note in notes if note.subject != _CONSTRAINTS_DROPPED], target_mapping)
+    verdicts = [approx] if approx else []
+    if dropped:
+        verdicts.append(FidelityVerdict.drop(
+            message="API Blueprint: " + "; ".join(note.message for note in dropped),
+            severity=LossinessSeverity.WARN,
+            target_mapping="constraints → dropped",
+        ))
+    return verdicts
+
+
+def _most_severe(verdicts: Sequence[FidelityVerdict], fallback: FidelityVerdict) -> FidelityVerdict:
+    """The ``DROP`` among ``verdicts`` when there is one, else the first, else ``fallback``."""
+    return next((v for v in verdicts if v.kind is LossinessKind.DROP), verdicts[0] if verdicts else fallback)
+
+
 class ApiblueprintFidelityRulePack(CapabilityRulePack):
     """Fidelity rules for API Blueprint export.
 
@@ -632,7 +665,18 @@ class ApiblueprintFidelityRulePack(CapabilityRulePack):
     its losses with: operations API Blueprint cannot place (no HTTP binding, a second operation on
     one method and path), what a written operation, type or field loses, the document envelope
     (services, identity, version, extra servers), and field numbers MSON's property order cannot
-    keep. Validation constraints are a ``DROP``: MSON has no facets to write them in.
+    keep.
+
+    MFX-18.2 (#3906) — the three loss classes the epic names:
+
+    * **non-REST** — an operation with no HTTP method and path (gRPC, GraphQL, WSDL sources) or an
+      event operation is a ``DROP``, and so is every channel (the capability rule);
+    * **MSON type limits** — what MSON writes differently is an ``APPROX``: wider scalars as its
+      three primitives (``i64`` → ``number``), aliases, named scalars and maps as named types;
+      unions, which MSON lacks, stay the capability rule's ``DROP``;
+    * **constraints** — a ``DROP`` wherever they sit (field, parameter, named scalar, alias,
+      record), recorded beside the construct's ``APPROX`` rather than folded into it: MSON has no
+      facets, so none of them is written.
     """
 
     target_label = "API Blueprint"
@@ -657,22 +701,39 @@ class ApiblueprintFidelityRulePack(CapabilityRulePack):
         rest = _verdict([n for n in notes if n not in synthesized], "document → API Blueprint")
         return [*verdicts, *([rest] if rest else [])]
 
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The capability verdict when it is a loss, a ``DROP`` for an operation API Blueprint cannot
+        place, else the operation's notes (:func:`_verdicts`), else ``OK``."""
         verdict = super().operation_verdict(operation)
         if verdict.kind is not LossinessKind.OK:
-            return verdict
+            return [verdict]
         reason = self._plan.dropped.get(operation.key)
         if reason:
-            return FidelityVerdict.drop(message=f"{reason}; the operation is dropped", target_mapping="dropped")
+            return [FidelityVerdict.drop(message=f"{reason}; the operation is dropped", target_mapping="dropped")]
         notes = _operation_notes(operation, self._names, self._owners, self._apib_source)
-        return _verdict(notes, "operation → resource action") or verdict
+        return _verdicts(notes, "operation → resource action") or [verdict]
 
-    def type_verdict(self, type_: Type) -> FidelityVerdict:
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """The most severe of :meth:`operation_verdicts`."""
+        verdicts = self.operation_verdicts(operation)
+        return _most_severe(verdicts, verdicts[0])
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The capability verdict when it is a loss (a union), else the type's notes, else ``OK``."""
         verdict = super().type_verdict(type_)
         if verdict.kind is not LossinessKind.OK:
-            return verdict
+            return [verdict]
         notes = _type_notes(type_, self._names, self._apib_source)
-        return _verdict(notes, f"{type_.kind.value} → MSON type") or verdict
+        return _verdicts(notes, f"{type_.kind.value} → MSON type") or [verdict]
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """The most severe of :meth:`type_verdicts`."""
+        verdicts = self.type_verdicts(type_)
+        return _most_severe(verdicts, verdicts[0])
+
+    def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
+        """A named scalar is carried; its constraints are a ``DROP`` of their own (:meth:`type_verdicts`)."""
+        return FidelityVerdict.ok(message=f"scalar carried to {self.target_label}")
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
         verdicts = super().field_verdicts(field)
@@ -681,11 +742,7 @@ class ApiblueprintFidelityRulePack(CapabilityRulePack):
 
     def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
         """MSON has no validation facets: a field's constraints are dropped."""
-        notes = _constraint_notes(field.constraints, "field")
-        if not notes:
-            return None
-        return FidelityVerdict.drop(message=f"API Blueprint: {notes[0].message}", severity=LossinessSeverity.WARN,
-                                    target_mapping="constraints → dropped")
+        return next(iter(_verdicts(_constraint_notes(field.constraints, "field"), "field → MSON property")), None)
 
     def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
         """Field numbers equal to the property's position survive (MSON keeps property order)."""
@@ -919,8 +976,6 @@ class _ApiblueprintWriter:
     def _type(self, type_: Type) -> List[str]:
         """One named type: ``## <Name> (<base>)``, its description, then its members."""
         for note in _type_notes(type_, self._names, self._apib_source):
-            self._loss(note, type_.key)
-        for note in _constraint_notes(type_.constraints, "type") if type_.kind is TypeKind.RECORD else []:
             self._loss(note, type_.key)
         base, members = self._type_body(type_)
         lines = [f"## {self._names.names[type_.key]} ({base})"]
