@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.360.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.361.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-jobs` · 6 operations
 
@@ -52,6 +52,8 @@ Submit an export of one artifact/version to one target through the async job pip
 **Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version × target items; ``acknowledged_snapshot`` is not accepted on a batch.
 
 **Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing ``version`` exports the item's latest) instead of ``artifact`` to export several artifacts — say catalog items picked together — to the target(s) in one batch job. Each item's files land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at most 100 item × target pairs.
+
+**Limits (X5):** each refusal names the limit it hit. A tenant runs at most ``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; a submit past it is refused with **429**. A job running longer than ``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``; an artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails with ``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for ``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`` (default 24) and is **410** after that. ``0`` turns a limit off.
 
 Operation id: `start_export_job_v1_export__tenant_slug__jobs_post`
 

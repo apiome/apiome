@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.497.0] - 2026-10-28
+
+### Added
+- **Export limits (X5, #6226).** Two new limits on export jobs, each refusal naming the limit and its setting:
+  - **Concurrent jobs per tenant** — `APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT` (default 5). `POST
+    /v1/export/{tenant}/jobs` answers `429` while the tenant already has that many queued or running export jobs,
+    counted across instances (this process's jobs plus the shared store's, created within the time cap so a row
+    left `running` by a crashed instance stops counting).
+  - **Job time cap** — `APIOME_EXPORT_JOB_TIMEOUT_SECONDS` (default 1800). A job still running when it elapses
+    fails with the new taxonomy code `EXPORT_JOB_TIMED_OUT` (category `resource`, not retriable).
+
+  `0` turns either off. The existing limits are unchanged and now documented together (Export a spec →
+  **Limits**, and the `POST …/jobs` description): `APIOME_EXPORT_ARTIFACT_MAX_BYTES` (32 MiB,
+  `EXPORT_ARTIFACT_TOO_LARGE`), `MAX_BATCH_ITEMS` 100 / 50 versions / 16 targets (`422`, `EXPORT_BATCH_TOO_LARGE`)
+  and `APIOME_EXPORT_ARTIFACT_RETENTION_HOURS` (24 h, then `410`). `tests/test_export_limits.py` has a test per
+  limit.
+
+### Changed
+- **Expired export artifacts are reclaimed on every submit and list**, not only when someone downloads, so an
+  artifact past its retention window leaves memory even if its job is never polled again.
+
 ## [1.496.0] - 2026-10-28
 
 ### Added
