@@ -1,6 +1,6 @@
 # RC7 — Catalog and Project import and export (plan of action)
 
-_Drafted 2026-10-25. Follows [`docs/RC6_OOE.md`](RC6_OOE.md) and
+_Drafted 2026-10-25; progress updated 2026-10-28. Follows [`docs/RC6_OOE.md`](RC6_OOE.md) and
 [`docs/PLAN_POST_LAUNCH_ENABLEMENT.md`](PLAN_POST_LAUNCH_ENABLEMENT.md) (E1 — Catalog Exporter)._
 
 **Status:** plan only. Nothing in this document has been enabled, disabled or moved. The code, the
@@ -20,6 +20,12 @@ Projects.** It contains exactly two things, and nothing else:
 Everything else stays where RC6 left it (§2.2).
 
 ## 1. Where things stand (audited 2026-10-25 against `main` @ `4ef81ad33`)
+
+**Progress at 2026-10-28 (`main` @ `745bae201`):** the **import half of RC7 is done.** Every ticket
+in §3 is built and closed: the formats (§3.1), the OpenAPI 3.2 and Arazzo gaps (§3.2), format depth
+(§3.3), the import flow (§3.4) and per-artifact refresh (§3.5). The epic for §3.5, #4386, has no
+open children left. **The export half (§4) has not started:** no E1 or X ticket has landed, and the
+conformance-matrix numbers below are unchanged. The audit as written on 2026-10-25 follows.
 
 **Import.** The format-matrix roadmap is built: about 99 import adapters are registered in
 `apiome-rest/src/app/*_import_source.py`. Every adapter gets a source card in the import picker
@@ -271,12 +277,18 @@ assembled AST on `raw["smithy_ast"]` so the diff compares whole models.
 
 ### 3.4 Import flow (Catalog and Projects)
 
-| Ticket | Work | Priority |
-| --- | --- | --- |
-| [#6321](https://github.com/apiome/apiome/issues/6321) IXH-3.7 | Import a new version into a project: a **Changes** step comparing the incoming spec with the latest version | P1 |
-| [#3758](https://github.com/apiome/apiome/issues/3758) MFI-7.3 | Backfill format/protocol on existing rows | P2 |
-| [#3754](https://github.com/apiome/apiome/issues/3754) MFI-6.2 | Cross-protocol full-text search over the normalized model | P2 |
-| [#4079](https://github.com/apiome/apiome/issues/4079), [#4080](https://github.com/apiome/apiome/issues/4080), [#3715](https://github.com/apiome/apiome/issues/3715) | Epics — close when their open children close | — |
+Every ticket here is built and closed.
+
+IXH-3.7 (#6321) is built: importing a new version into a project stops at a **Changes** step that
+compares the incoming spec with the latest version (added, changed, removed and breaking counts)
+before **Import**.
+
+MFI-7.3 (#3758) is built: format and protocol are backfilled onto existing rows.
+
+MFI-6.2 (#3754) is built: cross-protocol full-text search over the normalized model.
+
+The epics MFI-EPIC-26 (#4079) and MFI-EPIC-27 (#4080) are closed. The umbrella #3715 stays open
+until its remaining children, outside RC7, close.
 
 MFI-26.4 (#4097) is built: **Import to catalog** has a **Dry run** on the Options step. It runs the
 import pre-flight (`POST /api/import/preflight`, the commit's own importer with `dry_run` forced) for
@@ -287,9 +299,10 @@ shows the predicted format, routing and reason, catalog name/slug, counts, lint 
 MFI-26.5 (#4098) is built as the registry hook: `ImportSource.alternate_intake` /
 `ImportSourceDescriptor.alternate_intake` (`kind`, `label`, `description`, `icon`) names an intake a format offers
 beyond File / URL / Clipboard, and **Import to catalog** draws it as a card (`alternateIntakeTiles`) only when a panel
-is registered for its kind (`CATALOG_ALTERNATE_INTAKE_PANELS`). Both are empty: `supports_live_discovery` alone does
-not qualify, since the import pipeline runs no adapter's `introspect` / `discover` yet (that is #4399's re-discovery
-work). A live-discovery card is then a server flag plus one panel, with no dialog change.
+is registered for its kind (`CATALOG_ALTERNATE_INTAKE_PANELS`). Both are still empty. Since #4399, GraphQL
+introspection and gRPC reflection run through the import pipeline, but only for **live refresh** of an existing item
+(§3.5), not as an intake in **Import to catalog**. A live-discovery card is still a server flag plus one panel, with no
+dialog change.
 
 MFI-27.1 (#4099) is built: the conversion preview's confirm button reads **Convert & create Project**, or
 **Re-convert** when the item already has a conversion (`convertCommitLabel`; `ConversionPreviewDialog` takes the
@@ -300,21 +313,22 @@ MFI-27.2 (#4100) is built: the Catalog search placeholder reads **Search name, s
 (`CatalogClient`; the mockup `sources/catalog.html` matches), in a box widened to 21rem (`.cat-search`) so the text
 and the `/` hint fit. Average quality already read "letter · score" (`catalogModel.ts`).
 
-Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives)
-belongs to the gated `primitives` feature.
+Not in RC7: [#3465](https://github.com/apiome/apiome/issues/3465) (OpenAPI components → Primitives) is built and
+closed, but it belongs to the gated `primitives` feature and stays hidden.
 
 ### 3.5 Refresh of imported specs (P2)
 
 Imports that come from a URL or discovery can be refreshed. Connector-driven refresh is part of
-`connectors` (§2.2); these tickets are the per-artifact part that RC7 can ship without it.
+`connectors` (§2.2); these tickets are the per-artifact part that RC7 can ship without it. All five
+are built and closed, and the epic MFI-EPIC-31 (#4386) has no open children: close it.
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#4398](https://github.com/apiome/apiome/issues/4398) MFI-31.1 | Per-artifact refresh cadence | Built: per-item cadence (GraphQL / gRPC live source), sweep with concurrency cap, per-host delay and backoff, tenant kill switch; Live refresh card, `apiome catalog refresh` |
-| [#4399](https://github.com/apiome/apiome/issues/4399) MFI-31.2 | Re-discovery through the import pipeline for discovery adapters (gRPC reflection, GraphQL introspection) | Partly built |
-| [#4400](https://github.com/apiome/apiome/issues/4400) MFI-31.3 | Drift badge and breaking-change notification | Partly built (change report only) |
-| [#4401](https://github.com/apiome/apiome/issues/4401) MFI-31.4 | Crawl checkpoint for resume | Partly built |
-| [#4402](https://github.com/apiome/apiome/issues/4402) MFI-31.5 | Version retention and pruning | Not built |
+| [#4398](https://github.com/apiome/apiome/issues/4398) MFI-31.1 | Per-artifact refresh cadence | ✅ Built: per-item cadence (GraphQL / gRPC live source), sweep with concurrency cap, per-host delay and backoff, tenant kill switch; **Live refresh** card, `apiome catalog refresh` |
+| [#4399](https://github.com/apiome/apiome/issues/4399) MFI-31.2 | Re-discovery through the import pipeline for discovery adapters (gRPC reflection, GraphQL introspection) | ✅ Built: a check imports the discovered SDL / descriptor set through the import pipeline; `decide_version()` adds a version only when the source changed, with lint score, change report and `refreshTrigger` provenance |
+| [#4400](https://github.com/apiome/apiome/issues/4400) MFI-31.3 | Drift badge and breaking-change notification | ✅ Built: drift graded safe / dangerous / breaking (V334); badge, banner, **What changed** on Versions; `catalog.drift.detected` webhook and owner inbox; **Drift alerts** settings with daily digest. Drift email is stored as an opt-in only — sending is [#6384](https://github.com/apiome/apiome/issues/6384) |
+| [#4401](https://github.com/apiome/apiome/issues/4401) MFI-31.4 | Crawl checkpoint for resume | ✅ Built: crawl budgets (`requestsPerSecond`, `maxRequests`, `maxPages`, `maxBytes`), checkpoint resume (V335) and schema-id incremental passes for the schema-registry connector |
+| [#4402](https://github.com/apiome/apiome/issues/4402) MFI-31.5 | Version retention and pruning | ✅ Built: per-item **Keep versions** (V336, default 50); tagged, conversion-source, breaking-drift, locked and newest versions always kept; pruned versions answer 410 `version-pruned` |
 
 ## 4. Export — outstanding work
 
@@ -393,16 +407,17 @@ flowchart LR
 - **Week 4:** X2–X8, docs restore, staged gate opening (§2.1).
 - **P2 items** (§3.3 depth, §3.4 P2, §3.5) run alongside where capacity allows; whatever is not done
   moves to the first follow-up without blocking the gate.
+- **Status 2026-10-28:** the whole import column is done (§3). What remains is the export column:
+  E1-1 to E1-6, #3853, the X1 matrix and §4.3 fixes, then X2–X8 and the gate.
 
 ## 6. Stale tickets to verify and close
 
 The audit found the work these describe already in the code (often delivered later under FMT-/IXH-
 numbers). Verify each against its acceptance criteria and close; none blocks RC7.
 
-**Import:** #760, #2775, #2776, #3748, #3777, #3781, #3783, #3787, #3788, #3789 (except soapAction —
-see #3792), #3793, #3795, #3803, #3804, #3805, #3807, #3809, #3982,
-#3983, #3985–#3991, #3993–#3996, #4409; #3505 once the Projects importer is done. **#568** —
-close as superseded (OA1 #3498 accepts 2.x–3.2).
+**Import:** #760, #2775, #2776, #3748, #3777, #3781, #3783, #3787, #3788, #3793, #3795, #3803,
+#3804, #3805, #3807, #3809, #3982, #3983, #3985–#3991, #3993–#3996, #4409. **#568** — close as
+superseded (OA1 #3498 accepts 2.x–3.2). Already closed since the audit: #3789, #3505.
 
 **Export:** #3816 (epic, all children done), #3843, #3870–#3873, #3889, #3890, #3892, #3893, #3894,
 #3896, #3898, #3900, #3901, #3902, #3904, #3905, #3906, #3908, #3915, #3917, #4127, #4128, #4130,
@@ -425,7 +440,7 @@ Current RC7 issues and where this plan puts them. Applying it is a separate step
 
 | Issue | Proposal |
 | --- | --- |
-| #6321 IXH-3.7 Import a new version | **Keep** (§3.4 P1) |
+| #6321 IXH-3.7 Import a new version | ✅ Done and closed (§3.4) |
 | #6278 Proto/Thrift export doesn't compile | **Keep** (§4.3) |
 | #4311 MFX-35.1 SQL DDL emitter, #4312 MFX-35.2 DBML + Prisma | **Move to Future** — new emitters are out of RC7 (appendix A). Keep only if RC7 should add export targets |
 | #6317 HIVE-14, #6274 Monaco theme contrast, #6263 first-row allowances, #5617 HIVE-13.4, #5614 HIVE-13.1, #5613 HIVE-12.6, #5611 HIVE-12.4, #5610 HIVE-12.3, #5596 / #5595 / #5594 HIVE epics | **Move out** — not import or export |
