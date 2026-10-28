@@ -24,6 +24,8 @@ check. This module is the thin dispatcher that picks the matching validator per 
   every emitted ``.avsc`` with a shared named-schema registry; pure Python);
 * ``proto3`` — :func:`app.proto_descriptor.compile_proto_descriptor_set` (the emitted
   ``.proto`` is compiled by ``buf``; needs the ``buf`` toolchain);
+* ``capnproto`` — :func:`app.capnproto_compile.compile_capnp_schema` (the emitted ``.capnp`` is
+  compiled by ``capnp``; needs the optional ``capnp`` toolchain, MFX-30.2);
 * ``k8s-crd`` / ``gateway-api`` — :func:`app.k8s_structural_schema.validate_k8s_crd_document`
   and :func:`app.gateway_api_schema.validate_httproute_manifest` (re-import plus the field
   rules the API server enforces on each CRD; pure Python, FMT-2.7);
@@ -478,6 +480,40 @@ async def _validate_proto(
     return _passed(target)
 
 
+async def _validate_capnproto(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted ``.capnp`` schema by compiling it with ``capnp`` (MFX-30.2).
+
+    Needs the ``capnp`` toolchain; when it is unavailable — or the schema imports files that are
+    not part of the export (a ``.capnp`` source's ``using X = import "…"``), so it cannot compile on
+    its own — this reports *skipped* rather than failing a possibly-valid export.
+    """
+    from .capnproto_compile import CapnpCompileError, CapnpFile, compile_capnp_schema
+
+    if api.extras.get("capnp_imports"):
+        return _skipped(
+            target,
+            "The Cap'n Proto schema imports files that are not part of the export; it was not "
+            "compiled on its own.",
+        )
+    files = [CapnpFile(path=f.path, content=str(f.content)) for f in emit_result.files]
+    try:
+        await compile_capnp_schema(files)
+    except CapnpCompileError as exc:
+        if exc.unavailable:
+            return _skipped(
+                target,
+                "The 'capnp' toolchain is unavailable in this runtime; the emitted Cap'n Proto "
+                "schema was not re-validated.",
+            )
+        findings = [_finding_from_message(line) for line in exc.diagnostics] or [
+            _finding_from_message(str(exc))
+        ]
+        return _rejected(target, findings)
+    return _passed(target)
+
+
 # emitter ``format`` key → the validator that re-parses its output through the matching MFI
 # importer. A format absent here has no importable artifact (the sample no-op) and is reported
 # not-applicable. Keyed by the resolved emitter format so it tracks the emitter registry.
@@ -928,6 +964,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "asyncapi-3": _validate_asyncapi,
     "avro": _validate_avro,
     "proto3": _validate_proto,
+    # MFX-30.2 (#4179)
+    "capnproto": _validate_capnproto,
     "asn1": _validate_asn1,
     "edix12": _validate_edix12,
     "idoc": _validate_idoc,

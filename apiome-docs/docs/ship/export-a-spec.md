@@ -105,6 +105,31 @@ reordered. A field added since gets the next number not used yet. The fidelity r
 number Apiome assigned as *synthesized*. A source that has its own numbers, such as a Protobuf or
 Thrift import, keeps them.
 
+### Cap'n Proto from any source
+
+Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever
+the item was imported from:
+
+- **Types.** An object becomes a `struct`, an enumeration an `enum`, a `oneOf` (or another union) a
+  `struct` holding a `union` of its variants, a map a `struct` with a list of `key`/`value` entries,
+  and a list `List(T)`. Scalars map as for Protobuf, with Cap'n Proto's own names: `integer` is
+  `Int32` (`Int64` with `format: int64`), `number` is `Float64`, `string` is `Text`.
+- **Services.** Each service becomes an `interface`, and each operation a method. Its path, query and
+  header parameters and its request body are the method's parameters, and its response body is the
+  result.
+- **Names.** Cap'n Proto wants type names that start with a capital letter and other names in
+  camelCase with no underscore, so `first_name` is written `firstName` and `STATUS_ACTIVE` is
+  `statusActive`.
+- **Numbers.** Fields, enum values and methods are numbered `@0`, `@1`, `@2` in the order the source
+  lists them, and the file gets its own `@0x…` id. Apiome remembers both for the item, so every later
+  export writes the same numbers and the same file id. A field added since gets the next number.
+  Cap'n Proto cannot leave a gap or drop a field, so a field removed from the source stays in the
+  schema as `obsolete<Name>`, keeping its number and its size. The fidelity report lists every number
+  Apiome assigned as *synthesized*. A Cap'n Proto import keeps its own numbers and file id.
+
+When the server has the Cap'n Proto compiler, every export is compiled before it is delivered. A
+schema that imports other `.capnp` files is not compiled on its own.
+
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | Apache Avro | Data schema | Any source |

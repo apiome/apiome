@@ -78,9 +78,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -554,9 +560,15 @@
     },
     {
       "family": "acp",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -1048,9 +1060,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -1557,7 +1575,7 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 3,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -2143,18 +2161,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{segment1}",
-        "removed operation POST /v2/orders/orders",
-        "added operation default.CreateOrder",
-        "added operation default.GetOrder",
-        "added operation default.ListOrders"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -2699,15 +2715,15 @@
     },
     {
       "drift": [
+        "added operation Checkout.addItem",
+        "added operation Checkout.createCart",
+        "added operation Checkout.pay",
         "removed operation checkout#addItem",
         "removed operation checkout#createCart",
-        "removed operation checkout#pay",
-        "added operation checkout.addItem",
-        "added operation checkout.createCart",
-        "added operation checkout.pay"
+        "removed operation checkout#pay"
       ],
       "family": "arazzo",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
       "status": "silent-loss",
       "target": "capnproto"
     },
@@ -3238,7 +3254,7 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 8,
+        "approx": 12,
         "drop": 0,
         "synth": 0
       },
@@ -5828,7 +5844,7 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 0,
         "synth": 6
       },
@@ -6405,17 +6421,16 @@
       "target": "azure-apim"
     },
     {
-      "drift": [
-        "removed operation GET /orders",
-        "removed operation GET /orders/{orderId}",
-        "added operation default.order",
-        "added operation default.orders",
-        "changed root"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -6982,7 +6997,7 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 0,
         "synth": 3
       },
@@ -7550,16 +7565,9 @@
       "target": "azure-apim"
     },
     {
-      "drift": [
-        "changed type Person",
-        "removed type Person.PhoneNumber",
-        "removed type Person.PhoneNumber.Type",
-        "added type PhoneNumber",
-        "added type Type"
-      ],
       "family": "capnproto",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
+      "reason": null,
+      "status": "ok",
       "target": "capnproto"
     },
     {
@@ -8089,7 +8097,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 18,
+        "approx": 30,
         "drop": 0,
         "synth": 0
       },
@@ -8605,7 +8613,7 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 12,
+        "approx": 19,
         "drop": 0,
         "synth": 0
       },
@@ -9611,7 +9619,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 15,
         "drop": 0,
         "synth": 0
       },
@@ -10120,7 +10128,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 3,
+        "approx": 10,
         "drop": 0,
         "synth": 0
       },
@@ -10666,16 +10674,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "added operation orders.orders",
-        "changed root",
-        "changed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -12271,7 +12279,7 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 6,
+        "approx": 14,
         "drop": 0,
         "synth": 8
       },
@@ -13308,7 +13316,7 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 36,
+        "approx": 82,
         "drop": 0,
         "synth": 0
       },
@@ -13842,7 +13850,7 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 1,
+        "approx": 6,
         "drop": 0,
         "synth": 12
       },
@@ -14408,7 +14416,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 15,
+        "approx": 31,
         "drop": 0,
         "synth": 0
       },
@@ -14922,7 +14930,7 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 49,
+        "approx": 107,
         "drop": 0,
         "synth": 0
       },
@@ -15453,7 +15461,7 @@
     {
       "family": "edix12",
       "loss_counts": {
-        "approx": 23,
+        "approx": 47,
         "drop": 0,
         "synth": 0
       },
@@ -16000,18 +16008,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation storefront.health",
-        "added operation storefront.orders"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -16582,7 +16588,7 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 9,
+        "approx": 10,
         "drop": 0,
         "synth": 0
       },
@@ -17138,7 +17144,7 @@
     {
       "family": "fix",
       "loss_counts": {
-        "approx": 21,
+        "approx": 42,
         "drop": 0,
         "synth": 0
       },
@@ -17653,7 +17659,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 13,
+        "approx": 28,
         "drop": 0,
         "synth": 2
       },
@@ -18693,9 +18699,15 @@
     },
     {
       "family": "gateway-api",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -19244,7 +19256,7 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 10,
+        "approx": 11,
         "drop": 0,
         "synth": 16
       },
@@ -19784,9 +19796,15 @@
     },
     {
       "family": "haproxy",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -20345,7 +20363,7 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 13,
+        "approx": 18,
         "drop": 0,
         "synth": 20
       },
@@ -20908,7 +20926,7 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 49,
+        "approx": 99,
         "drop": 0,
         "synth": 0
       },
@@ -21441,7 +21459,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 72,
+        "approx": 84,
         "drop": 0,
         "synth": 0
       },
@@ -21975,7 +21993,7 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 2,
+        "approx": 6,
         "drop": 0,
         "synth": 2
       },
@@ -22561,7 +22579,7 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 0,
         "synth": 2
       },
@@ -23127,7 +23145,7 @@
     {
       "family": "idoc",
       "loss_counts": {
-        "approx": 8,
+        "approx": 51,
         "drop": 0,
         "synth": 0
       },
@@ -23669,7 +23687,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 34,
+        "approx": 56,
         "drop": 0,
         "synth": 0
       },
@@ -24203,7 +24221,7 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 3,
+        "approx": 8,
         "drop": 0,
         "synth": 3
       },
@@ -24769,7 +24787,7 @@
     {
       "family": "iso20022",
       "loss_counts": {
-        "approx": 36,
+        "approx": 72,
         "drop": 0,
         "synth": 0
       },
@@ -25309,7 +25327,7 @@
     {
       "family": "iso8583",
       "loss_counts": {
-        "approx": 22,
+        "approx": 44,
         "drop": 0,
         "synth": 0
       },
@@ -25866,9 +25884,15 @@
     },
     {
       "family": "istio",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -26435,7 +26459,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 29a43c62-6a80-47ef-b032-44efa0777553",
+        "added operation f01584fe-55ed-4ed1-b10e-cd43b209dce1",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -27443,7 +27467,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation c0d0c950-e9df-474e-adf3-c9883dc0b093",
+        "added operation f9427382-ca11-47fd-a30f-e45556e630cb",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -27959,7 +27983,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation f881065b-f106-413b-8289-617186103622",
+        "added operation 22a4994d-fe74-43c1-aee5-cea626f1a0a9",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -28434,7 +28458,7 @@
     {
       "family": "kafka-connect",
       "loss_counts": {
-        "approx": 7,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -28957,9 +28981,15 @@
     },
     {
       "family": "kong",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -29508,7 +29538,7 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 5,
+        "approx": 9,
         "drop": 0,
         "synth": 5
       },
@@ -30035,7 +30065,7 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 1,
+        "approx": 8,
         "drop": 0,
         "synth": 0
       },
@@ -30573,7 +30603,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 4,
+        "approx": 19,
         "drop": 0,
         "synth": 0
       },
@@ -31109,7 +31139,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 12,
+        "approx": 20,
         "drop": 0,
         "synth": 9
       },
@@ -32175,7 +32205,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 20,
+        "approx": 33,
         "drop": 0,
         "synth": 0
       },
@@ -32689,7 +32719,7 @@
     {
       "family": "ncpdp",
       "loss_counts": {
-        "approx": 84,
+        "approx": 172,
         "drop": 0,
         "synth": 0
       },
@@ -33240,9 +33270,15 @@
     },
     {
       "family": "nginx",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -33805,7 +33841,7 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 1,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -34391,7 +34427,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 4,
+        "approx": 16,
         "drop": 0,
         "synth": 0
       },
@@ -34954,7 +34990,7 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 6,
+        "approx": 11,
         "drop": 0,
         "synth": 6
       },
@@ -34978,7 +35014,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 609c84f9-e2c9-4872-a31d-c44da541f481",
+        "added operation 4cb4f980-aabd-46a3-86dd-cb6fb850a233",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -35460,8 +35496,8 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 8,
-        "drop": 1,
+        "approx": 15,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -35982,7 +36018,7 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 5,
+        "approx": 11,
         "drop": 0,
         "synth": 4
       },
@@ -37556,7 +37592,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation c1cd34ac-c737-4cfa-b04b-24b90446d89b",
+        "added operation ceafb57c-5144-401c-a8d1-a443081e1f73",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -38563,7 +38599,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 32,
+        "approx": 54,
         "drop": 0,
         "synth": 0
       },
@@ -39097,7 +39133,7 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 3,
+        "approx": 6,
         "drop": 0,
         "synth": 3
       },
@@ -39675,7 +39711,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 6,
         "drop": 0,
         "synth": 2
       },
@@ -40245,7 +40281,7 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 2,
+        "approx": 12,
         "drop": 0,
         "synth": 0
       },
@@ -40785,7 +40821,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 2,
+        "approx": 9,
         "drop": 0,
         "synth": 0
       },
@@ -41322,7 +41358,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 23,
+        "approx": 29,
         "drop": 0,
         "synth": 16
       },
@@ -41863,7 +41899,7 @@
     {
       "family": "raml",
       "loss_counts": {
-        "approx": 7,
+        "approx": 10,
         "drop": 0,
         "synth": 0
       },
@@ -42432,7 +42468,7 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 8,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -42941,7 +42977,7 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 20,
         "drop": 0,
         "synth": 14
       },
@@ -42965,7 +43001,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 047514b6-48eb-4788-8a3a-213f026cebd8",
+        "added operation 5bfc8e35-b8e5-4bc2-bd6e-49766e6415c9",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -43452,7 +43488,7 @@
     {
       "family": "sepa",
       "loss_counts": {
-        "approx": 59,
+        "approx": 118,
         "drop": 0,
         "synth": 0
       },
@@ -44504,7 +44540,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 5,
+        "approx": 7,
         "drop": 0,
         "synth": 11
       },
@@ -45051,7 +45087,7 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 2,
+        "approx": 6,
         "drop": 0,
         "synth": 2
       },
@@ -45613,7 +45649,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 7,
         "drop": 2,
         "synth": 7
       },
@@ -45637,7 +45673,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 38f27928-0342-4a0b-a85c-53cb2c0a54cc",
+        "added operation 0bda6614-d0a5-427f-8d68-ecce344c4be4",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -46125,7 +46161,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 22,
+        "approx": 42,
         "drop": 0,
         "synth": 21
       },
@@ -47802,7 +47838,7 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 17,
+        "approx": 31,
         "drop": 0,
         "synth": 0
       },
@@ -48888,7 +48924,7 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 2,
+        "approx": 6,
         "drop": 0,
         "synth": 2
       },
@@ -49451,7 +49487,7 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 18,
+        "approx": 37,
         "drop": 0,
         "synth": 0
       },
@@ -49992,18 +50028,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root",
-        "removed service catalogue-service",
-        "changed service noop"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -50552,7 +50586,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 42,
+        "approx": 44,
         "drop": 0,
         "synth": 28
       },
@@ -51091,9 +51125,15 @@
     },
     {
       "family": "tyk",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -51644,7 +51684,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 22,
+        "approx": 23,
         "drop": 0,
         "synth": 25
       },
@@ -51668,7 +51708,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation fc2543bd-9866-44c8-b5d0-3f250f5e66e6",
+        "added operation f6fa0a45-fd51-4466-91bc-cf2d250f136a",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -52749,7 +52789,7 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -53289,12 +53329,12 @@
         "removed operation GET /books",
         "removed operation GET /books/{bookId}",
         "removed operation POST /books",
-        "changed root",
-        "removed service http://example.com/bookstore.WADL API",
-        "added type Book"
+        "added operation WadlApi.createBook",
+        "added operation WadlApi.getBook",
+        "added operation WadlApi.listBooks"
       ],
       "family": "wadl",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
       "status": "silent-loss",
       "target": "capnproto"
     },
@@ -53857,8 +53897,8 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 3,
-        "drop": 1,
+        "approx": 6,
+        "drop": 0,
         "synth": 3
       },
       "reason": null,
@@ -54379,18 +54419,16 @@
       "target": "azure-apim"
     },
     {
-      "drift": [
-        "added operation OrderPort.CancelOrder",
-        "added operation OrderPort.CreateOrder",
-        "added operation OrderPort.GetOrder",
-        "removed operation http://example.com/orders.OrderPort.CancelOrder",
-        "removed operation http://example.com/orders.OrderPort.CreateOrder",
-        "removed operation http://example.com/orders.OrderPort.GetOrder"
-      ],
       "family": "wsdl",
-      "reason": "Fidelity report is empty but the round trip shows 27 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "wsdl",
@@ -54917,18 +54955,16 @@
       "target": "azure-apim"
     },
     {
-      "drift": [
-        "added operation OrderInterface.cancelOrder",
-        "added operation OrderInterface.getOrder",
-        "added operation OrderInterface.placeOrder",
-        "removed operation http://example.com/orders.OrderInterface.cancelOrder",
-        "removed operation http://example.com/orders.OrderInterface.getOrder",
-        "removed operation http://example.com/orders.OrderInterface.placeOrder"
-      ],
       "family": "wsdl2",
-      "reason": "Fidelity report is empty but the round trip shows 23 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "wsdl2",
@@ -55454,7 +55490,7 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 0
       },
@@ -57540,18 +57576,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /items/{sku}/stock",
-        "added operation InventoryRequester.getStockLevel",
-        "added operation InventoryRequester.reserveStock",
-        "removed operation POST /items/{sku}/reservations",
-        "changed root",
-        "added service InventoryRequester"
-      ],
       "family": "zosconnect",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -58034,10 +58068,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3153,
-    "ok": 106,
+    "lossy": 3170,
+    "ok": 98,
     "refused": 1828,
-    "silent-loss": 637,
+    "silent-loss": 628,
     "skipped": 0
   },
   "families": [

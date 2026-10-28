@@ -21,6 +21,7 @@ from typing import Any, Dict, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 from .canonical_model import CanonicalApi
+from .capnproto_emitter import CapnpEmitter
 from .emitter import (
     EmitOptions,
     EmitOptionsError,
@@ -34,6 +35,7 @@ from .emitter import (
     load_builtin_emitters,
 )
 from .field_identity_store import (
+    CAPNP_TARGET,
     PROTO3_TARGET,
     THRIFT_TARGET,
     load_persisted_field_numbers,
@@ -64,7 +66,8 @@ class ExportError(Exception):
 class ExportPersistenceContext(BaseModel):
     """Optional tenant/artifact coordinates for persisting synthesized field identities.
 
-    Used by the targets that number fields positionally: Protobuf (MFX-12.2) and Thrift (MFX-25.2).
+    Used by the targets that number fields positionally: Protobuf (MFX-12.2), Thrift (MFX-25.2) and
+    Cap'n Proto (MFX-30.2, which also keeps its file id there).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -81,12 +84,16 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
 
     Returns:
         :data:`~app.field_identity_store.PROTO3_TARGET` for Protobuf,
-        :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift, ``None`` for every other target.
+        :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift,
+        :data:`~app.field_identity_store.CAPNP_TARGET` for Cap'n Proto, ``None`` for every other
+        target.
     """
     if issubclass(emitter_cls, ProtoEmitter):
         return PROTO3_TARGET
     if issubclass(emitter_cls, ThriftEmitter):
         return THRIFT_TARGET
+    if issubclass(emitter_cls, CapnpEmitter):
+        return CAPNP_TARGET
     return None
 
 
@@ -254,8 +261,9 @@ def emit_canonical(
         target: Emitter key or format key.
         opts: Optional per-target emit options — a validated :class:`EmitOptions`
             instance or a raw ``dict`` validated against the target's schema.
-        persistence: When provided for a Protobuf or Thrift export, load and persist stable
-            synthesized field numbers (MFX-12.2, MFX-25.2).
+        persistence: When provided for a Protobuf, Thrift or Cap'n Proto export, load and persist
+            stable synthesized field numbers (MFX-12.2, MFX-25.2) — for Cap'n Proto, ordinals and
+            the file id (MFX-30.2).
 
     Returns:
         The emitter's :class:`~app.emitter.EmitResult`.

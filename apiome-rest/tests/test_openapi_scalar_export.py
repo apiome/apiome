@@ -38,6 +38,7 @@ from app.catalog_conversion import build_conversion_source
 from app.proto_descriptor import BUF_TOOL_KEY
 from app.proto_emitter import ProtoEmitter, compile_emitted_descriptor_set
 from app.scalar_aliases import (
+    CAPNP_SCALAR_FOR_KIND,
     PROTO_SCALAR_FOR_KIND,
     THRIFT_SCALAR_FOR_KIND,
     scalar_kind,
@@ -158,6 +159,7 @@ def test_every_kind_has_a_keyword_in_both_targets() -> None:
 
     kinds = set(_FIXED_KINDS.values()) | {"int32", "int64", "float", "double"}
     assert kinds == set(PROTO_SCALAR_FOR_KIND) == set(THRIFT_SCALAR_FOR_KIND)
+    assert kinds == set(CAPNP_SCALAR_FOR_KIND)
 
 
 def test_target_scalar_widens_where_a_target_has_no_exact_type() -> None:

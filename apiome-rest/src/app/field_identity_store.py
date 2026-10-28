@@ -1,7 +1,10 @@
-"""Persisted field-identity store for export targets — MFX-12.2 (#3880), MFX-25.2 (#4152).
+"""Persisted field-identity store for export targets — MFX-12.2 (#3880), MFX-25.2 (#4152),
+MFX-30.2 (#4179).
 
-Protobuf and Thrift (and later FlatBuffers, Iceberg, FIX Orchestra) require stable positional field
-numbers.
+Protobuf, Thrift and Cap'n Proto (and later FlatBuffers, Iceberg, FIX Orchestra) require stable
+positional field numbers. Cap'n Proto also keeps its file ``@0x`` id here; its rules (ordinals from
+``@0`` with no holes) live in :mod:`app.capnproto_identity`.
+
 Sources converted from OpenAPI, GraphQL, and other formats often lack them. The proto emitter
 synthesizes numbers on first export; this module **persists** those assignments per
 ``(tenant, artifact/project, target, field_key)`` so re-exports reuse them and new fields receive
@@ -14,12 +17,13 @@ after emit, :func:`persist_field_number_assignments` writes any newly synthesize
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from .canonical_model import CanonicalField, Type
 from .database import db
 
 __all__ = [
+    "CAPNP_TARGET",
     "PROTO3_TARGET",
     "THRIFT_TARGET",
     "field_number_in_reserved",
@@ -32,6 +36,9 @@ PROTO3_TARGET = "proto3"
 #: The store key for Thrift field ids. Separate from Protobuf's: the two formats number a model
 #: independently, so a Thrift export never inherits (or claims) a Protobuf field's number.
 THRIFT_TARGET = "thrift"
+#: The store key for Cap'n Proto ordinals, the file id and field layouts (MFX-30.2). The only target
+#: whose numbers may be ``0`` or wider than 32 bits (V337 relaxes the column's check for it).
+CAPNP_TARGET = "capnproto"
 _PROTO_MAX_FIELD_NUMBER = 536_870_911
 
 

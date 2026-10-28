@@ -244,33 +244,15 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
     # --- azure-apim (1) ---
     ('azure-apim', 'azure-apim'):
         'changed root',
-    # --- capnproto (13) ---
-    ('apigee', 'capnproto'):
-        'removed operation GET /v2/orders/orders; removed operation GET /v2/orders/orders/{segment1}; removed',
+    # --- capnproto (4) ---
     ('arazzo', 'capnproto'):
-        'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
-    ('azure-apim', 'capnproto'):
-        'removed operation GET /orders; removed operation GET /orders/{orderId}; added operation default.orde',
-    ('capnproto', 'capnproto'):
-        'changed type Person; removed type Person.PhoneNumber; removed type Person.PhoneNumber.Type; added ty',
-    ('consul', 'capnproto'):
-        'removed operation ANY /v2/orders; added operation orders.orders; changed root; changed service order',
-    ('envoy-xds', 'capnproto'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
+        'added operation Checkout.addItem; added operation Checkout.createCart; added operation Checkout.pay;',
     ('flatbuffers', 'capnproto'):
         'changed root; added type Color; added type Monster; added type Vec3; added type Weapon; removed type',
-    ('traefik', 'capnproto'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; chang',
     ('typespec', 'capnproto'):
         'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
     ('wadl', 'capnproto'):
         'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
-    ('wsdl', 'capnproto'):
-        'added operation OrderPort.CancelOrder; added operation OrderPort.CreateOrder; added operation OrderP',
-    ('wsdl2', 'capnproto'):
-        'added operation OrderInterface.cancelOrder; added operation OrderInterface.getOrder; added operation',
-    ('zosconnect', 'capnproto'):
-        'removed operation GET /items/{sku}/stock; added operation InventoryRequester.getStockLevel; added op',
     # --- cddl (15) ---
     ('cobolcopybook', 'cddl'):
         'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',
@@ -304,21 +286,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation 29a43c62-6a80-47ef-b032-44efa0777553; changed roo',
+        'added channel com.example.product; added operation f01584fe-55ed-4ed1-b10e-cd43b209dce1; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation c0d0c950-e9df-474e-adf3-c9883dc0b093; changed root; ',
+        'added channel com.example.user; added operation f9427382-ca11-47fd-a30f-e45556e630cb; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation f881065b-f106-413b-8289-617186103622; changed ',
+        'added channel com.example.cronwidget; added operation 22a4994d-fe74-43c1-aee5-cea626f1a0a9; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 609c84f9-e2c9-4872-a31d-c44da541f481; changed root',
+        'added channel com.example.orders; added operation 4cb4f980-aabd-46a3-86dd-cb6fb850a233; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation c1cd34ac-c737-4cfa-b04b-24b90446d89b; c',
+        'added channel com.example.commerce.ontology; added operation ceafb57c-5144-401c-a8d1-a443081e1f73; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 047514b6-48eb-4788-8a3a-213f026cebd8',
+        'added channel com.example.typicalsensormessage; added operation 5bfc8e35-b8e5-4bc2-bd6e-49766e6415c9',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 38f27928-0342-4a0b-a85c-53',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 0bda6614-d0a5-427f-8d68-ec',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation fc2543bd-9866-44c8-b5d0-3f250f5e66e6; changed r',
+        'added channel com.example.orderline; added operation f6fa0a45-fd51-4466-91bc-cf2d250f136a; changed r',
     # --- connectrpc (16) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',

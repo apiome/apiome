@@ -1,0 +1,22 @@
+---
+slug: capnproto-export
+title: Cap'n Proto export compiles from any source
+description: Cap'n Proto schemas compile, with numbers and file id kept on every export.
+authors: [apiome]
+---
+
+Exporting an item to **Cap'n Proto** now writes a `.capnp` schema that compiles with `capnp`, from an
+OpenAPI, GraphQL, Protobuf or any other source, and every later export writes the same numbers.
+[How the schema is written](/ship/export-a-spec#capn-proto-from-any-source).
+
+{/* truncate */}
+
+- **Compiles.** Fields, enum values and methods are numbered `@0`, `@1`, `@2` with no gaps, the file
+  gets an `@0x…` id, and names follow Cap'n Proto's rules (`first_name` becomes `firstName`). Before,
+  every field was `@0` and the file had no id.
+- **More of the model.** Unions (`oneOf`) become `union` groups, maps become key/value lists, and
+  services become `interface`s whose methods take the operation's parameters and body.
+- **Same numbers every time.** Apiome remembers the numbers and the file id for the item. A field
+  added later gets the next number; a removed one stays as `obsolete<Name>` so other fields keep
+  their place on the wire.
+- **Checked before delivery.** A server with the Cap'n Proto compiler compiles each export first.

@@ -64,6 +64,8 @@ ARG OASDIFF_VERSION=1.23.0
 ARG CUE_VERSION=0.17.1
 ARG PKL_VERSION=0.32.2
 ARG DHALL_VERSION=1.42.2
+# Cap'n Proto compiler (MFX-30.2, #4179) — optional: it re-validates an emitted .capnp schema.
+ARG CAPNP_VERSION=1.0.1
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -291,6 +293,20 @@ RUN git clone --depth 1 --branch "v${DRAFTER_VERSION}" --recursive \
     && cp /tmp/drafter/build/src/drafter ${TOOLS_PREFIX}/bin/drafter \
     && chmod +x ${TOOLS_PREFIX}/bin/drafter \
     && rm -rf /tmp/drafter
+
+# capnp — Cap'n Proto compiler (MFX-30.2). No official static binary, so build the pinned release
+# tarball and install just the `capnp` tool (the `capnp_tool` CMake target). BUILD_SHARED_LIBS=OFF
+# links it statically, so the runtime stage needs nothing beyond libstdc++.
+RUN curl -fsSL "https://capnproto.org/capnproto-c++-${CAPNP_VERSION}.tar.gz" | tar -xz -C /tmp \
+    && cmake -S /tmp/capnproto-c++-${CAPNP_VERSION} -B /tmp/capnp-build -DCMAKE_BUILD_TYPE=Release \
+         -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_OPENSSL=OFF -DWITH_ZLIB=OFF \
+    && cmake --build /tmp/capnp-build --target capnp_tool -j "$(nproc)" \
+    && cp /tmp/capnp-build/src/capnp/capnp ${TOOLS_PREFIX}/bin/capnp \
+    && chmod +x ${TOOLS_PREFIX}/bin/capnp \
+    && rm -rf /tmp/capnproto-c++-${CAPNP_VERSION} /tmp/capnp-build \
+    && printf '@0x8f1d5c3a2b4e6d70;\nstruct Smoke { id @0 :Text; }\n' > /tmp/smoke.capnp \
+    && ${TOOLS_PREFIX}/bin/capnp compile -o- /tmp/smoke.capnp > /dev/null \
+    && rm -f /tmp/smoke.capnp
 
 # ── Stage 2: runtime — Python REST API + a Node runtime to execute the TS import worker ──
 FROM python:3.12-slim
