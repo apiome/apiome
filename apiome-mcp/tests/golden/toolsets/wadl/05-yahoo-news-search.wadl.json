@@ -4,7 +4,29 @@
     {
       "description": "Search the news index for matching articles.\n\nReturns http://example.com/newssearch.ResultSet.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "appid": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "results": {},
+          "sort": {
+            "type": "string"
+          },
+          "start": {},
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "appid",
+          "query"
+        ],
         "type": "object"
       },
       "name": "search",

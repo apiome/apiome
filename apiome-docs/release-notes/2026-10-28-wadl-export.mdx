@@ -1,0 +1,21 @@
+---
+slug: wadl-export
+title: WADL export validates, with a linked XSD grammar
+description: WADL exports validate against the W3C schema and carry an XSD grammar.
+authors: [apiome]
+---
+
+Exporting an item to **WADL** now writes a description that validates against the W3C WADL schema,
+from an OpenAPI or any other source, with its types in a linked XSD grammar: a `.wadl` file and its
+`.xsd`, downloaded together. [How the WADL is written](/ship/export-a-spec#wadl-from-any-source).
+
+{/* truncate */}
+
+- **Valid.** The WADL passes the W3C schema and its grammar is valid XSD. Before, the `tns` prefix was
+  never declared, lists were written as one string, and every operation on `/` was dropped.
+- **Complete methods.** Query and header parameters, status codes, error responses, media types and
+  descriptions are written, with each parameter's XSD type.
+- **Nothing silent.** Operations WADL cannot carry (no HTTP binding), cookie parameters, status
+  ranges, extra servers, services and gateway details are listed in the fidelity report.
+- **WADL round trips.** An item imported from WADL now exports and re-imports unchanged. Import also
+  reads method request parameters it used to skip, and a grammar shipped in the same `.zip`.

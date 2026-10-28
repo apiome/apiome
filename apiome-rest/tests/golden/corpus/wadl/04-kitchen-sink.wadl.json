@@ -220,6 +220,82 @@
                   "name": "string",
                   "nullable": true
                 }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /query#query.lang",
+                "location": "query",
+                "name": "lang",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "int"
+                },
+                "key": "GET /query#query.page",
+                "location": "query",
+                "name": "page",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "int"
+                },
+                "key": "GET /query#query.pageSize",
+                "location": "query",
+                "name": "pageSize",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /query#query.q",
+                "location": "query",
+                "name": "q",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
               }
             ],
             "streaming": "none",
@@ -267,7 +343,27 @@
               }
             ],
             "name": "reindex",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "POST /reindex#query.priority",
+                "location": "query",
+                "name": "priority",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           }
@@ -419,7 +515,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:c66e6164b7473b0c6226ae57e69dcb55746c1dfbcdfe117b69e369b7d5c45dc8",
+  "fingerprint": "sha256:2f7b9d38f87b5335580ffc9bbe147386a381ea2b5b64b12163ac53a90c5a5079",
   "lint": {
     "findings": 17,
     "grade": "C",

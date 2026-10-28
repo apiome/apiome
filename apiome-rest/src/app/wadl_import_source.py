@@ -19,8 +19,8 @@ from .import_source import (
     ImportSourceError,
     InputKind,
 )
-from .wadl_parser import WadlDocument, WadlParseError, is_wadl, parse_wadl
 from .secure_xml import SecureXmlError
+from .wadl_parser import WadlDocument, WadlParseError, is_wadl, parse_wadl
 
 __all__ = ["WadlImportSource"]
 
@@ -69,7 +69,11 @@ class WadlImportSource(ImportSource, register=True):
         root = fileset.root
         if root not in fileset.members:
             raise ImportSourceError("WADL fileset is missing its root document")
-        return self.parse(fileset.members[root], source_label=root or source_label)
+        try:
+            # The set's other members are where an `<grammars><include href>` grammar is read from.
+            return parse_wadl(fileset.members[root], source_label=root or source_label, members=fileset.members)
+        except (WadlParseError, SecureXmlError) as exc:
+            raise ImportSourceError(str(exc), code=getattr(exc, "code", None)) from exc
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, WadlDocument):

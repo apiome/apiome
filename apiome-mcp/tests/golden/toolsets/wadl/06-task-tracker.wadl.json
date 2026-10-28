@@ -21,7 +21,12 @@
     {
       "description": "List tasks, optionally filtered by assignee or completion.\n\nReturns http://example.com/tasks.Task.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "assignee": {
+            "type": "string"
+          },
+          "done": {}
+        },
         "type": "object"
       },
       "name": "listTasks",

@@ -7,9 +7,11 @@ the stdlib :mod:`xml.etree.ElementTree`. Syntax errors surface as
 
 from __future__ import annotations
 
+import posixpath
+import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
 
@@ -29,6 +31,10 @@ _WADL_NS_MARKERS = (
     "http://wadl.dev.java.net/2009/02",
     "http://wadl.dev.java.net/ns/wadl",
 )
+
+
+#: A WADL ``application`` start tag, prefixed or not.
+_APPLICATION_TAG = re.compile(r"<(?:[\w.\-]+:)?application[\s>/]", re.IGNORECASE)
 
 
 class WadlParseError(ValueError):
@@ -90,8 +96,8 @@ def is_wadl(content: str) -> bool:
     trimmed = content.strip()
     if not trimmed:
         return False
-    lowered = trimmed.lower()
-    if "<application" not in lowered:
+    # The root may be prefixed (`<wadl:application`), as WADL written by Apiome's emitter is.
+    if not _APPLICATION_TAG.search(trimmed):
         return False
     return any(marker in trimmed for marker in _WADL_NS_MARKERS)
 
@@ -127,11 +133,44 @@ def _join_path(parent: str, segment: str) -> str:
     return f"{base}/{segment}"
 
 
-def _parse_complex_types(grammars_el: Optional[ET.Element]) -> Tuple[WadlComplexType, ...]:
+def _inline_restriction_base(element: ET.Element) -> Optional[str]:
+    """The base of an element's inline ``simpleType`` restriction (``xsd:string`` → ``string``)."""
+    for simple in _children(element, "simpleType"):
+        for restriction in _children(simple, "restriction"):
+            return _attr_local(restriction.get("base"))
+    return None
+
+
+def _grammar_schemas(
+    grammars_el: Optional[ET.Element], members: Optional[Mapping[str, str]], source_label: Optional[str]
+) -> List[ET.Element]:
+    """Every ``xsd:schema`` of the grammars: inline ones, then each ``include`` found in ``members``.
+
+    An ``include`` whose document is not in the set (or is not a schema) is skipped: a single
+    uploaded WADL that references an external grammar still imports its resources.
+    """
     if grammars_el is None:
-        return ()
+        return []
+    schemas = list(_find_descendants(grammars_el, "schema"))
+    for include in _children(grammars_el, "include"):
+        href = include.get("href")
+        if not href or not members:
+            continue
+        text = members.get(href) or members.get(posixpath.basename(href))
+        if not text:
+            continue
+        try:
+            document = parse_xml(text, source_label=href or source_label)
+        except SecureXmlError:
+            continue
+        if _local(document.tag) == "schema":
+            schemas.append(document)
+    return schemas
+
+
+def _parse_complex_types(schemas: List[ET.Element]) -> Tuple[WadlComplexType, ...]:
     complex_types: List[WadlComplexType] = []
-    for schema in _find_descendants(grammars_el, "schema"):
+    for schema in schemas:
         for complex_type in _children(schema, "complexType"):
             name = complex_type.get("name")
             if not name:
@@ -140,7 +179,7 @@ def _parse_complex_types(grammars_el: Optional[ET.Element]) -> Tuple[WadlComplex
             for sequence in _find_descendants(complex_type, "sequence"):
                 for field_el in _children(sequence, "element"):
                     field_name = field_el.get("name")
-                    type_expr = field_el.get("type")
+                    type_expr = field_el.get("type") or _inline_restriction_base(field_el)
                     if field_name and type_expr:
                         fields.append(
                             WadlField(
@@ -152,11 +191,9 @@ def _parse_complex_types(grammars_el: Optional[ET.Element]) -> Tuple[WadlComplex
     return tuple(complex_types)
 
 
-def _parse_elements(grammars_el: Optional[ET.Element]) -> Tuple[WadlElementDecl, ...]:
-    if grammars_el is None:
-        return ()
+def _parse_elements(schemas: List[ET.Element]) -> Tuple[WadlElementDecl, ...]:
     elements: List[WadlElementDecl] = []
-    for schema in _find_descendants(grammars_el, "schema"):
+    for schema in schemas:
         for element in _children(schema, "element"):
             name = element.get("name")
             type_expr = element.get("type")
@@ -262,6 +299,8 @@ def _collect_operations(
         doc_el = next(iter(_children(method_el, "doc")), None)
         description = doc_el.text.strip() if doc_el is not None and doc_el.text else None
         request_el = next(iter(_children(method_el, "request")), None)
+        # Query, header and plain params a method's request declares, after the resource's own.
+        method_params = params + (_parse_parameters(request_el) if request_el is not None else ())
         request_type = _extract_representation_type(
             request_el,
             element_to_type=element_to_type,
@@ -282,7 +321,7 @@ def _collect_operations(
                 method=method_name,
                 operation_id=operation_id,
                 description=description,
-                parameters=params,
+                parameters=method_params,
                 request_type=request_type,
                 response_types=tuple(responses),
             )
@@ -310,8 +349,17 @@ def _document_name(root: ET.Element) -> str:
     return "WADL API"
 
 
-def parse_wadl(content: str, *, source_label: Optional[str] = None) -> WadlDocument:
-    """Parse WADL XML into a :class:`WadlDocument`."""
+def parse_wadl(
+    content: str, *, source_label: Optional[str] = None, members: Optional[Mapping[str, str]] = None
+) -> WadlDocument:
+    """Parse WADL XML into a :class:`WadlDocument`.
+
+    Args:
+        content: The WADL document.
+        source_label: Label for errors.
+        members: Sibling documents of a multi-file set (``path → text``); a grammar the WADL
+            ``include`` s is read from here.
+    """
     if not content or not content.strip():
         raise WadlParseError("Invalid or empty WADL document")
     if not is_wadl(content):
@@ -328,8 +376,9 @@ def parse_wadl(content: str, *, source_label: Optional[str] = None) -> WadlDocum
         raise WadlParseError("WADL root element must be `application`")
 
     grammars_el = next(iter(_children(root, "grammars")), None)
-    complex_types = _parse_complex_types(grammars_el)
-    elements = _parse_elements(grammars_el)
+    schemas = _grammar_schemas(grammars_el, members, source_label)
+    complex_types = _parse_complex_types(schemas)
+    elements = _parse_elements(schemas)
     element_to_type = {element.name: element.type_expr for element in elements}
     type_names = frozenset(t.name for t in complex_types)
 
@@ -349,9 +398,8 @@ def parse_wadl(content: str, *, source_label: Optional[str] = None) -> WadlDocum
             )
 
     target_namespace: Optional[str] = None
-    if grammars_el is not None:
-        for schema in _find_descendants(grammars_el, "schema"):
-            target_namespace = schema.get("targetNamespace") or target_namespace
+    for schema in schemas:
+        target_namespace = schema.get("targetNamespace") or target_namespace
 
     if not complex_types and not operations:
         label = f" ({source_label})" if source_label else ""

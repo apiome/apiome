@@ -165,6 +165,44 @@ To get one file with the types inline, set the **layout** option to `single`.
 An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
 versions and XSD details round-trip unchanged.
 
+### WADL from any source
+
+Exporting to **WADL** writes a description that validates against the W3C WADL schema, with its
+types in an XSD grammar. By default you get two files, downloaded together as a `.zip`:
+
+- `<Name>.wadl` holds the resources and methods, and
+- `<Name>.xsd` holds the grammar. The WADL links it with `<grammars><include href="…"/>`.
+
+To get one file with the grammar inline, set the **layout** option to `single`. A model with no types
+and no request or response bodies has no grammar, so you get the `.wadl` alone.
+
+- **Resources.** Each path segment becomes a `resource`, nested the way the paths are (`/pets/{petId}`
+  is `pets` holding `{petId}`); an operation on `/` gets `<resource path="/">`.
+- **Methods.** Each operation is a `method` with its HTTP verb, its description as `doc`, and its
+  operation name as `id` when the source names it.
+- **Parameters.** Path parameters are `template` params on the resource that names them; query and
+  header parameters are request params, with their XSD type (`xsd:long` for a 64-bit integer),
+  `required`, `default` and documentation. An array is a `repeating` param.
+- **Bodies.** The request body and every response carry a `representation` with the body's media type
+  and the grammar element of its type. A list or scalar body gets an element of its own in the grammar
+  (`getPetsResponse200`). Each response keeps its status code.
+- **Types.** The grammar is the same XSD a WSDL export writes (see the section above): types keep
+  their precision, optional fields are `minOccurs="0"`, and constraints become facets.
+
+WADL describes HTTP resources and nothing else, so the fidelity report lists what it cannot carry:
+
+- operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), and event operations;
+- cookie parameters, and status ranges such as `4XX`;
+- every server but the first;
+- the grouping into services, the version and the description;
+- gateway details such as routes, backends and hosts.
+
+When the source has no server, the base URI `https://api.example.com/` is used, and the report says so.
+
+An item imported from WADL is written back as it was read. Import now also reads a WADL root written
+as `<wadl:application>`, the query and header params a method's request declares, and — when you
+upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
+
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | Apache Avro | Data schema | Any source |

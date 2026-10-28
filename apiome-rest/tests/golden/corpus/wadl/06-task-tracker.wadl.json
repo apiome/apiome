@@ -116,7 +116,46 @@
               }
             ],
             "name": "listTasks",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "string"
+                },
+                "key": "GET /tasks#query.assignee",
+                "location": "query",
+                "name": "assignee",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "wadl_type": "boolean"
+                },
+                "key": "GET /tasks#query.done",
+                "location": "query",
+                "name": "done",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "bool",
+                  "nullable": true
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           },
@@ -463,7 +502,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:5d20c50d6dbcee208d64d72459be1db504bd25b5ecfa37e554fb0935f9b67481",
+  "fingerprint": "sha256:0c4cbdf412f11db79c9c1fdb37aeb702d531075f471cfc0b5d51943068a3c7a0",
   "lint": {
     "findings": 20,
     "grade": "D",

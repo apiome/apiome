@@ -4415,8 +4415,8 @@
         {
           "source_format": "wadl",
           "emit_key": "wadl",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",
