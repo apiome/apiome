@@ -60,6 +60,23 @@ The keyboard path through them — open **Import to catalog**, **Convert to Open
 Every `ui/Dialog` does this, whether or not it has a Radix trigger; the unit tests in
 `tests/hive-dialogs.test.tsx` and the three page suites pin it.
 
+### Export studio
+
+The released export surfaces are held to the same bar, with no file exempt (X3,
+[#6224](https://github.com/apiome/apiome/issues/6224)):
+
+| Surface | Ledger entry | Fixtures |
+| --- | --- | --- |
+| **Source** and **Target** steps (the target grid), Generate progress, the several-targets Verify, the bulk **Export…** dialog after a run | `export-studio` | `hive-export-studio/` |
+| **Options**, **Verify** and **Review & Generate** steps | `export-e1` | `hive-a11y/export-studio-*.html`, dumped by `tests/ExportStudio.test.tsx` |
+| The source picker: catalog items, and a project's versions | `export-e1` | `hive-a11y/export-source-picker*.html`, dumped by `tests/export-source-picker.test.tsx` |
+| The bulk **Export…** dialog with a target picked | `export-e1` | `hive-a11y/export-bulk-pick.html`, dumped by `tests/export-multi.test.tsx` |
+
+`tests/a11y-routes.test.ts` fails if any of them leaves the gate. The keyboard-only export — one
+target, several targets, the source picker and the bulk dialog — is walked with Tab, `↵` and
+`Space` in the same three suites, which also pin that **Esc** or **“Close”** on the bulk dialog
+returns focus to **Export *n*…**.
+
 ### Running it locally
 
 `next dev` can serve a stale CSS chunk after a `globals.css` edit, which makes axe pass or fail

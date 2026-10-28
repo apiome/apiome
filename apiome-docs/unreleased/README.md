@@ -32,7 +32,6 @@ do not point any of them at `unreleased/`.
 | Style guides | Style guides | `docs/govern/style-guides.mdx` | `style-guides` |
 | Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
-| Export studio | Export studio | `docs/ship/export-studio.mdx` | `export-studio` |
 | SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
 | Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
 | Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
@@ -45,14 +44,18 @@ do not point any of them at `unreleased/`.
 
 Each page sits at `unreleased/<original path>`.
 
+**Export studio** (`export-studio`) is restored: its page, fragments, screenshots and help entry are
+back on the site (X7, [#6228](https://github.com/apiome/apiome/issues/6228)), without the gateway
+push-back and SDK & branding parts, which wait for `connectors` and `sdk-settings`. Its id stays in
+`UNRELEASED_FEATURE_IDS` until the last E1 issue closes; removing it (step 5 below) is all that is
+left.
+
 **Fragments** — sections cut from pages that stayed on the site, each with a comment saying where it
 goes back:
 
 | Fragment | Goes back into | Rail item id |
 | --- | --- | --- |
 | `fragments/bring-in/import-wizard.add-mcp-server.mdx` | `docs/bring-in/import-wizard.mdx` — the **Add MCP server** row and note, the screenshot caption, and the **Postman Collection** and **MCP Server** sections | `mcp` |
-| `fragments/ship/mock-try-out.test-drive-an-export.mdx` | `docs/ship/mock-try-out.mdx` — the **Test-drive an export** section, before **With the CLI or the API** (plus the third table row and “three ways” intro) | `export-studio` |
-| `fragments/getting-started/browse-and-export.export-another-format.mdx` | `docs/getting-started/browse-and-export.mdx` — replaces the **Export another format** section | `export-studio` |
 | `fragments/build/projects.consumers.mdx` | `docs/build/projects.mdx` — the **Consumers** menu row and section, the **Owner** section, and the `projects-table` alt text | `consumers`, `teams` |
 | `fragments/build/versions.dependencies.mdx` | `docs/build/versions.mdx` — the **Dependencies** section, before **Conversion** | `dependency-graph` |
 | `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams`, `connectors` |
@@ -60,9 +63,6 @@ goes back:
 | `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — **Recent runs**, the connector sentences, the **Backstage files** section and the `repositories` alt text | `connectors`, `dependency-graph`, `catalog-entities` |
 | `fragments/ship/published.owner.mdx` | `docs/ship/published.mdx` — the **Owner** column row and the owner filter sentence | `teams` |
 | `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
-| `fragments/workspace/keyboard.export-studio.mdx` | `docs/workspace/keyboard.md` — the **Export to another format** primary task, after **Cut, publish or export a version** | `export-studio` |
-| `fragments/workspace/accessibility.export-studio.mdx` | `docs/workspace/accessibility.md` — the **Export studio** gate table, after **Catalog, Projects and Versions** | `export-studio` |
-| `fragments/workspace/roles.export-studio.mdx` | `docs/workspace/roles.mdx` — the **Export studio** rows of the role table and the jobs sentence after it | `export-studio` |
 
 **Screenshots** — `unreleased/screens.json` holds the manifest entries (same `{"screens": [...]}`
 shape as `../screens.json`) and `unreleased/static/img/screens/` their light and dark images:
@@ -73,7 +73,6 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 | `mcp` | `mcp-servers`, `mcp-servers-grid`, `mcp-endpoint-versions`, `mcp-endpoint-capabilities`, `mcp-endpoint-lint`, `mcp-endpoint-settings`, `mcp-analytics`, `mcp-capabilities`, `mcp-compare`, `import-wizard-mcp`, `agent-access`, `agent-access-keys`, `agent-access-usage` |
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
-| `export-studio` | `export-studio`, `export-studio-source`, `export-verify`, `export-studio-job`, `export-studio-failure`, `export-studio-gate`, `mock-test-drive` |
 | `sdk-settings` | `sdk-settings` |
 | `connectors` | `connectors`, `connector-add`, `connector-detail`, `connector-runs`, `gateway-config-entity`, `export-studio-gateway`, `connector-add-schema-registry`, `connector-add-mcp-registry`, `connector-add-registry` |
 | `shadow-apis` | `shadow-apis`, `shadow-apis-link` |

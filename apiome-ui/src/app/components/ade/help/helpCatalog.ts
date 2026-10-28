@@ -168,6 +168,23 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['hoppscotch', 'thunder client', 'vs code', 'collection', 'environment', 'saved requests', 'migrate'],
   },
   {
+    id: 'export-catalog-items',
+    title: 'Export catalog items',
+    summary:
+      'One item or many to another format: the dialog, the studio, bulk select and the CLI, with each target\'s fidelity tier.',
+    page: 'apiome-docs/docs/ship/export-catalog-items.mdx',
+    section: 'spine',
+    keywords: ['bulk', 'several', 'zip', 'tier', 'lossless', 'types-only', 'convert'],
+  },
+  {
+    id: 'export-studio',
+    title: 'Export studio',
+    summary: 'Source, target, options, verify, generate — convert a version and see what survives.',
+    page: 'apiome-docs/docs/ship/export-studio.mdx',
+    section: 'reference',
+    keywords: ['convert', 'fidelity', 'lossy', 'types-only', 'verify', 'export job'],
+  },
+  {
     id: 'export-fidelity',
     title: 'Understand export fidelity',
     summary:
@@ -1373,14 +1390,6 @@ export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
     page: 'apiome-docs/unreleased/docs/bring-in/agent-access.mdx',
     section: 'reference',
     keywords: ['toolset', 'agent key', 'ai', 'claude', 'tools'],
-  },
-  {
-    id: 'export-studio',
-    title: 'Export studio',
-    summary: 'Source, target, options, verify, generate — convert a version and see what survives.',
-    page: 'apiome-docs/unreleased/docs/ship/export-studio.mdx',
-    section: 'reference',
-    keywords: ['convert', 'fidelity', 'lossy', 'types-only', 'verify', 'export job'],
   },
   {
     id: 'sdk-settings',

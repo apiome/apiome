@@ -44,6 +44,10 @@ you download anything.
    and downloads the job's bundle: every emitted file plus a `manifest.json` that lists them. The
    download starts when the job finishes; if the job fails, the dialog shows why.
 
+**“Open in Export Studio”** at the foot of the dialog carries the source, target and options into
+the [Export studio](./export-studio.mdx), which adds options, a verify step and a job you can watch.
+For catalog items, including several at once, see [Export catalog items](./export-catalog-items.mdx).
+
 <Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
 
 <Screenshot id="export-dialog-fidelity" alt="The Export dialog's fidelity report for Protobuf: what is kept, approximated and dropped, and the acknowledgement" />
@@ -70,8 +74,8 @@ in its **Why not** column, and `apiome export <format>` stops with it (exit 2) b
 ### When an item has nothing to export from
 
 Exports are built from the source file captured when the item was imported. If that file was not
-kept, or was not stored because it contained credentials, the **Export** dialog and the Export studio
-say so instead of failing. **Click "Re-import"** to open **Import to catalog** and import the source
+kept, or was not stored because it contained credentials, the **Export** dialog and the
+[Export studio](./export-studio.mdx#1-source) say so instead of failing. **Click "Re-import"** to open **Import to catalog** and import the source
 again.
 
 <Screenshot id="export-dialog-missing-source" alt="The Export dialog for Orders RPC: it can't be exported because its source file wasn't kept, with a Re-import button" />
@@ -386,7 +390,7 @@ the limit, so you know what to change. An administrator can change each one with
 | Jobs running at once, per workspace | 5 queued or running | A new job is refused with `429` until one finishes or is cancelled | `APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT` |
 | How long one job may run | 30 minutes | The job stops and fails with `EXPORT_JOB_TIMED_OUT` | `APIOME_EXPORT_JOB_TIMEOUT_SECONDS` |
 | Size of the download | 32 MiB | The job fails with `EXPORT_ARTIFACT_TOO_LARGE` | `APIOME_EXPORT_ARTIFACT_MAX_BYTES` |
-| Items in one batch | 100 items × formats; 50 versions; 16 formats | The request is refused with `422`, or an `all_versions` job fails with `EXPORT_BATCH_TOO_LARGE` | Fixed |
+| Items in one batch | 100 items × formats; 50 versions; 16 entries in `targets` | The request is refused with `422`, or an `all_versions` job fails with `EXPORT_BATCH_TOO_LARGE` | Fixed |
 | How long a download is kept | 24 hours | The download answers `410 Gone`; run the export again | `APIOME_EXPORT_ARTIFACT_RETENTION_HOURS` |
 
 Every member's jobs count toward the workspace's five. A download past its retention time is
@@ -410,7 +414,7 @@ downloaded document with `openapi-spec-validator`.
 
 ## Test-drive it
 
-For OpenAPI targets, the REST API can turn the artifact you just generated into
+For OpenAPI targets, the [Export studio](./export-studio.mdx)'s Review step can turn the artifact you just generated into
 a **live mock** for a few minutes — a base URL you can `curl`, responses generated from
 the document's own response schemas, and a log of everything it served. It is the strongest check
 available: a document that cannot answer its own operations is a finding no static validation would
@@ -424,12 +428,14 @@ POST /v1/export/{tenant_slug}/mock
 The mock expires by itself, and servers without the Mock Server deployed report the capability as
 unavailable rather than offering a button that cannot work. See
 [export_mock_test_drive.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_mock_test_drive.md) for the endpoints,
-the lifetime rules and the configuration.
+the lifetime rules and the configuration, and [Mock try-out](./mock-try-out.mdx#test-drive-an-export) for the panel.
 
 ## Related
 
 - [Supported formats](../bring-in/supported-formats.md) — every format Apiome imports and exports,
   generated from the registries
+- [Export studio](./export-studio.mdx) — the same export step by step, with verify and a job
+- [Export catalog items](./export-catalog-items.mdx) — one item or many, every target's fidelity tier
 - [Understand export fidelity](./export-fidelity.md) — cross-format exports: what is preserved,
   what is lost and why, and the risk acknowledgement
 - [Export to an API gateway](./export-to-a-gateway.md) — Kong, Gateway API, Envoy, Istio, Traefik,

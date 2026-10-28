@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.499.0] - 2026-10-28
+
+### Added
+- **Target × fidelity-tier table for the export guide (X7, #6228).** `app.export_target_tiers_doc` measures every
+  target `GET /export/targets` offers against four small reference sources (a REST API, an RPC service, an event API
+  and a types-only schema) with the same calls the targets route makes — `Emitter.source_unsupported_reason` and
+  `build_target_fidelity` — and renders the tier table between the `export-target-tiers` markers of
+  `apiome-docs/docs/ship/export-catalog-items.mdx`. Deployment toolchains are left out so the table does not change
+  from machine to machine. Regenerate with `uv run python scripts/generate_export_target_tiers_doc.py` (`--check` for
+  a gate); `tests/test_export_target_tiers_doc.py` fails when the committed table drifts. No API change.
+
 ## [1.498.0] - 2026-10-28
 
 ### Security

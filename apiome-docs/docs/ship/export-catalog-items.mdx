@@ -1,0 +1,209 @@
+---
+title: Export catalog items
+description: Export one catalog item or many to another format, in the app or CLI.
+sidebar_position: 4.4
+tags: [export, catalog]
+---
+
+<Route path="/ade/dashboard/catalog" />
+
+A [catalog item](../bring-in/catalog.mdx) keeps the format it was imported in. Exporting it writes a
+file in another format — Protobuf from a GraphQL schema, AsyncAPI from an OpenAPI document — and
+shows you what the conversion keeps before you download anything. An export never turns the item
+into a project; to edit it as OpenAPI, [convert it](../bring-in/convert-to-openapi.md) instead.
+
+| You want | Use | Open it from |
+| --- | --- | --- |
+| One item in one format, quickly | The **Export** dialog | **⋯ → “Export”** on the item, or **“Export”** on the item's page |
+| One item, with options, a verify step and a job you can watch | The [Export studio](./export-studio.mdx) | **⋯ → “Export to another format…”** on the item or its page |
+| Several items in one format, in one `.zip` | Bulk export | Tick the items, then **“Export *n*…”** in the bulk bar |
+| An export in a script or a pipeline | The CLI | `apiome export <format>` |
+
+All of them use the same targets and the same fidelity check, so a target that is `lossy` in the
+dialog is `lossy` in the studio and in the CLI.
+
+## Export one item: the dialog
+
+1. On the [Catalog](../bring-in/catalog.mdx), **open the item's ⋯ menu** and **choose “Export”**
+   (or **click “Export”** on the item's page).
+2. **Click “Choose target”**, pick a format and read its fidelity badge, then **click “Continue”**.
+3. Read what the conversion drops, approximates or invents. Tick the acknowledgement if it asks
+   for one.
+4. **Click “Export”** (**“Export anyway”** after an acknowledgement), then the **Download** button
+   that names the file, or **“Download .zip”**.
+
+<Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
+
+Each step is described on [Export a spec](./export-a-spec.md#in-the-app-the-export-dialog).
+**“Open in Export Studio”** at the foot of the dialog carries your choices into the studio.
+
+## Export one item: the Export studio
+
+1. **Open the item's ⋯ menu** and **choose “Export to another format…”**. The studio opens with the
+   item as its source.
+2. **2. Target** — pick a format; each card carries its tier for this item. **Click “Continue”.**
+3. **3. Options** — change any option, then **click “Continue”**.
+4. **4. Verify** — **click “Run verification”**. Fidelity, validation and lint of the emitted file
+   run in one pass. Acknowledge a lossy conversion, then **click “Continue to review”**.
+5. **5. Review & Generate** — **click “Generate”**, then **“Download .zip”** or the file's
+   **Download** button when the job completes.
+
+<Screenshot id="export-studio-source" alt="Export studio on the Source step: Pet Store API, version 1.2.0, ten export targets" />
+
+Opened from **Export studio** in the rail instead, the studio starts at **1. Source**: **click
+“Catalog items”**, search, and **click the item**. Every step is described on
+[Export studio](./export-studio.mdx).
+
+## Export several items at once
+
+1. On the Catalog, **tick the items** you want, then **click “Export *n*…”** in the bulk bar.
+2. **Choose a target.** The list shows the targets the first ticked item can export to.
+3. **Click “Generate”.** One job exports every item, each at its latest version.
+4. A table lists each item with its outcome: the fidelity tier, or why it failed. An item that
+   fails does not stop the others.
+5. **Click “Download .zip”.** Each item's files sit in a folder named after the item, and
+   `manifest.json` lists every item, including the ones that failed and why.
+
+<Screenshot id="catalog-bulk-export" alt="Export 3 catalog items to OpenAPI 3.1: two completed with their tiers, one failed with its reason" />
+
+One export takes at most 100 items; with more ticked, the first 100 are exported and the dialog
+says so. The other limits — jobs running at once, run time, download size and how long a download
+is kept — are on [Export a spec](./export-a-spec.md#limits). Every member can export, whatever their
+role; see [Who can export](./export-studio.mdx#who-can-export).
+
+## With the CLI
+
+`apiome export <format>` takes a catalog item's id — the last part of the address of the item's
+page — exports its latest version unless you add `--version`, and polls the job for you.
+
+```bash
+ITEM=0b7c2a4e-5d1f-4e8a-9c3b-2f6d8e1a7b90
+
+# Every target and its tier for this item
+apiome export targets --project "$ITEM"
+
+# The item to TypeSpec
+apiome export typespec "$ITEM" --out pets.tsp
+
+# The item to TypeSpec and two more formats: one archive, a folder per format
+apiome export typespec "$ITEM" --targets json-schema,smithy --out exports/
+
+# Three items to JSON Schema: one archive, a folder per item (ids or slugs, @VERSION optional)
+apiome export json-schema --items orders-api,pets-api@1.0.0,events-bus --out exports.zip
+```
+
+A lossy or types-only export exits non-zero unless you add `--force`. With `--items`, the command
+prints one row per item and exits **7** when the archive was written but some items failed. The
+flags are on [Export a spec](./export-a-spec.md#from-the-cli-several-formats-or-several-items), and
+the REST requests behind them on
+[Export several items in one job](./export-a-spec.md#export-several-items-in-one-job).
+
+## What each target keeps
+
+The dialog, the studio and `apiome export targets` badge every target with a tier worked out for
+*your* item:
+
+| Tier | Means |
+| --- | --- |
+| `lossless` | Carries the source cleanly. |
+| `lossy` | Drops or approximates some constructs, but keeps operations or channels. |
+| `types-only` | Only the schemas survive; operations and channels are dropped. |
+
+The table below gives each target's tier for four typical sources, so you can see what a format
+keeps before you open either screen. Your item's tiers can differ — a source with no constraints
+loses none — so check its own badges before you rely on one. How tiers are worked out is in
+[Understand export fidelity](./export-fidelity.md). A target whose tool is not installed on your
+server is greyed out in the app with the missing tool named, whatever its tier.
+
+{/* export-target-tiers:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_export_target_tiers_doc.py */}
+
+Each of the 53 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
+
+| Target | Kind | From a REST API | From an RPC service | From an event API | From types only |
+| --- | --- | --- | --- | --- | --- |
+| Apache Avro | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| Apache Thrift | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| API Blueprint | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| Apigee API proxy | REST | `lossy` | not offered | not offered | not offered |
+| Arazzo | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| ASN.1 | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| AsyncAPI 3.1 | Events | `lossy` | `lossy` | `lossless` | `lossless` |
+| AWS API Gateway | REST | `lossy` | not offered | not offered | not offered |
+| Azure API Management | REST | `lossy` | not offered | not offered | not offered |
+| Cap'n Proto | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| CDDL | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| CloudEvents | Events | `lossy` | `lossy` | `lossless` | `lossy` |
+| COBOL Copybook | Data schema | not offered | not offered | not offered | not offered |
+| Connect RPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| CORBA IDL | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| EDI X12 | Data schema | not offered | not offered | not offered | not offered |
+| Envoy xDS RouteConfiguration | REST | `lossy` | not offered | not offered | not offered |
+| FHIR | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| FIX | Data schema | not offered | not offered | not offered | not offered |
+| FlatBuffers | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| Gateway API HTTPRoute | REST | `lossy` | not offered | not offered | not offered |
+| GraphQL SDL | Graph | `lossy` | `lossy` | `lossy` | `lossy` |
+| HL7 v2 | Data schema | not offered | not offered | not offered | not offered |
+| Hoppscotch | REST | `lossy` | not offered | not offered | not offered |
+| HTTP Request File | REST | `lossy` | not offered | not offered | not offered |
+| ISO 20022 | Data schema | not offered | not offered | not offered | not offered |
+| ISO 8583 | Data schema | not offered | not offered | not offered | not offered |
+| Istio VirtualService | REST | `lossy` | not offered | not offered | not offered |
+| JSON Schema | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| JSON Type Definition | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| Kafka Connect Schema | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| Kong Declarative Config | REST | `lossy` | not offered | not offered | not offered |
+| Kubernetes CRD | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| LLM Tool Definitions | Agent tools | `lossy` | `lossy` | `lossy` | `lossy` |
+| OData | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| ODCS Data Contract | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| ONC RPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| OpenAPI 3.1 | REST | `lossless` | `lossy` | `lossy` | `lossless` |
+| OpenRPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| Postman | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| Protocol Buffers (proto3) | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| RAML | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| SAP IDoc | Data schema | not offered | not offered | not offered | not offered |
+| Smithy | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| Thunder Client | REST | `lossy` | not offered | not offered | not offered |
+| Traefik dynamic configuration | REST | `lossy` | not offered | not offered | not offered |
+| TypeSpec | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| WADL | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| WIT (WebAssembly) | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
+| WSDL | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| XML-RPC | RPC | not offered | `lossy` | not offered | not offered |
+| XSD | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
+| z/OS Connect | REST | not offered | not offered | not offered | not offered |
+
+Why a target is not offered for a source:
+
+- **Apigee API proxy** — Apigee API proxy export needs at least one HTTP operation (a method and a path); this source has none.
+- **AWS API Gateway** — AWS API Gateway export needs at least one HTTP operation (a method and a path); this source has none.
+- **Azure API Management** — Azure API Management export needs at least one HTTP operation (a method and a path); this source has none.
+- **COBOL Copybook** — Only a source imported as COBOL Copybook can be exported to COBOL Copybook.
+- **EDI X12** — Only a source imported as EDI X12 can be exported to EDI X12.
+- **Envoy xDS RouteConfiguration** — Envoy xDS RouteConfiguration export needs at least one HTTP operation (a method and a path); this source has none.
+- **FIX** — Only a source imported as FIX can be exported to FIX.
+- **Gateway API HTTPRoute** — Gateway API HTTPRoute export needs at least one HTTP operation (a method and a path); this source has none.
+- **HL7 v2** — Only a source imported as HL7 v2 can be exported to HL7 v2.
+- **Hoppscotch** — Hoppscotch export needs at least one HTTP operation (a method and a path); this source has none.
+- **HTTP Request File** — HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.
+- **ISO 20022** — Only a source imported as ISO 20022 can be exported to ISO 20022.
+- **ISO 8583** — Only a source imported as ISO 8583 can be exported to ISO 8583.
+- **Istio VirtualService** — Istio VirtualService export needs at least one HTTP operation (a method and a path); this source has none.
+- **Kong Declarative Config** — Kong Declarative Config export needs at least one HTTP operation (a method and a path); this source has none.
+- **SAP IDoc** — Only a source imported as SAP IDoc can be exported to SAP IDoc.
+- **Thunder Client** — Thunder Client export needs at least one HTTP operation (a method and a path); this source has none.
+- **Traefik dynamic configuration** — Traefik dynamic configuration export needs at least one HTTP operation (a method and a path); this source has none.
+- **XML-RPC** — XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.
+- **z/OS Connect** — Only a source imported as z/OS Connect can be exported to z/OS Connect.
+
+{/* export-target-tiers:end */}
+
+## Where next
+
+- [Export studio](./export-studio.mdx) — every step, the keyboard path and who can export
+- [Export a spec](./export-a-spec.md) — the dialog, the REST API and the limits
+- [Supported formats](../bring-in/supported-formats.md) — every format Apiome imports and exports
+- [Export to an API gateway](./export-to-a-gateway.md) and
+  [Export to an API client](./export-to-an-api-client.md)

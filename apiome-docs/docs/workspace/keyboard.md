@@ -87,6 +87,15 @@ On a version, `Tab` to its actions and press `↵`. Dialogs keep focus inside un
 (`↵` on the primary button) or cancel (`Esc`). A destructive confirmation focuses **Cancel**
 first, so a reflexive `↵` never deletes anything.
 
+### Export to another format — the Export studio
+On a version or catalog item, open **Export studio** from its **⋯** menu with `↵`. In the studio,
+`Tab` to the step's main button at the foot (**“Choose target”**, **“Continue”**,
+**“Continue to review”**, **“Generate”**) and press `↵`; focus moves to the new step, read as
+*Step N of 5* and its name. Pick a target card with `↵`, tick boxes with `Space`, and use `←` `→`
+between the Verify result tabs. In the Catalog, the bulk bar's **Export *n*…** dialog takes `Space`
+to pick a target and `↵` on **“Generate”**; `Esc` closes it and returns focus to **Export *n*…**.
+The full path is on [Export studio](../ship/export-studio.mdx#with-the-keyboard).
+
 ### Edit roles in the permission matrix
 On a role, `Tab` moves cell to cell; `Space` or `↵` toggles a permission (its pressed state is
 announced). The save bar's state is announced as it changes.
