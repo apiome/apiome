@@ -18,6 +18,8 @@ on:
       - 'docs/guide/README.md'
       # RC6-H5: the Catalog/Projects permission matrix the role suites read.
       - 'docs/catalog-projects-permission-matrix.json'
+      # X4: the export permission matrix (permission-matrix-export.test.tsx).
+      - 'docs/export-permission-matrix.json'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'
@@ -42,6 +44,8 @@ on:
       - 'docs/guide/README.md'
       # RC6-H5: the Catalog/Projects permission matrix the role suites read.
       - 'docs/catalog-projects-permission-matrix.json'
+      # X4: the export permission matrix (permission-matrix-export.test.tsx).
+      - 'docs/export-permission-matrix.json'
       - 'apiome-db/scripts/**'
       - 'scripts/auth_providers/registry.json'
       - 'scripts/format_capabilities/vocabulary.json'

@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.496.0] - 2026-10-28
+
+### Added
+- **Export permission matrix (X4, #6225).** `docs/export-permission-matrix.json` tables every export action ×
+  role (viewer / editor / owner, the RC6-H5 roles): every `/v1/export/…` route and the export pre-flight need
+  tenant membership only, so each role may perform every action, and another member's job is listed, polled,
+  downloaded and cancelled like one's own. `tests/test_export_permission_matrix.py` proves it route by route:
+  each role reaches all 23 calls with no permission guard consulted; a signed-in non-member and another tenant's
+  API key get `403`, an anonymous caller `401`, before the route runs; a job id from another tenant is `404` on
+  every job route, even to a member of both tenants; and every mounted export route has a row. No behaviour
+  change.
+
 ## [1.495.0] - 2026-10-28
 
 ### Added

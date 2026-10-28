@@ -1,0 +1,136 @@
+{
+  "$comment": "X4 (#6225): every export action × role. Roles (viewer / editor / owner) and their grants are the ones in catalog-projects-permission-matrix.json (RC6-H5, #6212). `permission: null` means any member of the tenant: every export route is guarded by tenant membership alone (validate_authentication), so a member of the tenant may perform every row, and another member's job is listed, polled, downloaded and cancelled like one's own. A caller outside the tenant is refused every row (403 before the handler runs), and a job id from another tenant is 404 even to a member of both. `rest[].reach` is the first call a route makes once auth has passed; apiome-rest/tests/test_export_permission_matrix.py stubs it to prove each role reaches it. `ui[]` lists the controls that offer the action; apiome-ui/tests/permission-matrix-export.test.tsx renders each screen as every role. The version and catalog-item Export dialogs (catalog.export, version.export) stay in catalog-projects-permission-matrix.json.",
+  "roles_from": "catalog-projects-permission-matrix.json",
+  "actions": [
+    {
+      "id": "export.targets",
+      "label": "List export targets and their fidelity",
+      "permission": null,
+      "rest": [
+        { "method": "GET", "path": "/v1/export/{tenant}/targets", "query": { "artifact": "{item}" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "GET", "path": "/v1/export/{tenant}/capability-registry", "reach": "app.export_routes.registry_snapshot" }
+      ],
+      "ui": [
+        { "screen": "catalog", "testid": "catalog-action-export-studio", "menu": "catalog-menu-{live}" }
+      ]
+    },
+    {
+      "id": "export.preview",
+      "label": "Preview a conversion (fidelity, manifest, evidence, round trip, pre-flight)",
+      "permission": null,
+      "rest": [
+        { "method": "POST", "path": "/v1/export/{tenant}/preview", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "POST", "path": "/v1/export/{tenant}/preview-manifest", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "POST", "path": "/v1/export/{tenant}/projection-evidence", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "POST", "path": "/v1/export/{tenant}/projection-metrics", "body": { "kind": "evidence_page" }, "reach": "app.export_routes.projection_telemetry.record" },
+        { "method": "POST", "path": "/v1/export/{tenant}/roundtrip", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "POST", "path": "/v1/tenants/{tenant}/export/preflight", "body": { "artifact": "{item}" }, "reach": "app.export_routes.load_export_source" }
+      ],
+      "ui": [],
+      "ui_note": "No control of its own: the studio's Target and Verify steps load these as they draw."
+    },
+    {
+      "id": "export.verify",
+      "label": "Verify a conversion",
+      "permission": null,
+      "rest": [
+        { "method": "POST", "path": "/v1/export/{tenant}/verify", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" }
+      ],
+      "ui": [
+        { "screen": "studio-verify", "testid": "verify-run" }
+      ]
+    },
+    {
+      "id": "export.document",
+      "label": "Export one document inline, or deliver it",
+      "permission": null,
+      "rest": [
+        { "method": "POST", "path": "/v1/export/{tenant}/document", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" },
+        { "method": "POST", "path": "/v1/export/{tenant}/dispatch", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_routes.load_export_source" }
+      ],
+      "ui": [],
+      "ui_note": "Offered by the Export dialog — catalog.export and version.export in catalog-projects-permission-matrix.json."
+    },
+    {
+      "id": "export.job.start",
+      "label": "Generate an export (one target or several)",
+      "permission": null,
+      "rest": [
+        { "method": "POST", "path": "/v1/export/{tenant}/jobs", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_job_routes.schedule_export_job" }
+      ],
+      "ui": [
+        { "screen": "studio-review", "testid": "export-studio-generate" }
+      ]
+    },
+    {
+      "id": "export.batch",
+      "label": "Export several catalog items at once",
+      "permission": null,
+      "rest": [
+        { "method": "POST", "path": "/v1/export/{tenant}/jobs", "body": { "items": [{ "artifact": "{item}" }, { "artifact": "cat-2" }], "target": "openapi" }, "reach": "app.export_job_routes.schedule_export_job" }
+      ],
+      "ui": [
+        { "screen": "catalog", "testid": "catalog-bulk-export", "bulk": true }
+      ]
+    },
+    {
+      "id": "export.jobs.list",
+      "label": "List Recent export jobs (every member's)",
+      "permission": null,
+      "rest": [
+        { "method": "GET", "path": "/v1/export/{tenant}/jobs", "reach": "app.export_job_routes.engine_list_export_jobs" }
+      ],
+      "ui": [
+        { "screen": "recent-jobs", "testid": "export-recent-jobs" }
+      ]
+    },
+    {
+      "id": "export.job.status",
+      "label": "Poll a job, or read its delivery attestation (any member's job)",
+      "permission": null,
+      "rest": [
+        { "method": "GET", "path": "/v1/export/{tenant}/jobs/{job}", "reach": "app.export_job_routes.engine_get_export_job_status" },
+        { "method": "GET", "path": "/v1/export/{tenant}/jobs/{job}/attestation", "reach": "app.export_job_routes.engine_get_export_job_status" }
+      ],
+      "ui": [],
+      "ui_note": "No control of its own: the studio polls the job it started."
+    },
+    {
+      "id": "export.job.download",
+      "label": "Download a job's artifact (any member's job)",
+      "permission": null,
+      "rest": [
+        { "method": "GET", "path": "/v1/export/{tenant}/jobs/{job}/download", "reach": "app.export_job_routes.engine_resolve_export_download" }
+      ],
+      "ui": [],
+      "ui_note": "Downloaded from the studio's Review step and the bulk dialog once the job finishes (their own job); Recent export jobs lists jobs without a download."
+    },
+    {
+      "id": "export.job.cancel",
+      "label": "Cancel a running job (any member's job)",
+      "permission": null,
+      "rest": [
+        { "method": "DELETE", "path": "/v1/export/{tenant}/jobs/{job}", "reach": "app.export_job_routes.engine_cancel_export_job" }
+      ],
+      "ui": [
+        { "screen": "generate-progress", "testid": "generate-cancel" }
+      ]
+    },
+    {
+      "id": "export.mock",
+      "label": "Test-drive an export on a mock server",
+      "permission": null,
+      "rest": [
+        { "method": "GET", "path": "/v1/export/{tenant}/mock/capability", "reach": "app.export_mock_routes.export_mock_availability" },
+        { "method": "POST", "path": "/v1/export/{tenant}/mock", "body": { "artifact": "{item}", "target": "openapi" }, "reach": "app.export_mock_routes._require_available" },
+        { "method": "GET", "path": "/v1/export/{tenant}/mock", "reach": "app.export_mock_routes._require_available" },
+        { "method": "GET", "path": "/v1/export/{tenant}/mock/{mock}", "reach": "app.export_mock_routes._require_available" },
+        { "method": "GET", "path": "/v1/export/{tenant}/mock/{mock}/requests", "reach": "app.export_mock_routes._require_available" },
+        { "method": "DELETE", "path": "/v1/export/{tenant}/mock/{mock}", "reach": "app.export_mock_routes._require_available" }
+      ],
+      "ui": [
+        { "screen": "mock-test-drive", "testid": "mock-start" }
+      ]
+    }
+  ]
+}
