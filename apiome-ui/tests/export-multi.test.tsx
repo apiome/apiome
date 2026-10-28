@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
@@ -41,6 +42,8 @@ import {
 } from '../src/app/components/ade/dashboard/export/exportBatchJob';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { CatalogItem } from '../src/app/components/ade/catalog/catalogModel';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { tabTo } from './helpers/keyboard';
 
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } } as const;
 
@@ -298,5 +301,128 @@ describe('Catalog bulk Export…', () => {
     });
     expect(within(screen.getByTestId('multi-export-outcomes')).getByText('Orders API')).toBeInTheDocument();
     expect(screen.getByText('Artifact not found.')).toBeInTheDocument();
+  });
+});
+
+// --- keyboard-only and the a11y gate (X3, #6224) -------------------------------------------------
+
+describe('several targets and bulk export with the keyboard alone (X3)', () => {
+  const ITEMS = [
+    { id: 'item-a', name: 'Orders API' },
+    { id: 'item-b', name: 'Pets API' },
+  ] as unknown as CatalogItem[];
+
+  /**
+   * The Catalog's bulk bar in miniature: a trigger that opens the dialog, as `CatalogClient` does
+   * (controlled `open`, no `Dialog.Trigger`), so the focus restore under test is the dialog's own.
+   */
+  function BulkBar() {
+    const [open, setOpen] = React.useState(false);
+    return (
+      <>
+        <button type="button" onClick={() => setOpen(true)}>
+          Export 2…
+        </button>
+        <CatalogBulkExportDialog open={open} items={ITEMS} onOpenChange={setOpen} />
+      </>
+    );
+  }
+
+  it('runs a several-targets export from the Studio without a pointer', async () => {
+    installFetch({ state: 'completed', result: { ...MULTI_TARGET_RESULT, dry_run: true } });
+    const user = userEvent.setup();
+    render(<ExportStudio artifact="proj-1" artifactLabel="Pets API" version="rev-1" />);
+    await waitFor(() => expect(screen.getByText(/export targets available/)).toBeInTheDocument());
+    await tabTo(user, screen.getByRole('button', { name: /Choose target/ }));
+    await user.keyboard('{Enter}');
+
+    await tabTo(user, within(screen.getByTestId('export-studio-multi-toggle')).getByRole('checkbox'));
+    await user.keyboard(' ');
+    for (const key of ['openapi', 'graphql']) {
+      await tabTo(user, within(screen.getByTestId(`export-studio-multi-target-${key}`)).getByRole('checkbox'));
+      await user.keyboard(' ');
+    }
+    await tabTo(user, screen.getByRole('button', { name: 'Continue' }));
+    await user.keyboard('{Enter}');
+
+    await tabTo(user, screen.getByTestId('multi-export-verify-start'));
+    await user.keyboard('{Enter}');
+    const toReview = screen.getByRole('button', { name: 'Continue to review' });
+    await waitFor(() => expect(toReview).toBeEnabled());
+    await tabTo(user, toReview);
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('multi-export-generate')).toBeInTheDocument();
+  });
+
+  it('opens the bulk dialog, exports and downloads, and gives focus back on Escape', async () => {
+    const calls = installFetch({ state: 'completed', result: BATCH_RESULT });
+    // The archive is handed to a download link; jsdom cannot follow it.
+    jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(<BulkBar />);
+    const trigger = screen.getByRole('button', { name: 'Export 2…' });
+
+    await tabTo(user, trigger);
+    await user.keyboard('{Enter}');
+    const dialog = await screen.findByRole('dialog', { name: 'Export 2 catalog items' });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    await tabTo(user, await screen.findByLabelText('OpenAPI 3.1'));
+    await user.keyboard(' ');
+    expect(screen.getByLabelText('OpenAPI 3.1')).toBeChecked();
+    await tabTo(user, screen.getByTestId('multi-export-generate-start'));
+    await user.keyboard('{Enter}');
+    await tabTo(user, await screen.findByTestId('multi-export-download'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/download'))).toBe(true));
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('gives focus back to the trigger when Close is pressed', async () => {
+    installFetch({ state: 'completed', result: BATCH_RESULT });
+    const user = userEvent.setup();
+    render(<BulkBar />);
+    const trigger = screen.getByRole('button', { name: 'Export 2…' });
+    await tabTo(user, trigger);
+    await user.keyboard('{Enter}');
+    await screen.findByRole('dialog');
+
+    await tabTo(user, screen.getByTestId('catalog-bulk-export-close'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(trigger).toHaveFocus();
+  });
+
+  it('keeps Tab inside the open dialog', async () => {
+    installFetch({ state: 'completed', result: BATCH_RESULT });
+    const user = userEvent.setup();
+    render(<BulkBar />);
+    await tabTo(user, screen.getByRole('button', { name: 'Export 2…' }));
+    await user.keyboard('{Enter}');
+    const dialog = await screen.findByRole('dialog');
+    await screen.findByLabelText('OpenAPI 3.1');
+    for (let press = 0; press < 12; press += 1) {
+      await user.tab({ shift: press % 3 === 2 });
+      expect(dialog.contains(document.activeElement)).toBe(true);
+    }
+  });
+
+  /**
+   * The browser fixture for the axe gate (`e2e/a11y/routes.ts`, entry `export-e1`): the dialog
+   * with a target picked, before Generate — `bulk-export.html` (the docs fixture) is the dialog
+   * after a run. Written into `e2e/fixtures/hive-a11y/` when `A11Y_FIXTURE_DUMP=1`:
+   *
+   *     A11Y_FIXTURE_DUMP=1 npx jest tests/export-multi.test.tsx -t "a11y gate"
+   */
+  it('dumps the bulk dialog with a target picked for the a11y gate', async () => {
+    installFetch({ state: 'completed', result: BATCH_RESULT });
+    render(<CatalogBulkExportDialog open items={ITEMS} onOpenChange={() => undefined} />);
+    fireEvent.click(await screen.findByLabelText('OpenAPI 3.1'));
+    await screen.findByTestId('multi-export-generate-start');
+    expect(await axe(screen.getByTestId('catalog-bulk-export-dialog'), AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('export-bulk-pick', liveMarkup(screen.getByTestId('catalog-bulk-export-dialog')));
   });
 });

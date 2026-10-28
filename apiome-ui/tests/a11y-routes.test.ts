@@ -62,4 +62,42 @@ describe('a11y route ledger', () => {
     expect(helper).toMatch(/GATE_THEMES[^=]*=\s*\[null, 'dark', 'high-contrast'\]/);
     expect(helper).toMatch(/WCAG_TAGS = \[[^\]]*'wcag22aa'/);
   });
+
+  /**
+   * X3 (#6224): the released export surfaces — the Studio's five steps, the source picker, the
+   * bulk Export… dialog and the target grid — are each gated, with no exemption: every fixture
+   * directory that holds one is gated whole or names the file.
+   */
+  describe('export surfaces (X3)', () => {
+    /** Every `dir/file` the gate mounts. */
+    const gated = new Set(
+      A11Y_ROUTES.flatMap((route) => {
+        const subject = route.subject;
+        if (subject.kind !== 'fixtures') return [];
+        const files = subject.files ?? fs.readdirSync(path.join(E2E, 'fixtures', subject.dir)).filter((f) => f.endsWith('.html'));
+        return files.map((file) => `${subject.dir}/${file}`);
+      }),
+    );
+
+    it.each([
+      ['Source step', 'hive-export-studio/source.html'],
+      ['Target step and its grid', 'hive-export-studio/target.html'],
+      ['Options step', 'hive-a11y/export-studio-options.html'],
+      ['Verify step', 'hive-a11y/export-studio-verify.html'],
+      ['Verify step, several targets', 'hive-export-studio/multi-verify.html'],
+      ['Review step', 'hive-a11y/export-studio-review.html'],
+      ['Generate progress', 'hive-export-studio/job.html'],
+      ['source picker, catalog items', 'hive-a11y/export-source-picker.html'],
+      ['source picker, a project’s versions', 'hive-a11y/export-source-picker-versions.html'],
+      ['bulk Export… dialog, target picked', 'hive-a11y/export-bulk-pick.html'],
+      ['bulk Export… dialog, after a run', 'hive-export-studio/bulk-export.html'],
+    ])('gates the %s', (_name, fixture) => {
+      expect(gated.has(fixture)).toBe(true);
+    });
+
+    it('gates the whole export-studio fixture directory', () => {
+      const entry = A11Y_ROUTES.find((route) => route.id === 'export-studio');
+      expect(entry?.subject).toEqual({ kind: 'fixtures', dir: 'hive-export-studio' });
+    });
+  });
 });
