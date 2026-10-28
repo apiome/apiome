@@ -67,8 +67,9 @@ describe('export job download proxy (GET /api/export/jobs/[jobId]/download)', ()
   it('exports only a GET handler that streams the artifact bytes verbatim', () => {
     expect(downloadRoute).toMatch(/export\s+async\s+function\s+GET/);
     expect(downloadRoute).not.toMatch(/export\s+async\s+function\s+(POST|PUT|DELETE)/);
-    // The body is passed through with its content-type/disposition (may be a document or a zip).
-    expect(downloadRoute).toContain('Content-Disposition');
+    // The body is passed through with its content-type/disposition (may be a document or a zip),
+    // through the shared helper that also sends nosniff (X6, #6227).
+    expect(downloadRoute).toContain('exportDownloadHeaders(response.headers, { contentLength: true })');
     expect(downloadRoute).toContain('response.body');
     expect(downloadRoute).toMatch(/\/jobs\/\$\{encodeURIComponent\(\s*[\s\S]*?\)\}\/download/);
   });

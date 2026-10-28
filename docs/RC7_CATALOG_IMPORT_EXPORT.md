@@ -356,9 +356,32 @@ The scope is PLAN_POST_LAUNCH_ENABLEMENT §2.2 (E1) with the 53 targets that exi
 | [#6224](https://github.com/apiome/apiome/issues/6224) X3 | Accessibility: studio, source picker, bulk dialog, target grid; full keyboard path | ✅ Built: every step, the source picker, the bulk **Export…** dialog and the target grid are in the axe gate ledger (`export-studio` + `export-e1`) with no file exempt; keyboard-only export end to end (one target, several targets, the source picker, the bulk dialog) and focus back on the trigger when the dialog closes, pinned in the jsdom suites |
 | [#6225](https://github.com/apiome/apiome/issues/6225) X4 | Permission matrix: batch, recent jobs, another user's job download | ✅ Built: `docs/export-permission-matrix.json` — every export action is a member action (viewer, editor and owner alike; jobs belong to the workspace, so another member's job is listed, downloaded and cancelled like one's own); pytest over all 23 export calls (each role reaches each, non-members and other tenants' keys 403, anonymous 401, another tenant's job 404 even to a member of both, every mounted route tabled); Jest renders the Catalog, Studio Verify/Review, generate progress, test drive and Recent export jobs as each role |
 | [#6226](https://github.com/apiome/apiome/issues/6226) X5 | Limits: size, time, batch, retention, per-tenant concurrency (not found); documented refusals | ✅ Built: new per-tenant concurrency cap (`APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`, 5, `429`, counted across instances) and job time cap (`APIOME_EXPORT_JOB_TIMEOUT_SECONDS`, 30 min, `EXPORT_JOB_TIMED_OUT`); expired artifacts reclaimed on every submit and list; size (32 MiB), batch (100 / 50 / 16) and retention (24 h, `410`) documented on Export a spec → **Limits**; `tests/test_export_limits.py` has a test per limit |
-| [#6227](https://github.com/apiome/apiome/issues/6227) X6 | Security review — check `zip_bundle.write_zip_entry` callers sanitize entry names | Not built |
+| [#6227](https://github.com/apiome/apiome/issues/6227) X6 | Security review — check `zip_bundle.write_zip_entry` callers sanitize entry names | ✅ Built: one HIGH (zip slip via Avro namespaces), one MEDIUM (non-Latin-1 download names → 500), one LOW (no `nosniff`) — all fixed with tests, none open; see §4.5. `/security-review` on the release PR (`export-studio` leaves the gate) is still owed |
 | [#6228](https://github.com/apiome/apiome/issues/6228) X7 | Restore and extend the export docs from `apiome-docs/unreleased/` | Not built |
 | [#6229](https://github.com/apiome/apiome/issues/6229) X8 | Metrics dashboards and alert thresholds (in-process metrics exist) | Partly built |
+
+### 4.5 Security review (X6, [#6227](https://github.com/apiome/apiome/issues/6227), 2026-10-28)
+
+Scope: zip output (paths from imported specs, zip slip), served content types, job isolation across
+tenants and users, the BFF export proxies. Method: read every archive writer and download route, then
+ran all 54 registered emitters over hostile names (`../../x`, `/abs`, `C:\x`, `a\..\b`, control
+characters, non-Latin-1, quotes) and extracted each bundle as a naive tool would.
+
+| # | Severity | Finding | Fix | Tests |
+| --- | --- | --- | --- | --- |
+| 1 | **High** | Zip slip: the Avro emitter (`.avsc` and `.avdl`) turned a namespace from the imported schema or the `namespace` option into folders verbatim — `/abs/evil` became an absolute member, `C:\x` a drive path, `..\x` a backslash path. No archive writer validated member names. | `EmittedFile.path` is normalised by `zip_bundle.safe_bundle_path` (relative, `/`-separated, no `..`, drive prefix or control characters); `write_zip_entry` refuses any unsafe name; Avro builds folders from sanitised namespace parts. | `test_export_security.py`: path rules, writer refusal, Avro/Avro IDL, every emitter × 6 hostile names extracted under a temp root |
+| 2 | Medium | A download name outside Latin-1 (an API titled `注文 API`, exported to JTD, Arazzo or ODCS) made `POST …/document` and `GET …/jobs/{id}/download` a **500**; the document route did not strip quotes or control characters. | `download_headers.attachment_headers`: ASCII `filename` + RFC 6266 `filename*=UTF-8''…`; the Studio and dialog read `filename*` first. | `test_export_security.py` (both routes, a Japanese name); `export-download-security.test.ts` |
+| 3 | Low | No `X-Content-Type-Options: nosniff` on export downloads (REST or the BFF passthrough). | Sent by REST on both download routes and by the BFF (`lib/export-download-headers.ts`). | both suites above |
+
+Reviewed, no finding: tenant isolation (auth binds the URL slug to the caller; every job, artifact
+and mock lookup also matches the tenant — #6225 proves it route by route); jobs are shared within a
+workspace by design (#6225); downloads are always `attachment`, and no emitter declares an HTML or
+SVG media type; target and batch folder names were already sanitised (`safe_bundle_segment`); the
+BFF takes the tenant from the session, URL-encodes ids, and the mock **try** proxy keeps only the
+path of a user-supplied URL (`resolveMockRequestUrl`), so it cannot reach another host.
+
+Out of scope, noted: GraphQL refuses a type named `../../evil` (its sanitised name starts with
+`__`), a clean validation failure rather than a security issue.
 
 ### 4.3 Emitter correctness found so far (feeds X1)
 

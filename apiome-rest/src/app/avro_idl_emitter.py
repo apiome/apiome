@@ -646,10 +646,11 @@ def _type_name(name: str) -> str:
 
 def _document_path(name: str, namespace: Optional[str]) -> str:
     """Return the deterministic ``.avdl`` path for a rendered document."""
+    from .avro_emitter import namespace_folder
+
     simple = _sanitize(name) or "protocol"
-    if namespace:
-        return f"{namespace.replace('.', '/')}/{simple}.avdl"
-    return f"{simple}.avdl"
+    folder = namespace_folder(namespace)
+    return f"{folder}/{simple}.avdl" if folder else f"{simple}.avdl"
 
 
 def _trim_trailing_blanks(lines: Iterable[str]) -> List[str]:

@@ -6,10 +6,27 @@
  * and triggering the anchor download — live here so the dialog and the Studio behave identically.
  */
 
-/** Parse the filename out of a `Content-Disposition: attachment; filename="…"` header. */
+/**
+ * Parse the filename out of a `Content-Disposition` header.
+ *
+ * Prefers the RFC 6266 `filename*=UTF-8''…` form, which carries a non-ASCII name (`注文 API.json`),
+ * and falls back to the ASCII `filename="…"` REST always sends beside it (X6, #6227).
+ *
+ * @param disposition The header value, or `null`.
+ * @returns The file name, or `null` when the header names none.
+ */
 export function filenameFromDisposition(disposition: string | null): string | null {
   if (!disposition) return null;
-  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  const extended = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
+  if (extended) {
+    try {
+      const decoded = decodeURIComponent(extended[1].trim());
+      if (decoded) return decoded;
+    } catch {
+      // A malformed escape: use the ASCII name instead.
+    }
+  }
+  const match = /filename\s*=\s*"?([^";]+)"?/i.exec(disposition);
   return match ? match[1] : null;
 }
 

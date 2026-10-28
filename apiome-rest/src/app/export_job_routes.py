@@ -28,6 +28,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 
 from .auth import validate_authentication
+from .download_headers import attachment_headers
 from .export_delivery_gate import DeliveryAttestation
 from .export_job_engine import (
     ExportJobAccepted,
@@ -116,8 +117,9 @@ async def start_export_job(
         HTTPException: 400 when a target is unknown or two targets of a multi-target job
             resolve to the same format; 422 when the emit options are invalid for a target or
             the request mixes ``target`` and ``targets``; 429 when the tenant already runs
-            ``export_max_concurrent_jobs_per_tenant`` export jobs (X5). Source-related failures (unknown artifact/version,
-            no reconstructable source) surface asynchronously in the job status.
+            ``export_max_concurrent_jobs_per_tenant`` export jobs (X5). Source-related failures
+            (unknown artifact/version, no reconstructable source) surface asynchronously in the
+            job status.
     """
     tenant_id = str(auth_data["tenant_id"])
     try:
@@ -257,7 +259,7 @@ async def download_export_job_artifact(
     _ = auth_data
     artifact = engine_resolve_export_download(tenant_slug, job_id)
     headers = {
-        "Content-Disposition": f'attachment; filename="{artifact.filename}"',
+        **attachment_headers(artifact.filename, "export"),
         "Content-Length": str(artifact.content_length),
     }
     if artifact.content_sha256:
