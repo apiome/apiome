@@ -44,9 +44,16 @@ from .import_source import (
 from .payload_analysis import PayloadAnalysisDocument
 
 __all__ = [
+    "SOURCE_NOT_CAPTURED",
+    "SOURCE_WITHHELD",
     "resolve_conversion_adapter",
     "build_conversion_source",
 ]
+
+#: Machine-readable codes for a revision with no source to rebuild (E1-6, #6221). A caller offers
+#: **Re-import** for both: the item's source was never captured, or was deliberately not stored.
+SOURCE_NOT_CAPTURED = "source-not-captured"
+SOURCE_WITHHELD = "source-withheld"
 
 
 def resolve_conversion_adapter(source_format: Optional[str], raw: str) -> ImportSource:
@@ -176,12 +183,14 @@ def build_conversion_source(
             f"This catalog item's source was deliberately not stored ({withheld}), so there is no "
             "source material to convert.",
             status_code=422,
+            code=SOURCE_WITHHELD,
         )
     if payload is None or payload.get("mode") != "content":
         raise ConversionError(
             "This catalog item has no captured source material to convert; re-import it with its "
             "source document to enable conversion.",
             status_code=422,
+            code=SOURCE_NOT_CAPTURED,
         )
 
     raw = payload["content"]

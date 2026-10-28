@@ -257,6 +257,24 @@ describe('the version Export dialog', () => {
 });
 
 describe('the Unpublish confirm', () => {
+  it('draws the missing-source notice with Re-import (E1-6)', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 422,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: 'This catalog item has no captured source material to convert.',
+            code: 'source-not-captured',
+          }),
+      }),
+    ) as unknown as typeof fetch;
+    render(<ExportDialog open onClose={() => {}} artifact="item-orders" artifactLabel="Orders RPC" />);
+    await screen.findByTestId('export-missing-source');
+    await judgeAndWrite('export-missing-source', openDialog());
+  });
+
   it('draws the destructive confirm the Versions row menu opens', async () => {
     render(
       <ConfirmDialog open {...unpublishVersionConfirm({ version_id: '1.2.0' })} onConfirm={() => {}} onCancel={() => {}} />

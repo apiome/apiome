@@ -42,7 +42,7 @@ export async function getAuthenticatedTenantContext(): Promise<
 export async function proxyRestGet(
   user: SessionUser,
   path: string
-): Promise<{ data: unknown; error: string | null; status: number }> {
+): Promise<{ data: unknown; error: string | null; status: number; detail?: unknown }> {
   const response = await fetch(`${REST_API_BASE_URL}${path}`, {
     method: 'GET',
     headers: createRestAuthHeaders(user),
@@ -57,7 +57,9 @@ export async function proxyRestGet(
 
   const data = await response.json();
   if (!response.ok) {
-    return { data: null, error: restErrorMessage(data), status: response.status };
+    // A typed refusal's whole `detail` rides along (as the write verbs do), so a route can pass
+    // its `code` on — e.g. an export source with nothing captured (E1-6).
+    return { data: null, error: restErrorMessage(data), status: response.status, detail: data?.detail };
   }
 
   return { data, error: null, status: response.status };

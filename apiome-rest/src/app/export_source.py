@@ -41,12 +41,46 @@ class ExportSourceError(Exception):
 
     Carries an HTTP ``status_code`` (``404`` for an unknown artifact/version, ``422`` for a
     revision that has no reconstructable source) so the route surfaces the right status without
-    leaking a stack trace.
+    leaking a stack trace. A revision with no source to rebuild also carries a ``code``
+    (:data:`~app.catalog_conversion.SOURCE_NOT_CAPTURED` / ``SOURCE_WITHHELD``, E1-6) and the
+    coordinates it was loading, so a client can say why and offer **Re-import** instead of
+    showing a bare 422.
     """
 
-    def __init__(self, message: str, *, status_code: int = 404) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int = 404,
+        code: Optional[str] = None,
+        artifact_id: Optional[str] = None,
+        version_record_id: Optional[str] = None,
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
+        self.code = code
+        self.artifact_id = artifact_id
+        self.version_record_id = version_record_id
+
+    def http_detail(self) -> Any:
+        """The HTTP error ``detail`` for this failure.
+
+        A typed failure (one with a ``code``) answers a structured object —
+        ``{code, message, artifactId, versionId, reimport}`` — so the UI can explain it and offer
+        **Re-import**; every other failure keeps the plain message it always had.
+
+        Returns:
+            The structured detail dict, or the message string.
+        """
+        if not self.code:
+            return str(self)
+        return {
+            "code": self.code,
+            "message": str(self),
+            "artifactId": self.artifact_id,
+            "versionId": self.version_record_id,
+            "reimport": True,
+        }
 
 
 class ExportSource(BaseModel):
@@ -268,8 +302,15 @@ def load_export_source(
         source = build_revision_source(item, tenant_id=tenant_id, revision_id=revision_id)
     except ConversionError as exc:
         # No captured source and no rebuildable OpenAPI document / unresolvable adapter /
-        # unparseable text — surface with the conversion path's status (422/400).
-        raise ExportSourceError(str(exc), status_code=exc.status_code) from exc
+        # unparseable text — surface with the conversion path's status (422/400). A missing
+        # source keeps its code (E1-6) so the caller can offer Re-import.
+        raise ExportSourceError(
+            str(exc),
+            status_code=exc.status_code,
+            code=exc.code,
+            artifact_id=str(projection["id"]),
+            version_record_id=revision_id,
+        ) from exc
 
     return ExportSource(
         api=source.api,

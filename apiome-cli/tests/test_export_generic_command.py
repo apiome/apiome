@@ -233,3 +233,62 @@ def test_generic_export_missing_out_is_usage_error() -> None:
     result = runner.invoke(app, ["export", "sample", "payments-api"])
     assert result.exit_code == EXIT_USAGE
     assert "--out is required" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# E1-6 (#6221): an unavailable target is refused before any job, with the registry's reason
+# ---------------------------------------------------------------------------
+_UNAVAILABLE_REASON = "Requires the buf toolchain, which is not available in this runtime."
+
+
+def _targets_with_unavailable(key: str) -> dict:
+    targets = json.loads(json.dumps(_TARGETS))
+    for entry in targets["targets"]:
+        if entry["descriptor"]["key"] == key:
+            entry["descriptor"]["available"] = False
+            entry["descriptor"]["unavailable_reason"] = _UNAVAILABLE_REASON
+    return targets
+
+
+def test_generic_export_refuses_an_unavailable_target_before_any_job(
+    httpx_mock: object, tmp_path: Path
+) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(url=_TARGETS_URL, json=_targets_with_unavailable("sample"))
+
+    result = runner.invoke(
+        app, ["export", "sample", "payments-api", "--version", "1.0.0", "--out", str(tmp_path / "x.txt")]
+    )
+
+    assert result.exit_code == EXIT_USAGE
+    assert "'sample' is not available" in result.stderr and "buf toolchain" in result.stderr
+    assert not any(r.url.path.endswith("/jobs") for r in httpx_mock.get_requests())
+
+
+def test_unavailable_export_target_reason_reads_the_registry() -> None:
+    from apiome_cli.client.export_registry import unavailable_export_target_reason
+
+    targets = _targets_with_unavailable("sample")["targets"]
+    assert unavailable_export_target_reason("sample", targets) == _UNAVAILABLE_REASON
+    assert unavailable_export_target_reason("openapi", targets) is None
+    assert unavailable_export_target_reason("missing", targets) is None
+
+
+def test_export_targets_table_says_why_a_target_is_unavailable(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(url=_TARGETS_URL, json=_targets_with_unavailable("sample"))
+
+    result = runner.invoke(
+        app,
+        ["export", "targets", "--project", "payments-api", "--version", "1.0.0"],
+        terminal_width=240,
+    )
+
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Why not" in result.stdout and "buf" in result.stdout
+
+    from apiome_cli.export_output import target_rows
+
+    rows = {row["key"]: row for row in target_rows(_targets_with_unavailable("sample")["targets"])}
+    assert (rows["sample"]["available"], rows["sample"]["reason"]) == ("no", _UNAVAILABLE_REASON)
+    assert rows["openapi"]["reason"] is None

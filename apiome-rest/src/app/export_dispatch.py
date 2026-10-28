@@ -38,6 +38,7 @@ from .export_service import (
     ExportError,
     ExportPersistenceContext,
     emit_canonical,
+    ensure_target_available,
     resolve_emit_format,
 )
 from .export_source import ExportSource, load_export_source
@@ -138,6 +139,10 @@ def dispatch_from_source(
     # emit, matching the preview/document routes.
     target_format = resolve_emit_format(target)
     emitter_cls = get_emitter(target_format)
+    # E1-6: a real emit to a target this deployment cannot run is refused here, with the
+    # registry's reason; a dry run (fidelity only) needs no toolchain and still answers.
+    if not dry_run and emitter_cls is not None:
+        ensure_target_available(emitter_cls)
 
     # The fidelity envelope is computed the same way the preview endpoint does, so a preview and
     # the dispatch it previews agree byte-for-byte. The guard reuses the envelope's report so it

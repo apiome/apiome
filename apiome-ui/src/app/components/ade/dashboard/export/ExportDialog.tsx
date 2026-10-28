@@ -32,6 +32,7 @@ import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
+import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import {
   downloadMultiExportArchive,
   pollMultiExportJob,
@@ -181,7 +182,13 @@ export function ExportDialog({
   /** Whether a multi-file target's bundle is being exported for download (E1-4). */
   const [zipping, setZipping] = useState(false);
 
-  const { response, loading, error: targetsError, retry: retryTargets } = useExportTargets(open, artifact, version);
+  const {
+    response,
+    loading,
+    error: targetsError,
+    code: targetsErrorCode,
+    retry: retryTargets,
+  } = useExportTargets(open, artifact, version);
   // IXH-2.4: the same readiness ranking the Studio uses, so the dialog's grid orders by expected
   // outcome and surfaces a policy-blocked target's reason before a job is submitted.
   const { report: preflight, readiness } = useExportPreflight(open, artifact, version);
@@ -449,6 +456,9 @@ export function ExportDialog({
           <Alert variant="error" className="mt-3 shrink-0">
             {error}
           </Alert>
+        ) : isMissingSourceCode(targetsErrorCode) && targetsErrorCode ? (
+          // E1-6 (#6221): nothing captured to export from — say why and offer Re-import, not a retry.
+          <MissingSourceNotice className="mt-3 shrink-0" code={targetsErrorCode} sourceLabel={sourceLabel} />
         ) : targetsError ? (
           // RC6-H3 (#6210): the targets read failed — say so, with a retry, not "reopen the dialog".
           <ErrorBanner

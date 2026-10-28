@@ -829,6 +829,45 @@ describe('ExportDialog — pending and failed targets read (RC6-H3, #6210)', () 
   });
 });
 
+describe('ExportDialog — a source with nothing captured (E1-6, #6221)', () => {
+  function failTargets(code: string | null, status = 422) {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status,
+        json: () =>
+          Promise.resolve({ success: false, error: 'This catalog item has no captured source material.', code }),
+      }),
+    ) as unknown as typeof fetch;
+  }
+
+  it('says why and offers Re-import instead of a bare 422', async () => {
+    failTargets('source-not-captured');
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+    const notice = await screen.findByTestId('export-missing-source');
+    expect(notice).toHaveTextContent("Pet Store API can't be exported: its source file wasn't kept");
+    expect(screen.getByTestId('export-missing-source-reimport')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/catalog?open=import-catalog',
+    );
+    expect(screen.queryByTestId('export-dialog-targets-error')).not.toBeInTheDocument();
+    expect(screen.getByTestId('export-dialog-choose-target')).toBeDisabled();
+  });
+
+  it('explains a source withheld for credentials', async () => {
+    failTargets('source-withheld');
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+    expect(await screen.findByTestId('export-missing-source')).toHaveTextContent('contained credentials');
+  });
+
+  it('keeps the retry banner for any other failure', async () => {
+    failTargets(null, 503);
+    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
+    expect(await screen.findByTestId('export-dialog-targets-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('export-missing-source')).not.toBeInTheDocument();
+  });
+});
+
 describe('ExportDialog — no path into the held-back Export studio (RC6-H4, #6211)', () => {
   it('offers no studio link or navigation at any step while export-studio is unreleased', async () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;

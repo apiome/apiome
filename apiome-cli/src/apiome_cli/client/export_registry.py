@@ -209,6 +209,38 @@ def resolve_export_target(format_ref: str, targets: Sequence[Any]) -> str:
     raise ValueError(normalized)
 
 
+def unavailable_export_target_reason(target_key: str, targets: Sequence[Any]) -> str | None:
+    """Why ``target_key`` cannot export here, or ``None`` when it can (E1-6, #6221).
+
+    Reads the registry's own ``descriptor.available`` / ``unavailable_reason`` — a toolchain this
+    deployment lacks, or a source the target cannot carry — so the CLI refuses the target before
+    submitting a job that would fail, with the same reason the app shows on the card.
+
+    Parameters
+    ----------
+    target_key:
+        The resolved registry key (from :func:`resolve_export_target`).
+    targets:
+        The ``targets`` list from ``GET …/export/targets``.
+
+    Returns
+    -------
+    str | None
+        The reason, or ``None`` when the target is available (or its availability is not stated).
+    """
+    for entry in targets:
+        if not isinstance(entry, Mapping):
+            continue
+        descriptor = entry.get("descriptor")
+        if not isinstance(descriptor, Mapping) or descriptor.get("key") != target_key:
+            continue
+        if descriptor.get("available") is False:
+            reason = descriptor.get("unavailable_reason")
+            return reason if isinstance(reason, str) and reason.strip() else "It is not available here."
+        return None
+    return None
+
+
 def unknown_export_target_message(format_ref: str, targets: Sequence[Any]) -> str:
     """Build an actionable error when ``format_ref`` is not in the registry."""
     available: list[str] = []

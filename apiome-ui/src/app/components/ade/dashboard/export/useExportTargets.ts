@@ -15,6 +15,11 @@ export interface UseExportTargetsResult {
    * instead of repeating the generic loader message (MFX-41.4).
    */
   status: number | null;
+  /**
+   * The typed refusal code of a failed load (E1-6), e.g. `source-not-captured` — the source has
+   * nothing to export from, so the screen offers Re-import instead of a retry. Null otherwise.
+   */
+  code: string | null;
   /** Read the targets again after a failed load (RC6-H3, #6210). */
   retry: () => void;
 }
@@ -40,6 +45,7 @@ export function useExportTargets(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
+  const [code, setCode] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((count) => count + 1), []);
 
@@ -54,6 +60,7 @@ export function useExportTargets(
       setLoading(true);
       setError(null);
       setStatus(null);
+      setCode(null);
       try {
         const params = new URLSearchParams({ artifact });
         if (version) params.set('version', version);
@@ -62,7 +69,10 @@ export function useExportTargets(
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
-          if (!cancelled) setStatus(typeof res.status === 'number' ? res.status : null);
+          if (!cancelled) {
+            setStatus(typeof res.status === 'number' ? res.status : null);
+            setCode(typeof data?.code === 'string' ? data.code : null);
+          }
           throw new Error(
             typeof data?.error === 'string' ? data.error : 'Could not load export targets.',
           );
@@ -85,5 +95,5 @@ export function useExportTargets(
     };
   }, [enabled, artifact, version, attempt]);
 
-  return { response, loading, error, status, retry };
+  return { response, loading, error, status, code, retry };
 }

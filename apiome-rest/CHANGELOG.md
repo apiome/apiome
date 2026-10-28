@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.494.0] - 2026-10-28
+
+### Added
+- **Honest target availability and the missing-source path (E1-6, #6221)**
+  - **Typed missing-source error.** A revision with no captured source now answers `422` with a structured
+    `detail` — `{code, message, artifactId, versionId, reimport: true}` — on every export route (`targets`,
+    `preview`, `verify`, `document`, `preview-manifest`, `roundtrip`, `projection-evidence`, …) instead of a bare
+    message. `code` is `source-not-captured` (never captured) or `source-withheld` (not stored because it contained
+    credentials). `ConversionError` and `ExportSourceError` carry the code; an export job's `SOURCE_LOAD_FAILED`
+    context adds `source_code`, `reimport` and `artifact_id`.
+  - **Unavailable targets refused up front.** New `export_service.ensure_target_available`: a real export (resolve,
+    dispatch, job submit) to a target whose registry descriptor is `available: false` is refused with `422` and the
+    registry's `unavailable_reason`, before any emit. A dry run (fidelity only) still answers. No shipped emitter is
+    toolchain-gated today; the guard reads `required_tools`, so one that is later is never offered and then failed.
+  - **Captured-source backfill.** New `app.source_backfill` and `scripts/backfill_captured_sources.py`
+    (`--dry-run`, `--tenant`): repairs a revision with no captured source from a stored copy — another revision of
+    the same item, or the linked repository file (`repository_import_spec`) — only when the copy re-imports to the
+    revision's recorded `fingerprint`. A repository file is scrubbed under the tenant's secret-scrub policy, and every
+    repair stamps `sourceBackfilledFrom`. Prints `scanned`, `repaired`, `unrepaired`, `unverifiable` and `no_copy`
+    plus each revision's outcome.
+  - API 1.358.0.
+
 ## [1.493.0] - 2026-10-28
 
 ### Added

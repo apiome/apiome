@@ -36,6 +36,7 @@ from apiome_cli.client.export_registry import (
     preview_fidelity,
     projection_snapshot_hash,
     resolve_export_target,
+    unavailable_export_target_reason,
     unknown_export_target_message,
 )
 from apiome_cli.client.http import RestClient
@@ -72,6 +73,18 @@ def parse_export_options(option_values: Sequence[str]) -> dict[str, Any]:
         except json.JSONDecodeError:
             options[key] = value
     return options
+
+
+def refuse_unavailable_target(target_key: str, targets: Sequence[Any]) -> None:
+    """Stop before submitting a job to a target the registry lists as unavailable (E1-6).
+
+    Raises:
+        typer.Exit: :data:`EXIT_USAGE`, with the registry's reason, when the target is unavailable.
+    """
+    reason = unavailable_export_target_reason(target_key, targets)
+    if reason is not None:
+        typer.echo(f"Export target {target_key!r} is not available: {reason}", err=True)
+        raise typer.Exit(EXIT_USAGE)
 
 
 def is_zip_bundle(*, content_type: str | None, body: bytes) -> bool:
@@ -218,6 +231,7 @@ def run_generic_export(
     except ValueError:
         typer.echo(unknown_export_target_message(target_format, targets), err=True)
         raise typer.Exit(EXIT_USAGE) from None
+    refuse_unavailable_target(target_key, targets)
 
     gate_export_before_job(
         client,

@@ -1,0 +1,22 @@
+---
+slug: export-missing-source
+title: Exports say why they can't run
+description: A missing source offers Re-import; unavailable formats are refused up front.
+authors: [apiome]
+---
+
+Exporting a catalog item with nothing to export from now explains itself, and a format the
+deployment cannot run is never offered and then failed.
+[When an item has nothing to export from](/ship/export-a-spec#when-an-item-has-nothing-to-export-from).
+
+{/* truncate */}
+
+- **Re-import.** If an item's source file wasn't kept at import, or wasn't stored because it
+  contained credentials, the **Export** dialog says so and offers **Re-import**, which opens
+  **Import to catalog**. Before, the dialog showed a bare error.
+- **Typed API error.** Every export route answers `422` with
+  `{"code": "source-not-captured" | "source-withheld", "message", "artifactId", "versionId", "reimport": true}`.
+- **Unavailable formats.** A format that needs a tool this deployment lacks is greyed out with the
+  reason, refused before anything runs, and listed under **Why not** in `apiome export targets`.
+- **Backfill.** Operators can repair items from a stored copy proven identical to the original with
+  `scripts/backfill_captured_sources.py`; see [Operating Apiome](/admin/operating-apiome#repair-items-with-no-captured-source).

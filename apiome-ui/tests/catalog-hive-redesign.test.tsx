@@ -673,6 +673,12 @@ describe('overlays', () => {
     expect(await screen.findByTestId('catalog-import-dialog')).toBeInTheDocument();
   });
 
+  it('opens it from an export’s Re-import link (?open=import-catalog, E1-6)', async () => {
+    searchParams = new URLSearchParams('open=import-catalog');
+    await renderCatalog();
+    expect(await screen.findByTestId('catalog-import-dialog')).toBeInTheDocument();
+  });
+
   it('opens it from the empty state too', async () => {
     await renderCatalog([]);
     fireEvent.click(await screen.findByTestId('catalog-empty-import'));

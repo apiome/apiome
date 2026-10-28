@@ -1418,6 +1418,25 @@ def delivery_failure(
     return code, delivery.message, context
 
 
+
+def _source_error_context(exc: ExportSourceError) -> Dict[str, Any]:
+    """The ``SOURCE_LOAD_FAILED`` error context for a source that could not be loaded.
+
+    Always the HTTP ``status_code``; for a revision with no source to rebuild (E1-6) also its
+    ``source_code`` (``source-not-captured`` / ``source-withheld``) and ``reimport: true``, so a
+    job's failure card can offer **Re-import** without parsing the message.
+
+    Args:
+        exc: The source-load failure.
+
+    Returns:
+        The context bag.
+    """
+    context: Dict[str, Any] = {"status_code": exc.status_code}
+    if exc.code:
+        context.update(source_code=exc.code, reimport=True, artifact_id=exc.artifact_id)
+    return context
+
 def serialize_file_content(content: Any) -> str:
     """Serialize one emitted file's content to its canonical download string form.
 
@@ -2152,7 +2171,7 @@ async def _drive_export_job_inner(job_id: str) -> None:
             )
         except ExportSourceError as exc:
             await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc),
-                        {"status_code": exc.status_code})
+                        _source_error_context(exc))
             return
 
         if not await _publish(
@@ -2529,7 +2548,7 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
             )
         except ExportSourceError as exc:
             await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc),
-                        {"status_code": exc.status_code})
+                        _source_error_context(exc))
             return
 
         if not await _publish(

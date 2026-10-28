@@ -44,6 +44,7 @@ __all__ = [
     "ExportError",
     "ExportPersistenceContext",
     "resolve_emit_format",
+    "ensure_target_available",
     "resolve_emitter",
     "resolve_emit_options",
     "emit_canonical",
@@ -129,7 +130,31 @@ def resolve_emitter(target: str) -> Emitter:
             f"Unsupported export target {target!r}; available: {available}.",
             status_code=400,
         )
+    ensure_target_available(emitter_cls)
     return emitter_cls()
+
+
+def ensure_target_available(emitter_cls: type[Emitter]) -> None:
+    """Refuse a target this deployment cannot run, with the registry's reason (E1-6, #6221).
+
+    Availability comes from the emitter's own descriptor (its ``required_tools`` checked against
+    the toolchain runner) — the same ``available`` / ``unavailable_reason`` the target grid, the
+    studio and ``apiome export targets`` show — so a target listed as unavailable is refused up
+    front instead of starting and then failing mid-emit.
+
+    Args:
+        emitter_cls: The resolved emitter class.
+
+    Raises:
+        ExportError: (422) When the target is unavailable in this runtime.
+    """
+    descriptor = emitter_cls.descriptor()
+    if not descriptor.available:
+        raise ExportError(
+            f"{descriptor.label} is not available in this deployment: "
+            f"{descriptor.unavailable_reason or 'its toolchain is not installed.'}",
+            status_code=422,
+        )
 
 
 def resolve_emit_options(

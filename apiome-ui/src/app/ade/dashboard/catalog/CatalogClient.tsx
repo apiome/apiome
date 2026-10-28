@@ -42,6 +42,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useAuthSession } from '@lib/auth/session-client';
 import { controlState, PERMISSIONS_PENDING_TITLE, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { isFeatureReleased } from '@lib/feature-release';
+import { OPEN_ACTIONS, useOpenAction } from '@/app/components/shell/openActions';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { deleteProject, permanentDeleteProject, restoreProject } from '@lib/db/helper-actions';
 
@@ -536,6 +537,11 @@ export default function CatalogClient() {
     React.useState<PrimitiveImportInitialSource | null>(null);
 
   const openImport = React.useCallback(() => setImportOpen(true), []);
+  // E1-6: an export of an item with no captured source offers Re-import, which lands here with
+  // `?open=import-catalog` and opens this page's own Import to catalog dialog.
+  useOpenAction(OPEN_ACTIONS.importCatalog, () => {
+    if (importControl !== 'hidden') openImport();
+  });
   const openAbout = React.useCallback(() => setAboutOpen(true), []);
 
   /** Open quality details — the server lint report when scored, otherwise local history. */

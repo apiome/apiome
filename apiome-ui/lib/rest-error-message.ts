@@ -32,3 +32,18 @@ export function restErrorMessage(body: unknown): string {
   }
   return 'Request failed';
 }
+
+/**
+ * The machine-readable `code` of a typed REST refusal (`detail: {code, …}`), or null.
+ *
+ * E1-6 (#6221): an export source with nothing captured answers `source-not-captured` /
+ * `source-withheld`; a proxy passes the code on so the screen can say why and offer Re-import.
+ *
+ * @param detail The FastAPI `detail` of the error body.
+ * @returns The code, or null when the refusal is untyped.
+ */
+export function restErrorCode(detail: unknown): string | null {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return null;
+  const code = (detail as { code?: unknown }).code;
+  return typeof code === 'string' && code.trim() ? code : null;
+}

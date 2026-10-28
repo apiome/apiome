@@ -287,6 +287,8 @@ def _target_row(target: Mapping[str, Any]) -> dict[str, Any]:
         "tier": fidelity.get("tier"),
         "preserved_percent": fidelity.get("preserved_percent"),
         "available": "yes" if available or available is None else "no",
+        # E1-6: an unavailable target says why — the registry's reason, as the app's card shows it.
+        "reason": None if available or available is None else descriptor.get("unavailable_reason"),
     }
 
 
@@ -309,6 +311,7 @@ EXPORT_TARGET_COLUMNS: tuple[ListColumn, ...] = (
     ("Fidelity", "tier", None),
     ("Preserved", "preserved_percent", _format_percent),
     ("Available", "available", None),
+    ("Why not", "reason", None),
 )
 
 

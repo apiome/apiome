@@ -602,7 +602,7 @@ async def _run_items(
                 run = _ItemRun(artifact=artifact, version=shown, spec=spec, target=spec.target)
                 runs.append(
                     await _fail_item(
-                        ctx, run, "SOURCE_LOAD_FAILED", str(exc), {"status_code": exc.status_code}
+                        ctx, run, "SOURCE_LOAD_FAILED", str(exc), engine._source_error_context(exc)
                     )
                 )
             continue

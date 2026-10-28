@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Version retention — the **Live refresh** dialog has **Keep versions** (50 by default): refresh keeps that many of the versions it adds and prunes older ones, never a tagged, breaking-drift or converted version or one you imported yourself. When **What changed** compares with a pruned version it says so and diffs against the nearest kept one; `apiome catalog refresh set --keep-versions` does the same from the CLI
   - Convert button — the conversion preview's button now says what it does: **Convert & create Project** on a first conversion, **Re-convert** when the item has been converted before (a re-convert adds a version to the same project). The item's primary **Convert to OpenAPI Project** action opens the preview
 - Export:
+  - Nothing to export from — a catalog item whose source file wasn't kept (or wasn't stored because it contained credentials) now says so in the **Export** dialog, with a **Re-import** button that opens **Import to catalog**, instead of an error. A format this deployment can't run is greyed out with the reason and is never offered and then failed
   - Every file in the .zip — exporting to a format that writes several files (an Avro or Protobuf schema set, for example) from the **Export** dialog now puts every file in **Download all files (.zip)**, with a `manifest.json` listing them; before, the .zip held only the main file. Single-file formats are unchanged
 - API Formats:
   - Adds formats:
