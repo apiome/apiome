@@ -291,6 +291,60 @@ Each version × format pair is an **item**. An item that fails does not stop the
 | `dry_run: true` | Every item's fidelity tier and the rollup, no zip. |
 | Attestation | Each completed item is attested against the zip. Fetch one with `GET …/jobs/{job_id}/attestation?version=<version>&target=<format key>`. |
 
+### Export several items in one job
+
+To export several catalog items or projects at once, send `items` instead of `artifact`. Each entry
+names an `artifact` and, optionally, a `version`; without one the item's latest version is exported.
+
+```http
+POST /v1/export/{tenant_slug}/jobs
+{
+  "items": [
+    { "artifact": "<orders-item-id>" },
+    { "artifact": "<pets-item-id>", "version": "1.0.0" }
+  ],
+  "targets": [{ "target": "openapi" }]
+}
+```
+
+It runs as a batch, so everything above applies: each item × format pair succeeds or fails on its
+own, `result.batch.items[]` reports each one (now with its `artifact`), and you get back one zip.
+
+- Each item's files sit in a folder named after the item's slug: `orders-api/openapi-3.1/`. An item
+  that names a version adds the version: `pets-api-1.0.0/openapi-3.1/`.
+- The root `manifest.json` gives each item's `artifact`, and `artifact_count` says how many distinct
+  items the job covered.
+- `items` cannot be combined with `artifact`, `version`, `versions` or `all_versions`. Entries must be
+  distinct, and the job runs at most 100 item × format pairs. A request that breaks a rule is
+  rejected with `422`.
+
+The Catalog's bulk **Export…** and `apiome export <format> --items` send this request for you.
+
+### From the CLI: several formats or several items
+
+`apiome export <format>` exports through the same job pipeline. Two flags turn it into one job that
+writes one archive. They work for every format with no dedicated command; `openapi`, which has one,
+can still be one of the `--targets`.
+
+```bash
+# One version to three formats: a folder per format
+apiome export graphql payments-api --targets openapi,avro --out exports/
+
+# Three catalog items, each at its latest version (or ITEM@VERSION), to one format
+apiome export graphql --items orders-api,pets-api@1.0.0,events-bus --out exports.zip
+```
+
+| Flag | Behavior |
+|---|---|
+| `--targets FORMAT,…` | More formats after `<format>`, in one all-or-nothing job. `--option` applies to `<format>` only; the other formats use their defaults. |
+| `--items ITEM[@VERSION],…` | Ids or slugs, instead of `ARTIFACT`. Runs a batch job; `--version` does not apply (use `@VERSION`). |
+| `--out` | A directory to unpack into, or a `.zip` path. `-` (stdout) is refused. |
+
+The command prints one row per item × format, with its state, fidelity tier and folder (or error).
+It exits **0** when every item completed, **7** when the archive was written but some items failed,
+and **1** when every item failed. `--min-grade` and `--fail-on` gate a single export, so they are
+refused with these flags.
+
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The

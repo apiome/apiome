@@ -40,6 +40,7 @@ from apiome_cli.client.spec_download import SpecSerialization, fetch_browse_spec
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_USAGE
 from apiome_cli.export_dispatch import parse_export_options, run_generic_export
+from apiome_cli.export_multi_dispatch import run_multi_export
 from apiome_cli.export_output import (
     EXPORT_EVIDENCE_COLUMNS,
     EXPORT_TARGET_COLUMNS,
@@ -107,10 +108,12 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         help=(
             f"Export an artifact to {target_format!r} via the async export job pipeline. "
             "Resolves the target from the emitter registry, polls the job, and writes the "
-            "artifact to --out (file, directory, or .zip)."
+            "artifact to --out (file, directory, or .zip). --targets adds more targets (one "
+            "archive, a folder per target); --items exports several items instead of ARTIFACT "
+            "(one archive, a folder per item × target; exit 7 when some items failed)."
         ),
     )
-    @click.argument("artifact", metavar="ARTIFACT")
+    @click.argument("artifact", metavar="[ARTIFACT]", required=False)
     @click.option("--version", default=None, help="Version UUID, slug, or label (default: latest).")
     @click.option(
         "--out",
@@ -154,8 +157,25 @@ def _build_generic_export_command(target_format: str) -> click.Command:
     )
     @click.option("--min-grade", "min_grade", default=None, help=MIN_GRADE_HELP)
     @click.option("--fail-on", "fail_on", default=None, help=FAIL_ON_HELP)
+    @click.option(
+        "--targets",
+        "targets_raw",
+        default=None,
+        metavar="FORMAT,…",
+        help="More targets after <format>, comma-separated: one job, one archive with a folder "
+        "per target. Each extra target uses its default options.",
+    )
+    @click.option(
+        "--items",
+        "items_raw",
+        default=None,
+        metavar="ITEM[@VERSION],…",
+        help="Export these items (ids or slugs, comma-separated; latest version unless "
+        "@VERSION) instead of ARTIFACT: one batch job, one archive with a folder per item × "
+        "target, at most 100 pairs. Prints each item's outcome; exits 7 when some failed.",
+    )
     def _generic(
-        artifact: str,
+        artifact: str | None,
         version: str | None,
         out: str | None,
         option_values: tuple[str, ...],
@@ -165,9 +185,35 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         poll_interval: float,
         min_grade: str | None,
         fail_on: str | None,
+        targets_raw: str | None,
+        items_raw: str | None,
     ) -> None:
+        ctx = click.get_current_context()
+        if (artifact is None) == (items_raw is None):
+            typer.echo("Name an ARTIFACT or --items (not both).", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        if items_raw is not None or targets_raw is not None:
+            if min_grade or fail_on:
+                typer.echo("--min-grade / --fail-on gate one artifact × one target; drop them with "
+                           "--targets or --items.", err=True)
+                raise typer.Exit(EXIT_USAGE)
+            run_multi_export(
+                ctx,
+                target_format=target_format,
+                artifact=artifact,
+                version=version,
+                items_raw=items_raw,
+                targets_raw=targets_raw,
+                out=out,
+                options=parse_export_options(option_values),
+                force=force,
+                confirm=confirm,
+                poll_interval=poll_interval,
+                export_timeout_override=export_timeout,
+            )
+            return
         run_generic_export(
-            click.get_current_context(),
+            ctx,
             target_format=target_format,
             artifact=artifact,
             version=version,

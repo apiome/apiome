@@ -121,6 +121,7 @@ __all__ = [
     "ExportJobState",
     "ExportJobEvent",
     "ExportJobProgress",
+    "ExportJobItemRef",
     "ExportJobStartRequest",
     "ExportJobTargetSpec",
     "ExportJobFile",
@@ -252,6 +253,18 @@ class ExportJobTargetSpec(BaseModel):
     )
 
 
+class ExportJobItemRef(BaseModel):
+    """One source of a multi-item batch export (E1-3, #6219): an artifact and, optionally, a version."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (catalog item or project) id to export.")
+    version: Optional[str] = Field(
+        default=None,
+        description="Revision UUID or version label; null exports the artifact's latest revision.",
+    )
+
+
 class ExportJobStartRequest(BaseModel):
     """Submit an export job: source coordinates + target(s) + options + dry-run flag.
 
@@ -267,7 +280,10 @@ class ExportJobStartRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    artifact: str = Field(description="The artifact (project) id to export.")
+    artifact: Optional[str] = Field(
+        default=None,
+        description="The artifact (project) id to export. Required unless ``items`` is given.",
+    )
     version: Optional[str] = Field(
         default=None,
         description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
@@ -323,6 +339,16 @@ class ExportJobStartRequest(BaseModel):
         "reported on its item without failing the batch. Mutually exclusive with ``version`` "
         "and ``all_versions``.",
     )
+    items: Optional[List[ExportJobItemRef]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_BATCH_ITEMS,
+        description="A batch export over several artifacts (E1-3): each entry an artifact and an "
+        "optional version (latest when omitted). Every item is exported to every target into one "
+        "archive with a folder per item, and an item that fails is reported on its own without "
+        f"failing the batch. At most {MAX_BATCH_ITEMS} item × target pairs. Replaces ``artifact``; "
+        "mutually exclusive with ``version``, ``versions`` and ``all_versions``.",
+    )
     all_versions: bool = Field(
         default=False,
         description="When true, a batch export over every version of the artifact (MFX-39.2), "
@@ -356,6 +382,46 @@ class ExportJobStartRequest(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def _source_shape(self) -> "ExportJobStartRequest":
+        """Require exactly one source: ``artifact``, or an ``items`` list (E1-3).
+
+        Returns:
+            The validated request.
+
+        Raises:
+            ValueError: When both or neither of ``artifact`` / ``items`` is set; when ``items`` is
+                combined with ``version`` / ``versions`` / ``all_versions``; when an entry repeats;
+                or when items × targets exceeds :data:`MAX_BATCH_ITEMS`.
+        """
+        if self.items is None:
+            if not (self.artifact or "").strip():
+                raise ValueError("Name an 'artifact', or an 'items' list for a multi-item batch export.")
+            return self
+        if self.artifact is not None:
+            raise ValueError("Set either 'artifact' or 'items', not both.")
+        if self.version is not None or self.versions is not None or self.all_versions:
+            raise ValueError(
+                "'items' names each item's version; do not combine it with 'version', 'versions' "
+                "or 'all_versions'."
+            )
+        keys = []
+        for entry in self.items:
+            entry.artifact = entry.artifact.strip()
+            entry.version = entry.version.strip() if entry.version and entry.version.strip() else None
+            if not entry.artifact:
+                raise ValueError("'items' entries need an 'artifact'.")
+            keys.append((entry.artifact, entry.version))
+        if len(set(keys)) != len(keys):
+            raise ValueError("'items' entries must be distinct.")
+        pairs = len(self.items) * len(self.target_specs)
+        if pairs > MAX_BATCH_ITEMS:
+            raise ValueError(
+                f"A batch export runs at most {MAX_BATCH_ITEMS} item × target pairs; this request "
+                f"names {pairs}."
+            )
+        return self
+
+    @model_validator(mode="after")
     def _batch_shape(self) -> "ExportJobStartRequest":
         """Keep a batch export's version selection consistent (MFX-39.2).
 
@@ -369,7 +435,7 @@ class ExportJobStartRequest(BaseModel):
                 batch); or when an explicit ``versions`` list × targets exceeds
                 :data:`MAX_BATCH_ITEMS`.
         """
-        if not self.is_batch:
+        if not self.is_batch or self.items is not None:
             return self
         if self.version is not None:
             raise ValueError(
@@ -401,8 +467,16 @@ class ExportJobStartRequest(BaseModel):
 
     @property
     def is_batch(self) -> bool:
-        """True when the job exports a set of versions (MFX-39.2): ``versions`` or ``all_versions``."""
-        return self.versions is not None or self.all_versions
+        """True when the job exports a set of sources: ``versions`` / ``all_versions`` (MFX-39.2)
+        or ``items`` (E1-3)."""
+        return self.versions is not None or self.all_versions or self.items is not None
+
+    @property
+    def artifact_label(self) -> str:
+        """The artifact for list rows and events: its id, or ``"<n> items"`` for an ``items`` batch."""
+        if self.items is not None:
+            return f"{len(self.items)} items"
+        return self.artifact or ""
 
     @property
     def target_specs(self) -> List[ExportJobTargetSpec]:
@@ -655,9 +729,14 @@ class ExportBatchItem(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    artifact: Optional[str] = Field(
+        default=None,
+        description="The item's artifact id (set on every item; differs per item in an ``items`` "
+        "batch, E1-3).",
+    )
     version: str = Field(
-        description="The version as requested (a ``versions`` entry), or the revision id for an "
-        "``all_versions`` batch.",
+        description="The version as requested (a ``versions`` entry or an ``items`` entry's version, "
+        "``latest`` when it named none), or the revision id for an ``all_versions`` batch.",
     )
     version_record_id: Optional[str] = Field(
         default=None, description="The resolved revision; null when the version did not load."
@@ -907,7 +986,7 @@ def _mirror_export_job(job_id: str) -> None:
     # List rows carry request metadata that isn't part of the poll payload; stash the fields
     # the list endpoint needs so any instance can render its rows from the shared store.
     extra = {
-        "artifact": request_json.get("artifact"),
+        "artifact": rec.request.artifact_label,
         "target": rec_target_label,
         "dry_run": request_json.get("dry_run"),
     }
@@ -2963,7 +3042,7 @@ async def list_export_jobs(
         logger.warning("Falling back to in-memory export job list for %s", tenant_slug, exc_info=True)
         with _jobs_lock:
             local = [
-                (r.status, r.request.artifact, r.request.target_label, r.request.dry_run)
+                (r.status, r.request.artifact_label, r.request.target_label, r.request.dry_run)
                 for r in _jobs.values()
                 if r.tenant_slug == tenant_slug and _state_matches(r.status.state)
             ]

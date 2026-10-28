@@ -599,6 +599,7 @@ describe('row verbs', () => {
       deletable: [],
       restorable: [],
       convertible: [],
+      exportable: [],
     });
   });
 });
@@ -652,6 +653,20 @@ describe('bulk selection', () => {
     expect(plan.restorable.map((row) => row.name)).toEqual(['Legacy Graph']);
     // Convert reaches the live rows only — the same gate as the row menu (MFI-28.5).
     expect(plan.convertible.map((row) => row.name)).toEqual(['Ledger Graph', 'Events Bus']);
+    // Export… (E1-3) stays empty until `export-studio` is released — RC6 is unchanged.
+    expect(plan.exportable).toEqual([]);
+  });
+
+  it('offers Export… over the live rows once export-studio is previewed (E1-3)', () => {
+    const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    try {
+      const plan = catalogBulkPlan(ALL, [LEDGER.id, RETIRED.id, EVENTS.id]);
+      expect(plan.exportable.map((row) => row.name)).toEqual(['Ledger Graph', 'Events Bus']);
+    } finally {
+      if (preview === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
+    }
   });
 
   it('ignores an id that is no longer on screen', () => {
@@ -659,6 +674,7 @@ describe('bulk selection', () => {
       deletable: [],
       restorable: [],
       convertible: [],
+      exportable: [],
     });
   });
 

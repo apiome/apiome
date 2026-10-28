@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.355.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.356.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-jobs` · 6 operations
 
@@ -50,6 +50,8 @@ Submit an export of one artifact/version to one target through the async job pip
 **Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.
 
 **Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version × target items; ``acknowledged_snapshot`` is not accepted on a batch.
+
+**Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing ``version`` exports the item's latest) instead of ``artifact`` to export several artifacts — say catalog items picked together — to the target(s) in one batch job. Each item's files land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at most 100 item × target pairs.
 
 Operation id: `start_export_job_v1_export__tenant_slug__jobs_post`
 
@@ -227,7 +229,7 @@ per-target fidelity reports plus a merged rollup.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `artifact` | string | yes | The artifact (project) id to export. |
+| `artifact` | string or null | no | The artifact (project) id to export. Required unless ``items`` is given. |
 | `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
 | `target` | string or null | no | Target emitter key (``openapi``) or format key (``openapi-3.1``) for a single-target export. Required unless ``targets`` is given; never both. |
 | `targets` | array of `ExportJobTargetSpec` or null | no | The targets of a multi-target export (MFX-39.1), each with its own options and acknowledged snapshot; 1–16 entries, each resolving to a distinct format. Mutually exclusive with ``target`` / ``options`` / ``acknowledged_snapshot``. |
@@ -237,6 +239,7 @@ per-target fidelity reports plus a merged rollup.
 | `acknowledged_snapshot` | string or null | no | The projection snapshot hash (``fidelity.projection.manifest_hash``) the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the source revision, options, emitter version, or registry changed since the preview, so the acknowledgement no longer describes what would be generated. Null skips the check. Single-target only — a multi-target job acknowledges per ``targets`` entry. |
 | `min_severity` | `LossinessSeverity` | no | Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts. |
 | `versions` | array of string or null | no | A batch export over these versions of the artifact (MFX-39.2): revision UUIDs or version labels, 1–50 distinct entries. Every version is exported to every target into one archive, and a version or target that fails is reported on its item without failing the batch. Mutually exclusive with ``version`` and ``all_versions``. |
+| `items` | array of `ExportJobItemRef` or null | no | A batch export over several artifacts (E1-3): each entry an artifact and an optional version (latest when omitted). Every item is exported to every target into one archive with a folder per item, and an item that fails is reported on its own without failing the batch. At most 100 item × target pairs. Replaces ``artifact``; mutually exclusive with ``version``, ``versions`` and ``all_versions``. |
 | `all_versions` | boolean | no | When true, a batch export over every version of the artifact (MFX-39.2), newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions × targets exceeds 100. Mutually exclusive with ``version`` and ``versions``. |
 
 ### `ExportJobStatus` {#schema-exportjobstatus}

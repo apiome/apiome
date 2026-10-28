@@ -24,6 +24,7 @@ import {
   ArrowLeftRight,
   BellRing,
   CircleHelp,
+  FileOutput,
   LayoutGrid,
   Link2,
   List,
@@ -98,6 +99,7 @@ import {
   CatalogAboutDialog,
   CatalogDriftAlertsDialog,
   CatalogBulkConvertDialog,
+  CatalogBulkExportDialog,
   CatalogCategoriesDialog,
   CatalogBulkFailureList,
   CatalogCard,
@@ -520,6 +522,10 @@ export default function CatalogClient() {
   const [bulkConvertItems, setBulkConvertItems] = React.useState<CatalogItem[] | null>(null);
   /** Bumped per bulk-convert opening, so each one mounts a fresh review. */
   const [bulkConvertRun, setBulkConvertRun] = React.useState(0);
+  /** The items the bulk bar's Export… is exporting (E1-3), while its dialog is open. */
+  const [bulkExportItems, setBulkExportItems] = React.useState<CatalogItem[] | null>(null);
+  /** Bumped per bulk-export opening, so each one starts from a fresh target pick. */
+  const [bulkExportRun, setBulkExportRun] = React.useState(0);
   /** The item the in-place export dialog is open for, while the Export studio is unreleased. */
   const [exportFor, setExportFor] = React.useState<CatalogItem | null>(null);
   const [importOpen, setImportOpen] = React.useState(false);
@@ -1046,6 +1052,19 @@ export default function CatalogClient() {
           Convert {bulk.convertible.length}…
         </DataTableBulkAction>
       ) : null}
+      {bulk.exportable.length > 0 ? (
+        <DataTableBulkAction
+          disabled={busy}
+          data-testid="catalog-bulk-export"
+          onClick={() => {
+            setBulkExportRun((run) => run + 1);
+            setBulkExportItems(bulk.exportable);
+          }}
+        >
+          <FileOutput aria-hidden />
+          Export {bulk.exportable.length}…
+        </DataTableBulkAction>
+      ) : null}
       {bulk.deletable.length > 0 ? (
         <DataTableBulkAction
           variant="danger-soft"
@@ -1440,6 +1459,17 @@ export default function CatalogClient() {
           onFinished={() => {
             setSelectedIds([]);
             void loadCatalog();
+          }}
+        />
+      ) : null}
+
+      {bulkExportItems ? (
+        <CatalogBulkExportDialog
+          key={`catalog-bulk-export-${bulkExportRun}`}
+          open
+          items={bulkExportItems}
+          onOpenChange={(open) => {
+            if (!open) setBulkExportItems(null);
           }}
         />
       ) : null}

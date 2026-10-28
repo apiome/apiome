@@ -1069,6 +1069,11 @@ export interface CatalogBulkPlan {
   restorable: CatalogItem[];
   /** Selected rows the row menu would offer Convert for (MFI-28.5) — the live ones. */
   convertible: CatalogItem[];
+  /**
+   * Selected rows the bulk bar's Export… takes (E1-3) — the live ones, and only while
+   * `export-studio` is released (the row menu's `exportStudio` gate); empty otherwise.
+   */
+  exportable: CatalogItem[];
 }
 
 /**
@@ -1104,6 +1109,7 @@ export function catalogBulkPlan(
     deletable: selected.filter((item) => actions(item).delete),
     restorable: selected.filter((item) => actions(item).undelete),
     convertible: selected.filter((item) => actions(item).convert),
+    exportable: selected.filter((item) => actions(item).exportStudio),
   };
 }
 
