@@ -38,6 +38,8 @@ check. This module is the thin dispatcher that picks the matching validator per 
   plus the provider tool-schema rules for the dialect the artifact declares);
 * ``wit`` — :func:`app.wit_emitter.validate_wit_document` (a WIT parse through the ``wit``
   adapter);
+* ``raml`` — AMF's RAML 1.0 validation (:func:`app.raml_amf.validate_raml_set_with_amf`) when the
+  ``amf`` toolchain is present, else a re-parse through :func:`app.raml_parser.parse_raml`;
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
   and :func:`app.thunder_client_emitter.validate_thunder_client_export` (the emitted collection
   and environment re-parsed together as one upload through the client's import adapter, FMT-10.4);
@@ -849,6 +851,45 @@ async def _validate_wit(
     return await _run_text_validator(target, emit_result, validate_wit_document)
 
 
+async def _validate_raml(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted RAML 1.0 document (MFX-17.1, #3901).
+
+    AMF — the RAML authority the import already runs (MFI-15.3) — validates the document against
+    its RAML 1.0 profile when the toolchain has it; a ``Violation`` rejects the export, warnings do
+    not. Without AMF the document is re-parsed through the RAML reader the import falls back to.
+    """
+    from .import_source import ImportSourceError
+    from .raml_amf import amf_available, validate_raml_set_with_amf
+    from .raml_parser import parse_raml
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The RAML export wrote no file.")])
+    if not amf_available():
+        return await _run_text_validator(target, emit_result, parse_raml)
+    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    root = emit_result.files[0].path
+    try:
+        results = await asyncio.to_thread(validate_raml_set_with_amf, members, root)
+    except ImportSourceError as exc:
+        if exc.code == "ADAPTER_UNAVAILABLE":
+            return await _run_text_validator(target, emit_result, parse_raml)
+        return _rejected(target, [_finding_from_message(str(exc), file=root)])
+    findings = [
+        ValidationFinding(
+            message=result.get("message") or "AMF reported a RAML 1.0 violation.",
+            file=result.get("file") or root,
+            line=result.get("line"),
+            column=result.get("column"),
+            keyword=result.get("constraint") or None,
+        )
+        for result in results
+        if result.get("severity") == "Violation"
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_cddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -990,6 +1031,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "http-file": _validate_http_file,
     "llm-tools": _validate_llm_tools,
     "wit": _validate_wit,
+    # MFX-17.1 (#3901)
+    "raml": _validate_raml,
     # FMT-4.4 (#5437)
     "cddl": _validate_cddl,
     # FMT-5.2 (#5440)

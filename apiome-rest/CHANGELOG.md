@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.506.0] - 2026-10-28
+
+### Added
+- **RAML 1.0 emitter (MFX-17.1, #3901).** The `raml` target is rebuilt on a data document dumped with PyYAML, so the
+  `#%RAML 1.0` header is always the first line (the old generated comment came first, so RAML tools refused every
+  export) and every scalar is quoted where YAML needs it.
+  - Document: `title` (synthesized from the name when missing, reported), `description`, `version`, `baseUri` (first
+    server) with its variables as `baseUriParameters` (`version` excluded), and `mediaType` — a RAML source's own,
+    else the media type the bodies use most, else the new option `media_type` (default `application/json`).
+  - Types: records keep field-number order (`name?` for optional fields); enums, unions (`A | B`), aliases, maps
+    (`//` pattern property) and named scalars; `RamlNames` writes RAML-safe, unique type names (no dots, built-in
+    names or expression characters). `raml_scalar` maps canonical scalars to RAML (`i64` → `integer` +
+    `format: int64`, a `date-time` string → `datetime`, unsigned → `integer` + `minimum: 0`); constraints become the
+    facets each type family allows (`minLength`, `maxLength`, `pattern`, `minimum`, `maximum`, `multipleOf`,
+    `minItems`, `maxItems`, `uniqueItems`, `enum`) and `default`. A RAML source's own spellings (`date-only`,
+    `time-only` …) are written back.
+  - Resources: one flat resource per path, sorted; path parameters as resource `uriParameters`; methods carry
+    `displayName` (when the source names the operation), `description`, `queryParameters`, `headers` (parameters and
+    request-message headers), `body` per media type (an inline schema as a JSON Schema type), and `responses` by
+    status code (explicit statuses first) with description, headers and body. Parameters write `required: false`
+    explicitly (RAML's default is required).
+  - Reported (emit losses and the rebuilt `RamlFidelityRulePack`, from the same helpers): operations with no HTTP
+    binding, a method RAML 1.0 lacks (`TRACE`, `CONNECT`), events and channels, a second operation on one method and
+    path, conflicting path-parameter definitions, cookie parameters, status ranges, duplicate statuses, extra servers,
+    merged services, the source identity, agents, disallowed facets, exclusive bounds, string formats with no RAML
+    type, deprecation flags, tags, streaming, type renames and namespaces, enum numbers and value docs, map key types,
+    custom scalars, field numbers that are not property positions, and source-specific details. A RAML source's
+    resource types and traits (already applied on import) are reported as written merged into each method.
+- **Emitted-output validation for `raml`** (`app.export_validation`): AMF's RAML 1.0 validation when the `amf`
+  toolchain is present (a `Violation` fails the export, warnings do not), else a re-parse through the RAML reader.
+
+### Changed
+- RAML capability profile: `unions` and `constraints` `True`, `field_identity` `False`.
+- Goldens: `raml → raml` round trip passes (xfail removed); the round-trip and export-conformance matrices are
+  regenerated for the `raml` target.
+
 ## [1.505.0] - 2026-10-28
 
 ### Added

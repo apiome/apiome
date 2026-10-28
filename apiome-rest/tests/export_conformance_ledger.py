@@ -286,21 +286,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation 114c63ac-1b75-42eb-a8c3-b164ec90d325; changed roo',
+        'added channel com.example.product; added operation 31bfa261-4c14-4dd0-8adf-2f2d53d4ed0f; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation 50a1e975-e2bd-4577-aae4-05777b9ebfa9; changed root; ',
+        'added channel com.example.user; added operation b6880e3d-9d2a-4792-a3a9-5563a3962ecc; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation 247b0e23-ed55-49f4-a218-1d21aa4aef1e; changed ',
+        'added channel com.example.cronwidget; added operation ac8819a3-cb3f-4ab4-8020-7803f97a87d6; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 46843fb1-edd0-4994-8acc-2858955d2151; changed root',
+        'added channel com.example.orders; added operation 0f9fe13c-c257-4fb6-b9f2-aa85afc8506a; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation 567dbf95-845a-4578-b67c-2074620d39ab; c',
+        'added channel com.example.commerce.ontology; added operation 33dd96e8-ce68-4c5d-a9ec-ec8762ba265d; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 2bdabcf3-8d2b-4a45-be9f-241d048139c3',
+        'added channel com.example.typicalsensormessage; added operation 59cdcb98-4ccf-4dd9-b346-31967ae2e789',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 7ca8e88a-1c72-40a0-9062-fa',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation f6d075a9-e9a2-451b-bc9c-67',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation 147c7aff-9304-4db4-9a5e-1c96c7f55ef5; changed r',
+        'added channel com.example.orderline; added operation 7afbe7b5-dde6-4ff6-9e83-b86846e5d386; changed r',
     # --- connectrpc (16) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
@@ -917,97 +917,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
     ('typespec', 'protobuf'):
         'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
-    # --- raml (45) ---
-    ('a2a', 'raml'):
-        'removed agent Travel Concierge; added operation GET /; removed operation Travel Concierge.build-itin',
-    ('acp', 'raml'):
-        'removed agent research-assistant; added operation GET /; removed operation research-assistant.Cite s',
-    ('agents-manifest', 'raml'):
-        'added operation GET /; removed operation a2a.https://returns.northwind.example/.well-known/agent-car',
-    ('api-blueprint', 'raml'):
-        'changed operation GET /tasks; changed operation GET /tasks/{id}; changed operation POST /tasks; chan',
-    ('apigee', 'raml'):
-        'changed operation GET /v2/orders/orders; changed operation GET /v2/orders/orders/{segment1}; changed',
-    ('arazzo', 'raml'):
-        'added operation GET /; removed operation checkout#addItem; removed operation checkout#createCart; re',
-    ('avro-idl', 'raml'):
-        'added operation GET /; removed operation com.example.orders.OrderService.cancelOrder; removed operat',
-    ('azure-apim', 'raml'):
-        'changed operation GET /orders; changed operation GET /orders/{orderId}; changed root; added service ',
-    ('capnproto', 'raml'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation GET /; changed ',
-    ('cobolcopybook', 'raml'):
-        'changed root; added service CUSTOMER-RECORD; added type CUSTOMER-RECORD; removed type CUSTOMER-RECOR',
-    ('connectrpc', 'raml'):
-        'added operation GET /; removed operation tasks.v1.TaskService.CompleteTask; removed operation tasks.',
-    ('corbaidl', 'raml'):
-        'removed operation Banking.Bank.deposit; removed operation Banking.Bank.getAccount; removed operation',
-    ('edifact', 'raml'):
-        'changed root; added service EDIFACT INVOIC; added type DTM; removed type EDIFACT-INVOIC.DTM; removed',
-    ('edix12', 'raml'):
-        'changed root; added service X12 850; added type PO1; added type TransactionSet850; removed type X12-',
-    ('fhir', 'raml'):
-        'changed operation GET /Patient; changed operation GET /Patient/{id}; changed operation POST /Patient',
-    ('fix', 'raml'):
-        'changed root; added service ExecutionReport (FIX.4.4); removed type FIX.4.4.Message8; added type Mes',
-    ('flatbuffers', 'raml'):
-        'changed root; added service example.game; added type Color; added type Monster; added type Vec3; add',
-    ('gateway-api', 'raml'):
-        'changed operation GET /users; changed operation GET /users/{userId}; changed operation POST /users; ',
-    ('hl7v2', 'raml'):
-        'changed root; added service ADT^A01; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; a',
-    ('idoc', 'raml'):
-        'changed root; added service IDoc ORDERS05; added type E1EDK01; added type E1EDK03; added type E1EDK1',
-    ('iso20022', 'raml'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('iso8583', 'raml'):
-        'changed root; added service Authorization Request; removed type 0100.DE11; removed type 0100.DE12; r',
-    ('istio', 'raml'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; changed',
-    ('kafka-connect', 'raml'):
-        'changed root; added service Order; added type Order; removed type com.example.orders.Order',
-    ('kong', 'raml'):
-        'changed operation DELETE /users/{userId}; changed operation GET /users; changed operation GET /users',
-    ('lwm2m', 'raml'):
-        'added operation GET /; removed operation TemperatureService.ResetMinAndMaxMeasuredValues; changed ro',
-    ('matter', 'raml'):
-        'added operation GET /; removed operation OnOffService.Off; removed operation OnOffService.OffWithEff',
-    ('nacha', 'raml'):
-        'changed root; added service NACHA ACH file (PPD); added type AchFile; added type Batch; added type B',
-    ('ncpdp', 'raml'):
-        'changed root; added service NCPDP SCRIPT NewRx; added type Address; added type Body; added type Comm',
-    ('odata', 'raml'):
-        'changed operation GET /Orders; changed operation GET /Orders({key}); changed operation POST /Orders;',
-    ('odata-v2', 'raml'):
-        'changed operation GET /Customers; changed operation GET /Customers({key}); changed operation GET /It',
-    ('protobuf', 'raml'):
-        'added operation GET /; removed operation example.catalog.v1.ProductService.CreateProduct; removed op',
-    ('protobuf-editions', 'raml'):
-        'added operation GET /; removed operation example.orders.v1.OrderService.GetOrder; removed operation ',
-    ('raml', 'raml'):
-        'changed operation GET /books/{bookId}; changed type Book; changed type NewBook',
-    ('sepa', 'raml'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('swift-mt', 'raml'):
-        'changed root; added service SWIFT MT103; added type CodeWord; added type Field13C; added type Field2',
-    ('thrift', 'raml'):
-        'added operation GET /; removed operation com.example.user.UserService.createUser; removed operation ',
-    ('tradacoms', 'raml'):
-        'changed root; added service TRADACOMS ORDERS; added type MessageORDERS; added type OLD; removed type',
-    ('tyk', 'raml'):
-        'changed operation DELETE /v2/orders/orders/{id}; changed operation GET /v2/orders/orders; changed op',
-    ('typespec', 'raml'):
-        'changed operation GET /pets; changed operation GET /pets/{id}; changed operation POST /pets; changed',
-    ('wadl', 'raml'):
-        'changed operation GET /books; changed operation GET /books/{bookId}; changed operation POST /books; ',
-    ('wsdl', 'raml'):
-        'added operation GET /; removed operation http://example.com/orders.OrderPort.CancelOrder; removed op',
-    ('wsdl2', 'raml'):
-        'added operation GET /; removed operation http://example.com/orders.OrderInterface.cancelOrder; remov',
-    ('xmlrpc', 'raml'):
-        'added operation GET /; removed operation inventory.reserveStock.inventory.reserveStock; changed root',
-    ('zosconnect', 'raml'):
-        'changed operation GET /items/{sku}/stock; changed operation POST /items/{sku}/reservations; changed ',
     # --- smithy (12) ---
     ('acp', 'smithy'):
         'removed agent research-assistant; removed operation research-assistant.Cite sources; removed operati',
