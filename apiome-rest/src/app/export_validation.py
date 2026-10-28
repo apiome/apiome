@@ -43,6 +43,8 @@ check. This module is the thin dispatcher that picks the matching validator per 
   :func:`app.apiblueprint_parser.parse_apiblueprint`;
 * ``raml`` — AMF's RAML 1.0 validation (:func:`app.raml_amf.validate_raml_set_with_amf`) when the
   ``amf`` toolchain is present, else a re-parse through :func:`app.raml_parser.parse_raml`;
+* ``postman`` — :func:`app.postman_emitter.validate_postman_collection` (the published Postman
+  Collection v2.1.0 JSON Schema, vendored, then a re-parse through the Postman reader);
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
   and :func:`app.thunder_client_emitter.validate_thunder_client_export` (the emitted collection
   and environment re-parsed together as one upload through the client's import adapter, FMT-10.4);
@@ -1041,6 +1043,19 @@ async def _validate_thunder_client(
     return await _run_fileset_validator(target, emit_result, validate_thunder_client_export)
 
 
+async def _validate_postman(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Postman collection (MFX-31.1, #4289).
+
+    The published Postman Collection v2.1.0 JSON Schema (vendored, offline) and then a re-parse
+    through the Postman reader the import uses (:func:`app.postman_emitter.validate_postman_collection`).
+    """
+    from .postman_emitter import validate_postman_collection
+
+    return await _run_text_validator(target, emit_result, validate_postman_collection)
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -1091,6 +1106,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     # FMT-10.4 (#5479)
     "hoppscotch": _validate_hoppscotch,
     "thunder-client": _validate_thunder_client,
+    # MFX-31.1 (#4289)
+    "postman": _validate_postman,
 }
 
 

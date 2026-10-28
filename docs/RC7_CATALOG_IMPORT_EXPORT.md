@@ -439,9 +439,10 @@ Out of scope, noted: GraphQL refuses a type named `../../evil` (its sanitised na
 | [#4179](https://github.com/apiome/apiome/issues/4179) ✅ MFX-30.2 | Cap'n Proto: every slot was `@0` and no file `@0x` id was generated (`capnproto_emitter.py`) — same class of bug as [#6278](https://github.com/apiome/apiome/issues/6278). Fixed: the schema compiles under `capnp` from any source, with ordinals and the file id persisted per item; `capnp` re-validates each export when installed |
 | _new tickets from X1_ | Re-import failures by target: wadl 105, asn1 85, asyncapi 78, postman 76, oncrpc 70, protobuf 67, connectrpc 67, corbaidl 56 cells; emitter crashes (e.g. "LossKind has no DROP", "'Type' object has no attribute 'scalar'"). Triage per target: fix, or downgrade the pair to types-only / refused with a reason |
 
-Validators missing in **Verify** (it reports "not applicable" today) for 12 targets (capnproto
+Validators missing in **Verify** (it reports "not applicable" today) for 11 targets (capnproto
 gained one in [#4179](https://github.com/apiome/apiome/issues/4179), raml in [#3901](https://github.com/apiome/apiome/issues/3901), apiblueprint — drafter, else the
-reader — in [#3905](https://github.com/apiome/apiome/issues/3905) ✅): thrift, connectrpc, flatbuffers, wsdl, wadl, openrpc, xmlrpc, xsd, postman, cloudevents,
+reader — in [#3905](https://github.com/apiome/apiome/issues/3905) ✅, postman — the v2.1.0 JSON Schema plus a re-parse — in
+[#4289](https://github.com/apiome/apiome/issues/4289) ✅): thrift, connectrpc, flatbuffers, wsdl, wadl, openrpc, xmlrpc, xsd, cloudevents,
 smithy, kafka-connect. Not a gate blocker; record each as "not validated" in the
 matrix and the target card so the studio never implies a check that did not run.
 

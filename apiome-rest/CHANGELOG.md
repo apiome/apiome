@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.509.0] - 2026-10-28
+
+### Added
+- **Postman Collection v2.1 emitter (MFX-31.1, #4289).** The `postman` target is rebuilt over the shared client-collection
+  plan (`app.client_collection_emit`, FMT-10.4) that Hoppscotch and Thunder Client are written from.
+  - Folders by the new option `folder_strategy`: `auto` (default — first tag, else the service when the model has more
+    than one), `tag`, `service`, `flat`; nested at ` / `.
+  - Variables by the new option `variable_style`: `variables` (default — every server a collection variable,
+    `{{baseUrl}}`, `{{baseUrl2}}` …, with a server template's variables declared) or `inline` (literal server URLs).
+    Credential variables are always declared with an empty value.
+  - Requests: `:param` path variables, query parameters (optional ones disabled), headers, and example bodies
+    synthesized from the request schema (was: the JSON Schema itself) at the new option `example_depth`
+    (`minimal` / `full`); form bodies as `urlencoded` / `formdata` fields.
+  - Saved example responses per single-status response, with bodies synthesized from the response schema; status
+    ranges reported (`status-range-response`).
+  - Auth: `bearer`, `basic`, `digest`, `apiKey`, `oauth2` as Postman v2.1 auth blocks with `{{variable}}`
+    credentials; written once on the collection when every request shares it.
+  - Info carries the description and version. A Postman source is written back as read (its folder tree, headers,
+    raw bodies, saved responses, variables, auth schemes with empty values) and reports nothing; a Collection v2.0
+    source is written as v2.1 (`collection-upgraded`). A source with no HTTP operation is refused (`422`,
+    `requires_source = http-operation`).
+  - `PostmanFidelityRulePack` extends the client-collection rules (description, version, servers and example
+    responses carried).
+- **Emitted-output validation for `postman`**: the published Postman Collection v2.1.0 JSON Schema (draft-07, vendored
+  as `app/data/postman_collection_v2_1_0_schema.json`) and a re-parse through the Postman reader.
+
+### Changed
+- `plan_collection` gains `folder_strategy`, `example_depth`, `carry_responses`, `carries_description` and
+  `carries_all_servers`, and `PlannedRequest.responses`; the defaults keep Hoppscotch and Thunder Client unchanged.
+  `snippet_render.synthesize_body` gains `full=`.
+- Postman import reads a saved response's `body` written as a string (Collection v2.1, what Postman exports), not
+  only as a body object.
+- Goldens: `api-blueprint`, `raml` and `postman-v2` → `postman` round trips pass (xfails removed); the `postman`
+  silent-loss ledger goes from 21 pairs to 0, and 76 sources with no HTTP operation are refused instead of exported
+  empty; the *Export catalog items* tier table is regenerated.
+
 ## [1.508.0] - 2026-10-28
 
 ### Changed

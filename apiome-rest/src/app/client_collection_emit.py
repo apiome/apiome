@@ -18,6 +18,14 @@ first, with any userinfo stripped from the base URL. Every credential variable i
 environment file with an empty value (marked ``secret`` where the client has the flag), which is
 how the collection says what must be filled in before it will run.
 
+**Options (MFX-31.1, #4289).** A target can choose how requests are filed — by first tag (``tag``,
+the Hoppscotch / Thunder Client default), by service (``service``), by tag else service (``auto``)
+or not at all (``flat``) — how deep its example bodies go (``minimal``: required properties only;
+``full``: every declared property), whether each request also carries **saved example responses**
+synthesized from the declared response schemas, and whether the collection carries the API
+description and every server (Postman does; the other clients do not), which decides the losses
+recorded for them.
+
 **Round-trip.** The plan is the inverse of what :mod:`app.client_collection` reads: folder paths
 become operation tags again, path parameters become ``{name}`` templates again, the auth block
 resolves to the same canonical scheme, and the base URL variable becomes the same ``{baseUrl}``
@@ -60,7 +68,10 @@ __all__ = [
     "ClientPair",
     "ClientVariable",
     "CollectionPlan",
+    "EXAMPLE_DEPTHS",
+    "FOLDER_STRATEGIES",
     "PlannedRequest",
+    "PlannedResponse",
     "SecretRef",
     "client_collection_profile",
     "output_slug",
@@ -109,7 +120,14 @@ _AUTH_RECORD_KEYS: Tuple[str, ...] = ("hoppscotch_auth", "thunder_client_auth")
 #: Body media types written as fields rather than text.
 FORM_MEDIA_TYPES: Tuple[str, ...] = ("application/x-www-form-urlencoded", "multipart/form-data")
 
+#: How requests are filed into folders: by first tag; by service; by first tag, else service; or flat.
+FOLDER_STRATEGIES: Tuple[str, ...] = ("tag", "service", "auto", "flat")
+
+#: How much of a body schema an example fills: required properties only, or every declared property.
+EXAMPLE_DEPTHS: Tuple[str, ...] = ("minimal", "full")
+
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+_STATUS_CODE_RE = re.compile(r"^[1-5][0-9]{2}$")
 _PATH_TEMPLATE_RE = re.compile(r"\{([^{}]+)\}")
 _BARE_TEMPLATE_RE = re.compile(r"^\{([A-Za-z0-9_.\-]+)\}$")
 _API_KEY_NAME_RE = re.compile(r"api.?key", re.IGNORECASE)
@@ -238,6 +256,25 @@ class ClientBody:
 
 
 @dataclass(frozen=True)
+class PlannedResponse:
+    """One saved example response (a target that carries responses, such as Postman).
+
+    Attributes:
+        status: The HTTP status code (``"200"``).
+        name: The example's display name.
+        content_type: The media type of the example body, when it has one.
+        body: The example body synthesized from the response schema, if any.
+        message_key: The canonical response message it was written from.
+    """
+
+    status: str
+    name: str
+    content_type: Optional[str]
+    body: Optional["ClientBody"]
+    message_key: str
+
+
+@dataclass(frozen=True)
 class PlannedRequest:
     """One saved request, fully resolved before any client-specific JSON is written.
 
@@ -254,6 +291,7 @@ class PlannedRequest:
         auth: The request's auth block, or ``None`` for no auth.
         origin: The ``scheme://host`` the request is written against literally, when the source
             saved it with an absolute URL; ``None`` for a request written against the base variable.
+        responses: The saved example responses (empty unless the target carries responses).
     """
 
     operation_key: str
@@ -267,6 +305,7 @@ class PlannedRequest:
     body: Optional[ClientBody]
     auth: Optional[ClientAuth]
     origin: Optional[str] = None
+    responses: Tuple[PlannedResponse, ...] = ()
 
 
 @dataclass
@@ -409,7 +448,17 @@ def output_slug(api: CanonicalApi) -> str:
     return re.sub(r"[^A-Za-z0-9_]+", "_", base).strip("_") or "collection"
 
 
-def plan_collection(api: CanonicalApi, *, target_label: str, auth_blocks: frozenset) -> CollectionPlan:
+def plan_collection(
+    api: CanonicalApi,
+    *,
+    target_label: str,
+    auth_blocks: frozenset,
+    folder_strategy: str = "tag",
+    example_depth: str = "minimal",
+    carry_responses: bool = False,
+    carries_description: bool = False,
+    carries_all_servers: bool = False,
+) -> CollectionPlan:
     """Plan one client collection for ``api``.
 
     Args:
@@ -418,6 +467,12 @@ def plan_collection(api: CanonicalApi, *, target_label: str, auth_blocks: frozen
         auth_blocks: The canonical schemes the client writes as an auth block. A scheme outside it
             but in :data:`PAIR_SCHEMES` is written as a credential header (or query parameter); any
             other is recorded as a loss.
+        folder_strategy: One of :data:`FOLDER_STRATEGIES` (``tag`` by default).
+        example_depth: One of :data:`EXAMPLE_DEPTHS` (``minimal`` by default).
+        carry_responses: Plan saved example responses for each request (and record no
+            ``responses-not-carried`` loss).
+        carries_description: The collection writes the API description (no ``api-description`` loss).
+        carries_all_servers: The collection writes every server (no ``additional-servers`` loss).
 
     Returns:
         The :class:`CollectionPlan`.
@@ -425,7 +480,20 @@ def plan_collection(api: CanonicalApi, *, target_label: str, auth_blocks: frozen
     Raises:
         ValueError: When ``api`` has no HTTP operation, so there is no request to save.
     """
-    return _Planner(api, target_label=target_label, auth_blocks=auth_blocks).plan()
+    if folder_strategy not in FOLDER_STRATEGIES:
+        raise ValueError(f"folder_strategy must be one of {', '.join(FOLDER_STRATEGIES)}; got {folder_strategy!r}")
+    if example_depth not in EXAMPLE_DEPTHS:
+        raise ValueError(f"example_depth must be one of {', '.join(EXAMPLE_DEPTHS)}; got {example_depth!r}")
+    return _Planner(
+        api,
+        target_label=target_label,
+        auth_blocks=auth_blocks,
+        folder_strategy=folder_strategy,
+        example_depth=example_depth,
+        carry_responses=carry_responses,
+        carries_description=carries_description,
+        carries_all_servers=carries_all_servers,
+    ).plan()
 
 
 def _strip_userinfo(url: str) -> str:
@@ -513,6 +581,11 @@ class _Planner:
     api: CanonicalApi
     target_label: str
     auth_blocks: frozenset
+    folder_strategy: str = "tag"
+    example_depth: str = "minimal"
+    carry_responses: bool = False
+    carries_description: bool = False
+    carries_all_servers: bool = False
     losses: LossTracker = field(default_factory=LossTracker)
     tracker: ProvenanceTracker = field(default_factory=ProvenanceTracker)
     _secrets: List[str] = field(default_factory=list)
@@ -523,7 +596,7 @@ class _Planner:
         requests: List[PlannedRequest] = []
         for service in self.api.services:
             for operation in service.operations:
-                for planned in self._plan_operation(operation):
+                for planned in self._plan_operation(operation, service_name=service.name):
                     self.tracker.record(f"/requests/{len(requests)}", Provenance.SOURCE, operation.key)
                     requests.append(planned)
         if not requests:
@@ -582,6 +655,8 @@ class _Planner:
         A collection carries the server its base variable stands for and the origin of every request
         saved with an absolute URL; any other server is lost.
         """
+        if self.carries_all_servers:
+            return
         carried = {url.rstrip("/") for url in origins | ({base_server} if base_server else set())}
         dropped = sorted(server.url for server in self.api.servers if server.url.rstrip("/") not in carried)
         if dropped:
@@ -610,7 +685,7 @@ class _Planner:
                 "collection; they survive only as the shape of an example body.",
                 pointer="types",
             )
-        if self.api.description:
+        if self.api.description and not self.carries_description:
             self.losses.record(
                 LossKind.NA,
                 "api-description",
@@ -628,8 +703,13 @@ class _Planner:
             self._secrets.append(variable)
         return variable
 
-    def _plan_operation(self, operation: Operation) -> List[PlannedRequest]:
-        """Plan one operation's saved request(s) — one per body media type — or record why it has none."""
+    def _plan_operation(self, operation: Operation, *, service_name: Optional[str] = None) -> List[PlannedRequest]:
+        """Plan one operation's saved request(s) — one per body media type — or record why it has none.
+
+        Args:
+            operation: The operation.
+            service_name: The name of the service it belongs to (the ``service`` / ``auto`` folder).
+        """
         if operation.kind in _EVENT_OPERATION_KINDS:
             self.losses.record(
                 LossKind.NA,
@@ -654,12 +734,13 @@ class _Planner:
         path = operation.http_path if operation.http_path.startswith("/") else "/" + operation.http_path
         name = self._name(operation)
         bodies = self._bodies(operation)
+        responses = self._responses(operation) if self.carry_responses else ()
         return [
             PlannedRequest(
                 operation_key=operation.key,
                 name=name if index == 0 else f"{name} ({body.content_type})",
                 method=operation.http_method.upper(),
-                folder=self._folder(operation) if index == 0 else self._folder(operation, record=False),
+                folder=self._folder(operation, service_name, record=index == 0),
                 path=_path_parts(path),
                 path_values=tuple(
                     (parameter.name, scrub_value(_example_value(parameter)))
@@ -671,6 +752,7 @@ class _Planner:
                 body=body,
                 auth=auth,
                 origin=_observed_origin(operation),
+                responses=responses,
             )
             for index, body in enumerate(bodies)
         ]
@@ -683,13 +765,30 @@ class _Planner:
             return label.strip()
         return operation.name or operation.key
 
-    def _folder(self, operation: Operation, *, record: bool = True) -> Tuple[str, ...]:
-        """The folder path: the operation's first tag, split on the folder separator.
+    def _folder(
+        self, operation: Operation, service_name: Optional[str] = None, *, record: bool = True
+    ) -> Tuple[str, ...]:
+        """The folder path the folder strategy files the request under.
+
+        ``tag``: the operation's first tag, split on the folder separator (root when untagged);
+        ``service``: the service's name; ``auto``: the first tag, else the service's name when the
+        model has more than one service (else the root); ``flat``: the collection root.
 
         Args:
             operation: The operation.
+            service_name: The name of the operation's service.
             record: Whether to record the extra-tags loss (once per operation, not per request).
         """
+        strategy = self.folder_strategy
+        if strategy == "flat":
+            return ()
+        by_service = (service_name.strip(),) if service_name and service_name.strip() else ()
+        if strategy == "service":
+            return by_service
+        if strategy == "auto" and not operation.tags:
+            # One service is the whole API: a single folder holding everything would group nothing.
+            services = sum(1 for service in self.api.services if service.operations)
+            return by_service if services > 1 else ()
         if not operation.tags:
             return ()
         if record and len(operation.tags) > 1:
@@ -753,7 +852,7 @@ class _Planner:
                 f"{self.target_label} request has no cookie list, so they are not carried.",
                 pointer=operation.key,
             )
-        if any(message.role is not MessageRole.REQUEST for message in operation.messages):
+        if not self.carry_responses and any(message.role is not MessageRole.REQUEST for message in operation.messages):
             self.losses.record(
                 LossKind.NA,
                 "responses-not-carried",
@@ -913,7 +1012,7 @@ class _Planner:
         if message is None or (message.payload is None and message.payload_schema is None):
             return [None]
         content_types = list(dict.fromkeys(message.content_types)) or [pick_content_type(message)]
-        instance = synthesize_body(self.api, message)
+        instance = synthesize_body(self.api, message, full=self.example_depth == "full")
         bodies: List[Optional[ClientBody]] = []
         for content_type in content_types:
             base_type = content_type.split(";", 1)[0].strip().lower()
@@ -930,6 +1029,60 @@ class _Planner:
                     pointer=operation.key,
                 )
         return bodies or [None]
+
+    def _responses(self, operation: Operation) -> Tuple[PlannedResponse, ...]:
+        """One saved example response per single-status-code response message, first per status.
+
+        The body is synthesized from the response schema at the plan's example depth (a JSON media
+        type only). A status range (``4XX``, ``default``) has no status code to save under and is
+        recorded as a loss; a response with no status is saved as ``200`` when that is free.
+        """
+        planned: List[PlannedResponse] = []
+        seen: set = set()
+        messages = [m for m in operation.messages if m.role in (MessageRole.RESPONSE, MessageRole.ERROR)]
+        messages.sort(key=lambda m: not (m.status_code or m.extras.get("http_status")))
+        for message in messages:
+            raw = str(message.status_code or message.extras.get("http_status") or "")
+            status = raw if _STATUS_CODE_RE.match(raw) else ("200" if not raw else None)
+            if status is None:
+                self.losses.record(
+                    LossKind.NA,
+                    "status-range-response",
+                    f"A saved example response has one status code; the {raw!r} response of "
+                    f"{operation.key!r} is not saved.",
+                    pointer=operation.key,
+                )
+                continue
+            if status in seen:
+                continue
+            seen.add(status)
+            content_type = next((ct for ct in message.content_types if "json" in ct.lower()), None)
+            if content_type is None and message.content_types:
+                content_type = message.content_types[0]
+            body: Optional[ClientBody] = None
+            if message.payload is not None or message.payload_schema is not None:
+                instance = synthesize_body(self.api, message, full=self.example_depth == "full")
+                if instance is not None and (content_type is None or "json" in content_type.lower()):
+                    content_type = content_type or "application/json"
+                    body = ClientBody(content_type=content_type, document=self._redact(instance))
+            planned.append(
+                PlannedResponse(
+                    status=status,
+                    name=message.name or message.description or f"{status} response",
+                    content_type=content_type,
+                    body=body,
+                    message_key=message.key,
+                )
+            )
+        if any(response.body is not None for response in planned):
+            self.losses.record(
+                LossKind.INFERRED,
+                "example-response-synthesized",
+                f"The saved example responses of {operation.key!r} are synthesized from the response "
+                "schemas; a re-import infers the schemas back from those examples.",
+                pointer=operation.key,
+            )
+        return tuple(planned)
 
     def _redact(self, value: Any) -> Any:
         """Replace every credential-named member of a JSON example with a :class:`SecretRef`."""

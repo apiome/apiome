@@ -338,15 +338,22 @@ def pick_content_type(message: Message) -> str:
     return "application/json"
 
 
-def synthesize_body(api: CanonicalApi, message: Message) -> Optional[Any]:
-    """Produce the minimal valid instance for a request message's payload schema.
+def synthesize_body(api: CanonicalApi, message: Message, *, full: bool = False) -> Optional[Any]:
+    """Produce a valid instance for a message's payload schema — minimal unless ``full``.
 
     Public because the client-collection emitters (FMT-10.4, #5479) write a saved request's body
     from the same instance a snippet sends — including for form bodies, which a snippet omits but a
-    Hoppscotch or Thunder Client request can carry as fields.
+    Hoppscotch or Thunder Client request can carry as fields — and the Postman emitter (MFX-31.1,
+    #4289) writes its saved example responses from it too.
 
-    Returns ``None`` when no schema is available or the synthesizer cannot produce a
-    minimal instance (the snippet degrades to body-less rather than failing).
+    Args:
+        api: The model the payload's named types resolve in.
+        message: The request or response message.
+        full: ``False`` for the required-properties-only instance; ``True`` for the instance that
+            fills every declared property.
+
+    Returns ``None`` when no schema is available or the synthesizer cannot produce the
+    instance (the snippet degrades to body-less rather than failing).
     """
     schema: Optional[Dict[str, Any]] = None
     if message.payload_schema is not None:
@@ -355,17 +362,19 @@ def synthesize_body(api: CanonicalApi, message: Message) -> Optional[Any]:
         schema = build_ref_json_schema(api, message.payload).document
     if not isinstance(schema, dict):
         return None
+    kind = "full" if full else "minimal"
     try:
         result = synthesize_instances(
             schema,
-            include_full=False,
+            include_minimal=not full,
+            include_full=full,
             include_branches=False,
             include_mutants=False,
         )
     except Exception:
         return None
     for instance in result.instances:
-        if instance.kind == "minimal" and instance.expected_valid:
+        if instance.kind == kind and instance.expected_valid:
             return instance.instance
     return None
 

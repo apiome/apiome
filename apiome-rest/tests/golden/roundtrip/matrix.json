@@ -1596,13 +1596,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (a2a->postman) (observed: Re-import failed: No Postman requests found in collection (a2a->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (a2a->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "a2a",
       "status": "xfail",
       "unexplained": []
@@ -3758,13 +3758,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (acp->postman) (observed: Re-import failed: No Postman requests found in collection (acp->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (acp->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "acp",
       "status": "xfail",
       "unexplained": []
@@ -6052,13 +6052,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (agents-manifest->postman) (observed: Re-import failed: No Postman requests found in collection (agents-manifest->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (agents-manifest->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "agents-manifest",
       "status": "xfail",
       "unexplained": []
@@ -8599,73 +8599,16 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 6,
-      "loss_ok": 5,
+      "loss_approx": 7,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
-      "overclaims": [
-        {
-          "construct": "GET /tasks",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /tasks/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "NewTask",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /tasks",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Task",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /tasks', changed operation 'GET /tasks/{id}', changed operation 'POST /tasks', changed root ''; overclaim: OK 'GET /tasks', OK 'GET /tasks/{id}', OK 'NewTask', OK 'POST /tasks', OK 'Task')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": null,
       "source_format": "api-blueprint",
-      "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /tasks"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /tasks/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /tasks"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "status": "pass",
+      "unexplained": []
     },
     {
       "corpus_path": "api-blueprint/01-simple-api.apib",
@@ -10955,58 +10898,16 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /v2/orders/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/orders/{segment1}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed root '', added service 'Orders v2', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Orders v2', removed service 'default')",
       "source_format": "apigee",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/orders/{segment1}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -12984,13 +12885,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (arazzo->postman) (observed: Re-import failed: No Postman requests found in collection (arazzo->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (arazzo->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "arazzo",
       "status": "xfail",
       "unexplained": []
@@ -14647,13 +14548,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 7,
-      "loss_ok": 1,
+      "loss_approx": 9,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (arrow->postman) (observed: Re-import failed: No Postman requests found in collection (arrow->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (arrow->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "arrow",
       "status": "xfail",
       "unexplained": []
@@ -16927,13 +16828,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 13,
-      "loss_ok": 5,
+      "loss_approx": 13,
+      "loss_drop": 18,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (asn1->postman) (observed: Re-import failed: No Postman requests found in collection (asn1->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (asn1->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "asn1",
       "status": "xfail",
       "unexplained": []
@@ -18620,13 +18521,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (asyncapi->postman) (observed: Re-import failed: No Postman requests found in collection (asyncapi->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (asyncapi->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "asyncapi",
       "status": "xfail",
       "unexplained": []
@@ -20190,13 +20091,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 6,
-      "loss_ok": 2,
+      "loss_approx": 7,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (avro->postman) (observed: Re-import failed: No Postman requests found in collection (avro->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (avro->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "avro",
       "status": "xfail",
       "unexplained": []
@@ -23088,13 +22989,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 14,
-      "loss_ok": 4,
+      "loss_approx": 11,
+      "loss_drop": 18,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (avro-idl->postman) (observed: Re-import failed: No Postman requests found in collection (avro-idl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (avro-idl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "avro-idl",
       "status": "xfail",
       "unexplained": []
@@ -26415,91 +26316,16 @@
       "diff_count": 10,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 7,
+      "loss_approx": 6,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "NewOrder",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "OPTIONS /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Order",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "OrderList",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'OPTIONS /orders', changed operation 'POST /orders', changed root '', removed service 'default', added service 'orders-api', removed type 'NewOrder', changed type 'Order', removed type 'OrderList'; overclaim: OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'OPTIONS /orders', OK 'Order', OK 'OrderList', OK 'POST /orders')",
+      "matched_count": 8,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'default', added service 'orders-api')",
       "source_format": "aws-apigateway",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "OPTIONS /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -26509,21 +26335,6 @@
           "change": "added",
           "entity": "service",
           "key": "orders-api"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "NewOrder"
-        },
-        {
-          "change": "changed",
-          "entity": "type",
-          "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "OrderList"
         }
       ]
     },
@@ -28762,46 +28573,16 @@
       "diff_count": 5,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed root '', added service 'Orders API', removed service 'default'; overclaim: OK 'GET /orders', OK 'GET /orders/{orderId}')",
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Orders API', removed service 'default')",
       "source_format": "azure-apim",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -30702,41 +30483,16 @@
       "diff_count": 5,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_approx": 5,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "POST /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostOrderRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'POST /v2/orders', changed root '', changed service 'Bruno collection', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'POST /v2/orders', changed root '', changed service 'Bruno collection', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'POST /v2/orders', changed root '', changed service 'Bruno collection', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed service 'Bruno collection', added type 'Order')",
       "source_format": "bruno",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "service",
@@ -30746,11 +30502,6 @@
           "change": "added",
           "entity": "type",
           "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostOrderRequest"
         }
       ]
     },
@@ -33553,13 +33304,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 13,
-      "loss_ok": 5,
+      "loss_approx": 1,
+      "loss_drop": 18,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (capnproto->postman) (observed: Re-import failed: No Postman requests found in collection (capnproto->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (capnproto->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "capnproto",
       "status": "xfail",
       "unexplained": []
@@ -36437,13 +36188,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 19,
-      "loss_ok": 6,
+      "loss_approx": 18,
+      "loss_drop": 26,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (cddl->postman) (observed: Re-import failed: No Postman requests found in collection (cddl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (cddl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "cddl",
       "status": "xfail",
       "unexplained": []
@@ -38335,13 +38086,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 6,
-      "loss_drop": 6,
-      "loss_ok": 1,
+      "loss_approx": 13,
+      "loss_drop": 7,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (cics-bms->postman) (observed: Re-import failed: No Postman requests found in collection (cics-bms->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (cics-bms->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "cics-bms",
       "status": "xfail",
       "unexplained": []
@@ -39797,13 +39548,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 2,
-      "loss_ok": 1,
+      "loss_approx": 7,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (cloudevents->postman) (observed: Re-import failed: No Postman requests found in collection (cloudevents->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (cloudevents->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "cloudevents",
       "status": "xfail",
       "unexplained": []
@@ -41211,13 +40962,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 7,
-      "loss_ok": 1,
+      "loss_approx": 8,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (cobolcopybook->postman) (observed: Re-import failed: No Postman requests found in collection (cobolcopybook->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (cobolcopybook->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "cobolcopybook",
       "status": "xfail",
       "unexplained": []
@@ -44741,13 +44492,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 19,
-      "loss_ok": 7,
+      "loss_approx": 4,
+      "loss_drop": 26,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (connectrpc->postman) (observed: Re-import failed: No Postman requests found in collection (connectrpc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (connectrpc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "connectrpc",
       "status": "xfail",
       "unexplained": []
@@ -47266,21 +47017,13 @@
       "diff_count": 5,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 0,
-      "loss_ok": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: removed operation 'ANY /v2/orders', added operation 'GET /v2/orders', changed root '', added service 'consul/02-typical-service-with-checks.json', removed service '... (observed: unexplained: removed operation 'ANY /v2/orders', added operation 'GET /v2/orders', changed root '', added service 'consul/02-typical-service-with-checks.json', removed service 'orders'; overclaim: OK 'ANY /v2/orders')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "unexplained: removed operation 'ANY /v2/orders', added operation 'GET /v2/orders', changed root '', added service 'consul/02-typical-service-with-checks.json', removed service '... (observed: unexplained: removed operation 'ANY /v2/orders', added operation 'GET /v2/orders', added service 'consul/02-typical-service-with-checks.json', removed service 'orders')",
       "source_format": "consul",
       "status": "xfail",
       "unexplained": [
@@ -47293,11 +47036,6 @@
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "added",
@@ -50111,13 +49849,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 10,
-      "loss_ok": 4,
+      "loss_approx": 7,
+      "loss_drop": 14,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (corbaidl->postman) (observed: Re-import failed: No Postman requests found in collection (corbaidl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (corbaidl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "corbaidl",
       "status": "xfail",
       "unexplained": []
@@ -52861,13 +52599,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 9,
-      "loss_drop": 0,
-      "loss_ok": 4,
+      "loss_approx": 20,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (cue->postman) (observed: Re-import failed: No Postman requests found in collection (cue->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (cue->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "cue",
       "status": "xfail",
       "unexplained": []
@@ -54773,13 +54511,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_approx": 7,
+      "loss_drop": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (dbt->postman) (observed: Re-import failed: No Postman requests found in collection (dbt->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (dbt->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "dbt",
       "status": "xfail",
       "unexplained": []
@@ -57126,13 +56864,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_approx": 14,
+      "loss_drop": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (dhall->postman) (observed: Re-import failed: No Postman requests found in collection (dhall->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (dhall->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "dhall",
       "status": "xfail",
       "unexplained": []
@@ -61232,13 +60970,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 3,
-      "loss_drop": 36,
-      "loss_ok": 11,
+      "loss_approx": 37,
+      "loss_drop": 47,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (dicom->postman) (observed: Re-import failed: No Postman requests found in collection (dicom->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (dicom->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "dicom",
       "status": "xfail",
       "unexplained": []
@@ -65352,141 +65090,20 @@
       "diff_count": 12,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 0,
-      "loss_ok": 10,
+      "loss_approx": 7,
+      "loss_drop": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
-      "overclaims": [
-        {
-          "construct": "Author",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Book",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "BookList",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "CheckoutReceipt",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "CheckoutRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /bookstore/v1/books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /bookstore/v1/books/{bookId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /bookstore/v1/books/{bookId}/reviews",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /bookstore/v1/books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /bookstore/v1/checkouts",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'GET /bookstore/v1/books', changed operation 'GET /bookstore/v1/books/{bookId}', changed operation 'GET /bookstore/v1/books/{b... (observed: unexplained: changed operation 'GET /bookstore/v1/books', changed operation 'GET /bookstore/v1/books/{bookId}', changed operation 'GET /bookstore/v1/books/{bookId}/reviews', changed operation 'POST /bookstore/v1/books', changed operation 'POST /bookstore/v1/checkouts', changed root '', removed type 'Author', removed type 'BookList', added type 'Checkout', removed type 'CheckoutReceipt', removed type 'CheckoutRequest'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest', OK 'GET /bookstore/v1/books', OK 'GET /bookstore/v1/books/{bookId}', OK 'GET /bookstore/v1/books/{bookId}/reviews', OK 'POST /bookstore/v1/books', OK 'POST /bookstore/v1/checkouts')",
+      "matched_count": 11,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'GET /bookstore/v1/books', changed operation 'GET /bookstore/v1/books/{bookId}', changed operation 'GET /bookstore/v1/books/{b... (observed: unexplained: added type 'Checkout')",
       "source_format": "discovery",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /bookstore/v1/books"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /bookstore/v1/books/{bookId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /bookstore/v1/books/{bookId}/reviews"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /bookstore/v1/books"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /bookstore/v1/checkouts"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Author"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "BookList"
-        },
-        {
           "change": "added",
           "entity": "type",
           "key": "Checkout"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "CheckoutReceipt"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "CheckoutRequest"
         }
       ]
     },
@@ -68576,13 +68193,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 4,
-      "loss_drop": 15,
-      "loss_ok": 6,
+      "loss_approx": 16,
+      "loss_drop": 21,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (dtd->postman) (observed: Re-import failed: No Postman requests found in collection (dtd->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (dtd->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "dtd",
       "status": "xfail",
       "unexplained": []
@@ -72255,13 +71872,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 49,
-      "loss_ok": 10,
+      "loss_approx": 50,
+      "loss_drop": 59,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (edifact->postman) (observed: Re-import failed: No Postman requests found in collection (edifact->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (edifact->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "edifact",
       "status": "xfail",
       "unexplained": []
@@ -74722,13 +74339,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 23,
-      "loss_ok": 2,
+      "loss_approx": 24,
+      "loss_drop": 25,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (edix12->postman) (observed: Re-import failed: No Postman requests found in collection (edix12->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (edix12->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "edix12",
       "status": "xfail",
       "unexplained": []
@@ -76696,42 +76313,13 @@
       "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 5,
       "loss_drop": 0,
-      "loss_ok": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /health",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/products",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /health', added operation 'GET /v2/orders', added operation 'GET /v2/products', changed root '', added service 'envoy-xds/02-typical-bootstrap.yaml', removed service 'storefront'; overclaim: OK 'ANY /', OK 'ANY /health', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /health', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /health', added operation 'GET /v2/orders', added operation 'GET /v2/products', added service 'envoy-xds/02-typical-bootstrap.yaml', removed service 'storefront')",
       "source_format": "envoy-xds",
       "status": "xfail",
       "unexplained": [
@@ -76774,11 +76362,6 @@
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/products"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "added",
@@ -79274,72 +78857,16 @@
       "diff_count": 9,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 9,
-      "loss_ok": 5,
+      "loss_approx": 13,
+      "loss_drop": 11,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
-      "overclaims": [
-        {
-          "construct": "GET /Patient",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Patient/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /Patient",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Patient.BackboneElement",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Patient.Patient",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /Patient', changed operation 'GET /Patient/{id}', changed operation 'POST /Patient', changed root '', added service 'Patient', added type 'Patient', removed type 'Patient.BackboneElement'; overclaim: OK 'GET /Patient', OK 'GET /Patient/{id}', OK 'POST /Patient', OK 'Patient.BackboneElement', OK 'Patient.Patient')",
+      "matched_count": 7,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Patient', added type 'Patient')",
       "source_format": "fhir",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /Patient"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /Patient/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /Patient"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -79349,11 +78876,6 @@
           "change": "added",
           "entity": "type",
           "key": "Patient"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Patient.BackboneElement"
         }
       ]
     },
@@ -81085,13 +80607,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 21,
-      "loss_ok": 1,
+      "loss_approx": 22,
+      "loss_drop": 22,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (fix->postman) (observed: Re-import failed: No Postman requests found in collection (fix->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (fix->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "fix",
       "status": "xfail",
       "unexplained": []
@@ -83469,13 +82991,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 13,
-      "loss_ok": 6,
+      "loss_approx": 14,
+      "loss_drop": 19,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (fix-orchestra->postman) (observed: Re-import failed: No Postman requests found in collection (fix-orchestra->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (fix-orchestra->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "fix-orchestra",
       "status": "xfail",
       "unexplained": []
@@ -86032,13 +85554,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 12,
-      "loss_ok": 4,
+      "loss_approx": 1,
+      "loss_drop": 16,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (flatbuffers->postman) (observed: Re-import failed: No Postman requests found in collection (flatbuffers->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (flatbuffers->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "flatbuffers",
       "status": "xfail",
       "unexplained": []
@@ -88078,58 +87600,16 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /users', changed operation 'GET /users/{userId}', changed operation 'POST /users', changed root '', added service 'gateway-api/02-typical-hostnames-methods.yaml', removed service 'identity/users'; overclaim: OK 'GET /users', OK 'GET /users/{userId}', OK 'POST /users')",
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'gateway-api/02-typical-hostnames-methods.yaml', removed service 'identity/users')",
       "source_format": "gateway-api",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /users"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -90540,13 +90020,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 2,
-      "loss_ok": 4,
+      "loss_approx": 11,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (graphql->postman) (observed: Re-import failed: No Postman requests found in collection (graphql->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (graphql->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "graphql",
       "status": "xfail",
       "unexplained": []
@@ -93097,49 +92577,13 @@
       "diff_count": 13,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 6,
       "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /healthz",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /metrics",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/products",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /metrics', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/produc... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /metrics', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', added operation 'GET /metrics', added operation 'GET /v2/orders', added operation 'GET /v2/products', changed root '', removed service 'frontend api_public', added service 'haproxy/02-typical-path-acls.cfg'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /metrics', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /metrics', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/produc... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /metrics', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', added operation 'GET /metrics', added operation 'GET /v2/orders', added operation 'GET /v2/products', removed service 'frontend api_public', added service 'haproxy/02-typical-path-acls.cfg')",
       "source_format": "haproxy",
       "status": "xfail",
       "unexplained": [
@@ -93192,11 +92636,6 @@
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/products"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "removed",
@@ -96705,158 +96144,20 @@
       "diff_count": 14,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 11,
+      "loss_approx": 19,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /v1/users/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v1/users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v1/users/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GetUserResponse200",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GetUserResponse404",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PATCH /v1/users/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v1/users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PatchUserRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PatchUserResponse200",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostUserRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostUserResponse201",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /v1/users/{id}', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{id}', changed operation 'PATCH /v1/users/{id}', changed operation 'POST /v1/users', changed root '', changed service 'api.example.com', removed type 'GetUserResponse200', removed type 'GetUserResponse404', removed type 'PatchUserRequest', removed type 'PatchUserResponse200', removed type 'PostUserRequest', removed type 'PostUserResponse201', added type 'User'; overclaim: OK 'DELETE /v1/users/{id}', OK 'GET /v1/users', OK 'GET /v1/users/{id}', OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PATCH /v1/users/{id}', OK 'POST /v1/users', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201' (observed: unexplained: changed operation 'DELETE /v1/users/{id}', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{id}', changed operation 'PATCH /v1/users/{id}', changed operation 'POST /v1/users', changed root '', changed service 'api.example.com', removed type 'GetUserResponse200', removed type 'GetUserResponse404', removed type 'PatchUserRequest', removed type 'PatchUserResponse200', removed type 'PostUserRequest', removed type 'PostUserResponse201', added type 'User'; overclaim: OK 'DELETE /v1/users/{id}', OK 'GET /v1/users', OK 'GET /v1/users/{id}', OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PATCH /v1/users/{id}', OK 'POST /v1/users', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201')",
+      "matched_count": 12,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /v1/users/{id}', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{id}', changed operation 'PATCH /v1/users/{id}', changed operation 'POST /v1/users', changed root '', changed service 'api.example.com', removed type 'GetUserResponse200', removed type 'GetUserResponse404', removed type 'PatchUserRequest', removed type 'PatchUserResponse200', removed type 'PostUserRequest', removed type 'PostUserResponse201', added type 'User'; overclaim: OK 'DELETE /v1/users/{id}', OK 'GET /v1/users', OK 'GET /v1/users/{id}', OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PATCH /v1/users/{id}', OK 'POST /v1/users', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201' (observed: unexplained: changed service 'api.example.com', added type 'User')",
       "source_format": "har",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /v1/users/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v1/users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v1/users/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "PATCH /v1/users/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v1/users"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "changed",
           "entity": "service",
           "key": "api.example.com"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "GetUserResponse200"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "GetUserResponse404"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PatchUserRequest"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PatchUserResponse200"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostUserRequest"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostUserResponse201"
         },
         {
           "change": "added",
@@ -99337,13 +98638,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 49,
-      "loss_ok": 2,
+      "loss_approx": 50,
+      "loss_drop": 51,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (hl7v2->postman) (observed: Re-import failed: No Postman requests found in collection (hl7v2->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (hl7v2->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "hl7v2",
       "status": "xfail",
       "unexplained": []
@@ -108053,13 +107354,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 132,
-      "loss_ok": 36,
+      "loss_approx": 73,
+      "loss_drop": 168,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (hl7v3->postman) (observed: Re-import failed: No Postman requests found in collection (hl7v3->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (hl7v3->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "hl7v3",
       "status": "xfail",
       "unexplained": []
@@ -113471,77 +112772,16 @@
       "diff_count": 8,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_approx": 7,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /v2/orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostOrderRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed service 'Orders API', added type 'Order')",
       "source_format": "hoppscotch",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /v2/orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "service",
@@ -113551,11 +112791,6 @@
           "change": "added",
           "entity": "type",
           "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostOrderRequest"
         }
       ]
     },
@@ -115778,62 +115013,20 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_approx": 5,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostUserRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'GET /users', changed operation 'POST /users', changed root '', changed service 'http-file/02-typical-vars-auth.http', removed... (observed: unexplained: changed operation 'GET /users', changed operation 'POST /users', changed root '', changed service 'http-file/02-typical-vars-auth.http', removed type 'PostUserRequest', added type 'User'; overclaim: OK 'GET /users', OK 'POST /users', OK 'PostUserRequest')",
+      "matched_count": 4,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'GET /users', changed operation 'POST /users', changed root '', changed service 'http-file/02-typical-vars-auth.http', removed... (observed: unexplained: changed service 'http-file/02-typical-vars-auth.http', added type 'User')",
       "source_format": "http-file",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "operation",
-          "key": "GET /users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /users"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "changed",
           "entity": "service",
           "key": "http-file/02-typical-vars-auth.http"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostUserRequest"
         },
         {
           "change": "added",
@@ -119029,13 +118222,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 34,
-      "loss_ok": 9,
+      "loss_approx": 9,
+      "loss_drop": 43,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (idoc->postman) (observed: Re-import failed: No Postman requests found in collection (idoc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (idoc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "idoc",
       "status": "xfail",
       "unexplained": []
@@ -121477,13 +120670,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 15,
-      "loss_drop": 19,
-      "loss_ok": 3,
+      "loss_approx": 35,
+      "loss_drop": 22,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (ims->postman) (observed: Re-import failed: No Postman requests found in collection (ims->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (ims->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "ims",
       "status": "xfail",
       "unexplained": []
@@ -123911,98 +123104,20 @@
       "diff_count": 9,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_approx": 9,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /v1/users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /health",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v1/users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v1/users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v1/users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostUserRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /v1/users/{userId}', changed operation 'GET /health', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{userId}', changed operation 'POST /v1/users', changed root '', changed service 'Users API', removed type 'PostUserRequest', added type 'User'; overclaim: OK 'DELETE /v1/users/{userId}', OK 'GET /health', OK 'GET /v1/users', OK 'GET /v1/users/{userId}', OK 'POST /v1/users', OK 'PostUserRequest' (observed: unexplained: changed operation 'DELETE /v1/users/{userId}', changed operation 'GET /health', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{userId}', changed operation 'POST /v1/users', changed root '', changed service 'Users API', removed type 'PostUserRequest', added type 'User'; overclaim: OK 'DELETE /v1/users/{userId}', OK 'GET /health', OK 'GET /v1/users', OK 'GET /v1/users/{userId}', OK 'POST /v1/users', OK 'PostUserRequest')",
+      "matched_count": 7,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /v1/users/{userId}', changed operation 'GET /health', changed operation 'GET /v1/users', changed operation 'GET /v1/users/{userId}', changed operation 'POST /v1/users', changed root '', changed service 'Users API', removed type 'PostUserRequest', added type 'User'; overclaim: OK 'DELETE /v1/users/{userId}', OK 'GET /health', OK 'GET /v1/users', OK 'GET /v1/users/{userId}', OK 'POST /v1/users', OK 'PostUserRequest' (observed: unexplained: changed service 'Users API', added type 'User')",
       "source_format": "insomnia",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /v1/users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /health"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v1/users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v1/users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v1/users"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "changed",
           "entity": "service",
           "key": "Users API"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostUserRequest"
         },
         {
           "change": "added",
@@ -129238,13 +128353,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 36,
-      "loss_ok": 18,
+      "loss_approx": 37,
+      "loss_drop": 54,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (iso20022->postman) (observed: Re-import failed: No Postman requests found in collection (iso20022->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (iso20022->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "iso20022",
       "status": "xfail",
       "unexplained": []
@@ -134279,13 +133394,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 22,
-      "loss_ok": 12,
+      "loss_approx": 23,
+      "loss_drop": 34,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (iso8583->postman) (observed: Re-import failed: No Postman requests found in collection (iso8583->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (iso8583->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "iso8583",
       "status": "xfail",
       "unexplained": []
@@ -137217,49 +136332,13 @@
       "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 6,
       "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /healthz",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/products",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', changed operation 'GET /v2/orders', added operation 'GET /v2/products', changed operation 'POST /v2/orders', changed root '', added service 'istio/02-typical-virtualservice.yaml', removed service 'storefront/orders'; overclaim: OK 'ANY /', OK 'ANY /healthz', OK 'ANY /v2/products', OK 'GET /v2/orders', OK 'POST /v2/orders')",
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /healthz', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', added operation 'GET /v2/products', added service 'istio/02-typical-virtualservice.yaml', removed service 'storefront/orders')",
       "source_format": "istio",
       "status": "xfail",
       "unexplained": [
@@ -137289,24 +136368,9 @@
           "key": "GET /healthz"
         },
         {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders"
-        },
-        {
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/products"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "added",
@@ -138845,13 +137909,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 1,
+      "loss_approx": 4,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (json-schema->postman) (observed: Re-import failed: No Postman requests found in collection (json-schema->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (json-schema->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "json-schema",
       "status": "xfail",
       "unexplained": []
@@ -140585,13 +139649,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 3,
-      "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_approx": 4,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (jsonld->postman) (observed: Re-import failed: No Postman requests found in collection (jsonld->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (jsonld->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "jsonld",
       "status": "xfail",
       "unexplained": []
@@ -142465,13 +141529,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_approx": 8,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (jtd->postman) (observed: Re-import failed: No Postman requests found in collection (jtd->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (jtd->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "jtd",
       "status": "xfail",
       "unexplained": []
@@ -144330,13 +143394,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 1,
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (k8s-crd->postman) (observed: Re-import failed: No Postman requests found in collection (k8s-crd->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (k8s-crd->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "k8s-crd",
       "status": "xfail",
       "unexplained": []
@@ -145808,13 +144872,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 8,
-      "loss_ok": 1,
+      "loss_approx": 8,
+      "loss_drop": 9,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (kafka-connect->postman) (observed: Re-import failed: No Postman requests found in collection (kafka-connect->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (kafka-connect->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "kafka-connect",
       "status": "xfail",
       "unexplained": []
@@ -147842,82 +146906,16 @@
       "diff_count": 8,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 6,
       "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /users",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PUT /users/{userId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'DELETE /users/{userId}', changed operation 'GET /users', changed operation 'GET /users/{userId}', changed operation 'POST /users', changed operation 'PUT /users/{userId}', changed root '', added service 'kong/02-typical-single-service-auth.yaml', removed service 'users-service'; overclaim: OK 'DELETE /users/{userId}', OK 'GET /users', OK 'GET /users/{userId}', OK 'POST /users', OK 'PUT /users/{userId}')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'kong/02-typical-single-service-auth.yaml', removed service 'users-service')",
       "source_format": "kong",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /users"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "PUT /users/{userId}"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -150057,13 +149055,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 2,
-      "loss_ok": 2,
+      "loss_approx": 6,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (llm-tools->postman) (observed: Re-import failed: No Postman requests found in collection (llm-tools->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (llm-tools->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "llm-tools",
       "status": "xfail",
       "unexplained": []
@@ -152207,13 +151205,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 7,
-      "loss_ok": 1,
+      "loss_approx": 2,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (lwm2m->postman) (observed: Re-import failed: No Postman requests found in collection (lwm2m->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (lwm2m->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "lwm2m",
       "status": "xfail",
       "unexplained": []
@@ -155697,13 +154695,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 15,
-      "loss_ok": 5,
+      "loss_approx": 5,
+      "loss_drop": 20,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (matter->postman) (observed: Re-import failed: No Postman requests found in collection (matter->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (matter->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "matter",
       "status": "xfail",
       "unexplained": []
@@ -159793,13 +158791,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 6,
-      "loss_drop": 6,
-      "loss_ok": 3,
+      "loss_approx": 13,
+      "loss_drop": 9,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (mcp->postman) (observed: Re-import failed: No Postman requests found in collection (mcp->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (mcp->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": []
@@ -163685,13 +162683,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 62,
-      "loss_ok": 7,
+      "loss_approx": 63,
+      "loss_drop": 69,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (nacha->postman) (observed: Re-import failed: No Postman requests found in collection (nacha->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (nacha->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "nacha",
       "status": "xfail",
       "unexplained": []
@@ -165599,13 +164597,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 8,
-      "loss_drop": 12,
-      "loss_ok": 1,
+      "loss_approx": 21,
+      "loss_drop": 13,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (natural-ddm->postman) (observed: Re-import failed: No Postman requests found in collection (natural-ddm->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (natural-ddm->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "natural-ddm",
       "status": "xfail",
       "unexplained": []
@@ -173253,13 +172251,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 92,
-      "loss_ok": 31,
+      "loss_approx": 85,
+      "loss_drop": 123,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (ncpdp->postman) (observed: Re-import failed: No Postman requests found in collection (ncpdp->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (ncpdp->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "ncpdp",
       "status": "xfail",
       "unexplained": []
@@ -178321,56 +177319,13 @@
       "diff_count": 15,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 7,
       "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /#api.example.com:80@return",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /healthz",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /static/",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/products",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /#api.example.com:80@return', removed operation 'ANY /healthz', removed operation 'ANY /static/', removed operatio... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /#api.example.com:80@return', removed operation 'ANY /healthz', removed operation 'ANY /static/', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', added operation 'GET /static', added operation 'GET /v2/orders', added operation 'GET /v2/products', changed root '', removed service 'api.example.com:443', removed service 'api.example.com:80', added service 'nginx/02-typical-reverse-proxy.conf'; overclaim: OK 'ANY /', OK 'ANY /#api.example.com:80@return', OK 'ANY /healthz', OK 'ANY /static/', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /#api.example.com:80@return', removed operation 'ANY /healthz', removed operation 'ANY /static/', removed operatio... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /#api.example.com:80@return', removed operation 'ANY /healthz', removed operation 'ANY /static/', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /healthz', added operation 'GET /static', added operation 'GET /v2/orders', added operation 'GET /v2/products', removed service 'api.example.com:443', removed service 'api.example.com:80', added service 'nginx/02-typical-reverse-proxy.conf')",
       "source_format": "nginx",
       "status": "xfail",
       "unexplained": [
@@ -178428,11 +177383,6 @@
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/products"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "removed",
@@ -181442,81 +180392,28 @@
     },
     {
       "corpus_path": "odata/02-orders.edmx",
-      "diff_count": 10,
+      "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 5,
-      "loss_ok": 6,
+      "loss_approx": 5,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
-      "overclaims": [
-        {
-          "construct": "Example.Orders.Address",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Example.Orders.Order",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Example.Orders.OrderStatus",
-          "kind": "ok",
-          "message": "enum type carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Orders({key})",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /Orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /Orders', changed operation 'GET /Orders({key})', changed operation 'POST /Orders', changed root '', added service 'Example.Orders', removed service 'Example.Orders.Orders', removed type 'Example.Orders.OrderStatus', added type 'Order'; overclaim: OK 'Example.Orders.Address', OK 'Example.Orders.Order', OK 'Example.Orders.OrderStatus', OK 'GET /Orders', OK 'GET /Orders({key})', OK 'POST /Orders')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /Orders(:key)', removed operation 'GET /Orders({key})', added service 'Example.Orders', removed service 'Example.Orders.Orders', added type 'Order')",
       "source_format": "odata",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
+          "change": "added",
           "entity": "operation",
-          "key": "GET /Orders"
+          "key": "GET /Orders(:key)"
         },
         {
-          "change": "changed",
+          "change": "removed",
           "entity": "operation",
           "key": "GET /Orders({key})"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /Orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "added",
@@ -181527,11 +180424,6 @@
           "change": "removed",
           "entity": "service",
           "key": "Example.Orders.Orders"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Example.Orders.OrderStatus"
         },
         {
           "change": "added",
@@ -186102,153 +184994,48 @@
     },
     {
       "corpus_path": "odata-v2/02-typical-v2-orders.xml",
-      "diff_count": 20,
+      "diff_count": 23,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 12,
-      "loss_ok": 12,
+      "loss_approx": 14,
+      "loss_drop": 15,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 3,
-      "overclaims": [
-        {
-          "construct": "GET /Customers",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Customers({key})",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Items",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Items({key})",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /Orders({key})",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Northbound.Orders.Customer",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Northbound.Orders.Item",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Northbound.Orders.Order",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /Customers",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /Items",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /Orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'GET /Customers', changed operation 'GET /Customers({key})', changed operation 'GET /Items', changed operation 'GET /Items({key})', changed operation 'GET /Orders', changed operation 'GET /Orders({key})', changed operation 'POST /Customers', changed operation 'POST /Items', changed operation 'POST /Orders', changed root '', added service 'Northbound.Orders', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', added type 'Customer', added type 'Item', added type 'Order'; overclaim: OK 'GET /Customers', OK 'GET /Customers({key})', OK 'GET /Items', OK 'GET /Items({key})', OK 'GET /Orders', OK 'GET /Orders({key})', OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order', OK 'POST /Customers', OK 'POST /Items', OK 'POST /Orders' (observed: unexplained: changed operation 'GET /Customers', changed operation 'GET /Customers({key})', changed operation 'GET /Items', changed operation 'GET /Items({key})', changed operation 'GET /Orders', changed operation 'GET /Orders({key})', changed operation 'POST /Customers', changed operation 'POST /Items', changed operation 'POST /Orders', changed root '', added service 'Northbound.Orders', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', added type 'Customer', added type 'Item', added type 'Order'; overclaim: OK 'GET /Customers', OK 'GET /Customers({key})', OK 'GET /Items', OK 'GET /Items({key})', OK 'GET /Orders', OK 'GET /Orders({key})', OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order', OK 'POST /Customers', OK 'POST /Items', OK 'POST /Orders')",
+      "matched_count": 10,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'GET /Customers', changed operation 'GET /Customers({key})', changed operation 'GET /Items', changed operation 'GET /Items({key})', changed operation 'GET /Orders', changed operation 'GET /Orders({key})', changed operation 'POST /Customers', changed operation 'POST /Items', changed operation 'POST /Orders', changed root '', added service 'Northbound.Orders', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', added type 'Customer', added type 'Item', added type 'Order'; overclaim: OK 'GET /Customers', OK 'GET /Customers({key})', OK 'GET /Items', OK 'GET /Items({key})', OK 'GET /Orders', OK 'GET /Orders({key})', OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order', OK 'POST /Customers', OK 'POST /Items', OK 'POST /Orders' (observed: unexplained: added operation 'GET /Customers(:key)', removed operation 'GET /Customers({key})', added operation 'GET /Items(:key)', removed operation 'GET /Items({key})', added operation 'GET /Orders(:key)', removed operation 'GET /Orders({key})', added service 'Northbound.Orders', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', added type 'Customer', added type 'Item', added type 'Order')",
       "source_format": "odata-v2",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
+          "change": "added",
           "entity": "operation",
-          "key": "GET /Customers"
+          "key": "GET /Customers(:key)"
         },
         {
-          "change": "changed",
+          "change": "removed",
           "entity": "operation",
           "key": "GET /Customers({key})"
         },
         {
-          "change": "changed",
+          "change": "added",
           "entity": "operation",
-          "key": "GET /Items"
+          "key": "GET /Items(:key)"
         },
         {
-          "change": "changed",
+          "change": "removed",
           "entity": "operation",
           "key": "GET /Items({key})"
         },
         {
-          "change": "changed",
+          "change": "added",
           "entity": "operation",
-          "key": "GET /Orders"
+          "key": "GET /Orders(:key)"
         },
         {
-          "change": "changed",
+          "change": "removed",
           "entity": "operation",
           "key": "GET /Orders({key})"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /Customers"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /Items"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /Orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "added",
@@ -188786,13 +187573,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 1,
+      "loss_approx": 7,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (odcs->postman) (observed: Re-import failed: No Postman requests found in collection (odcs->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (odcs->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "odcs",
       "status": "xfail",
       "unexplained": []
@@ -191246,13 +190033,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 4,
-      "loss_drop": 8,
-      "loss_ok": 3,
+      "loss_approx": 9,
+      "loss_drop": 11,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (oncrpc->postman) (observed: Re-import failed: No Postman requests found in collection (oncrpc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (oncrpc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": []
@@ -194001,13 +192788,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 1,
-      "loss_ok": 3,
+      "loss_approx": 6,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (opcua-nodeset->postman) (observed: Re-import failed: No Postman requests found in collection (opcua-nodeset->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (opcua-nodeset->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "opcua-nodeset",
       "status": "xfail",
       "unexplained": []
@@ -195863,13 +194650,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 4,
-      "loss_drop": 0,
-      "loss_ok": 1,
+      "loss_approx": 7,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (openapi->postman) (observed: Re-import failed: No Postman requests found in collection (openapi->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (openapi->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "openapi",
       "status": "xfail",
       "unexplained": []
@@ -197795,13 +196582,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 2,
-      "loss_ok": 2,
+      "loss_approx": 8,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (openrpc->postman) (observed: Re-import failed: No Postman requests found in collection (openrpc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (openrpc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "openrpc",
       "status": "xfail",
       "unexplained": []
@@ -200507,13 +199294,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 7,
+      "loss_approx": 1,
+      "loss_drop": 7,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (owl->postman) (observed: Re-import failed: No Postman requests found in collection (owl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (owl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "owl",
       "status": "xfail",
       "unexplained": []
@@ -203483,13 +202270,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 8,
-      "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_approx": 20,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (pkl->postman) (observed: Re-import failed: No Postman requests found in collection (pkl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (pkl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "pkl",
       "status": "xfail",
       "unexplained": []
@@ -205731,13 +204518,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 13,
-      "loss_drop": 19,
-      "loss_ok": 3,
+      "loss_approx": 33,
+      "loss_drop": 22,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (pli->postman) (observed: Re-import failed: No Postman requests found in collection (pli->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (pli->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "pli",
       "status": "xfail",
       "unexplained": []
@@ -210617,69 +209404,19 @@
     },
     {
       "corpus_path": "postman-v2/02-typical-crud-collection.json",
-      "diff_count": 4,
+      "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 0,
       "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders'; overclaim: OK 'DELETE /orders/{orderId}', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'POST /orders' (observed: unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders'; overclaim: OK 'DELETE /orders/{orderId}', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'POST /orders')",
+      "overclaims": [],
+      "reason": null,
       "source_format": "postman-v2",
-      "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /orders"
-        }
-      ]
+      "status": "pass",
+      "unexplained": []
     },
     {
       "corpus_path": "postman-v2/02-typical-crud-collection.json",
@@ -214543,13 +213280,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 18,
-      "loss_ok": 7,
+      "loss_approx": 3,
+      "loss_drop": 25,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (protobuf->postman) (observed: Re-import failed: No Postman requests found in collection (protobuf->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (protobuf->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "protobuf",
       "status": "xfail",
       "unexplained": []
@@ -218142,13 +216879,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 12,
-      "loss_ok": 4,
+      "loss_approx": 3,
+      "loss_drop": 16,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (protobuf-editions->postman) (observed: Re-import failed: No Postman requests found in collection (protobuf-editions->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (protobuf-editions->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "protobuf-editions",
       "status": "xfail",
       "unexplained": []
@@ -220757,13 +219494,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 11,
-      "loss_drop": 0,
-      "loss_ok": 4,
+      "loss_approx": 24,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (pydantic->postman) (observed: Re-import failed: No Postman requests found in collection (pydantic->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (pydantic->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "pydantic",
       "status": "xfail",
       "unexplained": []
@@ -223434,73 +222171,16 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 8,
-      "loss_ok": 5,
+      "loss_approx": 11,
+      "loss_drop": 10,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
-      "overclaims": [
-        {
-          "construct": "Book",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /books/{bookId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "NewBook",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /books', changed operation 'GET /books/{bookId}', changed operation 'POST /books', changed root ''; overclaim: OK 'Book', OK 'GET /books', OK 'GET /books/{bookId}', OK 'NewBook', OK 'POST /books')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": null,
       "source_format": "raml",
-      "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /books"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /books/{bookId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /books"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "status": "pass",
+      "unexplained": []
     },
     {
       "corpus_path": "raml/01-simple-api.raml",
@@ -225551,13 +224231,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 10,
-      "loss_ok": 3,
+      "loss_approx": 9,
+      "loss_drop": 13,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (relaxng->postman) (observed: Re-import failed: No Postman requests found in collection (relaxng->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (relaxng->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": []
@@ -227305,13 +225985,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_approx": 15,
+      "loss_drop": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (ros2->postman) (observed: Re-import failed: No Postman requests found in collection (ros2->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (ros2->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "ros2",
       "status": "xfail",
       "unexplained": []
@@ -233101,13 +231781,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 59,
-      "loss_ok": 25,
+      "loss_approx": 60,
+      "loss_drop": 84,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (sepa->postman) (observed: Re-import failed: No Postman requests found in collection (sepa->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (sepa->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "sepa",
       "status": "xfail",
       "unexplained": []
@@ -236619,13 +235299,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 5,
-      "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_approx": 10,
+      "loss_drop": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (shacl->postman) (observed: Re-import failed: No Postman requests found in collection (shacl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (shacl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "shacl",
       "status": "xfail",
       "unexplained": []
@@ -239919,13 +238599,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 2,
-      "loss_ok": 6,
+      "loss_approx": 6,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (smithy->postman) (observed: Re-import failed: No Postman requests found in collection (smithy->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (smithy->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "smithy",
       "status": "xfail",
       "unexplained": []
@@ -242941,77 +241621,16 @@
       "diff_count": 8,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_approx": 7,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /v2/orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostOrderRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/{orderId}', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'DELETE /v2/orders/{orderId}', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed service 'Orders API', added type 'Order')",
       "source_format": "soapui",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /v2/orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "service",
@@ -243021,11 +241640,6 @@
           "change": "added",
           "entity": "type",
           "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostOrderRequest"
         }
       ]
     },
@@ -245033,13 +243647,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 2,
-      "loss_ok": 1,
+      "loss_approx": 1,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (sparkplug->postman) (observed: Re-import failed: No Postman requests found in collection (sparkplug->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (sparkplug->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "sparkplug",
       "status": "xfail",
       "unexplained": []
@@ -247468,13 +246082,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_approx": 23,
+      "loss_drop": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (sql-ddl->postman) (observed: Re-import failed: No Postman requests found in collection (sql-ddl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (sql-ddl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "sql-ddl",
       "status": "xfail",
       "unexplained": []
@@ -251893,150 +250507,16 @@
       "diff_count": 17,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 23,
-      "loss_drop": 0,
-      "loss_ok": 14,
+      "loss_approx": 35,
+      "loss_drop": 8,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
-      "overclaims": [
-        {
-          "construct": "Category",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "DELETE /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Error",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /pets",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "NewPet",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Order",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /pets",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /pets/{petId}/upload",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PUT /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Pet",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "UpdatePet",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "UploadResponse",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "User",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'DELETE /pets/{petId}', changed operation 'GET /pets', changed operation 'GET /pets/{petId}', changed operation 'POST /pets', changed operation 'POST /pets/{petId}/upload', changed operation 'PUT /pets/{petId}', changed root '', added service 'Pet Store API', removed service 'pet', removed type 'Category', removed type 'Error', removed type 'NewPet', removed type 'Order', removed type 'UpdatePet', removed type 'UploadResponse', removed type 'User'; overclaim: OK 'Category', OK 'DELETE /pets/{petId}', OK 'Error', OK 'GET /pets', OK 'GET /pets/{petId}', OK 'NewPet', OK 'Order', OK 'POST /pets', OK 'POST /pets/{petId}/upload', OK 'PUT /pets/{petId}', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
+      "matched_count": 15,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Pet Store API', removed service 'pet')",
       "source_format": "swagger",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /pets/{petId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /pets"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /pets/{petId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /pets"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /pets/{petId}/upload"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "PUT /pets/{petId}"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -252046,41 +250526,6 @@
           "change": "removed",
           "entity": "service",
           "key": "pet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Category"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Error"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "NewPet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "UpdatePet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "UploadResponse"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "User"
         }
       ]
     },
@@ -256257,98 +254702,16 @@
       "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 6,
-      "loss_drop": 0,
-      "loss_ok": 8,
+      "loss_approx": 19,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
-      "overclaims": [
-        {
-          "construct": "DELETE /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ErrorModel",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "NewOrder",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "Order",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "OrderLine",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders', changed root '', added service 'Orders', removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders' (observed: unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders', changed root '', added service 'Orders', removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders')",
+      "matched_count": 9,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders', changed root '', added service 'Orders', removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders' (observed: unexplained: added service 'Orders', removed service 'orders')",
       "source_format": "swagger-1.2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -256358,21 +254721,6 @@
           "change": "removed",
           "entity": "service",
           "key": "orders"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "ErrorModel"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "NewOrder"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "OrderLine"
         }
       ]
     },
@@ -261480,13 +259828,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 36,
-      "loss_ok": 15,
+      "loss_approx": 18,
+      "loss_drop": 51,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (swift-mt->postman) (observed: Re-import failed: No Postman requests found in collection (swift-mt->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (swift-mt->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "swift-mt",
       "status": "xfail",
       "unexplained": []
@@ -265558,13 +263906,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 12,
-      "loss_ok": 4,
+      "loss_approx": 4,
+      "loss_drop": 16,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (thrift->postman) (observed: Re-import failed: No Postman requests found in collection (thrift->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (thrift->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "thrift",
       "status": "xfail",
       "unexplained": []
@@ -268350,77 +266698,16 @@
       "diff_count": 8,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 5,
+      "loss_approx": 7,
+      "loss_drop": 1,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /healthz",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PostOrderRequest",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'GET /healthz', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'GET /healthz', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed operation 'GET /healthz', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'GET /healthz', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest')",
+      "matched_count": 6,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'GET /healthz', changed operation 'GET /v2/orders', changed operation 'GET /v2/orders/{orderId}', changed operation 'POST /v2/orders', changed root '', changed service 'Orders API', added type 'Order', removed type 'PostOrderRequest'; overclaim: OK 'GET /healthz', OK 'GET /v2/orders', OK 'GET /v2/orders/{orderId}', OK 'POST /v2/orders', OK 'PostOrderRequest' (observed: unexplained: changed service 'Orders API', added type 'Order')",
       "source_format": "thunder-client",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /healthz"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "service",
@@ -268430,11 +266717,6 @@
           "change": "added",
           "entity": "type",
           "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PostOrderRequest"
         }
       ]
     },
@@ -270420,13 +268702,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 18,
-      "loss_ok": 2,
+      "loss_approx": 19,
+      "loss_drop": 20,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (tradacoms->postman) (observed: Re-import failed: No Postman requests found in collection (tradacoms->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (tradacoms->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "tradacoms",
       "status": "xfail",
       "unexplained": []
@@ -272542,35 +270824,13 @@
       "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "ANY /",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "ANY /v2/products",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /v2/orders', adde... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /v2/orders', added operation 'GET /v2/products', changed root '', removed service 'catalogue-service', removed service 'noop', removed service 'orders-service', added service 'traefik/02-typical-dynamic.yml'; overclaim: OK 'ANY /', OK 'ANY /v2/orders', OK 'ANY /v2/products')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": "unexplained: removed operation 'ANY /', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /v2/orders', adde... (observed: unexplained: removed operation 'ANY /', removed operation 'ANY /v2/orders', removed operation 'ANY /v2/products', added operation 'GET /', added operation 'GET /v2/orders', added operation 'GET /v2/products', removed service 'catalogue-service', removed service 'noop', removed service 'orders-service', added service 'traefik/02-typical-dynamic.yml')",
       "source_format": "traefik",
       "status": "xfail",
       "unexplained": [
@@ -272603,11 +270863,6 @@
           "change": "added",
           "entity": "operation",
           "key": "GET /v2/products"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
         },
         {
           "change": "removed",
@@ -276918,13 +275173,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 19,
-      "loss_drop": 4,
-      "loss_ok": 10,
+      "loss_approx": 43,
+      "loss_drop": 14,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (trpc->postman) (observed: Re-import failed: No Postman requests found in collection (trpc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (trpc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "trpc",
       "status": "xfail",
       "unexplained": []
@@ -280460,70 +278715,16 @@
       "diff_count": 6,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
+      "loss_approx": 5,
       "loss_drop": 0,
-      "loss_ok": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "DELETE /v2/orders/orders/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /v2/orders/orders/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /v2/orders/orders",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "unexplained: changed operation 'DELETE /v2/orders/orders/{id}', changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{id}', changed operation 'POS... (observed: unexplained: changed operation 'DELETE /v2/orders/orders/{id}', changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{id}', changed operation 'POST /v2/orders/orders', changed root '', changed service 'Orders API'; overclaim: OK 'DELETE /v2/orders/orders/{id}', OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{id}', OK 'POST /v2/orders/orders')",
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "unexplained: changed operation 'DELETE /v2/orders/orders/{id}', changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{id}', changed operation 'POS... (observed: unexplained: changed service 'Orders API')",
       "source_format": "tyk",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /v2/orders/orders/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /v2/orders/orders/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /v2/orders/orders"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "service",
@@ -283088,13 +281289,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_approx": 23,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (typescript-types->postman) (observed: Re-import failed: No Postman requests found in collection (typescript-types->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (typescript-types->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "typescript-types",
       "status": "xfail",
       "unexplained": []
@@ -286513,79 +284714,16 @@
       "diff_count": 10,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_approx": 4,
+      "loss_drop": 3,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "GET /pets",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /pets/{id}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /pets",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PetStore.NewPet",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PetStore.Pet",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "PetStore.PetStatus",
-          "kind": "ok",
-          "message": "enum type carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /pets', changed operation 'GET /pets/{id}', changed operation 'POST /pets', changed root '', removed service 'PetStore.Pets', added service 'Pets API', added type 'Pet', removed type 'PetStore.NewPet', removed type 'PetStore.Pet', removed type 'PetStore.PetStatus'; overclaim: OK 'GET /pets', OK 'GET /pets/{id}', OK 'POST /pets', OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
+      "matched_count": 7,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'PetStore.Pets', added service 'Pets API', added type 'Pet')",
       "source_format": "typespec",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /pets"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /pets/{id}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /pets"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -286600,21 +284738,6 @@
           "change": "added",
           "entity": "type",
           "key": "Pet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PetStore.NewPet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PetStore.Pet"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "PetStore.PetStatus"
         }
       ]
     },
@@ -288501,13 +286624,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 1,
-      "loss_ok": 1,
+      "loss_approx": 3,
+      "loss_drop": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (vsam-idcams->postman) (observed: Re-import failed: No Postman requests found in collection (vsam-idcams->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (vsam-idcams->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "vsam-idcams",
       "status": "xfail",
       "unexplained": []
@@ -290567,65 +288690,16 @@
       "diff_count": 8,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 4,
-      "loss_ok": 4,
+      "loss_approx": 4,
+      "loss_drop": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
-      "overclaims": [
-        {
-          "construct": "GET /books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "GET /books/{bookId}",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /books",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "http://example.com/bookstore.Book",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /books', changed operation 'GET /books/{bookId}', changed operation 'POST /books', changed root '', added service 'WADL API', removed service 'http://example.com/bookstore.WADL API', added type 'Book'; overclaim: OK 'GET /books', OK 'GET /books/{bookId}', OK 'POST /books', OK 'http://example.com/bookstore.Book')",
+      "matched_count": 5,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'WADL API', removed service 'http://example.com/bookstore.WADL API', added type 'Book')",
       "source_format": "wadl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /books"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /books/{bookId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /books"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -293308,13 +291382,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 3,
-      "loss_ok": 2,
+      "loss_approx": 4,
+      "loss_drop": 5,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (wit->postman) (observed: Re-import failed: No Postman requests found in collection (wit->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (wit->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "wit",
       "status": "xfail",
       "unexplained": []
@@ -297759,13 +295833,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 21,
-      "loss_ok": 9,
+      "loss_approx": 1,
+      "loss_drop": 30,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (wsdl->postman) (observed: Re-import failed: No Postman requests found in collection (wsdl->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (wsdl->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "wsdl",
       "status": "xfail",
       "unexplained": []
@@ -302285,13 +300359,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 18,
-      "loss_ok": 7,
+      "loss_approx": 1,
+      "loss_drop": 25,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (wsdl2->postman) (observed: Re-import failed: No Postman requests found in collection (wsdl2->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (wsdl2->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "wsdl2",
       "status": "xfail",
       "unexplained": []
@@ -304852,13 +302926,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 3,
-      "loss_ok": 1,
+      "loss_approx": 3,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (xmlrpc->postman) (observed: Re-import failed: No Postman requests found in collection (xmlrpc->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (xmlrpc->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "xmlrpc",
       "status": "xfail",
       "unexplained": []
@@ -306664,13 +304738,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 2,
-      "loss_drop": 4,
-      "loss_ok": 2,
+      "loss_approx": 8,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (xregistry->postman) (observed: Re-import failed: No Postman requests found in collection (xregistry->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (xregistry->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "xregistry",
       "status": "xfail",
       "unexplained": []
@@ -308840,13 +306914,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 1,
-      "loss_drop": 14,
-      "loss_ok": 4,
+      "loss_approx": 16,
+      "loss_drop": 18,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (xsd->postman) (observed: Re-import failed: No Postman requests found in collection (xsd->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (xsd->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "xsd",
       "status": "xfail",
       "unexplained": []
@@ -311098,13 +309172,13 @@
       "diff_count": 0,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 15,
-      "loss_drop": 0,
-      "loss_ok": 4,
+      "loss_approx": 28,
+      "loss_drop": 4,
+      "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
       "overclaims": [],
-      "reason": "Re-import failed: No Postman requests found in collection (zod->postman) (observed: Re-import failed: No Postman requests found in collection (zod->postman))",
+      "reason": "Re-import failed: No Postman requests found in collection (zod->postman) (observed: Emit failed: Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.)",
       "source_format": "zod",
       "status": "xfail",
       "unexplained": []
@@ -314177,74 +312251,16 @@
       "diff_count": 11,
       "emit_format": "postman",
       "emit_key": "postman",
-      "loss_approx": 0,
-      "loss_drop": 2,
-      "loss_ok": 6,
+      "loss_approx": 3,
+      "loss_drop": 6,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 2,
-      "overclaims": [
-        {
-          "construct": "GET /items/{sku}/stock",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "InventoryRequester.GET-STOCK-REQUEST",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "InventoryRequester.GET-STOCK-RESPONSE",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "InventoryRequester.RESERVE-REQUEST",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "InventoryRequester.RESERVE-RESPONSE",
-          "kind": "ok",
-          "message": "object carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "POST /items/{sku}/reservations",
-          "kind": "ok",
-          "message": "operation carried to Postman",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /items/{sku}/stock', changed operation 'POST /items/{sku}/reservations', changed root '', added service 'Inventory API', removed service 'InventoryRequester.InventoryRequester', removed type 'InventoryRequester.GET-STOCK-RESPONSE', removed type 'InventoryRequester.RESERVE-RESPONSE', added type 'Reservation', added type 'Stock'; overclaim: OK 'GET /items/{sku}/stock', OK 'InventoryRequester.GET-STOCK-REQUEST', OK 'InventoryRequester.GET-STOCK-RESPONSE', OK 'InventoryRequester.RESERVE-REQUEST', OK 'InventoryRequester.RESERVE-RESPONSE', OK 'POST /items/{sku}/reservations')",
+      "matched_count": 7,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Inventory API', removed service 'InventoryRequester.InventoryRequester', added type 'Reservation', added type 'Stock')",
       "source_format": "zosconnect",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /items/{sku}/stock"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /items/{sku}/reservations"
-        },
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -314254,16 +312270,6 @@
           "change": "removed",
           "entity": "service",
           "key": "InventoryRequester.InventoryRequester"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "InventoryRequester.GET-STOCK-RESPONSE"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "InventoryRequester.RESERVE-RESPONSE"
         },
         {
           "change": "added",

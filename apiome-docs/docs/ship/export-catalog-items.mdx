@@ -160,7 +160,7 @@ Each of the 53 targets, measured against four small sources: **From a REST API**
 | ONC RPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | OpenAPI 3.1 | REST | `lossless` | `lossy` | `lossy` | `lossless` |
 | OpenRPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
-| Postman | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| Postman | REST | `lossy` | not offered | not offered | not offered |
 | Protocol Buffers (proto3) | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | RAML | REST | `lossy` | `lossy` | `lossy` | `lossy` |
 | SAP IDoc | Data schema | not offered | not offered | not offered | not offered |
@@ -192,6 +192,7 @@ Why a target is not offered for a source:
 - **ISO 8583** — Only a source imported as ISO 8583 can be exported to ISO 8583.
 - **Istio VirtualService** — Istio VirtualService export needs at least one HTTP operation (a method and a path); this source has none.
 - **Kong Declarative Config** — Kong Declarative Config export needs at least one HTTP operation (a method and a path); this source has none.
+- **Postman** — Postman export needs at least one HTTP operation (a method and a path); this source has none.
 - **SAP IDoc** — Only a source imported as SAP IDoc can be exported to SAP IDoc.
 - **Thunder Client** — Thunder Client export needs at least one HTTP operation (a method and a path); this source has none.
 - **Traefik dynamic configuration** — Traefik dynamic configuration export needs at least one HTTP operation (a method and a path); this source has none.

@@ -423,6 +423,20 @@ def _parse_body(body_value: Any) -> Optional[PostmanBody]:
     )
 
 
+def _parse_response_body(body_value: Any) -> Optional[PostmanBody]:
+    """A saved response's body: a string in Collection v2.1 (and what Postman writes), else a body object.
+
+    Args:
+        body_value: The response's ``body``.
+
+    Returns:
+        The body as raw text (``mode`` ``raw``), a body object read like a request body, or ``None``.
+    """
+    if isinstance(body_value, str):
+        return PostmanBody(mode="raw", raw=body_value, language=None) if body_value else None
+    return _parse_body(body_value)
+
+
 def _parse_headers(headers_value: Any) -> Tuple[PostmanHeader, ...]:
     if not isinstance(headers_value, list):
         return ()
@@ -525,7 +539,7 @@ def _parse_responses(responses_value: Any) -> Tuple[PostmanResponse, ...]:
                 name=name.strip(),
                 status=entry.get("status") if isinstance(entry.get("status"), str) else None,
                 code=int(code) if isinstance(code, int) else None,
-                body=_parse_body(entry.get("body")),
+                body=_parse_response_body(entry.get("body")),
             )
         )
     return tuple(responses)
