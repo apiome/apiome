@@ -1,0 +1,19 @@
+---
+slug: export-dialog-full-bundle
+title: Export dialog downloads every file
+description: A multi-file export's .zip now holds every emitted file and a manifest.
+authors: [apiome]
+---
+
+Exporting to a format that writes several files now downloads all of them from the **Export** dialog.
+[The Export dialog](/ship/export-a-spec#in-the-app-the-export-dialog).
+
+{/* truncate */}
+
+- **Download all files (.zip).** For a format that writes several files, the dialog's zip button
+  reads **Download all files (.zip)**. It exports the source again as a job and downloads that job's
+  bundle: every emitted file plus a `manifest.json` listing them. Before, the .zip held only the
+  main file shown in the preview.
+- **The preview still shows the main file.** The line above it says the target writes several files,
+  and **Download *file-name*** still downloads just that one.
+- **Single-file formats are unchanged.** Their **Download .zip** wraps the previewed file as before.

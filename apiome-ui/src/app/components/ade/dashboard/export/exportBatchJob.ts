@@ -79,6 +79,44 @@ export function itemsBatchJobBody(itemIds: readonly string[], targetKey: string)
   };
 }
 
+/**
+ * The `POST /api/export/jobs` body for one source to one target (MFX-3.1). The Export dialog sends
+ * it to fetch a multi-file target's full bundle (E1-4): the job's download is the MFX-4.2 zip.
+ */
+export interface SingleExportJobBody {
+  artifact: string;
+  version?: string;
+  target: string;
+  options?: Record<string, unknown>;
+  confirm?: boolean;
+}
+
+/**
+ * The body for one source exported to one target.
+ *
+ * @param artifact The source artifact id.
+ * @param version The revision (UUID or label), or null for the latest.
+ * @param target The target key.
+ * @param options The changed emit options, or null for the defaults.
+ * @param confirm True to proceed with a severe conversion the user acknowledged.
+ * @returns The request body.
+ */
+export function singleTargetJobBody(
+  artifact: string,
+  version: string | null,
+  target: string,
+  options: Record<string, unknown> | null,
+  confirm = false,
+): SingleExportJobBody {
+  return {
+    artifact,
+    ...(version ? { version } : {}),
+    target,
+    ...(options && Object.keys(options).length > 0 ? { options } : {}),
+    ...(confirm ? { confirm: true } : {}),
+  };
+}
+
 /** One item × target outcome, as the outcome table renders it. */
 export interface ExportOutcomeRow {
   /** Stable row key. */
@@ -182,13 +220,15 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
 }
 
 /**
- * Submit a multi-target or batch export job.
+ * Submit an export job: multi-target, batch, or one target (whose download is its bundle).
  *
  * @param body The job body.
  * @returns The new job's id.
  * @throws Error with the server's message when the job was refused.
  */
-export async function submitMultiExportJob(body: MultiExportJobBody): Promise<string> {
+export async function submitMultiExportJob(
+  body: MultiExportJobBody | SingleExportJobBody,
+): Promise<string> {
   const res = await fetch('/api/export/jobs', {
     method: 'POST',
     credentials: 'include',

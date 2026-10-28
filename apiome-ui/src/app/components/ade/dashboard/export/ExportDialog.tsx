@@ -32,6 +32,12 @@ import { requiresExportAcknowledgement } from './exportFidelityPreview';
 import { zipFilenameFor, type EmittedArtifact } from './exportArtifactPreview';
 import { buildZip } from './zipBundle';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
+import {
+  downloadMultiExportArchive,
+  pollMultiExportJob,
+  singleTargetJobBody,
+  submitMultiExportJob,
+} from './exportBatchJob';
 import { exportStudioHref, type ExportStudioOrigin } from './exportStudioLink';
 import type { ExportStudioStep } from './exportStudioUrlState';
 import {
@@ -172,6 +178,8 @@ export function ExportDialog({
   const [error, setError] = useState<string | null>(null);
   /** Whether the user has acknowledged a lossy conversion ("Export anyway", MFX-6.2). */
   const [acknowledged, setAcknowledged] = useState(false);
+  /** Whether a multi-file target's bundle is being exported for download (E1-4). */
+  const [zipping, setZipping] = useState(false);
 
   const { response, loading, error: targetsError, retry: retryTargets } = useExportTargets(open, artifact, version);
   // IXH-2.4: the same readiness ranking the Studio uses, so the dialog's grid orders by expected
@@ -357,20 +365,51 @@ export function ExportDialog({
     );
   }, [emitted]);
 
+  /** Whether the selected target writes several files (its preview shows the primary one). */
+  const multiFile = Boolean(selected?.entry.descriptor.multi_file);
+
   /**
-   * Download the previewed document as a `.zip` built client-side (MFX-6.3). The bundle
-   * holds the file(s) the emit returned — the primary document today; every bundle file
-   * once the multi-file endpoint (MFX-4.2) lands.
+   * Download the export as a `.zip`.
+   *
+   * - A **single-file** target zips the previewed document client-side (MFX-6.3).
+   * - A **multi-file** target (E1-4) runs the same export as a job and downloads the job's
+   *   MFX-4.2 bundle — every emitted file plus `manifest.json` — since the document endpoint
+   *   returns only the primary file.
    */
-  const handleDownloadZip = useCallback(() => {
-    if (!emitted) return;
-    try {
-      const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
-      downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The zip download failed. Try again.');
+  const handleDownloadZip = useCallback(async () => {
+    if (!emitted || !selected) return;
+    setError(null);
+    if (!selected.entry.descriptor.multi_file) {
+      try {
+        const bytes = buildZip([{ path: emitted.filename, content: emitted.text }]);
+        downloadBlob(new Blob([bytes], { type: 'application/zip' }), zipFilenameFor(emitted.filename));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'The zip download failed. Try again.');
+      }
+      return;
     }
-  }, [emitted]);
+    setZipping(true);
+    try {
+      const jobId = await submitMultiExportJob(
+        singleTargetJobBody(
+          artifact,
+          version || null,
+          selected.key,
+          changedOptions(optionValues, selected.entry.default_options),
+          acknowledged,
+        ),
+      );
+      const status = await pollMultiExportJob(jobId);
+      if (status.state !== 'completed') {
+        throw new Error(status.error?.message ?? `The bundle export ${status.state}.`);
+      }
+      await downloadMultiExportArchive(jobId, zipFilenameFor(emitted.filename));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The bundle download failed. Try again.');
+    } finally {
+      setZipping(false);
+    }
+  }, [acknowledged, artifact, emitted, optionValues, selected, version]);
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const fidelity = selected?.entry.fidelity ?? null;
@@ -542,7 +581,16 @@ export function ExportDialog({
             <div className="flex h-full min-h-0 flex-col gap-2">
               <p className="shrink-0 text-xs text-fg-muted" data-testid="export-dialog-emitted">
                 <CheckCircle2 className="mr-1.5 inline h-4 w-4 text-ok align-text-bottom" aria-hidden />
-                Review <strong>{emitted.filename}</strong> below, then download the file or a .zip bundle.
+                {multiFile ? (
+                  <>
+                    Review <strong>{emitted.filename}</strong>, the main file, below. This target writes
+                    several files: download the main file, or every file as a .zip.
+                  </>
+                ) : (
+                  <>
+                    Review <strong>{emitted.filename}</strong> below, then download the file or a .zip bundle.
+                  </>
+                )}
               </p>
               <ArtifactPreviewCard
                 className="min-h-0 flex-1"
@@ -623,9 +671,19 @@ export function ExportDialog({
             )}
             {step === 'export' && emitted && (
               <>
-                <Button variant="outline" onClick={handleDownloadZip}>
-                  <FileArchive className="h-4 w-4" aria-hidden />
-                  Download .zip
+                <Button
+                  variant="outline"
+                  onClick={() => void handleDownloadZip()}
+                  disabled={zipping}
+                  title={zipping ? 'Exporting every file of the bundle…' : undefined}
+                  data-testid="export-dialog-download-zip"
+                >
+                  {zipping ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <FileArchive className="h-4 w-4" aria-hidden />
+                  )}
+                  {multiFile ? 'Download all files (.zip)' : 'Download .zip'}
                 </Button>
                 <Button variant="outline" onClick={handleDownloadFile}>
                   <Download className="h-4 w-4" aria-hidden />
