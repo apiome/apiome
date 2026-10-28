@@ -34,6 +34,7 @@ from .auth import validate_authentication
 from .backup_status import collect_backup_status
 from .config import settings
 from .database import db
+from .export_job_health import export_job_health
 from .import_export_metrics import import_export_metrics
 from .observability import metrics
 from .permissions import enforce_platform_admin
@@ -112,6 +113,7 @@ async def health_check() -> JSONResponse:
 def _metrics_payload() -> Dict[str, Any]:
     """Render the in-process metrics snapshot as a plain dict."""
     snap = metrics.snapshot()
+    import_export = import_export_metrics.snapshot()
     return {
         "uptime_seconds": snap.uptime_seconds,
         "total_requests": snap.total_requests,
@@ -128,7 +130,10 @@ def _metrics_payload() -> Dict[str, Any]:
         # Import/export pipeline observability (IXH-6.6): per-stage duration histograms and
         # byte totals, job totals by adapter/target×format×outcome, and failure counters by
         # taxonomy code. Closed-vocabulary tags only — never a tenant, job, or free-text tag.
-        "import_export": import_export_metrics.snapshot(),
+        "import_export": import_export,
+        # Export job health (X8, #6229): success and failure rate, per-target failures, the
+        # whole-job p95 and the failure-rate alert, read before Export studio's gate opens.
+        "export_health": export_job_health.summary(import_export),
     }
 
 
@@ -156,14 +161,17 @@ async def ops_import_export(
     The full operator view of the three metric families — per-stage duration histograms
     and byte totals, terminal job totals keyed by adapter/target × format × outcome, and
     failure counters keyed by the IXH-6.4 taxonomy code — plus the complete documented
-    tag set every key is drawn from. Aggregates are in-process: per replica, reset on
-    restart (same posture as ``/v1/ops/metrics``); durable per-job timing evidence lives
-    in each job's ``PHASE_TIMING`` events in the shared job store.
+    tag set every key is drawn from, and the export health summary (X8) — success and failure
+    rate, per-target failures, the whole-job p95 and the failure-rate alert. Aggregates are
+    in-process: per replica, reset on restart (same posture as ``/v1/ops/metrics``); durable
+    per-job timing evidence lives in each job's ``PHASE_TIMING`` events in the shared job store.
     """
     enforce_platform_admin(db, auth_data)
+    import_export = import_export_metrics.snapshot()
     return JSONResponse(
         content={
-            "import_export": import_export_metrics.snapshot(),
+            "import_export": import_export,
+            "export_health": export_job_health.summary(import_export),
             "documented_tags": import_export_metrics.documented_tags(),
             "scope": {"per_replica": True, "resets_on_restart": True},
         }
@@ -311,7 +319,7 @@ def _render_dashboard_html(snapshot: Dict[str, Any], request_id_header: str) -> 
     .replace(/&#x27;/g, "'").replace(/&amp;/g, '&'));
   function badgeClass(status) {{
     if (status === 'ok' || status === 'ready' || status === 'alive') return 'ok';
-    if (status === 'stale' || status === 'empty' || status === 'unconfigured') return 'warn';
+    if (['stale', 'empty', 'unconfigured', 'no-data', 'off'].includes(status)) return 'warn';
     return 'bad';
   }}
   function card(title, bodyNodes) {{
@@ -383,6 +391,24 @@ def _render_dashboard_html(snapshot: Dict[str, Any], request_id_header: str) -> 
     for (const [label, total] of failCounts.slice(0, 8)) failNodes.push(row(label, total));
     const failTotal = failCounts.reduce((a, [, n]) => a + n, 0);
     cards.appendChild(card('Import/Export failures', [bigMetric(failTotal), ...failNodes]));
+    // Export health (X8): failure rate, the alert, the whole-job p95 and the targets that fail.
+    const eh = m.export_health || {{}}, alert = eh.alert || {{}}, dur = eh.job_duration_ms || {{}};
+    const pct = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
+    const healthNodes = [];
+    const alertBadge = document.createElement('span');
+    alertBadge.className = 'badge ' + (alert.state === 'firing' ? 'bad' : badgeClass(alert.state));
+    alertBadge.textContent = 'alert: ' + (alert.state || 'unknown');
+    healthNodes.push(alertBadge);
+    healthNodes.push(row('success rate', pct(eh.success_rate)));
+    healthNodes.push(row('last ' + Math.round((alert.window_seconds ?? 0) / 60) + ' min',
+      (alert.window_failed ?? 0) + ' of ' + (alert.window_jobs ?? 0) + ' failed'));
+    healthNodes.push(row('alert at', pct(alert.threshold_rate) + ' of ' + (alert.min_jobs ?? 0) + '+ jobs'));
+    healthNodes.push(row('p95 job time', dur.p95_upper_ms == null ? '—'
+      : (dur.p95_over_last_bucket ? '> ' : '≤ ') + (dur.p95_upper_ms / 1000) + ' s'));
+    for (const t of (eh.per_target || []).filter((t) => t.failed > 0).slice(0, 5)) {{
+      healthNodes.push(row(t.target + ' failed', t.failed + ' (' + pct(t.failure_rate) + ')'));
+    }}
+    cards.appendChild(card('Export health', [bigMetric(pct(eh.failure_rate) + ' failed'), ...healthNodes]));
   }}
   render(INITIAL);
   async function refresh() {{

@@ -1,0 +1,20 @@
+---
+slug: export-health
+title: Watch export health before the studio opens
+description: The ops dashboard shows export failures, slow jobs and a failure-rate alert.
+authors: [apiome]
+---
+
+Operators can now see how exports are doing before Export studio opens to everyone: the REST API's
+ops dashboard has an **Export health** card, and a failure-rate alert fires when too many exports fail.
+[Watch exports](/admin/operating-apiome#watch-exports).
+
+{/* truncate */}
+
+- **Export health card.** On `/v1/ops/dashboard`: the share of export jobs that failed, the success
+  rate, the alert's state, the p95 job time, and the five targets with the most failures.
+- **Failure-rate alert.** Fires when, over the last 15 minutes, at least 10 export jobs finished and
+  20% or more of them failed. Each time it fires or clears, the REST API logs one
+  `export.failure_rate_alert` line for your log alerting. The three thresholds are settings.
+- **In the API.** `GET /v1/ops/import-export` returns the same numbers under `export_health`, with
+  every target's failure codes and the job-time histogram.

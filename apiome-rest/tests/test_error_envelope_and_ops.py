@@ -286,3 +286,56 @@ def test_ops_dashboard_renders_import_export_cards(_auth_override):
     assert r.status_code == 200
     assert "Import/Export jobs" in r.text
     assert "Import/Export failures" in r.text
+
+
+# ---------------------------------------------------------------------------
+# X8: export job health
+# ---------------------------------------------------------------------------
+
+
+def test_ops_metrics_payload_includes_export_health(_auth_override):
+    """/v1/ops/metrics (and so /v1/ops/status and the dashboard poll) carries the summary."""
+    from app.export_job_health import export_job_health
+    from app.import_export_metrics import import_export_metrics
+
+    import_export_metrics.reset()
+    export_job_health.reset()
+    try:
+        import_export_metrics.record_job(
+            kind="export", adapter_or_target="avro", format_key="avro", outcome="failed"
+        )
+        import_export_metrics.record_job(
+            kind="export", adapter_or_target="avro", format_key="avro", outcome="completed"
+        )
+        export_job_health.observe(outcome="failed", duration_ms=1200)
+        with patch("app.ops_routes.db") as mdb:
+            mdb.is_platform_admin.return_value = True
+            r = client.get("/v1/ops/metrics")
+        assert r.status_code == 200
+        health = r.json()["export_health"]
+        assert health["failure_rate"] == 0.5
+        assert health["per_target"][0]["target"] == "avro"
+        assert health["job_duration_ms"]["p95_upper_ms"] == 2500
+        assert health["alert"]["state"] in {"no-data", "ok", "firing", "off"}
+    finally:
+        import_export_metrics.reset()
+        export_job_health.reset()
+
+
+def test_ops_import_export_includes_export_health(_auth_override):
+    with patch("app.ops_routes.db") as mdb:
+        mdb.is_platform_admin.return_value = True
+        r = client.get("/v1/ops/import-export")
+    assert r.status_code == 200
+    assert set(r.json()["export_health"]) == {
+        "totals", "success_rate", "failure_rate", "job_duration_ms", "per_target", "alert",
+    }
+
+
+def test_ops_dashboard_renders_export_health_card(_auth_override):
+    with patch("app.ops_routes.db") as mdb:
+        mdb.is_platform_admin.return_value = True
+        r = client.get("/v1/ops/dashboard")
+    assert r.status_code == 200
+    assert "Export health" in r.text
+    assert "p95 job time" in r.text

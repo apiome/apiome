@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.363.0
+  version: 1.364.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -75643,13 +75643,17 @@ paths:
 
         failure counters keyed by the IXH-6.4 taxonomy code — plus the complete documented
 
-        tag set every key is drawn from. Aggregates are in-process: per replica, reset
-        on
+        tag set every key is drawn from, and the export health summary (X8) — success and
+        failure
 
-        restart (same posture as ``/v1/ops/metrics``); durable per-job timing evidence
-        lives
+        rate, per-target failures, the whole-job p95 and the failure-rate alert. Aggregates
+        are
 
-        in each job''s ``PHASE_TIMING`` events in the shared job store.'
+        in-process: per replica, reset on restart (same posture as ``/v1/ops/metrics``);
+        durable
+
+        per-job timing evidence lives in each job''s ``PHASE_TIMING`` events in the shared
+        job store.'
       operationId: ops_import_export_v1_ops_import_export_get
       parameters:
       - name: tenant_slug

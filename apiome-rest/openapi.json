@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.363.0",
+    "version": "1.364.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -102582,7 +102582,7 @@
           "ops"
         ],
         "summary": "Ops Import Export",
-        "description": "Import/export pipeline observability aggregates (IXH-6.6). Platform-admin only.\n\nThe full operator view of the three metric families \u2014 per-stage duration histograms\nand byte totals, terminal job totals keyed by adapter/target \u00d7 format \u00d7 outcome, and\nfailure counters keyed by the IXH-6.4 taxonomy code \u2014 plus the complete documented\ntag set every key is drawn from. Aggregates are in-process: per replica, reset on\nrestart (same posture as ``/v1/ops/metrics``); durable per-job timing evidence lives\nin each job's ``PHASE_TIMING`` events in the shared job store.",
+        "description": "Import/export pipeline observability aggregates (IXH-6.6). Platform-admin only.\n\nThe full operator view of the three metric families \u2014 per-stage duration histograms\nand byte totals, terminal job totals keyed by adapter/target \u00d7 format \u00d7 outcome, and\nfailure counters keyed by the IXH-6.4 taxonomy code \u2014 plus the complete documented\ntag set every key is drawn from, and the export health summary (X8) \u2014 success and failure\nrate, per-target failures, the whole-job p95 and the failure-rate alert. Aggregates are\nin-process: per replica, reset on restart (same posture as ``/v1/ops/metrics``); durable\nper-job timing evidence lives in each job's ``PHASE_TIMING`` events in the shared job store.",
         "operationId": "ops_import_export_v1_ops_import_export_get",
         "parameters": [
           {

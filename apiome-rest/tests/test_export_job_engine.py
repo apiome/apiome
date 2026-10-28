@@ -1399,6 +1399,42 @@ async def test_failed_export_counts_the_taxonomy_code_and_carries_the_correlatio
     assert jobs[target_key][target_key]["failed"]["count"] == 1
 
 
+async def test_terminal_exports_feed_the_export_health_window(_reset_import_export_metrics):
+    """X8 (#6229): a completed and a failed export each land in the health window, and the
+    completed one in the whole-job duration histogram."""
+    from app.export_job_health import export_job_health
+
+    export_job_health.reset()
+    registry = _reset_import_export_metrics
+    try:
+        with patch("app.export_job_engine.load_export_source", return_value=_source()):
+            ok = await schedule_export_job(
+                TENANT_SLUG, TENANT_ID, ExportJobStartRequest(artifact="artifact-1", target="openapi")
+            )
+            await _wait_terminal(ok.job_id)
+        with patch(
+            "app.export_job_engine.load_export_source",
+            side_effect=ExportSourceError("Artifact 'missing' was not found.", status_code=404),
+        ):
+            bad = await schedule_export_job(
+                TENANT_SLUG, TENANT_ID, ExportJobStartRequest(artifact="missing", target="openapi")
+            )
+            await _wait_terminal(bad.job_id)
+
+        for _ in range(200):
+            alert = export_job_health.summary(registry.snapshot())["alert"]
+            if alert["window_jobs"] == 2:
+                break
+            await asyncio.sleep(0.01)
+        summary = export_job_health.summary(registry.snapshot())
+        assert summary["alert"]["window_jobs"] == 2
+        assert summary["alert"]["window_failed"] == 1
+        assert summary["failure_rate"] == 0.5
+        assert summary["job_duration_ms"]["count"] >= 1
+    finally:
+        export_job_health.reset()
+
+
 async def test_canceled_export_closes_the_inflight_stage_as_canceled(
     _reset_import_export_metrics,
 ):

@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.500.0] - 2026-10-28
+
+### Added
+- **Export job health and a failure-rate alert (X8, #6229).** New `app.export_job_health`, fed from the export
+  engine's terminal-job seam: a whole-job duration histogram (buckets up to the 30-minute job cap) and a rolling
+  window of terminal exports. `GET /v1/ops/metrics`, `/v1/ops/status` and `/v1/ops/import-export` carry an
+  `export_health` summary — `totals`, `success_rate` and `failure_rate` over completed + failed jobs (canceled counts
+  in neither), `per_target` failures with their taxonomy codes, `job_duration_ms` with p50/p95 bucket bounds, and
+  `alert`. The alert is `firing` when the last `APIOME_EXPORT_FAILURE_ALERT_WINDOW_SECONDS` (900) hold at least
+  `APIOME_EXPORT_FAILURE_ALERT_MIN_JOBS` (10) completed-or-failed jobs and at least `APIOME_EXPORT_FAILURE_ALERT_RATE`
+  (0.2) failed; each change of state logs one `export.failure_rate_alert` line (`warning` when it fires).
+  `GET /v1/ops/dashboard` gains an **Export health** card. Per replica, reset on restart; no tenant, job or user tag.
+
 ## [1.499.0] - 2026-10-28
 
 ### Added
