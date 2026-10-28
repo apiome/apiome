@@ -68,11 +68,15 @@ def get_refresh(db: Any, project_id: str, tenant_id: str) -> Optional[Dict[str, 
 
 
 def get_refresh_for_check(db: Any, project_id: str) -> Optional[Dict[str, Any]]:
-    """The full row, including the sealed credential, for the check runner only."""
+    """The full row, including the sealed credential, for the check runner only.
+
+    Also carries ``created_by`` / ``updated_by``: a version a scheduled check creates is
+    attributed to whoever last saved the setting (MFI-31.2).
+    """
     return _first(
         db.execute_query(
             f"""
-            SELECT {_PUBLIC_COLUMNS}, r.encrypted_payload, r.key_version
+            SELECT {_PUBLIC_COLUMNS}, r.encrypted_payload, r.key_version, r.created_by, r.updated_by
             FROM apiome.catalog_item_refresh r
             WHERE r.project_id = %s::uuid
             """,
@@ -193,7 +197,7 @@ def list_due(db: Any, *, limit: int = 200) -> List[Dict[str, Any]]:
     cadence_case = " ".join(f"WHEN '{name}' THEN {secs}" for name, secs in CADENCE_SECONDS.items())
     return db.execute_query(
         f"""
-        SELECT {_PUBLIC_COLUMNS}, r.encrypted_payload, r.key_version
+        SELECT {_PUBLIC_COLUMNS}, r.encrypted_payload, r.key_version, r.created_by, r.updated_by
         FROM apiome.catalog_item_refresh r
         JOIN apiome.projects p ON p.id = r.project_id
         JOIN apiome.tenants t ON t.id = r.tenant_id

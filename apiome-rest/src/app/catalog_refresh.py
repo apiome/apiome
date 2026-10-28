@@ -18,16 +18,24 @@ runner registered with :func:`register_discovery_runner`; an adapter that declar
 (``adapter-not-refreshable``). Every network call goes through the adapter's SSRF-guarded client,
 unchanged.
 
+**Discovered document (MFI-31.2, #4399).** A runner serializes what it discovered into the
+document a person would upload for the same API — GraphQL SDL, or a gRPC binary
+``FileDescriptorSet`` — and runs it through the import pipeline as a dry run
+(:func:`pipeline_discovery_result`). So the model and fingerprint a check reports are the ones a
+manual import of that document produces: discover → parse → normalize → fingerprint.
+
 **Apply hook.** After a successful discovery the outcome is handed to the hook registered with
-:func:`register_refresh_apply`. MFI-31.2 (#4399) registers the hook that drives the import
-pipeline in refresh mode (version on change). Until then no hook is registered and a check only
-records whether the fingerprint changed. A failed check never calls the hook, so it can never
-create a version.
+:func:`register_refresh_apply`, with the trigger (``sweep`` or ``manual``) and the acting user.
+:mod:`app.catalog_refresh_apply` (MFI-31.2) registers the hook that adds a version to the item when
+the source changed (imported at the bottom of this module). A hook that returns an
+:class:`ApplyOutcome` decides the recorded status: ``changed`` when the live source differs from
+the item's current version. A failed check never calls the hook, so it can never create a version.
 """
 
 from __future__ import annotations
 
 import asyncio
+import base64
 import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional
@@ -50,6 +58,7 @@ _logger = logging.getLogger(__name__)
 
 __all__ = [
     "AUTH_TYPES",
+    "ApplyOutcome",
     "CADENCES",
     "CADENCE_SECONDS",
     "CODE_ADAPTER_NOT_REFRESHABLE",
@@ -61,9 +70,13 @@ __all__ = [
     "CheckOutcome",
     "DiscoveryResult",
     "RefreshSettingsError",
+    "TRIGGER_MANUAL",
+    "TRIGGER_SWEEP",
+    "TRIGGERS",
     "backoff_seconds",
     "endpoint_host",
     "get_discovery_runner",
+    "pipeline_discovery_result",
     "refreshable_adapters",
     "register_discovery_runner",
     "register_refresh_apply",
@@ -95,6 +108,12 @@ STATUS_NEVER = "never"
 STATUS_UNCHANGED = "unchanged"
 STATUS_CHANGED = "changed"
 STATUS_FAILED = "failed"
+
+#: What started a check: the scheduled sweep, or a person (``POST …/refresh/check``). Recorded on
+#: the provenance of a version the check creates (MFI-31.2).
+TRIGGER_SWEEP = "sweep"
+TRIGGER_MANUAL = "manual"
+TRIGGERS = (TRIGGER_SWEEP, TRIGGER_MANUAL)
 
 #: Longest error text kept on the row; discovery errors can embed whole response bodies.
 MAX_ERROR_LENGTH = 500
@@ -137,11 +156,17 @@ class DiscoveryResult:
             import of this surface records, so "changed" means what it means for an import.
         model: The normalized :class:`~app.canonical_model.CanonicalApi`, for the apply hook.
         native: The adapter's native AST (schema / descriptor set), for the apply hook.
+        document: The discovered source serialized as the document a manual import would upload
+            (GraphQL SDL, a binary ``FileDescriptorSet``); ``None`` from a runner that has none.
+        filename: The file name that document is imported under (it steers the adapter's parse,
+            e.g. ``.binpb`` selects the binary descriptor-set reader).
     """
 
     fingerprint: str
     model: Any
     native: Any
+    document: Optional[bytes] = None
+    filename: Optional[str] = None
 
 
 #: A runner discovers one live source. It is synchronous (the adapters' discovery clients are) and
@@ -184,6 +209,55 @@ def _auth(auth_type: str, auth_payload: Optional[Mapping[str, Any]]) -> Dict[str
     return {"auth_type": auth_type, "auth_payload": dict(auth_payload)}
 
 
+def pipeline_discovery_result(
+    adapter_key: str, document: bytes, filename: str, *, native: Any = None
+) -> DiscoveryResult:
+    """Fingerprint a discovered document exactly as a manual import of it would (MFI-31.2).
+
+    Runs the in-process import pipeline (:func:`app.import_source_pipeline.run_adapter_import_job`)
+    as a **dry run** over the document — intake, parse, normalize, fingerprint, lint, nothing
+    written — and reads the model and fingerprint from the run's artifacts. No second parse path
+    exists, so a check and a manual import of the same document cannot disagree.
+
+    Runs the pipeline on a private event loop, so call it from a worker thread (the runners are
+    run with ``asyncio.to_thread``).
+
+    Args:
+        adapter_key: The import adapter's registry key.
+        document: The serialized discovered source.
+        filename: The file name to import it under.
+        native: The discovered native AST, carried through on the result.
+
+    Returns:
+        The :class:`DiscoveryResult` with the pipeline's model and fingerprint and the document.
+
+    Raises:
+        ImportSourceError: When the pipeline cannot parse or normalize the document.
+    """
+    from .import_source import ImportSourceError
+    from .import_source_pipeline import ImportRunArtifacts, run_adapter_import_job
+
+    source = get_import_source(adapter_key)
+    artifacts = ImportRunArtifacts()
+    payload: Dict[str, Any] = {
+        "filename": filename,
+        "document_base64": base64.standard_b64encode(document).decode("ascii"),
+        "rest_job_id": f"refresh-dry-run-{adapter_key}",
+        "metadata": {"source_kind": source.key, "options": {"dry_run": True}},
+    }
+    final = asyncio.run(run_adapter_import_job(source, payload, artifacts=artifacts))
+    if final.state != "completed" or artifacts.model is None or artifacts.fingerprint is None:
+        reason = final.error.message if final.error is not None else f"the import ended {final.state}"
+        raise ImportSourceError(f"The discovered source could not be imported: {reason}")
+    return DiscoveryResult(
+        fingerprint=artifacts.fingerprint,
+        model=artifacts.model,
+        native=native,
+        document=document,
+        filename=filename,
+    )
+
+
 def _graphql_runner(
     endpoint: str,
     options: Mapping[str, Any],
@@ -191,11 +265,13 @@ def _graphql_runner(
     auth_payload: Optional[Mapping[str, Any]],
     timeout_seconds: float,
 ) -> DiscoveryResult:
-    """Introspect a GraphQL endpoint and fingerprint the normalized schema."""
+    """Introspect a GraphQL endpoint, print it as SDL and fingerprint it through the pipeline."""
+    from .graphql_federation import print_schema_with_directives
+
     source = get_import_source("graphql")
     schema = source.introspect(endpoint, **_auth(auth_type, auth_payload))
-    model = source.normalize(schema, include_raw=True)
-    return DiscoveryResult(fingerprint=source.fingerprint(model), model=model, native=schema)
+    sdl = print_schema_with_directives(schema)
+    return pipeline_discovery_result("graphql", sdl.encode("utf-8"), "schema.graphql", native=schema)
 
 
 def _grpc_runner(
@@ -205,7 +281,7 @@ def _grpc_runner(
     auth_payload: Optional[Mapping[str, Any]],
     timeout_seconds: float,
 ) -> DiscoveryResult:
-    """Crawl a gRPC server's reflection surface and fingerprint the normalized descriptor set."""
+    """Crawl a gRPC server's reflection surface and fingerprint its descriptor set through the pipeline."""
     source = get_import_source("grpc")
     compiled = source.discover(
         endpoint,
@@ -213,8 +289,7 @@ def _grpc_runner(
         timeout=timeout_seconds,
         **_auth(auth_type, auth_payload),
     )
-    model = source.normalize(compiled, include_raw=True)
-    return DiscoveryResult(fingerprint=source.fingerprint(model), model=model, native=compiled)
+    return pipeline_discovery_result("grpc", compiled.descriptor_set_bytes, "reflection.binpb", native=compiled)
 
 
 register_discovery_runner("graphql", _graphql_runner)
@@ -225,9 +300,27 @@ register_discovery_runner("grpc", _grpc_runner)
 # Apply hook (MFI-31.2 registers the real one)
 # ---------------------------------------------------------------------------------------
 
-#: Called after a successful discovery as ``hook(db, row, result, changed)``. Its return value is
-#: ignored; an exception it raises fails the check (recorded, backed off) like a discovery error.
-RefreshApplyHook = Callable[[Any, Mapping[str, Any], DiscoveryResult, bool], None]
+
+@dataclass(frozen=True)
+class ApplyOutcome:
+    """What the apply hook did with a successful check.
+
+    Attributes:
+        changed: Whether the live source differs from the item's current version.
+        version_id: The ``versions.id`` the hook created, or ``None`` when it created none.
+        version_label: The created version's label (a date/time tag), or ``None``.
+    """
+
+    changed: bool
+    version_id: Optional[str] = None
+    version_label: Optional[str] = None
+
+
+#: Called after a successful discovery as ``hook(db, row, result, changed, trigger=…, actor_id=…)``.
+#: ``changed`` compares the fingerprint with the last check's. A hook may return an
+#: :class:`ApplyOutcome`, which then decides the recorded status; any other return value is
+#: ignored. An exception it raises fails the check (recorded, backed off) like a discovery error.
+RefreshApplyHook = Callable[..., Optional[ApplyOutcome]]
 
 _APPLY_HOOK: Optional[RefreshApplyHook] = None
 
@@ -235,8 +328,9 @@ _APPLY_HOOK: Optional[RefreshApplyHook] = None
 def register_refresh_apply(hook: Optional[RefreshApplyHook]) -> None:
     """Register the hook that applies a successful check (``None`` clears it).
 
-    MFI-31.2 (#4399) registers the hook that runs the import pipeline in refresh mode. With no hook
-    a check only records the fingerprint and whether it changed.
+    :mod:`app.catalog_refresh_apply` (MFI-31.2, #4399) registers the hook that adds a version
+    through the import pipeline. With no hook a check only records the fingerprint and whether it
+    changed since the last check.
     """
     global _APPLY_HOOK
     _APPLY_HOOK = hook
@@ -356,11 +450,15 @@ class CheckOutcome:
         status: ``unchanged``, ``changed`` or ``failed``.
         fingerprint: The new fingerprint on success, else ``None``.
         error: The failure reason on failure (trimmed, credential-free), else ``None``.
+        version_id: The version the check created (``versions.id``), else ``None``.
+        version_label: The created version's label, else ``None``.
     """
 
     status: str
     fingerprint: Optional[str] = None
     error: Optional[str] = None
+    version_id: Optional[str] = None
+    version_label: Optional[str] = None
 
 
 def _error_text(exc: BaseException) -> str:
@@ -383,6 +481,8 @@ async def run_refresh_check(
     backoff_base_seconds: float,
     backoff_max_seconds: float,
     store: Any = None,
+    trigger: str = TRIGGER_MANUAL,
+    actor_id: Optional[str] = None,
 ) -> CheckOutcome:
     """Run one live check for a refresh row and record its outcome.
 
@@ -391,7 +491,8 @@ async def run_refresh_check(
     1. unseal the credential (a row whose credential cannot be unsealed fails the check rather
        than running unauthenticated);
     2. run the adapter's discovery runner in a worker thread, bounded by ``timeout_seconds``;
-    3. compare the fingerprint with the last one and call the apply hook, if any;
+    3. compare the fingerprint with the last one and call the apply hook, if any (MFI-31.2: it
+       adds a version when the live source differs from the item's current version);
     4. record ``unchanged`` / ``changed``, or ``failed`` with exponential backoff.
 
     A failure only updates the row's status columns: no hook runs, so no version is created.
@@ -403,6 +504,10 @@ async def run_refresh_check(
         backoff_base_seconds: First-failure backoff.
         backoff_max_seconds: Backoff ceiling.
         store: The storage module (tests inject a fake); defaults to :mod:`app.catalog_refresh_store`.
+        trigger: What started the check, :data:`TRIGGER_SWEEP` or :data:`TRIGGER_MANUAL`; handed to
+            the apply hook so a created version records it.
+        actor_id: The user a created version is attributed to; ``None`` lets the hook fall back to
+            whoever last saved the refresh setting.
 
     Returns:
         The :class:`CheckOutcome` that was recorded.
@@ -442,8 +547,14 @@ async def run_refresh_check(
             timeout=float(timeout_seconds),
         )
         changed = row.get("last_fingerprint") is not None and row.get("last_fingerprint") != result.fingerprint
+        applied: Optional[ApplyOutcome] = None
         if _APPLY_HOOK is not None:
-            await asyncio.to_thread(_APPLY_HOOK, db, row, result, changed)
+            returned = await asyncio.to_thread(
+                _APPLY_HOOK, db, row, result, changed, trigger=trigger, actor_id=actor_id
+            )
+            if isinstance(returned, ApplyOutcome):
+                applied = returned
+                changed = returned.changed
     except asyncio.CancelledError:
         raise
     except Exception as exc:  # noqa: BLE001 — every failure is recorded on the row, never raised.
@@ -456,4 +567,14 @@ async def run_refresh_check(
 
     status = STATUS_CHANGED if changed else STATUS_UNCHANGED
     await asyncio.to_thread(store.record_success, db, project_id, status=status, fingerprint=result.fingerprint)
-    return CheckOutcome(status=status, fingerprint=result.fingerprint)
+    return CheckOutcome(
+        status=status,
+        fingerprint=result.fingerprint,
+        version_id=applied.version_id if applied else None,
+        version_label=applied.version_label if applied else None,
+    )
+
+
+# MFI-31.2: the apply hook that versions the catalog item registers itself on import. Kept at the
+# bottom because it imports this module's names.
+from . import catalog_refresh_apply  # noqa: E402,F401

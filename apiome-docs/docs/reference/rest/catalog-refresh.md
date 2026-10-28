@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.351.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.352.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-refresh` · 6 operations
 
@@ -163,9 +163,12 @@ Operation id: `delete_catalog_item_refresh_v1_catalog__tenant_slug___item_id__re
 
 Run one live check now and return the recorded outcome (``projects:edit``).
 
-Works for every cadence except ``off``, including ``manual``. A failed check answers 200 with
-``status: failed`` and the reason; like a scheduled failure it backs off the next scheduled
-check and never creates a version.
+Works for every cadence except ``off``, including ``manual``. When the live source differs from
+the item's current version, the check adds a version through the import pipeline exactly as a
+manual re-import would, with a change report, and answers ``status: changed``; its provenance
+records ``refreshTrigger: manual``. An unchanged source creates nothing. A failed check answers
+200 with ``status: failed`` and the reason; like a scheduled failure it backs off the next
+scheduled check and never creates a version.
 
 Raises:
     HTTPException: 404 when the item has no refresh setting; 409 ``refresh-off`` when its
@@ -205,7 +208,7 @@ An item's refresh setting and the outcome of its last check. Never carries a cre
 | `options` | object | no | Options. |
 | `authType` | enum `"none"`, `"bearer"`, `"header"`, `"oauth2"` | no | Auth Type. |
 | `hasCredential` | boolean | no | Has Credential. |
-| `status` | enum `"never"`, `"unchanged"`, `"changed"`, `"failed"` | no | Status. |
+| `status` | enum `"never"`, `"unchanged"`, `"changed"`, `"failed"` | no | The last check: never (not run yet), unchanged (the live source matches the item's current version), changed (the live source differed, so the check added a version), failed. |
 | `lastCheckedAt` | string or null | no | Last Checked At. |
 | `lastSuccessAt` | string or null | no | Last Success At. |
 | `lastFailureAt` | string or null | no | Last Failure At. |
