@@ -117,11 +117,32 @@ def test_verify_returns_all_three_lenses_and_verdict():
     # Validation lens — a real re-parse verdict (valid / skipped / not_applicable, never blocking).
     assert body["validation"]["verdict"] in {"valid", "skipped", "not_applicable"}
     assert body["validation"]["blocks_delivery"] is False
-    # Lint lens — MFX-5.2 not yet implemented, so null (the UI renders the empty state).
-    assert body["lint"] is None
+    # Lint lens — MFX-5.2: the emitted OpenAPI is read back and linted (advisory).
+    assert body["lint"]["applicable"] is True
+    assert body["lint"]["pack"]
+    assert isinstance(body["lint"]["findings"], list)
     # Verdict — clean, and the guard rides along.
     assert body["verdict"] == "clean"
     assert body["guard"] is not None
+
+
+def test_verify_lints_the_emitted_artifact_with_its_format_pack():
+    """MFX-5.2: an Avro export is linted by the Avro pack; the lint never changes the verdict."""
+    response = _post({"artifact": "artifact-1", "version": "1.0.0", "target": "avro"})
+    assert response.status_code == 200
+    lint = response.json()["lint"]
+    assert lint["applicable"] is True and lint["pack"] == "avro"
+    assert lint["grade"] in {"A", "B", "C", "D", "F"} and lint["reason"] is None
+
+
+def test_verify_reports_an_unlintable_artifact_with_its_reason():
+    """MFX-5.2: a format nothing reads back is ``applicable: false`` with a reason, not a 500."""
+    with patch("app.export_emitted_lint.import_adapter_for_emit", return_value=None):
+        response = _post({"artifact": "artifact-1", "version": "1.0.0", "target": "openapi"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["lint"]["applicable"] is False and "No import adapter" in body["lint"]["reason"]
+    assert body["verdict"] == "clean"
 
 
 def test_verify_lossy_target_reports_lossy_verdict():

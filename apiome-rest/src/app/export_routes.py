@@ -38,6 +38,7 @@ and load the source model version-scoped through :func:`app.export_source.load_e
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import json
@@ -66,6 +67,7 @@ from .export_delivery_gate import (
     lint_delivery_source,
 )
 from .export_dispatch import dispatch_from_source
+from .export_emitted_lint import EmittedArtifactLint, lint_emitted_artifact
 from .export_fidelity import (
     ExportFidelity,
     ExportFidelityTier,
@@ -433,35 +435,6 @@ class ExportVerifyVerdict(str, Enum):
     INVALID = "invalid"
 
 
-class EmittedArtifactLint(BaseModel):
-    """The emitted-artifact lint report slot for one verify (MFX-5.2 → MFX-42.3).
-
-    The lint pass over the emitted artifact is **MFX-5.2**, which is not yet implemented; until it
-    lands, :func:`verify_export` returns ``lint: null`` and the Verify workbench renders the lint
-    lens's "no lint pack ran" empty state. This model documents the shape MFX-5.2 will populate so
-    the response contract is stable for the UI (`EmittedArtifactLintReport`).
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    applicable: bool = Field(
-        description="Whether a lint pack is registered for this target's format.",
-    )
-    pack: Optional[str] = Field(
-        default=None, description="The lint pack that ran (e.g. ``spectral:oas``), when applicable."
-    )
-    score: Optional[int] = Field(
-        default=None, description="The 0–100 quality score, when the pack computes one."
-    )
-    grade: Optional[str] = Field(
-        default=None, description="The A–F letter grade, when the pack computes one."
-    )
-    findings: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="The itemized lint findings (severity, rule, message, location).",
-    )
-
-
 class ExportVerifyRequest(BaseModel):
     """A one-call verify request: source revision + chosen target + options (MFX-42.5)."""
 
@@ -522,8 +495,10 @@ class ExportVerifyResponse(BaseModel):
     )
     lint: Optional[EmittedArtifactLint] = Field(
         default=None,
-        description="The emitted-artifact lint report (MFX-5.2); null until MFX-5.2 lands, which "
-        "the Verify workbench renders as the lint lens's empty state.",
+        description="The emitted-artifact lint report (MFX-5.2): the artifact read back through "
+        "its import adapter and linted with the MFI rule packs for its format. Advisory — it never "
+        "changes the verdict. ``applicable: false`` (with a ``reason``) when no adapter reads the "
+        "format back.",
     )
     verdict: ExportVerifyVerdict = Field(
         description="The overall go/no-go band the Generate gate reads (clean / lossy / invalid).",
@@ -1646,7 +1621,10 @@ def _inline_verify_files(
         "inline under a size cap (``include_content``) for the Monaco viewer (MFX-43.x). A severe "
         "conversion (MFX-3.3) is **verified, not blocked** — its verdict reports the loss so the "
         "user can decide. Rate-limited by the global per-tenant middleware (it does real emit "
-        "work). Lint (MFX-5.2) is not yet implemented, so ``lint`` is currently ``null``. "
+        "work). Lint (MFX-5.2) re-reads the emitted artifact through its import adapter and runs the "
+        "MFI rule packs for its format (common + format pack); it is advisory and never changes the "
+        "verdict, and reports ``applicable: false`` with a ``reason`` when the format cannot be "
+        "read back. "
         "Typical p50 for the five MVP emitters (OpenAPI, AsyncAPI, GraphQL, gRPC/Protobuf, Avro) "
         "is dominated by the single emit + re-parse and runs in the tens of milliseconds for "
         "pure-Python validators; protobuf/AsyncAPI add their toolchain's startup when installed."
@@ -1666,7 +1644,7 @@ async def verify_export(
 
     Returns:
         The one-call verify result: the fidelity envelope, the emitted-output validation gate, the
-        (currently null) lint report, the overall verdict, and — under the cap — the artifact
+        emitted-artifact lint report, the overall verdict, and — under the cap — the artifact
         inline. No artifact or job row is persisted.
 
     Raises:
@@ -1709,6 +1687,14 @@ async def verify_export(
     files, truncated = _inline_verify_files(
         dispatch.emit, include_content=request.include_content
     )
+    descriptor = dispatch.fidelity.target
+    lint = await asyncio.to_thread(
+        lint_emitted_artifact,
+        descriptor.key,
+        dispatch.target,
+        dispatch.emit,
+        multi_file=bool(descriptor.multi_file),
+    )
 
     return ExportVerifyResponse(
         artifact=dispatch.artifact,
@@ -1719,7 +1705,7 @@ async def verify_export(
         fidelity=dispatch.fidelity,
         guard=dispatch.guard,
         validation=validation_report,
-        lint=None,
+        lint=lint,
         verdict=verdict,
         files=files,
         truncated=truncated,

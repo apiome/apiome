@@ -157,12 +157,23 @@ export function EmittedLintLens({
 }: EmittedLintLensProps) {
   const state = emittedLintLensState(lint);
 
-  // No lint pack for this target: an explicit empty state, never a misleading clean score.
+  // Not linted: an explicit empty state, never a misleading clean score. The server says why
+  // when it knows (MFX-5.2: no import adapter reads the format back, or it refused the artifact).
   if (state === 'not_applicable') {
     return (
       <p className="xstd-quiet" data-testid="verify-lint-empty">
-        No lint pack is registered for {targetLabel ? <strong>{targetLabel}</strong> : 'this target'}
-        {' '}— there is nothing to lint. The export is not blocked by lint.
+        {lint?.reason ? (
+          <>
+            {targetLabel ? <strong>{targetLabel}</strong> : 'This artifact'} was not linted:{' '}
+            {lint.reason}
+          </>
+        ) : (
+          <>
+            No lint pack is registered for {targetLabel ? <strong>{targetLabel}</strong> : 'this target'}
+            {' '}— there is nothing to lint.
+          </>
+        )}{' '}
+        The export is not blocked by lint.
       </p>
     );
   }

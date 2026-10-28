@@ -54,7 +54,7 @@ Only E1 is planned in detail. Re-plan E2–E6 when E1 ships, using what launch t
 | Async export job, multi-file bundle explorer, Recent export jobs, resumable deep links | ✅ gated | `/export/jobs`, MFX-41.4, MFX-43 |
 | Multi-target and batch export | ✅ REST only | `export_job_engine.py`, `export_batch.py`; **no UI or CLI client** |
 | CLI `apiome export <format> <artifact>` | ✅ (should take a catalog item id; untested) | `apiome-cli/.../commands/export.py` |
-| Lint of the emitted artifact | ❌ verify returns `lint: null` | MFX-5.2 [#3853](https://github.com/apiome/apiome/issues/3853) |
+| Lint of the emitted artifact | ✅ verify lints the read-back artifact with its format pack | MFX-5.2 [#3853](https://github.com/apiome/apiome/issues/3853) |
 | Dialog bundle | ⚠ zips the primary file only | `ExportDialog.tsx` (comment waits on MFX-4.2, which has landed) |
 | Studio opened with no source | ⚠ dead-end "open from a source" card | `export/studio/page.tsx` |
 | Catalog item with no captured source | ⚠ 422 | `export_source.py` |
@@ -182,7 +182,7 @@ flowchart LR
 | E1-2 Studio source picker ✅ | [#6218](https://github.com/apiome/apiome/issues/6218) |
 | E1-3 Catalog bulk export and multi-target UI and CLI ✅ | [#6219](https://github.com/apiome/apiome/issues/6219) |
 | E1-4 Dialog full bundle ✅ | [#6220](https://github.com/apiome/apiome/issues/6220) |
-| E1-5 Emitted-artifact lint (MFX-5.2) | [#3853](https://github.com/apiome/apiome/issues/3853) (existing, moved to E1) |
+| E1-5 Emitted-artifact lint (MFX-5.2) ✅ | [#3853](https://github.com/apiome/apiome/issues/3853) (existing, moved to E1) |
 | E1-6 Target availability and the missing-source path | [#6221](https://github.com/apiome/apiome/issues/6221) |
 | X1 Conformance matrix | [#6222](https://github.com/apiome/apiome/issues/6222) |
 | X2 Journey in CI | [#6223](https://github.com/apiome/apiome/issues/6223) |
