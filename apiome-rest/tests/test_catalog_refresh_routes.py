@@ -55,6 +55,8 @@ def _setup(monkeypatch):
         lambda item_id, tenant_id, **kw: {"id": item_id} if item_id == _ITEM and tenant_id == _TENANT else None,
     )
     runners = dict(catalog_refresh._RUNNERS)
+    # These tests pin the check surface; the MFI-31.2 versioning hook has its own tests.
+    monkeypatch.setattr(catalog_refresh, "_APPLY_HOOK", None)
     yield
     catalog_refresh._RUNNERS.clear()
     catalog_refresh._RUNNERS.update(runners)

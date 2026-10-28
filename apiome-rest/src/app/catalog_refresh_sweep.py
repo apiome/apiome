@@ -16,7 +16,9 @@ any import adapter with a live-discovery runner (:mod:`app.catalog_refresh`):
   one server never hit it in a burst.
 * **Per-check timeout and backoff.** Each check is bounded by ``catalog_refresh_timeout_seconds``;
   a failure is recorded as ``failed`` and defers the item exponentially
-  (:func:`app.catalog_refresh.run_refresh_check`). A failure never creates a version.
+  (:func:`app.catalog_refresh.run_refresh_check`). A failure never creates a version; a changed
+  source adds one through the import pipeline, attributed to whoever last saved the setting, with
+  ``refreshTrigger: sweep`` on its provenance (MFI-31.2).
 
 The global ``catalog_refresh_enabled`` setting halts the whole tick.
 """
@@ -29,7 +31,7 @@ import time
 from typing import Any, Callable, Dict, Optional
 
 from . import catalog_refresh_store
-from .catalog_refresh import RefreshSettingsError, endpoint_host, run_refresh_check
+from .catalog_refresh import TRIGGER_SWEEP, RefreshSettingsError, endpoint_host, run_refresh_check
 
 _logger = logging.getLogger(__name__)
 
@@ -142,6 +144,7 @@ async def process_catalog_refresh_sweep(
                     backoff_base_seconds=float(settings.catalog_refresh_backoff_base_seconds),
                     backoff_max_seconds=float(settings.catalog_refresh_backoff_max_seconds),
                     store=store,
+                    trigger=TRIGGER_SWEEP,
                 )
 
         # run_refresh_check records its own failures; return_exceptions keeps one unexpected

@@ -1,5 +1,8 @@
 """Catalog item refresh API — per-item cadence, check now, tenant kill switch (MFI-31.1, #4398).
 
+A check that finds the live source changed adds a version to the item (MFI-31.2, #4399,
+:mod:`app.catalog_refresh_apply`).
+
 * ``GET    /v1/catalog/{tenant}/{item_id}/refresh`` — the item's refresh setting and last check.
 * ``PUT    /v1/catalog/{tenant}/{item_id}/refresh`` — create or replace it.
 * ``DELETE /v1/catalog/{tenant}/{item_id}/refresh`` — remove it (and its credential).
@@ -31,6 +34,7 @@ from .catalog_refresh import (
     CODE_REFRESH_DISABLED,
     CODE_REFRESH_OFF,
     STATUS_NEVER,
+    TRIGGER_MANUAL,
     RefreshSettingsError,
     refreshable_adapters,
     run_refresh_check,
@@ -118,7 +122,11 @@ class CatalogRefreshOut(BaseModel):
     options: Dict[str, Any] = Field(default_factory=dict)
     auth_type: AuthTypeName = Field(default="none", alias="authType")
     has_credential: bool = Field(default=False, alias="hasCredential")
-    status: Literal["never", "unchanged", "changed", "failed"] = STATUS_NEVER
+    status: Literal["never", "unchanged", "changed", "failed"] = Field(
+        default=STATUS_NEVER,
+        description="The last check: never (not run yet), unchanged (the live source matches the item's "
+        "current version), changed (the live source differed, so the check added a version), failed.",
+    )
     last_checked_at: Optional[str] = Field(default=None, alias="lastCheckedAt")
     last_success_at: Optional[str] = Field(default=None, alias="lastSuccessAt")
     last_failure_at: Optional[str] = Field(default=None, alias="lastFailureAt")
@@ -410,9 +418,12 @@ async def check_catalog_item_refresh(
 ) -> CatalogRefreshOut:
     """Run one live check now and return the recorded outcome (``projects:edit``).
 
-    Works for every cadence except ``off``, including ``manual``. A failed check answers 200 with
-    ``status: failed`` and the reason; like a scheduled failure it backs off the next scheduled
-    check and never creates a version.
+    Works for every cadence except ``off``, including ``manual``. When the live source differs from
+    the item's current version, the check adds a version through the import pipeline exactly as a
+    manual re-import would, with a change report, and answers ``status: changed``; its provenance
+    records ``refreshTrigger: manual``. An unchanged source creates nothing. A failed check answers
+    200 with ``status: failed`` and the reason; like a scheduled failure it backs off the next
+    scheduled check and never creates a version.
 
     Raises:
         HTTPException: 404 when the item has no refresh setting; 409 ``refresh-off`` when its
@@ -441,6 +452,11 @@ async def check_catalog_item_refresh(
         timeout_seconds=float(settings.catalog_refresh_timeout_seconds),
         backoff_base_seconds=float(settings.catalog_refresh_backoff_base_seconds),
         backoff_max_seconds=float(settings.catalog_refresh_backoff_max_seconds),
+        trigger=TRIGGER_MANUAL,
+        actor_id=actor_id,
     )
-    _audit(tenant_id, AUDIT_CHECKED, actor_id, {"itemId": item_id, "status": outcome.status})
+    detail: Dict[str, Any] = {"itemId": item_id, "status": outcome.status}
+    if outcome.version_id:
+        detail.update(versionId=outcome.version_id, versionLabel=outcome.version_label)
+    _audit(tenant_id, AUDIT_CHECKED, actor_id, detail)
     return _out(item_id, store.get_refresh(db, item_id, tenant_id), tenant_enabled=True)

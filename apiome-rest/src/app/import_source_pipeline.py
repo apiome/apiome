@@ -1391,6 +1391,11 @@ def persist_adapter_import(
     connector_source = payload.get("connector_source")
     if isinstance(connector_source, dict):
         format_metadata.update(connector_source)
+    # MFI-31.2: a live refresh records the endpoint, the adapter and what triggered it (sweep or
+    # manual), and re-labels the intake kind 'discovery'.
+    refresh_source = payload.get("refresh_source")
+    if isinstance(refresh_source, dict):
+        format_metadata.update(refresh_source)
     # CDG-5.5: a Backstage API definition records the catalog-info entity it came from.
     migration_source = payload.get("migration_source")
     if isinstance(migration_source, dict):
@@ -2069,6 +2074,16 @@ async def run_adapter_import_job(
             routing,
             reason=(
                 f"{model.format or model.paradigm.value} synced by a catalog connector "
+                "→ non-publishable catalog item; convert it to make a Project."
+            ),
+        )
+    # MFI-31.2: a live refresh adds a version to the catalog item it watches. Set only by
+    # app.catalog_refresh_apply on its internal payload, never from a request body.
+    elif isinstance(payload.get("refresh_source"), dict):
+        routing = force_catalog_routing(
+            routing,
+            reason=(
+                f"{model.format or model.paradigm.value} re-discovered by a catalog item's live refresh "
                 "→ non-publishable catalog item; convert it to make a Project."
             ),
         )

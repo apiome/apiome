@@ -8,9 +8,10 @@ tags: [catalog, refresh, graphql, grpc]
 <Route path="/ade/dashboard/catalog/[id]" />
 
 A catalog item describes an API that keeps running after you import it. **Live refresh**
-re-discovers that API from its live endpoint on a schedule you choose, and tells you whether it
-has changed since the last check. A check that fails is reported on the item. It never changes
-the item or its versions.
+re-discovers that API from its live endpoint on a schedule you choose. When the API has changed,
+the check adds a new version to the item, just as importing the new schema yourself would. When
+nothing changed, it adds nothing. A check that fails is reported on the item. It never changes the
+item or its versions.
 
 Live refresh works for two kinds of source:
 
@@ -72,8 +73,8 @@ credential**: pick another option only to replace or remove it.
 | Status | Meaning |
 | --- | --- |
 | **Not checked yet** | Refresh is set up but has not run yet |
-| **Up to date** | The live API matches the last check |
-| **Source changed** | The live API differs from the last check |
+| **Up to date** | The live API matches the item's current version |
+| **Source changed** | The live API differed from the item's current version, so the check added a version |
 | **Last check failed** | The endpoint could not be reached or refused discovery. **Last failure** gives the reason |
 | **Off** | Refresh is not set up, or its cadence is **Off** |
 | **Paused for workspace** | An administrator switched catalog refresh off for the workspace |
@@ -81,12 +82,36 @@ credential**: pick another option only to replace or remove it.
 The card also shows the method, endpoint, cadence, credential, when the item was **Last
 checked**, and the **Next check**.
 
-The first successful check records a baseline, so it always reads **Up to date**.
+The first check compares the live API with the version you imported. If you imported the same
+schema, it reads **Up to date**.
+
+## When the API changes
+
+A check that finds the live API changed adds a version to the item. The version is the same one
+you would get by importing the new schema yourself:
+
+- **The label** is the date and time of the check in UTC, such as `2026-10-27T14:03Z`. Two
+  versions in the same minute get `-2`, `-3` and so on.
+- **The content** goes through the normal import: the same format details, fingerprint and lint
+  score, and the discovered schema is kept as the version's source, so you can convert it later.
+  For GraphQL the source is the schema as SDL. For gRPC it is a binary descriptor set
+  (`reflection.binpb`).
+- **The Provenance tab** shows the source as **Live discovery**, labelled with the endpoint. The
+  version also records whether a scheduled check or **“Check now”** added it.
+- **A change report** compares the new version with the one before it and classifies each change
+  as breaking or not.
+
+The version is credited to the person who clicked **“Check now”**. For a scheduled check, it is
+credited to the person who last saved the refresh setting.
+
+What counts as a change is the API itself: its types, operations and fields. Reordering the schema
+or reformatting it is not a change.
 
 ### When a check fails
 
-A failed check does not change the item: its versions, format details and fingerprint stay as
-they were. Each failure in a row delays the next scheduled check: by 5 minutes after the first,
+A failed check does not change the item: no version is added, and its versions, format details
+and fingerprint stay as they were. A check also fails, without adding a version, when the item was
+deleted or the discovered schema cannot be imported. Each failure in a row delays the next scheduled check: by 5 minutes after the first,
 then 10, 20 and so on, up to one day. The card shows how many checks have failed in a row. The
 next successful check clears the failure.
 

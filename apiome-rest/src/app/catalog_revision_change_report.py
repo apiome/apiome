@@ -93,6 +93,7 @@ def generate_catalog_revision_change_report(
     revision_version_id: str,
     parent_version_id: str,
     actor_id: Optional[str],
+    action: str = CHANGE_REPORT_ACTION,
 ) -> Optional[Dict[str, Any]]:
     """Diff a catalog item's new revision against the one before it and store the report.
 
@@ -104,6 +105,8 @@ def generate_catalog_revision_change_report(
         revision_version_id: The new revision (``versions.id``) the report is keyed to.
         parent_version_id: The revision it supersedes, the diff baseline.
         actor_id: Who the audit row is attributed to.
+        action: The workflow-audit action; a live refresh (MFI-31.2) passes its own so the audit
+            says which flow added the revision.
 
     Returns:
         The stored ``change_reports`` row (the existing one when the revision already has a
@@ -116,6 +119,7 @@ def generate_catalog_revision_change_report(
             revision_version_id=revision_version_id,
             parent_version_id=parent_version_id,
             actor_id=actor_id,
+            action=action,
         )
     except Exception as exc:  # noqa: BLE001 - a report problem must never fail the sync
         logger.warning(
@@ -129,7 +133,7 @@ def generate_catalog_revision_change_report(
                 tenant_id,
                 project_id,
                 revision_version_id,
-                CHANGE_REPORT_ACTION,
+                action,
                 "failure",
                 actor_id,
                 {"error": str(exc)[:500], "parentVersionId": parent_version_id},
@@ -146,6 +150,7 @@ def _generate(
     revision_version_id: str,
     parent_version_id: str,
     actor_id: Optional[str],
+    action: str = CHANGE_REPORT_ACTION,
 ) -> Optional[Dict[str, Any]]:
     """:func:`generate_catalog_revision_change_report` without the safety net."""
     from .change_report_render import build_render_metadata, render_from_template_row
@@ -203,7 +208,7 @@ def _generate(
         tenant_id,
         project_id,
         revision_version_id,
-        CHANGE_REPORT_ACTION,
+        action,
         "success",
         actor_id,
         {

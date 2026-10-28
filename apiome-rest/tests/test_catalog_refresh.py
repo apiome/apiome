@@ -22,6 +22,8 @@ from app.catalog_refresh import (
     CODE_ADAPTER_NOT_REFRESHABLE,
     CODE_INVALID_CREDENTIAL,
     CODE_INVALID_ENDPOINT,
+    TRIGGER_SWEEP,
+    ApplyOutcome,
     DiscoveryResult,
     RefreshSettingsError,
     backoff_seconds,
@@ -44,10 +46,13 @@ _ITEM = "22222222-2222-4222-8222-222222222222"
 @pytest.fixture(autouse=True)
 def _restore_registry():
     runners = dict(catalog_refresh._RUNNERS)
+    hook = catalog_refresh._APPLY_HOOK
+    # Each test starts with no hook; the MFI-31.2 versioning hook has its own tests.
+    register_refresh_apply(None)
     yield
     catalog_refresh._RUNNERS.clear()
     catalog_refresh._RUNNERS.update(runners)
-    register_refresh_apply(None)
+    register_refresh_apply(hook)
 
 
 @pytest.fixture
@@ -165,11 +170,47 @@ def test_the_apply_hook_sees_the_result_and_the_change_flag(store):
     seen = []
     register_discovery_runner("graphql", _fake_runner("fp-b"))
     register_refresh_apply(
-        lambda db, row, result, changed: seen.append((row["project_id"], result.fingerprint, changed))
+        lambda db, row, result, changed, **kw: seen.append((row["project_id"], result.fingerprint, changed, kw))
     )
     store.add(_ITEM, _TENANT, last_fingerprint="fp-a")
     _check(store)
-    assert seen == [(_ITEM, "fp-b", True)]
+    assert seen == [(_ITEM, "fp-b", True, {"trigger": "manual", "actor_id": None})]
+
+
+def test_the_trigger_and_actor_reach_the_hook(store):
+    seen = []
+    register_discovery_runner("graphql", _fake_runner())
+    register_refresh_apply(lambda *a, **kw: seen.append(kw))
+    store.add(_ITEM, _TENANT)
+    row = store.get_refresh_for_check(None, _ITEM)
+    asyncio.run(
+        run_refresh_check(
+            None,
+            row,
+            timeout_seconds=5,
+            backoff_base_seconds=300,
+            backoff_max_seconds=86400,
+            trigger=TRIGGER_SWEEP,
+            actor_id="u-1",
+        )
+    )
+    assert seen == [{"trigger": "sweep", "actor_id": "u-1"}]
+
+
+def test_an_apply_outcome_decides_the_status_and_names_the_version(store):
+    register_discovery_runner("graphql", _fake_runner("fp-a"))
+    register_refresh_apply(
+        lambda *a, **kw: ApplyOutcome(changed=True, version_id="v-9", version_label="2026-10-27T12:00Z")
+    )
+    store.add(_ITEM, _TENANT)  # first check: no last fingerprint, yet the source differs from the item
+    outcome = _check(store)
+    assert (outcome.status, outcome.version_id, outcome.version_label) == ("changed", "v-9", "2026-10-27T12:00Z")
+    assert store.rows[_ITEM]["status"] == "changed"
+
+    register_refresh_apply(lambda *a, **kw: ApplyOutcome(changed=False))
+    store.rows[_ITEM]["last_fingerprint"] = "fp-old"  # differs from the last check, matches the item
+    outcome = _check(store)
+    assert (outcome.status, outcome.version_id) == ("unchanged", None)
 
 
 def test_a_failure_is_recorded_with_backoff_and_never_applied(store):
@@ -251,22 +292,27 @@ def test_an_unsealable_credential_fails_instead_of_running_anonymously(store):
 def test_grpc_runner_passes_the_secure_option(monkeypatch):
     seen = {}
 
+    class _Compiled:
+        descriptor_set_bytes = b"descriptor-set"
+
     class _Source:
         supports_live_discovery = True
 
         def discover(self, target, **kwargs):
             seen.update(target=target, **kwargs)
-            return "compiled"
+            return _Compiled()
 
-        def normalize(self, native, include_raw=True):
-            return "model"
-
-        def fingerprint(self, model):
-            return "fp-grpc"
-
+    imported = []
     monkeypatch.setattr(catalog_refresh, "get_import_source", lambda key: _Source())
+    monkeypatch.setattr(
+        catalog_refresh,
+        "pipeline_discovery_result",
+        lambda key, document, filename, native=None: imported.append((key, document, filename))
+        or DiscoveryResult(fingerprint="fp-grpc", model=object(), native=native, document=document),
+    )
     result = catalog_refresh._grpc_runner("h.example.com:443", {"secure": True}, "none", None, 12.0)
     assert result.fingerprint == "fp-grpc"
+    assert imported == [("grpc", b"descriptor-set", "reflection.binpb")]
     assert seen == {
         "target": "h.example.com:443",
         "secure": True,

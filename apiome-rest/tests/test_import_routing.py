@@ -730,3 +730,15 @@ async def test_pipeline_ignores_a_connector_key_that_is_not_an_object() -> None:
     final = await run_adapter_import_job(_StubAdapter("openapi", ApiParadigm.REST, model), payload)
 
     assert final.summary["routing"]["target"] == "project"
+
+
+async def test_pipeline_routes_a_refresh_import_to_the_catalog() -> None:
+    """MFI-31.2: a live refresh always adds to the catalog item, whatever the format would route to."""
+    model = _model(paradigm=ApiParadigm.REST, fmt="openapi-3.1", operations=4, types=6)
+    payload = _payload()
+    payload["refresh_source"] = {"inputKind": "discovery", "refreshTrigger": "manual"}
+
+    final = await run_adapter_import_job(_StubAdapter("openapi", ApiParadigm.REST, model), payload)
+
+    assert final.summary["routing"]["target"] == "catalog"
+    assert "live refresh" in final.summary["routing"]["reason"]

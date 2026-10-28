@@ -793,3 +793,23 @@ def test_ignores_a_connector_source_that_is_not_an_object(monkeypatch) -> None:
     persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing())
 
     assert fake.source_format_call["format_metadata"]["inputKind"] == "file"
+
+
+def test_records_the_refresh_source_descriptor(monkeypatch) -> None:
+    """MFI-31.2: a live refresh re-labels the intake 'discovery' and records the trigger."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    payload = _payload()
+    payload["refresh_source"] = {
+        "inputKind": "discovery",
+        "sourceLabel": "https://api.example.com/graphql",
+        "refreshAdapter": "graphql",
+        "refreshTrigger": "sweep",
+    }
+
+    persist_adapter_import(payload, _model(), _text_intake("x"), _catalog_routing(), fingerprint="sha256:f")
+
+    meta = fake.source_format_call["format_metadata"]
+    assert (meta["inputKind"], meta["refreshTrigger"], meta["refreshAdapter"]) == ("discovery", "sweep", "graphql")
+    assert meta["sourceLabel"] == "https://api.example.com/graphql"
+    assert (meta["sourceContent"], meta["fingerprint"]) == ("x", "sha256:f")

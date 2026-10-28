@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.351.0",
+    "version": "1.352.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15232,7 +15232,7 @@
           "catalog-refresh"
         ],
         "summary": "Check Catalog Item Refresh",
-        "description": "Run one live check now and return the recorded outcome (``projects:edit``).\n\nWorks for every cadence except ``off``, including ``manual``. A failed check answers 200 with\n``status: failed`` and the reason; like a scheduled failure it backs off the next scheduled\ncheck and never creates a version.\n\nRaises:\n    HTTPException: 404 when the item has no refresh setting; 409 ``refresh-off`` when its\n        cadence is off, ``refresh-disabled`` when the tenant or deployment switch is off.",
+        "description": "Run one live check now and return the recorded outcome (``projects:edit``).\n\nWorks for every cadence except ``off``, including ``manual``. When the live source differs from\nthe item's current version, the check adds a version through the import pipeline exactly as a\nmanual re-import would, with a change report, and answers ``status: changed``; its provenance\nrecords ``refreshTrigger: manual``. An unchanged source creates nothing. A failed check answers\n200 with ``status: failed`` and the reason; like a scheduled failure it backs off the next\nscheduled check and never creates a version.\n\nRaises:\n    HTTPException: 404 when the item has no refresh setting; 409 ``refresh-off`` when its\n        cadence is off, ``refresh-disabled`` when the tenant or deployment switch is off.",
         "operationId": "check_catalog_item_refresh_v1_catalog__tenant_slug___item_id__refresh_check_post",
         "parameters": [
           {
@@ -33032,7 +33032,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-10-27T23:25:20Z"
+                          "example": "2026-10-27T23:55:57Z"
                         },
                         "method": {
                           "type": "string",
@@ -115593,8 +115593,8 @@
               "failed"
             ],
             "title": "Status",
+            "description": "The last check: never (not run yet), unchanged (the live source matches the item's current version), changed (the live source differed, so the check added a version), failed.",
             "default": "never",
-            "description": "Status.",
             "example": "never"
           },
           "lastCheckedAt": {
@@ -116809,7 +116809,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "completed_at": {
             "anyOf": [
@@ -118405,7 +118405,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           }
         },
         "type": "object",
@@ -118461,7 +118461,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "workspaces": {
             "items": {
@@ -119065,7 +119065,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "comment_count": {
             "type": "integer",
@@ -119293,7 +119293,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "comment_count": {
             "type": "integer",
@@ -120060,14 +120060,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -123353,7 +123353,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "249d07ec-ec52-4d65-8d34-6317a7bb57da"
+            "example": "b5099785-2bae-40a5-aec0-312e3668db25"
           },
           "method": {
             "type": "string",
@@ -125880,7 +125880,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -127776,7 +127776,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "browse_url": {
             "anyOf": [
@@ -175009,7 +175009,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           }
         },
         "additionalProperties": false,
@@ -187464,13 +187464,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           }
         },
         "additionalProperties": false,
@@ -188974,7 +188974,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "detected_by": {
             "anyOf": [
@@ -197289,14 +197289,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-27T23:25:20Z"
+            "example": "2026-10-27T23:55:57Z"
           },
           "outcome": {
             "anyOf": [

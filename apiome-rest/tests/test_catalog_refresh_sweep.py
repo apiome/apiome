@@ -44,6 +44,8 @@ def _settings(monkeypatch):
     monkeypatch.setattr(settings, "catalog_refresh_max_concurrency", 4)
     monkeypatch.setattr(settings, "catalog_refresh_host_delay_seconds", 0.0)
     monkeypatch.setattr(settings, "catalog_refresh_timeout_seconds", 5)
+    # These tests pin the check surface; the MFI-31.2 versioning hook has its own tests.
+    monkeypatch.setattr(catalog_refresh, "_APPLY_HOOK", None)
     yield
     catalog_refresh._RUNNERS.clear()
     catalog_refresh._RUNNERS.update(runners)

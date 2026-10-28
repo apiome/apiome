@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.488.0] - 2026-10-27
+
+### Added
+- **Catalog item refresh: re-discovery through the import pipeline (MFI-31.2, #4399)** — a live-refresh check
+  now behaves exactly like a manual re-import. The GraphQL and gRPC discovery runners serialize what they
+  discovered into the document a manual import would upload (SDL via `print_schema_with_directives`, the
+  reflection descriptor set as `reflection.binpb`) and fingerprint it with a dry run of
+  `run_adapter_import_job` (`catalog_refresh.pipeline_discovery_result`). The new apply hook
+  (`app.catalog_refresh_apply`) rebuilds the item's current version from its stored source and calls
+  `versioning.decide_version`: an unchanged source creates nothing; a changed one is imported onto the item
+  (`existing_project_id`) with a minted date/time label, so lint score capture, payload analysis, search rows
+  and the verbatim source are stored as for any import, and gets the connector-sync change report (diff +
+  breaking classification) against the version it supersedes, audited as
+  `catalog.refresh.change_report.generated`. The pipeline's refresh mode (`refresh_source` on the internal
+  payload) forces catalog routing and records `inputKind: discovery`, the endpoint, `refreshAdapter` and
+  `refreshTrigger` (`sweep` or `manual`) on the revision's `format_metadata`. `status: changed` now means
+  the check added a version; `POST …/refresh/check` audits the created `versionId`. A sweep-created version is
+  attributed to whoever last saved the setting. A deleted item or a Project fails the check
+  (`item-unavailable`). API 1.352.0.
+
 ## [1.487.0] - 2026-10-27
 
 ### Added
