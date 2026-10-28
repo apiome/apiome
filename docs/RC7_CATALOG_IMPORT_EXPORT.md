@@ -21,6 +21,10 @@ Everything else stays where RC6 left it (§2.2).
 
 ## 0.1 Ticket status (2026-10-28)
 
+> **Superseded as the working checklist by [`RC7_SHIP_PLAN.md`](RC7_SHIP_PLAN.md)** (2026-10-28), which
+> adds the export loss report, the per-target correctness audit and the complete RC7 ticket list.
+> The status below is kept as the record of that day.
+
 Every issue this plan cites, checked against GitHub on 2026-10-28 (`main` @ `9918614ea`): 253 issues,
 79 closed, 174 open. No pull request is open against any of them.
 
