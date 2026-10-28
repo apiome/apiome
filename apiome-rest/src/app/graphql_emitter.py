@@ -105,6 +105,10 @@ _READ_HTTP_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 _FIELD_NAME_RE = re.compile(r"[^_A-Za-z0-9]")
 
+#: The placeholder field an empty record gets — GraphQL requires every object and input type to
+#: declare at least one field (X1, #6222).
+_EMPTY_RECORD_FIELD = "_empty"
+
 
 # Graph-native operation kinds the emitter carries without reframing.
 _GRAPH_OPERATION_KINDS = frozenset(
@@ -528,6 +532,12 @@ class _GraphQlWriter:
             candidate = type_.name
         else:
             candidate = _graphql_name(type_.key, prefix="Type")
+        # X1 (#6222): a GraphQL name is /[_A-Za-z][_0-9A-Za-z]*/ — a dotted, hyphenated or URI
+        # source name (`com.example.Order`, `CUSTOMER-RECORD`) is rewritten, and the rename said.
+        safe = _graphql_name(candidate, prefix="Type")
+        if safe != candidate:
+            self._record_rename("type", type_.key, candidate, safe)
+            candidate = safe
 
         name = candidate
         suffix = 2
@@ -540,6 +550,22 @@ class _GraphQlWriter:
         self._gql_names_by_key[type_.key] = name
         self._type_keys_by_gql_name[name] = type_.key
         return name
+
+    def _record_rename(self, what: str, pointer: str, original: str, renamed: str) -> None:
+        """Record that a source name was rewritten into a valid GraphQL name (X1, #6222)."""
+        self.losses.record(
+            LossKind.INFERRED,
+            f"renamed-{what}",
+            f"{what.capitalize()} name {original!r} is not a valid GraphQL name; emitted as {renamed!r}.",
+            pointer=pointer,
+        )
+
+    def _field_name(self, owner: Type, name: str) -> str:
+        """A valid GraphQL name for one of ``owner``'s fields, recording any rename."""
+        safe = _graphql_name(name, prefix="field")
+        if safe != name:
+            self._record_rename("field", f"{owner.key}.{name}", name, safe)
+        return safe
 
     def _build_record(self, type_: Type) -> GraphQLNamedType:
         name = self._graphql_type_name(type_)
@@ -564,11 +590,22 @@ class _GraphQlWriter:
             fields=lambda: self._output_fields(type_),
         )
 
-    def _build_union(self, type_: Type) -> GraphQLUnionType:
+    def _build_union(self, type_: Type) -> GraphQLNamedType:
         members = [
             self._resolve_named(member_name)
             for member_name in (type_.union_members or [])
         ]
+        # X1 (#6222): a GraphQL union holds object types only; one over scalars, enums or inputs
+        # (an ONC RPC discriminated union) is emitted as String, and the loss said.
+        if not members or not all(isinstance(member, GraphQLObjectType) for member in members):
+            self.losses.record(
+                LossKind.INFERRED,
+                "union-non-object-members",
+                f"Union {type_.key!r} has members that are not object types; a GraphQL union "
+                "can only hold object types, so it was emitted as String.",
+                pointer=type_.key,
+            )
+            return GraphQLString
         return GraphQLUnionType(
             name=self._graphql_type_name(type_),
             description=type_.description,
@@ -577,7 +614,7 @@ class _GraphQlWriter:
 
     def _build_enum(self, type_: Type) -> GraphQLEnumType:
         values = {
-            value.name: GraphQLEnumValue(
+            self._enum_value_name(type_, value.name): GraphQLEnumValue(
                 value.name,
                 description=value.description,
                 deprecation_reason=(value.extras or {}).get("deprecation_reason"),
@@ -589,6 +626,15 @@ class _GraphQlWriter:
             description=type_.description,
             values=values,
         )
+
+    def _enum_value_name(self, owner: Type, name: str) -> str:
+        """A valid GraphQL enum value name, recording any rename (X1, #6222)."""
+        safe = _graphql_name(name, prefix="VALUE")
+        if safe in {"true", "false", "null"}:
+            safe = f"{safe}_"
+        if safe != name:
+            self._record_rename("enum value", f"{owner.key}.{name}", name, safe)
+        return safe
 
     def _build_scalar(self, type_: Type) -> GraphQLScalarType:
         if type_.name in _BUILTIN_SCALARS:
@@ -625,12 +671,25 @@ class _GraphQlWriter:
                 )
         return result
 
+    def _empty_record_placeholder(self, type_: Type) -> str:
+        """Record that an empty record gets a placeholder field (GraphQL needs one, X1 #6222)."""
+        self.losses.record(
+            LossKind.INFERRED,
+            "empty-record",
+            f"Record {type_.key!r} declares no fields; GraphQL requires at least one, so a "
+            f"placeholder `{_EMPTY_RECORD_FIELD}: Boolean` was added.",
+            pointer=type_.key,
+        )
+        return _EMPTY_RECORD_FIELD
+
     def _output_fields(self, type_: Type) -> Dict[str, GraphQLField]:
+        if not type_.fields:
+            return {self._empty_record_placeholder(type_): GraphQLField(GraphQLBoolean)}
         fields: Dict[str, GraphQLField] = {}
         for field in type_.fields:
             self._record_constraint_loss(field)
             deprecation = (field.extras or {}).get("deprecation_reason")
-            fields[field.name] = GraphQLField(
+            fields[self._field_name(type_, field.name)] = GraphQLField(
                 self._from_type_ref(field.type),
                 args=self._field_arguments(field),
                 description=field.description,
@@ -643,12 +702,14 @@ class _GraphQlWriter:
         return fields
 
     def _input_fields(self, type_: Type) -> Dict[str, GraphQLInputField]:
+        if not type_.fields:
+            return {self._empty_record_placeholder(type_): GraphQLInputField(GraphQLBoolean)}
         fields: Dict[str, GraphQLInputField] = {}
         for field in type_.fields:
             self._record_constraint_loss(field)
             default = field.default if field.default is not None else Undefined
             deprecation = (field.extras or {}).get("deprecation_reason")
-            fields[field.name] = GraphQLInputField(
+            fields[self._field_name(type_, field.name)] = GraphQLInputField(
                 self._input_type_for_ref(field.type),
                 default_value=default,
                 description=field.description,
@@ -688,6 +749,15 @@ class _GraphQlWriter:
 
     # --- type references ---------------------------------------------------
 
+    def _untyped(self) -> Any:
+        """A reference with no type at all (an untyped / free-form value) — String, said (X1)."""
+        self.losses.record(
+            LossKind.INFERRED,
+            "untyped-reference",
+            "A value with no declared type was emitted as String.",
+        )
+        return GraphQLString
+
     def _resolve_named(self, name: str) -> GraphQLNamedType:
         if name in _BUILTIN_SCALARS:
             return _BUILTIN_SCALARS[name]
@@ -707,7 +777,8 @@ class _GraphQlWriter:
         if ref.is_list():
             inner = GraphQLList(self._from_type_ref(ref.item))  # type: ignore[arg-type]
             return inner if ref.nullable else GraphQLNonNull(inner)
-        assert ref.name is not None
+        if ref.name is None:
+            return self._untyped()
         if ref.name in _BUILTIN_SCALARS:
             leaf: Any = _BUILTIN_SCALARS[ref.name]
         else:
@@ -723,7 +794,8 @@ class _GraphQlWriter:
         if ref.is_list():
             inner = GraphQLList(self._input_type_for_ref(ref.item))  # type: ignore[arg-type]
             return inner if ref.nullable else GraphQLNonNull(inner)
-        assert ref.name is not None
+        if ref.name is None:
+            return self._untyped()
         if ref.name in _BUILTIN_SCALARS:
             leaf: Any = _BUILTIN_SCALARS[ref.name]
         else:
@@ -800,11 +872,13 @@ class _GraphQlWriter:
         return name
 
     def _synthesized_input_fields(self, source: Type) -> Dict[str, GraphQLInputField]:
+        if not source.fields:
+            return {self._empty_record_placeholder(source): GraphQLInputField(GraphQLBoolean)}
         fields: Dict[str, GraphQLInputField] = {}
         for field in source.fields:
             default = field.default if field.default is not None else Undefined
             deprecation = (field.extras or {}).get("deprecation_reason")
-            fields[field.name] = GraphQLInputField(
+            fields[self._field_name(source, field.name)] = GraphQLInputField(
                 self._input_type_for_ref(field.type),
                 default_value=default,
                 description=field.description,
@@ -1017,7 +1091,8 @@ class _GraphQlWriter:
         """Derive a camelCase argument name from a request-body payload type."""
         if payload.name is None:
             return "input"
-        return _camel_case(payload.name)
+        # X1 (#6222): a dotted / URI payload key (`com.example.orders.Order`) is not a GraphQL name.
+        return _graphql_name(_camel_case(payload.name.rsplit(".", 1)[-1].rsplit("/", 1)[-1]), prefix="input")
 
     def _record_constraint_loss(self, field: CanonicalField) -> None:
         """Record when validation constraints are approximated as a custom scalar."""

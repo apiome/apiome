@@ -24,6 +24,7 @@ from .canonical_model import CanonicalApi
 from .emitter import (
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     Emitter,
     available_emit_formats,
@@ -244,7 +245,12 @@ def emit_canonical(
                 {**raw, "persisted_field_numbers": merged}
             )
 
-    result = emitter.emit(api, opts=options)
+    try:
+        result = emitter.emit(api, opts=options)
+    except EmitPreconditionError as exc:
+        # X1 (#6222): the source lacks what the target writes — a refusal with the emitter's
+        # reason (422), never a crash. `source_unsupported_reason` catches most of these first.
+        raise ExportError(str(exc), status_code=422) from exc
 
     if persistence is not None and result.field_identity_assignments:
         persist_field_number_assignments(

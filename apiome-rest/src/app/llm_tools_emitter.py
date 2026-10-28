@@ -74,6 +74,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -266,7 +267,7 @@ class _LlmToolsWriter:
             max_depth=DEFAULT_MAX_NESTING_DEPTH,
         )
         if not tools:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "LLM tool-array export requires at least one callable: a tool array "
                 "describes what an agent may invoke, and this model declares no "
                 "operation (and no record type) that survives the emit filter."
@@ -552,6 +553,8 @@ class LlmToolsEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an OpenAI / Anthropic / bare tool array."""
 
     key = LLM_TOOLS_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("callable",)
     format = LLM_TOOLS_FORMAT_KEY
     label = "LLM Tool Definitions"
     description = (

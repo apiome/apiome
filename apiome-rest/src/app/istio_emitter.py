@@ -252,6 +252,8 @@ class IstioEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as Istio ``VirtualService`` manifests."""
 
     key = ISTIO_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = ISTIO_FORMAT_KEY
     label = "Istio VirtualService"
     description = (

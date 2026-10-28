@@ -35,6 +35,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     LossKind,
@@ -370,7 +371,7 @@ class GatewayEmitPlan:
         self.declared_routes = gateway_sourced(api)
         document = plan_gateway_config(api, flavor=flavor, losses=self.losses, service_naming=service_naming)
         if not document.routes:
-            raise ValueError(
+            raise EmitPreconditionError(
                 f"{label} export requires at least one HTTP operation: a gateway configuration "
                 "is a routing surface, and a model with no operations has no route to declare."
             )

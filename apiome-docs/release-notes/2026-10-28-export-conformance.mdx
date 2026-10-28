@@ -1,0 +1,22 @@
+---
+slug: export-conformance
+title: Every format, every target, tested
+description: Exports that used to fail now succeed or say why they can't.
+authors: [apiome]
+---
+
+Every format Apiome imports is now exported to every target as a check on each change, and the
+exports that used to fail were fixed or refused with a reason.
+[How exports are tested](/ship/export-fidelity#how-exports-are-tested).
+
+{/* truncate */}
+
+- **Refused, with a reason.** Gateway, API-client and `.http` formats need an HTTP operation, and ODCS
+  and Kafka Connect need a record type. For a source without one, the card is greyed out with the
+  reason, and the API answers `422` with it. Before, those exports failed with an error.
+- **GraphQL** exports from sources whose names use dots, hyphens or URIs, with each rename listed in the
+  fidelity report. Empty records and unions over non-object types export too.
+- **Avro** exports from sources that use other formats' scalar names (`i32`, `uint64`, `decimal`) or
+  types that reference each other, with what it had to change listed.
+- **ASN.1** and **Kafka Connect** no longer fail on aliases, scalars, empty records or repeated field
+  names.

@@ -193,11 +193,12 @@ class _Asn1Writer:
             return self._render_enumerated(type_)
         if type_.kind is TypeKind.UNION:
             return self._render_choice(type_)
-        if type_.kind is TypeKind.ALIAS and type_.alias_of is not None:
-            element = self._render_type_ref(type_.alias_of)
-            return [f"  {type_.name} ::= SEQUENCE OF {element}"]
+        # X1 (#6222): the canonical ALIAS target is ``aliased`` and a SCALAR carries no base field
+        # (the old ``alias_of`` / ``scalar`` reads crashed every source with an alias or scalar).
+        if type_.kind is TypeKind.ALIAS and type_.aliased is not None:
+            return [f"  {type_.name} ::= {self._render_type_ref(type_.aliased)}"]
         if type_.kind is TypeKind.SCALAR:
-            asn1_type = _CANONICAL_TO_ASN1.get(type_.scalar or "", "UTF8String")
+            asn1_type = _CANONICAL_TO_ASN1.get(type_.name.lower(), "UTF8String")
             return [f"  {type_.name} ::= {asn1_type}"]
         self.losses.record(
             LossKind.NA,

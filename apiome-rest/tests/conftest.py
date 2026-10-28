@@ -47,6 +47,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         ),
     )
     parser.addoption(
+        "--update-export-conformance",
+        action="store_true",
+        default=False,
+        help=(
+            "Regenerate the X1 export conformance matrix and its silent-loss ledger "
+            "(tests/golden/export_conformance/, tests/export_conformance_ledger.py) instead of "
+            "comparing against them."
+        ),
+    )
+    parser.addoption(
         "--update-corpus-parity",
         action="store_true",
         default=False,

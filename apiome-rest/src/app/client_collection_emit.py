@@ -44,7 +44,7 @@ from .canonical_model import (
 )
 from .canonical_security import AUTH_SCHEME_HEADERS, operation_security_schemes
 from .client_collection import FOLDER_SEPARATOR, SECRET_NAME_RE, scrub_value
-from .emitter import CapabilityProfile, LossKind, LossTracker, Provenance, ProvenanceTracker
+from .emitter import CapabilityProfile, EmitPreconditionError, LossKind, LossTracker, Provenance, ProvenanceTracker
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .http_file_emitter import camel_case
 from .snippet_render import pick_content_type, request_message, resolve_server_base, synthesize_body
@@ -527,7 +527,7 @@ class _Planner:
                     self.tracker.record(f"/requests/{len(requests)}", Provenance.SOURCE, operation.key)
                     requests.append(planned)
         if not requests:
-            raise ValueError(
+            raise EmitPreconditionError(
                 f"{self.target_label} export requires at least one HTTP operation: a collection is a "
                 "set of saved requests, and a model with no HTTP binding has no request to save."
             )

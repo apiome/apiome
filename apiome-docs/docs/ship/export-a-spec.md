@@ -56,6 +56,12 @@ a source imported in that format: an EDI X12 interchange in the catalog exports 
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
 and an export request is refused with `422`.
 
+Formats that write HTTP routes or saved requests (Kong, Gateway API, Envoy, Istio, Traefik, Apigee,
+AWS API Gateway, Azure API Management, Hoppscotch, Thunder Client and the `.http` file) need at least
+one HTTP operation, and the data-contract formats (ODCS, Kafka Connect) need at least one record type.
+For a source without one, the card is greyed out with that reason; for example, a GraphQL schema with
+no HTTP bindings cannot become a Kong configuration.
+
 A format that needs a tool this deployment does not have installed is greyed out the same way, with
 the missing tool named on the card. It is never offered and then left to fail: an export to it is
 refused with `422` and the same reason before anything runs. `apiome export targets` shows the reason
