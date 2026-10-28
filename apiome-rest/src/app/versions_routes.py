@@ -25,6 +25,7 @@ from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
 from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
+from .version_retention import raise_if_pruned
 from .mock_bundle import BundleIdentity, build_bundle
 from .mock_callbacks import (
     callback_digests,
@@ -848,6 +849,8 @@ async def get_version(
                 "requestedRevisionId": version_record_id,
             },
         )
+        # MFI-31.5: a version that retention pruned answers 410 version-pruned, not 404.
+        raise_if_pruned(db, tenant_id, version_record_id, project_id)
         raise HTTPException(
             status_code=404,
             detail=f"Version not found: {version_record_id}",

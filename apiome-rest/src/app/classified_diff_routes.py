@@ -41,6 +41,7 @@ from .diff_blast_radius import (
 from .import_ingestion import IngestionError, parse_document
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
+from .version_retention import raise_if_pruned
 
 router = APIRouter(prefix="/v1/diff", tags=["classified-diff"])
 
@@ -258,7 +259,8 @@ def _resolve_version_row(
         Version row including ``id``, ``version_id``, ``project_id``.
 
     Raises:
-        HTTPException: 400 for empty ref; 404 when the revision cannot be found.
+        HTTPException: 400 for empty ref; 410 ``version-pruned`` when version retention pruned it
+            (MFI-31.5); 404 when the revision cannot be found.
     """
     requested = (version_ref or "").strip()
     if not requested:
@@ -282,6 +284,8 @@ def _resolve_version_row(
     if is_uuid_string(requested):
         row = db.get_version_by_id(requested, tenant_id)
         if not row or str(row.get("project_id")) != str(project_id):
+            if not row:
+                raise_if_pruned(db, tenant_id, requested)  # MFI-31.5: 410 version-pruned
             raise HTTPException(
                 status_code=404,
                 detail=f"Revision not found: {requested}",
@@ -290,6 +294,7 @@ def _resolve_version_row(
 
     row = db.get_version_by_version_id(project_id, requested, tenant_id)
     if not row:
+        raise_if_pruned(db, tenant_id, requested, project_id)  # MFI-31.5: 410 version-pruned
         raise HTTPException(
             status_code=404,
             detail=f"Version {requested!r} was not found for project {project_id!r}",

@@ -202,6 +202,7 @@ apiome catalog refresh set [OPTIONS] ITEM_ID
 | `--tls` / `--no-tls` | flag | `--no-tls` |  | gRPC only: open a TLS channel. |
 | `--auth-type` | text |  |  | Credential type: none, bearer, header, oauth2. Omit to keep the stored credential; none clears it. |
 | `--credentials-file` | text |  |  | JSON file with the credential fields (- for stdin), e.g. {"token": "…"}. |
+| `--keep-versions` | integer range |  |  | Keep the last N versions a refresh creates (1-1000; default 50). Tagged, breaking-drift and conversion-source versions are always kept. Omit to keep the stored value. |
 | `--format` | text | `table` |  | Output: table (default) or json (the API response). |
 
 ## apiome catalog refresh show {#catalog-refresh-show}

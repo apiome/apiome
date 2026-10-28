@@ -170,6 +170,32 @@ describe('CatalogDriftPanel', () => {
     expect(screen.getByTestId('catalog-drift-event-e-1')).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('compares with the nearest kept version when the baseline was pruned (MFI-31.5)', async () => {
+    const pruned = {
+      ...EVENT,
+      parentVersionPruned: true,
+      compareBaseVersionId: 'v-0',
+      compareBaseVersionLabel: '0.9.0',
+    };
+    mockFetch({ [`GET ${URL}`]: () => ({ body: { events: [pruned] } }) });
+    const onCompare = jest.fn();
+    render(<CatalogDriftPanel itemId="item-1" active requestedEventId="e-1" onCompare={onCompare} />);
+    expect(await screen.findByTestId('catalog-drift-pruned')).toHaveTextContent(
+      'Version 1.0.0 was pruned by version retention; comparing with 0.9.0.',
+    );
+    expect(screen.getByTestId('catalog-drift-facts')).toHaveTextContent('1.0.0 (pruned) → 2026-10-28T12:00Z');
+    await waitFor(() => expect(onCompare).toHaveBeenCalledWith({ base: 'v-0', head: 'v-2' }));
+  });
+
+  it('offers no compare when no earlier version is kept', async () => {
+    mockFetch({
+      [`GET ${URL}`]: () => ({ body: { events: [{ ...EVENT, parentVersionPruned: true, compareBaseVersionId: null }] } }),
+    });
+    render(<CatalogDriftPanel itemId="item-1" active requestedEventId={null} onCompare={jest.fn()} />);
+    await screen.findByTestId('catalog-drift-pruned');
+    expect(screen.queryByTestId('catalog-drift-compare')).toBeNull();
+  });
+
   it('says when the stored changes are capped', async () => {
     mockFetch({ [`GET ${URL}`]: () => ({ body: { events: [{ ...EVENT, changeCount: 250 }] } }) });
     render(<CatalogDriftPanel itemId="item-1" active requestedEventId={null} onCompare={jest.fn()} />);

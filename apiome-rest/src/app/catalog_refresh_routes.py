@@ -43,6 +43,7 @@ from .catalog_refresh import (
 from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .redacted_validation_route import RedactedValidationRoute
+from .version_retention import DEFAULT_KEEP_VERSIONS, MAX_KEEP_VERSIONS, MIN_KEEP_VERSIONS
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,17 @@ class CatalogRefreshUpdate(BaseModel):
         default_factory=dict, description="Adapter options; gRPC reads `secure` (TLS, default false)."
     )
     credential: Optional[CatalogRefreshCredential] = None
+    keep_versions: Optional[int] = Field(
+        default=None,
+        alias="keepVersions",
+        ge=MIN_KEEP_VERSIONS,
+        le=MAX_KEEP_VERSIONS,
+        description=(
+            "How many refresh-created versions to keep (MFI-31.5); older ones are pruned unless tagged, "
+            "a conversion source, breaking drift or its baseline, locked, or the newest. Leave out to keep "
+            "the stored value (50 for a new setting)."
+        ),
+    )
 
 
 class CatalogRefreshOut(BaseModel):
@@ -137,6 +149,11 @@ class CatalogRefreshOut(BaseModel):
         default=None,
         alias="nextCheckAt",
         description="When the sweep next checks the item (null for off / manual).",
+    )
+    keep_versions: int = Field(
+        default=DEFAULT_KEEP_VERSIONS,
+        alias="keepVersions",
+        description="Refresh-created versions kept; older ones are pruned (MFI-31.5).",
     )
     tenant_enabled: bool = Field(default=True, alias="tenantEnabled")
     cadences: list[str] = Field(default_factory=lambda: list(CADENCES))
@@ -206,6 +223,7 @@ def _out(item_id: str, row: Optional[Mapping[str, Any]], *, tenant_enabled: bool
         last_fingerprint=row.get("last_fingerprint"),
         consecutive_failures=int(row.get("consecutive_failures") or 0),
         next_check_at=_next_check_at(row),
+        keep_versions=int(row.get("keep_versions") or DEFAULT_KEEP_VERSIONS),
         tenant_enabled=tenant_enabled,
         adapters=adapters,
     )
@@ -377,6 +395,7 @@ async def put_catalog_item_refresh(
         options=body.options,
         credential=credential,
         user_id=actor_id,
+        keep_versions=body.keep_versions,
     )
     _audit(
         tenant_id,

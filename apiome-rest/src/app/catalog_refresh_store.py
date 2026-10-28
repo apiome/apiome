@@ -38,7 +38,8 @@ _PUBLIC_COLUMNS = """
     r.project_id, r.tenant_id, r.cadence, r.adapter_key, r.endpoint, r.options, r.auth_type,
     (r.encrypted_payload IS NOT NULL) AS has_credential,
     r.status, r.last_checked_at, r.last_success_at, r.last_failure_at, r.last_error,
-    r.last_fingerprint, r.consecutive_failures, r.next_check_after, r.created_at, r.updated_at
+    r.last_fingerprint, r.consecutive_failures, r.next_check_after, r.keep_versions,
+    r.created_at, r.updated_at
 """
 
 
@@ -96,6 +97,7 @@ def upsert_refresh(
     options: Mapping[str, Any],
     credential: Any = KEEP_CREDENTIAL,
     user_id: Optional[str] = None,
+    keep_versions: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Create or replace an item's refresh setting.
 
@@ -114,6 +116,8 @@ def upsert_refresh(
         credential: :data:`KEEP_CREDENTIAL` to keep the stored one; ``None`` to clear it; or a
             sealed ``(auth_type, encrypted_payload, key_version)`` tuple to replace it.
         user_id: The acting user, stamped as creator / updater.
+        keep_versions: How many refresh-created versions to keep (MFI-31.5); ``None`` keeps the
+            stored value (the default 50 for a new setting).
 
     Returns:
         The stored row, in the :func:`get_refresh` shape.
@@ -129,10 +133,11 @@ def upsert_refresh(
         WITH saved AS (
             INSERT INTO apiome.catalog_item_refresh AS r
               (project_id, tenant_id, cadence, adapter_key, endpoint, options,
-               auth_type, encrypted_payload, key_version, created_by, updated_by)
-            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s)
+               auth_type, encrypted_payload, key_version, created_by, updated_by, keep_versions)
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, COALESCE(%s, 50))
             ON CONFLICT (project_id) DO UPDATE SET
               cadence = EXCLUDED.cadence,
+              keep_versions = COALESCE(%s, r.keep_versions),
               options = EXCLUDED.options,
               auth_type = CASE WHEN %s THEN r.auth_type ELSE EXCLUDED.auth_type END,
               encrypted_payload = CASE WHEN %s THEN r.encrypted_payload ELSE EXCLUDED.encrypted_payload END,
@@ -168,6 +173,8 @@ def upsert_refresh(
             key_version,
             user_id,
             user_id,
+            keep_versions,
+            keep_versions,
             keep,
             keep,
             keep,

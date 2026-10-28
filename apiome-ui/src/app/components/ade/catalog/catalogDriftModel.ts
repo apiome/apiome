@@ -48,6 +48,11 @@ export interface CatalogDriftEvent extends CatalogDriftBadgeData {
   notification: DriftNotification;
   notifiedAt: string | null;
   dismissedAt: string | null;
+  /** The version it was compared with was pruned by version retention (MFI-31.5). */
+  parentVersionPruned?: boolean;
+  /** The version to diff against: the compared one while kept, else the newest kept earlier one. */
+  compareBaseVersionId?: string | null;
+  compareBaseVersionLabel?: string | null;
   /** Worst first; at most 200 (`changeCount` is the full count). */
   changes: CatalogDriftChange[];
 }
@@ -160,6 +165,34 @@ export function selectDriftEvent(events: readonly CatalogDriftEvent[], requested
   if (!events.length) return null;
   const requested = requestedId ? events.find((event) => event.eventId === requestedId) : undefined;
   return requested ?? events.find((event) => !event.dismissedAt) ?? events[0];
+}
+
+/**
+ * The two versions "Compare these versions" diffs (MFI-31.5): the event's version against the
+ * version REST says to compare with — the one it was graded against while it is kept, else the
+ * newest kept earlier version. Older answers without that field fall back to the parent.
+ *
+ * @param event The drift event.
+ * @returns `{ base, head }`, or `null` when there is no version to compare with.
+ */
+export function driftComparePair(event: CatalogDriftEvent): { base: string; head: string } | null {
+  const base = event.compareBaseVersionId !== undefined ? event.compareBaseVersionId : event.parentVersionId;
+  return base ? { base, head: event.versionId } : null;
+}
+
+/**
+ * The note shown when the graded-against version was pruned (MFI-31.5), or `null`.
+ *
+ * @param event The drift event.
+ * @returns e.g. "Version 2026-10-01T06:00Z was pruned by version retention; comparing with 1.0.0."
+ */
+export function driftPrunedNote(event: CatalogDriftEvent): string | null {
+  if (!event.parentVersionPruned) return null;
+  const pruned = event.parentVersionLabel ?? 'The earlier version';
+  const lead = event.parentVersionLabel ? `Version ${pruned}` : pruned;
+  return event.compareBaseVersionLabel
+    ? `${lead} was pruned by version retention; comparing with ${event.compareBaseVersionLabel}.`
+    : `${lead} was pruned by version retention, and no earlier version is kept to compare with.`;
 }
 
 /**

@@ -37,6 +37,8 @@ export interface CatalogRefresh {
   consecutiveFailures: number;
   /** When the sweep next checks the item; null for off / manual. */
   nextCheckAt: string | null;
+  /** Refresh-created versions kept; older ones are pruned (MFI-31.5). */
+  keepVersions?: number;
   /** False when the workspace switched catalog refresh off. */
   tenantEnabled: boolean;
   /** Adapters this deployment can refresh. */
@@ -183,7 +185,13 @@ export interface RefreshForm {
   secret: string;
   /** Header name for `header`. */
   headerName: string;
+  /** How many refresh-created versions to keep (MFI-31.5), as typed. */
+  keepVersions: string;
 }
+
+/** The default and the range of **Keep versions** (REST's). */
+export const REFRESH_KEEP_VERSIONS_DEFAULT = 50;
+export const REFRESH_KEEP_VERSIONS_MAX = 1000;
 
 /**
  * The form's starting values.
@@ -197,7 +205,16 @@ export interface RefreshForm {
 export function refreshFormFrom(refresh: CatalogRefresh | null): RefreshForm {
   const adapters = refresh?.adapters?.length ? refresh.adapters : ['graphql'];
   if (!refresh?.configured) {
-    return { adapter: adapters[0], endpoint: '', cadence: 'daily', secure: false, authType: 'none', secret: '', headerName: '' };
+    return {
+      adapter: adapters[0],
+      endpoint: '',
+      cadence: 'daily',
+      secure: false,
+      authType: 'none',
+      secret: '',
+      headerName: '',
+      keepVersions: String(REFRESH_KEEP_VERSIONS_DEFAULT),
+    };
   }
   return {
     adapter: refresh.adapter ?? adapters[0],
@@ -207,6 +224,7 @@ export function refreshFormFrom(refresh: CatalogRefresh | null): RefreshForm {
     authType: refresh.hasCredential ? 'keep' : 'none',
     secret: '',
     headerName: '',
+    keepVersions: String(refresh.keepVersions ?? REFRESH_KEEP_VERSIONS_DEFAULT),
   };
 }
 
@@ -222,6 +240,10 @@ export function refreshFormError(form: RefreshForm): string | null {
     return 'The endpoint must be an http:// or https:// URL.';
   }
   if (form.authType === 'header' && !form.headerName.trim()) return 'Enter the header name.';
+  const keep = Number(form.keepVersions.trim());
+  if (!Number.isInteger(keep) || keep < 1 || keep > REFRESH_KEEP_VERSIONS_MAX) {
+    return `Keep versions must be a whole number from 1 to ${REFRESH_KEEP_VERSIONS_MAX}.`;
+  }
   if ((form.authType === 'bearer' || form.authType === 'oauth2' || form.authType === 'header') && !form.secret) {
     return 'Enter the credential, or choose None.';
   }
@@ -242,6 +264,7 @@ export function refreshPayload(form: RefreshForm): Record<string, unknown> {
     adapter: form.adapter,
     endpoint: form.endpoint.trim(),
     options: form.adapter === 'grpc' ? { secure: form.secure } : {},
+    keepVersions: Number(form.keepVersions.trim()),
   };
   switch (form.authType) {
     case 'keep':

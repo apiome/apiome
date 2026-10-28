@@ -31,6 +31,7 @@ def refresh_body(
     secure: bool,
     auth_type: str | None,
     credentials: dict[str, str] | None,
+    keep_versions: int | None = None,
 ) -> dict[str, Any]:
     """The ``PUT …/refresh`` body.
 
@@ -44,6 +45,8 @@ def refresh_body(
         secure: gRPC only: open a TLS channel.
         auth_type: ``None`` to keep the stored credential, else one of :data:`AUTH_TYPES`.
         credentials: The credential fields read from the credentials file.
+        keep_versions: How many refresh-created versions to keep (MFI-31.5); ``None`` keeps the
+            stored value.
 
     Returns:
         The JSON body.
@@ -58,6 +61,8 @@ def refresh_body(
         "endpoint": endpoint.strip(),
         "options": {"secure": secure} if adapter == "grpc" else {},
     }
+    if keep_versions is not None:
+        body["keepVersions"] = keep_versions
     if auth_type is None:
         if credentials:
             raise ValueError("--credentials-file needs --auth-type (bearer, header or oauth2)")
@@ -97,6 +102,7 @@ def refresh_rows(refresh: dict[str, Any]) -> list[dict[str, str]]:
             },
             {"field": "Last checked", "value": refresh.get("lastCheckedAt") or "never"},
             {"field": "Next check", "value": refresh.get("nextCheckAt") or "—"},
+            {"field": "Keeps", "value": f"the last {refresh.get('keepVersions', 50)} refresh versions"},
         ]
         if refresh.get("adapter") == "grpc":
             rows.insert(4, {"field": "TLS", "value": "yes" if options.get("secure") else "no"})

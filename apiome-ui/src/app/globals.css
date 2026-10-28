@@ -23776,6 +23776,15 @@ button.cid-entity__head {
   color: var(--fg-muted);
 }
 
+.cid-drift-panel__pruned {
+  padding: var(--space-2);
+  border-inline-start: 2px solid var(--warn);
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
 .cid-drift-panel__sub,
 .cid-drift-panel__empty,
 .cid-drift-panel__more {

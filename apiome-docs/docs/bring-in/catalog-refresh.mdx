@@ -32,8 +32,10 @@ You need `projects:edit` (an **Editor** or **Owner**).
 4. In **Discover with**, choose **GraphQL introspection** or **gRPC server reflection**.
 5. In **Endpoint**, enter the live endpoint.
 6. In **Cadence**, choose how often Apiome checks it (see [Cadences](#cadences)).
-7. If the endpoint needs a credential, choose it in **Credential** and enter the token or header.
-8. **Click “Save”.**
+7. In **Keep versions**, choose how many versions refresh may keep (50 by default; see
+   [Version retention](#version-retention)).
+8. If the endpoint needs a credential, choose it in **Credential** and enter the token or header.
+9. **Click “Save”.**
 
 <Screenshot id="catalog-item-refresh-dialog" alt="The Live refresh dialog: Discover with GraphQL introspection, the endpoint URL, a Daily cadence and Keep current credential" />
 
@@ -80,7 +82,7 @@ credential**: pick another option only to replace or remove it.
 | **Paused for workspace** | An administrator switched catalog refresh off for the workspace |
 
 The card also shows the method, endpoint, cadence, credential, when the item was **Last
-checked**, and the **Next check**.
+checked**, the **Next check**, and how many refresh versions it **Keeps**.
 
 The first check compares the live API with the version you imported. If you imported the same
 schema, it reads **Up to date**.
@@ -153,6 +155,10 @@ The item page shows a banner above the tabs while it has drift:
 When an item has drifted more than once, pick a version from the row above the facts to see that
 drift. The link in an alert opens the same view.
 
+If [version retention](#version-retention) has pruned the version a drift was compared with,
+**Versions** marks it **(pruned)**, a note says so, and **Compare these versions** compares with the
+newest earlier version that is still kept. The graded changes are kept with the drift either way.
+
 ### Dismiss drift
 
 **Click “Dismiss”** on the banner to clear the banner and the badge for everyone. The drift and its
@@ -193,6 +199,24 @@ announced still shows its badge.
 
 **Email me about drift too** is saved for later: drift email is not sent yet.
 
+## Version retention
+
+A daily refresh of an API that keeps changing adds a version every day. **Keep versions** caps that:
+after each version refresh adds, Apiome keeps the newest N versions that refresh created and prunes
+the older ones. Pruning is a soft delete, like deleting a version yourself.
+
+These are never pruned:
+
+- versions you imported by hand (they do not count toward N either);
+- tagged versions;
+- versions a conversion to OpenAPI was made from;
+- versions whose drift was graded **Breaking**, and the version each was compared with;
+- locked versions;
+- the item's newest version.
+
+Opening or diffing a pruned version answers **410 Gone** with the code `version-pruned` and when it
+was pruned, rather than "not found".
+
 ## Change or stop refresh
 
 - To change the endpoint, cadence or credential, **click “Edit refresh…”**. A new endpoint or
@@ -223,6 +247,8 @@ input), never on the command line:
 apiome catalog refresh set <item-id> --adapter graphql \
   --endpoint https://api.example.com/graphql --cadence daily \
   --auth-type bearer --credentials-file token.json   # {"token": "…"}
+apiome catalog refresh set <item-id> --endpoint https://api.example.com/graphql --cadence daily \
+  --keep-versions 20                     # keep the newest 20 refresh versions
 apiome catalog refresh show <item-id>
 apiome catalog refresh check <item-id>   # exits 7 when the check failed
 apiome catalog refresh off <item-id> --yes
@@ -237,7 +263,8 @@ See [`apiome catalog`](../reference/cli/catalog.md) for every option.
 
 REST: `GET`, `PUT` and `DELETE /v1/catalog/{tenant}/{item}/refresh`,
 `POST /v1/catalog/{tenant}/{item}/refresh/check`, and `GET` and `PUT
-/v1/catalog/{tenant}/refresh-policy`. See the [Catalog refresh reference](../reference/rest/catalog-refresh.md).
+/v1/catalog/{tenant}/refresh-policy`. The setting's `keepVersions` (1–1000) sets
+[version retention](#version-retention). See the [Catalog refresh reference](../reference/rest/catalog-refresh.md).
 
 Drift: `GET /v1/catalog/{tenant}/{item}/drift`, `POST
 /v1/catalog/{tenant}/{item}/drift/{event}/dismiss`, and `GET` and `PUT

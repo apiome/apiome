@@ -22,6 +22,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/app/components/ui/Card'
 
 import { CatalogRefreshDialog } from './CatalogRefreshDialog';
 import {
+  REFRESH_KEEP_VERSIONS_DEFAULT,
   formatRefreshTime,
   refreshAdapterLabel,
   refreshCadenceLabel,
@@ -215,6 +216,10 @@ export function CatalogItemRefreshCard({ item, active, canEdit }: CatalogItemRef
                 ) : null}
                 <dt>Next check</dt>
                 <dd>{refreshNextCheckText(refresh)}</dd>
+                <dt>Keeps</dt>
+                <dd data-testid="catalog-detail-refresh-keep">
+                  The newest {refresh.keepVersions ?? REFRESH_KEEP_VERSIONS_DEFAULT} refresh versions
+                </dd>
               </>
             ) : (
               <>

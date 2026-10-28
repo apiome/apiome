@@ -25,6 +25,9 @@ hit behave exactly like a manual re-import of the discovered document, with no p
 4. **Drift (MFI-31.3).** The change is classified safe / dangerous / breaking and recorded as a
    drift event (:mod:`app.catalog_drift_service`): the catalog badge and banner show it, and the
    tenant's drift alert settings decide whether it is announced now, in the daily digest, or not.
+5. **Retention (MFI-31.5).** Refresh-created versions beyond the setting's ``keep_versions`` are
+   pruned (:mod:`app.version_retention`), after the drift is recorded so a breaking version is
+   already protected.
 
 An item that was deleted, or is not a catalog item, fails the check (``item-unavailable``) and
 nothing is written. A failure anywhere before the pipeline commits fails the check the same way, so
@@ -293,6 +296,16 @@ def apply_refresh_to_catalog(
             trigger=trigger,
             actor_id=actor,
         )
+    # MFI-31.5: keep the newest `keep_versions` refresh-created versions (best-effort).
+    from .version_retention import DEFAULT_KEEP_VERSIONS, prune_refresh_versions_safely
+
+    prune_refresh_versions_safely(
+        db,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        keep=int(row.get("keep_versions") or DEFAULT_KEEP_VERSIONS),
+        actor_id=actor,
+    )
     _logger.info(
         "catalog refresh created version project_id=%s version=%s trigger=%s",
         project_id,

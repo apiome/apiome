@@ -186,6 +186,14 @@ def set_refresh(
         "--credentials-file",
         help='JSON file with the credential fields (- for stdin), e.g. {"token": "…"}.',
     ),
+    keep_versions: int | None = typer.Option(
+        None,
+        "--keep-versions",
+        min=1,
+        max=1000,
+        help="Keep the last N versions a refresh creates (1-1000; default 50). Tagged, breaking-drift and "
+        "conversion-source versions are always kept. Omit to keep the stored value.",
+    ),
     output_format: str = _format_option(),
 ) -> None:
     """Create or replace an item's refresh setting (PUT …/refresh).
@@ -208,6 +216,7 @@ def set_refresh(
             secure=secure,
             auth_type=auth_type,
             credentials=credentials,
+            keep_versions=keep_versions,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--credentials-file") from exc
