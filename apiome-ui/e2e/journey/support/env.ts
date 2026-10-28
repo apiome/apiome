@@ -12,6 +12,7 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { UNRELEASED_FEATURE_IDS } from '../../../lib/feature-release';
 
 /** Port the journey's Next.js dev server listens on (distinct from the usual 3000). */
 export const UI_PORT = Number(process.env.JOURNEY_UI_PORT || 3100);
@@ -172,4 +173,29 @@ function passThrough(keys: readonly string[]): Record<string, string> {
  */
 export function catalogJourneyServerEnv(): Record<string, string> {
   return { ...journeyServerEnv(), NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: '' };
+}
+
+/**
+ * The preview override the Catalog Exporter journey (X2, #6223) runs with: `export-studio` while
+ * the studio is held back, nothing once it is released. Derived from the release gate itself, so
+ * removing `export-studio` from `UNRELEASED_FEATURE_IDS` moves the journey onto released surfaces
+ * with no other edit (the workflow's build value is pinned to this by a unit test).
+ */
+export const CATALOG_EXPORTER_PREVIEW: string = (UNRELEASED_FEATURE_IDS as readonly string[]).includes(
+  'export-studio'
+)
+  ? 'export-studio'
+  : '';
+
+/**
+ * The environment the Catalog Exporter journey's server boots with (X2, #6223).
+ *
+ * {@link journeyServerEnv} with the preview override set to exactly {@link CATALOG_EXPORTER_PREVIEW}:
+ * only the studio is opened early, and every other held-back feature (`connectors`, `sdk-settings`,
+ * `schema-registry`, `mcp`, …) stays hidden — the journey's first step proves it.
+ *
+ * @returns The app-under-test environment.
+ */
+export function catalogExporterJourneyServerEnv(): Record<string, string> {
+  return { ...journeyServerEnv(), NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: CATALOG_EXPORTER_PREVIEW };
 }

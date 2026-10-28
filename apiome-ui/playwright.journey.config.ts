@@ -23,7 +23,7 @@ import {
 export default defineConfig({
   testDir: './e2e/journey',
   // The Catalog → Project journey (RC6-H1) runs with no preview override, under its own config.
-  testIgnore: ['catalog-project-journey.spec.ts'],
+  testIgnore: ['catalog-project-journey.spec.ts', 'catalog-exporter-journey.spec.ts'],
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,

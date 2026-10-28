@@ -185,7 +185,7 @@ flowchart LR
 | E1-5 Emitted-artifact lint (MFX-5.2) ✅ | [#3853](https://github.com/apiome/apiome/issues/3853) (existing, moved to E1) |
 | E1-6 Target availability and the missing-source path ✅ | [#6221](https://github.com/apiome/apiome/issues/6221) |
 | X1 Conformance matrix ✅ | [#6222](https://github.com/apiome/apiome/issues/6222) |
-| X2 Journey in CI | [#6223](https://github.com/apiome/apiome/issues/6223) |
+| X2 Journey in CI ✅ | [#6223](https://github.com/apiome/apiome/issues/6223) |
 | X3 Accessibility | [#6224](https://github.com/apiome/apiome/issues/6224) |
 | X4 Permissions | [#6225](https://github.com/apiome/apiome/issues/6225) |
 | X5 Limits | [#6226](https://github.com/apiome/apiome/issues/6226) |

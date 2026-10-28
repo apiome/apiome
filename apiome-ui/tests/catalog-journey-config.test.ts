@@ -22,10 +22,17 @@ import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
 import { isFeatureReleased, UNRELEASED_FEATURE_IDS } from '../lib/feature-release';
-import { catalogJourneyServerEnv, journeyServerEnv } from '../e2e/journey/support/env';
+import {
+  CATALOG_EXPORTER_PREVIEW,
+  catalogExporterJourneyServerEnv,
+  catalogJourneyServerEnv,
+  journeyServerEnv,
+} from '../e2e/journey/support/env';
 
 const ROOT = join(__dirname, '..');
 const SPEC = join(ROOT, 'e2e', 'journey', 'catalog-project-journey.spec.ts');
+const EXPORTER_SPEC = join(ROOT, 'e2e', 'journey', 'catalog-exporter-journey.spec.ts');
+const EXPORTER_SUPPORT = join(ROOT, 'e2e', 'journey', 'support', 'catalog-export.ts');
 const WORKFLOW = join(ROOT, '..', '.github', 'workflows', 'e2e-catalog-journey.yml');
 
 /** Every `.ts` / `.tsx` source under `src/`, read once. */
@@ -37,6 +44,36 @@ function sourceText(directory: string = join(ROOT, 'src')): string {
       return /\.tsx?$/.test(entry) ? readFileSync(path, 'utf8') : '';
     })
     .join('\n');
+}
+
+/**
+ * The test ids a spec waits on that `src/` no longer draws.
+ *
+ * @param spec The spec (and helper) text.
+ * @returns The missing ids (empty when every id is still drawn) and how many were checked.
+ */
+function missingTestIds(spec: string): { missing: string[]; checked: number } {
+  const source = sourceText();
+  const ids = [...spec.matchAll(/getByTestId\(\s*(['`])([^'`]+)\1/g)].map((match) => match[2]);
+  const prefixes = [...spec.matchAll(/\[data-testid\^="([^"]+)"\]/g)].map((match) => match[1]);
+  const missing = [
+    ...ids.map((id) => {
+      // `versions-row-menu-${versionRecordId}` → the app draws `versions-row-menu-${version.id}`.
+      const prefix = id.split('${')[0];
+      if (prefix === '') return null;
+      if (id.includes('${')) return source.includes(`data-testid={\`${prefix}`) ? null : id;
+      // A literal id is drawn as written, or built from a template whose stem it starts with
+      // (`catalog-import-source-${tile.method}` draws `catalog-import-source-paste`).
+      const stem = id.slice(0, id.lastIndexOf('-') + 1);
+      const drawn =
+        source.includes(`data-testid="${id}"`) ||
+        source.includes(`'${id}'`) ||
+        (stem !== '' && source.includes(`\`${stem}\${`));
+      return drawn ? null : id;
+    }),
+    ...prefixes.map((prefix) => (source.includes(`data-testid={\`${prefix}`) ? null : prefix)),
+  ].filter((id): id is string => Boolean(id));
+  return { missing, checked: ids.length };
 }
 
 describe('the journey server environment', () => {
@@ -79,7 +116,7 @@ describe('the Playwright configs', () => {
   });
 
   it('keeps the journey out of the OLO config, which turns every preview on', () => {
-    expect(read('playwright.journey.config.ts')).toContain("testIgnore: ['catalog-project-journey.spec.ts']");
+    expect(read('playwright.journey.config.ts')).toMatch(/testIgnore: \[[^\]]*'catalog-project-journey\.spec\.ts'/);
   });
 
   it('has a package script', () => {
@@ -126,28 +163,65 @@ describe('the journey spec', () => {
   });
 
   it('waits only on test ids the app still draws', () => {
-    const source = sourceText();
-    const ids = [...spec.matchAll(/getByTestId\(\s*(['`])([^'`]+)\1/g)].map((match) => match[2]);
-    const prefixes = [...spec.matchAll(/\[data-testid\^="([^"]+)"\]/g)].map((match) => match[1]);
-    expect(ids.length).toBeGreaterThan(20);
+    const { missing, checked } = missingTestIds(spec);
+    expect(checked).toBeGreaterThan(20);
+    expect(missing).toEqual([]);
+  });
+});
 
-    const missing = [
-      ...ids.map((id) => {
-        // `versions-row-menu-${versionRecordId}` → the app draws `versions-row-menu-${version.id}`.
-        const prefix = id.split('${')[0];
-        if (prefix === '') return null;
-        if (id.includes('${')) return source.includes(`data-testid={\`${prefix}`) ? null : id;
-        // A literal id is drawn as written, or built from a template whose stem it starts with
-        // (`catalog-import-source-${tile.method}` draws `catalog-import-source-paste`).
-        const stem = id.slice(0, id.lastIndexOf('-') + 1);
-        const drawn =
-          source.includes(`data-testid="${id}"`) ||
-          source.includes(`'${id}'`) ||
-          (stem !== '' && source.includes(`\`${stem}\${`));
-        return drawn ? null : id;
-      }),
-      ...prefixes.map((prefix) => (source.includes(`data-testid={\`${prefix}`) ? null : prefix)),
-    ].filter(Boolean);
+describe('the Catalog Exporter journey (X2, #6223)', () => {
+  const read = (name: string) => readFileSync(join(ROOT, name), 'utf8');
+  const spec = readFileSync(EXPORTER_SPEC, 'utf8') + readFileSync(EXPORTER_SUPPORT, 'utf8');
+  const saved = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...saved };
+  });
+
+  it('opens the Export studio while it is held back, and nothing else', () => {
+    const held = (UNRELEASED_FEATURE_IDS as readonly string[]).includes('export-studio');
+    expect(CATALOG_EXPORTER_PREVIEW).toBe(held ? 'export-studio' : '');
+    process.env.DATABASE_URL = 'postgresql://journey:journey@localhost:5432/apiome';
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
+    const preview = catalogExporterJourneyServerEnv().NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect(preview).toBe(CATALOG_EXPORTER_PREVIEW);
+    for (const id of UNRELEASED_FEATURE_IDS) {
+      expect(isFeatureReleased(id, preview)).toBe(id === 'export-studio');
+    }
+  });
+
+  it('runs alone under its own config, and the OLO config never runs it', () => {
+    const config = read('playwright.catalog-exporter-journey.config.ts');
+    expect(config).toContain("testMatch: 'catalog-exporter-journey.spec.ts'");
+    expect(config).toContain('env: catalogExporterJourneyServerEnv()');
+    expect(read('playwright.journey.config.ts')).toContain("'catalog-exporter-journey.spec.ts'");
+    const { scripts } = JSON.parse(read('package.json')) as { scripts: Record<string, string> };
+    expect(scripts['test:e2e:catalog-exporter-journey']).toBe(
+      'playwright test --config playwright.catalog-exporter-journey.config.ts'
+    );
+  });
+
+  it('is built and run in CI with the same preview value the server uses', () => {
+    const workflow = parseYaml(readFileSync(WORKFLOW, 'utf8')) as {
+      jobs: { exporter: { env: Record<string, string>; steps: { run?: string; env?: Record<string, string> }[] } };
+    };
+    const { env, steps } = workflow.jobs.exporter;
+    expect(env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES).toBe(CATALOG_EXPORTER_PREVIEW);
+    const build = steps.findIndex((step) => step.run === 'yarn build');
+    const run = steps.findIndex((step) => step.run === 'yarn test:e2e:catalog-exporter-journey');
+    expect(build).toBeGreaterThan(-1);
+    expect(run).toBeGreaterThan(build);
+    expect(steps[run].env?.CATALOG_EXPORTER_JOURNEY_USE_BUILD).toBe('1');
+  });
+
+  it('waits on screens, never on a clock, and sets no preview of its own', () => {
+    expect(spec).not.toMatch(/waitForTimeout|setTimeout|\bsleep\(/);
+    expect(spec).not.toMatch(/NEXT_PUBLIC_APIOME_PREVIEW_FEATURES\s*[:=]/);
+  });
+
+  it('waits only on test ids the app still draws', () => {
+    const { missing, checked } = missingTestIds(spec);
+    expect(checked).toBeGreaterThan(20);
     expect(missing).toEqual([]);
   });
 });
