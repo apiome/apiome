@@ -15,6 +15,9 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { axe } from 'jest-axe';
+import 'jest-axe/extend-expect';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -48,6 +51,8 @@ import { __resetVerifyCacheForTests } from '../src/app/components/ade/dashboard/
 import { buildZip } from '../src/app/components/ade/dashboard/export/zipBundle';
 import type { ExportTargetsResponse } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../src/app/components/ade/dashboard/export/exportFidelityPreview';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { tabTo } from './helpers/keyboard';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 const TARGETS: ExportTargetsResponse = {
@@ -1609,5 +1614,153 @@ describe('ExportStudio — emitted-version badge (FMT-3.2)', () => {
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     expect(screen.queryByTestId('export-target-dialect-openapi')).not.toBeInTheDocument();
     expect(screen.queryByTestId('export-fidelity-headline-dialect')).not.toBeInTheDocument();
+  });
+});
+
+describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)', () => {
+  /** The Studio's footer button for the current step, by its accessible name. */
+  const footer = (name: RegExp) => screen.getByRole('button', { name });
+
+  it('exports a lossless target end to end with the keyboard alone', async () => {
+    const user = userEvent.setup();
+    await renderStudio(mockFetch());
+
+    // Source → Target.
+    await tabTo(user, footer(/choose target/i));
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('export-studio-step-target')).toHaveAttribute('data-state', 'current');
+
+    // Pick a card from the grid; the card says it is picked.
+    const card = screen.getByRole('button', { name: /OpenAPI 3\.1/, pressed: false });
+    await tabTo(user, card);
+    await user.keyboard('{Enter}');
+    expect(card).toHaveAttribute('aria-pressed', 'true');
+
+    // Target → Options → Verify.
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
+
+    // Verify, then on to Review.
+    await tabTo(user, screen.getByTestId('verify-run'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'clean'));
+    await tabTo(user, footer(/continue to review/i));
+    await user.keyboard('{Enter}');
+
+    // Generate, then download the file.
+    await tabTo(user, screen.getByTestId('export-studio-generate'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+    await tabTo(user, footer(/download petstore\.json/i));
+    await user.keyboard('{Enter}');
+    expect(URL.createObjectURL).toHaveBeenCalled();
+  });
+
+  it('types options and acknowledges a lossy conversion with the keyboard alone', async () => {
+    const user = userEvent.setup();
+    await renderStudio(mockFetch(), { initialTarget: 'proto' });
+    await tabTo(user, footer(/choose target/i));
+    await user.keyboard('{Enter}');
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
+
+    // The required Package option, typed.
+    await tabTo(user, screen.getByLabelText(/Package/i));
+    await user.keyboard('com.example');
+    expect(screen.getByLabelText(/Package/i)).toHaveValue('com.example');
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
+
+    await tabTo(user, screen.getByTestId('verify-run'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toHaveAttribute('data-verdict', 'lossy'));
+    expect(footer(/continue to review/i)).toBeDisabled();
+
+    // "Export anyway" is a checkbox: Space ticks it and opens the gate.
+    await tabTo(user, within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    await user.keyboard(' ');
+    expect(footer(/continue to review/i)).toBeEnabled();
+    await tabTo(user, footer(/continue to review/i));
+    await user.keyboard('{Enter}');
+    await tabTo(user, screen.getByTestId('export-studio-generate'));
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+  });
+
+  it('moves focus to the named step panel on every step, and Back walks it home', async () => {
+    const user = userEvent.setup();
+    await renderStudio(mockFetch(), { initialTarget: 'openapi' });
+    await tabTo(user, footer(/choose target/i));
+    await user.keyboard('{Enter}');
+    expect(document.activeElement).toHaveAccessibleName('Step 2 of 5: Target');
+
+    await tabTo(user, footer(/^back$/i));
+    await user.keyboard('{Enter}');
+    expect(document.activeElement).toHaveAccessibleName('Step 1 of 5: Source');
+  });
+
+  /**
+   * The browser fixtures for the axe gate (`e2e/a11y/routes.ts`, entry `export-e1`).
+   *
+   * The Source and Target steps are dumped by `tests/export-studio-hive-redesign.test.tsx`; the
+   * other three steps need this file's full backend (verify, jobs, the artifact download), so they
+   * are dumped here into `e2e/fixtures/hive-a11y/` when `A11Y_FIXTURE_DUMP=1`:
+   *
+   *     A11Y_FIXTURE_DUMP=1 npx jest tests/ExportStudio.test.tsx -t "a11y gate"
+   */
+  describe('the a11y gate fixtures', () => {
+    /** The page column the shell would put the Studio in. */
+    const pageColumn = () => document.querySelector('.page') as HTMLElement;
+
+    /**
+     * axe in jsdom at the browser gate's bar — serious and critical only. Contrast and landmarks
+     * need a real renderer; the browser gate reads these dumps for those.
+     */
+    const AXE_OPTIONS = {
+      rules: { 'color-contrast': { enabled: false }, region: { enabled: false } },
+      impactLevels: ['serious', 'critical'],
+    } as const;
+
+    /** Assert the surface is axe clean in jsdom, then write its fixture. */
+    async function checkAndDump(name: string) {
+      expect(await axe(pageColumn(), AXE_OPTIONS)).toHaveNoViolations();
+      writeA11yFixture(name, liveMarkup(pageColumn()));
+    }
+
+    /** Drive proto to the Verify step with its Package typed. */
+    async function toVerify() {
+      await renderStudio(mockFetch(), { initialTarget: 'proto' });
+      fireEvent.click(footer(/choose target/i));
+      fireEvent.click(footer(/^continue$/i));
+      fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
+    }
+
+    it('dumps the Options step with its generated form', async () => {
+      await toVerify();
+      await checkAndDump('export-studio-options');
+    });
+
+    it('dumps the Verify step with its three lenses and the acknowledgement', async () => {
+      await toVerify();
+      fireEvent.click(footer(/^continue$/i));
+      fireEvent.click(screen.getByTestId('verify-run'));
+      await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByTestId('projection-table')).toBeInTheDocument());
+      await checkAndDump('export-studio-verify');
+    });
+
+    it('dumps the Review step after Generate', async () => {
+      await toVerify();
+      fireEvent.click(footer(/^continue$/i));
+      fireEvent.click(screen.getByTestId('verify-run'));
+      await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+      fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+      fireEvent.click(footer(/continue to review/i));
+      fireEvent.click(screen.getByTestId('export-studio-generate'));
+      await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+      await checkAndDump('export-studio-review');
+    });
   });
 });

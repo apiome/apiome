@@ -60,6 +60,8 @@ goes back:
 | `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — **Recent runs**, the connector sentences, the **Backstage files** section and the `repositories` alt text | `connectors`, `dependency-graph`, `catalog-entities` |
 | `fragments/ship/published.owner.mdx` | `docs/ship/published.mdx` — the **Owner** column row and the owner filter sentence | `teams` |
 | `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
+| `fragments/workspace/keyboard.export-studio.mdx` | `docs/workspace/keyboard.md` — the **Export to another format** primary task, after **Cut, publish or export a version** | `export-studio` |
+| `fragments/workspace/accessibility.export-studio.mdx` | `docs/workspace/accessibility.md` — the **Export studio** gate table, after **Catalog, Projects and Versions** | `export-studio` |
 
 **Screenshots** — `unreleased/screens.json` holds the manifest entries (same `{"screens": [...]}`
 shape as `../screens.json`) and `unreleased/static/img/screens/` their light and dark images:

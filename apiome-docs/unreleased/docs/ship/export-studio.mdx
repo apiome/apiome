@@ -202,6 +202,36 @@ One export takes at most 100 items. The studio is not involved, and no item beco
 
 **Recent export jobs**, under every step, lists earlier jobs with their state, target and progress.
 
+## With the keyboard
+
+Every step works without a mouse. `Tab` and `Shift`+`Tab` move between controls; `↵` presses a
+button (buttons also take `Space`); `Space` ticks a checkbox or picks a radio.
+
+1. **Source** — opened without a source, `Tab` to the **Catalog items** tab and use `←` `→` to
+   switch to **Projects**. `Tab` to the search box and type, then `Tab` to an item and press `↵`.
+   For a project, press `↵` on it, then on a version or **Latest version**; **All projects** goes back.
+   With a source, `Tab` to **“Choose target”** and press `↵`.
+2. **Target** — `Tab` through the target cards and press `↵` on one; the card reads as pressed.
+   For several targets, press `Space` on **Several targets**, then `Space` on each target.
+   `Tab` to **“Continue”** and press `↵`.
+3. **Options** — `Tab` through the fields and type; then `↵` on **“Continue”**.
+4. **Verify** — press `↵` on **“Run verification”**. `←` `→` move between the result tabs. For a
+   lossy conversion, `Tab` to **I understand this conversion is lossy and want to export anyway**
+   and press `Space` (a types-only conversion asks you to type the phrase shown instead). Then `↵`
+   on **“Continue to review”**.
+5. **Review & Generate** — press `↵` on **“Generate”**, then on **“Download .zip”** or the file's
+   **Download** button.
+
+Each time the step changes, focus moves to the new step, which is read as *Step N of 5* and its name.
+`↵` on **“Back”** returns to the step before.
+
+In the Catalog's **Export *n*…** dialog, focus starts inside the dialog and `Tab` stays there.
+`Space` picks the target; `↵` on **“Generate”**, then on **“Download .zip”**. `Esc` or **“Close”**
+closes the dialog and puts focus back on **Export *n*…**.
+
+Every step, the source picker, the target grid and the bulk dialog are checked by the
+[accessibility gate](../workspace/accessibility.md) in the light, dark and high-contrast themes.
+
 ## With the CLI or the API
 
 - CLI: `apiome export targets`, `apiome export preflight`, `apiome export evidence --target <format>`

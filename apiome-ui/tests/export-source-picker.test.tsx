@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
@@ -22,6 +23,8 @@ import {
   selectableProjects,
   selectableVersions,
 } from '../src/app/components/ade/export-studio/exportSourcePicker';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { tabTo } from './helpers/keyboard';
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -189,5 +192,64 @@ describe('ExportSourcePicker', () => {
     fail = false;
     fireEvent.click(screen.getByRole('button', { name: /try again|retry/i }));
     await waitFor(() => expect(screen.getByTestId('export-source-catalog')).toBeInTheDocument());
+  });
+});
+
+// --- keyboard-only and the a11y gate (X3, #6224) -------------------------------------------------
+
+describe('ExportSourcePicker with the keyboard alone (X3)', () => {
+  it('searches and opens a catalog item without a pointer', async () => {
+    mockFetch(OK);
+    const user = userEvent.setup();
+    render(<ExportSourcePicker />);
+    await screen.findByTestId('export-source-catalog');
+
+    await tabTo(user, screen.getByRole('searchbox', { name: 'Search catalog items' }));
+    await user.keyboard('orders');
+    await tabTo(user, screen.getByRole('button', { name: 'Export catalog item Orders RPC' }));
+    await user.keyboard('{Enter}');
+    expect(mockPush).toHaveBeenCalledWith(catalogSourceHref(CATALOG[0]));
+  });
+
+  it('switches to Projects with the arrow keys, then opens a version', async () => {
+    mockFetch(OK);
+    const user = userEvent.setup();
+    render(<ExportSourcePicker />);
+    await screen.findByTestId('export-source-catalog');
+
+    await tabTo(user, screen.getByRole('tab', { name: 'Catalog items' }));
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Projects' })).toHaveAttribute('aria-selected', 'true');
+
+    await tabTo(user, await screen.findByRole('button', { name: 'Choose a version of Pets API' }));
+    await user.keyboard('{Enter}');
+    await tabTo(user, await screen.findByRole('button', { name: 'Export Pets API version 1.1.0' }));
+    await user.keyboard(' ');
+    expect(mockPush).toHaveBeenLastCalledWith(projectSourceHref(PROJECTS[0], VERSIONS[1]));
+
+    // "All projects" goes back without a pointer too.
+    await tabTo(user, screen.getByTestId('export-source-change-project'), { backwards: true });
+    await user.keyboard('{Enter}');
+    expect(await screen.findByTestId('export-source-projects')).toBeInTheDocument();
+  });
+
+  /**
+   * The browser fixtures for the axe gate (`e2e/a11y/routes.ts`, entry `export-e1`), written into
+   * `e2e/fixtures/hive-a11y/` when `A11Y_FIXTURE_DUMP=1`:
+   *
+   *     A11Y_FIXTURE_DUMP=1 npx jest tests/export-source-picker.test.tsx -t "a11y gate"
+   */
+  it('dumps the catalog list and a project\'s versions for the a11y gate', async () => {
+    mockFetch(OK);
+    const { container } = render(<ExportSourcePicker />);
+    await screen.findByTestId('export-source-catalog');
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('export-source-picker', liveMarkup(container.firstElementChild as Element));
+
+    openTab('Projects');
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose a version of Pets API' }));
+    await screen.findByTestId('export-source-versions');
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('export-source-picker-versions', liveMarkup(container.firstElementChild as Element));
   });
 });

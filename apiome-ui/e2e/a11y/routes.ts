@@ -228,6 +228,28 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: null,
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['backstage-import-report.html', 'import-wizard-compass.html'] },
   },
+  {
+    // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
+    // the several-targets Verify and the bulk dialog after a run are gated with the whole
+    // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the
+    // other three steps, dumped by `tests/ExportStudio.test.tsx`, the source picker (both of its
+    // lists), dumped by `tests/export-source-picker.test.tsx`, and the bulk Export… dialog with a
+    // target picked, dumped by `tests/export-multi.test.tsx`. No file is exempt.
+    id: 'export-e1',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: [
+        'export-studio-options.html',
+        'export-studio-verify.html',
+        'export-studio-review.html',
+        'export-source-picker.html',
+        'export-source-picker-versions.html',
+        'export-bulk-pick.html',
+      ],
+    },
+  },
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },

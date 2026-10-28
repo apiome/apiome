@@ -14,6 +14,11 @@ import { pinAppearance } from '../support/a11y';
  *
  * The task-by-task keyboard paths these checks stand behind are documented in
  * `apiome-docs/docs/workspace/keyboard.md`.
+ *
+ * Surfaces that need a session are walked in jsdom instead, Tab by Tab (`tests/helpers/keyboard.ts`):
+ * the Export studio's five steps, several targets, the source picker, and the Catalog's bulk
+ * Export… dialog with its focus restore (X3, #6224) — `tests/ExportStudio.test.tsx`,
+ * `tests/export-source-picker.test.tsx` and `tests/export-multi.test.tsx`.
  */
 
 test.use({ viewport: { width: 1280, height: 900 } });
