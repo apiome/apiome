@@ -25,6 +25,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Every file in the .zip — exporting to a format that writes several files (an Avro or Protobuf schema set, for example) from the **Export** dialog now puts every file in **Download all files (.zip)**, with a `manifest.json` listing them; before, the .zip held only the main file. Single-file formats are unchanged
   - Safer downloads — an exported file named in any script (`注文-api.jtd.json`) now downloads under its own name instead of failing, and every file and folder in a download stays inside the folder you unpack it into, whatever names the source uses
   - Protobuf and Thrift from OpenAPI — exporting an OpenAPI project to Protobuf or Thrift now writes files that compile: `integer`, `number` and `boolean` fields become `int32`/`int64`, `double`/`float` and `bool` (the schema's `format` picks the width), and Thrift fields get their own ids instead of all being `1`
+  - Stable Thrift field ids — exporting an item to Thrift again keeps every field's id, like Protobuf; a field added later gets a new id, and an id of a removed field is never reused
   - Export guides — **Help & docs** finds the **Export studio** guide again and a new **Export catalog items** guide: the **Export** dialog, the studio, bulk export from the Catalog and the CLI side by side, with each target's fidelity tier for a REST API, an RPC service, an event API and a set of types
 - API Formats:
   - Adds formats:

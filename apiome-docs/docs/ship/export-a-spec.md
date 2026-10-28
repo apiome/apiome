@@ -98,8 +98,12 @@ An OpenAPI schema's `type` and `format` become the target's own scalar types:
 | `boolean` | `bool` | `bool` |
 | `string` | `string` | `string` |
 
-OpenAPI has no field numbers, so each field is numbered in the order the schema lists it: `1`, `2`,
-`3` and so on. A source that has its own numbers, such as a Protobuf or Thrift import, keeps them.
+OpenAPI has no field numbers, so the first export numbers each field in the order the schema lists
+it: `1`, `2`, `3` and so on. Apiome remembers those numbers for the item, so every later export to
+the same format gives each field the same number, even after fields are added, removed or
+reordered. A field added since gets the next number not used yet. The fidelity report lists every
+number Apiome assigned as *synthesized*. A source that has its own numbers, such as a Protobuf or
+Thrift import, keeps them.
 
 | Format | Kind | Exports from |
 | --- | --- | --- |

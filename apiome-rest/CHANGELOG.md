@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.502.0] - 2026-10-28
+
+### Added
+- **Stable Thrift field ids across re-exports (MFX-25.2, #4152).** Thrift now uses the MFX-12.2 field-identity store
+  (`apiome.export_field_identities`) under its own target key `thrift`: `ThriftEmitOptions.persisted_field_numbers`
+  carries the stored ids, a re-export writes identical ids, a new field gets a fresh id, and `EmitResult.field_identity_
+  assignments` returns the new ones, which `emit_canonical` persists for every export path that passes an
+  `ExportPersistenceContext`. Each assigned id is an `INFERRED` loss (`synthesized-field-number`) with `INFERRED`
+  provenance, and the fidelity report lists it as `SYNTH`. No migration: `target` is free text.
+
+### Fixed
+- **Field-number allocation never repeats or recycles a number (Protobuf and Thrift).** `FieldNumberAllocator` no
+  longer reuses a stored number that the source has since given to another field, or that a second stored entry
+  already took (the field gets a fresh number, written back), and never hands a new field the number stored for a
+  field the message no longer has.
+
 ## [1.501.0] - 2026-10-28
 
 ### Fixed
