@@ -202,6 +202,27 @@ One export takes at most 100 items. The studio is not involved, and no item beco
 
 **Recent export jobs**, under every step, lists earlier jobs with their state, target and progress.
 
+## Who can export
+
+Every member of a workspace can use the whole studio, whatever their role: **Viewer**, **Editor**
+and **Owner** all see the same buttons, and the REST API answers them the same way.
+
+| Action | Viewer | Editor | Owner |
+| --- | --- | --- | --- |
+| Choose a target, preview and verify a conversion | ✓ | ✓ | ✓ |
+| **“Generate”**, for one target or several | ✓ | ✓ | ✓ |
+| **Export *n*…** from the Catalog's bulk bar | ✓ | ✓ | ✓ |
+| See **Recent export jobs** — everyone's, not only yours | ✓ | ✓ | ✓ |
+| Poll, download or cancel a job, including another member's | ✓ | ✓ | ✓ |
+| Test-drive an export on a mock server | ✓ | ✓ | ✓ |
+
+Jobs belong to the workspace, not to the person who started them. Nobody outside the workspace can
+reach them, and a job is never found from another workspace — not even by someone who belongs to both.
+
+The table is `docs/export-permission-matrix.json` in the repository; the role tests in apiome-rest
+and apiome-ui read it, so the studio and the API cannot drift apart. See
+[Roles](../workspace/roles.mdx) for everything else each role can do.
+
 ## With the keyboard
 
 Every step works without a mouse. `Tab` and `Shift`+`Tab` move between controls; `↵` presses a

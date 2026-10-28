@@ -6,6 +6,10 @@
  * `tests/test_permission_matrix.py` proves each REST call refuses the roles the table refuses; the
  * `tests/permission-matrix-*.test.tsx` suites render each screen as every role and use
  * {@link expectScreenMatchesMatrix} to prove the same roles are never offered the control.
+ *
+ * `docs/export-permission-matrix.json` (X4, #6225) is the same kind of table for every export action,
+ * with this table's roles; {@link EXPORT_MATRIX} loads it, and `tests/permission-matrix-export.test.tsx`
+ * passes it to {@link screenMismatches}.
  */
 
 import * as fs from 'fs';
@@ -49,9 +53,21 @@ export interface MatrixRole {
 
 export const MATRIX_PATH = path.resolve(__dirname, '../../../docs/catalog-projects-permission-matrix.json');
 
-export const MATRIX: { roles: Record<string, MatrixRole>; actions: MatrixAction[] } = JSON.parse(
-  fs.readFileSync(MATRIX_PATH, 'utf8')
-);
+/** A whole table: the roles and every action. */
+export interface Matrix {
+  roles: Record<string, MatrixRole>;
+  actions: MatrixAction[];
+}
+
+export const MATRIX: Matrix = JSON.parse(fs.readFileSync(MATRIX_PATH, 'utf8'));
+
+export const EXPORT_MATRIX_PATH = path.resolve(__dirname, '../../../docs/export-permission-matrix.json');
+
+/** The export table (X4, #6225), with the roles of {@link MATRIX} — the file names them, it does not repeat them. */
+export const EXPORT_MATRIX: Matrix = {
+  roles: MATRIX.roles,
+  actions: JSON.parse(fs.readFileSync(EXPORT_MATRIX_PATH, 'utf8')).actions,
+};
 
 /** The roles, in the table's order (viewer, editor, owner). */
 export const ROLES = Object.keys(MATRIX.roles);
@@ -87,10 +103,14 @@ export function permissionsFor(role: string) {
  * Every control the table puts on a screen, with the action it offers.
  *
  * @param screenName The screen.
+ * @param matrix The table to read (default: the Catalog and Projects table).
  * @returns The pairs, in table order.
  */
-export function controlsOn(screenName: string): Array<{ action: MatrixAction; control: MatrixControl }> {
-  return MATRIX.actions.flatMap((action) =>
+export function controlsOn(
+  screenName: string,
+  matrix: Matrix = MATRIX
+): Array<{ action: MatrixAction; control: MatrixControl }> {
+  return matrix.actions.flatMap((action) =>
     action.ui.filter((control) => control.screen === screenName).map((control) => ({ action, control }))
   );
 }
@@ -130,11 +150,17 @@ export interface ScreenDriver {
  * @param screenName The screen being shown.
  * @param role The role it is rendered as.
  * @param driver How to reach menu and bulk controls.
+ * @param matrix The table to check against (default: the Catalog and Projects table).
  * @returns The mismatches, as sentences (empty when the screen matches).
  */
-export async function screenMismatches(screenName: string, role: string, driver: ScreenDriver): Promise<string[]> {
+export async function screenMismatches(
+  screenName: string,
+  role: string,
+  driver: ScreenDriver,
+  matrix: Matrix = MATRIX
+): Promise<string[]> {
   const problems: string[] = [];
-  const pairs = controlsOn(screenName);
+  const pairs = controlsOn(screenName, matrix);
   if (pairs.length === 0) return [`the table puts no controls on ${screenName}`];
 
   const check = (action: MatrixAction, control: MatrixControl, testid: string) => {

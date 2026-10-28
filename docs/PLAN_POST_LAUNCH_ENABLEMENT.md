@@ -187,7 +187,7 @@ flowchart LR
 | X1 Conformance matrix ✅ | [#6222](https://github.com/apiome/apiome/issues/6222) |
 | X2 Journey in CI ✅ | [#6223](https://github.com/apiome/apiome/issues/6223) |
 | X3 Accessibility ✅ | [#6224](https://github.com/apiome/apiome/issues/6224) |
-| X4 Permissions | [#6225](https://github.com/apiome/apiome/issues/6225) |
+| X4 Permissions ✅ | [#6225](https://github.com/apiome/apiome/issues/6225) |
 | X5 Limits | [#6226](https://github.com/apiome/apiome/issues/6226) |
 | X6 Security review | [#6227](https://github.com/apiome/apiome/issues/6227) |
 | X7 Docs | [#6228](https://github.com/apiome/apiome/issues/6228) |

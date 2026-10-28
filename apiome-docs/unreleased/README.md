@@ -62,6 +62,7 @@ goes back:
 | `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
 | `fragments/workspace/keyboard.export-studio.mdx` | `docs/workspace/keyboard.md` — the **Export to another format** primary task, after **Cut, publish or export a version** | `export-studio` |
 | `fragments/workspace/accessibility.export-studio.mdx` | `docs/workspace/accessibility.md` — the **Export studio** gate table, after **Catalog, Projects and Versions** | `export-studio` |
+| `fragments/workspace/roles.export-studio.mdx` | `docs/workspace/roles.mdx` — the **Export studio** rows of the role table and the jobs sentence after it | `export-studio` |
 
 **Screenshots** — `unreleased/screens.json` holds the manifest entries (same `{"screens": [...]}`
 shape as `../screens.json`) and `unreleased/static/img/screens/` their light and dark images:
