@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.501.0] - 2026-10-28
+
+### Fixed
+- **Protobuf and Thrift export from OpenAPI projects compiles (#6278).** The OpenAPI normalizer keeps JSON Schema's
+  `integer` / `number` / `boolean` (width in the field's `format`), and the proto3 and Thrift emitters wrote them as
+  type references (`.integer id = 1;`). New `app.scalar_aliases` reduces the fleet's scalar spellings plus `format`
+  to a kind and maps it to each target's keyword (`integer` → `int32`, or `int64` with `format: int64`; `number` →
+  `double`/`float`; `boolean` → `bool`; Thrift widens unsigned and `float`). A type the model defines by such a name
+  still wins, and native spellings are untouched. Stored canonical models are unchanged.
+- **Thrift field ids are unique (#6278).** A field without a `field_number` gets the next free id in declaration
+  order (`FieldNumberAllocator`, shared with the proto3 emitter) instead of `1`; source ids are kept.
+
 ## [1.500.0] - 2026-10-28
 
 ### Added

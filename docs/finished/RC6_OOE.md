@@ -320,6 +320,5 @@ its fix merges.
 
 | Issue | Severity | Bug | Where users see it |
 | --- | --- | --- | --- |
-| [#6278](https://github.com/apiome/apiome/issues/6278) | `sev:medium` | Exporting an OpenAPI project to **Protobuf** or **Thrift** writes `integer`/`number`/`boolean` fields as unknown type names (`.integer id = 1;`), so the file doesn't compile; Thrift also numbers every field `1` | Export dialog, `apiome export`, REST export. Noted on *Export a spec* |
 | [#6274](https://github.com/apiome/apiome/issues/6274) | `sev:medium` | The Hive editor theme's light syntax colours and line numbers fall below 4.5:1 contrast | Versions spec viewer |
 

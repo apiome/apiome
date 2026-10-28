@@ -1,0 +1,20 @@
+---
+slug: proto-thrift-export-fixed
+title: Protobuf and Thrift exports from OpenAPI now compile
+description: Integer, number and boolean fields export as real types; Thrift field ids are unique.
+authors: [apiome]
+---
+
+Exporting an OpenAPI project to **Protobuf** or **Thrift** now writes files that compile.
+[How the types map](/ship/export-a-spec#protobuf-and-thrift-from-an-openapi-source).
+
+{/* truncate */}
+
+- **Real scalar types.** `integer`, `number` and `boolean` fields become `int32` or `int64`, `double`
+  or `float`, and `bool` in Protobuf, and `i32` or `i64`, `double` and `bool` in Thrift. The schema's
+  `format` picks the width. Before, they came out as type names such as `.integer`, and the file
+  didn't compile.
+- **Unique Thrift field ids.** Fields without ids are numbered in order, `1`, `2`, `3`. Before,
+  every field was `1`. A Thrift or Protobuf source keeps its own numbers.
+- This fixes the [known issue](/release-notes/known-issue-proto-thrift-export) from RC6. You no
+  longer need to edit the file by hand.

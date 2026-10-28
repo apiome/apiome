@@ -85,14 +85,21 @@ Over the API, every export route answers `422` with a structured `detail`:
 An export job fails with `SOURCE_LOAD_FAILED`, and its `error.context` carries the same `source_code`
 and `reimport`.
 
-:::caution Known issue: Protobuf and Thrift from an OpenAPI project
-Exporting a version of an OpenAPI project (imported from OpenAPI or Swagger, or converted from the
-Catalog) to **Protobuf** or **Thrift** writes integer, number and boolean fields with names those
-formats don't recognise. For example, `.integer id = 1;` in a `.proto` file. The file won't compile
-until you change those types by hand: `int64`, `double` and `bool` in Protobuf, or `i64`, `double`
-and `bool` in Thrift. Thrift output also gives every field the id `1`, so give each its own. String fields and the other formats are not affected. A fix is tracked in
-[#6278](https://github.com/apiome/apiome/issues/6278).
-:::
+### Protobuf and Thrift from an OpenAPI source
+
+An OpenAPI schema's `type` and `format` become the target's own scalar types:
+
+| OpenAPI | Protobuf | Thrift |
+| --- | --- | --- |
+| `integer` | `int32` | `i32` |
+| `integer`, `format: int64` | `int64` | `i64` |
+| `number` | `double` | `double` |
+| `number`, `format: float` | `float` | `double` |
+| `boolean` | `bool` | `bool` |
+| `string` | `string` | `string` |
+
+OpenAPI has no field numbers, so each field is numbered in the order the schema lists it: `1`, `2`,
+`3` and so on. A source that has its own numbers, such as a Protobuf or Thrift import, keeps them.
 
 | Format | Kind | Exports from |
 | --- | --- | --- |

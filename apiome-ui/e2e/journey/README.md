@@ -83,7 +83,9 @@ admin edit reaches the login path within a bounded wait instead of the 30s defau
 6. a version is cut on the Versions page;
 7. it is published;
 8. it is unpublished;
-9. that version is exported to Protobuf through the in-place **Export** dialog.
+9. that version is exported to Protobuf through the in-place **Export** dialog, and the `.proto` in
+   **Download .zip** passes `support/proto-check.ts` (a syntax line, balanced braces, every type
+   declared or a scalar, unique field numbers — #6278).
 
 It has its own config, `playwright.catalog-journey.config.ts`, because it must run with **no**
 `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` (`support/env.ts` → `catalogJourneyServerEnv()`), while the
