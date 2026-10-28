@@ -86,7 +86,15 @@ router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
         "land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one "
         "was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be "
         "combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at "
-        "most 100 item × target pairs."
+        "most 100 item × target pairs.\n\n"
+        "**Limits (X5):** each refusal names the limit it hit. A tenant runs at most "
+        "``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; "
+        "a submit past it is refused with **429**. A job running longer than "
+        "``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``; an "
+        "artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails with "
+        "``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for "
+        "``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`` (default 24) and is **410** after that. ``0`` "
+        "turns a limit off."
     ),
 )
 async def start_export_job(
@@ -107,7 +115,8 @@ async def start_export_job(
     Raises:
         HTTPException: 400 when a target is unknown or two targets of a multi-target job
             resolve to the same format; 422 when the emit options are invalid for a target or
-            the request mixes ``target`` and ``targets``. Source-related failures (unknown artifact/version,
+            the request mixes ``target`` and ``targets``; 429 when the tenant already runs
+            ``export_max_concurrent_jobs_per_tenant`` export jobs (X5). Source-related failures (unknown artifact/version,
             no reconstructable source) surface asynchronously in the job status.
     """
     tenant_id = str(auth_data["tenant_id"])

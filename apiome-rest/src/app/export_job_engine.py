@@ -76,7 +76,7 @@ import time
 import uuid
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 from fastapi import HTTPException
@@ -2084,18 +2084,46 @@ async def _drive_export_job(job_id: str) -> None:
         else:
             correlation_id = None
     bind_contextvars(request_id=correlation_id, export_job_id=job_id)
-    try:
-        if rec is not None and rec.request.is_batch:
-            # Imported here: the batch driver builds on this module's pipeline helpers.
-            from .export_batch import drive_batch_job_inner
+    if rec is not None and rec.request.is_batch:
+        # Imported here: the batch driver builds on this module's pipeline helpers.
+        from .export_batch import drive_batch_job_inner
 
-            await drive_batch_job_inner(job_id)
-        elif rec is not None and rec.request.is_multi_target:
-            await _drive_multi_target_job_inner(job_id)
-        else:
-            await _drive_export_job_inner(job_id)
+        pipeline = drive_batch_job_inner(job_id)
+    elif rec is not None and rec.request.is_multi_target:
+        pipeline = _drive_multi_target_job_inner(job_id)
+    else:
+        pipeline = _drive_export_job_inner(job_id)
+    timeout = export_job_timeout_seconds()
+    try:
+        await asyncio.wait_for(pipeline, timeout=timeout)
+    except asyncio.TimeoutError:
+        await _fail_timed_out(job_id, timeout)
     finally:
         _record_terminal_export_metrics(job_id)
+
+
+async def _fail_timed_out(job_id: str, timeout: Optional[float]) -> None:
+    """Fail a job that outran the wall-clock cap (X5): ``EXPORT_JOB_TIMED_OUT``, naming the limit.
+
+    The pipeline coroutine has been cancelled at its current ``await``; a stage already running
+    in a worker thread finishes there, but nothing reads its result.
+
+    Args:
+        job_id: The job.
+        timeout: The cap that elapsed, in seconds.
+    """
+    seconds = int(timeout or 0)
+    with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None or rec.state in _TERMINAL_STATES:
+            return
+    await _fail(
+        job_id,
+        "EXPORT_JOB_TIMED_OUT",
+        f"The export ran longer than {seconds} seconds, the most one export job may run "
+        "(APIOME_EXPORT_JOB_TIMEOUT_SECONDS), and was stopped.",
+        {"timeout_seconds": seconds},
+    )
 
 
 def _record_terminal_export_metrics(job_id: str) -> None:
@@ -2931,6 +2959,79 @@ def _validate_target_specs(specs: List[ExportJobTargetSpec]) -> None:
         seen[directory] = spec.target
 
 
+# ===========================================================================
+# Export limits (X5, #6226)
+# ===========================================================================
+
+#: How far back the shared store is read for a tenant's active jobs when the job time cap is
+#: off. With the cap on, a job older than the cap cannot still be running (it was failed with
+#: ``EXPORT_JOB_TIMED_OUT``), so a row left ``running`` by a crashed instance stops counting.
+_ACTIVE_JOB_WINDOW_WITHOUT_TIMEOUT_SECONDS = 6 * 3600
+
+
+def export_job_timeout_seconds() -> Optional[float]:
+    """The job wall-clock cap in seconds, or ``None`` when ``export_job_timeout_seconds`` <= 0."""
+    seconds = settings.export_job_timeout_seconds
+    return float(seconds) if seconds > 0 else None
+
+
+def _shared_active_job_ids(tenant_slug: str) -> set:
+    """The tenant's queued and running export jobs in the shared store (every instance's).
+
+    Best-effort: an unreachable store answers an empty set, and the in-memory view still counts.
+
+    Args:
+        tenant_slug: The tenant whose jobs to read.
+
+    Returns:
+        The job ids, limited to jobs created within the time cap (see
+        :data:`_ACTIVE_JOB_WINDOW_WITHOUT_TIMEOUT_SECONDS`).
+    """
+    from .database import db
+
+    window = export_job_timeout_seconds() or _ACTIVE_JOB_WINDOW_WITHOUT_TIMEOUT_SECONDS
+    since = datetime.fromtimestamp(time.time() - window, tz=timezone.utc)
+    ids: set = set()
+    try:
+        for state in ("queued", "running"):
+            page = db.list_async_jobs(
+                tenant_slug, _SHARED_JOB_KIND, limit=200, state=state, created_after=since
+            )
+            ids.update(str(row["status"]["job_id"]) for row in page["jobs"])
+    except Exception:  # noqa: BLE001 - shared store is best-effort; the local view still counts
+        logger.warning("Could not read active export jobs for %s", tenant_slug, exc_info=True)
+    return ids
+
+
+def _concurrency_refusal(tenant_slug: str, shared_active: set) -> Optional[ExportError]:
+    """The ``429`` refusal when the tenant is at its concurrent-job cap. Call under the lock.
+
+    Args:
+        tenant_slug: The submitting tenant.
+        shared_active: Its active job ids in the shared store (:func:`_shared_active_job_ids`).
+
+    Returns:
+        The error naming the limit and its setting, or ``None`` when the job may start.
+    """
+    cap = settings.export_max_concurrent_jobs_per_tenant
+    if cap <= 0:
+        return None
+    local_active = {
+        job_id
+        for job_id, rec in _jobs.items()
+        if rec.tenant_slug == tenant_slug and rec.state not in _TERMINAL_STATES
+    }
+    active = len(local_active | shared_active)
+    if active < cap:
+        return None
+    return ExportError(
+        f"This workspace already has {active} export jobs queued or running; one workspace runs at "
+        f"most {cap} at once (APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT). Wait for one to "
+        "finish, or cancel one, then try again.",
+        status_code=429,
+    )
+
+
 async def schedule_export_job(
     tenant_slug: str,
     tenant_id: str,
@@ -2952,7 +3053,8 @@ async def schedule_export_job(
         The 202 acceptance payload (job id + poll path).
 
     Raises:
-        ExportError: When the target is unknown (400) or its options are invalid (422).
+        ExportError: When the target is unknown (400) or its options are invalid (422), or the
+            tenant already runs ``export_max_concurrent_jobs_per_tenant`` jobs (429, X5).
     """
     # Fail fast on a bad target/options; also warms the emitter registry.
     if request.targets is not None:
@@ -2967,7 +3069,15 @@ async def schedule_export_job(
     initial = ExportJobStatus(
         job_id=job_id, state="queued", percent=0, correlation_id=correlation_id
     )
+    shared_active = await asyncio.to_thread(_shared_active_job_ids, tenant_slug)
     with _jobs_lock:
+        # X5: every submit also reclaims expired artifacts, so retained bytes never wait on a
+        # download to be dropped.
+        _expire_stale_artifacts(_now_ms())
+        # The count and the insert share the lock, so two submits cannot both take the last slot.
+        refusal = _concurrency_refusal(tenant_slug, shared_active)
+        if refusal is not None:
+            raise refusal
         _jobs[job_id] = _ExportJobRecord(
             tenant_slug=tenant_slug,
             tenant_id=tenant_id,
@@ -3024,6 +3134,9 @@ async def list_export_jobs(
     """
     from .database import db
 
+    with _jobs_lock:
+        # X5: listing reclaims expired artifacts too (see schedule_export_job).
+        _expire_stale_artifacts(_now_ms())
     page_limit = max(1, min(int(limit), 200))
     page_offset = max(0, int(offset))
 

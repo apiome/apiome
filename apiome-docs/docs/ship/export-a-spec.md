@@ -375,6 +375,24 @@ It exits **0** when every item completed, **7** when the archive was written but
 and **1** when every item failed. `--min-grade` and `--fail-on` gate a single export, so they are
 refused with these flags.
 
+## Limits
+
+Every export job runs inside these limits. A request that hits one is refused with a message naming
+the limit, so you know what to change. An administrator can change each one with the setting shown;
+`0` turns a limit off.
+
+| Limit | Default | When it is hit | Setting |
+|---|---|---|---|
+| Jobs running at once, per workspace | 5 queued or running | A new job is refused with `429` until one finishes or is cancelled | `APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT` |
+| How long one job may run | 30 minutes | The job stops and fails with `EXPORT_JOB_TIMED_OUT` | `APIOME_EXPORT_JOB_TIMEOUT_SECONDS` |
+| Size of the download | 32 MiB | The job fails with `EXPORT_ARTIFACT_TOO_LARGE` | `APIOME_EXPORT_ARTIFACT_MAX_BYTES` |
+| Items in one batch | 100 items × formats; 50 versions; 16 formats | The request is refused with `422`, or an `all_versions` job fails with `EXPORT_BATCH_TOO_LARGE` | Fixed |
+| How long a download is kept | 24 hours | The download answers `410 Gone`; run the export again | `APIOME_EXPORT_ARTIFACT_RETENTION_HOURS` |
+
+Every member's jobs count toward the workspace's five. A download past its retention time is
+deleted, not just hidden. The job itself stays in the job list (`GET /v1/export/{tenant_slug}/jobs`)
+until it is cleared: 7 days after it finished or was cancelled, 30 days after it failed.
+
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The

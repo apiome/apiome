@@ -1044,6 +1044,26 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Export job limits (X5, #6226). ``export_job_timeout_seconds`` caps one job's wall clock:
+    # a job still running when it elapses fails with ``EXPORT_JOB_TIMED_OUT``.
+    # ``export_max_concurrent_jobs_per_tenant`` caps a workspace's queued + running export jobs:
+    # a submit past it is refused with ``429``. Each refusal names its limit and setting. ``0`` (or
+    # any non-positive value) disables that limit.
+    export_job_timeout_seconds: int = Field(
+        default=1800,  # 30 minutes
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_JOB_TIMEOUT_SECONDS",
+            "export_job_timeout_seconds",
+        ),
+    )
+    export_max_concurrent_jobs_per_tenant: int = Field(
+        default=5,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT",
+            "export_max_concurrent_jobs_per_tenant",
+        ),
+    )
+
     # Async job row retention (IXH-6.3, #5122). Terminal jobs older than these windows
     # (measured from updated_at) are claimed by the scheduled sweep, summarized into
     # async_job_history, then deleted (export artifacts CASCADE). ``0`` disables reap for

@@ -164,6 +164,14 @@ DELIVERY_ERROR_TAXONOMY: Dict[str, DeliveryErrorDescriptor] = {
             "This batch export covers more version × target items than one job allows. "
             "Select specific versions (a 'versions' list) or fewer targets, then try again.",
         ),
+        # X5 (#6226): the job wall-clock cap (``APIOME_EXPORT_JOB_TIMEOUT_SECONDS``).
+        _d(
+            "EXPORT_JOB_TIMED_OUT",
+            JobErrorCategory.RESOURCE,
+            False,
+            "This export ran longer than one export job may run. Export fewer items, versions or "
+            "targets per job, or ask an administrator to raise APIOME_EXPORT_JOB_TIMEOUT_SECONDS.",
+        ),
         _d(
             "EXPORT_BATCH_FAILED",
             JobErrorCategory.INPUT,

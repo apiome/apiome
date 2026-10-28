@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.360.0
+  version: 1.361.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -61985,7 +61985,16 @@ paths:
         is its slug, plus the version label when one was named) and ``manifest.json``
         names each item''s ``artifact``. ``items`` cannot be combined with ``version``,
         ``versions`` or ``all_versions``; entries must be distinct; at most 100 item
-        × target pairs.'
+        × target pairs.
+
+
+        **Limits (X5):** each refusal names the limit it hit. A tenant runs at most
+        ``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running
+        export jobs; a submit past it is refused with **429**. A job running longer
+        than ``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``;
+        an artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails
+        with ``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for ``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS``
+        (default 24) and is **410** after that. ``0`` turns a limit off.'
       operationId: start_export_job_v1_export__tenant_slug__jobs_post
       parameters:
       - name: tenant_slug
