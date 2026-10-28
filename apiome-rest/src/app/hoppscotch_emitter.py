@@ -110,6 +110,8 @@ class HoppscotchEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a Hoppscotch collection and its environment."""
 
     key = FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = FORMAT_KEY
     label = "Hoppscotch"
     description = (

@@ -351,7 +351,7 @@ The scope is PLAN_POST_LAUNCH_ENABLEMENT §2.2 (E1) with the 53 targets that exi
 
 | Ticket | Work | Status |
 | --- | --- | --- |
-| [#6222](https://github.com/apiome/apiome/issues/6222) X1 | Conformance matrix: no crashes, no silent loss; every refusal named. **Long pole** — see §4.3 | Harness built; 54 / 5,565 cells pass |
+| [#6222](https://github.com/apiome/apiome/issues/6222) X1 | Conformance matrix: no crashes, no silent loss; every refusal named. **Long pole** — see §4.3 | ✅ Built: `tests/test_export_conformance_matrix.py` (108 families × 53 targets, catalog export path) — 0 crashes (870 became reasons via `requires_source`, ~70 emitter bugs fixed in GraphQL/Avro/ASN.1/Kafka Connect); 637 silent-loss pairs tracked in a shrinking ledger (`tests/export_conformance_ledger.py`); CI `export-conformance.yml` |
 | [#6223](https://github.com/apiome/apiome/issues/6223) X2 | Journey in CI: import → Catalog → dialog → studio → verify → job → bundle; bulk export | Not built |
 | [#6224](https://github.com/apiome/apiome/issues/6224) X3 | Accessibility: studio, source picker, bulk dialog, target grid; full keyboard path | Partly built |
 | [#6225](https://github.com/apiome/apiome/issues/6225) X4 | Permission matrix: batch, recent jobs, another user's job download | Partly built |

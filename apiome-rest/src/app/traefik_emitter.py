@@ -250,6 +250,8 @@ class TraefikEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as Traefik dynamic configuration."""
 
     key = TRAEFIK_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = TRAEFIK_FORMAT_KEY
     label = "Traefik dynamic configuration"
     description = (

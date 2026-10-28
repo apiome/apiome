@@ -73,6 +73,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -558,6 +559,8 @@ class GatewayApiEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as Kubernetes Gateway API ``HTTPRoute`` manifests."""
 
     key = "gateway-api"
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = GATEWAY_API_FORMAT_KEY
     label = "Gateway API HTTPRoute"
     description = (
@@ -666,7 +669,7 @@ class _GatewayApiWriter:
             service_naming=options.service_naming,
         )
         if not document.routes:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "Gateway API export requires at least one HTTP operation: an HTTPRoute "
                 "is a routing surface, and a model with no operations has no rule to "
                 "declare (an HTTPRoute with no rules routes nothing)."

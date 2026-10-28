@@ -60,6 +60,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -391,6 +392,8 @@ class KongEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a Kong ``deck`` declarative configuration."""
 
     key = "kong"
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = KONG_FORMAT_KEY
     label = "Kong Declarative Config"
     description = (
@@ -496,7 +499,7 @@ class _KongWriter:
             service_naming=options.service_naming,
         )
         if not document.routes:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "Kong declarative export requires at least one HTTP operation: a "
                 "declarative configuration is a routing surface, and a model with no "
                 "operations has no route to declare (Kong rejects a config with none)."

@@ -40,6 +40,7 @@ from .canonical_model import ApiParadigm, CanonicalApi, Operation
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -228,7 +229,7 @@ class _ApimWriter:
     def build(self) -> List[EmittedFile]:
         """The emitted files, definition first."""
         if not self.operations:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "Azure API Management export requires at least one HTTP operation: an APIM API is a set "
                 "of HTTP operations, and a model with none has nothing to declare."
             )
@@ -447,6 +448,8 @@ class AzureApimEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an APIM definition with its policy documents."""
 
     key = AZURE_APIM_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = AZURE_APIM_FORMAT_KEY
     label = "Azure API Management"
     description = (

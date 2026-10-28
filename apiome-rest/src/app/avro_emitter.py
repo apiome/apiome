@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Self, Sequence, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Self, Sequence, Set, Tuple, Union
 
 from fastavro import parse_schema
 from pydantic import Field, model_validator
@@ -96,6 +96,44 @@ _CANONICAL_TO_AVRO: Dict[str, str] = {
     "double": "double",
     "string": "string",
     "bytes": "bytes",
+    # X1 (#6222): the scalar spellings other formats import with (Thrift `i32`, Cap'n Proto
+    # `uint64`, FlatBuffers `i16`, COBOL/PL-I `decimal`, JSON-Schema `object` / `any`, …), so a
+    # reference to one is a primitive rather than a name fastavro cannot resolve.
+    "i8": "int",
+    "i16": "int",
+    "i32": "int",
+    "u8": "int",
+    "u16": "int",
+    "int8": "int",
+    "int16": "int",
+    "uint8": "int",
+    "uint16": "int",
+    "short": "int",
+    "byte": "int",
+    "smallint": "int",
+    "i64": "long",
+    "u32": "long",
+    "u64": "long",
+    "uint32": "long",
+    "uint64": "long",
+    "bigint": "long",
+    "f32": "float",
+    "float32": "float",
+    "f64": "double",
+    "float64": "double",
+    "real": "double",
+    "decimal": "double",
+    "date": "string",
+    "datetime": "string",
+    "date-time": "string",
+    "time": "string",
+    "timestamp": "string",
+    "uuid": "string",
+    "any": "string",
+    "object": "string",
+    "json": "string",
+    "binary": "bytes",
+    "byte[]": "bytes",
 }
 
 # JSON-Schema ``format`` values that become Avro logical types on a primitive base.
@@ -408,6 +446,10 @@ class _AvroWriter:
         )
         self._default_namespace = self.default_namespace
         self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
+        # X1 (#6222): the record whose schema is being written, and the records each record
+        # references — to break a cycle between two schema files (see `_cuts_cycle`).
+        self._current_record: Optional[str] = None
+        self._reach_memo: Dict[str, Set[str]] = {}
         self._emittable = [
             t
             for t in api.types
@@ -458,13 +500,18 @@ class _AvroWriter:
     def _emit_record(self, type_: Type) -> Dict[str, Any]:
         """Emit a RECORD as an Avro ``record`` schema."""
         namespace = _type_namespace(type_, self._default_namespace)
+        previous, self._current_record = self._current_record, type_.key
+        try:
+            fields = [
+                self._emit_field(field, namespace=namespace, type_key=type_.key)
+                for field in type_.fields
+            ]
+        finally:
+            self._current_record = previous
         schema: Dict[str, Any] = {
             "type": "record",
             "name": _sanitize_name(type_.name),
-            "fields": [
-                self._emit_field(field, namespace=namespace, type_key=type_.key)
-                for field in type_.fields
-            ],
+            "fields": fields,
         }
         if namespace:
             schema["namespace"] = namespace
@@ -487,7 +534,11 @@ class _AvroWriter:
             "type": avro_type,
         }
         if _field_has_default(field):
-            entry["default"] = _field_default(field)
+            default = _field_default(field)
+            # X1 (#6222): a default recorded as text (`"100"`) must be the value of a branch.
+            branches = avro_type if isinstance(avro_type, list) else [avro_type]
+            value_branch = next((b for b in branches if b != "null"), branches[0] if branches else None)
+            entry["default"] = _coerce_default(default, value_branch)
         elif _field_needs_synth_default(field):
             entry["default"] = _synthesized_evolution_default(avro_type)
             pointer = ProvenanceTracker.child(
@@ -531,10 +582,14 @@ class _AvroWriter:
         return schema
 
     def _emit_union_type(self, type_: Type) -> List[Any]:
-        """Emit a UNION type as an Avro union (top-level array schema)."""
-        namespace = _type_namespace(type_, self._default_namespace)
+        """Emit a UNION type as an Avro union (top-level array schema).
+
+        Members are referenced fully qualified: a union written as its own schema file has no
+        enclosing namespace, so a relative name (`kv_entry` for `KV_PROG.kv_entry`) would not
+        resolve (X1, #6222).
+        """
         return [
-            self._resolve_union_member(member, namespace=namespace)
+            self._resolve_union_member(member, namespace=None)
             for member in type_.union_members
         ]
 
@@ -638,14 +693,94 @@ class _AvroWriter:
                 return self._emit_union_type(target)
             if target.kind is TypeKind.SCALAR:
                 if _fixed_size(target) is not None:
-                    return _named_type_reference(target, namespace=namespace)
+                    return _named_type_reference(
+                        target, namespace=namespace, default_namespace=self._default_namespace
+                    )
                 return self._emit_scalar_type(target)
             if target.kind is TypeKind.ALIAS and target.aliased is not None:
                 return self._emit_type_ref(target.aliased, namespace=namespace, field=field)
+            if target.kind is TypeKind.RECORD and self._cuts_cycle(target):
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "cyclic-reference",
+                    f"{self._current_record!r} and {target.key!r} reference each other across "
+                    f"schema files, which Avro cannot resolve; the reference to {target.key!r} "
+                    f"from {self._current_record!r} is emitted as string.",
+                    pointer=f"{self._current_record}->{target.key}",
+                )
+                return "string"
             if target.kind in (TypeKind.RECORD, TypeKind.ENUM):
-                return _named_type_reference(target, namespace=namespace)
+                return _named_type_reference(
+                    target, namespace=namespace, default_namespace=self._default_namespace
+                )
 
-        return _named_type_reference_by_key(ref.name, namespace=namespace)
+        return self._dangling_reference(ref.name)
+
+    def _record_refs(self, key: str) -> Set[str]:
+        """The record keys a record's fields reference directly (through lists and aliases)."""
+        type_ = self._types_by_key.get(key)
+        refs: Set[str] = set()
+        if type_ is None or type_.kind is not TypeKind.RECORD:
+            return refs
+
+        def walk(ref: Optional[TypeRef], seen: Set[str]) -> None:
+            while ref is not None and ref.item is not None:
+                ref = ref.item
+            if ref is None or not ref.name:
+                return
+            target = self._types_by_key.get(ref.name)
+            if target is None or target.key in seen:
+                return
+            if target.kind is TypeKind.RECORD:
+                refs.add(target.key)
+            elif target.kind is TypeKind.ALIAS:
+                walk(target.aliased, seen | {target.key})
+
+        for field in type_.fields:
+            walk(field.type, set())
+        return refs
+
+    def _reachable(self, key: str) -> Set[str]:
+        """Every record reachable from ``key`` through field references."""
+        if key in self._reach_memo:
+            return self._reach_memo[key]
+        seen: Set[str] = set()
+        stack = [key]
+        while stack:
+            for ref in self._record_refs(stack.pop()):
+                if ref not in seen:
+                    seen.add(ref)
+                    stack.append(ref)
+        self._reach_memo[key] = seen
+        return seen
+
+    def _cuts_cycle(self, target: Type) -> bool:
+        """Whether the reference from the current record to ``target`` must be cut (X1, #6222).
+
+        Each named record is its own schema file, and Avro resolves a name only once it has been
+        defined — so two records that reference each other across files can never both parse. A
+        reference that closes such a cycle is cut when it points at the record with the higher
+        key; every cross-file cycle has at least one such edge, so the bundle becomes acyclic.
+        A record's reference to itself stays (Avro allows recursion within one schema).
+        """
+        current = self._current_record
+        if current is None or target.key == current or target.key < current:
+            return False
+        return current in self._reachable(target.key)
+
+    def _dangling_reference(self, name: str) -> str:
+        """A reference to a type the model does not declare — ``string``, said (X1, #6222).
+
+        Emitting the bare name would leave a reference fastavro cannot resolve, failing the
+        whole bundle; ``string`` keeps the field and the loss report names the gap.
+        """
+        self.losses.record(
+            LossKind.INFERRED,
+            "dangling-type-reference",
+            f"Reference to type {name!r}, which this source does not declare; emitted as string.",
+            pointer=name,
+        )
+        return "string"
 
     def _resolve_union_member(self, member: str, *, namespace: Optional[str]) -> Any:
         """Resolve one UNION member key or primitive name."""
@@ -656,8 +791,10 @@ class _AvroWriter:
             return primitive
         target = self._types_by_key.get(member)
         if target is not None and target.kind in (TypeKind.RECORD, TypeKind.ENUM, TypeKind.SCALAR):
-            return _named_type_reference(target, namespace=namespace)
-        return _named_type_reference_by_key(member, namespace=namespace)
+            return _named_type_reference(
+                target, namespace=namespace, default_namespace=self._default_namespace
+            )
+        return self._dangling_reference(member)
 
 
 def _as_dict_schema(schema: Any) -> Any:
@@ -842,10 +979,21 @@ def _type_namespace(type_: Type, default: Optional[str]) -> Optional[str]:
     return None
 
 
-def _named_type_reference(type_: Type, *, namespace: Optional[str]) -> str:
-    """Return an Avro name reference to a named type, unqualified when namespaces match."""
+def _named_type_reference(
+    type_: Type, *, namespace: Optional[str], default_namespace: Optional[str] = None
+) -> str:
+    """Return an Avro name reference to a named type, unqualified when namespaces match.
+
+    Args:
+        type_: The referenced type.
+        namespace: The namespace of the schema the reference sits in.
+        default_namespace: The emit-wide default the referenced type was *written* with. The
+            target's namespace must be resolved the way its own schema was (X1, #6222): resolving
+            it against the referring schema's namespace made `Person.PhoneNumber.Type` read as
+            `Person.Type` from inside `Person.PhoneNumber`, an unresolvable name.
+    """
     simple = _sanitize_name(type_.name)
-    type_ns = _type_namespace(type_, namespace)
+    type_ns = _type_namespace(type_, default_namespace)
     if namespace and type_ns == namespace:
         return simple
     if type_ns:
@@ -865,8 +1013,8 @@ def _named_type_reference_by_key(key: str, *, namespace: Optional[str]) -> str:
 
 
 def _canonical_primitive(name: str) -> Optional[str]:
-    """Map a canonical primitive name to an Avro primitive, or ``None``."""
-    mapped = _CANONICAL_TO_AVRO.get(name)
+    """Map a canonical primitive name to an Avro primitive, or ``None`` (case-insensitive)."""
+    mapped = _CANONICAL_TO_AVRO.get(name) or _CANONICAL_TO_AVRO.get(name.lower())
     if mapped in _AVRO_PRIMITIVES:
         return mapped
     return None
@@ -960,6 +1108,28 @@ def _field_has_default(field: CanonicalField) -> bool:
     if field.extras.get("has_default"):
         return True
     return field.default is not None
+
+
+def _coerce_default(value: Any, branch: Any) -> Any:
+    """Coerce a textual default to the Avro primitive it must match (X1, #6222).
+
+    A source that records defaults as text (FlatBuffers `hp: short = 100;`) yields ``"100"`` for an
+    ``int`` field, which Avro rejects; a number or boolean written as text becomes that value.
+    Anything that does not convert cleanly is returned unchanged.
+    """
+    if not isinstance(value, str) or not isinstance(branch, str):
+        return value
+    text = value.strip()
+    try:
+        if branch in ("int", "long"):
+            return int(text)
+        if branch in ("float", "double"):
+            return float(text)
+    except ValueError:
+        return value
+    if branch == "boolean" and text.lower() in ("true", "false"):
+        return text.lower() == "true"
+    return value
 
 
 def _field_default(field: CanonicalField) -> Any:

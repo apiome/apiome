@@ -283,6 +283,22 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Diagram/code exports (Mermaid, PlantUML, GraphML, DOT) | No extension slot — skipped (`destination_unsupported`). |
 | PNG / JPEG / SVG / PDF canvas images | Notes render as drawn; the Export Wizard's **Include notes** overlay toggle includes or excludes them. |
 
+## How exports are tested
+
+Every format Apiome imports is exported to every target on each change to the exporter. One
+example file per format is exported to all 53 targets, and each pair must end in one of four
+outcomes:
+
+| Outcome | Means |
+| --- | --- |
+| Exported | The file is written and nothing is lost. |
+| Lossy, with a report | The file is written and the fidelity report names what was dropped, approximated or synthesized. |
+| Refused, with a reason | The target cannot carry this source (for example, it needs an HTTP operation), and says so. |
+| Silent loss | The report says nothing was lost, but reading the file back shows a difference. These pairs are tracked and must only ever go down. |
+
+An export that crashes fails the check. The current grid is in the repository at
+`apiome-rest/tests/golden/export_conformance/matrix.md`.
+
 ## REST endpoints
 
 | Purpose | Route |

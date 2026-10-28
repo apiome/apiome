@@ -41,7 +41,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -58,6 +58,9 @@ from .canonical_model import (
 )
 
 __all__ = [
+    "EmitPreconditionError",
+    "SOURCE_REQUIREMENTS",
+    "source_requirement_reason",
     "EmitOptions",
     "EmitOptionsError",
     "EmittedFile",
@@ -261,6 +264,63 @@ class EmittedFile(BaseModel):
         description="Schema Registry subject for this artifact when the target assigns one "
         "(e.g. Confluent ``RecordNameStrategy`` subjects on Avro export).",
     )
+
+
+class EmitPreconditionError(ValueError):
+    """The source lacks what the target writes — a refusal with a reason, not a fault (X1, #6222).
+
+    Raised by an emitter whose output would be empty for this source (a gateway config with no
+    HTTP operation, a data contract with no record type). :func:`app.export_service.emit_canonical`
+    turns it into an HTTP 422 refusal carrying the message. A ``ValueError`` subclass, so callers
+    that already catch ``ValueError`` keep working.
+    """
+
+
+def _has_http_operation(api: CanonicalApi) -> bool:
+    """Whether ``api`` has an operation bound to an HTTP path."""
+    return any(op.http_path for op in api.operations())
+
+
+def _has_record_type(api: CanonicalApi) -> bool:
+    """Whether ``api`` declares a record (object / struct / message) type."""
+    return any(type_.kind is TypeKind.RECORD for type_ in api.types)
+
+
+#: The source requirements an emitter may declare in ``requires_source``: each maps to a test
+#: and the reader-facing sentence that names what is missing.
+SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
+    "http-operation": (
+        _has_http_operation,
+        "{label} export needs at least one HTTP operation (a method and a path); this source has none.",
+    ),
+    "record-type": (
+        _has_record_type,
+        "{label} export needs at least one record type (an object, struct or message); this source "
+        "has none.",
+    ),
+    "callable": (
+        lambda api: any(True for _ in api.operations()) or _has_record_type(api),
+        "{label} export needs at least one operation or record type; this source has neither.",
+    ),
+}
+
+
+def source_requirement_reason(requirement: str, api: CanonicalApi, label: str) -> Optional[str]:
+    """Why ``api`` fails one declared source requirement, or ``None`` when it meets it.
+
+    Args:
+        requirement: A :data:`SOURCE_REQUIREMENTS` key.
+        api: The source canonical model.
+        label: The target's label, for the sentence.
+
+    Returns:
+        The reason, or ``None``.
+
+    Raises:
+        KeyError: For an undeclared requirement (a typo in an emitter's ``requires_source``).
+    """
+    test, sentence = SOURCE_REQUIREMENTS[requirement]
+    return None if test(api) else sentence.format(label=label)
 
 
 class EmitOptionsError(Exception):
@@ -490,6 +550,11 @@ class Emitter(ABC):
     #: same-format import leaves behind (an EDI X12 interchange's ``x12_transactions``). Empty for
     #: an emitter that projects any source. See :meth:`source_unsupported_reason` (RC6-H4, #6211).
     required_source_extras: ClassVar[Tuple[str, ...]] = ()
+    #: What the source must contain for this target to write anything (X1, #6222): an
+    #: ``"http-operation"`` for a gateway config or a request collection, a ``"record-type"`` for a
+    #: data contract, a ``"callable"`` (operation or record) for an agent tool array. Empty for an
+    #: emitter that writes something for any source. See :data:`SOURCE_REQUIREMENTS`.
+    requires_source: ClassVar[Tuple[str, ...]] = ()
     #: Pydantic model describing this emitter's per-target options (MFX-1.4).
     options_model: ClassVar[type[EmitOptions]] = EmitOptions
 
@@ -547,6 +612,10 @@ class Emitter(ABC):
         missing = [key for key in cls.required_source_extras if not api.extras.get(key)]
         if missing:
             return f"Only a source imported as {cls.label} can be exported to {cls.label}."
+        for requirement in cls.requires_source:
+            reason = source_requirement_reason(requirement, api, cls.label or cls.format)
+            if reason:
+                return reason
         return None
 
     @classmethod
@@ -651,62 +720,64 @@ def load_builtin_emitters() -> None:
     if _builtins_loaded:
         return
     _builtins_loaded = True
+    from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
+    from . import apigee_emitter as _apigee_emitter  # noqa: F401
+    from . import arazzo_emitter as _arazzo_emitter  # noqa: F401
+    from . import asn1_emitter as _asn1  # noqa: F401
     from . import asyncapi_emitter as _asyncapi  # noqa: F401
     from . import avro_emitter as _avro  # noqa: F401
-    from . import graphql_emitter as _graphql  # noqa: F401
-    from . import openapi_emitter as _openapi  # noqa: F401
-    from . import proto_emitter as _proto  # noqa: F401
-    from . import sample_emitter as _sample  # noqa: F401
-    from . import thrift_emitter as _thrift  # noqa: F401
-    from . import connectrpc_emitter as _connectrpc  # noqa: F401
-    from . import flatbuffers_emitter as _flatbuffers  # noqa: F401
-    from . import capnproto_emitter as _capnproto  # noqa: F401
-    from . import wsdl_emitter as _wsdl  # noqa: F401
-    from . import raml_emitter as _raml  # noqa: F401
-    from . import wadl_emitter as _wadl  # noqa: F401
-    from . import openrpc_emitter as _openrpc  # noqa: F401
-    from . import xmlrpc_emitter as _xmlrpc  # noqa: F401
-    from . import xsd_emitter as _xsd  # noqa: F401
-    from . import postman_emitter as _postman  # noqa: F401
-    from . import cloudevents_emitter as _cloudevents  # noqa: F401
-    from . import smithy_emitter as _smithy  # noqa: F401
-    from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
-    from . import asn1_emitter as _asn1  # noqa: F401
-    from . import edix12_emitter as _edix12  # noqa: F401
-    from . import idoc_emitter as _idoc  # noqa: F401
-    from . import oncrpc_emitter as _oncrpc  # noqa: F401
-    from . import corbaidl_emitter as _corbaidl  # noqa: F401
-    from . import odata_emitter as _odata  # noqa: F401
-    from . import fhir_emitter as _fhir  # noqa: F401
-    from . import typespec_emitter as _typespec  # noqa: F401
-    from . import hl7v2_emitter as _hl7v2  # noqa: F401
-    from . import iso20022_emitter as _iso20022  # noqa: F401
-    from . import iso8583_emitter as _iso8583  # noqa: F401
-    from . import cobolcopybook_emitter as _cobolcopybook  # noqa: F401
-    from . import fix_emitter as _fix  # noqa: F401
-    from . import zosconnect_emitter as _zosconnect  # noqa: F401
-    from . import jsonschema_emitter as _jsonschema_emitter  # noqa: F401
-    from . import jtd_emitter as _jtd_emitter  # noqa: F401
-    from . import arazzo_emitter as _arazzo_emitter  # noqa: F401
-    from . import k8s_crd_emitter as _k8s_crd_emitter  # noqa: F401
-    from . import kong_emitter as _kong_emitter  # noqa: F401
-    from . import gateway_api_emitter as _gateway_api_emitter  # noqa: F401
-    from . import http_file_emitter as _http_file_emitter  # noqa: F401
-    from . import llm_tools_emitter as _llm_tools_emitter  # noqa: F401
-    from . import wit_emitter as _wit_emitter  # noqa: F401
-    from . import cddl_emitter as _cddl_emitter  # noqa: F401
-    from . import odcs_emitter as _odcs_emitter  # noqa: F401
-    from . import kafka_connect_emitter as _kafka_connect_emitter  # noqa: F401
-    # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.
-    from . import envoy_xds_emitter as _envoy_xds_emitter  # noqa: F401
-    from . import istio_emitter as _istio_emitter  # noqa: F401
-    from . import traefik_emitter as _traefik_emitter  # noqa: F401
     from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401
     from . import azure_apim_emitter as _azure_apim_emitter  # noqa: F401
-    from . import apigee_emitter as _apigee_emitter  # noqa: F401
+    from . import capnproto_emitter as _capnproto  # noqa: F401
+    from . import cddl_emitter as _cddl_emitter  # noqa: F401
+    from . import cloudevents_emitter as _cloudevents  # noqa: F401
+    from . import cobolcopybook_emitter as _cobolcopybook  # noqa: F401
+    from . import connectrpc_emitter as _connectrpc  # noqa: F401
+    from . import corbaidl_emitter as _corbaidl  # noqa: F401
+    from . import edix12_emitter as _edix12  # noqa: F401
+
+    # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.
+    from . import envoy_xds_emitter as _envoy_xds_emitter  # noqa: F401
+    from . import fhir_emitter as _fhir  # noqa: F401
+    from . import fix_emitter as _fix  # noqa: F401
+    from . import flatbuffers_emitter as _flatbuffers  # noqa: F401
+    from . import gateway_api_emitter as _gateway_api_emitter  # noqa: F401
+    from . import graphql_emitter as _graphql  # noqa: F401
+    from . import hl7v2_emitter as _hl7v2  # noqa: F401
+
     # FMT-10.4 (#5479): the client-workspace emit modes, on the shared client-collection plan.
     from . import hoppscotch_emitter as _hoppscotch_emitter  # noqa: F401
+    from . import http_file_emitter as _http_file_emitter  # noqa: F401
+    from . import idoc_emitter as _idoc  # noqa: F401
+    from . import iso8583_emitter as _iso8583  # noqa: F401
+    from . import iso20022_emitter as _iso20022  # noqa: F401
+    from . import istio_emitter as _istio_emitter  # noqa: F401
+    from . import jsonschema_emitter as _jsonschema_emitter  # noqa: F401
+    from . import jtd_emitter as _jtd_emitter  # noqa: F401
+    from . import k8s_crd_emitter as _k8s_crd_emitter  # noqa: F401
+    from . import kafka_connect_emitter as _kafka_connect_emitter  # noqa: F401
+    from . import kong_emitter as _kong_emitter  # noqa: F401
+    from . import llm_tools_emitter as _llm_tools_emitter  # noqa: F401
+    from . import odata_emitter as _odata  # noqa: F401
+    from . import odcs_emitter as _odcs_emitter  # noqa: F401
+    from . import oncrpc_emitter as _oncrpc  # noqa: F401
+    from . import openapi_emitter as _openapi  # noqa: F401
+    from . import openrpc_emitter as _openrpc  # noqa: F401
+    from . import postman_emitter as _postman  # noqa: F401
+    from . import proto_emitter as _proto  # noqa: F401
+    from . import raml_emitter as _raml  # noqa: F401
+    from . import sample_emitter as _sample  # noqa: F401
+    from . import smithy_emitter as _smithy  # noqa: F401
+    from . import thrift_emitter as _thrift  # noqa: F401
     from . import thunder_client_emitter as _thunder_client_emitter  # noqa: F401
+    from . import traefik_emitter as _traefik_emitter  # noqa: F401
+    from . import typespec_emitter as _typespec  # noqa: F401
+    from . import wadl_emitter as _wadl  # noqa: F401
+    from . import wit_emitter as _wit_emitter  # noqa: F401
+    from . import wsdl_emitter as _wsdl  # noqa: F401
+    from . import xmlrpc_emitter as _xmlrpc  # noqa: F401
+    from . import xsd_emitter as _xsd  # noqa: F401
+    from . import zosconnect_emitter as _zosconnect  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

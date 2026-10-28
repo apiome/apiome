@@ -293,6 +293,8 @@ class EnvoyXdsEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an Envoy v3 ``RouteConfiguration``."""
 
     key = ENVOY_XDS_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = ENVOY_XDS_FORMAT_KEY
     label = "Envoy xDS RouteConfiguration"
     description = (

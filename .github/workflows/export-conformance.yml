@@ -1,0 +1,84 @@
+name: Export Conformance
+
+# The X1 export conformance matrix (#6222): every corpus source family exported to every
+# production target through the catalog export path. Fails a pull request on an export crash, on a
+# NEW silent-loss pair (an empty fidelity report while the round trip shows drift) or a stale entry
+# in the tracked ledger, and on a cell whose status drifted from the checked-in matrix.
+#
+# The full apiome-rest suite runs nightly (apiome-rest-test.yml); this gate runs on every change
+# that can move an export result — the REST application (emitters, importers, the canonical model,
+# fidelity), the import corpus and the matrix itself. Regenerate after an intended change with
+#   UPDATE_EXPORT_CONFORMANCE=1 uv run pytest tests/test_export_conformance_matrix.py
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/uv.lock'
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/tests/export_conformance*.py'
+      - 'apiome-rest/tests/test_export_conformance_matrix.py'
+      - 'apiome-rest/tests/golden/export_conformance/**'
+      - 'apiome-rest/tests/corpus_*.py'
+      - 'apiome-ui/examples/**'
+      - '.github/workflows/export-conformance.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/uv.lock'
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/tests/export_conformance*.py'
+      - 'apiome-rest/tests/test_export_conformance_matrix.py'
+      - 'apiome-rest/tests/golden/export_conformance/**'
+      - 'apiome-rest/tests/corpus_*.py'
+      - 'apiome-ui/examples/**'
+      - '.github/workflows/export-conformance.yml'
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    name: Export conformance matrix
+    runs-on: self-hosted
+    env:
+      DATABASE_URL: ""
+    defaults:
+      run:
+        working-directory: apiome-rest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # uv-managed Python: setup-python's Ubuntu 26.04 builds need an x86-64-v3 CPU the
+      # self-hosted runner does not have (see apiome-rest-test.yml).
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies (incl. dev/test group)
+        run: uv sync
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # The same toolchain the nightly suite installs, so the families that need it (AsyncAPI,
+      # TypeScript types, Zod, CUE/Pkl/Dhall, buf) run here instead of skipping.
+      - name: Install the export toolchain
+        run: |
+          ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor
+          ./scripts/install_dev_toolchain.sh cue pkl dhall
+          ./scripts/install_dev_toolchain.sh buf
+
+      - name: Export conformance matrix
+        run: uv run pytest tests/test_export_conformance_matrix.py -p no:cacheprovider -q

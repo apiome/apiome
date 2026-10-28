@@ -70,6 +70,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -576,6 +577,8 @@ class OdcsEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an Open Data Contract Standard v3 contract."""
 
     key = "odcs"
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("record-type",)
     format = "odcs"
     label = "ODCS Data Contract"
     description = (
@@ -724,7 +727,7 @@ class _OdcsWriter:
         """
         objects = self._schema_objects()
         if not objects:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "ODCS export requires at least one record type — a data contract states "
                 "a dataset's structure, and this model describes none"
             )

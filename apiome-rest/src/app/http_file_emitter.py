@@ -81,6 +81,7 @@ from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitOptionsError,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -388,6 +389,8 @@ class HttpFileEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as a runnable ``.http`` request file or cURL script."""
 
     key = HTTP_FILE_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = HTTP_FILE_FORMAT_KEY
     label = "HTTP Request File"
     description = (
@@ -801,7 +804,7 @@ class _HttpFileWriter:
         self._base_url = self._resolve_base_url()
         self._requests: List[_PlannedRequest] = self._plan_requests()
         if not self._requests:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "HTTP request-file export requires at least one HTTP operation: a request "
                 "file is a collection of calls, and a model with no HTTP binding has no "
                 "request to write."

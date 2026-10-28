@@ -354,6 +354,8 @@ class ApigeeEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an Apigee API proxy bundle."""
 
     key = APIGEE_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = APIGEE_FORMAT_KEY
     label = "Apigee API proxy"
     description = (

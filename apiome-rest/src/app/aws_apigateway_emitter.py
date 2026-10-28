@@ -46,6 +46,7 @@ from .canonical_model import ApiParadigm, CanonicalApi, Operation
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -166,7 +167,7 @@ class _AwsWriter:
     def build(self) -> Dict[str, Any]:
         """The OpenAPI 3.0 document with integrations."""
         if not self.operations:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "AWS API Gateway export requires at least one HTTP operation: a REST API integrates "
                 "methods, and a model with none has nothing to integrate."
             )
@@ -360,6 +361,8 @@ class AwsApiGatewayEmitter(Emitter, register=True):
     """Emit a :class:`CanonicalApi` as an API Gateway-importable OpenAPI 3.0 document."""
 
     key = AWS_APIGATEWAY_FORMAT_KEY
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("http-operation",)
     format = AWS_APIGATEWAY_FORMAT_KEY
     label = "AWS API Gateway"
     description = (

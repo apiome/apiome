@@ -54,6 +54,7 @@ from .canonical_model import (
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -281,6 +282,8 @@ class KafkaConnectEmitter(Emitter, register=True):
     """
 
     key = "kafka-connect"
+    #: X1 (#6222): refused with a reason, never crashed, when the source lacks this.
+    requires_source = ("record-type",)
     format = "kafka-connect"
     label = "Kafka Connect Schema"
     description = (
@@ -371,7 +374,7 @@ class _ConnectWriter:
             ValueError: When the model holds no record type.
         """
         if not self._records:
-            raise ValueError(
+            raise EmitPreconditionError(
                 "Kafka Connect export requires at least one record type — a Connect "
                 "schema describes a struct, and this model declares none."
             )
@@ -380,6 +383,17 @@ class _ConnectWriter:
         taken: Set[str] = {"connector.json"}
         for type_ in roots:
             pointer = f"/{type_.key}"
+            if not self._ordered_fields(type_):
+                # X1 (#6222): a key/value schema must be a struct with fields; an empty root
+                # record has no schema file to write.
+                self.losses.record(
+                    LossKind.NA,
+                    "empty-root-struct",
+                    f"Record {type_.key!r} declares no members, so it has no Kafka Connect "
+                    f"key or value schema and is not written.",
+                    pointer=type_.key,
+                )
+                continue
             document = self._emit_record(type_, pointer=pointer, stack=set(), root=True)
             errors = validate_connect_schema(document, source_label=type_.key)
             if errors:
@@ -391,6 +405,11 @@ class _ConnectWriter:
                     content=document,
                     media_type=KafkaConnectEmitter.OUTPUT_MEDIA_TYPE,
                 )
+            )
+        if not files:
+            raise EmitPreconditionError(
+                "Kafka Connect export needs a record type with at least one field; every record "
+                "in this source is empty."
             )
         files.extend(self._connector_files())
         self._report_carried_payload()
@@ -574,14 +593,40 @@ class _ConnectWriter:
             self._emit_field(field, pointer=f"{pointer}/fields/{index}", stack=inner)
             for index, field in enumerate(self._ordered_fields(type_))
         ]
+        # X1 (#6222): Connect refuses a struct that names a field twice (an ISO 20022 choice can
+        # repeat an element); later repeats get a numbered suffix, and the rename is said.
+        seen: Set[str] = set()
+        for emitted in schema["fields"]:
+            name = emitted.get("field")
+            if not isinstance(name, str):
+                continue
+            if name in seen:
+                renamed, n = name, 2
+                while f"{name}_{n}" in seen:
+                    n += 1
+                renamed = f"{name}_{n}"
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "duplicate-field",
+                    f"Record {type_.key!r} names field {name!r} twice; the repeat is written as "
+                    f"{renamed!r}.",
+                    pointer=type_.key,
+                )
+                emitted["field"] = renamed
+                name = renamed
+            seen.add(name)
         if not schema["fields"]:
+            # X1 (#6222): Connect cannot read a struct with no fields, so an empty record is
+            # written as optional bytes (keeping its name and doc) rather than failing the emit.
             self.losses.record(
-                LossKind.NA,
+                LossKind.INFERRED,
                 "empty-struct",
-                f"Record {type_.key!r} declares no members; a Kafka Connect struct with no "
-                f"fields describes no record",
+                f"Record {type_.key!r} declares no members; a Kafka Connect struct needs at "
+                f"least one field, so it is written as optional bytes",
                 pointer=type_.key,
             )
+            empty = {key: schema[key] for key in ("name", "doc") if key in schema}
+            return {"type": "bytes", **empty, "optional": True}
         parameters = self._parameters(type_.extras)
         if parameters:
             schema["parameters"] = parameters
