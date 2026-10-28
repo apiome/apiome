@@ -40,8 +40,14 @@ jest.mock('@monaco-editor/react', () => ({
 
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={typeof href === 'string' ? href : '#'}>{children}</a>
+  // Forwards className / data-* so a `Button asChild` link (the header's Back, HIVE-11.11b) keeps
+  // its button chrome in the dumped fixtures.
+  default: React.forwardRef<HTMLAnchorElement, { children: React.ReactNode; href: string } & Record<string, unknown>>(
+    ({ children, href, prefetch: _prefetch, ...rest }, ref) => (
+      <a ref={ref} href={typeof href === 'string' ? href : '#'} {...rest}>
+        {children}
+      </a>
+    ),
   ),
 }));
 
@@ -213,6 +219,7 @@ async function renderStudio(props: Partial<React.ComponentProps<typeof ExportStu
       artifact="proj-petstore"
       artifactLabel="Pet Store API"
       version="rev-1"
+      workspaceName="Acme Corp"
       {...props}
     />,
   );
@@ -265,20 +272,39 @@ describe('the Studio wears the shared page chrome', () => {
     expect(screen.queryByRole('main')).toBeNull();
   });
 
-  it('puts the way back in the trail rather than in a bare link above the title', async () => {
-    await renderStudio();
+  it('reads <workspace> › Ship › Export studio, with no navigation verb in the trail (HIVE-11.11b)', async () => {
+    await renderStudio({ workspaceName: 'Acme Corp' });
     const trail = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(trail).getByRole('link', { name: 'Acme Corp' })).toHaveAttribute('href', '/ade/dashboard');
     expect(within(trail).getByText('Ship')).toBeInTheDocument();
-    expect(within(trail).getByRole('link', { name: /back to versions/i })).toHaveAttribute(
-      'href',
-      expect.stringContaining('/versions'),
-    );
+    expect(within(trail).getByText('Export studio')).toBeInTheDocument();
+    expect(within(trail).queryByText(/back to/i)).toBeNull();
+  });
+
+  it('falls back to Home for the first crumb until the workspace name is known', async () => {
+    await renderStudio({ workspaceName: null });
+    const trail = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(trail).getByRole('link', { name: 'Home' })).toBeInTheDocument();
+  });
+
+  it('draws the icon in the title row, inside the h1', async () => {
+    await renderStudio();
+    const title = screen.getByRole('heading', { level: 1, name: 'Export studio' });
+    expect(title.querySelector('.xstd-page-title > svg')).not.toBeNull();
+  });
+
+  it('puts the way back to Versions in the header actions, not the trail', async () => {
+    await renderStudio();
+    const header = document.querySelector('.page-header') as HTMLElement;
+    const back = within(header).getByRole('link', { name: /back to versions/i });
+    expect(back).toHaveAttribute('href', expect.stringContaining('/versions'));
+    const trail = screen.getByRole('navigation', { name: 'Breadcrumb' });
+    expect(trail.contains(back)).toBe(false);
   });
 
   it('follows a catalog origin back to the catalog', async () => {
     await renderStudio({ origin: 'catalog' });
-    const trail = screen.getByRole('navigation', { name: 'Breadcrumb' });
-    expect(within(trail).getByRole('link', { name: /back to catalog/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /back to catalog/i })).toHaveAttribute(
       'href',
       expect.stringContaining('/catalog'),
     );
@@ -746,7 +772,7 @@ describe('the browser fixtures', () => {
         { target: 'proto', fidelity: { summary: { tier: 'lossy', preserved_percent: 64 } } },
       ],
     });
-    render(<ExportStudio artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);
+    render(<ExportStudio artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" workspaceName="Acme Corp" />);
     await waitFor(() => expect(screen.getByText(/export targets available/)).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(within(screen.getByTestId('export-studio-multi-toggle')).getByRole('checkbox'));

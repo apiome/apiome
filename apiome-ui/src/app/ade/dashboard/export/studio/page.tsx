@@ -6,6 +6,11 @@ import { useSearchParams } from 'next/navigation';
 import { LoadingState } from '../../../../components/ui/LoadingState';
 import { ExportStudio } from '../../../../components/ade/dashboard/export/ExportStudio';
 import { ExportStudioSteps } from '../../../../components/ade/dashboard/export/ExportStudioSteps';
+import {
+  ExportStudioTitle,
+  exportStudioBreadcrumb,
+} from '../../../../components/ade/dashboard/export/ExportStudioHeaderParts';
+import { useWorkspaceName } from '../../../../components/shell/useWorkspaceName';
 import { ExportSourcePicker } from '../../../../components/ade/export-studio/ExportSourcePicker';
 import type { ExportedArtifactSummary } from '../../../../components/ade/dashboard/export/ExportDialog';
 import { recordRecentExport } from '../../../../components/ade/dashboard/export/recentExports';
@@ -42,6 +47,8 @@ import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 function ExportStudioRouteContent() {
   const { data: session, status } = useAuthSession();
   const searchParams = useSearchParams();
+  // HIVE-11.11b: the crumb trail starts at the workspace (`Acme Corp › Ship › Export studio`).
+  const workspaceName = useWorkspaceName();
 
   // Validate the whole link once per query string: scalars, the compact option overrides
   // (MFX-41.3/41.4), and the resumable step, plus the notices for anything that had to degrade.
@@ -85,12 +92,8 @@ function ExportStudioRouteContent() {
     return (
       <Page data-testid="export-studio-unscoped">
         <PageHeader
-          breadcrumb={[
-            { label: 'Home', href: '/ade/dashboard' },
-            { label: 'Ship' },
-            { label: 'Export studio' },
-          ]}
-          title="Export studio"
+          breadcrumb={exportStudioBreadcrumb(workspaceName)}
+          title={<ExportStudioTitle />}
           tabs={tabs}
         />
         <PageBody>
@@ -116,6 +119,7 @@ function ExportStudioRouteContent() {
       linkIssues={issues}
       origin={origin}
       sourceFormat={sourceFormat}
+      workspaceName={workspaceName}
       // Record every Studio generate in the MFX-6.5 recent-exports store, keyed by the scoped
       // source — so a catalog item's exports (MFX-41.2) are tracked just as the dialog tracked them.
       onGenerated={(summary: ExportedArtifactSummary) =>

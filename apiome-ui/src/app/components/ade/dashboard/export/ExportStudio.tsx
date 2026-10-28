@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { toast } from '../../../ui/toast';
 import {
   ArrowLeft,
@@ -12,7 +13,6 @@ import {
   Link2,
   Loader2,
   Package,
-  PanelsTopLeft,
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
@@ -31,6 +31,7 @@ import { DeliveryGatePanel } from './DeliveryGatePanel';
 import { deliveryReportFor } from './exportJob';
 import { RecentAsyncJobsPanel } from '../asyncJobs/RecentAsyncJobsPanel';
 import { MultiExportRun } from './MultiExportRun';
+import { ExportStudioTitle, exportStudioBreadcrumb } from './ExportStudioHeaderParts';
 import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import { MultiTargetChecklist } from './MultiTargetChecklist';
 import { multiTargetJobBody } from './exportBatchJob';
@@ -128,6 +129,8 @@ interface ExportStudioProps {
    * rendered with the ones the Studio derives once the target registry has loaded (MFX-41.4).
    */
   linkIssues?: ExportStudioLinkIssue[];
+  /** The workspace's name, the first crumb (HIVE-11.11b); `Home` until it is known. */
+  workspaceName?: string | null;
   /** Where the export was launched from — resolves the back link (Versions vs Catalog). */
   origin?: string | null;
   /**
@@ -201,6 +204,7 @@ export function ExportStudio({
   linkIssues = EMPTY_LINK_ISSUES,
   origin = null,
   sourceFormat = null,
+  workspaceName = null,
   onGenerated,
   tabs,
 }: ExportStudioProps) {
@@ -1048,21 +1052,12 @@ export function ExportStudio({
 
   return (
     <Page data-testid="export-studio">
-      {/* The shell has drawn the chrome since HIVE-3.8, so the screen is a `Page` with the
-          standard header: the trail carries the way back to Versions or Catalog that the
-          hand-rolled link used to, and "Copy link" is the header's one action — Generate
-          stays in the footer nav, where every step's primary lives. */}
+      {/* The standard header (HIVE-11.11b): crumbs `<workspace> › Ship › Export studio`, the
+          icon in the title row, and the way back to Versions or the Catalog as a ghost action
+          beside "Copy link". Generate stays in the footer nav, where every step's primary lives. */}
       <PageHeader
-        breadcrumb={[
-          { label: 'Ship' },
-          { label: `Back to ${backTarget.label}`, href: backTarget.href },
-        ]}
-        title={
-          <>
-            <PanelsTopLeft aria-hidden />
-            Export studio
-          </>
-        }
+        breadcrumb={exportStudioBreadcrumb(workspaceName)}
+        title={<ExportStudioTitle />}
         description={
           <>
             Verify a conversion before you generate it. Exporting{' '}
@@ -1071,7 +1066,17 @@ export function ExportStudio({
           </>
         }
         /* MFX-41.4: "look at this export config" as a URL. */
-        actions={<CopyStudioLinkButton scope={shareScope} />}
+        actions={
+          <>
+            <Button asChild variant="ghost" size="sm">
+              <Link href={backTarget.href} data-testid="export-studio-back">
+                <ArrowLeft aria-hidden />
+                Back to {backTarget.label}
+              </Link>
+            </Button>
+            <CopyStudioLinkButton scope={shareScope} />
+          </>
+        }
         tabs={tabs}
       />
       <PageBody>

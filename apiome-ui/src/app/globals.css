@@ -31202,6 +31202,21 @@ tr:focus-within .pub-url__glyph {
   block-size: var(--icon-rail);
 }
 
+/* The Export studio's page title (HIVE-11.11b): the icon sits in the title row, quiet, at the
+   title's own scale — not as a tile above it. */
+.xstd-page-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xstd-page-title > svg {
+  flex: none;
+  inline-size: 0.9em;
+  block-size: 0.9em;
+  color: var(--fg-subtle);
+}
+
 .xstd-title-row {
   display: flex;
   flex-wrap: wrap;

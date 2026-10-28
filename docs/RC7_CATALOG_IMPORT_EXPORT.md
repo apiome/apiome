@@ -345,7 +345,7 @@ The scope is PLAN_POST_LAUNCH_ENABLEMENT §2.2 (E1) with the 53 targets that exi
 | [#6220](https://github.com/apiome/apiome/issues/6220) E1-4 | Export dialog downloads the full multi-file bundle | ✅ Built: a multi-file target's **Download all files (.zip)** runs the export as a job and downloads its MFX-4.2 bundle (every file + `manifest.json`); single-file targets keep the client-built zip |
 | [#3853](https://github.com/apiome/apiome/issues/3853) MFX-5.2 | Lint of the emitted artifact (REST verify returns `lint: null`; the UI lens is ready) | ✅ Built: verify reads the emitted artifact back through its import adapter and lints it with the MFI rule packs for its format (advisory; `applicable: false` + `reason` when it cannot be read back) |
 | [#6221](https://github.com/apiome/apiome/issues/6221) E1-6 | Honest target availability; typed missing-source error, **Re-import** action, source backfill | ✅ Built: `422 {code: source-not-captured \| source-withheld, reimport}` on every export route + job context; dialog/studio **Re-import** notice (`?open=import-catalog`); `ensure_target_available` refuses unavailable targets up front, CLI **Why not** column + pre-job refusal; `scripts/backfill_captured_sources.py` (sibling revision or linked repo file, fingerprint-proven) |
-| [#6234](https://github.com/apiome/apiome/issues/6234) HIVE-11.11b | Studio header: crumbs, ghost **Back to Versions** | Not built |
+| [#6234](https://github.com/apiome/apiome/issues/6234) HIVE-11.11b | Studio header: crumbs, ghost **Back to Versions** | ✅ Built: crumbs `<workspace> › Ship › Export studio`, icon in the title row, **Back to Versions/Catalog** as a ghost header action; fixtures re-dumped, header gate green |
 
 ### 4.2 Hardening (the gate opens only when these pass)
 
