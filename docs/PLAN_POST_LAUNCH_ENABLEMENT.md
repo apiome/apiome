@@ -179,7 +179,7 @@ flowchart LR
 | Item | Issue |
 | --- | --- |
 | E1-1 Studio release wiring and hiding gated pieces ✅ | [#6217](https://github.com/apiome/apiome/issues/6217) |
-| E1-2 Studio source picker | [#6218](https://github.com/apiome/apiome/issues/6218) |
+| E1-2 Studio source picker ✅ | [#6218](https://github.com/apiome/apiome/issues/6218) |
 | E1-3 Catalog bulk export and multi-target UI and CLI | [#6219](https://github.com/apiome/apiome/issues/6219) |
 | E1-4 Dialog full bundle | [#6220](https://github.com/apiome/apiome/issues/6220) |
 | E1-5 Emitted-artifact lint (MFX-5.2) | [#3853](https://github.com/apiome/apiome/issues/3853) (existing, moved to E1) |

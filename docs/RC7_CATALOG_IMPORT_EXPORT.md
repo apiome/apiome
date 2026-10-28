@@ -340,7 +340,7 @@ The scope is PLAN_POST_LAUNCH_ENABLEMENT §2.2 (E1) with the 53 targets that exi
 | Ticket | Work | Status |
 | --- | --- | --- |
 | [#6217](https://github.com/apiome/apiome/issues/6217) E1-1 | Release wiring; keep `sdk-settings` / `connectors` pieces hidden | ✅ Built: Catalog **Export** (dialog) and **Export to another format…** (studio, row menu and item ⋯) verbs; facts card and Versions ⋯ open the studio scoped to the head revision; the gateway-config back link falls back while `connectors` is gated |
-| [#6218](https://github.com/apiome/apiome/issues/6218) E1-2 | Source picker (studio opened from the rail or palette today lands on a dead end) | Not built |
+| [#6218](https://github.com/apiome/apiome/issues/6218) E1-2 | Source picker (studio opened from the rail or palette today lands on a dead end) | ✅ Built: the Source step lists catalog items (search, format/protocol pills) and project → version (catalog items never listed as projects); choosing opens the resumable deep link at Target |
 | [#6219](https://github.com/apiome/apiome/issues/6219) E1-3 | Bulk export from the Catalog bulk bar; multi-target in the studio; CLI `--targets`, `--items`, `--all-versions` | REST built; no UI or CLI |
 | [#6220](https://github.com/apiome/apiome/issues/6220) E1-4 | Export dialog downloads the full multi-file bundle | Not built |
 | [#3853](https://github.com/apiome/apiome/issues/3853) MFX-5.2 | Lint of the emitted artifact (REST verify returns `lint: null`; the UI lens is ready) | Not built |

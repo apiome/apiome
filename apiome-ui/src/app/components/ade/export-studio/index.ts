@@ -44,3 +44,7 @@ export {
 } from './exportStudioTabs';
 
 export { ExportStudioTabs, type ExportStudioTabsProps } from './ExportStudioTabs';
+
+// E1-2 (#6218): the Source step's picker when the studio opens without a source.
+export * from './exportSourcePicker';
+export { ExportSourcePicker } from './ExportSourcePicker';
