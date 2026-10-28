@@ -133,8 +133,15 @@ The banner gives the verdict:
 
 The **Fidelity**, **Validation** and **Lint** tabs carry counts. **Fidelity** shows the % preserved
 and what was dropped, approximated or synthesized; **Show per-construct report** opens the
-projection map, where each construct links to its reason. **Lint** lints the *emitted* file, not the
-source. Changing the target or an option clears the verdict and the acknowledgement — run it again.
+projection map, where each construct links to its reason. Changing the target or an option clears
+the verdict and the acknowledgement — run it again.
+
+**Lint** lints the *emitted* file, not the source. Apiome reads the file back and runs the same lint
+rules an import of that format runs, so a GraphQL export is checked by the GraphQL rules and a
+Protobuf export by the Protobuf rules. The tab shows the score and grade, the findings grouped by
+severity, and the rules that fired. Lint is advice: it never changes the verdict or blocks the
+export. A format Apiome cannot read back (a Postman collection, for example) says it was not linted
+and why.
 
 ## 5. Review & Generate
 

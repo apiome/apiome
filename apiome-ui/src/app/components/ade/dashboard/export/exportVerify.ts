@@ -110,6 +110,8 @@ export interface EmittedArtifactLintReport {
   grade?: string | null;
   /** The itemized findings, in the server's order. */
   findings: EmittedLintFinding[];
+  /** Why the artifact was not linted, when {@link applicable} is false (e.g. no reader for it). */
+  reason?: string | null;
 }
 
 /**

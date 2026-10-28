@@ -292,6 +292,7 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Preview (fidelity + projection summary + snapshot hash) | `POST /v1/export/{tenant}/preview` |
 | Bounded, cursor-paginated projection evidence | `POST /v1/export/{tenant}/projection-evidence` |
 | Reviewed reason explanations + destination documentation | `GET /v1/export/{tenant}/capability-registry` |
+| One-call verify: fidelity, validation, lint of the emitted file (format's rule pack; advisory), verdict | `POST /v1/export/{tenant}/verify` |
 | Export job (accepts `acknowledged_snapshot`; fails `STALE_PREVIEW` on mismatch) | `POST /v1/export/{tenant}/jobs` |
 | Multi-format export job: one zip, per-format fidelity + a rollup (`targets` list) | `POST /v1/export/{tenant}/jobs` |
 | Batch export job: several versions × formats, one zip, per-item status (`versions` / `all_versions`) | `POST /v1/export/{tenant}/jobs` |

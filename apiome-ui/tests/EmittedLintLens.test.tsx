@@ -108,6 +108,19 @@ describe('EmittedLintLens — empty state is explicit (MFX-42.3)', () => {
     expect(empty).toHaveTextContent(/not blocked by lint/i);
   });
 
+  it('says why the server could not lint the artifact (MFX-5.2)', () => {
+    render(
+      <EmittedLintLens
+        targetLabel="WADL"
+        lint={{ applicable: false, findings: [], reason: "No import adapter reads 'wadl' back." }}
+      />,
+    );
+    const empty = screen.getByTestId('verify-lint-empty');
+    expect(empty).toHaveTextContent("WADL was not linted: No import adapter reads 'wadl' back.");
+    expect(empty).not.toHaveTextContent(/no lint pack is registered/i);
+    expect(empty).toHaveTextContent(/not blocked by lint/i);
+  });
+
   it('treats a null report as not-applicable (the endpoint ran no lint pass)', () => {
     render(<EmittedLintLens lint={null} />);
     expect(screen.getByTestId('verify-lint-empty')).toBeInTheDocument();

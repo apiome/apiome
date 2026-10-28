@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.356.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.357.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export` · 11 operations
 
@@ -269,7 +269,7 @@ Operation id: `list_export_targets_v1_export__tenant_slug__targets_get`
 
 **One-call pre-generation verify: fidelity + validation + lint + verdict**
 
-The Verify workbench's dry run (MFX-42.5, backing MFX-42.1): emit the source artifact/version to one ``target`` in a **temporary buffer**, then run fidelity (MFX-2.5) + emitted-output validation (MFX-5.1/5.3) + emitted-artifact lint (MFX-5.2) over it, and return all three lenses plus an overall go/no-go **verdict** — **without persisting an artifact or a job row**. The emit is read-only (no field-identity persistence), so a verify never mutates tenant state. The emitted artifact rides back inline under a size cap (``include_content``) for the Monaco viewer (MFX-43.x). A severe conversion (MFX-3.3) is **verified, not blocked** — its verdict reports the loss so the user can decide. Rate-limited by the global per-tenant middleware (it does real emit work). Lint (MFX-5.2) is not yet implemented, so ``lint`` is currently ``null``. Typical p50 for the five MVP emitters (OpenAPI, AsyncAPI, GraphQL, gRPC/Protobuf, Avro) is dominated by the single emit + re-parse and runs in the tens of milliseconds for pure-Python validators; protobuf/AsyncAPI add their toolchain's startup when installed.
+The Verify workbench's dry run (MFX-42.5, backing MFX-42.1): emit the source artifact/version to one ``target`` in a **temporary buffer**, then run fidelity (MFX-2.5) + emitted-output validation (MFX-5.1/5.3) + emitted-artifact lint (MFX-5.2) over it, and return all three lenses plus an overall go/no-go **verdict** — **without persisting an artifact or a job row**. The emit is read-only (no field-identity persistence), so a verify never mutates tenant state. The emitted artifact rides back inline under a size cap (``include_content``) for the Monaco viewer (MFX-43.x). A severe conversion (MFX-3.3) is **verified, not blocked** — its verdict reports the loss so the user can decide. Rate-limited by the global per-tenant middleware (it does real emit work). Lint (MFX-5.2) re-reads the emitted artifact through its import adapter and runs the MFI rule packs for its format (common + format pack); it is advisory and never changes the verdict, and reports ``applicable: false`` with a ``reason`` when the format cannot be read back. Typical p50 for the five MVP emitters (OpenAPI, AsyncAPI, GraphQL, gRPC/Protobuf, Avro) is dominated by the single emit + re-parse and runs in the tens of milliseconds for pure-Python validators; protobuf/AsyncAPI add their toolchain's startup when installed.
 
 Operation id: `verify_export_v1_export__tenant_slug__verify_post`
 
@@ -633,7 +633,7 @@ The emit is read-only (no field-identity persistence), so a verify never mutates
 | `fidelity` | `ExportFidelity` | yes | The full fidelity envelope (target + tier + per-construct report + advisory). |
 | `guard` | `TranscodeGuard` | yes | The pre-flight transcoding guard (MFX-3.3): the conversion band and why. |
 | `validation` | `EmittedValidationReport` | yes | The emitted-output validation gate + structured report (MFX-5.1/5.3). |
-| `lint` | `EmittedArtifactLint` or null | no | The emitted-artifact lint report (MFX-5.2); null until MFX-5.2 lands, which the Verify workbench renders as the lint lens's empty state. |
+| `lint` | `EmittedArtifactLint` or null | no | The emitted-artifact lint report (MFX-5.2): the artifact read back through its import adapter and linted with the MFI rule packs for its format. Advisory — it never changes the verdict. ``applicable: false`` (with a ``reason``) when no adapter reads the format back. |
 | `verdict` | `ExportVerifyVerdict` | yes | The overall go/no-go band the Generate gate reads (clean / lossy / invalid). |
 | `files` | array of `ExportDispatchFile` | no | The emitted artifact inline (under the size cap); empty when the caller opted out (``include_content: false``) or the artifact exceeded the cap (`truncated`). |
 | `truncated` | boolean | no | True when the emitted artifact exceeded the inline size cap and was omitted from ``files``; the Monaco viewer should fetch it via the job/document surface instead. |
