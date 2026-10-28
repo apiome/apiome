@@ -29,7 +29,7 @@ shipment — in the product, in the API, in the CLI and inside every downloaded 
 | **What the user is told is lost** | ❌ A *prediction* only; real emit-time losses are discarded; no report in the download | **One loss report everywhere (§3)** |
 | **Correctness of emitted files** | ❌ Broken output in ≥ 20 targets (dangling `$ref`s, undeclared prefixes, invalid identifiers, type names leaked) | Per-target fixes (§5) |
 | Conformance matrix | 628 tracked silent-loss pairs, but the gate never round-trips a "lossy" cell, so the true number is higher | Every cell round-tripped and validated; ledger at zero (§6) |
-| Open tickets in scope | 318 open; 74 already done, 104 partial or folded | Close, fold or schedule each (§11) |
+| Open tickets in scope | 318 open; 74 already done, 104 partial or folded | Close or finish in RC7 (§11); the rest move to [RC8](RC8_PLAN.md) |
 
 **Ticket count for RC7: 85 new `R7-` tickets** (60 MVP — gate blockers, 25 V2 — ship in RC7 after the
 gate), **74 existing tickets to close** as already done, and **104 existing tickets (epics included)
@@ -75,7 +75,8 @@ RC7 ships when all of these hold on `main`:
 6. **X3–X8 green**, including the owed X6 `/security-review` and X8 staging week (§8).
 7. **The gate is open:** `export-studio` is removed from `UNRELEASED_FEATURE_IDS`; SDK & branding
    and gateway push-back stay hidden (§8).
-8. **No open MVP ticket** in §12, and every V2 ticket closed or explicitly moved with a reason.
+8. **No open MVP ticket** in §12, and every V2 ticket closed or moved to RC8 with a reason
+   ([`RC8_PLAN.md`](RC8_PLAN.md) §1).
 
 ---
 
@@ -365,31 +366,11 @@ only re-parse with Apiome's own importer.
 Also for RC7, no ticket needed: review gateway defaults so AWS API Gateway exports OpenAPI 3.0.3 by
 default (AWS accepts 2.0 and 3.0; Azure only partly processes 3.1).
 
-### 10.4 Next release (not RC7), in priority order
+### 10.4 Beyond RC7
 
-1. SQL DDL emitter ([#4311](https://github.com/apiome/apiome/issues/4311)). It is in the RC7 milestone, but this plan moves it to Future (§11.4).
-2. Bruno and Insomnia v5 output ([#4291](https://github.com/apiome/apiome/issues/4291)).
-3. TypeScript types-only emitter (new).
-4. gRPC JSON transcoding / gRPC-Gateway options ([#4343](https://github.com/apiome/apiome/issues/4343)).
-5. Apollo Federation subgraph output ([#4344](https://github.com/apiome/apiome/issues/4344)).
-6. Google Cloud API Gateway target (new).
-7. MCP server manifest and A2A Agent Card ([#4295](https://github.com/apiome/apiome/issues/4295), [#4296](https://github.com/apiome/apiome/issues/4296)).
-8. OData V2 output option (new, SAP estates).
-9. Zod emitter (new).
-10. DBML + Prisma ([#4312](https://github.com/apiome/apiome/issues/4312)).
-11. Schema Registry subjects ([#4183](https://github.com/apiome/apiome/issues/4183)).
-12. Protobuf Editions output, Tyk OAS output, EDIFACT ([#4146](https://github.com/apiome/apiome/issues/4146)), Arrow/Parquet ([#4317](https://github.com/apiome/apiome/issues/4317)), FHIR R5
-    output ([#4157](https://github.com/apiome/apiome/issues/4157)).
-
-### 10.5 Not worthwhile
-
-These are not worth building: Pydantic output, Pact, JSON:API/HAL output (they belong in lint
-profiles), Postman v2.0, Swagger 1.2, WSDL 2.0 ([#4182](https://github.com/apiome/apiome/issues/4182)), Google Discovery ([#4174](https://github.com/apiome/apiome/issues/4174)), CSDL JSON ([#3897](https://github.com/apiome/apiome/issues/3897)),
-RELAX NG/DTD ([#4134](https://github.com/apiome/apiome/issues/4134)), PL/I ([#4141](https://github.com/apiome/apiome/issues/4141)), Liquibase/Flyway ([#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795)), Iceberg ([#4319](https://github.com/apiome/apiome/issues/4319)), BigQuery/Spark
-([#4318](https://github.com/apiome/apiome/issues/4318)), xRegistry ([#4306](https://github.com/apiome/apiome/issues/4306)–[#4309](https://github.com/apiome/apiome/issues/4309)), HAR, SoapUI, tRPC and nginx/HAProxy/Consul output.
-
-The industry, mainframe and IoT formats stay import-only, except where §5's passthrough fix
-applies. Close or move these tickets with this reason (§11.4).
+The ranked list of new targets and output modes for the next release, and the formats considered
+and not planned, are in [`RC8_PLAN.md`](RC8_PLAN.md) §2 and §4. The SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311)) and
+DBML/Prisma ([#4312](https://github.com/apiome/apiome/issues/4312)) tickets currently in the RC7 milestone move there.
 
 ---
 
@@ -431,7 +412,7 @@ Close each one when the R7 ticket that finishes it closes; link both ways.
 | R7-EM12 | [#3914](https://github.com/apiome/apiome/issues/3914), [#3915](https://github.com/apiome/apiome/issues/3915) |
 | R7-EM13 | [#3893](https://github.com/apiome/apiome/issues/3893), [#3894](https://github.com/apiome/apiome/issues/3894) |
 | R7-EM14 | [#4301](https://github.com/apiome/apiome/issues/4301), [#4302](https://github.com/apiome/apiome/issues/4302) |
-| R7-EM17 | [#3897](https://github.com/apiome/apiome/issues/3897), [#3898](https://github.com/apiome/apiome/issues/3898), [#4157](https://github.com/apiome/apiome/issues/4157), [#4158](https://github.com/apiome/apiome/issues/4158), [#4161](https://github.com/apiome/apiome/issues/4161) |
+| R7-EM17 | [#3897](https://github.com/apiome/apiome/issues/3897) (CSDL XML), [#3898](https://github.com/apiome/apiome/issues/3898), [#4157](https://github.com/apiome/apiome/issues/4157) (R4; R5 in RC8), [#4158](https://github.com/apiome/apiome/issues/4158), [#4161](https://github.com/apiome/apiome/issues/4161) |
 | R7-EM20 | [#4132](https://github.com/apiome/apiome/issues/4132), [#4133](https://github.com/apiome/apiome/issues/4133) |
 | R7-EM21 / R7-FG1 | [#4126](https://github.com/apiome/apiome/issues/4126), [#4127](https://github.com/apiome/apiome/issues/4127), [#4128](https://github.com/apiome/apiome/issues/4128), [#4130](https://github.com/apiome/apiome/issues/4130) |
 | R7-EM23 | [#4163](https://github.com/apiome/apiome/issues/4163), [#4164](https://github.com/apiome/apiome/issues/4164), [#4178](https://github.com/apiome/apiome/issues/4178) |
@@ -446,28 +427,20 @@ Close each one when the R7 ticket that finishes it closes; link both ways.
 Epics closing with them: [#3813](https://github.com/apiome/apiome/issues/3813) (umbrella), [#3821](https://github.com/apiome/apiome/issues/3821), [#3823](https://github.com/apiome/apiome/issues/3823), [#3824](https://github.com/apiome/apiome/issues/3824), [#3827](https://github.com/apiome/apiome/issues/3827)–[#3833](https://github.com/apiome/apiome/issues/3833), [#4125](https://github.com/apiome/apiome/issues/4125), [#4131](https://github.com/apiome/apiome/issues/4131), [#4138](https://github.com/apiome/apiome/issues/4138),
 [#4144](https://github.com/apiome/apiome/issues/4144), [#4150](https://github.com/apiome/apiome/issues/4150), [#4156](https://github.com/apiome/apiome/issues/4156), [#4162](https://github.com/apiome/apiome/issues/4162), [#4167](https://github.com/apiome/apiome/issues/4167), [#4172](https://github.com/apiome/apiome/issues/4172), [#4177](https://github.com/apiome/apiome/issues/4177), [#4288](https://github.com/apiome/apiome/issues/4288), [#4300](https://github.com/apiome/apiome/issues/4300), [#4360](https://github.com/apiome/apiome/issues/4360).
 
-### 11.3 Keep open — the umbrella
+### 11.3 Everything else moves to RC8
 
-[#3715](https://github.com/apiome/apiome/issues/3715) (MFI umbrella, milestone *Future*) stays open by design.
+Every other in-scope ticket moves to [`RC8_PLAN.md`](RC8_PLAN.md):
 
-### 11.4 Move to Future, with the reason "not RC7: new target or new channel (§10.4–10.5)"
+- deferred new targets and modes, delivery, presets and schedules, the MCP export surface,
+  test-drive, visualizations, enterprise ops UX and cross-format breaking semantics (RC8 §3);
+- formats considered and not planned, with the reason to close their tickets (RC8 §4);
+- the issues in the RC7 milestone that are not import or export (RC8 §5);
+- the other open features the audit found outside RC7's scope (RC8 §6);
+- the MFI umbrella [#3715](https://github.com/apiome/apiome/issues/3715) (RC8 §7).
 
-- **New targets and modes:**
-  - [#795](https://github.com/apiome/apiome/issues/795), [#4134](https://github.com/apiome/apiome/issues/4134), [#4135](https://github.com/apiome/apiome/issues/4135), [#4141](https://github.com/apiome/apiome/issues/4141), [#4145](https://github.com/apiome/apiome/issues/4145), [#4146](https://github.com/apiome/apiome/issues/4146), [#4159](https://github.com/apiome/apiome/issues/4159), [#4174](https://github.com/apiome/apiome/issues/4174), [#4182](https://github.com/apiome/apiome/issues/4182), [#4183](https://github.com/apiome/apiome/issues/4183), [#4291](https://github.com/apiome/apiome/issues/4291), [#4295](https://github.com/apiome/apiome/issues/4295)–[#4299](https://github.com/apiome/apiome/issues/4299),
-    [#4306](https://github.com/apiome/apiome/issues/4306)–[#4309](https://github.com/apiome/apiome/issues/4309), [#4311](https://github.com/apiome/apiome/issues/4311), [#4312](https://github.com/apiome/apiome/issues/4312), [#4313](https://github.com/apiome/apiome/issues/4313)–[#4315](https://github.com/apiome/apiome/issues/4315), [#4317](https://github.com/apiome/apiome/issues/4317)–[#4321](https://github.com/apiome/apiome/issues/4321), [#4323](https://github.com/apiome/apiome/issues/4323)–[#4326](https://github.com/apiome/apiome/issues/4326), [#4343](https://github.com/apiome/apiome/issues/4343), [#4344](https://github.com/apiome/apiome/issues/4344), [#4346](https://github.com/apiome/apiome/issues/4346).
-  - Epics: [#4294](https://github.com/apiome/apiome/issues/4294), [#4305](https://github.com/apiome/apiome/issues/4305), [#4310](https://github.com/apiome/apiome/issues/4310), [#4316](https://github.com/apiome/apiome/issues/4316), [#4322](https://github.com/apiome/apiome/issues/4322).
-- **Delivery, presets and schedules:** [#3851](https://github.com/apiome/apiome/issues/3851), [#3912](https://github.com/apiome/apiome/issues/3912) (push part), [#4328](https://github.com/apiome/apiome/issues/4328)–[#4331](https://github.com/apiome/apiome/issues/4331), [#4335](https://github.com/apiome/apiome/issues/4335)–[#4337](https://github.com/apiome/apiome/issues/4337), [#4381](https://github.com/apiome/apiome/issues/4381),
-  [#4382](https://github.com/apiome/apiome/issues/4382); epics [#3817](https://github.com/apiome/apiome/issues/3817), [#4327](https://github.com/apiome/apiome/issues/4327), [#4332](https://github.com/apiome/apiome/issues/4332).
-- **MCP export surface:** [#4339](https://github.com/apiome/apiome/issues/4339)–[#4341](https://github.com/apiome/apiome/issues/4341); epic [#4338](https://github.com/apiome/apiome/issues/4338).
-- **Test-drive, visualizations, enterprise ops UX:** [#4367](https://github.com/apiome/apiome/issues/4367)–[#4370](https://github.com/apiome/apiome/issues/4370), [#4372](https://github.com/apiome/apiome/issues/4372), [#4375](https://github.com/apiome/apiome/issues/4375)–[#4377](https://github.com/apiome/apiome/issues/4377), [#4379](https://github.com/apiome/apiome/issues/4379), [#4383](https://github.com/apiome/apiome/issues/4383);
-  epics [#4366](https://github.com/apiome/apiome/issues/4366), [#4373](https://github.com/apiome/apiome/issues/4373), [#4378](https://github.com/apiome/apiome/issues/4378).
-- **Cross-format breaking semantics** (follow-up to diffing imported specs): [#5743](https://github.com/apiome/apiome/issues/5743), [#5745](https://github.com/apiome/apiome/issues/5745)–[#5748](https://github.com/apiome/apiome/issues/5748).
-- **Other:** [#1735](https://github.com/apiome/apiome/issues/1735), [#1747](https://github.com/apiome/apiome/issues/1747), [#4498](https://github.com/apiome/apiome/issues/4498), [#4499](https://github.com/apiome/apiome/issues/4499), [#6163](https://github.com/apiome/apiome/issues/6163).
-- **Not import or export at all** (the RC7 plan §8): [#5594](https://github.com/apiome/apiome/issues/5594), [#5595](https://github.com/apiome/apiome/issues/5595), [#5596](https://github.com/apiome/apiome/issues/5596), [#5610](https://github.com/apiome/apiome/issues/5610), [#5611](https://github.com/apiome/apiome/issues/5611), [#5613](https://github.com/apiome/apiome/issues/5613),
-  [#5614](https://github.com/apiome/apiome/issues/5614), [#5617](https://github.com/apiome/apiome/issues/5617), [#6263](https://github.com/apiome/apiome/issues/6263), [#6317](https://github.com/apiome/apiome/issues/6317).
-  - Keep [#6274](https://github.com/apiome/apiome/issues/6274) in RC7 (R7-RG5).
-- **The remaining 62 out-of-scope issues:** Browse portal, SDK, mocks, audit, SSO, runtime drift,
-  security posture, legacy CLI epics. They are untouched by this plan and keep their milestones.
+Three tickets are split between the releases: [#4157](https://github.com/apiome/apiome/issues/4157) (R4 output rebuilt in RC7 by
+R7-EM17; R5 output in RC8), [#3897](https://github.com/apiome/apiome/issues/3897) (CSDL XML fixed in RC7; CSDL JSON not planned) and
+[#4295](https://github.com/apiome/apiome/issues/4295) (the MCP tool-definition dialect in RC7 as R7-FG4; the server manifest in RC8).
 
 ---
 
@@ -493,7 +466,8 @@ Housekeeping (no code):
 
 - **R7-HK1:** close the §11.1 list.
 - **R7-HK2:** link the §11.2 tickets to their R7 tickets.
-- **R7-HK3:** apply the milestone moves in §11.4 and add every R7 ticket to RC7.
+- **R7-HK3:** add every R7 ticket to the RC7 milestone; the moves out of RC7 are R8-HK1–HK3 in
+  [`RC8_PLAN.md`](RC8_PLAN.md) §8.
 - **R7-HK4:** point the RC7 plan §0.1 here.
 
 ### Dependencies
@@ -526,7 +500,7 @@ flowchart LR
   - LR3, LR4, LR5, LR8, VA1, RG5, RG6; CG2 and CG3 to zero; PC1, PC2, FG1.
   - Then RG3: preview env, staging week, gate removed.
 - **V2 alongside and after the gate:** the PC, FG and V2-tier tickets. Anything not done at release
-  moves explicitly with a reason (§1 item 8).
+  moves to RC8 with a reason (§1 item 8, [`RC8_PLAN.md`](RC8_PLAN.md) §1).
 
 ### Risks
 
