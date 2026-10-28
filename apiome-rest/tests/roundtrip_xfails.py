@@ -656,7 +656,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('capnproto', 'avro'): 'Invalid Avro schema: Person',
     ('capnproto', 'aws-apigateway'): 'Emit failed: AWS API Gateway export requires at least one HTTP operation: a REST API integrates methods, and a model with none has nothing to integrate.',
     ('capnproto', 'azure-apim'): 'Emit failed: Azure API Management export requires at least one HTTP operation: an APIM API is a set of HTTP operations, and a model with none has nothing to declare.',
-    ('capnproto', 'capnproto'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('capnproto', 'cddl'): "unexplained: changed root '', removed service 'Directory', changed type 'AddressBook', changed type 'Date', changed type 'Person', removed type 'Person.PhoneNumber', removed type 'Person.PhoneNumber.Type', added type 'PhoneNumber', added type 'Type'; overclaim: OK 'AddressBook', OK 'Date', OK 'Person', OK 'Person.PhoneNumber', OK 'Person.PhoneNumber.Type'",
     ('capnproto', 'cloudevents'): 'Emitter raises: LossKind has no DROP (fidelity/loss tracker bug).',
     ('capnproto', 'cobolcopybook'): 'COBOL copybook export requires `cobolcopybook_tree` extras from import',

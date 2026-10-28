@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.503.0] - 2026-10-28
+
+### Added
+- **Cap'n Proto schema emitter compiles from any source (MFX-30.2, #4179).** `CapnpEmitter` now writes `struct`s with
+  contiguous `@N` ordinals, `enum`s, `UNION` types as a `struct` holding an unnamed `union` group, `MAP` types as
+  `entries :List(Entry)`, `ALIAS`/`SCALAR` types as `using`, `List(T)` (`AnyList` for untyped items) and services as
+  `interface`s whose methods take the operation's parameters and request body. Scalars map through the new
+  `scalar_aliases.CAPNP_SCALAR_FOR_KIND`; names follow the compiler's rules (`app.capnproto_names`: capitalised
+  type names, camelCase members, no underscores, no built-in shadowing, de-duplicated). Types nested in a `.capnp`
+  source stay nested, and a source's imports are written `using X = import "…";` (was the invalid `@import`).
+- **Stable ordinals and file id (`app.capnproto_identity`).** Ordinals and the file `@0x` id are kept in the
+  field-identity store under target `capnproto` (`CapnpEmitOptions.persisted_field_numbers`, returned in
+  `EmitResult.field_identity_assignments`, loaded and persisted by `emit_canonical`). A re-export is identical; a new
+  member gets the next free ordinal; a removed member keeps its ordinal as an `obsolete<Name>` placeholder of the
+  same wire layout (recorded as `@layout:` rows), since Cap'n Proto allows no holes. The file id is derived from the
+  API identity on first export (top bit set) and then persisted. Synthesized numbers are `INFERRED` losses
+  (`synthesized-ordinal`, `synthesized-file-id`); `.capnp` sources keep their own ordinals and file id.
+- **`capnp` toolchain and export validation.** New optional bundled tool `capnp` 1.0.1 (`APIOME_CAPNP_BIN`; built
+  from source in the image) and `app.capnproto_compile.compile_capnp_schema`; the export validator compiles every
+  `capnproto` export and reports *skipped* when the tool is absent or the schema imports other files.
+- **Migration V337.** `apiome.export_field_identities.field_number` is `BIGINT`, and its check allows `0` and values
+  above 536870911 for the `capnproto` target only.
+
+### Changed
+- The Cap'n Proto capability profile declares `unions=True`, and `CapnpFidelityRulePack` reports every type, field or
+  method the emitter renames to Cap'n Proto's naming rules as an `APPROX` (info) verdict. Exports that now re-import
+  show those renames instead of losing them silently; nine pairs leave the export-conformance silent-loss ledger.
+
 ## [1.502.0] - 2026-10-28
 
 ### Added

@@ -53,6 +53,7 @@ _EXPECTED_KEYS = {
     "redocly",
     "oasdiff",
     "openapi-changes",
+    "capnp",
 }
 
 _AUTH = {

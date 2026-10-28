@@ -45,6 +45,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `spectral` | OpenAPI/AsyncAPI lint (`@stoplight/spectral-cli`, CLX-2.2) | `6.16.1` | node | npm into tools prefix + wrapper |
 | `vacuum` | OpenAPI lint (`daveshanley/vacuum`, CLX-2.2) | `0.29.9` | native | GitHub release tarball |
 | `redocly` | OpenAPI lint/resolve (`@redocly/cli`, CLX-2.2) | `2.39.0` | node | npm into tools prefix + wrapper |
+| `capnp` | Cap'n Proto compiler: `capnp compile` re-validates an emitted `.capnp` schema (`app.capnproto_compile`, MFX-30.2). Optional: without it a Cap'n Proto export is reported *not re-validated* | `1.0.1` | native | built from the capnproto.org release tarball (static `capnp_tool` target) |
 
 All of them land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
 wrappers so the runner invokes them by bare name exactly like the native binaries. The

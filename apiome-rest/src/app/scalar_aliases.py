@@ -9,8 +9,8 @@ writes those names as type references, and the file does not compile — Protobu
 
 This module reduces a spelling (plus its ``format``) to a small set of :data:`ScalarKind` values,
 and each emitter maps a kind to its own keyword (:data:`PROTO_SCALAR_FOR_KIND`,
-:data:`THRIFT_SCALAR_FOR_KIND`). Stored canonical models are untouched; only the emitted text
-changes.
+:data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`). Stored canonical models are
+untouched; only the emitted text changes.
 
 Only spellings with one clear meaning are listed. A name that is not listed — a named type, or a
 scalar such as ``decimal`` or ``date`` whose mapping is a choice — resolves to ``None``, and the
@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Dict, Mapping, Optional
 
 __all__ = [
+    "CAPNP_SCALAR_FOR_KIND",
     "PROTO_SCALAR_FOR_KIND",
     "THRIFT_SCALAR_FOR_KIND",
     "ScalarKind",
@@ -111,6 +112,24 @@ THRIFT_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
     "double": "double",
     "string": "string",
     "bytes": "binary",
+}
+
+#: Cap'n Proto built-in type per kind (MFX-30.2). Cap'n Proto has every width, signed and unsigned,
+#: so nothing widens.
+CAPNP_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "Bool",
+    "int8": "Int8",
+    "int16": "Int16",
+    "int32": "Int32",
+    "int64": "Int64",
+    "uint8": "UInt8",
+    "uint16": "UInt16",
+    "uint32": "UInt32",
+    "uint64": "UInt64",
+    "float": "Float32",
+    "double": "Float64",
+    "string": "Text",
+    "bytes": "Data",
 }
 
 

@@ -19,7 +19,7 @@ What lives here:
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
   ``zod-schema-extractor``, ``cue``, ``pkl``, ``dhall``, ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``.
+  ``openapi-changes``, ``capnp``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -324,6 +324,16 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version="0.0.78",
         description="Optional OpenAPI HTML/Markdown change renderer (pb33f/openapi-changes, CLX-2.3).",
         env_override_key="APIOME_OPENAPI_CHANGES_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="capnp",
+        executable="capnp",
+        version="1.0.1",
+        description="Cap'n Proto compiler: `capnp compile` checks an emitted .capnp schema "
+        "(capnproto/capnproto, MFX-30.2). Optional: without it the export is not re-validated.",
+        env_override_key="APIOME_CAPNP_BIN",
         parses_json=False,
         runtime="native",
     ),
