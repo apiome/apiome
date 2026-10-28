@@ -49,23 +49,25 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "apib_response_array": "Question",
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /questions#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
-                  "item": null,
-                  "name": "Question",
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Question",
+                    "nullable": false
+                  },
+                  "name": null,
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "List questions",
@@ -108,9 +110,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /questions/{question_id}#response.200",
                 "name": null,
@@ -123,14 +123,12 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
                 "content_types": [],
                 "description": null,
-                "extras": {
-                  "http_status": "404"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /questions/{question_id}#response.404",
                 "name": null,
@@ -138,7 +136,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "404"
               }
             ],
             "name": "View a question detail",
@@ -201,9 +199,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "201"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "POST /questions#response.201",
                 "name": null,
@@ -216,7 +212,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "Create a question",
@@ -259,9 +255,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "201"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "POST /questions/{question_id}/choices/{choice_id}#response.201",
                 "name": null,
@@ -274,7 +268,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "Vote on a choice",
@@ -569,7 +563,7 @@
     "confidence": 0.98,
     "format": "api-blueprint"
   },
-  "fingerprint": "sha256:85fda397acec63e33ba591a8c249da14a7a34c2fcd1c331a65743ec72ac24caf",
+  "fingerprint": "sha256:5568c01b483186a2074cc761c3f334980e46f8b8eb80cfdb327d99f4d8f26235",
   "lint": {
     "findings": 13,
     "grade": "D",

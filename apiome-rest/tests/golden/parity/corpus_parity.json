@@ -170,8 +170,8 @@
         {
           "source_format": "api-blueprint",
           "emit_key": "apiblueprint",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

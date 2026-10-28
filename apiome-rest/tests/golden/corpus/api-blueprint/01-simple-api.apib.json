@@ -49,23 +49,25 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "apib_response_array": "Task",
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /tasks#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
-                  "item": null,
-                  "name": "Task",
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Task",
+                    "nullable": false
+                  },
+                  "name": null,
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "List all tasks",
@@ -88,9 +90,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /tasks/{id}#response.200",
                 "name": null,
@@ -103,14 +103,12 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
                 "content_types": [],
                 "description": null,
-                "extras": {
-                  "http_status": "404"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /tasks/{id}#response.404",
                 "name": null,
@@ -118,7 +116,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "404"
               }
             ],
             "name": "Get a task",
@@ -181,9 +179,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "201"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "POST /tasks#response.201",
                 "name": null,
@@ -196,7 +192,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "Create a task",
@@ -376,7 +372,7 @@
     "confidence": 0.98,
     "format": "api-blueprint"
   },
-  "fingerprint": "sha256:8fc62318155019bab5855516026d9d8ddc6dedf0d5505118a18400bd441dad46",
+  "fingerprint": "sha256:68726f99c09186732cda2dd22a4e25095360de3e6b2ccf505e3dbd0610dc465d",
   "lint": {
     "findings": 10,
     "grade": "C",

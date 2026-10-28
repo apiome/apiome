@@ -38,6 +38,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
   plus the provider tool-schema rules for the dialect the artifact declares);
 * ``wit`` — :func:`app.wit_emitter.validate_wit_document` (a WIT parse through the ``wit``
   adapter);
+* ``apiblueprint`` — drafter's errors (:func:`app.apiblueprint_drafter.run_drafter`) when the
+  ``drafter`` toolchain is present, else a re-parse through
+  :func:`app.apiblueprint_parser.parse_apiblueprint`;
 * ``raml`` — AMF's RAML 1.0 validation (:func:`app.raml_amf.validate_raml_set_with_amf`) when the
   ``amf`` toolchain is present, else a re-parse through :func:`app.raml_parser.parse_raml`;
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
@@ -890,6 +893,45 @@ async def _validate_raml(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_apiblueprint(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted API Blueprint document (MFX-18.1, #3905).
+
+    drafter — the reference API Blueprint parser the import already runs for its lint (MFI-16.3) —
+    parses the document when the toolchain has it; an ``error`` annotation rejects the export,
+    warnings do not. Without drafter the document is re-parsed through the API Blueprint reader the
+    import uses.
+    """
+    from .apiblueprint_drafter import drafter_available, run_drafter
+    from .apiblueprint_parser import parse_apiblueprint
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The API Blueprint export wrote no file.")])
+    if not drafter_available():
+        return await _run_text_validator(target, emit_result, parse_apiblueprint)
+
+    def _run() -> List[ValidationFinding]:
+        findings: List[ValidationFinding] = []
+        for emitted in emit_result.files:
+            for annotation in run_drafter(str(emitted.content)):
+                if annotation.get("severity") != "error":
+                    continue
+                findings.append(
+                    ValidationFinding(
+                        message=annotation.get("message") or "drafter reported an API Blueprint error.",
+                        file=emitted.path,
+                        line=annotation.get("line"),
+                        column=annotation.get("column"),
+                        keyword=str(annotation["code"]) if annotation.get("code") is not None else None,
+                    )
+                )
+        return findings
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_cddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1033,6 +1075,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "wit": _validate_wit,
     # MFX-17.1 (#3901)
     "raml": _validate_raml,
+    # MFX-18.1 (#3905)
+    "apiblueprint": _validate_apiblueprint,
     # FMT-4.4 (#5437)
     "cddl": _validate_cddl,
     # FMT-5.2 (#5440)

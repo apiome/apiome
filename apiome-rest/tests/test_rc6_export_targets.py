@@ -220,7 +220,10 @@ def test_the_export_guide_names_every_rc6_target(sources: Dict[str, CanonicalApi
     page = _EXPORT_GUIDE.read_text(encoding="utf-8")
     section = page.split("## Formats the Export dialog offers", 1)
     assert len(section) == 2, "the guide page has no 'Formats the Export dialog offers' section"
-    table = section[1].split("\n## ", 1)[0]
+    # The formats table itself (the section's subsections hold tables of their own).
+    body = section[1].split("\n## ", 1)[0]
+    assert "\n| Format | Kind |" in body, "the section has no '| Format | Kind |' table"
+    table = "| Format | Kind |" + body.split("\n| Format | Kind |", 1)[1].split("\n\n", 1)[0]
     entries = build_target_fidelity_entries(sources["version"])
     labels = {entry.descriptor.key: entry.descriptor.label for entry in entries}
     missing = [label for label in labels.values() if f"| {label} |" not in table]

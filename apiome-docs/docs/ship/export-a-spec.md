@@ -63,8 +63,9 @@ and an export request is refused with `422`.
 Formats that write HTTP routes or saved requests (Kong, Gateway API, Envoy, Istio, Traefik, Apigee,
 AWS API Gateway, Azure API Management, Hoppscotch, Thunder Client and the `.http` file) need at least
 one HTTP operation, and the data-contract formats (ODCS, Kafka Connect) need at least one record type.
-For a source without one, the card is greyed out with that reason; for example, a GraphQL schema with
-no HTTP bindings cannot become a Kong configuration.
+API Blueprint needs at least one HTTP operation or one type. For a source without one, the card is
+greyed out with that reason; for example, a GraphQL schema with no HTTP bindings cannot become a Kong
+configuration.
 
 A format that needs a tool this deployment does not have installed is greyed out the same way, with
 the missing tool named on the card. It is never offered and then left to fail: an export to it is
@@ -239,6 +240,44 @@ AMF toolchain, and otherwise by reading it back with the RAML importer.
 An item imported from WADL is written back as it was read. Import now also reads a WADL root written
 as `<wadl:application>`, the query and header params a method's request declares, and — when you
 upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
+
+### API Blueprint from any source
+
+Exporting to **API Blueprint** writes one `<Name>.apib` file in API Blueprint 1A: Markdown, with
+its data structures in MSON. It is meant to be read by people, as documentation of the API, so it
+writes what a reader needs and leaves out validation rules MSON cannot express.
+
+- **Document.** The `FORMAT: 1A` line and the first server as `HOST` come first, then the item's
+  title and description.
+- **Resources.** Each path is one resource (`## Pets [/pets/{petId}]`) with its path parameters.
+  Each operation is an action with its name, method and description. Its query parameters go in the
+  action's URI (`[GET /pets{?limit}]`) and are listed under **Parameters**. Its request and its
+  responses, one per status code, name their media type and body (`+ Attributes (Pet)`). A body
+  given as an inline JSON Schema is written as a `+ Schema` section.
+- **Data structures.** Objects list their fields in order as MSON properties, such as
+  `+ id (string, required) - Pet id.`. A default is a nested `+ Default:` line. Enums list their
+  members, and an alias is a named type based on what it wraps.
+- **Types.** MSON has three value types: `string`, `number` and `boolean`. A 64-bit integer becomes a
+  `number`, and a date becomes a `string`.
+
+The fidelity report lists what API Blueprint cannot carry:
+
+- validation rules: lengths, ranges, patterns and formats are dropped;
+- operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), event operations and
+  channels, and a second operation on the same method and path;
+- header and cookie parameters, status ranges such as `4XX`, and response headers and descriptions;
+- every server but the first, server variables, the version, and the grouping into services;
+- unions and maps, which become an enum of types and a plain object;
+- deprecation flags, tags, and source details such as gateway routes;
+- renamed types: MSON type names here are letters, digits and `_`, so `com.acme.Order` is written
+  `com_acme_Order`.
+
+An item imported from API Blueprint is written back as it was read. Import now also reads an
+action's description, query parameters from the URI (`{?limit}`), a data structure's description,
+`+ Default:` values, and property names in backticks.
+
+Each export is validated before you download it: with drafter, the API Blueprint parser, when the
+server has it, and otherwise by reading it back with the API Blueprint importer.
 
 | Format | Kind | Exports from |
 | --- | --- | --- |

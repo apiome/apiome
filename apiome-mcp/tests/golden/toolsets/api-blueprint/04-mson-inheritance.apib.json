@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns application/json (AdminUser).",
+      "description": "Returns HTTP 200 application/json (array of AdminUser).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -12,24 +12,28 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "mfaEnrolled": {},
-            "scope": {
-              "description": "Administrative scope granted.",
-              "type": "string"
-            }
+          "items": {
+            "properties": {
+              "mfaEnrolled": {},
+              "scope": {
+                "description": "Administrative scope granted.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "mfaEnrolled",
+              "scope"
+            ],
+            "type": "object"
           },
-          "required": [
-            "mfaEnrolled",
-            "scope"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "AdminUser"
+        "shape": "array of AdminUser",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (User).",
+      "description": "Returns HTTP 200 application/json (array of User).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -39,31 +43,35 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "displayName": {
-              "description": "Preferred display name.",
-              "type": "string"
+          "items": {
+            "properties": {
+              "displayName": {
+                "description": "Preferred display name.",
+                "type": "string"
+              },
+              "email": {
+                "description": "Login email address.",
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique user identifier.",
+                "type": "string"
+              }
             },
-            "email": {
-              "description": "Login email address.",
-              "type": "string"
-            },
-            "id": {
-              "description": "Unique user identifier.",
-              "type": "string"
-            }
+            "required": [
+              "email",
+              "id"
+            ],
+            "type": "object"
           },
-          "required": [
-            "email",
-            "id"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "User"
+        "shape": "array of User",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (AdminUser).",
+      "description": "Returns HTTP 201 application/json (AdminUser).",
       "inputSchema": {
         "properties": {
           "mfaEnrolled": {},
@@ -96,11 +104,12 @@
           ],
           "type": "object"
         },
-        "shape": "AdminUser"
+        "shape": "AdminUser",
+        "status": "201"
       }
     },
     {
-      "description": "Returns application/json (User).",
+      "description": "Returns HTTP 201 application/json (User).",
       "inputSchema": {
         "properties": {
           "displayName": {
@@ -147,7 +156,8 @@
           ],
           "type": "object"
         },
-        "shape": "User"
+        "shape": "User",
+        "status": "201"
       }
     }
   ]

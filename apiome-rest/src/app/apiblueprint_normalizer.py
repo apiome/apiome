@@ -3,6 +3,10 @@
 Maps a parsed :class:`~app.apiblueprint_parser.ApiblueprintDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.REST`.
+
+An ``array[T]`` body is an array of ``T``; a response's status is its ``status_code``. A
+``+ Default:`` value is read as the member's type says (``5`` for a ``number``, ``true`` for a
+``boolean``).
 """
 
 from __future__ import annotations
@@ -13,7 +17,6 @@ from typing import Any, Dict, List, Optional
 from .apiblueprint_parser import (
     ApiblueprintDocument,
     ApiblueprintField,
-    ApiblueprintOperation,
     ApiblueprintParameter,
 )
 from .canonical_model import (
@@ -37,7 +40,7 @@ from .canonical_model import (
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
 
-__all__ = ["ApiblueprintNormalizer"]
+__all__ = ["ApiblueprintNormalizer", "default_value"]
 
 _FORMAT_KEY = "apiblueprint"
 
@@ -63,13 +66,38 @@ def _type_ref_from_expr(type_expr: str, *, type_names: frozenset[str]) -> TypeRe
     expr = type_expr.strip()
     array_inner = _array_inner(expr)
     if array_inner:
-        return TypeRef(item=_type_ref_from_expr(array_inner, type_names=type_names))
+        return TypeRef(item=_type_ref_from_expr(array_inner, type_names=type_names), nullable=False)
     mapped = _APIB_TO_CANONICAL.get(expr.lower())
     if mapped:
         return TypeRef(name=mapped, nullable=False)
     if expr in type_names:
         return TypeRef(name=_type_key(expr), nullable=False)
     return TypeRef(name=expr, nullable=False)
+
+
+def default_value(raw: Optional[str], type_expr: str) -> Any:
+    """A ``+ Default:`` value as its MSON type says: a number or boolean literal, else the text.
+
+    Args:
+        raw: The value as written, or ``None``.
+        type_expr: The member's MSON type (``number``, ``boolean``, ``string`` …).
+
+    Returns:
+        ``None`` for no default; an ``int`` / ``float`` for a ``number``; a ``bool`` for a
+        ``boolean`` written ``true`` / ``false``; else ``raw``.
+    """
+    if raw is None:
+        return None
+    kind = type_expr.strip().lower()
+    if kind == "number":
+        try:
+            number = float(raw)
+        except ValueError:
+            return raw
+        return int(number) if number.is_integer() and "." not in raw else number
+    if kind == "boolean" and raw.lower() in ("true", "false"):
+        return raw.lower() == "true"
+    return raw
 
 
 def _canonical_field(
@@ -93,6 +121,7 @@ def _canonical_field(
             extras=ref.extras,
         ),
         field_number=field_number,
+        default=default_value(field.default, field.type_expr),
         description=field.description,
         extras=extras,
     )
@@ -104,20 +133,17 @@ def _parameter(
     operation_key: str,
     type_names: frozenset[str],
 ) -> Parameter:
+    location = ParameterLocation.QUERY if param.location == "query" else ParameterLocation.PATH
     return Parameter(
-        key=Keys.parameter(operation_key, "path", param.name),
+        key=Keys.parameter(operation_key, location.value, param.name),
         name=param.name,
-        location=ParameterLocation.PATH,
+        location=location,
         required=param.required,
+        default=default_value(param.default, param.type_expr),
         description=param.description,
         type=_type_ref_from_expr(param.type_expr, type_names=type_names),
         extras={"apib_type": param.type_expr},
     )
-
-
-def _response_type_name(type_name: str) -> str:
-    array_inner = _array_inner(type_name)
-    return array_inner or type_name
 
 
 
@@ -201,10 +227,7 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                     Message(
                         key=Keys.request_message(op_key),
                         role=MessageRole.REQUEST,
-                        payload=_type_ref_from_expr(
-                            _response_type_name(endpoint.request_type),
-                            type_names=type_names,
-                        ),
+                        payload=_type_ref_from_expr(endpoint.request_type, type_names=type_names),
                         required=True,
                         content_types=[endpoint.request_media_type]
                         if endpoint.request_media_type
@@ -212,22 +235,13 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                     )
                 )
             for status, media_type, response_type in endpoint.responses:
-                extras: Dict[str, Any] = {"http_status": status}
-                payload = None
-                if response_type:
-                    payload = _type_ref_from_expr(
-                        _response_type_name(response_type),
-                        type_names=type_names,
-                    )
-                    if array_inner := _array_inner(response_type):
-                        extras["apib_response_array"] = array_inner
                 messages.append(
                     Message(
                         key=Keys.response_message(op_key, status),
                         role=MessageRole.RESPONSE,
-                        payload=payload,
+                        payload=_type_ref_from_expr(response_type, type_names=type_names) if response_type else None,
                         content_types=[media_type] if media_type else [],
-                        extras=extras,
+                        status_code=status,
                     )
                 )
             operations.append(

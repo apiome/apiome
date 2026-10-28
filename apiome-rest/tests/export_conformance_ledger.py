@@ -11,105 +11,6 @@ Regenerate with `UPDATE_EXPORT_CONFORMANCE=1 pytest tests/test_export_conformanc
 from typing import Dict, Tuple
 
 KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
-    # --- apiblueprint (49) ---
-    ('a2a', 'apiblueprint'):
-        'removed agent Travel Concierge; added operation GET /; removed operation Travel Concierge.build-itin',
-    ('acp', 'apiblueprint'):
-        'removed agent research-assistant; added operation GET /; removed operation research-assistant.Cite s',
-    ('agents-manifest', 'apiblueprint'):
-        'added operation GET /; removed operation a2a.https://returns.northwind.example/.well-known/agent-car',
-    ('api-blueprint', 'apiblueprint'):
-        'changed type NewTask; changed type Task',
-    ('apigee', 'apiblueprint'):
-        'changed operation GET /v2/orders/orders; changed operation GET /v2/orders/orders/{segment1}; changed',
-    ('arazzo', 'apiblueprint'):
-        'added operation GET /; removed operation checkout#addItem; removed operation checkout#createCart; re',
-    ('avro-idl', 'apiblueprint'):
-        'added operation GET /; removed operation com.example.orders.OrderService.cancelOrder; removed operat',
-    ('azure-apim', 'apiblueprint'):
-        'changed operation GET /orders; changed operation GET /orders/{orderId}; changed root; added service ',
-    ('capnproto', 'apiblueprint'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation GET /; changed ',
-    ('connectrpc', 'apiblueprint'):
-        'added operation GET /; removed operation tasks.v1.TaskService.CompleteTask; removed operation tasks.',
-    ('consul', 'apiblueprint'):
-        'changed operation ANY /v2/orders; changed root; added service consul/02-typical-service-with-checks.',
-    ('corbaidl', 'apiblueprint'):
-        'removed operation Banking.Bank.deposit; removed operation Banking.Bank.getAccount; removed operation',
-    ('edifact', 'apiblueprint'):
-        'changed root; added service EDIFACT INVOIC; added type DTM; removed type EDIFACT-INVOIC.DTM; removed',
-    ('edix12', 'apiblueprint'):
-        'changed root; added service X12 850; added type PO1; added type TransactionSet850; removed type X12-',
-    ('envoy-xds', 'apiblueprint'):
-        'changed operation ANY /; changed operation ANY /health; changed operation ANY /v2/orders; changed op',
-    ('fhir', 'apiblueprint'):
-        'changed operation GET /Patient; changed operation GET /Patient/{id}; changed operation POST /Patient',
-    ('fix', 'apiblueprint'):
-        'changed root; added service ExecutionReport (FIX.4.4); removed type FIX.4.4.Message8; added type Mes',
-    ('flatbuffers', 'apiblueprint'):
-        'changed root; added service example.game; added type Color; added type Monster; added type Vec3; add',
-    ('gateway-api', 'apiblueprint'):
-        'changed operation GET /users; changed operation GET /users/{userId}; changed operation POST /users; ',
-    ('haproxy', 'apiblueprint'):
-        'changed operation ANY /; changed operation ANY /healthz; changed operation ANY /metrics; changed ope',
-    ('hl7v2', 'apiblueprint'):
-        'changed root; added service ADT^A01; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; a',
-    ('idoc', 'apiblueprint'):
-        'changed root; added service IDoc ORDERS05; added type E1EDK01; added type E1EDK03; added type E1EDK1',
-    ('iso20022', 'apiblueprint'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('iso8583', 'apiblueprint'):
-        'changed root; added service Authorization Request; removed type 0100.DE11; removed type 0100.DE12; r',
-    ('istio', 'apiblueprint'):
-        'changed operation ANY /; changed operation ANY /healthz; changed operation ANY /v2/products; changed',
-    ('kafka-connect', 'apiblueprint'):
-        'changed root; added service Order; added type Order; removed type com.example.orders.Order',
-    ('kong', 'apiblueprint'):
-        'changed operation DELETE /users/{userId}; changed operation GET /users; changed operation GET /users',
-    ('lwm2m', 'apiblueprint'):
-        'added operation GET /; removed operation TemperatureService.ResetMinAndMaxMeasuredValues; changed ro',
-    ('matter', 'apiblueprint'):
-        'added operation GET /; removed operation OnOffService.Off; removed operation OnOffService.OffWithEff',
-    ('nacha', 'apiblueprint'):
-        'changed root; added service NACHA ACH file (PPD); added type AchFile; added type Batch; added type B',
-    ('ncpdp', 'apiblueprint'):
-        'changed root; added service NCPDP SCRIPT NewRx; added type Address; added type Body; added type Comm',
-    ('nginx', 'apiblueprint'):
-        'changed operation ANY /; removed operation ANY /#api.example.com:80@return; changed operation ANY /h',
-    ('odata', 'apiblueprint'):
-        'changed operation GET /Orders; changed operation GET /Orders({key}); changed operation POST /Orders;',
-    ('odata-v2', 'apiblueprint'):
-        'changed operation GET /Customers; changed operation GET /Customers({key}); changed operation GET /It',
-    ('protobuf', 'apiblueprint'):
-        'added operation GET /; removed operation example.catalog.v1.ProductService.CreateProduct; removed op',
-    ('protobuf-editions', 'apiblueprint'):
-        'added operation GET /; removed operation example.orders.v1.OrderService.GetOrder; removed operation ',
-    ('raml', 'apiblueprint'):
-        'changed operation GET /books; changed operation GET /books/{bookId}; changed operation POST /books; ',
-    ('sepa', 'apiblueprint'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('swift-mt', 'apiblueprint'):
-        'changed root; added service SWIFT MT103; added type CodeWord; added type Field13C; added type Field2',
-    ('thrift', 'apiblueprint'):
-        'added operation GET /; removed operation com.example.user.UserService.createUser; removed operation ',
-    ('tradacoms', 'apiblueprint'):
-        'changed root; added service TRADACOMS ORDERS; added type MessageORDERS; added type OLD; removed type',
-    ('traefik', 'apiblueprint'):
-        'changed operation ANY /; changed operation ANY /v2/orders; changed operation ANY /v2/products; chang',
-    ('tyk', 'apiblueprint'):
-        'changed operation DELETE /v2/orders/orders/{id}; changed operation GET /v2/orders/orders; changed op',
-    ('typespec', 'apiblueprint'):
-        'changed operation GET /pets; changed operation GET /pets/{id}; changed operation POST /pets; changed',
-    ('wadl', 'apiblueprint'):
-        'changed operation GET /books; changed operation GET /books/{bookId}; changed operation POST /books; ',
-    ('wsdl', 'apiblueprint'):
-        'added operation GET /; removed operation http://example.com/orders.OrderPort.CancelOrder; removed op',
-    ('wsdl2', 'apiblueprint'):
-        'added operation GET /; removed operation http://example.com/orders.OrderInterface.cancelOrder; remov',
-    ('xmlrpc', 'apiblueprint'):
-        'added operation GET /; removed operation inventory.reserveStock.inventory.reserveStock; changed root',
-    ('zosconnect', 'apiblueprint'):
-        'changed operation GET /items/{sku}/stock; changed operation POST /items/{sku}/reservations; changed ',
     # --- arazzo (49) ---
     ('a2a', 'arazzo'):
         'removed agent Travel Concierge; added operation Travel Concierge#Build itinerary; added operation Tr',
@@ -286,21 +187,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation 31bfa261-4c14-4dd0-8adf-2f2d53d4ed0f; changed roo',
+        'added channel com.example.product; added operation 409bca25-9ae3-4fdf-a04b-5c1f1a658aa6; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation b6880e3d-9d2a-4792-a3a9-5563a3962ecc; changed root; ',
+        'added channel com.example.user; added operation 6521d798-2692-44e5-a0c4-4aed28197872; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation ac8819a3-cb3f-4ab4-8020-7803f97a87d6; changed ',
+        'added channel com.example.cronwidget; added operation 28ed5236-1c29-4800-8676-2d5517be627e; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 0f9fe13c-c257-4fb6-b9f2-aa85afc8506a; changed root',
+        'added channel com.example.orders; added operation 76e4b4bb-487a-479d-af78-b3e5a1d8a191; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation 33dd96e8-ce68-4c5d-a9ec-ec8762ba265d; c',
+        'added channel com.example.commerce.ontology; added operation 7f79a76f-c45c-4d5f-9943-7431ab7d7089; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 59cdcb98-4ccf-4dd9-b346-31967ae2e789',
+        'added channel com.example.typicalsensormessage; added operation 918dfb0c-bc58-4129-96ca-57d4e5267546',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation f6d075a9-e9a2-451b-bc9c-67',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation d784c0c3-9de9-4418-b772-c8',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation 7afbe7b5-dde6-4ff6-9e83-b86846e5d386; changed r',
+        'added channel com.example.orderline; added operation 6337af43-2863-4988-9430-d5111c42fb4a; changed r',
     # --- connectrpc (16) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',

@@ -47,9 +47,7 @@
               {
                 "content_types": [],
                 "description": null,
-                "extras": {
-                  "http_status": "204"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "DELETE /books/{id}#response.204",
                 "name": null,
@@ -57,7 +55,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "204"
               }
             ],
             "name": "Remove a book",
@@ -100,23 +98,25 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "apib_response_array": "Book",
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /books#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
-                  "item": null,
-                  "name": "Book",
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Book",
+                    "nullable": false
+                  },
+                  "name": null,
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "List all books",
@@ -139,9 +139,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "200"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /books/{id}#response.200",
                 "name": null,
@@ -154,14 +152,12 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
                 "content_types": [],
                 "description": null,
-                "extras": {
-                  "http_status": "404"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "GET /books/{id}#response.404",
                 "name": null,
@@ -169,7 +165,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "404"
               }
             ],
             "name": "Get a book",
@@ -232,9 +228,7 @@
                   "application/json"
                 ],
                 "description": null,
-                "extras": {
-                  "http_status": "201"
-                },
+                "extras": {},
                 "headers": [],
                 "key": "POST /books#response.201",
                 "name": null,
@@ -247,7 +241,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               }
             ],
             "name": "Add a book",
@@ -465,7 +459,7 @@
     "confidence": 0.98,
     "format": "api-blueprint"
   },
-  "fingerprint": "sha256:30f3fc6b4fb887924600893e65a9a93ac7022e3b74206a5f451b77b62470504f",
+  "fingerprint": "sha256:25e36416712372c14213031bc5f39cadcfa7c2a71af0b44d009e7d122cefd242",
   "lint": {
     "findings": 12,
     "grade": "C",

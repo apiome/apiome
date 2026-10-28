@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns application/json (Ticket).",
+      "description": "Returns HTTP 200 application/json (array of Ticket).",
       "inputSchema": {
         "properties": {
           "status": {
@@ -20,41 +20,45 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "assignee": {
-              "description": "Current assignee, if any.",
-              "type": "string"
+          "items": {
+            "properties": {
+              "assignee": {
+                "description": "Current assignee, if any.",
+                "type": "string"
+              },
+              "id": {
+                "description": "Ticket identifier.",
+                "type": "string"
+              },
+              "priority": {},
+              "status": {
+                "enum": [
+                  0,
+                  1,
+                  2
+                ],
+                "type": "integer"
+              },
+              "subject": {
+                "description": "Short subject line.",
+                "type": "string"
+              }
             },
-            "id": {
-              "description": "Ticket identifier.",
-              "type": "string"
-            },
-            "priority": {},
-            "status": {
-              "enum": [
-                0,
-                1,
-                2
-              ],
-              "type": "integer"
-            },
-            "subject": {
-              "description": "Short subject line.",
-              "type": "string"
-            }
+            "required": [
+              "id",
+              "status",
+              "subject"
+            ],
+            "type": "object"
           },
-          "required": [
-            "id",
-            "status",
-            "subject"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "Ticket"
+        "shape": "array of Ticket",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Ticket).",
+      "description": "Returns HTTP 200 application/json (array of Ticket).",
       "inputSchema": {
         "properties": {
           "limit": {
@@ -81,41 +85,45 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {
-            "assignee": {
-              "description": "Current assignee, if any.",
-              "type": "string"
+          "items": {
+            "properties": {
+              "assignee": {
+                "description": "Current assignee, if any.",
+                "type": "string"
+              },
+              "id": {
+                "description": "Ticket identifier.",
+                "type": "string"
+              },
+              "priority": {},
+              "status": {
+                "enum": [
+                  0,
+                  1,
+                  2
+                ],
+                "type": "integer"
+              },
+              "subject": {
+                "description": "Short subject line.",
+                "type": "string"
+              }
             },
-            "id": {
-              "description": "Ticket identifier.",
-              "type": "string"
-            },
-            "priority": {},
-            "status": {
-              "enum": [
-                0,
-                1,
-                2
-              ],
-              "type": "integer"
-            },
-            "subject": {
-              "description": "Short subject line.",
-              "type": "string"
-            }
+            "required": [
+              "id",
+              "status",
+              "subject"
+            ],
+            "type": "object"
           },
-          "required": [
-            "id",
-            "status",
-            "subject"
-          ],
-          "type": "object"
+          "type": "array"
         },
-        "shape": "Ticket"
+        "shape": "array of Ticket",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Ticket).",
+      "description": "Returns HTTP 200 application/json (Ticket).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -163,11 +171,12 @@
           ],
           "type": "object"
         },
-        "shape": "Ticket"
+        "shape": "Ticket",
+        "status": "200"
       }
     },
     {
-      "description": "Returns application/json (Ticket).",
+      "description": "Returns HTTP 200 application/json (Ticket).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -220,7 +229,8 @@
           ],
           "type": "object"
         },
-        "shape": "Ticket"
+        "shape": "Ticket",
+        "status": "200"
       }
     }
   ]

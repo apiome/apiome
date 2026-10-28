@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns application/json.",
+      "description": "Returns HTTP 200 application/json.",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -10,7 +10,8 @@
       "name": "Check_liveness",
       "operation": "GET /ping",
       "output": {
-        "mediaType": "application/json"
+        "mediaType": "application/json",
+        "status": "200"
       }
     }
   ]
