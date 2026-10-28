@@ -78,6 +78,7 @@ __all__ = [
     "FidelityVerdict",
     "FidelityRulePack",
     "CapabilityRulePack",
+    "rename_verdict",
 ]
 
 #: The canonical construct key of the artifact **root** — its title, version,
@@ -210,6 +211,33 @@ class FidelityVerdict(BaseModel):
             message=message,
             target_mapping=target_mapping,
         )
+
+
+def rename_verdict(
+    source: str, emitted: str, *, target_label: str, noun: str
+) -> Optional[FidelityVerdict]:
+    """An ``APPROX`` (info) verdict when a target writes the name ``source`` as ``emitted``.
+
+    Shared by every pack whose target renames identifiers to meet its own rules (Cap'n Proto
+    camelCase, XML ``NCName`` …), so the report names each change instead of hiding it.
+
+    Args:
+        source: The name as the source wrote it.
+        emitted: The name the target writes.
+        target_label: The target's human label (``"Cap'n Proto"``, ``"WSDL"``).
+        noun: What is named (``"type"``, ``"field"``, ``"method"``, ``"operation"``).
+
+    Returns:
+        The verdict, or ``None`` when the name is written unchanged.
+    """
+    if source == emitted:
+        return None
+    return FidelityVerdict.approx(
+        message=f"{target_label} {noun} names must follow its style rules; {source!r} is written as "
+        f"{emitted!r}",
+        severity=LossinessSeverity.INFO,
+        target_mapping=f"{source} → {emitted}",
+    )
 
 
 class FidelityRulePack(ABC):

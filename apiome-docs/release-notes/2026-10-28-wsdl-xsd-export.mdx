@@ -1,0 +1,25 @@
+---
+slug: wsdl-xsd-export
+title: WSDL export writes valid WSDL and XSD from any source
+description: WSDL exports are a WSDL and an XSD file, valid and WS-I clean.
+authors: [apiome]
+---
+
+Exporting an item to **WSDL** now writes a SOAP description that XML tools accept, from an OpenAPI,
+GraphQL, Protobuf or any other source: a `.wsdl` file and its `.xsd` types, downloaded together.
+[How the WSDL is written](/ship/export-a-spec#wsdl-and-xsd-from-any-source).
+
+{/* truncate */}
+
+- **Valid.** The schema validates, every `tns:` reference resolves, and the description passes the
+  WS-I Basic Profile checks. Before, the `tns` prefix was never declared, lists were written as one
+  string, and operations carried no parameters.
+- **Faithful types.** 64-bit integers stay `xs:long`, dates stay `xs:dateTime`, lists repeat, and
+  optional fields are `minOccurs="0"`. Lengths, ranges, patterns and enums become XSD facets, and
+  descriptions become annotations.
+- **Operations.** Each operation's parameters and request body are its SOAP request; its response
+  body and error responses are its response and faults.
+- **Nothing silent.** Renamed names, the target namespace, maps written as entry lists and rules XSD
+  cannot express are all listed in the fidelity report.
+- **WSDL round trips.** An item imported from WSDL now exports and re-imports unchanged, including
+  `dateTime` and `decimal` fields.

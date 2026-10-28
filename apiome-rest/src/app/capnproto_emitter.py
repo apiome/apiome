@@ -62,8 +62,8 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessKind, LossinessSeverity
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
+from .lossiness import LossinessKind
 from .scalar_aliases import CAPNP_SCALAR_FOR_KIND, target_scalar
 
 __all__ = ["CapnpEmitOptions", "CapnpEmitter", "CapnpFidelityRulePack"]
@@ -145,14 +145,7 @@ class CapnpFidelityRulePack(CapabilityRulePack):
 
 def _rename_verdict(source: str, emitted: str, noun: str) -> Optional[FidelityVerdict]:
     """An ``APPROX`` (info) verdict when Cap'n Proto writes ``source`` as ``emitted``, else ``None``."""
-    if source == emitted:
-        return None
-    return FidelityVerdict.approx(
-        message=f"Cap'n Proto {noun} names must follow its style rules; {source!r} is written as "
-        f"{emitted!r}",
-        severity=LossinessSeverity.INFO,
-        target_mapping=f"{source} → {emitted}",
-    )
+    return rename_verdict(source, emitted, target_label=CapnpFidelityRulePack.target_label, noun=noun)
 
 
 class CapnpEmitOptions(EmitOptions):

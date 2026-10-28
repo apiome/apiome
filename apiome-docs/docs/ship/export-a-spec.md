@@ -130,6 +130,41 @@ the item was imported from:
 When the server has the Cap'n Proto compiler, every export is compiled before it is delivered. A
 schema that imports other `.capnp` files is not compiled on its own.
 
+### WSDL and XSD from any source
+
+Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the
+item was imported from. By default you get two files, downloaded together as a `.zip`:
+
+- `<Name>.wsdl` holds the messages, port types, bindings and service, and
+- `<Name>.xsd` holds the types. The WSDL imports it with `xsd:import`.
+
+To get one file with the types inline, set the **layout** option to `single`.
+
+- **Types.** An object becomes an XSD `complexType` with a `sequence`, an enumeration a `simpleType`
+  with `enumeration` values, a `oneOf` (or another union) a `complexType` with an `xs:choice` of its
+  variants, and a map a list of `entry` elements, each with a `key` and a `value`. A list repeats its
+  element (`maxOccurs="unbounded"`, or the schema's `minItems`/`maxItems`). An optional or nullable
+  field is `minOccurs="0" nillable="true"`. Descriptions become `xs:annotation` documentation.
+- **Precision.** Scalars keep their width: `integer` is `xs:int` (`xs:long` with `format: int64`),
+  `number` is `xs:double`, a string with `format: date-time` is `xs:dateTime`, and `decimal` stays
+  `xs:decimal`.
+- **Rules.** `minLength`, `maxLength`, `minimum`, `maximum`, the exclusive bounds, `pattern` and
+  `enum` become XSD facets. A JSON Schema pattern is translated to XSD's dialect (`^[A-Z]{3}$` is
+  written `[A-Z]{3}`, because an XSD pattern always matches the whole value). XSD has no facet for
+  `multipleOf` or `uniqueItems`, nor for a pattern that uses lookahead, lazy quantifiers or `\b`;
+  those rules are not written, and the fidelity report lists each one.
+- **Operations.** Each operation becomes a SOAP operation with a request element named after it,
+  carrying its path, query and header parameters and its request body, a `<operation>Response`
+  element carrying the response body, and one element per error response (`getPetByIdStatus404Fault`).
+  The HTTP method and path are not carried; the fidelity report says so for each operation.
+- **Names.** Names must be valid XML names: `GET /pets/{petId}` is written `getPetsPetId`, and two
+  names that end up the same get a number (`firstName2`). The fidelity report lists every rename.
+- **Namespace.** Every type and operation lives in the WSDL's target namespace: the item's own
+  namespace, or `http://example.com/service` when it has none (reported as synthesized).
+
+An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
+versions and XSD details round-trip unchanged.
+
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | Apache Avro | Data schema | Any source |
