@@ -20,7 +20,7 @@ import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { Badge } from '../../../ui/Badge';
 import { LoadingState } from '../../../ui/LoadingState';
-import { stepperStatus } from '../../../ui/Stepper';
+import { ExportStudioSteps, STUDIO_STEPS } from './ExportStudioSteps';
 import PageHeader from '../../../shell/PageHeader';
 import { Page, PageBody } from '../../../shell/pageChrome';
 import { useExportTargets } from './useExportTargets';
@@ -136,19 +136,8 @@ interface ExportStudioProps {
   tabs?: ReactNode;
 }
 
-/**
- * The Studio's five stepper stops (MFX-41.1). The key list is owned by `exportStudioUrlState`
- * because the URL's `step` param is validated against it (MFX-41.4); the labels stay here.
- */
 type StudioStep = ExportStudioStep;
 
-const STUDIO_STEPS: { key: StudioStep; label: string }[] = [
-  { key: 'source', label: 'Source' },
-  { key: 'target', label: 'Target' },
-  { key: 'options', label: 'Options' },
-  { key: 'verify', label: 'Verify' },
-  { key: 'review', label: 'Review & Generate' },
-];
 
 const STEP_ORDER: readonly StudioStep[] = EXPORT_STUDIO_STEP_ORDER;
 
@@ -1030,42 +1019,8 @@ export function ExportStudio({
         tabs={tabs}
       />
       <PageBody>
-        {/* The numbered stepper (MFX-41.1) — the ImportDialog/ExportDialog pill pattern, full width.
-            The three states are distinguished by glyph and weight as well as palette (MFX-41.5): a
-            completed step leads with a check and says so to a screen reader, the current step carries
-            `aria-current="step"`, and an upcoming step keeps its number outlined. The steps are
-            status, not controls — navigation is the Back / Continue pair below. */}
-        <ol
-          data-testid="export-studio-stepper"
-          aria-label="Export steps"
-          role="list"
-          className="xstd-steps"
-        >
-          {STUDIO_STEPS.map((s, idx) => {
-            const state = stepperStatus(idx, stepIndex);
-            return (
-              <li
-                key={s.key}
-                data-testid={`export-studio-step-${s.key}`}
-                data-state={state}
-                aria-current={state === 'current' ? 'step' : undefined}
-                className="xstd-step"
-              >
-                <span className="xstd-step__num" aria-hidden>
-                  {state === 'done' ? <Check /> : idx + 1}
-                </span>
-                {s.label}
-                <span className="sr-only">
-                  {state === 'done'
-                    ? ' — completed'
-                    : state === 'current'
-                      ? ` — current step, ${idx + 1} of ${STUDIO_STEPS.length}`
-                      : ' — not started'}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        {/* The numbered stepper (MFX-41.1), shared with the source picker (E1-2). */}
+        <ExportStudioSteps stepIndex={stepIndex} />
 
         {(error || sourceError) && (
           <Alert variant="error" data-testid="export-studio-error">

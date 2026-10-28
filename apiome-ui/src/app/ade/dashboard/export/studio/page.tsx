@@ -3,11 +3,10 @@
 import { Suspense, useMemo } from 'react';
 import { useAuthSession } from '@lib/auth/session-client';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { PanelsTopLeft } from 'lucide-react';
 import { LoadingState } from '../../../../components/ui/LoadingState';
-import { Button } from '../../../../components/ui/Button';
 import { ExportStudio } from '../../../../components/ade/dashboard/export/ExportStudio';
+import { ExportStudioSteps } from '../../../../components/ade/dashboard/export/ExportStudioSteps';
+import { ExportSourcePicker } from '../../../../components/ade/export-studio/ExportSourcePicker';
 import type { ExportedArtifactSummary } from '../../../../components/ade/dashboard/export/ExportDialog';
 import { recordRecentExport } from '../../../../components/ade/dashboard/export/recentExports';
 import { parseExportStudioUrlState } from '../../../../components/ade/dashboard/export/exportStudioUrlState';
@@ -78,9 +77,10 @@ function ExportStudioRouteContent() {
     );
   }
 
-  // The Studio is always scoped to a source — never a bare global screen. Without an `artifact`
-  // there is nothing to export, so point the user at the entry points that open it scoped. It
-  // still draws the standard header, so the SDK & branding tab is one click away from here.
+  // The Studio always exports a source. Without an `artifact` (the rail, the command palette) the
+  // Source step is a picker (E1-2): choosing a catalog item or a project version writes the
+  // scoped deep link and continues at Target. It still draws the standard header, so the SDK &
+  // branding tab is one click away from here.
   if (!artifact) {
     return (
       <Page data-testid="export-studio-unscoped">
@@ -94,22 +94,11 @@ function ExportStudioRouteContent() {
           tabs={tabs}
         />
         <PageBody>
-          <div className="mx-auto w-full max-w-3xl">
-            <div className="flex gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-800 dark:bg-indigo-950/30">
-              <PanelsTopLeft className="h-8 w-8 flex-shrink-0 text-indigo-600 dark:text-indigo-300" aria-hidden />
-              <div>
-                <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
-                  Open the Export Studio from a source
-                </h2>
-                <p className="mt-1 text-sm text-indigo-800 dark:text-indigo-200">
-                  The Studio exports a specific version. Open it from a version’s export dialog (via
-                  “Open in Export Studio”) or a catalog item, and it will arrive scoped to that source.
-                </p>
-                <Button asChild className="mt-4">
-                  <Link href="/ade/dashboard/versions">Go to Versions</Link>
-                </Button>
-              </div>
-            </div>
+          {/* E1-2 (#6218): no source yet — the Source step is a picker. Choosing writes the
+              resumable deep link and the studio continues at Target. */}
+          <ExportStudioSteps stepIndex={0} />
+          <div className="xstd-panel" role="group" aria-label="Step 1 of 5: Source" data-testid="export-studio-body">
+            <ExportSourcePicker />
           </div>
         </PageBody>
       </Page>

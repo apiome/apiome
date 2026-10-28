@@ -15,6 +15,7 @@ import { jest } from '@jest/globals';
 const mockSearchParams = jest.fn();
 jest.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams(),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => '/ade/dashboard/export/studio',
 }));
 
@@ -128,10 +129,12 @@ describe('Export Studio route — deep links (MFX-41.4)', () => {
     expect(renderRoute('artifact=proj-1&step=teleport').initialStep).toBeNull();
   });
 
-  it('shows how to open the Studio when the link carries no source', () => {
+  it('offers the source picker on the Source step when the link carries no source (E1-2)', () => {
     mockSearchParams.mockReturnValue(new URLSearchParams(''));
+    global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ success: true, catalog: [] }) })) as unknown as typeof fetch;
     render(<ExportStudioPage />);
-    expect(screen.getByText(/open the export studio from a source/i)).toBeInTheDocument();
+    expect(screen.getByTestId('export-source-picker')).toBeInTheDocument();
+    expect(screen.getByTestId('export-studio-step-source')).toHaveAttribute('aria-current', 'step');
     expect(screen.queryByTestId('export-studio-stub')).not.toBeInTheDocument();
   });
 });
@@ -175,6 +178,7 @@ describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
     expect(props.tabs).toBeTruthy();
 
     mockSearchParams.mockReturnValue(new URLSearchParams(''));
+    global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ success: true, catalog: [] }) })) as unknown as typeof fetch;
     render(<ExportStudioPage />);
     expect(screen.getByRole('heading', { level: 1, name: /Export studio/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute(
