@@ -22,6 +22,8 @@ import { test, expect, type Cookie, type Page } from '@playwright/test';
 import { loadCorpus, readCorpusFile } from '../../lib/corpus/corpus';
 import { setMockPersona, type MockPersona } from './support/mock-oauth';
 import { closeDb, seedMultiTenantFixture, MULTITENANT_FIXTURE } from './support/db';
+import { downloadArchive } from './support/catalog-export';
+import { checkProto } from './support/proto-check';
 
 const { user } = MULTITENANT_FIXTURE;
 
@@ -280,6 +282,15 @@ test.describe('RC6-H1 — Catalog → Project journey', () => {
     const emitted = page.getByTestId('export-dialog-emitted');
     await expect(emitted).toBeVisible({ timeout: 120_000 });
     await expect(emitted).toContainText('.proto');
+
+    // The file must be one protoc would accept, not just a file with the right name (#6278): an
+    // OpenAPI project once exported `.integer id = 1;`.
+    const { files } = await downloadArchive(page, () =>
+      page.getByTestId('export-dialog-download-zip').click(),
+    );
+    const proto = files.find((file) => file.path.endsWith('.proto'));
+    expect(proto, 'the archive holds a .proto file').toBeDefined();
+    expect(checkProto(proto!.text)).toEqual([]);
     await page.getByTestId('export-dialog-done').click();
     await expect(page.getByTestId('export-dialog-body')).toBeHidden();
   });

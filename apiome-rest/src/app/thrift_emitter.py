@@ -47,6 +47,8 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .field_identity_store import FieldNumberAllocator
+from .scalar_aliases import THRIFT_SCALAR_FOR_KIND, target_scalar
 
 __all__ = ["ThriftEmitOptions", "ThriftEmitter", "ThriftFidelityRulePack"]
 
@@ -236,33 +238,60 @@ class _ThriftWriter:
 
     def _render_struct(self, type_: Type, *, keyword: str) -> List[str]:
         lines = [f"{keyword} {type_.name} {{"]
-        for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
-            lines.append(f"  {self._render_field(field)},")
+        # A field without a ``field_number`` (an OpenAPI or JSON Schema source) gets the next free
+        # id in declaration order, so ids stay unique within the struct (#6278).
+        allocator = FieldNumberAllocator(type_)
+        numbered = [(allocator.allocate(field)[0], field) for field in type_.fields]
+        for number, field in sorted(numbered, key=lambda pair: pair[0]):
+            lines.append(f"  {self._render_field(field, number)},")
         lines.append("}")
         self.tracker.record(type_.key, Provenance.SOURCE)
         return lines
 
-    def _render_field(self, field: CanonicalField) -> str:
+    def _render_field(self, field: CanonicalField, number: int) -> str:
+        """Render one struct field.
+
+        Args:
+            field: The canonical field.
+            number: Its Thrift field id — the source's, or one assigned by ``_render_struct``.
+
+        Returns:
+            The field line without its trailing comma, e.g. ``2: optional i64 id``.
+        """
         required = field.extras.get("thrift_required")
         if required is None:
             required = not field.type.nullable
         modifier = "required " if required else "optional "
-        number = field.field_number if field.field_number is not None else 1
-        type_expr = self._render_type_ref(field.type)
+        fmt = field.constraints.format if field.constraints is not None else None
+        type_expr = self._render_type_ref(field.type, fmt)
         default = field.extras.get("thrift_default")
         default_suffix = f" = {default}" if default else ""
         self.tracker.record(field.key, Provenance.SOURCE)
         return f"{number}: {modifier}{type_expr} {field.name}{default_suffix}"
 
-    def _render_type_ref(self, ref: TypeRef) -> str:
+    def _render_type_ref(self, ref: TypeRef, fmt: Optional[str] = None) -> str:
+        """Render a type reference as a Thrift type expression.
+
+        Args:
+            ref: The reference (a list, a map type, a base type or a named type).
+            fmt: The field's ``format`` constraint, which picks the width of a JSON Schema
+                ``integer`` or ``number``.
+
+        Returns:
+            The Thrift type, e.g. ``list<i64>`` or ``Pet``.
+        """
         if ref.item is not None:
-            inner = self._render_type_ref(ref.item)
+            inner = self._render_type_ref(ref.item, fmt)
             if ref.extras.get("thrift_container") == "set":
                 return f"set<{inner}>"
             return f"list<{inner}>"
         if ref.name:
-            mapped = _THRIFT_BASE_FROM_CANONICAL.get(ref.name, ref.name.split(".")[-1])
+            base = _THRIFT_BASE_FROM_CANONICAL.get(ref.name)
             target = self._types_by_key.get(ref.name)
+            if base is None and target is None:
+                # Another normalizer's scalar spelling (``integer``, ``boolean``, ``int64``…) (#6278).
+                base = target_scalar(ref.name, THRIFT_SCALAR_FOR_KIND, fmt)
+            mapped = base if base is not None else ref.name.split(".")[-1]
             if target and target.kind is TypeKind.MAP:
                 key = self._render_type_ref(target.key_type or TypeRef(name="string"))
                 value = self._render_type_ref(target.value_type or TypeRef(name="string"))

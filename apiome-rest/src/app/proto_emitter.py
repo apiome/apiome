@@ -83,6 +83,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .field_identity_store import FieldNumberAllocator
+from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY,
     ENUM_CLOSED_EXTRA_KEY,
@@ -982,6 +983,8 @@ class _ProtoWriter:
         shape lives in the type expression, so its prefix is empty.
         """
         ref = field.type
+        # The width of a JSON Schema ``integer``/``number`` lives in the ``format`` constraint (#6278).
+        fmt = field.constraints.format if field.constraints is not None else None
         # A reference to a MAP type becomes a ``map<K,V>`` (the entry message is never emitted).
         if not ref.is_list() and ref.name is not None:
             target = self._types_by_key.get(ref.name)
@@ -1004,11 +1007,11 @@ class _ProtoWriter:
                     "``repeated`` level.",
                     pointer=field.key,
                 )
-            expr = self._leaf_expr(element) if element is not None else "bytes"
+            expr = self._leaf_expr(element, fmt) if element is not None else "bytes"
             return expr, "repeated "
 
         prefix = "optional " if _emits_proto3_optional(field) else ""
-        return self._leaf_expr(ref), prefix
+        return self._leaf_expr(ref, fmt), prefix
 
     def _map_expr(self, map_type: Type, pointer: str) -> str:
         """Render a ``MAP`` type as ``map<key, value>`` from its key/value refs."""
@@ -1016,13 +1019,28 @@ class _ProtoWriter:
         value_expr = self._leaf_expr(map_type.value_type) if map_type.value_type else "string"
         return f"map<{key_expr}, {value_expr}>"
 
-    def _leaf_expr(self, ref: Optional[TypeRef]) -> str:
-        """Render a leaf (non-list) type reference: a proto scalar or a qualified type name."""
+    def _leaf_expr(self, ref: Optional[TypeRef], fmt: Optional[str] = None) -> str:
+        """Render a leaf (non-list) type reference: a proto scalar or a qualified type name.
+
+        Args:
+            ref: The reference; ``None`` or a nameless one renders ``bytes``.
+            fmt: The field's ``format`` constraint, which picks the width of a JSON Schema
+                ``integer`` or ``number``.
+
+        Returns:
+            A proto scalar keyword, or ``.``-prefixed fully qualified type name.
+        """
         if ref is None or not ref.name:
             return "bytes"
         name = ref.name
         if name in _PROTO_SCALARS:
             return name
+        # Another normalizer's scalar spelling (``integer``, ``boolean``, ``i64``, …), unless the
+        # model defines a type by that name (#6278).
+        if name not in self._types_by_key:
+            alias = target_scalar(name, PROTO_SCALAR_FOR_KIND, fmt)
+            if alias is not None:
+                return alias
         # A named type: local (emitted in this file) or imported from a sibling package / WKT.
         if name not in self._emittable_keys:
             self._note_import(name)
@@ -1270,6 +1288,8 @@ class _ProtoWriter:
     def _register_reference(self, type_name: str) -> None:
         """Note the import for an rpc request/response type when it is not local to this file."""
         if type_name in _PROTO_SCALARS or type_name in self._emittable_keys:
+            return
+        if type_name not in self._types_by_key and target_scalar(type_name, PROTO_SCALAR_FOR_KIND):
             return
         self._note_import(type_name)
 
