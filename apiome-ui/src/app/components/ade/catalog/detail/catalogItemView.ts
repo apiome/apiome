@@ -24,6 +24,7 @@
  *   predates this ticket and is unchanged.
  */
 
+import { isFeatureReleased } from '@lib/feature-release';
 import { allowEverything, type PermissionCheck } from '../../access/permissionCheck';
 import {
   CATALOG_LIFECYCLE_LABEL,
@@ -176,6 +177,8 @@ export interface CatalogDetailActions {
   categorize: { shown: boolean };
   /** Live refresh's Set up / Edit / Check now / Turn off (MFI-31.1) — hidden once the item is deleted. */
   refresh: { shown: boolean };
+  /** "Export to another format…" — Export studio with the item as source (E1-1; released only). */
+  exportStudio: { shown: boolean };
   /** Dismiss the item's drift banner and badge (MFI-31.3; `projects:edit`). */
   dismissDrift: { shown: boolean };
 }
@@ -208,6 +211,7 @@ export function catalogDetailActions(
       label: convertActionLabel(item.conversion ?? null, item.sourceFormat ?? null),
     },
     export: { shown: live },
+    exportStudio: { shown: live && isFeatureReleased('export-studio') },
     viewCode: { shown: true },
     categorize: { shown: live && can('projects:edit') },
     refresh: { shown: live && can('projects:edit') },

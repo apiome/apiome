@@ -23,6 +23,7 @@
  * `exportStudioUrlState.ts`, which this module builds on.
  */
 
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   encodeStudioOptions,
   decodeStudioOptions,
@@ -55,12 +56,31 @@ const STUDIO_BACK_TARGETS: Record<ExportStudioOrigin, ExportStudioBackTarget> = 
 const DEFAULT_STUDIO_ORIGIN: ExportStudioOrigin = 'versions';
 
 /**
- * Resolve the Studio's back-link target for a carried origin. Unknown or missing origins fall
- * back to the Versions screen, so the link is always valid.
+ * The release feature an origin's back link leads into, where that screen is gated
+ * (`lib/feature-release.ts`). E1-1 (#6217): the studio never links into a feature that is still
+ * held back, so a held-back origin returns to the default screen instead.
  */
-export function resolveStudioBack(origin: string | null | undefined): ExportStudioBackTarget {
+const STUDIO_BACK_FEATURE: Partial<Record<ExportStudioOrigin, string>> = {
+  'gateway-config': 'connectors',
+};
+
+/**
+ * Resolve the Studio's back-link target for a carried origin. Unknown or missing origins fall
+ * back to the Versions screen, so the link is always valid; so does an origin whose screen is
+ * still gated (the connectors' gateway configs while `connectors` is held back).
+ *
+ * @param origin The `from` parameter.
+ * @param released Which features are released; defaults to {@link isFeatureReleased} (tests pass
+ *     their own).
+ * @returns Where the back link goes and what it says.
+ */
+export function resolveStudioBack(
+  origin: string | null | undefined,
+  released: (feature: string) => boolean = isFeatureReleased,
+): ExportStudioBackTarget {
   if (origin && Object.prototype.hasOwnProperty.call(STUDIO_BACK_TARGETS, origin)) {
-    return STUDIO_BACK_TARGETS[origin as ExportStudioOrigin];
+    const feature = STUDIO_BACK_FEATURE[origin as ExportStudioOrigin];
+    if (!feature || released(feature)) return STUDIO_BACK_TARGETS[origin as ExportStudioOrigin];
   }
   return STUDIO_BACK_TARGETS[DEFAULT_STUDIO_ORIGIN];
 }

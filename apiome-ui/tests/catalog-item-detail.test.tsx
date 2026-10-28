@@ -525,20 +525,33 @@ describe('CatalogItemDetailClient', () => {
     expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
   });
 
-  it('opens the Export Studio from the Export CTA without touching Convert (MFX-41.2, #4349)', async () => {
+  it('keeps Export in place and offers no studio row while the Export Studio is unreleased (E1-1)', async () => {
+    mockFetchItem(RICH_ITEM);
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+    await screen.findByTestId('catalog-detail-export');
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+  });
+
+  it('opens the Export Studio from Export to another format…, while Export stays in place (MFX-41.2, E1-1)', async () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 
+    // Export is the in-place dialog even with the studio released.
     const exportCta = await screen.findByTestId('catalog-detail-export');
-    // The CTA states the Export-vs-Convert distinction (export never mints a Project).
     expect(exportCta).toHaveAttribute('title', expect.stringContaining('never turns the item into a project'));
-    // No conversion preview is opened by exporting.
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(exportCta);
+    expect(await screen.findByTestId('export-dialog-body')).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('export-dialog-body')).not.toBeInTheDocument());
 
-    // Export routes to the version-scoped Export Studio (the power path), carrying the catalog
-    // origin (back-link → Catalog) and the source format (hide the same-format target).
+    // The studio is the header's ⋯ row.
+    fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });
+    fireEvent.click(await screen.findByTestId('page-header-overflow-export-studio'));
+
+    // It routes to the version-scoped Export Studio, carrying the catalog origin (back-link →
+    // Catalog) and the source format (hide the same-format target).
     expect(mockPush).toHaveBeenCalledTimes(1);
     const href = mockPush.mock.calls[0][0] as string;
     expect(href).toContain('/ade/dashboard/export/studio');
@@ -547,8 +560,6 @@ describe('CatalogItemDetailClient', () => {
     expect(params.get('label')).toBe(RICH_ITEM.name);
     expect(params.get('from')).toBe('catalog');
     expect(params.get('sourceFormat')).toBe('protobuf');
-    // Convert stays present and unchanged next to it — no conversion dialog opened.
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
   });
 

@@ -943,8 +943,13 @@ export interface CatalogRowActions {
   versions: boolean;
   /** Open the server lint report. */
   lint: boolean;
-  /** Open the Export Studio scoped to it (MFX-41.2). */
+  /** Export it in place, through the Export dialog. */
   export: boolean;
+  /**
+   * "Export to another format…": open Export studio with it as the source (E1-1, #6217). Offered
+   * only once the studio is released (`lib/feature-release.ts` `export-studio`).
+   */
+  exportStudio: boolean;
   /** Open the conversion preview (MFI-22.4). */
   convert: boolean;
   /** Soft-delete it. */
@@ -982,6 +987,7 @@ export function catalogRowActions(item: CatalogItem, can: PermissionCheck = allo
     versions: !deleted,
     lint: !deleted,
     export: !deleted,
+    exportStudio: !deleted && isFeatureReleased('export-studio'),
     convert: !deleted && can('projects:create'),
     delete: !deleted && can('projects:delete'),
     undelete: deleted && can('projects:edit'),

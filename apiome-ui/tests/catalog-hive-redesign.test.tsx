@@ -571,6 +571,46 @@ describe('narrowing', () => {
 // Writes
 // ---------------------------------------------------------------------------------------
 
+describe('the two export verbs (E1-1, #6217)', () => {
+  const PREVIEW = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  afterEach(() => {
+    if (PREVIEW === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW;
+  });
+
+  it('changes nothing from RC6 while Export studio is unreleased', async () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    // Exactly as in RC6: one row, reading "Export to another format…", opening the dialog.
+    expect(await screen.findByTestId('catalog-action-export')).toHaveTextContent('Export to another format…');
+    expect(screen.queryByTestId('catalog-action-export-studio')).toBeNull();
+    fireEvent.click(screen.getByTestId('catalog-action-export'));
+    expect(await screen.findByTestId('export-dialog-body')).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('adds Export to another format…, which opens the studio scoped to the item', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    expect(await screen.findByTestId('catalog-action-export')).toHaveTextContent(/^Export$/);
+    const studio = screen.getByTestId('catalog-action-export-studio');
+    expect(studio).toHaveTextContent('Export to another format…');
+    fireEvent.click(studio);
+    await waitFor(() => expect(mockPush).toHaveBeenCalledTimes(1));
+    const params = new URLSearchParams(String(mockPush.mock.calls[0][0]).split('?')[1]);
+    expect(String(mockPush.mock.calls[0][0])).toMatch(/^\/ade\/dashboard\/export\/studio\?/);
+    expect([params.get('artifact'), params.get('from'), params.get('sourceFormat')]).toEqual([
+      LEDGER.id,
+      'catalog',
+      'graphql',
+    ]);
+  });
+});
+
 describe('the three writes', () => {
   it('soft-deletes without a gate, and says how to get the item back', async () => {
     await renderCatalog();

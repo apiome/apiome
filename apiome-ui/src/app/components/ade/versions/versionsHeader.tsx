@@ -29,7 +29,8 @@ import { COPY_PROJECT_LINK_SHORTCUT, formatShortcutKeys } from '@lib/shortcuts';
 
 export { COPY_PROJECT_LINK_SHORTCUT };
 
-import { EXPORT_STUDIO_ROUTE, PUBLISHED_ROUTE } from './ProjectFactsCard';
+import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
+import { PUBLISHED_ROUTE } from './ProjectFactsCard';
 import { SUNSET_TIMELINE_ROUTE } from './VersionsStatusStrip';
 import {
   GITLIKE_FLAG_LABEL,
@@ -80,6 +81,10 @@ export interface VersionsOverflowContext {
   branchCount: number;
   /** Whether the Export studio has been released (`lib/feature-release.ts`). */
   exportStudioReleased: boolean;
+  /** The selected project's name, for the studio's header (E1-1). */
+  projectName?: string | null;
+  /** The selected project's head revision, so the studio opens on it (E1-1). */
+  headRevisionId?: string | null;
   /** Open the merge dialog. */
   onOpenMerge: () => void;
   /** Copy the project link. */
@@ -97,6 +102,8 @@ export function versionsOverflowItems({
   projectId,
   branchCount,
   exportStudioReleased,
+  projectName,
+  headRevisionId,
   onOpenMerge,
   onCopyLink,
 }: VersionsOverflowContext): PageHeaderOverflowItem[] {
@@ -135,11 +142,21 @@ export function versionsOverflowItems({
   );
 
   if (exportStudioReleased) {
+    // E1-1 (#6217): the studio always opens scoped to a source — this project's head revision.
     items.push({
       id: 'export-studio',
       label: 'Export studio',
       icon: PackageOpen,
-      href: EXPORT_STUDIO_ROUTE,
+      ...(projectId
+        ? {
+            href: exportStudioHref({
+              artifact: projectId,
+              version: headRevisionId ?? null,
+              label: projectName ?? null,
+              origin: 'versions',
+            }),
+          }
+        : { disabledReason: NEEDS_PROJECT }),
     });
   }
 

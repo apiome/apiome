@@ -552,18 +552,22 @@ export default function CatalogClient() {
   );
 
   /**
-   * "Export to another format…" (MFX-41.2) — opens the Export Studio scoped to the item's
-   * latest revision. Unlike Convert this emits a document and never mutates the item, which is
-   * why both verbs are offered and why the menu row carries the sentence that tells them apart.
-   * While the Studio is unreleased (`lib/feature-release.ts`) the same verb opens the in-place
-   * export dialog instead, so a catalog item can still be exported.
+   * "Export" — the in-place Export dialog for the item's latest revision. Unlike Convert this
+   * emits a document and never mutates the item, which is why both verbs are offered and why the
+   * menu row carries the sentence that tells them apart.
    */
-  const openExport = React.useCallback(
+  const openExport = React.useCallback((item: CatalogItem) => setExportFor(item), []);
+
+  /**
+   * "Export to another format…" (MFX-41.2, E1-1 #6217) — opens Export studio with the item as the
+   * source: the launch origin (so the studio's back link returns to Catalog) and the source format
+   * (so the redundant same-format target is hidden). The row is only offered while the studio is
+   * released (`catalogRowActions().exportStudio`); this handler checks again so a stale menu can
+   * never navigate into the gated route.
+   */
+  const openExportStudio = React.useCallback(
     (item: CatalogItem) => {
-      if (!isFeatureReleased('export-studio')) {
-        setExportFor(item);
-        return;
-      }
+      if (!isFeatureReleased('export-studio')) return;
       router.push(
         exportStudioHref({
           artifact: item.id,
@@ -786,6 +790,7 @@ export default function CatalogClient() {
     onOpenVersions: openVersions,
     onOpenLint: openLint,
     onExport: openExport,
+    onExportStudio: openExportStudio,
     onConvert: openConvert,
     onDelete: (item: CatalogItem) => void handleDelete(item),
     onRestore: (item: CatalogItem) => void handleRestore(item),

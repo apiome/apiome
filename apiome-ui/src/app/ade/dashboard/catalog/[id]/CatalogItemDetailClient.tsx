@@ -63,6 +63,7 @@ import {
   Layers,
   LayoutDashboard,
   Network,
+  PanelsTopLeft,
   Route,
   ShieldCheck,
   Tags,
@@ -478,20 +479,18 @@ export function CatalogItemDetailClient({
     [],
   );
 
+  /** **Export** — the in-place Export dialog for this item's latest revision. */
+  const handleExport = useCallback(() => setExportOpen(true), []);
+
   /**
-   * Open the Export Studio (MFX-41.2, #4349) scoped to this item's latest revision — the power
-   * path where the item is emitted in another format with the full verify-then-generate flow.
-   * Carries the launch origin (so the Studio's back link returns to Catalog) and the source
-   * format (so the redundant same-format target is hidden). Unlike Convert, this never mints a
-   * Project and never mutates the item. While the Studio is unreleased (`lib/feature-release.ts`)
-   * the button opens the in-place export dialog instead.
+   * **Export to another format…** (MFX-41.2, E1-1 #6217) — Export studio with this item as the
+   * source, the power path with the full verify-then-generate flow. Carries the launch origin (so
+   * the studio's back link returns to Catalog) and the source format (so the redundant same-format
+   * target is hidden). Unlike Convert, this never mints a Project and never mutates the item.
+   * Offered only while the studio is released, from the header's ⋯ menu.
    */
-  const handleExport = useCallback(() => {
-    if (!item) return;
-    if (!isFeatureReleased('export-studio')) {
-      setExportOpen(true);
-      return;
-    }
+  const handleExportStudio = useCallback(() => {
+    if (!item || !isFeatureReleased('export-studio')) return;
     router.push(
       exportStudioHref({
         artifact: item.id,
@@ -626,6 +625,20 @@ export function CatalogItemDetailClient({
               </Button>
             ) : null}
           </div>
+        }
+        overflow={
+          actions.exportStudio.shown
+            ? {
+                items: [
+                  {
+                    id: 'export-studio',
+                    label: 'Export to another format…',
+                    icon: PanelsTopLeft,
+                    onSelect: handleExportStudio,
+                  },
+                ],
+              }
+            : undefined
         }
         actions={
           <>
