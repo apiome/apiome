@@ -52,6 +52,8 @@ jest.mock('sonner', () => ({
 
 import { ExportStudio } from '../src/app/components/ade/dashboard/export/ExportStudio';
 import { ExportTargetGrid } from '../src/app/components/ade/dashboard/export/ExportTargetGrid';
+import { CatalogBulkExportDialog } from '../src/app/components/ade/catalog/CatalogBulkExportDialog';
+import type { CatalogItem } from '../src/app/components/ade/catalog/catalogModel';
 import { GenerateProgress } from '../src/app/components/ade/dashboard/export/GenerateProgress';
 import { DeliveryGatePanel } from '../src/app/components/ade/dashboard/export/DeliveryGatePanel';
 import { exportTargetCards } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
@@ -711,6 +713,80 @@ describe('the browser fixtures', () => {
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.queryByText(/load this list/)).not.toBeInTheDocument());
     write('source-ready', pageColumn().outerHTML);
+  });
+
+  /**
+   * The registry plus a multi-target / batch job that answers at once (E1-3): the job list is
+   * empty, the submit is accepted and the poll returns `result`.
+   */
+  const withJob = (result: Record<string, unknown>) => {
+    const registry = mockFetch();
+    global.fetch = jest.fn((input: unknown, init?: { method?: string }) => {
+      const url = typeof input === 'string' ? input : String(input);
+      const json = (payload: unknown) =>
+        Promise.resolve({ ok: true, headers: new Headers(), json: () => Promise.resolve(payload) });
+      if (url === '/api/export/jobs' && init?.method === 'POST') return json({ success: true, job_id: 'job-m' });
+      if (url.includes('/api/export/jobs/job-m')) {
+        return json({ success: true, job_id: 'job-m', state: 'completed', percent: 100, events: [], result });
+      }
+      if (url.includes('jobs')) return json({ success: true, jobs: [], total: 0, offset: 0 });
+      return registry(input);
+    }) as unknown as typeof fetch;
+  };
+
+  it('renders the several-targets verify (the docs fixture, E1-3)', async () => {
+    withJob({
+      artifact: 'proj-petstore',
+      version_label: '1.2.0',
+      dry_run: true,
+      fidelity_rollup: { tier: 'lossy', min_preserved_percent: 64, target_count: 3 },
+      targets: [
+        { target: 'openapi', fidelity: { summary: { tier: 'lossless', preserved_percent: 100 } } },
+        { target: 'graphql', fidelity: { summary: { tier: 'lossy', preserved_percent: 78 } } },
+        { target: 'proto', fidelity: { summary: { tier: 'lossy', preserved_percent: 64 } } },
+      ],
+    });
+    render(<ExportStudio artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);
+    await waitFor(() => expect(screen.getByText(/export targets available/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(within(screen.getByTestId('export-studio-multi-toggle')).getByRole('checkbox'));
+    for (const key of ['openapi', 'graphql', 'proto']) {
+      fireEvent.click(within(screen.getByTestId(`export-studio-multi-target-${key}`)).getByRole('checkbox'));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByTestId('multi-export-verify-start'));
+    await screen.findByTestId('multi-export-outcomes');
+    write('multi-verify', pageColumn().outerHTML);
+  });
+
+  it('renders the Catalog bulk Export… dialog after a run (the docs fixture, E1-3)', async () => {
+    withJob({
+      artifact: '3 items',
+      download_path: '/v1/export/acme/jobs/job-m/download',
+      batch: {
+        item_count: 3,
+        completed_count: 2,
+        failed_count: 1,
+        items: [
+          { artifact: 'item-orders', version: 'latest', version_label: '2.1.0', target: 'openapi', state: 'completed', tier: 'lossless', preserved_percent: 100 },
+          { artifact: 'item-pets', version: 'latest', version_label: '1.4.0', target: 'openapi', state: 'completed', tier: 'lossy', preserved_percent: 88 },
+          { artifact: 'item-events', version: 'latest', target: 'openapi', state: 'failed', error: { message: 'The source has no operations to export.' } },
+        ],
+      },
+    });
+    const items = [
+      { id: 'item-orders', name: 'Orders API' },
+      { id: 'item-pets', name: 'Pet Store API' },
+      { id: 'item-events', name: 'Events Bus' },
+    ] as unknown as CatalogItem[];
+    render(<CatalogBulkExportDialog open items={items} onOpenChange={() => undefined} />);
+    fireEvent.click(await screen.findByLabelText('OpenAPI 3.1'));
+    fireEvent.click(screen.getByTestId('multi-export-generate-start'));
+    await screen.findByTestId('multi-export-download');
+    // `checked` is a DOM property; mirror it into the markup so the fixture shows the pick.
+    const dialog = screen.getByTestId('catalog-bulk-export-dialog');
+    dialog.querySelectorAll<HTMLInputElement>('input:checked').forEach((input) => input.setAttribute('checked', ''));
+    write('bulk-export', dialog.outerHTML);
   });
 
   it('renders the deep-link notices', async () => {

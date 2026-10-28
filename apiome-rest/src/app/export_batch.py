@@ -1,7 +1,9 @@
-"""Project / batch export — MFX-39.2 (#4334).
+"""Project / batch export — MFX-39.2 (#4334), multi-item batches — E1-3 (#6219).
 
-One export job over a **set of versions** of an artifact (every version, or a selected list) ×
-one or more targets, delivered as **one archive**. It is the batch half of the export job engine
+One export job over a **set of sources** × one or more targets, delivered as **one archive**. The
+sources are versions of one artifact (``versions`` / ``all_versions``, MFX-39.2) or several
+artifacts — say three catalog items picked in the Catalog — each at a version or its latest
+(``items``, E1-3). It is the batch half of the export job engine
 (:mod:`app.export_job_engine`): the same submit → poll → download contract, the same per-target
 pipeline (fidelity → transcode guard → emit → re-parse → delivery gate), and the same shared
 helpers for persistence and attestation.
@@ -15,8 +17,9 @@ at least one item completed; only when **every** item failed does the job fail
 (``EXPORT_BATCH_FAILED``, the items' errors in ``error.context.items``).
 
 The archive (``export-batch.zip``) holds each completed item's files under
-``<version>/<target>/`` plus a root ``manifest.json`` (``kind: "batch"``) listing every item —
-completed or failed — with its files, fidelity, provenance, or error.
+``<version>/<target>/`` (an ``items`` batch: ``<item>/<target>/``, the item's slug) plus a root
+``manifest.json`` (``kind: "batch"``) listing every item — completed or failed — with its artifact,
+files, fidelity, provenance, or error.
 
 Pure seams (unit-tested without a job): :func:`version_directory`, :func:`build_batch_manifest`,
 :func:`build_batch_zip`. The DB-backed version listing is :func:`list_project_version_ids`.
@@ -27,7 +30,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from . import export_job_engine as engine
 from .delivery_error_taxonomy import delivery_error_fields
@@ -65,12 +68,18 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "BATCH_BUNDLE_FILENAME",
     "BATCH_MANIFEST_KIND",
+    "LATEST_VERSION",
+    "artifact_folder_name",
+    "item_directory",
     "list_project_version_ids",
     "version_directory",
     "build_batch_manifest",
     "build_batch_zip",
     "drive_batch_job_inner",
 ]
+
+#: What an ``items`` entry with no version shows as its version (the latest revision is exported).
+LATEST_VERSION = "latest"
 
 #: Download filename of a batch export's archive.
 BATCH_BUNDLE_FILENAME = "export-batch.zip"
@@ -103,6 +112,53 @@ def list_project_version_ids(tenant_id: str, artifact_id: str) -> List[str]:
     return [str(row["id"]) for row in db.get_versions_for_project(artifact_id, tenant_id)]
 
 
+def artifact_folder_name(tenant_id: str, artifact_id: str) -> str:
+    """The name an ``items`` batch gives an artifact's folder: its slug, else its name, else its id.
+
+    Args:
+        tenant_id: The owning tenant id.
+        artifact_id: The artifact (project) id.
+
+    Returns:
+        The raw name (made safe by :func:`item_directory`). A lookup failure falls back to the id.
+    """
+    try:
+        from .database import db
+
+        project = db.get_project_by_id(artifact_id, tenant_id) or {}
+    except Exception:  # noqa: BLE001 - a name lookup never fails an item
+        logger.debug("batch export could not name artifact %s", artifact_id, exc_info=True)
+        project = {}
+    return str(project.get("slug") or project.get("name") or artifact_id)
+
+
+def item_directory(name: str, source: ExportSource, *, versioned: bool, taken: Set[str]) -> str:
+    """The archive folder for one item of an ``items`` batch (E1-3), unique within the archive.
+
+    Named after the item (``orders-api``); an item that named a version also carries its label
+    (``orders-api-1.0.0``) so two versions of one item never share a folder. A clash gets a
+    numbered suffix. The chosen name is added to ``taken``.
+
+    Args:
+        name: The item's name (:func:`artifact_folder_name`).
+        source: The loaded version.
+        versioned: Whether the item named a version.
+        taken: Folder names already used in this archive (updated in place).
+
+    Returns:
+        A safe, unique folder name.
+    """
+    raw = f"{name}-{source.version_label or source.version_record_id}" if versioned else name
+    base = safe_bundle_segment(raw, "item")
+    name_out = base
+    counter = 1
+    while name_out in taken:
+        counter += 1
+        name_out = f"{base}-{counter}"
+    taken.add(name_out)
+    return name_out
+
+
 def version_directory(source: ExportSource, taken: Set[str]) -> str:
     """The archive folder for one version of a batch export, unique within the archive.
 
@@ -133,6 +189,7 @@ def version_directory(source: ExportSource, taken: Set[str]) -> str:
 def _manifest_item(item: ExportBatchItem, provenance: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """One item's section of the batch manifest (never any file content)."""
     section: Dict[str, Any] = {
+        "artifact": item.artifact,
         "version": item.version,
         "version_record_id": item.version_record_id,
         "version_label": item.version_label,
@@ -170,7 +227,7 @@ def build_batch_manifest(
 
     Args:
         items: Every item of the batch, in run order.
-        artifact: The exported artifact (project) id.
+        artifact: The exported artifact (project) id, or ``"<n> items"`` for an ``items`` batch.
         rollup: The fidelity rollup over the completed items (``None`` when there are none).
         provenance: Snapshot + version provenance per completed item, keyed by its directory.
 
@@ -185,6 +242,7 @@ def build_batch_manifest(
         "kind": BATCH_MANIFEST_KIND,
         "manifest": "manifest.json",
         "artifact": artifact,
+        "artifact_count": len({item.artifact for item in items if item.artifact}),
         "version_count": len({item.version for item in items}),
         "item_count": len(items),
         "completed_count": len(completed),
@@ -233,8 +291,9 @@ class _JobCanceledError(Exception):
 
 @dataclass
 class _ItemRun:
-    """One (version × target) item as it moves through the batch pipeline."""
+    """One (source × target) item as it moves through the batch pipeline."""
 
+    artifact: str
     version: str
     spec: ExportJobTargetSpec
     target: str
@@ -258,6 +317,7 @@ class _ItemRun:
     def to_item(self) -> ExportBatchItem:
         """The poll-payload view of this item."""
         return ExportBatchItem(
+            artifact=self.artifact,
             version=self.version,
             version_record_id=self.source.version_record_id if self.source else None,
             version_label=self.source.version_label if self.source else None,
@@ -324,7 +384,7 @@ async def _fail_item(
     Returns:
         ``run``, now carrying its error.
     """
-    detail: Dict[str, Any] = {"version": run.version, "target": run.target}
+    detail: Dict[str, Any] = {"artifact": run.artifact, "version": run.version, "target": run.target}
     if context:
         detail.update(context)
     run.error = ExportJobError(
@@ -500,17 +560,18 @@ async def _run_item(
 
 
 async def _run_items(
-    ctx: _BatchContext, version_refs: List[str], specs: List[ExportJobTargetSpec]
+    ctx: _BatchContext, sources: List[Tuple[str, Optional[str]]], specs: List[ExportJobTargetSpec]
 ) -> List[_ItemRun]:
-    """Run every (version × target) item, version by version.
+    """Run every (source × target) item, source by source.
 
-    A version that fails to load fails each of its items; a second reference to a revision
+    A source that fails to load fails each of its items; a second reference to a revision
     already in the batch (a label and its revision id) is skipped with a warning.
 
     Args:
         ctx: The batch context.
-        version_refs: The versions to export, as requested.
-        specs: The targets to export each version to.
+        sources: The ``(artifact, version)`` pairs to export, as requested (``version`` null for
+            an ``items`` entry that named none: the latest).
+        specs: The targets to export each source to.
 
     Returns:
         Every item that ran, in order.
@@ -521,21 +582,24 @@ async def _run_items(
     runs: List[_ItemRun] = []
     taken: Set[str] = set()
     seen_revisions: Set[str] = set()
-    for version_index, ref in enumerate(version_refs):
+    multi_item = ctx.request.items is not None
+    for version_index, (artifact, ref) in enumerate(sources):
         first_item = version_index * len(specs)
+        shown = ref or LATEST_VERSION
+        name = await asyncio.to_thread(artifact_folder_name, ctx.tenant_id, artifact) if multi_item else None
         await _step(
             ctx.job_id,
             percent=_percent(ctx, first_item, 0),
             stage="loading-source",
-            current_item=f"{ref} ({version_index + 1}/{len(version_refs)})",
+            current_item=(f"{name} " if name else "") + f"{shown} ({version_index + 1}/{len(sources)})",
         )
         try:
             source: ExportSource = await asyncio.to_thread(
-                engine.load_export_source, ctx.tenant_id, ctx.request.artifact, ref
+                engine.load_export_source, ctx.tenant_id, artifact, ref
             )
         except ExportSourceError as exc:
             for spec in specs:
-                run = _ItemRun(version=ref, spec=spec, target=spec.target)
+                run = _ItemRun(artifact=artifact, version=shown, spec=spec, target=spec.target)
                 runs.append(
                     await _fail_item(
                         ctx, run, "SOURCE_LOAD_FAILED", str(exc), {"status_code": exc.status_code}
@@ -548,17 +612,21 @@ async def _run_items(
                 event=(
                     "warn",
                     "BATCH_VERSION_DUPLICATE",
-                    f"Version {ref!r} is revision {source.version_record_id}, which this batch "
+                    f"Version {shown!r} is revision {source.version_record_id}, which this batch "
                     "already exports; skipped.",
-                    {"version": ref, "version_record_id": source.version_record_id},
+                    {"artifact": artifact, "version": shown, "version_record_id": source.version_record_id},
                 ),
             )
             continue
         seen_revisions.add(source.version_record_id)
-        version_dir = version_directory(source, taken)
+        version_dir = (
+            item_directory(name or artifact, source, versioned=ref is not None, taken=taken)
+            if multi_item
+            else version_directory(source, taken)
+        )
         lint_cache: Dict[str, Any] = {}
         for target_index, spec in enumerate(specs):
-            run = _ItemRun(version=ref, spec=spec, target=spec.target, source=source)
+            run = _ItemRun(artifact=artifact, version=shown, spec=spec, target=spec.target, source=source)
             try:
                 runs.append(
                     await _run_item(
@@ -628,17 +696,26 @@ async def drive_batch_job_inner(job_id: str) -> None:
             event=(
                 "info",
                 "EXPORT_STARTED",
-                f"Batch export of artifact {request.artifact} to {request.target_label} started"
+                (
+                    f"Batch export of {len(request.items)} items"
+                    if request.items is not None
+                    else f"Batch export of artifact {request.artifact}"
+                )
+                + f" to {request.target_label} started"
                 + (" (dry-run: fidelity reports only)" if request.dry_run else ""),
-                {"artifact": request.artifact,
+                {"artifact": request.artifact_label,
+                 "items": [item.model_dump() for item in request.items] if request.items is not None else None,
                  "versions": request.versions if request.versions is not None else "all",
                  "targets": [spec.target for spec in specs],
                  "dry_run": request.dry_run},
             ),
         )
 
-        if request.versions is not None:
-            version_refs = list(request.versions)
+        sources: List[Tuple[str, Optional[str]]]
+        if request.items is not None:
+            sources = [(item.artifact, item.version) for item in request.items]
+        elif request.versions is not None:
+            sources = [(request.artifact or "", ref) for ref in request.versions]
         else:
             try:
                 version_refs = await asyncio.to_thread(
@@ -656,14 +733,15 @@ async def drive_batch_job_inner(job_id: str) -> None:
                     {"status_code": 404},
                 )
                 return
-        item_total = len(version_refs) * len(specs)
+            sources = [(request.artifact or "", ref) for ref in version_refs]
+        item_total = len(sources) * len(specs)
         if item_total > MAX_BATCH_ITEMS:
             await engine._fail(
                 job_id,
                 "EXPORT_BATCH_TOO_LARGE",
-                f"This batch would export {len(version_refs)} versions × {len(specs)} targets "
+                f"This batch would export {len(sources)} versions × {len(specs)} targets "
                 f"= {item_total} items; one batch export runs at most {MAX_BATCH_ITEMS}.",
-                {"version_count": len(version_refs),
+                {"version_count": len(sources),
                  "target_count": len(specs),
                  "item_count": item_total,
                  "max_items": MAX_BATCH_ITEMS},
@@ -674,9 +752,10 @@ async def drive_batch_job_inner(job_id: str) -> None:
             event=(
                 "info",
                 "BATCH_PLANNED",
-                f"Exporting {len(version_refs)} version(s) × {len(specs)} target(s) "
-                f"= {item_total} item(s)",
-                {"version_count": len(version_refs),
+                f"Exporting {len(sources)} "
+                + ("item(s)" if request.items is not None else "version(s)")
+                + f" × {len(specs)} target(s) = {item_total} item(s)",
+                {"version_count": len(sources),
                  "target_count": len(specs),
                  "item_count": item_total},
             ),
@@ -690,7 +769,7 @@ async def drive_batch_job_inner(job_id: str) -> None:
             item_total=item_total,
             correlation_id=correlation_id,
         )
-        runs = await _run_items(ctx, version_refs, specs)
+        runs = await _run_items(ctx, sources, specs)
         completed = [run for run in runs if run.error is None]
         if not completed:
             await engine._fail(
@@ -698,7 +777,8 @@ async def drive_batch_job_inner(job_id: str) -> None:
                 "EXPORT_BATCH_FAILED",
                 f"All {len(runs)} item(s) of the batch export failed.",
                 {"items": [
-                    {"version": run.version,
+                    {"artifact": run.artifact,
+                     "version": run.version,
                      "target": run.target,
                      "code": run.error.code if run.error else None,
                      "message": run.error.message if run.error else None}
@@ -717,7 +797,7 @@ async def drive_batch_job_inner(job_id: str) -> None:
                 state="completed",
                 percent=100,
                 result=ExportJobResult(
-                    artifact=request.artifact,
+                    artifact=request.artifact_label,
                     dry_run=True,
                     fidelity_rollup=rollup,
                     batch=_summary(runs, len(specs)),
@@ -786,7 +866,7 @@ async def _package_and_complete(
             filename=BATCH_BUNDLE_FILENAME,
             media_type=BUNDLE_MEDIA_TYPE,
             body=build_batch_zip(
-                parts, items_before_attestation, artifact=ctx.request.artifact, rollup=rollup
+                parts, items_before_attestation, artifact=ctx.request.artifact_label, rollup=rollup
             ),
         ),
         expires_at,
@@ -822,7 +902,7 @@ async def _package_and_complete(
     all_files = [f for run in completed for f in run.files]
     summary = _summary(runs, target_count)
     result = ExportJobResult(
-        artifact=ctx.request.artifact,
+        artifact=ctx.request.artifact_label,
         dry_run=False,
         files=all_files,
         media_type=BUNDLE_MEDIA_TYPE,

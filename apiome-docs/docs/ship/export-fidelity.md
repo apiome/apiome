@@ -295,6 +295,7 @@ The round trip is **lossless** for position, size, color, text, kind, and attach
 | Export job (accepts `acknowledged_snapshot`; fails `STALE_PREVIEW` on mismatch) | `POST /v1/export/{tenant}/jobs` |
 | Multi-format export job: one zip, per-format fidelity + a rollup (`targets` list) | `POST /v1/export/{tenant}/jobs` |
 | Batch export job: several versions × formats, one zip, per-item status (`versions` / `all_versions`) | `POST /v1/export/{tenant}/jobs` |
+| Batch export job over several items, each at a version or its latest (`items`) | `POST /v1/export/{tenant}/jobs` |
 
 All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 

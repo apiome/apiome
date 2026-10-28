@@ -30,6 +30,10 @@ import { GenerateProgress } from './GenerateProgress';
 import { DeliveryGatePanel } from './DeliveryGatePanel';
 import { deliveryReportFor } from './exportJob';
 import { RecentAsyncJobsPanel } from '../asyncJobs/RecentAsyncJobsPanel';
+import { MultiExportRun } from './MultiExportRun';
+import { MultiTargetChecklist } from './MultiTargetChecklist';
+import { multiTargetJobBody } from './exportBatchJob';
+import type { ExportJobStatus } from './exportJob';
 import { useCatalogSourceContext } from './useCatalogSourceContext';
 import type { EmittedValidationReport } from './exportVerify';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
@@ -247,6 +251,11 @@ export function ExportStudio({
   // a policy-blocked target as blocked rather than as just another card.
   const { report: preflight, readiness } = useExportPreflight(true, artifact, version);
   const [targetOrder, setTargetOrder] = useState<ExportTargetOrder>('readiness');
+  // E1-3: "Several targets" — one job to 2+ targets, each with its defaults (Options is skipped);
+  // Verify is one multi-target dry run, Generate one job whose `.zip` holds a folder per target.
+  const [multiMode, setMultiMode] = useState(false);
+  const [multiKeys, setMultiKeys] = useState<string[]>([]);
+  const [multiVerified, setMultiVerified] = useState(false);
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
   // replaces it when the source's format is known.
   const cards = useMemo(
@@ -525,6 +534,35 @@ export function ExportStudio({
       clearActiveJob();
     },
     [clearActiveJob],
+  );
+
+  /** Turn "Several targets" on or off; turning it on starts from the single target picked so far. */
+  const toggleMultiMode = useCallback(
+    (on: boolean) => {
+      setMultiMode(on);
+      setMultiVerified(false);
+      setMultiKeys(on && selectedKey ? [selectedKey] : []);
+    },
+    [selectedKey],
+  );
+
+  /** Tick or untick one target of the "Several targets" checklist (a change re-opens Verify). */
+  const toggleMultiKey = useCallback((key: string) => {
+    setMultiVerified(false);
+    setMultiKeys((keys) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]));
+  }, []);
+
+  const multiBody = useMemo(
+    () => multiTargetJobBody(artifact, version, multiKeys),
+    [artifact, version, multiKeys],
+  );
+  const targetLabels = useMemo(
+    () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
+    [cards],
+  );
+  const onMultiVerified = useCallback(
+    (status: ExportJobStatus) => setMultiVerified(status.state === 'completed'),
+    [],
   );
 
   /** Pick a target from the grid — a manual re-pick forgets any job from the previous target. */
@@ -910,10 +948,11 @@ export function ExportStudio({
       case 'source':
         return Boolean(response) && !loading;
       case 'target':
-        return Boolean(selected);
+        return multiMode ? multiKeys.length >= 2 : Boolean(selected);
       case 'options':
         return Boolean(selected) && validation.valid;
       case 'verify':
+        if (multiMode) return multiVerified;
         // Generate is gated on the verdict (MFX-42.1): clean proceeds, lossy needs the
         // acknowledgement, invalid is blocked outright, and an unrun/failed verify stays closed. A
         // validation-gate override (MFX-46.2) keeps it closed until the user re-verifies.
@@ -921,7 +960,19 @@ export function ExportStudio({
       default:
         return false;
     }
-  }, [step, response, loading, selected, validation.valid, verifyVerdict, acknowledged, jobValidationOverride]);
+  }, [
+    step,
+    response,
+    loading,
+    selected,
+    validation.valid,
+    verifyVerdict,
+    acknowledged,
+    jobValidationOverride,
+    multiMode,
+    multiKeys.length,
+    multiVerified,
+  ]);
 
   // MFX-41.4: the session as a link. Source, target, non-default options (credential-shaped keys
   // stripped by the builder), and the current step — everything a teammate needs to arrive where
@@ -967,12 +1018,15 @@ export function ExportStudio({
     : null;
 
   const stepIndex = STEP_ORDER.indexOf(step);
+  // "Several targets" (E1-3) steps over Options: each target exports with its defaults.
   const goBack = useCallback(() => {
-    setStep(STEP_ORDER[Math.max(0, stepIndex - 1)]);
-  }, [stepIndex]);
+    const previous = STEP_ORDER[Math.max(0, stepIndex - 1)];
+    setStep(multiMode && previous === 'options' ? 'target' : previous);
+  }, [stepIndex, multiMode]);
   const goNext = useCallback(() => {
-    setStep(STEP_ORDER[Math.min(STEP_ORDER.length - 1, stepIndex + 1)]);
-  }, [stepIndex]);
+    const next = STEP_ORDER[Math.min(STEP_ORDER.length - 1, stepIndex + 1)];
+    setStep(multiMode && next === 'options' ? 'verify' : next);
+  }, [stepIndex, multiMode]);
 
   // Stepping is a content swap in place, so a keyboard/screen-reader user gets no signal that the
   // page changed under a Continue button that never moves (MFX-41.5). Move focus to the step panel
@@ -1093,29 +1147,43 @@ export function ExportStudio({
 
           {step === 'target' && (
             <div className="xstd-stack">
-              {sourceFormat && <OriginalSourceOption artifact={artifact} sourceFormat={sourceFormat} />}
-              <ExportTargetGrid
-                cards={cards}
-                selectedKey={selectedKey}
-                onSelect={handleSelectCard}
-                readiness={readiness}
-                preflight={preflight}
-                order={targetOrder}
-                onOrderChange={setTargetOrder}
-                dialect={dialect}
-                // HIVE-8.3: the Studio groups all 36 registry targets under the four family
-                // headings; the ExportDialog, which mounts the same grid, does not.
-                groupByFamily
-                heading={
-                  <div>
-                    <div className="xstd-source__name">Choose a target format</div>
-                    <p className="xstd-quiet">
-                      Fidelity badges are computed for <strong>this</strong> source (version{' '}
-                      {versionLabel}).
-                    </p>
-                  </div>
-                }
-              />
+              <label className="xstd-check" data-testid="export-studio-multi-toggle">
+                <input
+                  type="checkbox"
+                  checked={multiMode}
+                  onChange={(event) => toggleMultiMode(event.target.checked)}
+                />
+                Several targets — one archive with a folder per target, each with its default options
+              </label>
+              {multiMode ? (
+                <MultiTargetChecklist cards={cards} selected={multiKeys} onToggle={toggleMultiKey} />
+              ) : (
+                <>
+                  {sourceFormat && <OriginalSourceOption artifact={artifact} sourceFormat={sourceFormat} />}
+                  <ExportTargetGrid
+                    cards={cards}
+                    selectedKey={selectedKey}
+                    onSelect={handleSelectCard}
+                    readiness={readiness}
+                    preflight={preflight}
+                    order={targetOrder}
+                    onOrderChange={setTargetOrder}
+                    dialect={dialect}
+                    // HIVE-8.3: the Studio groups all 36 registry targets under the four family
+                    // headings; the ExportDialog, which mounts the same grid, does not.
+                    groupByFamily
+                    heading={
+                      <div>
+                        <div className="xstd-source__name">Choose a target format</div>
+                        <p className="xstd-quiet">
+                          Fidelity badges are computed for <strong>this</strong> source (version{' '}
+                          {versionLabel}).
+                        </p>
+                      </div>
+                    }
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -1152,7 +1220,26 @@ export function ExportStudio({
             </div>
           )}
 
-          {step === 'verify' && selected && fidelity && (
+          {step === 'verify' && multiMode && (
+            <MultiExportRun
+              mode="verify"
+              body={multiBody}
+              labels={targetLabels}
+              archiveName={`${artifact}-export.zip`}
+              onSettled={onMultiVerified}
+            />
+          )}
+
+          {step === 'review' && multiMode && (
+            <MultiExportRun
+              mode="generate"
+              body={multiBody}
+              labels={targetLabels}
+              archiveName={`${artifact}-export.zip`}
+            />
+          )}
+
+          {step === 'verify' && !multiMode && selected && fidelity && (
             <>
               {jobValidationOverride && (
                 <Alert variant="error" data-testid="verify-gate-failure-notice">
@@ -1206,7 +1293,7 @@ export function ExportStudio({
             </>
           )}
 
-          {step === 'review' && selected && (
+          {step === 'review' && !multiMode && selected && (
             <div className="xstd-stack">
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
@@ -1387,7 +1474,7 @@ export function ExportStudio({
                 Continue to review
               </Button>
             )}
-            {step === 'review' && !emitted && !job && (
+            {step === 'review' && !multiMode && !emitted && !job && (
               <Button
                 data-testid="export-studio-generate"
                 onClick={handleGenerate}
@@ -1397,7 +1484,7 @@ export function ExportStudio({
                 Generate
               </Button>
             )}
-            {step === 'review' && emitted && (
+            {step === 'review' && !multiMode && emitted && (
               <>
                 <Button variant="outline" onClick={handleDownloadZip}>
                   <FileArchive className="h-4 w-4" aria-hidden />

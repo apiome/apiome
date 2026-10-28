@@ -163,3 +163,9 @@ EXIT_SYNC_FAILED = 7
 #: off. Distinct from :data:`EXIT_ERROR` (Apiome could not be reached) and :data:`EXIT_USAGE` (a
 #: rejected request) so a pipeline can gate on the check itself. Another per-command use of 7.
 EXIT_REFRESH_CHECK_FAILED = 7
+
+#: ``apiome export <format> --items`` (E1-3): the batch export **ran and some items failed** — the
+#: archive holds the completed ones and the outcome table names the failures. Distinct from
+#: :data:`EXIT_ERROR` (every item failed, or Apiome could not be reached) so a pipeline can tell a
+#: partial archive from none. Another per-command use of 7.
+EXIT_EXPORT_PARTIAL = 7

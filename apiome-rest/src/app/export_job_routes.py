@@ -79,7 +79,14 @@ router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
         "every item. Failures are per item: ``result.batch.items[]`` carries each item's state "
         "and, for a failed one, its structured ``error``; the job only fails "
         "(``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version × target items; "
-        "``acknowledged_snapshot`` is not accepted on a batch."
+        "``acknowledged_snapshot`` is not accepted on a batch.\n\n"
+        "**Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing "
+        "``version`` exports the item's latest) instead of ``artifact`` to export several artifacts "
+        "— say catalog items picked together — to the target(s) in one batch job. Each item's files "
+        "land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one "
+        "was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be "
+        "combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at "
+        "most 100 item × target pairs."
     ),
 )
 async def start_export_job(

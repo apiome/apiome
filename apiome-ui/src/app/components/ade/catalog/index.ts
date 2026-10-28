@@ -61,6 +61,8 @@ export type { CatalogExplainerCalloutProps } from './CatalogExplainerCallout';
 export * from './catalogBulkConvertModel';
 export { CatalogBulkConvertDialog } from './CatalogBulkConvertDialog';
 export type { CatalogBulkConvertDialogProps } from './CatalogBulkConvertDialog';
+export { CatalogBulkExportDialog } from './CatalogBulkExportDialog';
+export type { CatalogBulkExportDialogProps } from './CatalogBulkExportDialog';
 export { CatalogBulkFailureList } from './CatalogBulkFailureList';
 export type { CatalogBulkFailureListProps } from './CatalogBulkFailureList';
 export { CatalogCategoriesDialog } from './CatalogCategoriesDialog';

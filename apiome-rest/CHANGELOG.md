@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.492.0] - 2026-10-28
+
+### Added
+- **Several items in one export job (E1-3, #6219)** — `POST /v1/export/{tenant}/jobs` accepts `items`
+  (`[{artifact, version?}]`, a missing `version` exports the item's latest) instead of `artifact`: a batch job over
+  several artifacts — say catalog items picked together in the Catalog — to one or more targets, delivered as one
+  `export-batch.zip`. Each item's files land under `<item>/<target>/` (the item's slug, plus the version label when
+  one was named); `manifest.json` gains `artifact_count` and a per-item `artifact`, and `result.batch.items[]` gains
+  `artifact`. `items` cannot be combined with `version`, `versions` or `all_versions`; entries must be distinct; at
+  most 100 item × target pairs (422 otherwise). Failures stay per item. API 1.356.0.
+
 ## [1.491.0] - 2026-10-28
 
 ### Added
