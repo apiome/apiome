@@ -3596,8 +3596,8 @@
         {
           "source_format": "raml",
           "emit_key": "raml",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

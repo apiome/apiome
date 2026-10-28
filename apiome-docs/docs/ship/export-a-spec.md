@@ -199,6 +199,43 @@ WADL describes HTTP resources and nothing else, so the fidelity report lists wha
 
 When the source has no server, the base URI `https://api.example.com/` is used, and the report says so.
 
+### RAML from any source
+
+Exporting to **RAML** writes one `<Name>.raml` file in RAML 1.0, starting with the `#%RAML 1.0` header
+line that RAML tools require.
+
+- **Document.** The item's title, description and version, its first server as `baseUri` (server
+  variables become `baseUriParameters`), and a `mediaType`: a RAML item keeps its own; otherwise it is
+  the media type the bodies use most, or `application/json`. Set the **media_type** option to choose
+  another default.
+- **Types.** Objects keep their fields in order, and an optional field is written `name?`. Enums are
+  `string` types with `enum`, unions are `Cat | Dog`, and maps are objects with a `//` property.
+  Numbers keep their width (`integer` with `format: int64`) and dates their type (`datetime`,
+  `date-only`). Lengths, ranges, patterns, list sizes, enums and defaults become RAML facets.
+- **Resources.** Each path is one resource (`/pets/{petId}`), with its path parameters as
+  `uriParameters`. Each operation is a method with its operation name as `displayName` (when the
+  source names it), its description, query parameters, headers and body, and its responses by status
+  code with their description, headers and body.
+
+The fidelity report lists what RAML cannot carry:
+
+- operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), a `TRACE` or `CONNECT`
+  method, event operations and channels, and a second operation on the same method and path;
+- cookie parameters, and status ranges such as `4XX`;
+- every server but the first, and the grouping into services;
+- exclusive bounds, string formats RAML has no type for (`email`, `uuid`), and a facet the type does
+  not allow;
+- deprecation flags, tags, and source details such as gateway routes;
+- renamed types: RAML type names cannot contain dots or spaces, so `com.acme.Order` is written
+  `Order` (or `Order2` when the name is taken).
+
+An item imported from RAML is written back as it was read. Its resource types and traits are already
+applied to each method when it is imported, so the export writes the methods in full, without `type:`
+or `is:`, and the report says so.
+
+Each export is validated before you download it: with AMF's RAML 1.0 checks when the server has the
+AMF toolchain, and otherwise by reading it back with the RAML importer.
+
 An item imported from WADL is written back as it was read. Import now also reads a WADL root written
 as `<wadl:application>`, the query and header params a method's request declares, and — when you
 upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.

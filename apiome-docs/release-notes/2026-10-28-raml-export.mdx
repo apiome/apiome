@@ -1,0 +1,25 @@
+---
+slug: raml-export
+title: RAML export is valid RAML 1.0, from any source
+description: RAML exports start with the header and keep types, facets and responses.
+authors: [apiome]
+---
+
+Exporting an item to **RAML** now writes a RAML 1.0 document that RAML tools accept, from an OpenAPI
+or any other source. [How the RAML is written](/ship/export-a-spec#raml-from-any-source).
+
+{/* truncate */}
+
+- **Valid.** The `#%RAML 1.0` header is the first line. Before, a comment came first and RAML tools
+  refused the file. Path parameters are declared on their resource, and every value is quoted where
+  YAML needs it.
+- **Types kept.** Fields stay in order, 64-bit integers and dates keep their types, and lengths,
+  ranges, patterns, list sizes, enums and defaults become facets. Unions, maps and aliases are
+  written too.
+- **Complete methods.** Query parameters, headers, operation names, media types, error responses and
+  response headers are written.
+- **Nothing silent.** Operations RAML cannot carry, cookie parameters, status ranges, extra servers,
+  formats, renamed types and source details are listed in the fidelity report.
+- **Checked.** Each export is validated with AMF's RAML 1.0 checks when the server has AMF, and read
+  back otherwise. An item imported from RAML exports and re-imports unchanged; its resource types and
+  traits are written into each method.

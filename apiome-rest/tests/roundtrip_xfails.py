@@ -3043,7 +3043,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('raml', 'openrpc'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('raml', 'postman'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('raml', 'protobuf'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
-    ('raml', 'raml'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('raml', 'smithy'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('raml', 'thrift'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('raml', 'thunder-client'): "unexplained: changed service 'Bookstore API', added type 'PostBookRequest'",
