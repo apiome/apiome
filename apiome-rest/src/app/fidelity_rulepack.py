@@ -345,6 +345,22 @@ class FidelityRulePack(ABC):
         """Return every representational loss one record field incurs (possibly none)."""
         raise NotImplementedError
 
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """Return every verdict recorded for one operation: its :meth:`operation_verdict` by default.
+
+        Override to report losses of different kinds on one operation (an ``APPROX`` for how it is
+        written beside a ``DROP`` for what is not written at all), instead of folding them into one.
+        """
+        return [self.operation_verdict(operation)]
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """Return every verdict recorded for one named type: its :meth:`type_verdict` by default.
+
+        The type counterpart of :meth:`operation_verdicts`; record fields still come from
+        :meth:`field_verdicts`.
+        """
+        return [self.type_verdict(type_)]
+
     # --- drive loop ---------------------------------------------------------
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
@@ -366,11 +382,11 @@ class FidelityRulePack(ABC):
         builder = LossinessReportBuilder()
         self._record(builder, ROOT_CONSTRUCT_KEY, self.root_verdicts(api))
         for operation in api.operations():
-            self._record(builder, operation.key, [self.operation_verdict(operation)])
+            self._record(builder, operation.key, self.operation_verdicts(operation))
         for channel in api.channels:
             self._record(builder, channel.key, [self.channel_verdict(channel)])
         for type_ in api.types:
-            self._record(builder, type_.key, [self.type_verdict(type_)])
+            self._record(builder, type_.key, self.type_verdicts(type_))
             if type_.kind is TypeKind.RECORD:
                 for field in type_.fields:
                     self._record(builder, field.key, self.field_verdicts(field))

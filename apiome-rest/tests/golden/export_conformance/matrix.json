@@ -7982,7 +7982,7 @@
       "family": "cddl",
       "loss_counts": {
         "approx": 10,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -13210,7 +13210,7 @@
       "family": "dicom",
       "loss_counts": {
         "approx": 12,
-        "drop": 3,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -37945,7 +37945,7 @@
       "family": "pkl",
       "loss_counts": {
         "approx": 4,
-        "drop": 8,
+        "drop": 9,
         "synth": 0
       },
       "reason": null,
@@ -46529,7 +46529,7 @@
       "family": "swagger",
       "loss_counts": {
         "approx": 19,
-        "drop": 23,
+        "drop": 28,
         "synth": 0
       },
       "reason": null,
@@ -47109,7 +47109,7 @@
       "family": "swagger-1.2",
       "loss_counts": {
         "approx": 7,
-        "drop": 6,
+        "drop": 7,
         "synth": 0
       },
       "reason": null,

@@ -21,5 +21,7 @@ read as documentation, from an OpenAPI or any other source.
 - **Nothing silent.** Validation rules MSON cannot express, operations API Blueprint cannot carry,
   header and cookie parameters, status ranges, extra servers, the version and renamed types are listed
   in the fidelity report. A source with no HTTP operation and no type is refused with the reason.
+- **Clear report.** Validation rules are marked dropped wherever they sit, on a parameter, a named
+  scalar or an alias as well as a field, and stay separate from how the rest of that part is written.
 - **Checked.** Each export is validated with drafter when the server has it, and read back otherwise.
   An item imported from API Blueprint exports and re-imports unchanged.

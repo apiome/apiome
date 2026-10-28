@@ -445,7 +445,7 @@ def test_operation_losses_are_reported() -> None:
         "tags-dropped", "operation-details-dropped",
     } <= set(_subjects(result))
     assert "### Get a [GET /a{?q}]" in _text(result)
-    assert _verdicts(api)["GET /a"] == [LossinessKind.APPROX]
+    assert set(_verdicts(api)["GET /a"]) == {LossinessKind.APPROX, LossinessKind.DROP}  # the DROP: q's min_length
 
 
 def test_a_response_with_no_status_is_written_as_200_and_a_request_gets_a_media_type() -> None:

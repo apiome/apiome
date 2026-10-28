@@ -262,12 +262,16 @@ writes what a reader needs and leaves out validation rules MSON cannot express.
 
 The fidelity report lists what API Blueprint cannot carry:
 
-- validation rules: lengths, ranges, patterns and formats are dropped;
+- validation rules: lengths, ranges, patterns and formats are marked **dropped** wherever they sit (a
+  field, a parameter, a named scalar, an alias or an object), next to anything else about how that
+  part is written;
 - operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), event operations and
   channels, and a second operation on the same method and path;
 - header and cookie parameters, status ranges such as `4XX`, and response headers and descriptions;
 - every server but the first, server variables, the version, and the grouping into services;
-- unions and maps, which become an enum of types and a plain object;
+- types MSON writes differently: wider numbers and dates as `number` and `string`, aliases, named
+  scalars and maps as named types (marked **approximated**), and unions, which MSON lacks (marked
+  **dropped**);
 - deprecation flags, tags, and source details such as gateway routes;
 - renamed types: MSON type names here are letters, digits and `_`, so `com.acme.Order` is written
   `com_acme_Order`.
