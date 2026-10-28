@@ -610,7 +610,7 @@ async def list_export_targets(
     try:
         source = load_export_source(tenant_id, artifact, version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     entries = build_target_fidelity_entries(source.api)
 
@@ -695,7 +695,7 @@ async def preview_export_fidelity(
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
         projection_telemetry.record("preview_failure", reason_category="source_load")
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
         emitter_cls = type(resolve_emitter(request.target))
@@ -767,7 +767,7 @@ async def preview_export_manifest(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
         return run_export_preview_manifest(source, request, tenant_id=str(tenant_id))
@@ -988,7 +988,7 @@ async def get_projection_evidence(
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
         projection_telemetry.record("preview_failure", reason_category="source_load")
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
         emitter_cls = type(resolve_emitter(request.target))
@@ -1368,7 +1368,7 @@ async def emit_export_document(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     # The delivery gate runs *before* the emit, so a blocked delivery never even produces bytes
     # to withhold. The projected fidelity comes from the same cheap summary builder the export
@@ -1452,7 +1452,7 @@ async def dispatch_export_document(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     # Gate the delivery *before* the emit (IXH-2.5). Emitting first would both waste the work and
     # write proto3 field-identity rows for an artifact that is never delivered; a dry-run delivers
@@ -1656,7 +1656,7 @@ async def verify_export(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
         # confirm=True: a severe conversion is *verified* here (its verdict reports the loss), not
@@ -1758,7 +1758,7 @@ async def roundtrip_export(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
         return run_export_roundtrip(
@@ -1820,7 +1820,7 @@ async def preflight_export(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     report = run_export_preflight(source, request, tenant_id=tenant_id)
     if request.include_conformance:

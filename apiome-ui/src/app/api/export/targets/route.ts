@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedTenantContext, proxyRestGet } from '@lib/primitives-api-proxy';
+import { restErrorCode } from '@lib/rest-error-message';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,13 +32,14 @@ export async function GET(request: NextRequest) {
     const version = request.nextUrl.searchParams.get('version');
     if (version) params.set('version', version);
 
-    const { data, error, status } = await proxyRestGet(
+    const { data, error, status, detail } = await proxyRestGet(
       ctx.user,
       `/export/${ctx.tenantSlug}/targets?${params.toString()}`,
     );
 
     if (error) {
-      return NextResponse.json({ success: false, error }, { status });
+      // E1-6: a source with nothing captured keeps its `code`, so the UI offers Re-import.
+      return NextResponse.json({ success: false, error, code: restErrorCode(detail) }, { status });
     }
 
     return NextResponse.json({ success: true, ...(data as Record<string, unknown>) });

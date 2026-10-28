@@ -35,6 +35,8 @@ export const OPEN_ACTIONS = {
   importSpec: 'import-spec',
   /** The API keys page's create-key dialog. */
   newApiKey: 'new-api-key',
+  /** The Catalog's Import to catalog dialog — the Re-import of a source with nothing captured (E1-6). */
+  importCatalog: 'import-catalog',
 } as const;
 
 /** One of {@link OPEN_ACTIONS}. */

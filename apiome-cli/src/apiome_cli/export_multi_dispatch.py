@@ -45,7 +45,7 @@ from apiome_cli.client.http import RestClient
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_EXPORT_PARTIAL, EXIT_USAGE
-from apiome_cli.export_dispatch import write_export_artifact
+from apiome_cli.export_dispatch import refuse_unavailable_target, write_export_artifact
 from apiome_cli.export_output import enforce_export_fidelity_gate
 from apiome_cli.output import emit_json, emit_list_table
 
@@ -167,6 +167,7 @@ def _resolve_targets(
         except ValueError:
             typer.echo(unknown_export_target_message(name, registry), err=True)
             raise typer.Exit(EXIT_USAGE) from None
+        refuse_unavailable_target(key, registry)
         if key not in keys:
             keys.append(key)
     return keys

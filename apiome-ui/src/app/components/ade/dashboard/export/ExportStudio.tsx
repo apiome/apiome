@@ -31,6 +31,7 @@ import { DeliveryGatePanel } from './DeliveryGatePanel';
 import { deliveryReportFor } from './exportJob';
 import { RecentAsyncJobsPanel } from '../asyncJobs/RecentAsyncJobsPanel';
 import { MultiExportRun } from './MultiExportRun';
+import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import { MultiTargetChecklist } from './MultiTargetChecklist';
 import { multiTargetJobBody } from './exportBatchJob';
 import type { ExportJobStatus } from './exportJob';
@@ -245,6 +246,7 @@ export function ExportStudio({
     loading,
     error: targetsError,
     status: targetsStatus,
+    code: targetsErrorCode,
   } = useExportTargets(true, artifact, version);
   // IXH-2.4: rank the same targets by expected outcome — source lint grade, projected fidelity,
   // capability fit, and the tenant's export policy — so the grid leads with the best bet and shows
@@ -1076,10 +1078,15 @@ export function ExportStudio({
         {/* The numbered stepper (MFX-41.1), shared with the source picker (E1-2). */}
         <ExportStudioSteps stepIndex={stepIndex} />
 
-        {(error || sourceError) && (
-          <Alert variant="error" data-testid="export-studio-error">
-            {error || sourceError}
-          </Alert>
+        {/* E1-6: a source with nothing captured says why and offers Re-import. */}
+        {!error && isMissingSourceCode(targetsErrorCode) && targetsErrorCode ? (
+          <MissingSourceNotice code={targetsErrorCode} sourceLabel={sourceLabel} />
+        ) : (
+          (error || sourceError) && (
+            <Alert variant="error" data-testid="export-studio-error">
+              {error || sourceError}
+            </Alert>
+          )
         )}
 
         {/* MFX-41.4: every part of the deep link that could not be honoured, stated plainly. */}

@@ -193,6 +193,33 @@ token under the newest version. Remove the old version once the command reports
 | [Backup and disaster recovery](https://github.com/apiome/apiome/blob/main/docs/runbooks/BACKUP_AND_DR.md) | Take, verify and restore backups, and run DR drills |
 | [Private beta triage](https://github.com/apiome/apiome/blob/main/docs/runbooks/BETA_TRIAGE.md) | Triage feedback and incidents from beta and dogfood users |
 
+## Repair items with no captured source
+
+Exports, conversions and the schema test bench are built from the source file each catalog revision
+captured at import. A revision without one cannot be exported, and its users are told to re-import
+it. `scripts/backfill_captured_sources.py` repairs the revisions it can, from a copy that is still
+stored:
+
+- **another revision of the same item** in the same format, or
+- **the linked repository file** a repository-imported item came from, re-read at its recorded branch
+  and path.
+
+A copy is only used when it re-imports to the exact fingerprint the revision recorded, so text from
+a different version is never stored. A repository file is scrubbed under the workspace's secret-scrub
+policy first. Revisions that recorded no fingerprint are left alone and reported as `unverifiable`.
+
+Run it from `apiome-rest`, with a dry run first:
+
+```bash
+PYTHONPATH=src python scripts/backfill_captured_sources.py --dry-run
+PYTHONPATH=src python scripts/backfill_captured_sources.py            # every workspace
+PYTHONPATH=src python scripts/backfill_captured_sources.py --tenant <tenant-uuid>
+```
+
+It prints how many revisions it scanned and repaired, and how many it could not repair and why
+(`unverifiable`, `no_copy`), with one outcome per revision. Each repaired revision records where its
+source came from in `sourceBackfilledFrom`. It is safe to run again.
+
 ## The operator screens
 
 - [The admin console](./admin-console.mdx) — signing in, and the overview.

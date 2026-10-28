@@ -326,6 +326,16 @@
       ]
     },
     {
+      "id": "export-dialog-missing-source",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"export-missing-source\"]",
+      "data": "fixture:hive-rc6-dialogs/export-missing-source.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/MissingSourceNotice.tsx"
+      ]
+    },
+    {
       "id": "version-merge-conflicts",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

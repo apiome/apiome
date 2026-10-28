@@ -56,6 +56,25 @@ a source imported in that format: an EDI X12 interchange in the catalog exports 
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
 and an export request is refused with `422`.
 
+A format that needs a tool this deployment does not have installed is greyed out the same way, with
+the missing tool named on the card. It is never offered and then left to fail: an export to it is
+refused with `422` and the same reason before anything runs. `apiome export targets` shows the reason
+in its **Why not** column, and `apiome export <format>` stops with it (exit 2) before starting a job.
+
+### When an item has nothing to export from
+
+Exports are built from the source file captured when the item was imported. If that file was not
+kept, or was not stored because it contained credentials, the **Export** dialog and the Export studio
+say so instead of failing. **Click "Re-import"** to open **Import to catalog** and import the source
+again.
+
+<Screenshot id="export-dialog-missing-source" alt="The Export dialog for Orders RPC: it can't be exported because its source file wasn't kept, with a Re-import button" />
+
+Over the API, every export route answers `422` with a structured `detail`:
+`{"code": "source-not-captured" | "source-withheld", "message", "artifactId", "versionId", "reimport": true}`.
+An export job fails with `SOURCE_LOAD_FAILED`, and its `error.context` carries the same `source_code`
+and `reimport`.
+
 :::caution Known issue: Protobuf and Thrift from an OpenAPI project
 Exporting a version of an OpenAPI project (imported from OpenAPI or Swagger, or converted from the
 Catalog) to **Protobuf** or **Thrift** writes integer, number and boolean fields with names those

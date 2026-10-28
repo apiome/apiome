@@ -111,12 +111,14 @@ class ConversionError(Exception):
     """A conversion could not be completed (bad source, commit failure, …).
 
     Carries an optional ``status_code`` so the MFI-22.6 REST endpoint can map a failure onto an HTTP
-    status without re-classifying it.
+    status without re-classifying it, and an optional machine-readable ``code`` for the failures a
+    caller acts on (E1-6: ``source-not-captured`` / ``source-withheld`` — re-import the item).
     """
 
-    def __init__(self, message: str, *, status_code: int = 422) -> None:
+    def __init__(self, message: str, *, status_code: int = 422, code: Optional[str] = None) -> None:
         super().__init__(message)
         self.status_code = status_code
+        self.code = code
 
 
 # ===========================================================================
