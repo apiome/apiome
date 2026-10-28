@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.498.0] - 2026-10-28
+
+### Security
+- **Export archives can no longer name a path outside the bundle (X6, #6227 — high).** The Avro emitter
+  (`.avsc` and `.avdl`) turned a namespace from the imported schema or the `namespace` option into folders
+  verbatim, so a namespace such as `/abs/evil`, `C:\x` or `..\x` produced an absolute, drive-letter or backslash
+  member that a naive extractor would write outside its folder (zip slip). Every emitted path is now normalised by
+  `zip_bundle.safe_bundle_path` (relative, `/`-separated, no `..`, drive prefix or control characters) on
+  `EmittedFile`, so the manifest, the zip, the download name and the UI's file tree agree; `write_zip_entry` refuses
+  any unsafe member name; Avro builds folders from sanitised namespace parts (`com.acme` → `com/acme`).
+- **Download names outside Latin-1 no longer fail with 500 (medium).** `POST …/export/{tenant}/document` and
+  `GET …/jobs/{job_id}/download` send `Content-Disposition` with an ASCII `filename` plus an RFC 6266
+  `filename*=UTF-8''…` (`download_headers.attachment_headers`); the document route also strips quotes and control
+  characters now.
+- **Export downloads send `X-Content-Type-Options: nosniff` (low).**
+
+`tests/test_export_security.py` runs every registered emitter over hostile names and extracts each bundle as a naive
+tool would. Review record: `docs/RC7_CATALOG_IMPORT_EXPORT.md` §4.5.
+
 ## [1.497.0] - 2026-10-28
 
 ### Added

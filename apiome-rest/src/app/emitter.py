@@ -43,7 +43,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 if TYPE_CHECKING:  # avoid an import cycle — fidelity_rulepack imports this module.
     from .fidelity_rulepack import FidelityRulePack
@@ -56,6 +56,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .zip_bundle import safe_bundle_path
 
 __all__ = [
     "EmitPreconditionError",
@@ -264,6 +265,16 @@ class EmittedFile(BaseModel):
         description="Schema Registry subject for this artifact when the target assigns one "
         "(e.g. Confluent ``RecordNameStrategy`` subjects on Avro export).",
     )
+
+    @field_validator("path")
+    @classmethod
+    def _bundle_relative(cls, path: str) -> str:
+        """Keep every emitted path inside the bundle (X6): see :func:`~app.zip_bundle.safe_bundle_path`.
+
+        Normalising here — not only when zipping — keeps the manifest, the zip, the single-file
+        download name and the UI's file tree in agreement.
+        """
+        return safe_bundle_path(path)
 
 
 class EmitPreconditionError(ValueError):

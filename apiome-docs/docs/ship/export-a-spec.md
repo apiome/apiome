@@ -393,6 +393,15 @@ Every member's jobs count toward the workspace's five. A download past its reten
 deleted, not just hidden. The job itself stays in the job list (`GET /v1/export/{tenant_slug}/jobs`)
 until it is cleared: 7 days after it finished or was cancelled, 30 days after it failed.
 
+### File names in a download
+
+File and folder names in a download come from your source: the API's title, a type's name, an Avro
+namespace. Apiome keeps every name inside the download. A name that would leave the folder you
+unpack into (one starting with `/` or a drive letter, or containing `..` or `\`) is rewritten to
+stay inside it: an Avro namespace `com.acme` becomes the folders `com/acme`, and parts that are not
+legal Avro names become `_`. A file name in any script, such as `注文-api.jtd.json`, keeps its
+characters when you download it. Every download is sent as an attachment, and browsers are told not to guess its type.
+
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The

@@ -954,10 +954,25 @@ def _synthesized_evolution_default(avro_type: Any) -> Any:
 def _schema_path(type_: Type, default_namespace: Optional[str]) -> str:
     """Return a deterministic ``.avsc`` path for a named type."""
     simple = _sanitize_name(type_.name) or "schema"
-    namespace = _type_namespace(type_, default_namespace)
-    if namespace:
-        return f"{namespace.replace('.', '/')}/{simple}.avsc"
-    return f"{simple}.avsc"
+    folder = namespace_folder(_type_namespace(type_, default_namespace))
+    return f"{folder}/{simple}.avsc" if folder else f"{simple}.avsc"
+
+
+def namespace_folder(namespace: Optional[str]) -> str:
+    """The folder an Avro namespace maps to: one legal-identifier segment per dotted part (X6).
+
+    The namespace comes from the imported source or the ``namespace`` option, so each part is
+    reduced to an Avro identifier and empty parts are dropped — ``../../x`` or ``/etc`` can never
+    become a folder outside the bundle.
+
+    Args:
+        namespace: The dotted namespace, or ``None``.
+
+    Returns:
+        ``a/b/c`` for ``a.b.c``; ``""`` when there is no usable part.
+    """
+    parts = [part for part in (namespace or "").split(".") if part.strip()]
+    return "/".join(_sanitize_name(part.strip()) for part in parts)
 
 
 def _qualified_name(type_: Type, default_namespace: Optional[str]) -> str:

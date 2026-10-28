@@ -53,6 +53,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import __version__ as APIOME_VERSION
 from .auth import validate_authentication
 from .capability_registry import REGISTRY_VERSION, CapabilityRegistrySnapshot, registry_snapshot
+from .download_headers import attachment_headers
 from .emitter import (
     CapabilityProfile,
     EmitterDescriptor,
@@ -1302,7 +1303,8 @@ def render_emitted_document(
     content = primary.content
     yaml_serialization = _wants_yaml(accept)
     filename = _document_filename(primary.path, yaml_serialization=yaml_serialization)
-    disposition = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    # X6: a name from the source may be non-Latin-1 or carry quotes; the helper encodes it safely.
+    disposition = attachment_headers(filename, "document")
 
     # Structured (dict) documents serialize to the requested wire format; a plain-text bundle
     # (rare, non-JSON/YAML targets) is returned verbatim under its own media type.

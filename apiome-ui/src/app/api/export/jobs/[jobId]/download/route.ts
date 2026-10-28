@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedTenantContext } from '@lib/primitives-api-proxy';
+import { exportDownloadHeaders } from '@lib/export-download-headers';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
 export const dynamic = 'force-dynamic';
@@ -46,15 +47,10 @@ export async function GET(
       return NextResponse.json({ success: false, error: detail }, { status: response.status });
     }
 
-    const passthrough = new Headers();
-    const contentType = response.headers.get('content-type');
-    if (contentType) passthrough.set('Content-Type', contentType);
-    const disposition = response.headers.get('content-disposition');
-    if (disposition) passthrough.set('Content-Disposition', disposition);
-    const length = response.headers.get('content-length');
-    if (length) passthrough.set('Content-Length', length);
-
-    return new NextResponse(response.body, { status: response.status, headers: passthrough });
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers: exportDownloadHeaders(response.headers, { contentLength: true }),
+    });
   } catch (error) {
     console.error('Error downloading export job artifact:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
