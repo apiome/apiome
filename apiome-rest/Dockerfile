@@ -45,6 +45,7 @@ ARG TSP_VERSION=0.65.0
 ARG SMITHY_VERSION=1.53.0
 ARG DRAFTER_VERSION=4.0.0
 ARG AMF_VERSION=5.7.1
+ARG FHIR_VALIDATOR_VERSION=6.10.4
 ARG ASYNCAPI_VERSION=2.16.0
 # NOTE: @asyncapi/parser, typescript, zod and @trpc/server are deliberately absent from this list.
 # They are HARD dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463; FMT-8.3, #5464) and
@@ -190,6 +191,25 @@ RUN curl -fsSL "https://repository-master.mulesoft.org/nexus/content/repositorie
       -o ${TOOLS_PREFIX}/lib/amf.jar \
     && printf '#!/bin/sh\nexec java -jar %s/lib/amf.jar "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/amf \
     && chmod +x ${TOOLS_PREFIX}/bin/amf
+
+# HL7 FHIR validator (MFX-26.1, #4157) — the official validator_cli.jar, invoked through a
+# `fhir-validator` wrapper that pins its package cache under the tools prefix (-Duser.home) so the
+# FHIR R4 and R5 core packages fetched here at build time are what the runtime validates against,
+# with no download at export time. Terminology is validated offline (`-tx n/a` is passed by
+# app.fhir_validation). The cache stays writable: the validator takes lock files in it.
+RUN mkdir -p ${TOOLS_PREFIX}/share/fhir \
+    && curl -fsSL "https://github.com/hapifhir/org.hl7.fhir.core/releases/download/${FHIR_VALIDATOR_VERSION}/validator_cli.jar" \
+      -o ${TOOLS_PREFIX}/lib/fhir-validator.jar \
+    && printf '#!/bin/sh\nexec java -Duser.home=%s/share/fhir -jar %s/lib/fhir-validator.jar "$@"\n' "${TOOLS_PREFIX}" "${TOOLS_PREFIX}" \
+      > ${TOOLS_PREFIX}/bin/fhir-validator \
+    && chmod +x ${TOOLS_PREFIX}/bin/fhir-validator \
+    && printf '{"resourceType":"Basic","code":{"text":"warm-up"}}' > /tmp/fhir-warmup.json \
+    && (${TOOLS_PREFIX}/bin/fhir-validator /tmp/fhir-warmup.json -version 4.0.1 -tx n/a || true) \
+    && (${TOOLS_PREFIX}/bin/fhir-validator /tmp/fhir-warmup.json -version 5.0.0 -tx n/a || true) \
+    && ls ${TOOLS_PREFIX}/share/fhir/.fhir/packages | grep -q '^hl7.fhir.r4.core#4.0.1$' \
+    && ls ${TOOLS_PREFIX}/share/fhir/.fhir/packages | grep -q '^hl7.fhir.r5.core#5.0.0$' \
+    && rm /tmp/fhir-warmup.json \
+    && chmod -R a+rwX ${TOOLS_PREFIX}/share/fhir
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently

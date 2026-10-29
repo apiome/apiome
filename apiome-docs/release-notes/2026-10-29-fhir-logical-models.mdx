@@ -1,0 +1,25 @@
+---
+slug: fhir-logical-models
+title: FHIR export writes R4 and R5 logical models, with ValueSets
+description: FHIR exports write StructureDefinition logical models, ValueSets and CodeSystems for R4 and R5.
+authors: [apiome]
+---
+
+Exporting an item to **FHIR** now writes every cataloged type as a StructureDefinition **logical
+model**, for FHIR R4 or R5, from any source.
+[How the FHIR is written](/ship/export-a-spec#fhir-structuredefinition-from-any-source).
+
+{/* truncate */}
+
+- **Every type, not just one.** Each type becomes a logical model. An object used by a single field
+  is nested as a `BackboneElement`, and the rest are referenced by canonical URL.
+- **Cardinality and types.** Required fields have `min` 1 and lists have `max` `*`, and primitives
+  map to FHIR's own types (`integer64` in R5).
+- **Enums.** Each enum becomes a CodeSystem and a ValueSet, bound `required` to its field.
+- **Constraints.** Lengths, ranges and defaults are written as element properties, and patterns and
+  other rules as FHIRPath constraints.
+- **R4 or R5, bundle or files.** The **fhir_version** option picks R4 or R5, and **packaging**
+  writes one Bundle or one file per resource. A CapabilityStatement summarizes the source's
+  operations.
+- **Validated.** The server runs the official HL7 FHIR validator, with the R4 and R5 core packages
+  included, on every export.

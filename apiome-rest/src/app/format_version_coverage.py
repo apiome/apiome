@@ -797,7 +797,13 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 version="R4",
                 format_key="fhir",
                 support=VersionSupport.FULL,
-            )
+            ),
+            # MFX-26.1 (#4157): logical models for FHIR R5 (option `fhir_version`).
+            FormatVersion(
+                version="R5",
+                format_key="fhir",
+                support=VersionSupport.FULL,
+            ),
         ],
         default_write="R4",
     ),

@@ -38,6 +38,7 @@ _EXPECTED_KEYS = {
     "smithy",
     "drafter",
     "amf",
+    "fhir-validator",
     "asyncapi",
     "asyncapi-parser",
     "typescript-types-extractor",
