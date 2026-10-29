@@ -203,6 +203,23 @@ them, not both together.
   limits were not kept, cannot be written back, and the report says so. A `resource` is not written
   back either; its operations stay on the service.
 
+The fidelity report lists what Smithy cannot carry, on the type, field or operation it concerns.
+The report predicts exactly what the export writes:
+
+- **Dropped:** constraints with no Smithy trait (`multipleOf`, a list of allowed values, a length on a
+  number), and a default that does not fit its type. Also dropped: parameters Smithy cannot bind
+  (cookies, and transport headers such as `Authorization`), the body of a GET, HEAD or DELETE
+  request, error responses that are not objects, and event operations and channels. A route that is
+  not a valid Smithy URI, or that repeats another, loses its `@http` binding.
+- **Approximated:** renamed shapes and members, aliases written as the type they alias, bodies
+  wrapped in a `body` member, scalars written as `String`, and a required member made optional to
+  break a cycle.
+- **The document.** Smithy has no title, description or servers, so for an item not imported from
+  Smithy the report lists each one. The version moves to each service, or is dropped when there is
+  no service.
+- **Carried.** For each operation and type that is carried, the report names the Smithy shape it
+  became, such as `operation getPet @http(GET /pets/{id})` or `structure Pet`.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever
