@@ -17,7 +17,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
-from .canonical_model import CanonicalApi, CanonicalField, Operation, Type, TypeKind
+from .canonical_model import CanonicalApi, CanonicalField, Channel, Operation, Type, TypeKind
 from .emitter import Loss, LossKind
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessReport, LossinessSeverity
@@ -96,6 +96,10 @@ class WriterLossRulePack(CapabilityRulePack):
             return super().operation_verdict(operation)
         return FidelityVerdict.ok(message=f"operation carried to {self.target_label}", target_mapping=written)
 
+    def channel_verdicts(self, channel: Channel) -> List[FidelityVerdict]:
+        """The writer's losses for the channel, else the capability verdict."""
+        return self.loss_verdicts(channel.key) or [self.channel_verdict(channel)]
+
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
         """The writer's losses for the type (its union members, enum values), else :meth:`type_verdict`."""
         return self.loss_verdicts(type_.key) or [self.type_verdict(type_)]
@@ -134,6 +138,8 @@ def losses_by_construct(api: CanonicalApi, losses: List[Loss]) -> Dict[str, List
             owners[field.key] = field.key if type_.kind is TypeKind.RECORD else type_.key
         for value in type_.enum_values:
             owners[value.key] = type_.key
+    for channel in api.channels:
+        owners[channel.key] = channel.key
     for operation in api.operations():
         owners[operation.key] = operation.key
         for param in operation.parameters:

@@ -353,6 +353,13 @@ class FidelityRulePack(ABC):
         """
         return [self.operation_verdict(operation)]
 
+    def channel_verdicts(self, channel: Channel) -> List[FidelityVerdict]:
+        """Return every verdict recorded for one channel: its :meth:`channel_verdict` by default.
+
+        The channel counterpart of :meth:`operation_verdicts` (MFX-33.2).
+        """
+        return [self.channel_verdict(channel)]
+
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
         """Return every verdict recorded for one named type: its :meth:`type_verdict` by default.
 
@@ -384,7 +391,7 @@ class FidelityRulePack(ABC):
         for operation in api.operations():
             self._record(builder, operation.key, self.operation_verdicts(operation))
         for channel in api.channels:
-            self._record(builder, channel.key, [self.channel_verdict(channel)])
+            self._record(builder, channel.key, self.channel_verdicts(channel))
         for type_ in api.types:
             self._record(builder, type_.key, self.type_verdicts(type_))
             if type_.kind is TypeKind.RECORD:
