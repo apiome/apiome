@@ -1,0 +1,154 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "version_label": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "fhir",
+        "format": "fhir",
+        "label": "FHIR",
+        "description": "Export as HL7 FHIR R4 / R5 StructureDefinition logical models, with ValueSets and CodeSystems.",
+        "icon": "heart-pulse",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`FhirEmitter`.",
+        "properties": {
+          "fhir_version": {
+            "default": "R4",
+            "description": "FHIR release: `R4` (4.0.1) or `R5` (5.0.0).",
+            "enum": [
+              "R4",
+              "R5"
+            ],
+            "title": "Fhir Version",
+            "type": "string"
+          },
+          "packaging": {
+            "default": "bundle",
+            "description": "`bundle` writes one `collection` Bundle; `per-type` writes one JSON file per StructureDefinition, ValueSet, CodeSystem and CapabilityStatement.",
+            "enum": [
+              "bundle",
+              "per-type"
+            ],
+            "title": "Packaging",
+            "type": "string"
+          },
+          "capability_statement": {
+            "default": true,
+            "description": "Summarize the source's REST operations in a CapabilityStatement (FHIR cannot declare operations on logical models).",
+            "title": "Capability Statement",
+            "type": "boolean"
+          },
+          "canonical_base": {
+            "default": "http://example.org/fhir",
+            "description": "The base of every canonical URL (`<base>/StructureDefinition/<Name>`).",
+            "title": "Canonical Base",
+            "type": "string"
+          },
+          "include_comments": {
+            "default": false,
+            "description": "Unused for FHIR JSON; kept for compatibility.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "prefer_structure_definition": {
+            "default": true,
+            "description": "For an item imported from a FHIR profile, write its StructureDefinition (else its resource).",
+            "title": "Prefer Structure Definition",
+            "type": "boolean"
+          }
+        },
+        "title": "FhirEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "fhir_version": "R4",
+        "packaging": "bundle",
+        "capability_statement": true,
+        "canonical_base": "http://example.org/fhir",
+        "include_comments": false,
+        "prefer_structure_definition": true
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 71,
+        "total": 7,
+        "preserved": 5,
+        "dropped": 1,
+        "approximated": 1,
+        "synthesized": 0
+      }
+    },
+    {
+      "descriptor": {
+        "key": "hl7v2",
+        "format": "hl7v2",
+        "label": "HL7 v2",
+        "description": "Export as an HL7 v2.x healthcare message (.hl7) inferred from the catalog schema.",
+        "icon": "heart-pulse",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": false,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`Hl7V2Emitter`.",
+        "properties": {
+          "include_comments": {
+            "default": false,
+            "description": "HL7 messages do not carry inline comments; kept for SPI parity.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "segment_terminator": {
+            "default": "\r",
+            "description": "Segment terminator to use when emitting HL7 v2 messages.",
+            "title": "Segment Terminator",
+            "type": "string"
+          }
+        },
+        "title": "Hl7V2EmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": false,
+        "segment_terminator": "\r"
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 71,
+        "total": 7,
+        "preserved": 5,
+        "dropped": 1,
+        "approximated": 1,
+        "synthesized": 0
+      }
+    }
+  ]
+}

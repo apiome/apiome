@@ -286,6 +286,12 @@ Set **fhir_version** to `R4` (4.0.1, the default) or `R5` (5.0.0). Set **packagi
 one JSON file per resource. Each export is checked by the official HL7 FHIR validator against the
 version it declares, or by Apiome's structural FHIR rules where the server has no validator.
 
+**Where to find it.** In **Export studio**, the **FHIR** and **HL7 v2** cards are under
+**Healthcare** on the **Target** step. From the CLI, run
+`apiome export fhir <item> --option fhir_version=R5 --option packaging=per-type` or
+`apiome export hl7v2 <item>`; `apiome export targets --project <item>` lists both. A public item's
+**Export** dialog on Browse offers the same two targets.
+
 - **Elements.** Each field is an element. An object used by only one field is nested in its
   parent as a `BackboneElement` (`Pet.owner.name`), and the `explicit-type-name` extension keeps
   its type name. Any other object is a logical model of its own, referenced by its canonical URL

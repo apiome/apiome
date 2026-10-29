@@ -49,6 +49,7 @@ describe('familyForParadigm', () => {
       'Events',
       'Data schema & graph',
       'Agents & tools',
+      'Healthcare',
     ]);
   });
 
@@ -94,6 +95,12 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rest', 'postman').label).toBe('API clients & collections');
   });
 
+  it('files the FHIR and HL7 v2 targets under Healthcare (MFX-26.5)', () => {
+    expect(familyForTarget('rest', 'fhir').label).toBe('Healthcare');
+    expect(familyForTarget('data_schema', 'hl7v2').label).toBe('Healthcare');
+    expect(familyForTarget('data_schema', 'hl7v3').key).toBe('data');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });
@@ -117,23 +124,25 @@ describe('groupTargetsByFamily', () => {
     card('graphql', 'graph'),
     card('raml', 'rest'),
     card('tools', 'agent'),
+    card('fhir', 'rest'),
     card('quantum', 'quantum'),
   ];
 
   it('draws the families in their declared order, with the catch-all last', () => {
-    const groups = groupTargetsByFamily(CARDS, (c) => c.paradigm);
+    const groups = groupTargetsByFamily(CARDS, (c) => c.paradigm, (c) => c.key);
     expect(groups.map((group) => group.key)).toEqual([
       'rest',
       'rpc',
       'event',
       'data',
       'agent',
+      'healthcare',
       'other',
     ]);
   });
 
   it('keeps the incoming order inside a family, so the readiness sort still ranks', () => {
-    const groups = groupTargetsByFamily(CARDS, (c) => c.paradigm);
+    const groups = groupTargetsByFamily(CARDS, (c) => c.paradigm, (c) => c.key);
     const rest = groups.find((group) => group.key === 'rest')!;
     expect(rest.items.map((c) => c.key)).toEqual(['openapi', 'raml']);
     const data = groups.find((group) => group.key === 'data')!;

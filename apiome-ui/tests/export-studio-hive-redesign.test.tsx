@@ -154,6 +154,9 @@ const TARGETS: ExportTargetsResponse = {
     entry('avro', 'Apache Avro', 'data_schema', LOSSY),
     entry('graphql', 'GraphQL SDL', 'graph', LOSSY),
     entry('toolbundle', 'Agent tool bundle', 'agent', LOSSY),
+    // Filed under Healthcare by key (MFX-26.5): FHIR is REST by paradigm, HL7 v2 a data schema.
+    entry('fhir', 'FHIR', 'rest', LOSSY),
+    entry('hl7v2', 'HL7 v2', 'data_schema', LOSSY),
     // A paradigm no family table knows: it must still reach the grid, under the catch-all.
     entry('holodeck', 'Holodeck program', 'quantum', LOSSY),
   ],
