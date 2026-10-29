@@ -1,0 +1,19 @@
+---
+slug: asn1-export
+title: ASN.1 export keeps your constraints
+description: ASN.1 export writes compiling X.680 modules with SIZE and range constraints.
+authors: [apiome]
+---
+
+Exporting to **ASN.1** now writes one X.680 module that compiles with `asn1tools`, whatever the item
+was imported from, and keeps its validation rules as ASN.1 subtype constraints.
+[How types and constraints are written](/ship/export-a-spec#asn1-from-any-source).
+
+{/* truncate */}
+
+- **Types.** Objects, unions, enums and lists become `SEQUENCE`, `CHOICE`, `ENUMERATED` and
+  `SEQUENCE OF`; a sized integer keeps its width (`uint8` is `INTEGER (0..255)`).
+- **Constraints.** Lengths become `SIZE (…)`, bounds become value ranges, and patterns become
+  `PATTERN`; anything ASN.1 cannot state is listed in the fidelity report.
+- **Module options.** Set the **module_name** and the module's **oid**, such as
+  `1.3.6.1.4.1.99999.1`.

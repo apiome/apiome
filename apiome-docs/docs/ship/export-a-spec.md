@@ -625,6 +625,55 @@ The fidelity report lists, construct by construct, what XML Schema cannot say th
 | A deprecated property | Dropped (note): XSD has no deprecation marker |
 | A name that is not an XML name (`first name`) | Approximated (note): `firstName` |
 
+### ASN.1 from any source
+
+Exporting to **ASN.1** writes the item's data types as one ITU-T X.680 module, `<Module>.asn1`,
+for telecom, PKI and aviation tool chains. The module compiles with `asn1tools`. Operations and
+channels are left out: an ASN.1 module describes data only.
+
+- **Types.** Objects become `SEQUENCE`s, unions `CHOICE`s (one alternative per member type), enums
+  `ENUMERATED` (numbered when every value is a distinct integer), and lists `SEQUENCE OF`. A map
+  becomes `SEQUENCE OF SEQUENCE { key …, value … }`, because ASN.1 has no map type.
+- **Scalars.** Text is `UTF8String`, bytes `OCTET STRING`, a timestamp `GeneralizedTime`, a date
+  `DATE`, a time `TIME-OF-DAY`, a real `REAL`. A sized integer keeps its width as a range: `uint8` is
+  `INTEGER (0..255)`, `int32` `INTEGER (-2147483648..2147483647)`.
+- **Optional fields.** A field with a default is written `DEFAULT <value>` (`TRUE`, `3`, `"hi"`, or an
+  enum item); any other field that may be left out is `OPTIONAL`.
+- **Names.** Type names start with a capital letter and field and enum names with a small one, using
+  hyphens between words: `order_id` is written `order-id`, `OPEN` is `open`, and a type named like a
+  reserved word (`END`) gets `-Type`. Each rename is in the fidelity report, and a clash gets a
+  number (`line-no-2`).
+- **Descriptions** are written as `--` comments. An ASN.1 import does not read comments, so the report
+  notes each one.
+
+Constraints are kept as ASN.1 subtype notation, so a validator such as `asn1tools` checks them when
+encoding:
+
+| In the source | In the ASN.1 export |
+|---|---|
+| `minLength` / `maxLength` | `UTF8String (SIZE (3..20))`, also on `OCTET STRING` |
+| `minItems` / `maxItems` | `SEQUENCE (SIZE (1..50)) OF …` (other rules on a list apply to its items) |
+| `minimum` / `maximum` | A value range, `INTEGER (1..100)`, within the integer's width |
+| An exclusive bound on an integer | The same range, inclusive: `> 0` is written `1..` |
+| An exclusive bound on a real | Approximated: written inclusive, because `asn1tools` cannot read `<` |
+| An `enum` of integers | A value set, `INTEGER (1 \| 2 \| 5)` |
+| `pattern` | `(PATTERN "…")` — noted, because X.680 reads it in its own regular-expression syntax |
+| `multipleOf`, `uniqueItems`, an `enum` of strings, formats such as `email` | Dropped, and listed in the report |
+
+Options:
+
+- **module_name** — the module name, such as `Shop-Orders`. By default it is the imported module's
+  name, else the item's namespace when that is already a valid module name, else the item's name.
+- **oid** — the module's object identifier, dotted (`1.3.6.1.4.1.99999.1`) or as arcs in braces
+  (`{ iso(1) identified-organization(3) 6 }`). It is written after the module name.
+- **automatic_tags** — on by default (`AUTOMATIC TAGS`). Turn it off to keep an imported module's
+  own tagging.
+- **include_comments** — on by default; turn it off to leave out the header and description comments.
+
+An item imported from ASN.1 exports back to an equivalent module that reads back unchanged, built-in
+types such as `OBJECT IDENTIFIER` and `PrintableString` included. A type the module imports from
+another module has no definition to write, so it is written as `UTF8String` and listed in the report.
+
 ### WADL from any source
 
 Exporting to **WADL** writes a description that validates against the W3C WADL schema, with its

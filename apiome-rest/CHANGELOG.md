@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.529.0] - 2026-10-29
+
+### Changed
+- **ASN.1 emitter (MFX-27.1, #4163).** The `asn1` export is rebuilt to write one X.680 module that compiles under
+  `asn1tools` for any source: records → `SEQUENCE`, unions → `CHOICE`, enums → `ENUMERATED` (numbered only when every
+  value is a distinct integer), lists → `SEQUENCE OF`, maps → `SEQUENCE OF SEQUENCE { key, value }`; scalars →
+  `UTF8String`, `INTEGER` (sized integers keep their width as a value range), `REAL`, `BOOLEAN`, `NULL`,
+  `OCTET STRING`, `GeneralizedTime` / `DATE` / `TIME-OF-DAY`; ASN.1 built-ins (`OBJECT IDENTIFIER`, `PrintableString`
+  …) pass through. A field is `DEFAULT <value>` or `OPTIONAL`, never both (the old writer wrote both).
+- **Constraints as subtype notation:** `minLength` / `maxLength` → `SIZE`, `minItems` / `maxItems` → `SEQUENCE (SIZE)
+  OF`, bounds → value ranges intersected with the integer's width (exclusive integer bounds exact), integer `enum` →
+  value set, `pattern` → `PATTERN`. What has no notation (`multipleOf`, `uniqueItems`, string `enum`, non-time
+  formats, unspellable defaults) is recorded (`constraint-dropped`, `default-dropped`).
+- **Names** follow X.680 (`order_id` → `order-id`, `OPEN` → `open`, reserved words get `-Type`, collisions
+  `-2`) — `app/asn1_notation.py`. New options `module_name` and `oid` (dotted or brace form); the module name
+  defaults to the imported name, then a namespace that is already a module reference (so re-imported keys match),
+  then the item name. `automatic_tags: false` now writes the imported `<X> TAGS` clause correctly.
+- `Asn1FidelityRulePack` builds the module and files the writer's losses on their constructs (`name-respelled`,
+  `pattern-dialect`, `description-as-comment`, `map-as-sequence`, `unmapped-scalar`, `exclusive-bound-inclusive`,
+  `empty-enum` / `empty-choice` APPROX; `constraint-dropped`, `default-dropped`, `description-dropped` DROP), plus a
+  root note for a document of another format and for keys re-namespaced under the module. Finer verdicts stay with
+  MFX-27.2.
+- Goldens: the `asn1` cells of the round-trip and export-conformance matrices. `asn1 → asn1` now passes (xfail
+  removed); 14 `→ asn1` cells that only read `ok` because the module could not be re-imported are now `lossy`; the
+  `nacha → asn1` silent-loss ledger entry is gone.
+
 ## [1.528.0] - 2026-10-29
 
 ### Added

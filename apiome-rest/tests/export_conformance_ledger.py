@@ -11,9 +11,6 @@ Regenerate with `UPDATE_EXPORT_CONFORMANCE=1 pytest tests/test_export_conformanc
 from typing import Dict, Tuple
 
 KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
-    # --- asn1 (1) ---
-    ('nacha', 'asn1'):
-        'changed root; removed type NACHA-ACH.AchFile; removed type NACHA-ACH.Batch; removed type NACHA-ACH.B',
     # --- asyncapi (10) ---
     ('asyncapi', 'asyncapi'):
         'changed channel user/deleted; changed channel user/signedup; changed operation onUserDeleted; change',
