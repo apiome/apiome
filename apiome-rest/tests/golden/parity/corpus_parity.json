@@ -366,8 +366,8 @@
         {
           "source_format": "asn1",
           "emit_key": "asn1",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

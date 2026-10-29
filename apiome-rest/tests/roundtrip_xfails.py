@@ -376,7 +376,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('arrow', 'zosconnect'): 'Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import',
     ('asn1', 'apiblueprint'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('asn1', 'apigee'): 'Emit failed: Apigee API proxy bundle export requires at least one HTTP operation: a gateway configuration is a routing surface, and a model with no operations has no route to de...',
-    ('asn1', 'asn1'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('asn1', 'asyncapi'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('asn1', 'avro'): 'Invalid Avro schema: PersonModule.PhoneNumber',
     ('asn1', 'aws-apigateway'): 'Emit failed: AWS API Gateway export requires at least one HTTP operation: a REST API integrates methods, and a model with none has nothing to integrate.',
