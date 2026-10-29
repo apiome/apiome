@@ -150,7 +150,7 @@ def test_types_become_sequence_choice_enumerated_and_sequence_of() -> None:
 def test_constraints_are_subtype_notation() -> None:
     text = _text(_orders_api())
     assert "    order-id INTEGER (1..4294967295)," in text
-    assert '    sku UTF8String (SIZE (3..20)) (PATTERN "[A-Z]{3}-[0-9]+"),' in text
+    assert "    -- pattern: [A-Z]{3}-[0-9]+\n    sku UTF8String (SIZE (3..20))," in text
     assert "    quantity INTEGER (1..100)," in text
     assert "    ratio REAL (0..1) OPTIONAL," in text
     assert "    lines SEQUENCE (SIZE (1..50)) OF Line," in text
@@ -171,7 +171,7 @@ def test_asn1tools_checks_the_constraints_when_encoding() -> None:
 def test_what_has_no_notation_is_recorded() -> None:
     result = _emit(_orders_api())
     subjects = _subjects(result)
-    assert ("pattern-dialect", "shop.Order.sku") in subjects
+    assert ("pattern-as-comment", "shop.Order.sku") in subjects
     assert ("exclusive-bound-inclusive", "shop.Order.ratio") in subjects
     assert ("map-as-sequence", "shop.Tags") in subjects
     assert ("name-respelled", "shop.Order.order_id") in subjects
@@ -198,8 +198,10 @@ def test_rules_without_notation_are_dropped_and_recorded() -> None:
     assert "    level INTEGER (1 | 2 | 5)," in text
     assert "    n INTEGER (-2147483648..2147483647)," in text
     dropped = [loss.detail for loss in result.losses if loss.subject == "constraint-dropped"]
-    for keyword in ("multipleOf", "uniqueItems", "`enum`", "max_length", "format email", "pattern", "minimum/maximum"):
+    for keyword in ("multipleOf", "uniqueItems", "`enum`", "max_length", "format email", "minimum/maximum"):
         assert any(keyword in detail for detail in dropped), keyword
+    assert ("pattern-as-comment", "T.Row.quoted") in _subjects(result)
+    assert '    -- pattern: a"b\n    quoted UTF8String,' in text
 
 
 def test_an_integer_width_is_a_value_range_intersected_with_the_bounds() -> None:
@@ -485,7 +487,7 @@ def _report(api: CanonicalApi):
 
 def test_the_report_files_the_writer_losses_on_their_constructs() -> None:
     items = {(i.construct_key, i.target_mapping): i for i in _report(_orders_api()).items}
-    assert items[("shop.Order.sku", "pattern-dialect")].kind is LossinessKind.APPROX
+    assert items[("shop.Order.sku", "pattern-as-comment")].kind is LossinessKind.DROP
     assert items[("shop.Tags", "map-as-sequence")].severity is LossinessSeverity.WARN
     assert ("shop.Status", "name-respelled") in items  # an enum value's loss lands on its enum
     assert items[("", "namespace → module Shop")].severity is LossinessSeverity.INFO
@@ -550,3 +552,162 @@ def test_integer_bounds_are_exact() -> None:
 def test_module_oid_forms() -> None:
     assert module_oid("1.3.6.1") == "{ 1 3 6 1 }"
     assert module_oid("{iso(1)   3}") == "{ iso(1) 3 }"
+
+
+# ===========================================================================
+# Fidelity pack — MFX-27.2 (#4164)
+# ===========================================================================
+
+
+def _items(api: CanonicalApi, key: str):
+    """The report items of ``key``, without the field-number SYNTH every unnumbered field gets (field identity)."""
+    return [i for i in _report(api).items
+            if i.construct_key == key and i.target_mapping != "synthesized field number"]
+
+
+def _constrained_api() -> CanonicalApi:
+    t = "T.R"
+    return _api(_record(
+        t,
+        _field(t, "name", TypeRef(name="string", nullable=False),
+               constraints=Constraints(min_length=1, max_length=64)),
+        _field(t, "age", TypeRef(name="int", nullable=False),
+               constraints=Constraints(minimum=0, exclusive_maximum=150)),
+        _field(t, "score", TypeRef(name="double", nullable=False), constraints=Constraints(minimum=0, maximum=1)),
+        _field(t, "tags", TypeRef(item=TypeRef(name="string"), nullable=False), constraints=Constraints(max_items=5)),
+        _field(t, "level", TypeRef(name="int", nullable=False), constraints=Constraints(enum=[1, 2, 3])),
+        _field(t, "code", TypeRef(name="string", nullable=False), constraints=Constraints(pattern="^[A-Z0-9_]{3,8}$")),
+        _field(t, "ref", TypeRef(name="string", nullable=False), constraints=Constraints(pattern="^[A-Z]{3}-\\d+$")),
+        _field(t, "step", TypeRef(name="int", nullable=False), constraints=Constraints(multiple_of=5)),
+        _field(t, "plain", TypeRef(name="string", nullable=False)),
+    ))
+
+
+def test_constraints_covered_by_subtype_notation_are_reported_ok() -> None:
+    expected = {
+        "T.R.name": "minLength/maxLength → SIZE",
+        "T.R.age": "minimum/maximum → value range",
+        "T.R.score": "minimum/maximum → value range",
+        "T.R.tags": "minItems/maxItems → SEQUENCE (SIZE) OF",
+        "T.R.level": "enum → value set",
+    }
+    api = _constrained_api()
+    for key, mapping in expected.items():
+        items = _items(api, key)
+        assert [i.kind for i in items] == [LossinessKind.OK], (key, items)
+        assert items[0].target_mapping == mapping
+    assert _items(api, "T.R.plain") == []
+
+
+def test_constrained_fields_are_no_longer_demoted_to_documentation() -> None:
+    assert not [i for i in _report(_constrained_api()).items if i.target_mapping == "constraints → doc comment"]
+
+
+def test_a_simple_pattern_is_a_permitted_alphabet_approx() -> None:
+    api = _constrained_api()
+    text = _text(api)
+    assert '    code UTF8String (SIZE (3..8)) (FROM ("A".."Z" | "0".."9" | "_")),' in text
+    (item,) = [i for i in _items(api, "T.R.code") if i.kind is not LossinessKind.OK]
+    assert (item.kind, item.severity, item.target_mapping) == (
+        LossinessKind.APPROX, LossinessSeverity.INFO, "pattern-as-alphabet")
+    spec = _compile(text)
+    row = {"name": "a", "age": 1, "score": 0.5, "tags": [], "level": 1, "code": "AB_1", "ref": "x",
+           "step": 5, "plain": "p"}
+    spec.encode("R", row, check_constraints=True)
+    for bad in ("ab_1", "AB", "ABCDEFGHI"):
+        with pytest.raises(asn1tools.ConstraintsError):
+            spec.encode("R", {**row, "code": bad}, check_constraints=True)
+
+
+def test_any_other_pattern_is_a_comment_and_a_drop() -> None:
+    api = _constrained_api()
+    assert "    -- pattern: ^[A-Z]{3}-\\d+$\n    ref UTF8String," in _text(api)
+    (item,) = _items(api, "T.R.ref")
+    assert (item.kind, item.target_mapping) == (LossinessKind.DROP, "pattern-as-comment")
+    plain = _emit(api, include_comments=False)
+    assert "pattern:" not in plain.files[0].content
+    details = [loss.detail for loss in plain.losses if loss.subject == "pattern-as-comment"]
+    assert any("comments are switched off" in detail for detail in details)
+
+
+def test_a_pattern_comment_cannot_break_out_of_its_line() -> None:
+    t = "T.R"
+    api = _api(_record(t, _field(t, "x", TypeRef(name="string", nullable=False),
+                                 constraints=Constraints(pattern="a\nEND -- b"))))
+    text = _text(api)
+    assert "    -- pattern: a END - - b\n    x UTF8String" in text
+    _compile(text)
+
+
+def test_a_rule_without_notation_is_a_drop_beside_the_covered_ones() -> None:
+    kinds = [i.kind for i in _items(_constrained_api(), "T.R.step")]
+    assert kinds == [LossinessKind.DROP]
+
+
+def test_a_pattern_narrows_the_length_already_in_force() -> None:
+    t = "T.R"
+    api = _api(_record(t, _field(t, "x", TypeRef(name="string", nullable=False),
+                                 constraints=Constraints(max_length=4, pattern="^[a-z]{2,10}$"))))
+    assert '    x UTF8String (SIZE (2..4)) (FROM ("a".."z"))' in _text(api)
+
+
+def test_names_respelled_are_synthesized() -> None:
+    t = "T.R"
+    api = _api(_record(t, _field(t, "order_id", TypeRef(name="int", nullable=False))))
+    (item,) = [i for i in _items(api, "T.R.order_id") if i.target_mapping == "name-respelled"]
+    assert (item.kind, item.severity) == (LossinessKind.SYNTH, LossinessSeverity.INFO)
+
+
+def test_a_map_is_a_key_value_sequence_approx() -> None:
+    (item,) = [i for i in _items(_orders_api(), "shop.Tags") if i.target_mapping == "map-as-sequence"]
+    assert item.kind is LossinessKind.APPROX
+
+
+def test_a_recursive_type_is_carried() -> None:
+    t = "T.Node"
+    api = _api(_record(t, _field(t, "next", TypeRef(name="T.Node")),
+                       _field(t, "children", TypeRef(item=TypeRef(name="T.Node"), nullable=False))))
+    for key in ("T.Node", "T.Node.next", "T.Node.children"):
+        assert {i.kind for i in _items(api, key)} <= {LossinessKind.OK, LossinessKind.SYNTH}, key
+    _compile(_text(api))
+
+
+def test_operations_and_channels_are_dropped_with_the_types_only_advisory() -> None:
+    from app.canonical_model import Channel, Operation, OperationKind, Service
+
+    api = _orders_api()
+    api.services.append(Service(key="S", name="S", operations=[
+        Operation(key="S.get", name="get", kind=OperationKind.REQUEST_RESPONSE)]))
+    api.channels.append(Channel(key="orders", name="orders", address="orders"))
+    report = _report(api)
+    advisory = next(i for i in report.items if i.target_mapping == "types-only")
+    assert (advisory.construct_key, advisory.kind, advisory.severity) == ("", LossinessKind.DROP,
+                                                                          LossinessSeverity.CRITICAL)
+    for key in ("S.get", "orders"):
+        item = next(i for i in report.items if i.construct_key == key)
+        assert (item.kind, item.severity) == (LossinessKind.DROP, LossinessSeverity.CRITICAL)
+    assert any(loss.detail == advisory.message for loss in _emit(api).losses)
+
+
+def test_the_report_matches_the_export_losses() -> None:
+    api = _constrained_api()
+    emitted = {loss.detail for loss in _emit(api).losses}
+    reported = {i.message for i in _report(api).items if i.kind is not LossinessKind.OK}
+    assert {d for d in emitted if "pattern" in d} <= reported
+
+
+@pytest.mark.parametrize(("pattern", "expected"), [
+    ("^[A-Z]{3}$", ('(FROM ("A".."Z"))', 3, 3)),
+    ("^[A-Z0-9_-]+$", ('(FROM ("A".."Z" | "0".."9" | "_" | "-"))', 1, None)),
+    ("^\\d{4,}$", ('(FROM ("0".."9"))', 4, None)),
+    ("^\\w*$", ('(FROM ("A".."Z" | "a".."z" | "0".."9" | "_"))', 0, None)),
+    ("^[a-z.\\-]{1,5}$", ('(FROM ("a".."z" | "." | "-"))', 1, 5)),
+    ("^[\\dA-F]{2}$", ('(FROM ("0".."9" | "A".."F"))', 2, 2)),
+    ("^[a-]?$", ('(FROM ("a" | "-"))', 0, 1)),
+    ("[A-Z]+", None), ("^[^a]+$", None), ("^[A-Z]{3}-[0-9]+$", None), ("^[\\s]+$", None),
+    ("^[z-a]+$", None), ('^["]+$', None), ("^.+$", None), ("", None),
+])
+def test_pattern_alphabet(pattern: str, expected) -> None:
+    from app.asn1_notation import pattern_alphabet
+
+    assert pattern_alphabet(pattern) == expected

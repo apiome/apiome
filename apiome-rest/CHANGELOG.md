@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.530.0] - 2026-10-29
+
+### Changed
+- **ASN.1 fidelity pack (MFX-27.2, #4164).** `Asn1FidelityRulePack` now reports:
+  - **constraints** — `OK` for each rule the module writes exactly as subtype notation, with the notation as the
+    mapping (`minLength/maxLength → SIZE`, `minimum/maximum → value range`, `minItems/maxItems → SEQUENCE (SIZE) OF`,
+    `enum → value set`); the ASN.1 capability profile now declares `constraints=True`, so constrained fields are no
+    longer reported `constraints → doc comment`;
+  - **patterns** — an anchored one-class pattern (`^[A-Z0-9_]{3,8}$`, `^\d{4}$`, `\w`) is written as a permitted
+    alphabet `(FROM (…))` narrowing `SIZE` (info `APPROX`, `pattern-as-alphabet`; `asn1tools` checks it); any other
+    pattern is written as a `-- pattern:` comment (`DROP`, `pattern-as-comment`). This replaces the MFX-27.1
+    `(PATTERN "…")`, which wrote an ECMAScript regex into X.680's own dialect (`app.asn1_notation.pattern_alphabet`);
+  - **types-only** — the critical root advisory with counts beside each critical operation / channel `DROP` (the
+    writer's `services-dropped` loss carries the same text);
+  - **names** — a respelled name is `SYNTH` (was `APPROX`); maps stay `APPROX` (`map-as-sequence`); recursive types
+    are `OK`.
+- Goldens: the `asn1` cells of the round-trip and export-conformance matrices (`asn1 → asn1` is now `ok`: no loss).
+
 ## [1.529.0] - 2026-10-29
 
 ### Changed

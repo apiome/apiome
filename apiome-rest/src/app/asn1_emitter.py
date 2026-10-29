@@ -20,8 +20,9 @@ The inverse of :class:`app.asn1_normalizer.Asn1Normalizer` and an implementation
 * ``minimum`` / ``maximum`` → a value range ``(a..b)``, intersected with the integer's width; an
   exclusive bound is exact for an integer (``> 0`` → ``1..``) and written inclusive for a real
   (``asn1tools`` cannot read ``<``) — recorded; an integer ``enum`` → a value set ``(1 | 2 | 5)``;
-* ``pattern`` → ``(PATTERN "…")``, recorded because X.680 reads it in its own regular-expression
-  syntax.
+* ``pattern`` → a permitted alphabet ``(FROM ("A".."Z" | "_"))`` (and its size) when it only says which
+  characters the whole value is made of (``^[A-Z_]{3,8}$``); any other pattern is written as a ``--``
+  comment, since X.680 ``PATTERN`` reads another regular-expression dialect (MFX-27.2).
 
 What has no notation (``multipleOf``, ``uniqueItems``, a string ``enum``, formats other than
 date/time, a default the type cannot spell) is left out and recorded on the
@@ -45,6 +46,7 @@ from .asn1_notation import (
     integer_bounds,
     module_oid,
     number_literal,
+    pattern_alphabet,
     size_constraint,
     type_reference,
     value_range,
@@ -70,7 +72,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = ["Asn1EmitOptions", "Asn1Emitter", "Asn1FidelityRulePack", "validate_asn1_module"]
@@ -129,29 +131,33 @@ _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 
 class Asn1FidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for ASN.1 export.
+    """Fidelity rules for ASN.1 export — MFX-27.1 (#4163), MFX-27.2 (#4164).
 
-    Operations and channels are dropped (types-only). Beside the capability verdicts, the pack builds the
-    module as it will be emitted (MFX-27.1) and reports what the writer changed, on the construct it
-    changed (an enum value's loss on its enum):
+    The pack builds the module as it will be emitted and reports, on the construct each applies to (an
+    enum value's on its enum):
 
-    * a document of another format, written as an ASN.1 module that reads back as an ASN.1 item, and the
-      module name, when the source does not key its types under it — a re-import does (info ``APPROX`` on
-      the root);
-    * ``name-respelled``, ``pattern-dialect``, ``description-as-comment`` (info ``APPROX``);
-      ``description-dropped`` (info ``DROP``); ``map-as-sequence``, ``unmapped-scalar``,
-      ``exclusive-bound-inclusive``, ``empty-enum``, ``empty-choice`` (``APPROX``); ``constraint-dropped``
-      and ``default-dropped`` (``DROP``).
-
-    The finer verdicts (maps, constraints reported OK where subtype notation covers them) are MFX-27.2.
+    * **types-only** — every operation and channel is a critical ``DROP``, and a source that has any carries
+      the critical root advisory with counts (:func:`~app.fidelity_rulepack.types_only_advisory`);
+    * **constraints** — ``OK`` for each rule written exactly as subtype notation (``SIZE``, value ranges,
+      ``SEQUENCE (SIZE) OF``, integer value sets), named in the verdict's mapping; a simple pattern written
+      as a permitted alphabet (``FROM``) is an info ``APPROX``, any other pattern a ``DROP`` (written as a
+      comment); rules with no notation are ``DROP`` (``constraint-dropped``), an exclusive REAL bound written
+      inclusive an ``APPROX``;
+    * **maps** — ``APPROX``: a ``SEQUENCE OF SEQUENCE { key, value }`` that does not keep keys unique;
+    * **names** — ``SYNTH``: a name respelled to the ASN.1 identifier rules (``order_id`` → ``order-id``);
+    * **the document** — a document of another format reads back as an ASN.1 item, and a re-import keys
+      types under the module name (info ``APPROX`` on the root); descriptions become comments the import
+      does not read (info ``APPROX``);
+    * **recursive types** are carried (``OK``): a SEQUENCE may refer to itself.
     """
 
     target_label = "ASN.1"
 
     #: Writer loss subjects → (verdict kind, severity).
     _WRITER_LOSSES = {
-        "name-respelled": (LossinessKind.APPROX, LossinessSeverity.INFO),
-        "pattern-dialect": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "name-respelled": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "pattern-as-alphabet": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "pattern-as-comment": (LossinessKind.DROP, LossinessSeverity.WARN),
         "description-as-comment": (LossinessKind.APPROX, LossinessSeverity.INFO),
         "description-dropped": (LossinessKind.DROP, LossinessSeverity.INFO),
         "map-as-sequence": (LossinessKind.APPROX, LossinessSeverity.WARN),
@@ -183,11 +189,19 @@ class Asn1FidelityRulePack(CapabilityRulePack):
             verdict = FidelityVerdict(kind=kind, severity=severity, message=loss.detail,
                                       target_mapping=loss.subject)
             self._filed.setdefault(_owning_construct(loss.pointer or "", constructs), []).append(verdict)
+        for owner, mappings in writer.covered.items():
+            self._filed.setdefault(_owning_construct(owner, constructs), []).append(FidelityVerdict.ok(
+                message=f"{self.target_label} keeps the rule as subtype notation, which a validator checks",
+                target_mapping="; ".join(mappings),
+            ))
         return super().evaluate(api)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """A note when the source does not key its types under the module name (a re-import does)."""
+        """The types-only advisory, and notes for another format and for keys the module name re-namespaces."""
         verdicts: List[FidelityVerdict] = []
+        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            verdicts.append(advisory)
         if api.format != "asn1":
             verdicts.append(FidelityVerdict.approx(
                 message=f"The {api.format or 'source'} document is written as an ASN.1 module and reads back as an "
@@ -291,6 +305,9 @@ class Asn1Emitter(Emitter, register=True):
             events=False,
             unions=True,
             nullability=True,
+            # Subtype notation carries lengths, bounds, item counts and value sets (MFX-27.2); the pack
+            # reports each rule it cannot carry.
+            constraints=True,
             field_identity=True,
         )
 
@@ -343,6 +360,10 @@ class _Asn1Writer:
             self._type_names.name(type_.name or type_.key, key=type_.key)
         self.module_name = type_reference(self._module_source(), fallback="Module")
         self.output_path = f"{self.module_name}.asn1"
+        #: Construct key → each source rule written exactly as subtype notation (``minLength/maxLength → SIZE``).
+        self.covered: Dict[str, List[str]] = {}
+        #: Construct key → comment lines written above it (patterns subtype notation cannot state).
+        self._notes: Dict[str, List[str]] = {}
 
     # --- module -------------------------------------------------------------
 
@@ -357,12 +378,9 @@ class _Asn1Writer:
             rendered = self._render_type(type_)
             if rendered:
                 lines += rendered + [""]
-        if self._api.services or self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "services-dropped",
-                "ASN.1 export is types-only; services and channels are omitted",
-            )
+        advisory = types_only_advisory(self._api, target_label="ASN.1", keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            self.losses.record(LossKind.NA, "services-dropped", advisory.message)
         lines.append("END")
         return "\n".join(lines).rstrip() + "\n"
 
@@ -420,7 +438,7 @@ class _Asn1Writer:
             body = [self._constrained_ref(TypeRef(name=type_.name or type_.key), type_.constraints, type_.key,
                                           scalar_only=True)]
         self.tracker.record(type_.key, Provenance.SOURCE)
-        lines = self._comment_lines(type_.description, "  ", type_.key)
+        lines = self._comment_lines(type_.description, "  ", type_.key) + self._note_lines(type_.key, "  ")
         lines.append(f"  {name} ::= {body[0]}")
         lines += body[1:]
         return lines
@@ -432,8 +450,9 @@ class _Asn1Writer:
         for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
             component = names.name(field.name or field.key)
             self._renamed(field.name, component, field.key, "field")
-            lines = self._comment_lines(field.description, "    ", field.key)
-            lines.append(f"    {component} {self._field(field)}")
+            body = self._field(field)
+            lines = self._comment_lines(field.description, "    ", field.key) + self._note_lines(field.key, "    ")
+            lines.append(f"    {component} {body}")
             self.tracker.record(field.key, Provenance.SOURCE)
             members.append(lines)
         if not members:
@@ -572,6 +591,8 @@ class _Asn1Writer:
             size = ""
             if constraints is not None:
                 size = size_constraint(constraints.min_items, constraints.max_items)
+                if size:
+                    self._covered(owner, "minItems/maxItems → SEQUENCE (SIZE) OF")
                 if constraints.unique_items:
                     self._dropped(owner, "uniqueItems", "ASN.1 has no notation for unique items")
                 constraints = constraints.model_copy(update={"min_items": None, "max_items": None,
@@ -609,11 +630,15 @@ class _Asn1Writer:
         c = constraints or Constraints()
         parts: List[str] = []
         if kind in ("string", "bytes"):
-            parts.append(size_constraint(c.min_length, c.max_length))
+            low, high = c.min_length, c.max_length
             if c.pattern and kind == "string":
-                parts.append(self._pattern(c.pattern, owner))
+                alphabet, low, high = self._pattern(c.pattern, owner, low, high)
+                parts.append(alphabet)
             elif c.pattern:
                 self._dropped(owner, "pattern", "a pattern applies to text, not to bytes")
+            if c.min_length is not None or c.max_length is not None:
+                self._covered(owner, "minLength/maxLength → SIZE")
+            parts.insert(0, size_constraint(low, high))
             if c.enum:
                 self._dropped(owner, "enum", "asn1tools cannot read a set of string values")
         elif kind == "integer":
@@ -640,9 +665,14 @@ class _Asn1Writer:
         if low is not None and high is not None and low > high:
             self._dropped(owner, "minimum/maximum", f"the bounds {low}..{high} admit no value")
             low, high = width if width is not None else (None, None)
+            c = c.model_copy(update={"minimum": None, "maximum": None, "exclusive_minimum": None,
+                                     "exclusive_maximum": None})
         values = [v for v in (c.enum or []) if isinstance(v, int) and not isinstance(v, bool)]
         if c.enum and len(values) == len(c.enum):
+            self._covered(owner, "enum → value set")
             return "(" + " | ".join(number_literal(v) for v in dict.fromkeys(values)) + ")"
+        if any(b is not None for b in (c.minimum, c.maximum, c.exclusive_minimum, c.exclusive_maximum)):
+            self._covered(owner, "minimum/maximum → value range")
         if c.enum:
             self._dropped(owner, "enum", "only a set of integers can be written for an INTEGER")
         return value_range(low, high)
@@ -665,23 +695,66 @@ class _Asn1Writer:
         if low is not None and high is not None and low > high:
             self._dropped(owner, "minimum/maximum", f"the bounds {low}..{high} admit no value")
             return ""
+        if c.minimum is not None or c.maximum is not None:
+            self._covered(owner, "minimum/maximum → value range")
         return value_range(low, high)
 
-    def _pattern(self, pattern: str, owner: str) -> str:
-        """``(PATTERN "…")`` — recorded, since X.680 reads it in its own regular-expression syntax."""
-        literal = cstring_literal(pattern)
-        if literal is None:
-            self._dropped(owner, "pattern", "it contains a quote or a line break, which asn1tools cannot read")
-            return ""
+    def _pattern(
+        self, pattern: str, owner: str, low: Optional[int], high: Optional[int]
+    ) -> Tuple[str, Optional[int], Optional[int]]:
+        """A pattern as a permitted alphabet when it is simple, else as a comment (recorded either way).
+
+        Args:
+            pattern: The source (ECMAScript) pattern.
+            owner: The construct key the losses are recorded under.
+            low: The ``minLength`` already in force (``None`` when there is none).
+            high: The ``maxLength`` already in force.
+
+        Returns:
+            ``(alphabet constraint or "", low, high)`` — the length bounds narrowed by the pattern's
+            quantifier (``^[A-Z]{3}$`` allows exactly 3 characters).
+        """
+        simple = pattern_alphabet(pattern)
+        if simple is not None:
+            alphabet, size_low, size_high = simple
+            lows = [b for b in (low, size_low) if b is not None]
+            highs = [b for b in (high, size_high) if b is not None]
+            narrowed = (max(lows) if lows else None, min(highs) if highs else None)
+            if narrowed[0] is not None and narrowed[1] is not None and narrowed[0] > narrowed[1]:
+                narrowed = (low, high)
+            self.losses.record(
+                LossKind.INFERRED, "pattern-as-alphabet",
+                f"The pattern {pattern!r} of {owner!r} is written as the permitted alphabet {alphabet}"
+                + (" with its length" if simple[1:] != (0, None) else "")
+                + ", which asn1tools checks when encoding.",
+                pointer=owner,
+            )
+            return alphabet, narrowed[0], narrowed[1]
+        if self._options.include_comments:
+            self._notes.setdefault(owner, []).append(f"pattern: {pattern}")
+            where = "is written as a comment"
+        else:
+            where = "is not written (comments are switched off)"
         self.losses.record(
-            LossKind.INFERRED, "pattern-dialect",
-            f"The pattern of {owner!r} is written as an X.680 PATTERN, which uses the regular-expression syntax of "
-            "X.680 Annex A rather than ECMAScript's; asn1tools does not check it when encoding.",
+            LossKind.NA, "pattern-as-comment",
+            f"The pattern {pattern!r} of {owner!r} {where}: an ASN.1 permitted alphabet can only say which "
+            "characters a value is made of, and X.680 PATTERN reads another regular-expression dialect.",
             pointer=owner,
         )
-        return f"(PATTERN {literal})"
+        return "", low, high
 
     # --- bookkeeping --------------------------------------------------------
+
+    def _covered(self, owner: str, mapping: str) -> None:
+        """Record a source rule written exactly as subtype notation (reported ``OK`` by the pack)."""
+        mappings = self.covered.setdefault(owner, [])
+        if mapping not in mappings:
+            mappings.append(mapping)
+
+    def _note_lines(self, key: str, indent: str) -> List[str]:
+        """The comment lines collected for ``key`` (a pattern subtype notation cannot state)."""
+        # A line break would end the comment and leave the rest of the note as module text.
+        return [f"{indent}-- {_comment(' '.join(note.split()))}" for note in self._notes.pop(key, [])]
 
     def _dropped(self, owner: str, keyword: str, reason: str) -> None:
         """Record a constraint left out of the module."""
