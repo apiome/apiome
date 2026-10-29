@@ -61,7 +61,7 @@ Every new target must meet the RC7 bar from day one:
 | 13 | Tyk OAS output | new (R8-FG6) | S | Tyk is imported; the gateway set is otherwise complete |
 | 14 | UN/EDIFACT message-guide emitter | [#4146](https://github.com/apiome/apiome/issues/4146) | M | EDIFACT is imported; X12 already emits |
 | 15 | Parquet / Arrow schema emitter | [#4317](https://github.com/apiome/apiome/issues/4317) | M | Arrow is imported |
-| 16 | FHIR R5 output | [#4157](https://github.com/apiome/apiome/issues/4157) (R5 part; RC7 rebuilds R4) | S | After RC7's R7-EM17 rebuilds FHIR output from the model |
+| 16 | ✅ **Shipped in RC7** ([#6424](https://github.com/apiome/apiome/pull/6424)) — FHIR R5 output | [#4157](https://github.com/apiome/apiome/issues/4157) (R5 part; RC7 rebuilds R4) | S | Done with R7-EM17: option `fhir_version` writes R4 or R5 |
 
 ---
 
@@ -135,7 +135,7 @@ RC8_PLAN §4".
 | Swagger 1.2 | — | Obsolete |
 | WSDL 2.0 | [#4182](https://github.com/apiome/apiome/issues/4182) | Little tool support; WSDL 1.1 is what estates run |
 | Google API Discovery | [#4174](https://github.com/apiome/apiome/issues/4174) | Google's own format; Google publishes OpenAPI too |
-| OData CSDL JSON | [#3897](https://github.com/apiome/apiome/issues/3897) (JSON part) | CSDL XML covers the tools; revisit with OData V2 (§2) |
+| OData CSDL JSON — ✅ **shipped in RC7** ([#6422](https://github.com/apiome/apiome/pull/6422)) | [#3897](https://github.com/apiome/apiome/issues/3897) (JSON part) | CSDL JSON 4.01 is now the default OData output; CSDL XML is `output: xml` |
 | RELAX NG / DTD output | [#4134](https://github.com/apiome/apiome/issues/4134) | XSD covers XML schema consumers |
 | PL/I include structures | [#4141](https://github.com/apiome/apiome/issues/4141) | Very small audience; copybooks cover mainframe layouts |
 | Liquibase / Flyway changelogs | [#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795) | Changelogs need a diff between database states, not a spec |

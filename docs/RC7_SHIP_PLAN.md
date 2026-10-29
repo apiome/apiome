@@ -9,6 +9,11 @@ an audit of all 53 export targets on 2026-10-28 found that exports routinely **l
 without telling the user**, and that many targets **write files their own format rejects**. The
 export studio gate is still closed, and the exporter journey has never passed in CI.
 
+**Progress (2026-10-29):** ✅ done — R7-EM12 (Smithy), R7-EM13 (TypeSpec), R7-FG5 (Smithy JSON AST).
+◐ partly done — R7-EM5 (RAML: valid output shipped; [#3902](https://github.com/apiome/apiome/issues/3902) open),
+R7-EM14 (OpenRPC shipped; XML-RPC open), R7-EM17 (OData and FHIR shipped;
+[#4161](https://github.com/apiome/apiome/issues/4161) open). Rows are marked ✅ / ◐ below; everything unmarked is open.
+
 **The requirement this plan is built around:** every export tells the user, before and after it
 runs, everything the conversion from the catalog item to the target format loses or changes —
 **type precision** (`int64` → `int`), **definitions** (descriptions, defaults, constraints,
@@ -235,7 +240,7 @@ definition. Each fix comes with a validator-backed test (§7) and at least one f
 | R7-EM2 | MVP | openapi | **Same-format export keeps what import absorbed.** OpenAPI → OpenAPI reports 0 losses on 33 corpus files but loses data on 32: `examples`, `const`, `allOf`, `discriminator`, `if/then/else`, `prefixItems`, `x-*`, `securitySchemes`, `externalDocs`, tag descriptions. Wire `preservation_envelope.apply_envelope` into the OpenAPI emit path, or report every unabsorbed pointer | — |
 | R7-EM3 | MVP | openapi | **Collisions are reported, not overwritten.** Two operations with the same method and path (`openapi_emitter.py:579`) and two responses with the same status (`:785`); reuse `record_method_path_collisions`. Gateway `ANY` routes become real operations, not only `x-apiome-*` | — |
 | R7-EM4 | MVP | wadl, wsdl | **Valid WADL and WSDL.** Declare `xmlns:tns` (`wadl_emitter.py:171`, `wsdl_emitter.py:172`); arrays as `maxOccurs="unbounded"`, not `xsd:string`; WADL root-path resources (today every operation on `/` is dropped); WSDL parameters; NCNames (R7-NM4). **Fix the WADL importer's detection** (`wadl_parser.py:94` looks for a literal `<application`), which rejects every WADL export: 108/108 round trips fail | [#3889](https://github.com/apiome/apiome/issues/3889), [#4173](https://github.com/apiome/apiome/issues/4173) |
-| R7-EM5 | MVP | raml | **Valid RAML.** `#%RAML 1.0` on the first line, no `any:` method, escaped title and version | [#3901](https://github.com/apiome/apiome/issues/3901) |
+| R7-EM5 | MVP | raml | ◐ **Partly done** — the RAML 1.0 emitter ships ([#6408](https://github.com/apiome/apiome/pull/6408)); the RAML fidelity pack [#3902](https://github.com/apiome/apiome/issues/3902) is open. **Valid RAML.** `#%RAML 1.0` on the first line, no `any:` method, escaped title and version | [#3901](https://github.com/apiome/apiome/issues/3901) |
 | R7-EM6 | MVP | apiblueprint, raml, wadl, wsdl | **Document emitters carry the HTTP surface.** Status codes from `message.status_code` (today only `extras["http_status"]`, so 200 everywhere); error responses; query and header parameters; operations with no HTTP binding are DROPped with a verdict (today they silently become `GET /`) | [#3905](https://github.com/apiome/apiome/issues/3905), [#3906](https://github.com/apiome/apiome/issues/3906) |
 | R7-EM7 | MVP | postman | **Real Postman requests.** Bodies are examples, not `{"$ref": …}`; responses are written; a types-only source is refused with a reason (today an empty collection with an empty report). Rebase request planning on `client_collection_emit.plan_collection` and its pack. Auth mapping | [#4289](https://github.com/apiome/apiome/issues/4289), [#4290](https://github.com/apiome/apiome/issues/4290) |
 | R7-EM8 | MVP | arazzo | **Arazzo from a non-Arazzo source.** Today the document has no `sourceDescriptions` and dangling operationIds. Refuse with a reason, or synthesize the source description, with a root DROP for types, parameters and responses and the "captures workflows only" advisory | [#3871](https://github.com/apiome/apiome/issues/3871) |
@@ -247,12 +252,12 @@ definition. Each fix comes with a validator-backed test (§7) and at least one f
 | --- | --- | --- | --- | --- |
 | R7-EM10 | MVP | protobuf, connectrpc | **Protobuf correctness.** Prefer the 2xx response over the error body as the rpc response (`proto_emitter.py:1252`); import the root-package file; resolve scalar union members, aliases and scalar types; maps whose values are lists or messages; enum values scoped per enum; dropped HTTP parameters reported (R7-EM15) | — |
 | R7-EM11 | MVP | thrift, corbaidl, oncrpc | **IDL targets valid for foreign sources.** Thrift/CORBA: integer enum values (not `active = active`), unions from members, typedefs for alias/scalar/map, throws only of exception types with unique ids, CORBA `bytes` → `sequence<octet>`. ONC RPC: emit every record (today only `oncrpc_kind == "struct"`, `oncrpc_emitter.py:180`), `<>` lists and `opaque<>`, unique procedure numbers. Gate with `rpcgen`, `thrift`, `omniidl` where available | [#4151](https://github.com/apiome/apiome/issues/4151), [#4168](https://github.com/apiome/apiome/issues/4168) |
-| R7-EM12 | MVP | smithy | **Valid Smithy IDL.** Sanitized names, a derived namespace, lists, union members, aliases as simple shapes, int64 → `Long`, `@default`/`@deprecated`/constraint/`@http`/`errors` traits; today it records no losses at all | [#3914](https://github.com/apiome/apiome/issues/3914), [#3915](https://github.com/apiome/apiome/issues/3915) |
-| R7-EM13 | MVP | typespec | **TypeSpec declares every referenced type.** MAP → `Record<>`, union/alias/scalar declarations, `number` → `float64`, backtick escapes, route/verb/optional parameters, enum values, defaults, `#deprecated`; today it never records a loss | [#3893](https://github.com/apiome/apiome/issues/3893), [#3894](https://github.com/apiome/apiome/issues/3894) |
-| R7-EM14 | MVP | openrpc, xmlrpc | **OpenRPC and XML-RPC tell the truth.** OpenRPC: component keys match the `$ref`s, `errors[]`, deprecated, parameters. XML-RPC: write every operation or DROP each one (today one call is written and every operation reported OK); params from the request payload; lists, `dateTime.iso8601`, `base64`; recursion guard | [#4301](https://github.com/apiome/apiome/issues/4301), [#4302](https://github.com/apiome/apiome/issues/4302) |
+| R7-EM12 | MVP | smithy | ✅ **Done** ([#6416](https://github.com/apiome/apiome/pull/6416), [#6417](https://github.com/apiome/apiome/pull/6417)). **Valid Smithy IDL.** Sanitized names, a derived namespace, lists, union members, aliases as simple shapes, int64 → `Long`, `@default`/`@deprecated`/constraint/`@http`/`errors` traits; today it records no losses at all | [#3914](https://github.com/apiome/apiome/issues/3914), [#3915](https://github.com/apiome/apiome/issues/3915) |
+| R7-EM13 | MVP | typespec | ✅ **Done** ([#6418](https://github.com/apiome/apiome/pull/6418), [#6419](https://github.com/apiome/apiome/pull/6419)). **TypeSpec declares every referenced type.** MAP → `Record<>`, union/alias/scalar declarations, `number` → `float64`, backtick escapes, route/verb/optional parameters, enum values, defaults, `#deprecated`; today it never records a loss | [#3893](https://github.com/apiome/apiome/issues/3893), [#3894](https://github.com/apiome/apiome/issues/3894) |
+| R7-EM14 | MVP | openrpc, xmlrpc | ◐ **Partly done** — OpenRPC done ([#6420](https://github.com/apiome/apiome/pull/6420), [#6421](https://github.com/apiome/apiome/pull/6421)); XML-RPC open. **OpenRPC and XML-RPC tell the truth.** OpenRPC: component keys match the `$ref`s, `errors[]`, deprecated, parameters. XML-RPC: write every operation or DROP each one (today one call is written and every operation reported OK); params from the request payload; lists, `dateTime.iso8601`, `base64`; recursion guard | [#4301](https://github.com/apiome/apiome/issues/4301), [#4302](https://github.com/apiome/apiome/issues/4302) |
 | R7-EM15 | MVP | protobuf, connectrpc, capnproto, thrift, corbaidl, oncrpc, graphql, smithy, typespec | **RPC targets report the dropped HTTP surface.** Path, query and header parameters, extra and error responses, the method/path binding — reported as **Behaviour** items, or mapped into the request message (option) | — |
 | R7-EM16 | MVP | graphql | **GraphQL keeps more and says more.** Honour `deprecated` (`@deprecated`); report dropped error responses; map scalars through R7-TM1 instead of `String` for everything | — |
-| R7-EM17 | MVP | odata, fhir | **OData and FHIR rendered from the canonical model.** Stop replaying stale import extras. OData: Edm type mapping, legal identifiers, integer enum ordinals, a synthesized `<Key>` flagged as **Identity**, declared union and map types, the right EntitySet binding. FHIR: every type, `max "*"` for arrays, FHIR type codes | [#3897](https://github.com/apiome/apiome/issues/3897), [#3898](https://github.com/apiome/apiome/issues/3898), [#4157](https://github.com/apiome/apiome/issues/4157), [#4158](https://github.com/apiome/apiome/issues/4158) |
+| R7-EM17 | MVP | odata, fhir | ◐ **Partly done** — OData ([#6422](https://github.com/apiome/apiome/pull/6422), [#6423](https://github.com/apiome/apiome/pull/6423)) and FHIR ([#6424](https://github.com/apiome/apiome/pull/6424), [#6425](https://github.com/apiome/apiome/pull/6425)) emitters and fidelity packs done; the HL7 validator run and [#4161](https://github.com/apiome/apiome/issues/4161) (target cards, CLI, fixtures) are open. **OData and FHIR rendered from the canonical model.** Stop replaying stale import extras. OData: Edm type mapping, legal identifiers, integer enum ordinals, a synthesized `<Key>` flagged as **Identity**, declared union and map types, the right EntitySet binding. FHIR: every type, `max "*"` for arrays, FHIR type codes | [#3897](https://github.com/apiome/apiome/issues/3897), [#3898](https://github.com/apiome/apiome/issues/3898), [#4157](https://github.com/apiome/apiome/issues/4157), [#4158](https://github.com/apiome/apiome/issues/4158) |
 | R7-EM18 | MVP | cloudevents, llm-tools | **Stop fabricating.** CloudEvents: write `data`/`dataschema`, deterministic `id`, SYNTH verdicts for `source`/`type`, refuse instead of inventing a fallback event. LLM tools: no invented "submit record" tools when filtering leaves none (`tool_projection.py:1396`); report deprecated operations it excludes | — |
 | R7-EM19 | MVP | asyncapi | **AsyncAPI report gaps.** Key renames and the 2.6 downgrade are reported as predicted items (today only emit-losses); scalar `$ref`s fixed by R7-TM3 | — |
 
@@ -359,7 +364,7 @@ only re-parse with Apiome's own importer.
 | R7-FG2 | V2 | OpenAPI 3.2 output option | [#4342](https://github.com/apiome/apiome/issues/4342) | M | 3.2 imports leave as 3.1 + `x-apiome-*`; Swagger tooling supports 3.2 since April 2026 |
 | R7-FG3 | V2 | AsyncAPI 3.0.0 output pin | [#3876](https://github.com/apiome/apiome/issues/3876) | S | Finishes the multi-version ticket (3.1 and 2.6 exist) |
 | R7-FG4 | V2 | MCP tool-definition dialect on `llm-tools` (`mode=mcp`) | `llm_tools_emitter.py` / `tool_projection.py`; carved from [#4295](https://github.com/apiome/apiome/issues/4295) | S | MCP manifests already import; closes the round trip |
-| R7-FG5 | V2 | Smithy JSON AST output mode | [#3914](https://github.com/apiome/apiome/issues/3914) | S | AWS publishes models in this form and import reads it |
+| R7-FG5 | V2 | ✅ **Done** ([#6416](https://github.com/apiome/apiome/pull/6416)). Smithy JSON AST output mode | [#3914](https://github.com/apiome/apiome/issues/3914) | S | AWS publishes models in this form and import reads it |
 | R7-FG6 | V2 | Bruno OpenCollection YAML import | follow-up to [#4406](https://github.com/apiome/apiome/issues/4406) | M | Bruno 3.x default; "complete import" is RC7's theme |
 | R7-FG7 | V2 | Zod 4 import | Zod adapter | S | Zod 4 is current; confirm with a fixture first |
 
@@ -404,15 +409,15 @@ Close each one when the R7 ticket that finishes it closes; link both ways.
 | R7 ticket | Existing tickets it finishes |
 | --- | --- |
 | R7-EM4 | [#3889](https://github.com/apiome/apiome/issues/3889), [#4173](https://github.com/apiome/apiome/issues/4173), [#3891](https://github.com/apiome/apiome/issues/3891) |
-| R7-EM5 | [#3901](https://github.com/apiome/apiome/issues/3901), [#3902](https://github.com/apiome/apiome/issues/3902) (REST-only advisory) |
+| R7-EM5 ◐ | [#3901](https://github.com/apiome/apiome/issues/3901) ✅, [#3902](https://github.com/apiome/apiome/issues/3902) (REST-only advisory) |
 | R7-EM6 | [#3905](https://github.com/apiome/apiome/issues/3905), [#3906](https://github.com/apiome/apiome/issues/3906) |
 | R7-EM7 | [#4289](https://github.com/apiome/apiome/issues/4289), [#4290](https://github.com/apiome/apiome/issues/4290), [#4293](https://github.com/apiome/apiome/issues/4293) (legacy reconciliation) |
 | R7-EM8 | [#3871](https://github.com/apiome/apiome/issues/3871) |
 | R7-EM11 | [#4151](https://github.com/apiome/apiome/issues/4151), [#4153](https://github.com/apiome/apiome/issues/4153), [#4168](https://github.com/apiome/apiome/issues/4168), [#4169](https://github.com/apiome/apiome/issues/4169) |
-| R7-EM12 | [#3914](https://github.com/apiome/apiome/issues/3914), [#3915](https://github.com/apiome/apiome/issues/3915) |
-| R7-EM13 | [#3893](https://github.com/apiome/apiome/issues/3893), [#3894](https://github.com/apiome/apiome/issues/3894) |
-| R7-EM14 | [#4301](https://github.com/apiome/apiome/issues/4301), [#4302](https://github.com/apiome/apiome/issues/4302) |
-| R7-EM17 | [#3897](https://github.com/apiome/apiome/issues/3897) (CSDL XML), [#3898](https://github.com/apiome/apiome/issues/3898), [#4157](https://github.com/apiome/apiome/issues/4157) (R4; R5 in RC8), [#4158](https://github.com/apiome/apiome/issues/4158), [#4161](https://github.com/apiome/apiome/issues/4161) |
+| R7-EM12 ✅ | [#3914](https://github.com/apiome/apiome/issues/3914) ✅, [#3915](https://github.com/apiome/apiome/issues/3915) ✅ |
+| R7-EM13 ✅ | [#3893](https://github.com/apiome/apiome/issues/3893) ✅, [#3894](https://github.com/apiome/apiome/issues/3894) ✅ |
+| R7-EM14 ◐ | [#4301](https://github.com/apiome/apiome/issues/4301) ✅, [#4302](https://github.com/apiome/apiome/issues/4302) ✅ (XML-RPC part open) |
+| R7-EM17 ◐ | [#3897](https://github.com/apiome/apiome/issues/3897) ✅ (CSDL JSON and XML), [#3898](https://github.com/apiome/apiome/issues/3898) ✅, [#4157](https://github.com/apiome/apiome/issues/4157) ✅ (R4 and R5), [#4158](https://github.com/apiome/apiome/issues/4158) ✅, [#4161](https://github.com/apiome/apiome/issues/4161) |
 | R7-EM20 | [#4132](https://github.com/apiome/apiome/issues/4132), [#4133](https://github.com/apiome/apiome/issues/4133) |
 | R7-EM21 / R7-FG1 | [#4126](https://github.com/apiome/apiome/issues/4126), [#4127](https://github.com/apiome/apiome/issues/4127), [#4128](https://github.com/apiome/apiome/issues/4128), [#4130](https://github.com/apiome/apiome/issues/4130) |
 | R7-EM23 | [#4163](https://github.com/apiome/apiome/issues/4163), [#4164](https://github.com/apiome/apiome/issues/4164), [#4178](https://github.com/apiome/apiome/issues/4178) |
@@ -438,9 +443,11 @@ Every other in-scope ticket moves to [`RC8_PLAN.md`](RC8_PLAN.md):
 - the other open features the audit found outside RC7's scope (RC8 §6);
 - the MFI umbrella [#3715](https://github.com/apiome/apiome/issues/3715) (RC8 §7).
 
-Three tickets are split between the releases: [#4157](https://github.com/apiome/apiome/issues/4157) (R4 output rebuilt in RC7 by
-R7-EM17; R5 output in RC8), [#3897](https://github.com/apiome/apiome/issues/3897) (CSDL XML fixed in RC7; CSDL JSON not planned) and
-[#4295](https://github.com/apiome/apiome/issues/4295) (the MCP tool-definition dialect in RC7 as R7-FG4; the server manifest in RC8).
+One ticket is split between the releases: [#4295](https://github.com/apiome/apiome/issues/4295) (the MCP tool-definition dialect
+in RC7 as R7-FG4; the server manifest in RC8). [#4157](https://github.com/apiome/apiome/issues/4157) and
+[#3897](https://github.com/apiome/apiome/issues/3897) were planned as splits but shipped whole in RC7: FHIR R4 **and** R5
+([#6424](https://github.com/apiome/apiome/pull/6424)), and OData CSDL JSON (the default) **and** CSDL XML
+([#6422](https://github.com/apiome/apiome/pull/6422)).
 
 ---
 
