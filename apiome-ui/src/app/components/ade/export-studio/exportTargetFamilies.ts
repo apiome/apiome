@@ -3,8 +3,8 @@
  *
  * Authority: `docs/mockups/ship/export-studio.html`, Step 2, whose target grid carries the
  * headings *REST & HTTP*, *RPC*, *Events* and *Data schema & graph* over what was one flat
- * list of thirty-six cards. *Agents & tools* (FMT-2.7) and *API clients & collections*
- * (FMT-10.4) were added since.
+ * list of thirty-six cards. *Agents & tools* (FMT-2.7), *API clients & collections*
+ * (FMT-10.4) and *Healthcare* (MFX-26.5) were added since.
  *
  * ### Why a family rather than a longer list
  *
@@ -39,6 +39,11 @@
  * targets get a heading of their own, placed straight after *REST & HTTP*. A target key the table
  * does not list falls back to its paradigm, so a new emitter still lands somewhere.
  *
+ * *Healthcare* (MFX-26.5, #4161) is chosen by target key for the same reason: FHIR logical models are
+ * a data-schema export and HL7 v2 segment definitions a message one, but a healthcare integration
+ * team looks for "FHIR" and "HL7" by name, not under *REST & HTTP* or *Data schema & graph*. It is
+ * drawn last, being the newest and smallest family.
+ *
  * Everything here is pure — no React, no fetch — so the partition is unit-tested directly.
  */
 
@@ -66,6 +71,7 @@ export const EXPORT_TARGET_FAMILIES: readonly ExportTargetFamily[] = [
   { key: 'event', label: 'Events' },
   { key: 'data', label: 'Data schema & graph' },
   { key: 'agent', label: 'Agents & tools' },
+  { key: 'healthcare', label: 'Healthcare' },
 ] as const;
 
 /** Where a paradigm with no family of its own lands — a heading, never a hidden card. */
@@ -97,14 +103,17 @@ const PARADIGM_FAMILY: Readonly<Record<string, string>> = {
 /**
  * Target key → family, for the targets whose family is not their paradigm's.
  *
- * The keys are emitter registry keys (`descriptor.key`). Every member is an API-client
- * collection or request file: a set of saved calls a developer opens in their client.
+ * The keys are emitter registry keys (`descriptor.key`): the API-client collections and request
+ * files (a set of saved calls a developer opens in their client), and the healthcare targets —
+ * FHIR StructureDefinition logical models (R4 / R5) and HL7 v2 segment definitions.
  */
 const TARGET_FAMILY: Readonly<Record<string, string>> = {
   postman: 'client',
   hoppscotch: 'client',
   'thunder-client': 'client',
   'http-file': 'client',
+  fhir: 'healthcare',
+  hl7v2: 'healthcare',
 };
 
 /**

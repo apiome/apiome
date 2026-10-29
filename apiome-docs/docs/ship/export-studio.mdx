@@ -60,8 +60,10 @@ its format and counts of services, operations, types and channels. **Click “Ch
 ## 2. Target
 
 **Choose a target format.** Cards are grouped — **REST & HTTP**, **API clients & collections**,
-**RPC**, **Events**, **Data schema & graph**, **Agents & tools**, **Other targets** — and each carries
-a **fidelity tier** computed for *this* source. **API clients & collections** holds the targets that
+**RPC**, **Events**, **Data schema & graph**, **Agents & tools**, **Other targets**, **Healthcare** —
+and each carries a **fidelity tier** computed for *this* source. **Healthcare** holds **FHIR** and
+**HL7 v2**; the FHIR card's options pick **fhir_version** (`R4` or `R5`) and **packaging** (`bundle`
+or `per-type`). **API clients & collections** holds the targets that
 export saved requests rather than a contract: Postman, Hoppscotch, Thunder Client and the `.http`
 request file (see [Export to an API client](./export-to-an-api-client.md)).
 
