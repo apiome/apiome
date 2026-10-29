@@ -67,6 +67,16 @@ def _method_messages(
                 },
             )
         )
+    for error in method.errors:
+        messages.append(
+            Message(
+                key=f"{op_key}#error.{error.code}",
+                role=MessageRole.ERROR,
+                status_code=str(error.code),
+                description=error.message or None,
+                extras={"openrpc_error_data": error.data} if error.data is not None else {},
+            )
+        )
     if method.result_schema is not None:
         messages.append(
             Message(
@@ -100,9 +110,12 @@ class OpenRpcNormalizer(Normalizer, register=True):
                 Operation(
                     key=op_key,
                     name=method.name,
-                    kind=OperationKind.REQUEST_RESPONSE,
+                    # A method with no `result` is a notification (MFX-33.1).
+                    kind=OperationKind.ONE_WAY if method.notification else OperationKind.REQUEST_RESPONSE,
                     streaming=StreamingMode.NONE,
                     description=method.description or method.summary,
+                    deprecated=method.deprecated,
+                    tags=list(method.tags),
                     messages=_method_messages(method, op_key=op_key, coercer=coercer),
                     extras={
                         "openrpc_summary": method.summary,

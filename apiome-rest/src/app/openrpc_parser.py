@@ -21,6 +21,7 @@ from .import_ingestion import IngestionError, parse_document
 
 __all__ = [
     "OpenRpcParseError",
+    "OpenRpcError",
     "OpenRpcParam",
     "OpenRpcMethod",
     "OpenRpcServer",
@@ -56,6 +57,22 @@ class OpenRpcMethod:
     #: ``by-name``, ``by-position`` or ``either`` as written; ``None`` when absent (the spec
     #: default is ``either``).
     param_structure: Optional[str] = None
+    #: Tag names, in order (MFX-33.1).
+    tags: Tuple[str, ...] = ()
+    deprecated: bool = False
+    #: ``True`` when the method declares no ``result``: a JSON-RPC notification (MFX-33.1).
+    notification: bool = False
+    #: The method's errors (``components/errors`` references resolved), in order (MFX-33.1).
+    errors: Tuple["OpenRpcError", ...] = ()
+
+
+@dataclass(frozen=True)
+class OpenRpcError:
+    """An application error a method may return: its integer ``code``, ``message`` and ``data``."""
+
+    code: int
+    message: str
+    data: Any = None
 
 
 @dataclass(frozen=True)
@@ -155,7 +172,40 @@ def _parse_params(raw_params: Any, descriptors: Mapping[str, Any]) -> Tuple[Open
     return tuple(params)
 
 
-def _parse_methods(raw_methods: Any, descriptors: Mapping[str, Any]) -> Tuple[OpenRpcMethod, ...]:
+_ERROR_REF_PREFIX = "#/components/errors/"
+
+
+def _parse_errors(raw_errors: Any, components: Mapping[str, Any]) -> Tuple[OpenRpcError, ...]:
+    """A method's errors; a ``$ref`` into ``components.errors`` is followed, one without a code skipped."""
+    if not isinstance(raw_errors, list):
+        return ()
+    errors: list[OpenRpcError] = []
+    for entry in raw_errors:
+        if isinstance(entry, dict) and isinstance(entry.get("$ref"), str):
+            ref = entry["$ref"]
+            entry = components.get(ref[len(_ERROR_REF_PREFIX):]) if ref.startswith(_ERROR_REF_PREFIX) else None
+        if not isinstance(entry, dict) or not isinstance(entry.get("code"), int) or isinstance(entry.get("code"), bool):
+            continue
+        message = entry.get("message")
+        errors.append(OpenRpcError(code=entry["code"], message=message if isinstance(message, str) else "",
+                                   data=entry.get("data")))
+    return tuple(errors)
+
+
+def _parse_tags(raw_tags: Any) -> Tuple[str, ...]:
+    """Tag names; a tag reference keeps the name after its last ``/``."""
+    names: list[str] = []
+    for tag in raw_tags if isinstance(raw_tags, list) else []:
+        if isinstance(tag, dict) and isinstance(tag.get("name"), str):
+            names.append(tag["name"])
+        elif isinstance(tag, dict) and isinstance(tag.get("$ref"), str):
+            names.append(tag["$ref"].rsplit("/", 1)[-1])
+    return tuple(names)
+
+
+def _parse_methods(
+    raw_methods: Any, descriptors: Mapping[str, Any], error_components: Optional[Mapping[str, Any]] = None
+) -> Tuple[OpenRpcMethod, ...]:
     if not isinstance(raw_methods, list):
         return ()
     methods: list[OpenRpcMethod] = []
@@ -184,6 +234,10 @@ def _parse_methods(raw_methods: Any, descriptors: Mapping[str, Any]) -> Tuple[Op
                 result_name=result_name,
                 result_schema=result_schema,
                 param_structure=param_structure if isinstance(param_structure, str) else None,
+                tags=_parse_tags(entry.get("tags")),
+                deprecated=entry.get("deprecated") is True,
+                notification="result" not in entry,
+                errors=_parse_errors(entry.get("errors"), error_components or {}),
             )
         )
     return tuple(methods)
@@ -235,7 +289,10 @@ def parse_openrpc(content: str, *, source_label: Optional[str] = None) -> OpenRp
     descriptors = components.get("contentDescriptors") if isinstance(components, dict) else {}
     if not isinstance(descriptors, dict):
         descriptors = {}
-    methods = _parse_methods(document.get("methods"), descriptors)
+    error_components = components.get("errors") if isinstance(components, dict) else {}
+    if not isinstance(error_components, dict):
+        error_components = {}
+    methods = _parse_methods(document.get("methods"), descriptors, error_components)
     if not methods and not schemas:
         label = f" ({source_label})" if source_label else ""
         raise OpenRpcParseError(f"No OpenRPC methods or component schemas found{label}")

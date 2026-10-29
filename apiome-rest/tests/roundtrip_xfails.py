@@ -783,7 +783,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ("cloudevents", "odcs"): "unexplained: removed service 'com.example.order.created', changed type 'OrderCreated'; overclaim: OK 'OrderCreated'",
     ('cloudevents', 'oncrpc'): 'Re-import failed: Content does not appear to be ONC RPC / XDR RPCL (cloudevents->oncrpc)',
     ('cloudevents', 'openapi'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
-    ('cloudevents', 'openrpc'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('cloudevents', 'postman'): 'Re-import failed: No Postman requests found in collection (cloudevents->postman)',
     ('cloudevents', 'protobuf'): 'Re-import failed: buf build failed to compile the supplied .proto files',
     ('cloudevents', 'raml'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',

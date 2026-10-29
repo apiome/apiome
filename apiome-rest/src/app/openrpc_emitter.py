@@ -1,29 +1,58 @@
-"""OpenRPC emitter: canonical model → OpenRPC JSON — MFX-21.1.
+"""OpenRPC emitter: canonical model → OpenRPC 1.3 JSON — MFX-33.1 (#4301).
 
-The inverse of :class:`app.openrpc_normalizer.OpenRpcNormalizer` and an implementation
-of the :class:`app.emitter.Emitter` SPI.
+The inverse of :class:`app.openrpc_normalizer.OpenRpcNormalizer` and an implementation of the
+:class:`app.emitter.Emitter` SPI. The document validates against the OpenRPC meta-schema
+(:func:`validate_openrpc_document`, vendored from ``@open-rpc/meta-schema`` 1.14.9):
+
+* **Document** — ``openrpc`` (an OpenRPC source's own version, else ``1.3.2``), ``info`` (title, the
+  version — ``0.0.0`` when the source has none, reported — and description), ``servers`` with their
+  variables.
+* **Methods** — each service operation is one method; the JSON-RPC method name is the operation name
+  (made unique across services). An RPC operation's request becomes its ``params`` (an OpenRPC
+  source's own parameter list as written, else one ``params`` content descriptor), its response the
+  ``result``, its error responses ``errors`` (``code`` / ``message`` / ``data``), its tags ``tags``.
+  A one-way operation is a **notification**: a method with no ``result``.
+* **REST sources are reframed** (reported per operation): path, query, header and cookie parameters
+  and the request body become by-name ``params`` (``paramStructure: by-name``), the success response
+  the ``result`` (``{"type": "null"}`` when it has no body), numeric error statuses ``errors`` with the
+  status as ``code``, and the HTTP binding is kept as the extension ``x-http: {method, path}``.
+* **Schemas** — named types are ``components/schemas`` through the canonical JSON-Schema mapping
+  (:class:`app.emitter.SchemaEmitter`); every ``$ref`` names a written component, and canonical scalars
+  (``i64``, ``bool``, ``timestamp`` …) resolve through
+  :data:`app.canonical_json_schema.CANONICAL_SCALAR_SCHEMAS`.
+
+Whatever cannot be carried is reported as a :class:`~app.emitter.Loss`; the fidelity pack
+(:class:`OpenRpcFidelityRulePack`) predicts exactly those losses.
 """
 
 from __future__ import annotations
 
+import copy
 import json
 import re
-from typing import Any, Dict, List, Optional, Union
+from http import HTTPStatus
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from pydantic import Field
 
+from .canonical_json_schema import CANONICAL_SCALAR_SCHEMAS
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
+    CanonicalField,
     MessageRole,
     Operation,
     OperationKind,
-    Type,
+    Parameter,
+    Service,
+    StreamingMode,
     TypeKind,
 )
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -32,39 +61,75 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
     SchemaEmitter,
+    _emit_constraints,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessSeverity
+from .writer_loss_rulepack import WriterLossRulePack
 
-__all__ = ["OpenRpcEmitOptions", "OpenRpcEmitter", "OpenRpcFidelityRulePack"]
+__all__ = [
+    "OPENRPC_META_SCHEMA_PATH",
+    "OpenRpcEmitOptions",
+    "OpenRpcEmitter",
+    "OpenRpcFidelityRulePack",
+    "validate_openrpc_document",
+]
+
+#: The OpenRPC document meta-schema (``@open-rpc/meta-schema`` 1.14.9), vendored for offline validation.
+OPENRPC_META_SCHEMA_PATH = Path(__file__).resolve().parent / "data" / "openrpc_meta_schema_1_14_9.json"
 
 _REF_PREFIX = "#/components/schemas/"
+_DEFAULT_VERSION = "1.3.2"
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+#: JSON-RPC reserves -32768 … -32000 for its own errors.
+_RESERVED_CODES = range(-32768, -31999)
 
 
-class OpenRpcFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for OpenRPC export."""
+class OpenRpcFidelityRulePack(WriterLossRulePack):
+    """Fidelity rules for OpenRPC export — MFX-33.1 (#4301).
+
+    The pack builds the document with the OpenRPC writer and turns each loss the writer records into a
+    verdict on the construct it concerns (:class:`~app.writer_loss_rulepack.WriterLossRulePack`): a REST
+    operation reframed as a method, a synthesized version, renamed methods and components, scalars with
+    no JSON-Schema form are approximations; events, channels, streams, extra success responses, error
+    responses with no numeric code and error payload schemas are dropped. A carried operation is ``OK``
+    and its ``target_mapping`` names the method it became (``method getPet``, ``notification ping``).
+    A REST source's root is reported as reframed to JSON-RPC; agent descriptors are dropped.
+    """
 
     target_label = "OpenRPC"
+    critical_drops = frozenset({"event-operation-dropped", "unsupported-type"})
+    info_drops = frozenset({"error-payload-dropped"})
+    cosmetic = frozenset({"renamed-method", "renamed-component"})
 
-    def event_verdict(self, event) -> FidelityVerdict:
-        return FidelityVerdict.drop(
-            message=f"{self.target_label} has no event/channel representation; event {event.key!r} is dropped",
-            target_mapping="event → dropped",
-        )
+    def build_writer(self, api: CanonicalApi) -> "_OpenRpcWriter":
+        """Build the document (default options: they change no loss)."""
+        writer = _OpenRpcWriter(api, OpenRpcEmitOptions())
+        writer.build()
+        return writer
 
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.drop(
-                message=f"{self.target_label} has no event vocabulary; "
-                f"{operation.kind.value} operation {operation.key!r} is dropped",
-                target_mapping="event operation → dropped",
-            )
-        if operation.http_method or operation.http_path:
-            return FidelityVerdict.drop(
-                message=f"{self.target_label} has no HTTP binding; operation {operation.key!r} is dropped",
-                target_mapping="HTTP operation → dropped",
-            )
-        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}")
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """A REST source reframed to JSON-RPC, agent descriptors, and losses with no construct."""
+        verdicts: List[FidelityVerdict] = []
+        if api.format != "openrpc":
+            verdicts.append(FidelityVerdict.approx(
+                message="The document is written as an OpenRPC service description and reads back as a "
+                "JSON-RPC API, with its title, version and servers in `info` and `servers`",
+                severity=LossinessSeverity.INFO,
+                target_mapping="document → OpenRPC",
+            ))
+        if api.paradigm is ApiParadigm.REST and any(op.http_method for op in api.operations()):
+            verdicts.append(FidelityVerdict.approx(
+                message="OpenRPC describes JSON-RPC methods; this REST API's operations are reframed as "
+                "methods with by-name params, and it reads back as an RPC API",
+                target_mapping="rest → JSON-RPC",
+            ))
+        if api.agents:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
+                target_mapping="agents → dropped",
+            ))
+        return verdicts + self.loss_verdicts(ROOT_CONSTRUCT_KEY)
 
 
 class OpenRpcEmitOptions(EmitOptions):
@@ -94,7 +159,8 @@ class OpenRpcEmitter(Emitter, register=True):
             events=False,
             unions=True,
             nullability=True,
-            field_identity=True,
+            constraints=True,
+            field_identity=False,
         )
 
     @classmethod
@@ -113,153 +179,477 @@ class OpenRpcEmitter(Emitter, register=True):
             else OpenRpcEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
         writer = _OpenRpcWriter(api, options)
-        content = writer.render()
+        writer.build()
+        if not writer.document["methods"] and not writer.document.get("components"):
+            raise EmitPreconditionError(
+                "OpenRPC export needs at least one method or schema to write; this source has neither."
+            )
         return EmitResult(
-            files=[
-                EmittedFile(
-                    path=writer.output_path,
-                    content=content,
-                    media_type=self.OUTPUT_MEDIA_TYPE,
-                )
-            ],
+            files=[EmittedFile(path=writer.output_path, content=writer.render(), media_type=self.OUTPUT_MEDIA_TYPE)],
             media_type=self.OUTPUT_MEDIA_TYPE,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
         )
 
 
+# ===========================================================================
+# Writer
+# ===========================================================================
+
+
 class _OpenRpcWriter:
+    """Build the OpenRPC document (see the module docstring)."""
+
     def __init__(self, api: CanonicalApi, options: OpenRpcEmitOptions) -> None:
         self._api = api
         self._options = options
+        self._openrpc_source = api.format == "openrpc"
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
         self._schema = SchemaEmitter(ref_prefix=_REF_PREFIX)
         self.output_path = _output_path(api)
-        self._openrpc_version = str(api.extras.get("openrpc_version") or "1.2.6")
+        #: Type key or name → component name.
+        self._components: Dict[str, str] = {}
+        #: Key → what it became (``method getPet``), for the fidelity pack.
+        self._written: Dict[str, str] = {}
+        self._context: Optional[str] = None
+        self.document: Dict[str, Any] = {}
 
-    def render(self) -> str:
-        document: Dict[str, Any] = {
-            "openrpc": self._openrpc_version,
-            "info": self._info(),
-            "methods": self._methods(),
-        }
-        servers = self._servers()
+    def build(self) -> None:
+        """Write the document into :attr:`document`."""
+        self._claim_components()
+        document: Dict[str, Any] = {"openrpc": self._version(), "info": self._info()}
+        servers = [self._server(server) for server in self._api.servers]
         if servers:
             document["servers"] = servers
-        components = self._components()
-        if components:
-            document["components"] = components
+        document["methods"] = self._methods()
+        schemas = self._schemas()
+        if schemas:
+            document["components"] = {"schemas": schemas}
         if self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "channels-dropped",
-                "OpenRPC export omits event/channel constructs",
-                pointer="channels",
-            )
+            self.losses.record(LossKind.NA, "channels-dropped", "OpenRPC has no event channels.", pointer="channels")
+        self.document = document
+
+    def render(self) -> str:
+        """The document as JSON text."""
         indent = self._options.indent if self._options.indent > 0 else None
-        return json.dumps(document, indent=indent, ensure_ascii=False) + "\n"
+        return json.dumps(self.document, indent=indent, ensure_ascii=False) + "\n"
+
+    def written_as(self, key: str) -> Optional[str]:
+        """What the operation or type ``key`` became, or ``None``."""
+        return self._written.get(key)
+
+    # ------------------------------------------------------------------
+    # Document
+    # ------------------------------------------------------------------
+
+    def _version(self) -> str:
+        declared = self._api.extras.get("openrpc_version") if self._openrpc_source else None
+        return declared if isinstance(declared, str) and declared in _meta_versions() else _DEFAULT_VERSION
 
     def _info(self) -> Dict[str, Any]:
-        info: Dict[str, Any] = {"title": self._api.title or self._api.identity.name}
+        info: Dict[str, Any] = {"title": self._api.title or self._api.identity.name or "API"}
         if self._api.version:
-            info["version"] = self._api.version
+            info["version"] = str(self._api.version)
+        else:
+            info["version"] = "0.0.0"
+            self.losses.record(LossKind.INFERRED, "version-synthesized",
+                               "OpenRPC requires info.version; the source has none, so 0.0.0 is written.")
         if self._api.description:
             info["description"] = self._api.description
         return info
 
-    def _servers(self) -> List[Dict[str, Any]]:
-        servers: List[Dict[str, Any]] = []
-        for index, server in enumerate(self._api.servers):
-            entry: Dict[str, Any] = {"url": server.url}
-            if server.description:
-                entry["name"] = server.description
-            elif index == 0:
-                entry["name"] = "default"
-            servers.append(entry)
-        return servers
+    @staticmethod
+    def _server(server: Any) -> Dict[str, Any]:
+        entry: Dict[str, Any] = {"url": server.url}
+        if server.name:
+            entry["name"] = server.name
+        if server.description:
+            entry["description"] = server.description
+        variables: Dict[str, Any] = {}
+        for variable in server.variables:
+            spec: Dict[str, Any] = {"default": str(variable.default if variable.default is not None
+                                                    else (variable.enum or [""])[0])}
+            if variable.enum:
+                spec["enum"] = [str(v) for v in variable.enum]
+            if variable.description:
+                spec["description"] = variable.description
+            variables[variable.name] = spec
+        if variables:
+            entry["variables"] = variables
+        return entry
 
-    def _components(self) -> Dict[str, Any]:
+    # ------------------------------------------------------------------
+    # Schemas
+    # ------------------------------------------------------------------
+
+    def _claim_components(self) -> None:
+        """Give every named type a component name: its name made safe for a JSON pointer, unique."""
+        taken: Set[str] = set()
+        for type_ in self._api.types:
+            base = re.sub(r"[^A-Za-z0-9._-]+", "_", type_.name).strip("_") or "Schema"
+            name, suffix = base, 2
+            while name in taken:
+                name, suffix = f"{base}{suffix}", suffix + 1
+            taken.add(name)
+            if name != type_.name:
+                self.losses.record(LossKind.INFERRED, "renamed-component",
+                                   f"OpenRPC component names are unique and safe in a JSON pointer; {type_.name!r} "
+                                   f"is written as {name!r}.", pointer=type_.key)
+            self._components[type_.key] = name
+            self._components.setdefault(type_.name, name)
+
+    def _schemas(self) -> Dict[str, Any]:
         schemas: Dict[str, Any] = {}
-        for type_ in sorted(self._api.types, key=lambda t: t.name):
-            if type_.kind in {TypeKind.RECORD, TypeKind.ENUM, TypeKind.UNION, TypeKind.MAP, TypeKind.ALIAS}:
-                schemas[type_.name] = self._schema.named_schema(type_)
-                self.tracker.record(type_.key, Provenance.SOURCE)
-        return {"schemas": schemas} if schemas else {}
+        for type_ in self._api.types:
+            self._context = type_.key
+            if type_.kind not in (TypeKind.RECORD, TypeKind.ENUM, TypeKind.UNION, TypeKind.MAP, TypeKind.ALIAS,
+                                  TypeKind.SCALAR):
+                self.losses.record(LossKind.NA, "unsupported-type",
+                                   f"Type {type_.key!r} ({type_.kind.value}) has no JSON-Schema form and is not "
+                                   "written.", pointer=type_.key)
+                continue
+            name = self._components[type_.key]
+            schema = self._resolve(self._schema.named_schema(type_))
+            repeated = sorted({f.name for f in type_.fields if [g.name for g in type_.fields].count(f.name) > 1})
+            if repeated:
+                # JSON-Schema properties are keyed by name: a repeated field keeps one entry.
+                self.losses.record(LossKind.NA, "duplicate-field-dropped",
+                                   f"JSON-Schema properties are unique; the repeated field(s) {', '.join(repeated)} of "
+                                   f"{type_.key!r} keep one entry.", pointer=type_.key)
+                if isinstance(schema.get("required"), list):
+                    schema["required"] = list(dict.fromkeys(schema["required"]))
+            schemas[name] = schema
+            self._written[type_.key] = f"schema {name}"
+            self.tracker.record(type_.key, Provenance.SOURCE)
+        self._context = None
+        return schemas
+
+    def _resolve(self, schema: Any) -> Any:
+        """Point every ``$ref`` at a written component; a canonical scalar becomes its JSON-Schema form."""
+        if isinstance(schema, list):
+            return [self._resolve(item) for item in schema]
+        if not isinstance(schema, dict):
+            return schema
+        out = {key: self._resolve(value) for key, value in schema.items()}
+        ref = out.get("$ref")
+        if isinstance(ref, str) and ref.startswith(_REF_PREFIX):
+            target = ref[len(_REF_PREFIX):]
+            if target in self._components:
+                out["$ref"] = _REF_PREFIX + self._components[target]
+            else:
+                del out["$ref"]
+                scalar = CANONICAL_SCALAR_SCHEMAS.get(target.lower())
+                if scalar is None:
+                    self.losses.record(LossKind.INFERRED, "unknown-type",
+                                       f"The type {target!r} has no JSON-Schema form; it is written as any value.",
+                                       pointer=self._context)
+                out = {**copy.deepcopy(scalar or {}), **out}
+        return out
+
+    def _type_schema(self, ref: Any, constraints: Any = None, default: Any = None) -> Dict[str, Any]:
+        schema = self._resolve(self._schema.type_ref(ref)) if ref is not None else {}
+        # Whole-number bounds read as integers (`minimum: 1`, not `1.0`).
+        schema.update({key: int(value) if isinstance(value, float) and value.is_integer() else value
+                       for key, value in _emit_constraints(constraints).items()})
+        if default is not None:
+            schema["default"] = default
+        return schema
+
+    # ------------------------------------------------------------------
+    # Methods
+    # ------------------------------------------------------------------
 
     def _methods(self) -> List[Dict[str, Any]]:
         methods: List[Dict[str, Any]] = []
+        names: Set[str] = set()
         for service in self._api.services:
             for operation in service.operations:
-                if operation.kind in _EVENT_OPERATION_KINDS:
-                    continue
-                if operation.http_method or operation.http_path:
-                    continue
-                method: Dict[str, Any] = {"name": operation.name}
-                summary = operation.extras.get("openrpc_summary")
-                if isinstance(summary, str) and summary:
-                    method["summary"] = summary
-                elif operation.description:
-                    method["summary"] = operation.description
-                if operation.description and method.get("summary") != operation.description:
-                    method["description"] = operation.description
-                params = self._params(operation)
-                if params:
-                    method["params"] = params
-                param_structure = operation.extras.get("openrpc_param_structure")
-                if isinstance(param_structure, str) and param_structure:
-                    method["paramStructure"] = param_structure
-                result = self._result(operation)
-                if result:
-                    method["result"] = result
-                methods.append(method)
-                self.tracker.record(operation.key, Provenance.SOURCE)
+                self._context = operation.key
+                method = self._method(operation, service, names)
+                if method is not None:
+                    methods.append(method)
+        self._context = None
         return methods
 
-    def _params(self, operation: Operation) -> List[Dict[str, Any]]:
+    def _method(self, operation: Operation, service: Service, names: Set[str]) -> Optional[Dict[str, Any]]:
+        if operation.kind in _EVENT_OPERATION_KINDS:
+            self.losses.record(LossKind.NA, "event-operation-dropped",
+                               f"OpenRPC has no events; {operation.kind.value} operation {operation.key!r} is not "
+                               "written.", pointer=operation.key)
+            return None
+        name = self._method_name(operation, service, names)
+        method: Dict[str, Any] = {"name": name}
+        summary = operation.extras.get("openrpc_summary") if self._openrpc_source else None
+        if isinstance(summary, str) and summary:
+            method["summary"] = summary
+        if operation.description and operation.description != summary:
+            method["description"] = operation.description
+        if operation.tags:
+            method["tags"] = [{"name": tag} for tag in operation.tags]
+        rest = bool(operation.http_method)
+        method["params"] = self._rest_params(operation) if rest else self._rpc_params(operation)
+        structure = operation.extras.get("openrpc_param_structure") if self._openrpc_source else None
+        if rest:
+            method["paramStructure"] = "by-name"
+        elif isinstance(structure, str) and structure:
+            method["paramStructure"] = structure
+        notification = operation.kind is OperationKind.ONE_WAY
+        result = self._result(operation, rest)
+        if notification and result is not None:
+            self.losses.record(LossKind.NA, "response-dropped",
+                               f"A JSON-RPC notification has no result; the response of {operation.key!r} is not "
+                               "written.", pointer=operation.key)
+        elif result is not None:
+            method["result"] = result
+        errors = self._errors(operation)
+        if errors:
+            method["errors"] = errors
+        if operation.deprecated:
+            method["deprecated"] = True
+        if operation.streaming is not StreamingMode.NONE or operation.kind is OperationKind.SUBSCRIPTION:
+            stream = ("a subscription" if operation.kind is OperationKind.SUBSCRIPTION
+                      else f"{operation.streaming.value}-streaming")
+            self.losses.record(LossKind.NA, "streaming-dropped",
+                               f"JSON-RPC calls are one request and one response; {operation.key!r} ({stream}) is "
+                               "written as one call.", pointer=operation.key)
+        if rest:
+            method["x-http"] = {"method": operation.http_method.upper(), "path": operation.http_path or "/"}
+            self.losses.record(LossKind.INFERRED, "rest-as-method",
+                               f"OpenRPC methods have no HTTP binding; {operation.http_method.upper()} "
+                               f"{operation.http_path or '/'} is the method {name!r} with its parameters and body "
+                               "as by-name params (the binding is kept as x-http).", pointer=operation.key)
+        self._written[operation.key] = f"{'notification' if notification else 'method'} {name}"
+        self.tracker.record(operation.key, Provenance.SOURCE)
+        return method
+
+    def _method_name(self, operation: Operation, service: Service, names: Set[str]) -> str:
+        """The operation name, unique in the document (qualified by its service on a clash)."""
+        base = operation.name or operation.key
+        name = base
+        if name in names:
+            name = f"{service.name}.{base}"
+        suffix = 2
+        while name in names:
+            name, suffix = f"{service.name}.{base}{suffix}", suffix + 1
+        names.add(name)
+        if name != base:
+            self.losses.record(LossKind.INFERRED, "renamed-method",
+                               f"JSON-RPC method names are unique; {base!r} of {operation.key!r} is written as "
+                               f"{name!r}.",
+                               pointer=operation.key)
+        return name
+
+    def _rpc_params(self, operation: Operation) -> List[Dict[str, Any]]:
+        """An RPC operation's params: an OpenRPC source's list as written, else one ``params`` descriptor."""
         request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
         if request is None:
             return []
-        openrpc_params = request.extras.get("openrpc_params")
-        if isinstance(openrpc_params, list):
-            return [
-                {
-                    "name": entry["name"],
-                    "required": bool(entry.get("required")),
-                    "schema": entry.get("schema") or {},
-                    **(
-                        {"description": entry["description"]}
-                        if isinstance(entry.get("description"), str)
-                        else {}
-                    ),
-                }
-                for entry in openrpc_params
-                if isinstance(entry, dict) and isinstance(entry.get("name"), str)
-            ]
-        if request.payload is not None:
-            return [
-                {
-                    "name": "params",
-                    "required": bool(request.required),
-                    "schema": self._schema.type_ref(request.payload),
-                }
-            ]
-        return []
+        listed = request.extras.get("openrpc_params")
+        if isinstance(listed, list):
+            params = []
+            for entry in listed:
+                if not isinstance(entry, dict) or not isinstance(entry.get("name"), str):
+                    continue
+                param: Dict[str, Any] = {"name": entry["name"], "schema": entry.get("schema") or {}}
+                if entry.get("required"):
+                    param["required"] = True
+                if isinstance(entry.get("description"), str):
+                    param["description"] = entry["description"]
+                params.append(param)
+            return params
+        if request.payload is None and not request.payload_schema:
+            return []
+        schema = self._type_schema(request.payload) if request.payload is not None else dict(request.payload_schema)
+        param = {"name": request.name or "params", "schema": schema}
+        if request.required:
+            param["required"] = True
+        return [param]
 
-    def _result(self, operation: Operation) -> Optional[Dict[str, Any]]:
-        response = next((m for m in operation.messages if m.role is MessageRole.RESPONSE), None)
-        if response is None or response.payload is None:
-            return None
-        result_name = operation.extras.get("openrpc_result_name")
-        if not isinstance(result_name, str) or not result_name:
-            result_name = response.name or "result"
-        return {
-            "name": result_name,
-            "schema": self._schema.type_ref(response.payload),
+    def _rest_params(self, operation: Operation) -> List[Dict[str, Any]]:
+        """A REST operation's parameters, then its body, as by-name params (names unique)."""
+        params: List[Dict[str, Any]] = []
+        taken: Set[str] = set()
+        for param in operation.parameters:
+            params.append(self._param_descriptor(param, taken))
+        request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
+        for header in request.headers if request is not None else []:
+            params.append(self._header_descriptor(header, taken))
+        if request is not None and (request.payload is not None or request.payload_schema):
+            schema = self._type_schema(request.payload) if request.payload is not None else dict(request.payload_schema)
+            body: Dict[str, Any] = {"name": _unique("body", taken), "schema": schema}
+            if request.required:
+                body["required"] = True
+            if request.description:
+                body["description"] = request.description
+            params.append(body)
+        return params
+
+    def _param_descriptor(self, param: Parameter, taken: Set[str]) -> Dict[str, Any]:
+        self._context = param.key
+        descriptor: Dict[str, Any] = {
+            "name": _unique(param.name, taken),
+            "schema": self._type_schema(param.type, param.constraints, param.default),
         }
+        if param.required:
+            descriptor["required"] = True
+        description = param.description or ""
+        descriptor["description"] = (f"{description} " if description else "") + f"({param.location.value} parameter)"
+        if param.deprecated:
+            descriptor["deprecated"] = True
+        self._context = None
+        return descriptor
+
+    def _header_descriptor(self, header: CanonicalField, taken: Set[str]) -> Dict[str, Any]:
+        descriptor: Dict[str, Any] = {"name": _unique(header.name, taken),
+                                      "schema": self._type_schema(header.type, header.constraints, header.default)}
+        if header.type.nullable is False:
+            descriptor["required"] = True
+        descriptor["description"] = (f"{header.description} " if header.description else "") + "(header)"
+        if header.deprecated:
+            descriptor["deprecated"] = True
+        return descriptor
+
+    def _result(self, operation: Operation, rest: bool) -> Optional[Dict[str, Any]]:
+        """The ``result`` descriptor: the success response (a REST one with no body is ``null``)."""
+        responses = [m for m in operation.messages if m.role is MessageRole.RESPONSE]
+        success = [m for m in responses if str(m.status_code or "200").startswith("2")] or responses
+        if not success:
+            if rest or operation.kind is OperationKind.ONE_WAY:
+                return None if operation.kind is OperationKind.ONE_WAY else {"name": "result",
+                                                                              "schema": {"type": "null"}}
+            return None
+        chosen = next((m for m in success if m.payload is not None or m.payload_schema), success[0])
+        for other in responses:
+            if other is not chosen:
+                self.losses.record(LossKind.NA, "response-dropped",
+                                   f"A JSON-RPC method has one result; the {other.status_code or 'other'} response "
+                                   f"{other.key!r} of {operation.key!r} is not written.", pointer=operation.key)
+        name = operation.extras.get("openrpc_result_name") if self._openrpc_source else None
+        if not isinstance(name, str) or not name:
+            name = chosen.name or "result"
+        if chosen.payload is not None:
+            schema = self._type_schema(chosen.payload)
+        elif chosen.payload_schema:
+            schema = dict(chosen.payload_schema)
+        else:
+            schema = {"type": "null"}
+        result: Dict[str, Any] = {"name": name, "schema": schema}
+        if chosen.description:
+            result["description"] = chosen.description
+        if chosen.headers:
+            self.losses.record(LossKind.NA, "response-header-dropped",
+                               f"A JSON-RPC result has no headers; those of {chosen.key!r} are not written.",
+                               pointer=operation.key)
+        return result
+
+    def _errors(self, operation: Operation) -> List[Dict[str, Any]]:
+        """``errors``: each error response with an integer code (a REST status becomes the code)."""
+        errors: List[Dict[str, Any]] = []
+        codes: Set[int] = set()
+        for message in operation.messages:
+            if message.role is not MessageRole.ERROR:
+                continue
+            code = _error_code(message.status_code)
+            if code is None or code in codes:
+                self.losses.record(LossKind.NA, "error-dropped",
+                                   f"An OpenRPC error needs a distinct integer code; {message.key!r} (status "
+                                   f"{message.status_code or 'none'}) is not written.", pointer=operation.key)
+                continue
+            codes.add(code)
+            error: Dict[str, Any] = {"code": code, "message": message.description or _reason(code)}
+            data = message.extras.get("openrpc_error_data") if self._openrpc_source else None
+            if data is not None:
+                error["data"] = data
+            elif message.payload is not None or message.payload_schema:
+                self.losses.record(LossKind.NA, "error-payload-dropped",
+                                   f"An OpenRPC error carries a data value, not a schema; the payload type of "
+                                   f"{message.key!r} is not written.", pointer=operation.key)
+            errors.append(error)
+        return errors
+
+
+# ===========================================================================
+# Helpers
+# ===========================================================================
+
+
+def _unique(name: str, taken: Set[str]) -> str:
+    candidate, suffix = name, 2
+    while candidate in taken:
+        candidate, suffix = f"{name}{suffix}", suffix + 1
+    taken.add(candidate)
+    return candidate
+
+
+def _error_code(status: Optional[str]) -> Optional[int]:
+    """The JSON-RPC code for an error status: an integer status as is, else ``None``."""
+    text = str(status or "").strip()
+    if not re.fullmatch(r"-?\d+", text):
+        return None
+    return int(text)
+
+
+def _reason(code: int) -> str:
+    """A message for an error with no description: the HTTP reason phrase, or a generic one."""
+    if code in _RESERVED_CODES:
+        return "JSON-RPC error"
+    try:
+        return HTTPStatus(code).phrase
+    except ValueError:
+        return f"Error {code}"
 
 
 def _output_path(api: CanonicalApi) -> str:
-    base = api.identity.name or "api"
+    base = api.identity.name or api.title or "api"
     safe = re.sub(r"[^A-Za-z0-9_]+", "_", base).strip("_") or "api"
     return f"{safe}.openrpc.json"
+
+
+_META_SCHEMA: Optional[Dict[str, Any]] = None
+
+
+def _meta_schema() -> Dict[str, Any]:
+    global _META_SCHEMA
+    if _META_SCHEMA is None:
+        _META_SCHEMA = json.loads(OPENRPC_META_SCHEMA_PATH.read_text(encoding="utf-8"))
+    return _META_SCHEMA
+
+
+def _meta_versions() -> Tuple[str, ...]:
+    return tuple(_meta_schema()["properties"]["openrpc"]["enum"])
+
+
+def meta_schema_errors(document: Any, limit: int = 5) -> List[str]:
+    """The first ``limit`` OpenRPC meta-schema violations of ``document`` (``path: message``)."""
+    from jsonschema import Draft7Validator
+    from referencing import Registry, Resource
+    from referencing.jsonschema import DRAFT7
+
+    draft7 = Draft7Validator.META_SCHEMA
+    registry = Registry().with_resource("http://json-schema.org/draft-07/schema", Resource(draft7, DRAFT7))
+    validator = Draft7Validator(_meta_schema(), registry=registry)
+    errors = sorted(validator.iter_errors(document), key=lambda e: list(e.absolute_path))
+    return [f"{'/'.join(str(p) for p in error.absolute_path) or '(root)'}: {error.message}" for error in errors[:limit]]
+
+
+def validate_openrpc_document(text: str) -> None:
+    """Validate an emitted OpenRPC document: the OpenRPC meta-schema, then a re-parse.
+
+    Args:
+        text: The document JSON.
+
+    Raises:
+        ValueError: When the text is not JSON, breaks the meta-schema (the first few violations named
+            with their JSON path), or does not re-parse as OpenRPC.
+    """
+    from .openrpc_parser import parse_openrpc
+
+    try:
+        document = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid OpenRPC document: not JSON ({exc.msg})") from exc
+    errors = meta_schema_errors(document)
+    if errors:
+        raise ValueError(f"Invalid OpenRPC document (meta-schema): {'; '.join(errors)}")
+    parse_openrpc(text)

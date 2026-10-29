@@ -45,7 +45,7 @@
             "http_method": null,
             "http_path": null,
             "key": "Telemetry Ingest API.emitReading",
-            "kind": "request_response",
+            "kind": "one_way",
             "messages": [
               {
                 "content_types": [],
@@ -112,7 +112,7 @@
           },
           {
             "channel_ref": null,
-            "deprecated": false,
+            "deprecated": true,
             "description": "Deprecated synchronous flush.",
             "extras": {
               "openrpc_result_name": "flushed",
@@ -145,7 +145,9 @@
             "name": "flushBuffer",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "admin"
+            ]
           },
           {
             "channel_ref": null,
@@ -161,6 +163,36 @@
             "key": "Telemetry Ingest API.queryReadings",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": "Sensor unknown",
+                "extras": {},
+                "headers": [],
+                "key": "Telemetry Ingest API.queryReadings#error.-32050",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "-32050"
+              },
+              {
+                "content_types": [],
+                "description": "Window too large",
+                "extras": {
+                  "openrpc_error_data": {
+                    "type": "object"
+                  }
+                },
+                "headers": [],
+                "key": "Telemetry Ingest API.queryReadings#error.-32051",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "-32051"
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -231,7 +263,9 @@
             "name": "queryReadings",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "query"
+            ]
           }
         ]
       }
@@ -252,7 +286,7 @@
     "confidence": 0.98,
     "format": "openrpc"
   },
-  "fingerprint": "sha256:a25e9c9e6418b7eaccb1653802c0d8fa237c1cae30749815621cf73f4570f608",
+  "fingerprint": "sha256:5d88d4f011855dff9bde3fe01caa0765e3d82b5d5c11e3c1d7f313400bc0f3ab",
   "lint": {
     "findings": 4,
     "grade": "A",
