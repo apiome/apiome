@@ -1,7 +1,7 @@
-"""Shared XML Schema (XSD 1.0) writer for the XML-family emitters — MFX-14.1 (#3889), MFX-29.1 (#4173).
+"""Shared XML Schema writer for the XML-family emitters — MFX-14.1 (#3889), MFX-29.1 (#4173), MFX-22.1 (#4132).
 
-Builds the ``xsd:schema`` that WSDL (``wsdl:types``) and WADL (``wadl:grammars``) export, so both
-write the same, valid types for the same model:
+Builds the ``xsd:schema`` that WSDL (``wsdl:types``), WADL (``wadl:grammars``) and the standalone XSD
+export (:mod:`app.xsd_emitter`) write, so all three write the same, valid types for the same model:
 
 * records → ``complexType`` + ``sequence`` and a global element of the same name;
 * lists → ``maxOccurs`` (from ``minItems``/``maxItems``); nullable → ``minOccurs="0" nillable="true"``;
@@ -11,7 +11,15 @@ write the same, valid types for the same model:
   named scalars → derived types; descriptions → ``xs:annotation``;
 * scalars keep their precision (:func:`app.xsd_types.xsd_builtin`);
 * a field imported from XSD (``extras["xsd_type"]`` …) is written back with the occurrence, facets
-  and type it was read with.
+  and type it was read with, as an ``xs:attribute`` when it was one; an XSD enum keeps its values and base.
+
+**Namespaces.** The schema's ``targetNamespace`` may be absent (a no-namespace schema: types are
+referenced by bare name). The standalone XSD export can spread the types over several namespaces: each
+type is placed in its namespace (``type_namespaces``) and referenced through that namespace's prefix
+(``prefixes``); :meth:`XsdSchemaWriter.append_types` writes one namespace's types per schema document.
+
+**XSD 1.1** (``xsd_version="1.1"``): the schema is marked ``vc:minVersion="1.1"`` and ``multipleOf``
+becomes an ``xs:assertion`` facet (``$value mod 5 = 0``), which XSD 1.0 has no facet for.
 
 Names are made legal ``NCName`` s and de-duplicated; every change, and every construct XSD cannot
 carry, is recorded on the caller's :class:`~app.emitter.LossTracker`. The matching predicted
@@ -23,7 +31,7 @@ from __future__ import annotations
 
 import math
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Set, Tuple
 
 from .canonical_model import CanonicalApi, CanonicalField, Constraints, Type, TypeKind, TypeRef
 from .emitter import LossKind, LossTracker, Provenance, ProvenanceTracker
@@ -33,6 +41,7 @@ from .xsd_types import ncname, xsd_builtin, xsd_pattern
 
 __all__ = [
     "TNS_PREFIX",
+    "VC_NS",
     "XSD_NS",
     "XSD_PREFIX",
     "NameScope",
@@ -46,8 +55,13 @@ __all__ = [
 ]
 
 XSD_NS = "http://www.w3.org/2001/XMLSchema"
+#: The XSD versioning namespace (``vc:minVersion``), which marks a schema as XSD 1.1.
+VC_NS = "http://www.w3.org/2007/XMLSchema-versioning"
 XSD_PREFIX = "xsd"
 TNS_PREFIX = "tns"
+
+#: Writes every type (the default of :meth:`XsdSchemaWriter.append_types`).
+_EVERY_NAMESPACE = object()
 
 #: XSD built-ins that take length facets, and those that take range facets.
 _LENGTH_BASES = frozenset({"string", "normalizedString", "token", "anyURI", "base64Binary", "hexBinary"})
@@ -80,22 +94,31 @@ class XsdSchemaWriter:
 
     Args:
         api: The model being exported.
-        target_namespace: The schema's ``targetNamespace`` (``tns:``).
+        target_namespace: The schema's ``targetNamespace`` (``tns:``), or ``None`` for a no-namespace
+            schema.
         target_label: The export target's label, used in loss messages (``"WSDL"``, ``"WADL"``).
         losses: Where renames and constructs XSD cannot carry are recorded.
         tracker: Provenance for the types and fields written.
         skip_types: Type keys the caller writes itself (a WSDL source's multi-part messages).
+        type_namespaces: Type key → the namespace it is written in, for a type outside
+            ``target_namespace`` (default: every type is in ``target_namespace``).
+        prefixes: Namespace → the prefix references to its types use (default: ``tns`` for
+            ``target_namespace``). Every namespace in ``type_namespaces`` needs one.
+        xsd_version: ``"1.0"`` (default) or ``"1.1"``.
     """
 
     def __init__(
         self,
         api: CanonicalApi,
         *,
-        target_namespace: str,
+        target_namespace: Optional[str],
         target_label: str,
         losses: LossTracker,
         tracker: ProvenanceTracker,
         skip_types: FrozenSet[str] = frozenset(),
+        type_namespaces: Optional[Mapping[str, Optional[str]]] = None,
+        prefixes: Optional[Mapping[str, str]] = None,
+        xsd_version: str = "1.0",
     ) -> None:
         self._api = api
         self.target_namespace = target_namespace
@@ -103,21 +126,48 @@ class XsdSchemaWriter:
         self.losses = losses
         self.tracker = tracker
         self._skip = skip_types
+        self.xsd_version = xsd_version
         self._types_by_key = {t.key: t for t in api.types}
-        #: Global element names (one symbol space for every element the export declares).
-        self.element_scope = NameScope()
+        #: Namespace → prefix; a no-namespace schema's types are referenced by bare name.
+        self.prefixes: Dict[str, str] = dict(prefixes or {})
+        if target_namespace and target_namespace not in self.prefixes:
+            self.prefixes[target_namespace] = TNS_PREFIX
+        #: Type key → the namespace it is written in.
+        self.type_namespaces: Dict[str, Optional[str]] = {
+            t.key: (type_namespaces or {}).get(t.key, target_namespace) for t in api.types
+        }
+        #: Global element names, one symbol space per namespace.
+        self._element_scopes: Dict[Optional[str], NameScope] = {}
+        #: The element names of ``target_namespace`` (WSDL claims its message elements here).
+        self.element_scope = self._element_scope(target_namespace)
         #: Type key → the legal name the type is written under.
         self.type_names: Dict[str, str] = {}
         #: Type key → the global element declared for it (complex types only).
         self.type_elements: Dict[str, str] = {}
         self._schema_el: Optional[ET.Element] = None
-        self._simple_types_written: Set[str] = set()
-        type_scope = NameScope()
+        #: The namespace of the schema document being written.
+        self._document_namespace: Optional[str] = target_namespace
+        #: ``(document namespace, name)`` of each source simple type already written.
+        self._simple_types_written: Set[Tuple[Optional[str], str]] = set()
+        type_scopes: Dict[Optional[str], NameScope] = {}
         for type_ in api.types:
             if type_.key in skip_types:
                 continue
-            name = type_scope.claim(ncname(type_.name, pascal=True, fallback="Type"))
+            scope = type_scopes.setdefault(self.type_namespaces[type_.key], NameScope())
+            name = scope.claim(ncname(type_.name, pascal=True, fallback="Type"))
             self.type_names[type_.key] = self.rename(type_.name, name, type_.key, "type")
+
+    def _element_scope(self, namespace: Optional[str]) -> NameScope:
+        """The global element names already used in ``namespace``."""
+        return self._element_scopes.setdefault(namespace, NameScope())
+
+    def qualified(self, name: str, namespace: Optional[str]) -> str:
+        """``name`` as a reference from a schema document: ``<prefix>:<name>``, or bare without a namespace."""
+        return f"{self.prefixes[namespace]}:{name}" if namespace else name
+
+    def type_ref(self, key: str) -> str:
+        """The ``type=`` / ``base=`` reference to the named type ``key`` (``tns:Pet``)."""
+        return self.qualified(self.type_names[key], self.type_namespaces[key])
 
     # ------------------------------------------------------------------
     # Names
@@ -138,29 +188,67 @@ class XsdSchemaWriter:
     # Schema
     # ------------------------------------------------------------------
 
-    def new_schema(self) -> ET.Element:
-        """The empty ``xsd:schema`` element, with ``targetNamespace`` and ``xmlns:tns`` declared."""
-        schema_el = ET.Element(
-            ET.QName(XSD_NS, "schema"),
-            # `tns:` appears only in attribute values, which ElementTree never declares itself.
-            {"targetNamespace": self.target_namespace, f"xmlns:{TNS_PREFIX}": self.target_namespace},
-        )
+    def new_schema(self, namespace: Any = _EVERY_NAMESPACE) -> ET.Element:
+        """The empty ``xsd:schema`` element of one namespace (default: ``target_namespace``).
+
+        ``targetNamespace`` and its prefix are declared when there is a namespace; an XSD 1.1 schema
+        is marked ``vc:minVersion="1.1"``. A document that references another namespace's types
+        declares that prefix itself (:meth:`declare_prefixes`).
+        """
+        namespace = self.target_namespace if namespace is _EVERY_NAMESPACE else namespace
+        attributes: Dict[str, str] = {}
+        if namespace:
+            # Prefixes appear only in attribute values, which ElementTree never declares itself.
+            attributes = {"targetNamespace": namespace, f"xmlns:{self.prefixes[namespace]}": namespace}
+        if self.xsd_version == "1.1":
+            attributes.update({"xmlns:vc": VC_NS, "vc:minVersion": "1.1"})
+        schema_el = ET.Element(ET.QName(XSD_NS, "schema"), attributes)
         self._schema_el = schema_el
+        self._document_namespace = namespace
         return schema_el
 
-    def append_types(self, schema_el: ET.Element) -> None:
-        """Write every type (and a global element for each complex one) into ``schema_el``."""
+    def append_types(
+        self, schema_el: ET.Element, namespace: Any = _EVERY_NAMESPACE, *, declare_elements: bool = True
+    ) -> None:
+        """Write the types (and a global element for each complex one) into ``schema_el``.
+
+        Args:
+            schema_el: The schema document.
+            namespace: Write only the types in this namespace (default: every type).
+            declare_elements: Declare a global element per complex type (an XSD source declares its own).
+        """
         self._schema_el = schema_el
+        if namespace is not _EVERY_NAMESPACE:
+            self._document_namespace = namespace
         for type_ in self._api.types:
             if type_.key in self._skip:
                 continue
-            if self.append_type(schema_el, type_):
-                name = self.type_names[type_.key]
-                element = self.element_scope.claim(name)
+            type_namespace = self.type_namespaces[type_.key]
+            if namespace is not _EVERY_NAMESPACE and type_namespace != namespace:
+                continue
+            if self.append_type(schema_el, type_) and declare_elements:
+                element = self._element_scope(type_namespace).claim(self.type_names[type_.key])
                 ET.SubElement(
-                    schema_el, ET.QName(XSD_NS, "element"), {"name": element, "type": f"{TNS_PREFIX}:{name}"}
+                    schema_el, ET.QName(XSD_NS, "element"), {"name": element, "type": self.type_ref(type_.key)}
                 )
                 self.type_elements[type_.key] = element
+
+    def referenced_namespaces(self, schema_el: ET.Element) -> List[str]:
+        """The other namespaces whose prefixes ``schema_el``'s ``type`` / ``base`` references use, in order."""
+        by_prefix = {prefix: namespace for namespace, prefix in self.prefixes.items()}
+        found: List[str] = []
+        for node in schema_el.iter():
+            for attribute in ("type", "base"):
+                value = node.get(attribute) or ""
+                namespace = by_prefix.get(value.split(":", 1)[0]) if ":" in value else None
+                if namespace and namespace != self._document_namespace and namespace not in found:
+                    found.append(namespace)
+        return found
+
+    def declare_prefixes(self, schema_el: ET.Element, namespaces: List[str]) -> None:
+        """Declare the prefix of each namespace in ``namespaces`` on ``schema_el``."""
+        for namespace in namespaces:
+            schema_el.set(f"xmlns:{self.prefixes[namespace]}", namespace)
 
     def append_type(self, schema_el: ET.Element, type_: Type) -> bool:
         """Write one named type; return whether it is a complex type (and so gets an element)."""
@@ -178,6 +266,7 @@ class XsdSchemaWriter:
                 ET.SubElement(simple, ET.QName(XSD_NS, "restriction"), {"base": f"{XSD_PREFIX}:{base}"}),
                 type_.constraints,
                 base,
+                self.xsd_version,
             )
             return False
         if type_.kind is TypeKind.ALIAS and type_.aliased is not None:
@@ -192,19 +281,48 @@ class XsdSchemaWriter:
         else:
             sequence_el = ET.SubElement(complex_el, ET.QName(XSD_NS, "sequence"))
             scope = NameScope()
+            attributes: List[CanonicalField] = []
             for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
-                self.append_field(sequence_el, field, scope)
+                if (field.extras or {}).get("xsd_kind") == "attribute":
+                    attributes.append(field)
+                else:
+                    self.append_field(sequence_el, field, scope)
+            # Attributes follow the content model; they have their own symbol space.
+            attribute_scope = NameScope()
+            for field in attributes:
+                self._append_source_attribute(complex_el, field, attribute_scope)
         return True
 
+    def _append_source_attribute(self, complex_el: ET.Element, field: CanonicalField, scope: NameScope) -> None:
+        """A field imported from an XSD ``xs:attribute``: written back as one."""
+        name = scope.claim(ncname(field.name, fallback="attribute"))
+        self.rename(field.name, name, field.key, "attribute")
+        self.tracker.record(field.key, Provenance.SOURCE)
+        type_ref = self.source_type_qname(field.type, hint=field.extras.get("xsd_type"))
+        ET.SubElement(complex_el, ET.QName(XSD_NS, "attribute"), {"name": name, "type": type_ref})
+
     def _append_enum(self, schema_el: ET.Element, type_: Type, name: str) -> None:
-        """An enum: a ``simpleType`` restricting ``xs:int`` (all-integer values) or ``xs:string``."""
-        values = [v.value if v.value is not None else v.name for v in type_.enum_values]
-        integral = bool(values) and all(isinstance(v, int) and not isinstance(v, bool) for v in values)
+        """An enum: a ``simpleType`` restricting ``xs:int`` (a numeric enum) or ``xs:string``.
+
+        A numeric enum is one whose every value is an integer named by itself (JSON Schema
+        ``enum: [1, 2]``). Any other enum is written by its wire values: a string value, else the symbol
+        name — an Avro or Protobuf enum's number is a position or tag, not what an XML document carries.
+        An enum imported from XSD keeps its base.
+        """
+        members = type_.enum_values
+        integral = bool(members) and all(
+            isinstance(v.value, int) and not isinstance(v.value, bool) and v.name == str(v.value) for v in members
+        )
+        values: List[Any] = [
+            v.value if integral or isinstance(v.value, str) else v.name for v in members
+        ]
+        base = "int" if integral else "string"
+        source_base = (type_.extras or {}).get("xsd_base")
+        if isinstance(source_base, str) and source_base:
+            values, base = [v.name for v in members], source_base.split(":")[-1]
         simple = ET.SubElement(schema_el, ET.QName(XSD_NS, "simpleType"), {"name": name})
         annotate(simple, type_.description)
-        restriction = ET.SubElement(
-            simple, ET.QName(XSD_NS, "restriction"), {"base": f"{XSD_PREFIX}:{'int' if integral else 'string'}"}
-        )
+        restriction = ET.SubElement(simple, ET.QName(XSD_NS, "restriction"), {"base": f"{XSD_PREFIX}:{base}"})
         for value in values:
             ET.SubElement(restriction, ET.QName(XSD_NS, "enumeration"), {"value": _literal(value)})
 
@@ -216,16 +334,14 @@ class XsdSchemaWriter:
         if builtin is not None or (target is not None and self.is_simple(target)):
             simple = ET.SubElement(schema_el, ET.QName(XSD_NS, "simpleType"), {"name": name})
             annotate(simple, type_.description)
-            base = f"{XSD_PREFIX}:{builtin}" if builtin else f"{TNS_PREFIX}:{self.type_names[target.key]}"
+            base = f"{XSD_PREFIX}:{builtin}" if builtin else self.type_ref(target.key)
             ET.SubElement(simple, ET.QName(XSD_NS, "restriction"), {"base": base})
             return False
         complex_el = ET.SubElement(schema_el, ET.QName(XSD_NS, "complexType"), {"name": name})
         annotate(complex_el, type_.description)
         if target is not None:
             content = ET.SubElement(complex_el, ET.QName(XSD_NS, "complexContent"))
-            ET.SubElement(
-                content, ET.QName(XSD_NS, "extension"), {"base": f"{TNS_PREFIX}:{self.type_names[target.key]}"}
-            )
+            ET.SubElement(content, ET.QName(XSD_NS, "extension"), {"base": self.type_ref(target.key)})
         else:
             sequence_el = ET.SubElement(complex_el, ET.QName(XSD_NS, "sequence"))
             self.append_value(sequence_el, "item", aliased, pointer=type_.key, optional=False)
@@ -280,7 +396,7 @@ class XsdSchemaWriter:
                 LossKind.NA, "deprecated-dropped",
                 f"XSD has no deprecation marker; {field.key!r} is written without one.", pointer=field.key,
             )
-        unsupported = unsupported_facets(field.constraints)
+        unsupported = unsupported_facets(field.constraints, version=self.xsd_version)
         if unsupported:
             self.losses.record(
                 LossKind.NA, "unsupported-facet",
@@ -314,10 +430,11 @@ class XsdSchemaWriter:
         simple_type = extras.get("xsd_simple_type")
         base = extras.get("xsd_base")
         if base and simple_type:
-            # A named simple type: written once at schema level, referenced by name.
-            attributes["type"] = f"{TNS_PREFIX}:{simple_type}"
-            if simple_type not in self._simple_types_written and self._schema_el is not None:
-                self._simple_types_written.add(simple_type)
+            # A named simple type: written once per schema document, referenced by name.
+            attributes["type"] = self.qualified(simple_type, self._document_namespace)
+            written = (self._document_namespace, simple_type)
+            if written not in self._simple_types_written and self._schema_el is not None:
+                self._simple_types_written.add(written)
                 named = ET.SubElement(self._schema_el, ET.QName(XSD_NS, "simpleType"), {"name": simple_type})
                 _append_restriction(named, base, facets)
         elif not base:
@@ -389,9 +506,12 @@ class XsdSchemaWriter:
             attributes["minOccurs"] = "0"
             attributes["nillable"] = "true"
         builtin = self.builtin(ref, fmt, hint=hint)
-        if default is not None and builtin is not None and not isinstance(default, (dict, list)):
+        target = self._types_by_key.get(ref.name or "") if builtin is None else None
+        # A default needs a simple type: a built-in, or a named enum / scalar / simple alias.
+        simple = builtin is not None or (target is not None and self.is_simple(target))
+        if default is not None and simple and not isinstance(default, (dict, list)):
             attributes["default"] = _literal(default)
-        if builtin is not None and _has_facets(constraints, builtin):
+        if builtin is not None and _has_facets(constraints, builtin, self.xsd_version):
             element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
             annotate(element, description)
             restriction = ET.SubElement(
@@ -399,7 +519,7 @@ class XsdSchemaWriter:
                 ET.QName(XSD_NS, "restriction"),
                 {"base": f"{XSD_PREFIX}:{builtin}"},
             )
-            _append_facets(restriction, constraints, builtin)
+            _append_facets(restriction, constraints, builtin, self.xsd_version)
             return element
         attributes["type"] = self.type_qname(ref, fmt, pointer, hint=hint)
         element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
@@ -443,7 +563,7 @@ class XsdSchemaWriter:
             )
             return f"{XSD_PREFIX}:anyType"
         if ref.name in self.type_names:
-            return f"{TNS_PREFIX}:{self.type_names[ref.name]}"
+            return self.type_ref(ref.name)
         builtin = xsd_builtin(ref.name, fmt, xsd_hint=hint)
         if builtin is not None:
             return f"{XSD_PREFIX}:{builtin}"
@@ -455,17 +575,22 @@ class XsdSchemaWriter:
         return f"{XSD_PREFIX}:string"
 
     def source_type_qname(self, ref: TypeRef, *, hint: Optional[str] = None) -> str:
-        """The ``type=`` value for a field or part imported from XML (keeps imported names)."""
+        """The ``type=`` value for a field or part imported from XML (keeps imported names).
+
+        A list's item type is named (the occurrence is written by ``maxOccurs``).
+        """
+        while ref.item is not None:
+            ref = ref.item
         if ref.name:
             mapped = xsd_builtin(ref.name, xsd_hint=hint) if hint else None
             if mapped:
                 return f"{XSD_PREFIX}:{mapped}"
             if ref.name in self.type_names:
-                return f"{TNS_PREFIX}:{self.type_names[ref.name]}"
+                return self.type_ref(ref.name)
             mapped = xsd_builtin(ref.name)
             if mapped:
                 return f"{XSD_PREFIX}:{mapped}"
-            return f"{TNS_PREFIX}:{ref.name.split('.')[-1]}"
+            return self.qualified(ref.name.split(".")[-1], self._document_namespace)
         return f"{XSD_PREFIX}:string"
 
 
@@ -523,7 +648,9 @@ def schema_type_verdict(type_: Type, *, target_label: str) -> Optional[FidelityV
     )
 
 
-def schema_field_verdicts(field: CanonicalField, *, target_label: str) -> List[FidelityVerdict]:
+def schema_field_verdicts(
+    field: CanonicalField, *, target_label: str, version: str = "1.0"
+) -> List[FidelityVerdict]:
     """Everything XSD changes or cannot carry about one field (rename, untyped, facets, deprecated)."""
     verdicts: List[FidelityVerdict] = []
     renamed = rename_verdict(
@@ -539,7 +666,7 @@ def schema_field_verdicts(field: CanonicalField, *, target_label: str) -> List[F
                 target_mapping="untyped → xs:anyType",
             )
         )
-    unsupported = unsupported_facets(field.constraints)
+    unsupported = unsupported_facets(field.constraints, version=version)
     if unsupported:
         verdicts.append(
             FidelityVerdict.approx(
@@ -562,12 +689,15 @@ def schema_field_verdicts(field: CanonicalField, *, target_label: str) -> List[F
 # ---------------------------------------------------------------------------
 
 
-def unsupported_facets(constraints: Optional[Constraints]) -> List[str]:
-    """Constraint keywords XSD has no facet for (and patterns it cannot express)."""
+def unsupported_facets(constraints: Optional[Constraints], *, version: str = "1.0") -> List[str]:
+    """Constraint keywords XSD has no facet for (and patterns it cannot express).
+
+    XSD 1.1 writes ``multipleOf`` as an ``xs:assertion``, so only XSD 1.0 reports it.
+    """
     if constraints is None:
         return []
     names = []
-    if constraints.multiple_of is not None:
+    if constraints.multiple_of is not None and version != "1.1":
         names.append("multipleOf")
     if constraints.unique_items:
         names.append("uniqueItems")
@@ -576,8 +706,11 @@ def unsupported_facets(constraints: Optional[Constraints]) -> List[str]:
     return names
 
 
-def _facets(constraints: Constraints, base: str) -> List[Tuple[str, Any]]:
-    """The ``(facet, value)`` pairs ``constraints`` maps to on a restriction of ``base``."""
+def _facets(constraints: Constraints, base: str, version: str = "1.0") -> List[Tuple[str, Any]]:
+    """The ``(facet, value)`` pairs ``constraints`` maps to on a restriction of ``base``.
+
+    In XSD 1.1, ``multipleOf`` on a numeric base is an ``("assertion", <XPath test>)`` pair.
+    """
     pairs: List[Tuple[str, Any]] = []
     if base in _LENGTH_BASES:
         if constraints.min_length is not None:
@@ -593,6 +726,8 @@ def _facets(constraints: Constraints, base: str) -> List[Tuple[str, Any]]:
         ):
             if value is not None:
                 pairs.append((facet, value))
+        if version == "1.1" and constraints.multiple_of is not None:
+            pairs.append(("assertion", f"$value mod {_literal(constraints.multiple_of)} = 0"))
     if constraints.pattern and xsd_pattern(constraints.pattern) is not None:
         pairs.append(("pattern", xsd_pattern(constraints.pattern)))
     for value in constraints.enum or []:
@@ -601,16 +736,19 @@ def _facets(constraints: Constraints, base: str) -> List[Tuple[str, Any]]:
     return pairs
 
 
-def _has_facets(constraints: Optional[Constraints], base: str) -> bool:
-    return constraints is not None and bool(_facets(constraints, base))
+def _has_facets(constraints: Optional[Constraints], base: str, version: str = "1.0") -> bool:
+    return constraints is not None and bool(_facets(constraints, base, version))
 
 
-def _append_facets(restriction: ET.Element, constraints: Optional[Constraints], base: str) -> None:
-    """Write the restriction facets ``base`` accepts; the order is free in XSD 1.0."""
+def _append_facets(
+    restriction: ET.Element, constraints: Optional[Constraints], base: str, version: str = "1.0"
+) -> None:
+    """Write the restriction facets ``base`` accepts; the order is free (an assertion comes last)."""
     if constraints is None:
         return
-    for facet, value in _facets(constraints, base):
-        ET.SubElement(restriction, ET.QName(XSD_NS, facet), {"value": _literal(value)})
+    for facet, value in _facets(constraints, base, version):
+        attribute = {"test": value} if facet == "assertion" else {"value": _literal(value)}
+        ET.SubElement(restriction, ET.QName(XSD_NS, facet), attribute)
 
 
 def _append_restriction(simple_type_el: ET.Element, base: str, facets: Any) -> None:

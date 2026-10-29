@@ -518,9 +518,10 @@ def _xml_result(
 
 def test_xsd_valid_instances_pass_through_the_harnessed_schema():
     async def fake_validate(schema_text: str, instance_text: str, **_: Any) -> XmlValidationResult:
-        # The harness must declare a global element for the entity, referencing the
-        # emitted type untouched; the instance root must be that element.
-        assert '<xs:element name="Widget" type="Widget"/>' in schema_text
+        # The schema must declare a global element for the entity, referencing the emitted
+        # type untouched (MFX-22.1: the XSD export declares one per record itself, so the
+        # harness adds none); the instance root must be that element.
+        assert '<xsd:element name="Widget" type="Widget" />' in schema_text
         assert instance_text.startswith("<Widget")
         return _xml_result(valid=True)
 

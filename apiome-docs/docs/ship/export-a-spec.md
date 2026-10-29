@@ -499,6 +499,32 @@ To get one file with the types inline, set the **layout** option to `single`.
 An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
 versions and XSD details round-trip unchanged.
 
+### XSD (XML Schema) on its own
+
+Exporting to **XSD** writes just the data types as an XML Schema, without the WSDL around them — for
+XML payloads, JAXB / JAXP code generation and standards that publish schemas (ISO 20022, UBL). The
+types are written exactly as in a WSDL export (the section above; both exports share one mapping):
+objects as `complexType`, a `oneOf` as `xs:choice`, a nullable field as `nillable="true"
+minOccurs="0"`, a list as `maxOccurs="unbounded"`, enums as `xs:enumeration`, and `pattern`,
+`minLength`/`maxLength` and `minimum`/`maximum` as facets. Each object also gets a global element of
+the same name, so a document can start with it.
+
+- **Version.** Set **xsd_version** to `1.0` (the default) or `1.1`. An XSD 1.1 schema is marked
+  `vc:minVersion="1.1"` and writes `multipleOf: 5` as an assertion facet,
+  `<xsd:assertion test="$value mod 5 = 0"/>`. XSD 1.0 has no facet for `multipleOf`, so the fidelity
+  report lists it there.
+- **Namespace.** The schema's `targetNamespace` is the item's own namespace; an item without one gets
+  a no-namespace schema, whose types are referenced by plain name.
+- **Several namespaces.** When the item's types live in different namespaces (URIs such as
+  `http://example.com/common`), you get one `.xsd` per namespace, downloaded together as a `.zip`:
+  `<Name>.xsd` is the main schema, `<Name>-common.xsd` the next, and each schema `xs:import`s the
+  others it uses.
+- **Operations.** XSD describes data only: operations and channels are left out, and the fidelity
+  report lists each one.
+
+An item imported from XSD is written back with its own global elements, attributes, occurrences and
+enumeration values.
+
 ### WADL from any source
 
 Exporting to **WADL** writes a description that validates against the W3C WADL schema, with its

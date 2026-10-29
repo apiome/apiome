@@ -508,35 +508,4 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation CancelOrder.CancelOrder; removed operation http://example.com/orders.OrderPort.Cance',
     ('wsdl2', 'xmlrpc'):
         'added operation cancelOrder.cancelOrder; removed operation http://example.com/orders.OrderInterface.',
-    # --- xsd (15) ---
-    ('cobolcopybook', 'xsd'):
-        'changed root; changed type CUSTOMER-RECORD.CUSTOMER-RECORD',
-    ('edifact', 'xsd'):
-        'changed root; changed type EDIFACT-INVOIC.DTM; changed type EDIFACT-INVOIC.IMD; changed type EDIFACT',
-    ('edix12', 'xsd'):
-        'changed root; changed type X12-850.PO1; changed type X12-850.TransactionSet850',
-    ('fix', 'xsd'):
-        'changed root; changed type FIX.4.4.Message8',
-    ('flatbuffers', 'xsd'):
-        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
-    ('hl7v2', 'xsd'):
-        'changed root; changed type ADT-A01.MSH; changed type ADT-A01.MessageADTA01',
-    ('idoc', 'xsd'):
-        'changed root; changed type IDOC-ORDERS05.E1EDK01; changed type IDOC-ORDERS05.E1EDK03; changed type I',
-    ('iso20022', 'xsd'):
-        'changed root; changed type pain.001.001.09.Amt; changed type pain.001.001.09.CdtTrfTxInf; changed ty',
-    ('iso8583', 'xsd'):
-        'changed root; changed type 0100.DE11; changed type 0100.DE12; changed type 0100.DE13; changed type 0',
-    ('kafka-connect', 'xsd'):
-        'changed root; changed type com.example.orders.Order',
-    ('nacha', 'xsd'):
-        'changed root; changed type NACHA-ACH.AchFile; changed type NACHA-ACH.Batch; changed type NACHA-ACH.B',
-    ('ncpdp', 'xsd'):
-        'changed root; changed type NCPDP-SCRIPT.Address; changed type NCPDP-SCRIPT.Body; changed type NCPDP-',
-    ('sepa', 'xsd'):
-        'changed root; changed type pain.001.001.09.Amt; changed type pain.001.001.09.CdtTrfTxInf; changed ty',
-    ('swift-mt', 'xsd'):
-        'changed root; changed type SWIFT-MT103.CodeWord; changed type SWIFT-MT103.Field13C; changed type SWI',
-    ('tradacoms', 'xsd'):
-        'changed root; changed type TRADACOMS-ORDERS.MessageORDERS; changed type TRADACOMS-ORDERS.OLD',
 }

@@ -1,0 +1,22 @@
+---
+slug: standalone-xsd-export
+title: XSD export writes facets, choices and XSD 1.1
+description: The XSD export now writes facets, choices, nillable fields, XSD 1.1 and multi-namespace zips.
+authors: [apiome]
+---
+
+Exporting an item to **XSD** now writes the same XML Schema a WSDL export writes for its types, as a
+standalone schema, in XSD 1.0 or 1.1.
+[How the XSD is written](/ship/export-a-spec#xsd-xml-schema-on-its-own).
+
+{/* truncate */}
+
+- **Rules as facets.** `pattern`, `minLength`/`maxLength` and `minimum`/`maximum` become XSD facets,
+  so a validator enforces them.
+- **Unions, nullability and lists.** A `oneOf` becomes an `xs:choice`, a nullable field
+  `nillable="true" minOccurs="0"`, and a list `maxOccurs="unbounded"`.
+- **XSD 1.1.** Set **xsd_version** to `1.1` to write `multipleOf` as an assertion facet.
+- **Several namespaces.** An item whose types live in different namespaces downloads as a `.zip` with
+  one schema per namespace, joined by `xs:import`.
+- **XSD items round-trip.** An item imported from XSD keeps its elements, attributes and enumeration
+  values.

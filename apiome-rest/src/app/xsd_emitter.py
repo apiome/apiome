@@ -1,26 +1,35 @@
-"""XSD emitter: canonical model → XML Schema (XSD).
+"""XSD emitter: canonical model → standalone XML Schema — MFX-22.1 (#4132).
 
-The inverse of :class:`app.xsd_normalizer.XsdNormalizer` and an implementation of
-the :class:`app.emitter.Emitter` SPI.
+The inverse of :class:`app.xsd_normalizer.XsdNormalizer` and an implementation of the
+:class:`app.emitter.Emitter` SPI. Exports just the data types, as XSD 1.0 (the default) or XSD 1.1.
+
+**Types → XSD** use the shared writer, :mod:`app.xsd_schema` — the same mapping WSDL (MFX-14.1) and
+WADL write, so the three cannot drift:
+
+* records → ``complexType`` + ``sequence`` (and a global element of the same name);
+* unions (``oneOf``) → ``xs:choice``; enums → ``xs:enumeration``;
+* nullable fields → ``nillable="true" minOccurs="0"``; lists → ``maxOccurs="unbounded"``;
+* constraints → facets (``pattern``, ``minLength`` / ``maxLength``, ``minInclusive`` /
+  ``maxInclusive`` …), never comments; in XSD 1.1 ``multipleOf`` → ``xs:assertion``;
+* a model imported from XSD is written back with its own elements, attributes, occurrences and enum
+  bases.
+
+**Namespaces.** The ``targetNamespace`` is the source's namespace (an XSD source's own); a source with
+none writes a no-namespace schema. A type whose namespace is a different URI is written in a schema
+document of its own, so a multi-namespace source exports one ``.xsd`` per namespace — the first is
+the main document — each ``xs:import`` ing the namespaces it references (delivered as a zip).
+Operations and channels are dropped: XSD describes data only.
 """
 
 from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from pydantic import Field
 
-from .canonical_model import (
-    ApiParadigm,
-    CanonicalApi,
-    CanonicalField,
-    OperationKind,
-    Type,
-    TypeKind,
-    TypeRef,
-)
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Type
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -29,42 +38,51 @@ from .emitter import (
     Emitter,
     LossKind,
     LossTracker,
-    Provenance,
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessKind, LossinessSeverity
+from .xsd_schema import (
+    TNS_PREFIX,
+    XSD_NS,
+    XSD_PREFIX,
+    XsdSchemaWriter,
+    comment_safe,
+    schema_field_verdicts,
+    schema_type_verdict,
+)
+from .xsd_types import xsd_builtin
 
-__all__ = ["XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack"]
+__all__ = ["XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces"]
 
-_XSD_NS = "http://www.w3.org/2001/XMLSchema"
-_XS_PREFIX = "xs"
-_TNS_PREFIX = "tns"
-
-_CANONICAL_TO_XSD: Dict[str, str] = {
-    "bool": "boolean",
-    "string": "string",
-    "double": "double",
-    "float": "float",
-    "i16": "short",
-    "i32": "int",
-    "i64": "long",
-    "integer": "int",
-    "uint8": "unsignedByte",
-    "uint16": "unsignedShort",
-    "uint32": "unsignedInt",
-    "uint64": "unsignedLong",
-    "int8": "byte",
-    "bytes": "base64Binary",
-}
-
-_EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+_XSD_FORMAT = "xsd"
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
+#: A namespace that is a URI (``http://…``, ``urn:…``) rather than a package name (``com.example``).
+_URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 class XsdFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for XSD export."""
+    """Fidelity rules for XSD export.
+
+    XSD is types-only: operations and channels are dropped. On top of the capability rules, the
+    shared XSD rules (:mod:`app.xsd_schema`) report renamed names, maps written as entry lists,
+    untyped values and constraints with no facet.
+    """
 
     target_label = "XSD"
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """A document of another format is rewritten as an XML Schema and reads back as an XSD item."""
+        if api.format == _XSD_FORMAT:
+            return []
+        return [
+            FidelityVerdict.approx(
+                message=f"The {api.format or 'source'} document is written as an XML Schema and reads back as an "
+                "XSD item; details specific to its format are not kept",
+                severity=LossinessSeverity.INFO,
+                target_mapping="document → XML Schema",
+            )
+        ]
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -80,10 +98,24 @@ class XsdFidelityRulePack(CapabilityRulePack):
             target_mapping="channel → dropped (types-only export)",
         )
 
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        verdict = super().type_verdict(type_)
+        if verdict.kind is not LossinessKind.OK:
+            return verdict
+        return schema_type_verdict(type_, target_label=self.target_label) or verdict
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        return [*super().field_verdicts(field), *schema_field_verdicts(field, target_label=self.target_label)]
+
 
 class XsdEmitOptions(EmitOptions):
     """Per-target options for :class:`XsdEmitter`."""
 
+    xsd_version: Literal["1.0", "1.1"] = Field(
+        default="1.0",
+        description="`1.0` (default) or `1.1`. XSD 1.1 marks the schema `vc:minVersion=\"1.1\"` and "
+        "writes `multipleOf` as an `xs:assertion` facet.",
+    )
     include_xml_declaration: bool = Field(
         default=True,
         description="Emit the XML 1.0 declaration prolog.",
@@ -95,12 +127,12 @@ class XsdEmitOptions(EmitOptions):
 
 
 class XsdEmitter(Emitter, register=True):
-    """Emit a :class:`CanonicalApi` as an XSD schema document."""
+    """Emit a :class:`CanonicalApi` as XSD schema documents (one per namespace)."""
 
     key = "xsd"
     format = "xsd"
     label = "XSD"
-    description = "Export as a W3C XML Schema Definition (XSD)."
+    description = "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1)."
     icon = "file-code"
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
@@ -113,8 +145,9 @@ class XsdEmitter(Emitter, register=True):
         return CapabilityProfile(
             operations=False,
             events=False,
-            unions=False,
+            unions=True,
             nullability=True,
+            constraints=True,
             field_identity=True,
         )
 
@@ -134,66 +167,74 @@ class XsdEmitter(Emitter, register=True):
             else XsdEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
         writer = _XsdWriter(api, options)
-        content = writer.render()
+        files = [
+            EmittedFile(path=path, content=content, media_type=self.OUTPUT_MEDIA_TYPE)
+            for path, content in writer.render()
+        ]
         return EmitResult(
-            files=[
-                EmittedFile(
-                    path=writer.output_path,
-                    content=content,
-                    media_type=self.OUTPUT_MEDIA_TYPE,
-                )
-            ],
+            files=files,
             media_type=self.OUTPUT_MEDIA_TYPE,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
         )
 
 
+def xsd_namespaces(api: CanonicalApi) -> Tuple[Optional[str], Dict[str, Optional[str]]]:
+    """The main ``targetNamespace`` and the namespace each type is written in.
+
+    The main namespace is the source's (``identity.namespace``, an XSD source's target namespace),
+    else the first URI namespace of a type, else ``None`` (a no-namespace schema). A type whose own
+    namespace is a URI keeps it; any other type (a package name, or none) is written in the main one.
+
+    Args:
+        api: The model being exported.
+
+    Returns:
+        ``(main namespace, {type key: namespace})``.
+    """
+    type_uris = [t.namespace for t in api.types if t.namespace and _URI.match(t.namespace)]
+    main = (
+        api.identity.namespace
+        or api.extras.get("xsd_target_namespace")
+        or (type_uris[0] if type_uris else None)
+    )
+    return main, {
+        t.key: t.namespace if t.namespace and _URI.match(t.namespace) else main for t in api.types
+    }
+
+
 class _XsdWriter:
+    """Builds the schema documents of one export (single use)."""
+
     def __init__(self, api: CanonicalApi, options: XsdEmitOptions) -> None:
         self._api = api
         self._options = options
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
-        self._types_by_key = {type_.key: type_ for type_ in api.types}
-        self._target_ns = api.identity.namespace or api.extras.get("xsd_target_namespace")
-        self.output_path = _output_path(api)
+        self.main_namespace, type_namespaces = xsd_namespaces(api)
+        #: Every namespace written, the main one first.
+        self.namespaces: List[Optional[str]] = [self.main_namespace]
+        for namespace in type_namespaces.values():
+            if namespace not in self.namespaces:
+                self.namespaces.append(namespace)
+        prefixes = {self.main_namespace: TNS_PREFIX} if self.main_namespace else {}
+        for index, namespace in enumerate(n for n in self.namespaces if n and n != self.main_namespace):
+            prefixes[namespace] = f"ns{index + 1}"
+        self._schema = XsdSchemaWriter(
+            api,
+            target_namespace=self.main_namespace,
+            target_label="XSD",
+            losses=self.losses,
+            tracker=self.tracker,
+            type_namespaces=type_namespaces,
+            prefixes=prefixes,
+            xsd_version=options.xsd_version,
+        )
+        self.paths = _document_paths(api, self.namespaces)
 
-    def render(self) -> str:
-        ET.register_namespace(_XS_PREFIX, _XSD_NS)
-        if self._target_ns:
-            ET.register_namespace(_TNS_PREFIX, str(self._target_ns))
-
-        schema_attrs: Dict[str, str] = {
-            "elementFormDefault": "qualified",
-        }
-        if self._target_ns:
-            schema_attrs["targetNamespace"] = str(self._target_ns)
-            schema_attrs[f"xmlns:{_TNS_PREFIX}"] = str(self._target_ns)
-
-        schema_el = ET.Element(ET.QName(_XSD_NS, "schema"), schema_attrs)
-
-        root_element = self._api.extras.get("xsd_root_element")
-        if isinstance(root_element, str) and root_element:
-            root_type = self._root_type_name(root_element)
-            if root_type:
-                ET.SubElement(
-                    schema_el,
-                    ET.QName(_XSD_NS, "element"),
-                    {
-                        "name": root_element,
-                        "type": f"{_TNS_PREFIX}:{root_type}",
-                    },
-                )
-
-        for type_ in sorted(self._api.types, key=lambda item: item.name):
-            if type_.kind is TypeKind.RECORD:
-                self._append_complex_type(schema_el, type_)
-            elif type_.kind is TypeKind.ENUM:
-                self._append_simple_enum(schema_el, type_)
-            elif type_.kind is TypeKind.SCALAR:
-                self._append_simple_scalar(schema_el, type_)
-
+    def render(self) -> List[Tuple[str, str]]:
+        """Every schema document as ``(path, text)``, the main document first."""
+        ET.register_namespace(XSD_PREFIX, XSD_NS)
         if self._api.services or self._api.channels:
             self.losses.record(
                 LossKind.NA,
@@ -201,148 +242,80 @@ class _XsdWriter:
                 "XSD export omits service/operation constructs",
                 pointer="services",
             )
+        from_xsd = self._api.format == _XSD_FORMAT
+        documents: List[Tuple[str, str]] = []
+        for namespace in self.namespaces:
+            schema_el = self._schema.new_schema(namespace)
+            if namespace:
+                schema_el.set("elementFormDefault", "qualified")
+            self._schema.append_types(schema_el, namespace, declare_elements=not from_xsd)
+            if from_xsd and namespace == self.main_namespace:
+                self._prepend_source_elements(schema_el)
+            self._prepend_imports(schema_el)
+            documents.append((self.paths[namespace], self._serialize(schema_el)))
+        return documents
 
-        xml_body = ET.tostring(schema_el, encoding="unicode")
+    def _prepend_source_elements(self, schema_el: ET.Element) -> None:
+        """An XSD source's own global elements, first (the first is the document's root element)."""
+        types_by_name = {t.name: t.key for t in self._api.types}
+        declared = [e for e in self._api.extras.get("xsd_elements") or [] if isinstance(e, dict)]
+        for index, entry in enumerate(e for e in declared if e.get("name") and e.get("type")):
+            type_name = str(entry["type"])
+            key = types_by_name.get(type_name)
+            builtin = None if key else xsd_builtin(type_name, xsd_hint=type_name)
+            type_ref = (
+                self._schema.type_ref(key) if key
+                else f"{XSD_PREFIX}:{builtin}" if builtin
+                else self._schema.qualified(type_name, self.main_namespace)
+            )
+            element = ET.Element(ET.QName(XSD_NS, "element"), {"name": str(entry["name"]), "type": type_ref})
+            schema_el.insert(index, element)
+
+    def _prepend_imports(self, schema_el: ET.Element) -> None:
+        """``xs:import`` each other namespace the document references (imports come first)."""
+        namespaces = self._schema.referenced_namespaces(schema_el)
+        self._schema.declare_prefixes(schema_el, namespaces)
+        for index, namespace in enumerate(namespaces):
+            schema_el.insert(
+                index,
+                ET.Element(
+                    ET.QName(XSD_NS, "import"),
+                    {"namespace": namespace, "schemaLocation": self.paths[namespace]},
+                ),
+            )
+
+    def _serialize(self, schema_el: ET.Element) -> str:
+        """The document text, with the optional XML declaration and header comment."""
         parts: List[str] = []
         if self._options.include_xml_declaration:
             parts.append('<?xml version="1.0" encoding="UTF-8"?>')
         if self._options.include_comments:
             title = self._api.title or self._api.identity.name or "schema"
-            parts.append(f"<!-- Generated XSD for {title} -->")
-        parts.append(xml_body)
+            parts.append(f"<!-- Generated XSD {self._options.xsd_version} for {comment_safe(title)} -->")
+        ET.indent(schema_el, space="  ")
+        parts.append(ET.tostring(schema_el, encoding="unicode"))
         return "\n".join(parts) + "\n"
 
-    def _root_type_name(self, root_element: str) -> Optional[str]:
-        elements = self._api.extras.get("xsd_elements")
-        if isinstance(elements, list):
-            for entry in elements:
-                if isinstance(entry, dict) and entry.get("name") == root_element:
-                    type_name = entry.get("type")
-                    if isinstance(type_name, str):
-                        return type_name
-        for type_ in self._api.types:
-            if type_.name == root_element:
-                return type_.name
-        return None
 
-    def _append_complex_type(self, schema_el: ET.Element, type_: Type) -> None:
-        complex_el = ET.SubElement(
-            schema_el,
-            ET.QName(_XSD_NS, "complexType"),
-            {"name": type_.name},
-        )
-        element_fields = [field for field in type_.fields if field.extras.get("xsd_kind") != "attribute"]
-        attribute_fields = [field for field in type_.fields if field.extras.get("xsd_kind") == "attribute"]
-        if element_fields:
-            sequence_el = ET.SubElement(complex_el, ET.QName(_XSD_NS, "sequence"))
-            for field in sorted(element_fields, key=lambda item: item.field_number or 0):
-                attrs: Dict[str, str] = {
-                    "name": field.name,
-                    "type": self._xsd_type(field),
-                }
-                max_occurs = field.extras.get("xsd_max_occurs")
-                if isinstance(max_occurs, str) and max_occurs:
-                    attrs["maxOccurs"] = max_occurs
-                min_occurs = field.extras.get("xsd_min_occurs")
-                if isinstance(min_occurs, str) and min_occurs:
-                    attrs["minOccurs"] = min_occurs
-                ET.SubElement(sequence_el, ET.QName(_XSD_NS, "element"), attrs)
-                self.tracker.record(field.key, Provenance.SOURCE)
-        for field in sorted(attribute_fields, key=lambda item: item.field_number or 0):
-            ET.SubElement(
-                complex_el,
-                ET.QName(_XSD_NS, "attribute"),
-                {
-                    "name": field.name,
-                    "type": self._xsd_type(field),
-                },
-            )
-            self.tracker.record(field.key, Provenance.SOURCE)
-        self.tracker.record(type_.key, Provenance.SOURCE)
-
-    def _append_simple_enum(self, schema_el: ET.Element, type_: Type) -> None:
-        simple_el = ET.SubElement(
-            schema_el,
-            ET.QName(_XSD_NS, "simpleType"),
-            {"name": type_.name},
-        )
-        base = type_.extras.get("xsd_base")
-        restriction_base = (
-            f"{_XS_PREFIX}:{_attr_local(str(base))}"
-            if isinstance(base, str) and base
-            else f"{_XS_PREFIX}:string"
-        )
-        restriction_el = ET.SubElement(
-            simple_el,
-            ET.QName(_XSD_NS, "restriction"),
-            {"base": restriction_base},
-        )
-        for enum_value in type_.enum_values:
-            ET.SubElement(
-                restriction_el,
-                ET.QName(_XSD_NS, "enumeration"),
-                {"value": enum_value.name},
-            )
-        self.tracker.record(type_.key, Provenance.SOURCE)
-
-    def _append_simple_scalar(self, schema_el: ET.Element, type_: Type) -> None:
-        simple_el = ET.SubElement(
-            schema_el,
-            ET.QName(_XSD_NS, "simpleType"),
-            {"name": type_.name},
-        )
-        base = type_.extras.get("xsd_base") or type_.extras.get("xsd_type") or "string"
-        ET.SubElement(
-            simple_el,
-            ET.QName(_XSD_NS, "restriction"),
-            {"base": f"{_XS_PREFIX}:{_attr_local(str(base))}"},
-        )
-        self.tracker.record(type_.key, Provenance.SOURCE)
-
-    def _xsd_type(self, field: CanonicalField) -> str:
-        xsd_type = field.extras.get("xsd_type")
-        if isinstance(xsd_type, str) and xsd_type in self._types_by_key:
-            return f"{_TNS_PREFIX}:{xsd_type}"
-        if isinstance(xsd_type, str):
-            mapped = _CANONICAL_TO_XSD.get(xsd_type.lower())
-            if mapped:
-                return f"{_XS_PREFIX}:{mapped}"
-            if xsd_type.lower() in {
-                "string",
-                "boolean",
-                "double",
-                "float",
-                "decimal",
-                "int",
-                "integer",
-                "positiveinteger",
-                "date",
-                "datetime",
-                "time",
-            }:
-                return f"{_XS_PREFIX}:{xsd_type.lower().replace('positiveinteger', 'positiveInteger')}"
-        ref = field.type
-        if ref.is_list() and ref.item is not None and ref.item.name:
-            return self._xsd_type_for_ref(ref.item)
-        return self._xsd_type_for_ref(ref)
-
-    def _xsd_type_for_ref(self, ref: TypeRef) -> str:
-        if not ref.name:
-            return f"{_XS_PREFIX}:string"
-        mapped = _CANONICAL_TO_XSD.get(ref.name.lower())
-        if mapped:
-            return f"{_XS_PREFIX}:{mapped}"
-        target = self._types_by_key.get(ref.name)
-        if target:
-            return f"{_TNS_PREFIX}:{target.name}"
-        return f"{_TNS_PREFIX}:{ref.name.split('.')[-1]}"
+def _document_paths(api: CanonicalApi, namespaces: List[Optional[str]]) -> Dict[Optional[str], str]:
+    """The file name of each namespace's document: ``<Name>.xsd``, then ``<Name>-<last segment>.xsd``."""
+    base = _safe(api.identity.name or api.title or "schema", "schema")
+    paths: Dict[Optional[str], str] = {}
+    taken = set()
+    for index, namespace in enumerate(namespaces):
+        if index == 0:
+            stem = base
+        else:
+            segment = re.split(r"[/:#]", (namespace or "").rstrip("/#"))[-1]
+            stem = f"{base}-{_safe(segment, f'ns{index}')}"
+        candidate, suffix = stem, 2
+        while candidate in taken:
+            candidate, suffix = f"{stem}{suffix}", suffix + 1
+        taken.add(candidate)
+        paths[namespace] = f"{candidate}.xsd"
+    return paths
 
 
-def _attr_local(value: str) -> str:
-    return value.split(":", 1)[-1] if ":" in value else value
-
-
-def _output_path(api: CanonicalApi) -> str:
-    base = api.identity.name or api.title or "schema"
-    safe = re.sub(r"[^A-Za-z0-9_]+", "_", base).strip("_") or "schema"
-    return f"{safe}.xsd"
+def _safe(text: str, fallback: str) -> str:
+    """``text`` as a file-name stem (letters, digits and ``_``)."""
+    return re.sub(r"[^A-Za-z0-9_]+", "_", text).strip("_") or fallback
