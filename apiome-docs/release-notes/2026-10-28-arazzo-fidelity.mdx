@@ -1,0 +1,22 @@
+---
+slug: arazzo-fidelity
+title: Arazzo export says it captures workflows, not the whole API
+description: Exporting a plain API to Arazzo now warns and lists what becomes a workflow.
+authors: [apiome]
+---
+
+Arazzo describes workflows, not APIs. Exporting an OpenAPI, RPC or event API to **Arazzo** now says
+so up front: the fidelity report warns that *this target captures workflows, not the full API
+surface*. [What an Arazzo export carries](/ship/export-a-spec#arazzo-from-any-source).
+
+{/* truncate */}
+
+- **Synthesized workflows are marked.** Each service becomes a workflow whose steps follow the
+  operations' order. The report marks it synthesized, because the source declares no such workflow.
+  A step's operation id made up from the operation key is marked synthesized too.
+- **What is left behind is listed.** Each operation is marked approximated: its parameters and
+  schemas are not written. Types and event channels are marked dropped.
+- **Near-empty exports are explained.** A set of types or an event API has nothing to sequence. It
+  exports as a document with no workflow, and the report says why. A service with only event
+  operations no longer becomes a workflow with no steps.
+- **Arazzo items are unchanged.** An item imported from Arazzo exports and re-imports as it was.

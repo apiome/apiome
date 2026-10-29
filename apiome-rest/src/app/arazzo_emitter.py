@@ -7,6 +7,14 @@ was imported from (``extras.arazzo``); otherwise :func:`app.arazzo_spec.default_
 which picks 1.1.0 only when the model declares an AsyncAPI source description — a construct
 1.0 cannot express — and 1.0.1 otherwise. A 1.0 import therefore re-emits as 1.0, and a
 1.1 import as 1.1, without either being silently upgraded or downgraded.
+
+**Fidelity (MFX-10.2, #3871).** Arazzo is workflow-only. An Arazzo source is written back as it was
+read; any other source yields only the sequencing Apiome can make of it — one workflow per service,
+whose steps call that service's operations by id in declaration order — and :class:`ArazzoFidelityRulePack`
+says so: the report warns that *this target captures workflows, not the full API surface*, marks
+each synthesized workflow and step target ``SYNTH``, each operation reduced to a step ``APPROX``,
+every type declaration ``DROP``, and a source with nothing to sequence (a set of types, an event API)
+as a near-empty document (``DROP``). The writer records the same losses.
 """
 
 from __future__ import annotations
@@ -29,8 +37,7 @@ from .arazzo_spec import (
     supports_async_sources,
     validate_arazzo_version,
 )
-from .canonical_model import ApiParadigm, CanonicalApi, OperationKind
-from .import_source import DetectionInput
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Operation, OperationKind, Type
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -43,6 +50,8 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .import_source import DetectionInput
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = [
     "ArazzoEmitOptions",
@@ -53,11 +62,129 @@ __all__ = [
 
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
+#: The warning a non-workflow source's report leads with (MFX-10.2).
+WORKFLOWS_ONLY_WARNING = "this target captures workflows, not the full API surface"
+
+
+def _is_arazzo_source(api: CanonicalApi) -> bool:
+    """Whether ``api`` was imported from Arazzo (its workflows are real, not synthesized)."""
+    return api.format == ARAZZO_FORMAT
+
+
+def _steps(api: CanonicalApi) -> List[Operation]:
+    """The operations a rebuilt document writes as steps (every non-event operation)."""
+    return [op for op in api.operations() if op.kind not in _EVENT_OPERATION_KINDS]
+
+
+def _names_step_target(operation: Operation) -> bool:
+    """Whether the operation carries a step target of its own (else ``operationId`` is synthesized)."""
+    return any(key in operation.extras for key in STEP_TARGET_FIELDS)
+
+
+def _workflow_services(api: CanonicalApi) -> List[str]:
+    """The services a rebuilt document turns into workflows (those with at least one step)."""
+    return [svc.name or svc.key for svc in api.services if any(op.kind not in _EVENT_OPERATION_KINDS
+                                                                for op in svc.operations)]
+
 
 class ArazzoFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for Arazzo export."""
+    """Fidelity rules for Arazzo export (MFX-10.2, #3871).
+
+    An Arazzo source keeps the capability rules (its workflows are written back as read). Any other
+    source is a **non-workflow source**, and the report says what Arazzo makes of it:
+
+    * the root leads with :data:`WORKFLOWS_ONLY_WARNING` (``APPROX``, warn), names the workflows
+      synthesized from services (``SYNTH``), or — with nothing to sequence — the near-empty document
+      (``DROP``, warn);
+    * each operation becomes a step that calls it by id: ``APPROX`` (its parameters, bodies and
+      responses stay in the source description), plus ``SYNTH`` when the step's ``operationId`` is
+      made up from the operation key; event operations and channels are ``DROP``;
+    * every type declaration is ``DROP`` (Arazzo has no type vocabulary), its fields with it.
+    """
 
     target_label = "Arazzo"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note whether the source is a workflow source, then run the drive loop."""
+        self._workflows_source = _is_arazzo_source(api)
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The workflows-only warning, the synthesized workflows, or the near-empty document."""
+        if _is_arazzo_source(api):
+            return []
+        verdicts = [FidelityVerdict.approx(
+            message=(
+                f"Arazzo: {WORKFLOWS_ONLY_WARNING}. Operations become workflow steps that call them by id; "
+                "servers, parameters, request and response schemas and types are not written"
+            ),
+            severity=LossinessSeverity.WARN,
+            target_mapping="API surface → workflows",
+        )]
+        services = _workflow_services(api)
+        if services:
+            listed = ", ".join(repr(name) for name in services[:3]) + (
+                f" and {len(services) - 3} more" if len(services) > 3 else ""
+            )
+            verdicts.append(FidelityVerdict.synth(
+                message=(
+                    f"Arazzo: the source declares no workflow; {listed} "
+                    f"{'becomes a workflow' if len(services) == 1 else 'become workflows'} whose steps follow "
+                    "the operations' declaration order"
+                ),
+                severity=LossinessSeverity.INFO,
+                target_mapping="service → synthesized workflow",
+            ))
+        else:
+            verdicts.append(FidelityVerdict.drop(
+                message="Arazzo: the source has no operation to sequence; the document carries no workflow",
+                severity=LossinessSeverity.WARN,
+                target_mapping="no operations → near-empty document",
+            ))
+        return verdicts
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """A non-workflow source's operation becomes a step (``APPROX``), with a ``SYNTH`` made-up target."""
+        verdict = super().operation_verdict(operation)
+        if verdict.kind is not LossinessKind.OK or getattr(self, "_workflows_source", True):
+            return [verdict]
+        verdicts = [FidelityVerdict.approx(
+            message=(
+                f"Arazzo writes {operation.key!r} as a workflow step that calls it by id; its parameters, request "
+                "and response schemas stay in the source description and are not written"
+            ),
+            target_mapping="operation → workflow step",
+        )]
+        if not _names_step_target(operation):
+            verdicts.append(FidelityVerdict.synth(
+                message=(
+                    f"Arazzo: the source names no operation id for {operation.key!r}; the step's operationId is "
+                    "the canonical operation key"
+                ),
+                severity=LossinessSeverity.INFO,
+                target_mapping="step target → synthesized operationId",
+            ))
+        return verdicts
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """The first of :meth:`operation_verdicts` (the step itself, or the capability ``DROP``)."""
+        return self.operation_verdicts(operation)[0]
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """A non-workflow source's types have no Arazzo declaration: ``DROP``."""
+        if getattr(self, "_workflows_source", True):
+            return super().type_verdict(type_)
+        return FidelityVerdict.drop(
+            message=f"Arazzo has no type declarations; type {type_.key!r} is not written",
+            severity=LossinessSeverity.INFO,
+            target_mapping="type → dropped",
+        )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """A dropped type's fields go with it (the type's ``DROP`` covers them)."""
+        if getattr(self, "_workflows_source", True):
+            return super().field_verdicts(field)
+        return []
 
     def event_verdict(self, event) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -236,11 +363,43 @@ class _ArazzoWriter:
                 "channels-dropped",
                 "Arazzo export has no event/channel representation; channels are omitted",
             )
+        if not _is_arazzo_source(self._api):
+            self._record_non_workflow_losses()
 
         self.tracker.record(self._api.identity.name or "arazzo", Provenance.SOURCE)
         if self._options.pretty_print:
             return yaml.dump(document, sort_keys=False, default_flow_style=False, allow_unicode=True)
         return yaml.dump(document, default_flow_style=True, allow_unicode=True)
+
+    def _record_non_workflow_losses(self) -> None:
+        """Record what Arazzo makes of a non-workflow source (MFX-10.2) — the rule pack's verdicts, as losses."""
+        self.losses.record(
+            LossKind.NA,
+            "workflows-only",
+            f"Arazzo: {WORKFLOWS_ONLY_WARNING}; servers, parameters, request and response schemas and types "
+            "are not written.",
+        )
+        services = _workflow_services(self._api)
+        if services:
+            self.losses.record(
+                LossKind.INFERRED,
+                "workflows-synthesized",
+                f"The source declares no workflow; {len(services)} workflow(s) are synthesized from its services, "
+                "with steps in the operations' declaration order.",
+            )
+        else:
+            self.losses.record(
+                LossKind.NA,
+                "no-workflow",
+                "The source has no operation to sequence, so the document carries no workflow.",
+            )
+        if self._api.types:
+            self.losses.record(
+                LossKind.NA,
+                "types-not-written",
+                f"Arazzo has no type declarations; {len(self._api.types)} type(s) are not written.",
+                pointer="types",
+            )
 
     def _source_document(self) -> Optional[Dict[str, Any]]:
         raw = self._api.raw
@@ -340,6 +499,10 @@ class _ArazzoWriter:
                 step = self._step_from_operation(operation, step_id)
                 steps.append(step)
                 self.tracker.record(operation.key, Provenance.SOURCE)
+            if not steps and not _is_arazzo_source(self._api):
+                # A synthesized workflow with no step (a service of event operations only) is not a
+                # workflow; leaving it out is what the report's near-empty DROP describes (MFX-10.2).
+                continue
             workflow["steps"] = steps
             workflows.append(workflow)
         return workflows
