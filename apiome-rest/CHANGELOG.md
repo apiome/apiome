@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.510.0] - 2026-10-28
+
+### Added
+- **Collection fidelity pack (MFX-31.2, #4290).** `app.client_collection_fidelity.ExampleCollectionFidelityRulePack`
+  (Postman's pack now; reusable by the other MFX-EPIC-31 collections) records each schema → example trade as its own
+  item on the operation, with its reason: request schema → example body (`APPROX`, constraints not enforced),
+  response schemas → saved example responses (`APPROX`), status ranges (`DROP`), unions / `oneOf` → one
+  representative example (`APPROX`, via the new `client_collection_emit.reachable_unions`), generated example values
+  (`SYNTH`), streaming (`DROP`), auth beyond the collection's auth types (OpenID Connect and generic
+  `Authorization`/`Cookie` `APPROX`, others `DROP`, several schemes `APPROX`); field constraints are `APPROX` "not
+  enforced" (was "demoted to documentation"). Event channels, event and non-HTTP operations stay `DROP`, and so does a
+  named type's declaration (a re-import infers body types under its own names). A Postman source reports nothing.
+- The writer records `union-representative-example` when an example body shows one alternative of a union.
+
+### Changed
+- Goldens: the `postman` cells of the round-trip and export-conformance matrices record the new loss counts (no
+  status changes).
+
 ## [1.509.0] - 2026-10-28
 
 ### Added

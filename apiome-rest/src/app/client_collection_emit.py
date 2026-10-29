@@ -43,12 +43,15 @@ from urllib.parse import urlsplit, urlunsplit
 from .canonical_model import (
     CanonicalApi,
     Channel,
+    Message,
     MessageRole,
     Operation,
     OperationKind,
     Parameter,
     ParameterLocation,
     Type,
+    TypeKind,
+    TypeRef,
 )
 from .canonical_security import AUTH_SCHEME_HEADERS, operation_security_schemes
 from .client_collection import FOLDER_SEPARATOR, SECRET_NAME_RE, scrub_value
@@ -76,6 +79,7 @@ __all__ = [
     "client_collection_profile",
     "output_slug",
     "plan_collection",
+    "reachable_unions",
 ]
 
 #: The variable every request URL is written against, unless the model's server is already a
@@ -440,6 +444,63 @@ class ClientCollectionFidelityRulePack(CapabilityRulePack):
 # ===========================================================================
 # Planning
 # ===========================================================================
+
+
+def reachable_unions(api: CanonicalApi, message: Message) -> List[str]:
+    """The unions a message body reaches: named union types, and ``oneOf`` / ``anyOf`` in an inline schema.
+
+    An example body shows one alternative of each (MFX-31.2, #4290), so these are what a collection
+    export approximates. The walk follows record fields, list items, aliases and map values through
+    named types, each visited once.
+
+    Args:
+        api: The model the body's named types resolve in.
+        message: The request or response message.
+
+    Returns:
+        The union type names in first-reached order, then ``inline oneOf`` / ``inline anyOf`` for an
+        inline schema that has one.
+    """
+    types = {type_.key: type_ for type_ in api.types}
+    by_name = {}
+    for type_ in api.types:
+        by_name.setdefault(type_.name, type_)
+    found: List[str] = []
+    seen: set = set()
+
+    def visit_ref(ref: Optional[TypeRef]) -> None:
+        while ref is not None and ref.item is not None:
+            ref = ref.item
+        if ref is None or not ref.name:
+            return
+        type_ = types.get(ref.name) or by_name.get(ref.name)
+        if type_ is None or type_.key in seen:
+            return
+        seen.add(type_.key)
+        if type_.kind is TypeKind.UNION:
+            found.append(type_.name)
+            for member in type_.union_members:
+                visit_ref(TypeRef(name=member))
+        for field_ in type_.fields:
+            visit_ref(field_.type)
+        visit_ref(type_.aliased)
+        visit_ref(type_.value_type)
+
+    def visit_schema(node: Any) -> None:
+        if isinstance(node, dict):
+            for keyword in ("oneOf", "anyOf"):
+                label = f"inline {keyword}"
+                if keyword in node and label not in found:
+                    found.append(label)
+            for value in node.values():
+                visit_schema(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit_schema(value)
+
+    visit_ref(message.payload)
+    visit_schema(message.payload_schema)
+    return found
 
 
 def output_slug(api: CanonicalApi) -> str:
@@ -1013,6 +1074,7 @@ class _Planner:
             return [None]
         content_types = list(dict.fromkeys(message.content_types)) or [pick_content_type(message)]
         instance = synthesize_body(self.api, message, full=self.example_depth == "full")
+        self._record_union_example(operation, message)
         bodies: List[Optional[ClientBody]] = []
         for content_type in content_types:
             base_type = content_type.split(";", 1)[0].strip().lower()
@@ -1061,6 +1123,7 @@ class _Planner:
                 content_type = message.content_types[0]
             body: Optional[ClientBody] = None
             if message.payload is not None or message.payload_schema is not None:
+                self._record_union_example(operation, message)
                 instance = synthesize_body(self.api, message, full=self.example_depth == "full")
                 if instance is not None and (content_type is None or "json" in content_type.lower()):
                     content_type = content_type or "application/json"
@@ -1083,6 +1146,17 @@ class _Planner:
                 pointer=operation.key,
             )
         return tuple(planned)
+
+    def _record_union_example(self, operation: Operation, message: Message) -> None:
+        """Record that an example shows one alternative of each union its body reaches (MFX-31.2)."""
+        unions = reachable_unions(self.api, message)
+        if unions:
+            self.losses.record(
+                LossKind.INFERRED,
+                "union-representative-example",
+                f"The example body of {message.key!r} shows one alternative of {', '.join(unions)}.",
+                pointer=operation.key,
+            )
 
     def _redact(self, value: Any) -> Any:
         """Replace every credential-named member of a JSON example with a :class:`SecretRef`."""
