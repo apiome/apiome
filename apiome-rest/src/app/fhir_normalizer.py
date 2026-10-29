@@ -297,6 +297,11 @@ class FhirNormalizer(Normalizer, register=True):
                 "FHIR source must be a FhirDocument (see app.fhir_parser.parse_fhir)"
             )
 
+        if source.kind == "logical" and source.logical is not None:
+            from .fhir_logical import logical_resources, normalize_logical
+
+            return normalize_logical(source.logical, logical_resources(source.logical) or [], raw=source.raw,
+                                     include_raw=include_raw)
         if source.kind == "structure_definition" and source.structure_definition is not None:
             return self._normalize_structure_definition(source, include_raw=include_raw)
         if source.kind == "resource_profile" and source.resource_profile is not None:

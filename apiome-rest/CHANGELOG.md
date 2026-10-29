@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.522.0] - 2026-10-29
+
+### Added
+- **FHIR StructureDefinition emitter: R4 / R5 logical models (MFX-26.1, #4157).** The `fhir` writer now writes every
+  type as a StructureDefinition logical model (`kind: logical`, `derivation: specialization`, base `Element` (R4) /
+  `Base` (R5)), in a `collection` Bundle or one file per resource (option `packaging`), for R4 or R5 (option
+  `fhir_version`). Element paths from nesting (a record used by one field is a `BackboneElement` with the
+  `explicit-type-name` extension; others are referenced by canonical URL, base option `canonical_base`);
+  cardinality from nullability, lists and `minItems` / `maxItems`; FHIR primitives via `fhir_primitive`
+  (`integer64` in R5, reported in R4); enums as CodeSystem + ValueSet with a `required` binding; constraints as
+  `maxLength`, `minValue[x]` / `maxValue[x]`, `defaultValue[x]` and FHIRPath `constraint`s (pattern, minLength,
+  exclusive bounds, multipleOf, allowed values); unions as choice models with an exactly-one invariant, maps as
+  repeating key / value entries. Option `capability_statement` (default on) summarizes REST operations, title,
+  description and version in a CapabilityStatement. A FHIR profile / resource source is written back in its own
+  form. `FhirFidelityRulePack` predicts the writer's losses.
+- The FHIR reader reads a logical-model Bundle (or one logical StructureDefinition) back: records (nested
+  BackboneElements by their explicit type name), enums from CodeSystems / ValueSet bindings, title / version from
+  the CapabilityStatement (`app.fhir_logical`).
+- Toolchain tool `fhir-validator` (HL7 `validator_cli` 6.10.4, JVM, `APIOME_FHIR_VALIDATOR_BIN`) installed in the
+  image with the R4 and R5 core packages cached at build time; export validation runs it (`-tx n/a`) and reports
+  each error, falling back to Apiome's structural FHIR rules (`app.fhir_validation`).
+- Version coverage: FHIR writes R5.
+
 ## [1.521.0] - 2026-10-29
 
 ### Changed

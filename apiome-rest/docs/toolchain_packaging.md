@@ -32,6 +32,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `smithy` | Smithy IDL build·validate; `smithy ast` assembles a multi-file model into one JSON AST for the `smithy` adapter (MFI-17.1, `app.smithy_ast`), and `smithy validate` with the `smithy-linters` validators feeds the `smithy` lint pack (MFI-17.3). Optional: without it, a single `.smithy` file still imports (with no Smithy lint events) and a set of several model files is `ADAPTER_UNAVAILABLE` | `1.53.0` | jvm | GitHub CLI zip (bundles its own runtime) + `smithy-linters`/`smithy-model`/`smithy-utils` jars in an offline Maven folder (`lib/smithy-m2`, `APIOME_SMITHY_LINTERS_REPO`) |
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
 | `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
+| `fhir-validator` | HL7 FHIR validator (`validator_cli`): validates a FHIR export — logical-model StructureDefinitions, ValueSets, CodeSystems, the CapabilityStatement — against FHIR R4 (`4.0.1`) or R5 (`5.0.0`), terminology offline (`-tx n/a`) (MFX-26.1, `app.fhir_validation`). Optional: without it, the export is checked by Apiome's built-in structural FHIR rules | `6.10.4` | jvm | GitHub release jar + `java -jar` wrapper; R4/R5 core packages cached at build time under `share/fhir` |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
@@ -77,12 +78,13 @@ plus the JRE the AMF wrapper needs — smithy ships its own runtime, so no extra
 | `default-jre-headless` (for AMF) | ~140 MB |
 | `smithy` CLI (self-contained runtime) | ~80 MB |
 | `amf` assembly jar | ~60 MB |
+| `fhir-validator` jar + R4 / R5 core package cache | ~300 MB |
 | `tsp` + `asyncapi` + `@asyncapi/parser` + `@asyncapi/diff` + `@graphql-inspector/core` + spectral + redocly (node_modules) | ~180 MB |
 | `buf` | ~30 MB |
 | `vacuum` | ~25 MB |
 | `rover` | ~30 MB |
 | `drafter` | ~5 MB |
-| **Total added** | **~480 MB** |
+| **Total added** | **~780 MB** |
 
 The build-time `tools` stage also pulls `cmake`/`build-essential`/`git` to compile drafter,
 but that toolchain stays in the builder stage and is **not** copied into the runtime image.

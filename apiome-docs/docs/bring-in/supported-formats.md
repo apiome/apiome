@@ -209,7 +209,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | DTD | `dtd` | XML 1.0 DTD* | — | — |
 | EDI X12 | `edix12` | X12 interchange (004010, 005010, …)* | X12 interchange (004010, 005010, …)* | X12 interchange (004010, 005010, …) |
 | Envoy xDS routes | `envoy-xds` | xDS v3 (envoy.config.*.v3), xDS v2 (envoy.api.v2)* | xDS v3 RouteConfiguration (envoy.config.route.v3) | xDS v3 RouteConfiguration (envoy.config.route.v3) |
-| FHIR | `fhir` | R4 | R4 | R4 |
+| FHIR | `fhir` | R4 | R4, R5 | R4 |
 | FIX | `fix` | tag=value message (any BeginString)* | tag=value message (any BeginString)* | tag=value message (any BeginString) |
 | FIX Orchestra | `fix-orchestra` | FIX Orchestra 1.0 repository | — | — |
 | FlatBuffers | `flatbuffers` | FlatBuffers schema (.fbs)* | FlatBuffers schema (.fbs)* | FlatBuffers schema (.fbs) |

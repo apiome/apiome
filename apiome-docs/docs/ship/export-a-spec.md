@@ -278,6 +278,43 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 
+### FHIR (StructureDefinition) from any source
+
+Exporting to **FHIR** writes each cataloged type as a FHIR **StructureDefinition logical model**
+(`kind: logical`), with a **CodeSystem** and **ValueSet** for each enum, in one `collection` Bundle.
+Set **fhir_version** to `R4` (4.0.1, the default) or `R5` (5.0.0). Set **packaging** to `per-type` for
+one JSON file per resource. Each export is checked by the official HL7 FHIR validator against the
+version it declares, or by Apiome's structural FHIR rules where the server has no validator.
+
+- **Elements.** Each field is an element. An object used by only one field is nested in its
+  parent as a `BackboneElement` (`Pet.owner.name`), and the `explicit-type-name` extension keeps
+  its type name. Any other object is a logical model of its own, referenced by its canonical URL
+  (`http://example.org/fhir/StructureDefinition/Owner`; set **canonical_base** to use your own).
+- **Cardinality.** A field that may not be null has `min` 1, and a list has `max` `*`. `minItems`
+  and `maxItems` set the bounds.
+- **Types.** FHIR primitives: `string`, `boolean`, `integer`, `decimal`, `date`, `dateTime`, `time`,
+  `uri`, `uuid` and `base64Binary`. A 64-bit integer is `integer64` in R5. R4 has no `integer64`,
+  so it is written as `integer`, and the report says so.
+- **Enums.** Each enum becomes a CodeSystem with one concept per value, plus a ValueSet that
+  includes it. The field is a `code` with a `required` binding to that ValueSet.
+- **Constraints.** `maxLength`, `minValue[x]` and `maxValue[x]`, and `defaultValue[x]` are written
+  as element properties. Patterns, minimum lengths, exclusive bounds, `multipleOf` and allowed
+  values become FHIRPath `constraint`s, such as `matches('^[A-Z]+$')`.
+- **Unions and maps.** A union becomes a model with one optional element per alternative and an
+  invariant that exactly one is present. A map becomes a repeating `entry` with a `key` and a
+  `value`.
+- **Operations.** FHIR cannot declare operations on logical models. The **capability_statement**
+  option (on by default) lists the source's operations in a CapabilityStatement's REST
+  documentation, which also carries the title, description and version.
+- **From a FHIR item.** An item imported from a FHIR profile or resource is written back in that
+  form. An exported logical-model Bundle imports back unchanged.
+
+The fidelity report lists what FHIR cannot carry. **Dropped:** event operations and channels,
+servers, constraints with no FHIR form (`uniqueItems`, a `format` such as `email`) and defaults
+that do not fit. **Approximated:** operations summarized in the CapabilityStatement, unions, maps,
+aliases and named scalars written as their underlying type, coerced primitives, and renamed
+elements.
+
 ### OData (CSDL) from any source
 
 Exporting to **OData** writes the service's metadata as **CSDL JSON 4.01** (`<Namespace>.csdl.json`),

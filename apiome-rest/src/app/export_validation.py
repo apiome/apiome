@@ -622,16 +622,46 @@ async def _validate_odata(
 async def _validate_fhir(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted FHIR JSON document by re-parsing it."""
-    from .fhir_emitter import validate_fhir_document
+    """Re-validate an emitted FHIR export (MFX-26.1, #4157).
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
+    The official HL7 FHIR validator (toolchain tool ``fhir-validator``) checks every emitted file against FHIR
+    R4 or R5 — the version the export declares — when the toolchain has it; each ``error`` / ``fatal`` issue is
+    a finding and rejects the export. Without it, Apiome's structural FHIR rules and a re-parse through the
+    FHIR reader check each file (:func:`app.fhir_emitter.validate_fhir_document`).
+    """
+    from .fhir_emitter import validate_fhir_document
+    from .fhir_validation import fhir_validator_available, validate_with_fhir_validator
+    from .import_source import ImportSourceError
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The FHIR export wrote no file.")])
+    if not fhir_validator_available():
+        return await _run_text_validator(target, emit_result, validate_fhir_document)
+    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    try:
+        issues = await asyncio.to_thread(validate_with_fhir_validator, members, _fhir_version(members))
+    except ImportSourceError as exc:
+        if exc.code == "ADAPTER_UNAVAILABLE":
+            return await _run_text_validator(target, emit_result, validate_fhir_document)
+        return _rejected(target, [_finding_from_message(str(exc), file=emit_result.files[0].path)])
+    findings = [ValidationFinding(message=issue.message, file=issue.file, path=issue.location, keyword=issue.code)
+                for issue in issues]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
+def _fhir_version(members: Dict[str, str]) -> str:
+    """The FHIR version an export declares (``fhirVersion`` of its first resource that has one), else R4."""
+    for text in members.values():
         try:
-            validate_fhir_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+            document = json.loads(text)
+        except ValueError:
+            continue
+        resources = ([e.get("resource") or {} for e in document.get("entry") or []]
+                     if document.get("resourceType") == "Bundle" else [document])
+        for resource in resources:
+            if resource.get("fhirVersion") in ("4.0.1", "5.0.0"):
+                return resource["fhirVersion"]
+    return "4.0.1"
 
 
 async def _validate_typespec(

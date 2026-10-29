@@ -190,6 +190,18 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         runtime="jvm",
     ),
     BundledTool(
+        key="fhir-validator",
+        executable="fhir-validator",
+        version="6.10.4",
+        description="HL7 FHIR validator (hapifhir/org.hl7.fhir.core validator_cli, JVM) with the R4 and R5 core "
+        "packages cached at build time.",
+        env_override_key="APIOME_FHIR_VALIDATOR_BIN",
+        # The FHIR export seam (MFX-26.1, app.fhir_validation) reads the OperationOutcome the validator
+        # writes with `-output`; its stdout is a progress log, never JSON.
+        parses_json=False,
+        runtime="jvm",
+    ),
+    BundledTool(
         key="asyncapi",
         executable="asyncapi",
         version="2.16.0",

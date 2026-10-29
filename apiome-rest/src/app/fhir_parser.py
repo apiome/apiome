@@ -100,10 +100,12 @@ class FhirResourceProfile:
 
 @dataclass(frozen=True)
 class FhirDocument:
-    kind: str  # structure_definition | resource_profile
+    kind: str  # structure_definition | resource_profile | logical
     structure_definition: Optional[FhirStructureDefinition] = None
     resource_profile: Optional[FhirResourceProfile] = None
     raw: str = ""
+    #: A logical-model export (MFX-26.1): the Bundle or StructureDefinition as parsed.
+    logical: Optional[Mapping[str, Any]] = None
 
 
 def _looks_like_fhir_mapping(document: Mapping[str, Any]) -> bool:
@@ -330,6 +332,11 @@ def parse_fhir(content: str, *, source_label: Optional[str] = None) -> FhirDocum
         raise FhirParseError("Content does not appear to be a FHIR JSON document")
     if not isinstance(document, Mapping):
         raise FhirParseError("FHIR document must be a JSON object")
+
+    from .fhir_logical import logical_resources
+
+    if logical_resources(document) is not None:
+        return FhirDocument(kind="logical", logical=document, raw=content)
 
     if document.get("resourceType") == "StructureDefinition":
         structure = _parse_structure_definition(document)
