@@ -21,5 +21,8 @@ model**, for FHIR R4 or R5, from any source.
 - **R4 or R5, bundle or files.** The **fhir_version** option picks R4 or R5, and **packaging**
   writes one Bundle or one file per resource. A CapabilityStatement summarizes the source's
   operations.
+- **Choice types and an itemized report.** A union of distinct single types becomes a FHIR choice
+  element (`value[x]`). The fidelity report itemizes operations, unions, maps, regular expressions,
+  recursive types and renamed elements, each with its kind.
 - **Validated.** The server runs the official HL7 FHIR validator, with the R4 and R5 core packages
   included, on every export.

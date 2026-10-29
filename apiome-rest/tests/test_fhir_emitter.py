@@ -208,10 +208,10 @@ def test_constraints_become_element_properties_and_fhirpath_invariants() -> None
 
 def test_constraints_without_a_fhir_form_are_reported() -> None:
     a = _record("A", _field("A", "ids", item="string", constraints=Constraints(unique_items=True)),
-                _field("A", "mail", constraints=Constraints(format="email")),
+                _field("A", "slug", constraints=Constraints(format="slug")),
                 _field("A", "flag", "bool", default="yes"))
     found = set(_losses(_emit(_api(types=[a]))))
-    assert {("constraint-dropped", "A.ids"), ("constraint-dropped", "A.mail"), ("default-dropped", "A.flag")} <= found
+    assert {("constraint-dropped", "A.ids"), ("constraint-dropped", "A.slug"), ("default-dropped", "A.flag")} <= found
 
 
 # ===========================================================================
@@ -237,23 +237,19 @@ def test_a_record_used_once_is_nested_and_a_shared_one_is_referenced() -> None:
 
 
 def test_unions_maps_and_aliases() -> None:
+    # MFX-26.2: a union of distinct single alternatives is a choice element; a map is dropped.
     shape = Type(key="Shape", name="Shape", kind=TypeKind.UNION,
                  fields=[_field("Shape", "circle", "number"), _field("Shape", "label")])
     attrs = Type(key="Attrs", name="Attrs", kind=TypeKind.MAP, value_type=TypeRef(name="integer"))
     code = Type(key="Code", name="Code", kind=TypeKind.ALIAS, aliased=TypeRef(name="string"))
-    holder = _record("Holder", _field("Holder", "code", "Code"))
+    holder = _record("Holder", _field("Holder", "code", "Code"), _field("Holder", "attrs", "Attrs"))
     result = _emit(_api(types=[shape, attrs, code, holder]))
     resources = {e["resource"]["id"]: e["resource"] for e in json.loads(result.files[0].content)["entry"]}
-    shape_elements = _elements(resources["Shape"])
-    assert shape_elements["Shape"]["constraint"][0]["expression"] == (
-        "iif(circle.exists(), 1, 0) + iif(label.exists(), 1, 0) = 1")
-    assert shape_elements["Shape.circle"]["min"] == 0
-    attr_elements = _elements(resources["Attrs"])
-    assert attr_elements["Attrs.entry"]["max"] == "*" and attr_elements["Attrs.entry.value"]["type"] == [
-        {"code": "integer"}]
+    assert _elements(resources["Shape"])["Shape.value[x]"]["type"] == [{"code": "decimal"}, {"code": "string"}]
+    assert "Attrs" not in resources and "Holder.attrs" not in _elements(resources["Holder"])
     assert _elements(resources["Holder"])["Holder.code"]["type"] == [{"code": "string"}]
     found = set(_losses(result))
-    assert {("union-as-choice", "Shape"), ("map-as-entries", "Attrs"), ("alias-inlined", "Code")} <= found
+    assert {("map-dropped", "Attrs"), ("map-dropped", "Holder.attrs"), ("alias-inlined", "Code")} <= found
 
 
 def test_names_are_made_fhir_identifiers() -> None:

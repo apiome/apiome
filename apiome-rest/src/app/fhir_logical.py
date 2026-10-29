@@ -102,8 +102,13 @@ def normalize_logical(document: Mapping[str, Any], resources: List[Mapping[str, 
             if include.get("system") in enum_by_system:
                 enum_by_value_set[str(url)] = enum_by_system[include["system"]]
     reader = _Reader(model_names, enum_by_value_set)
+    seen = {t.key for t in types}
     for structure in structures:
-        types.extend(reader.model(structure))
+        for type_ in reader.model(structure):
+            # A choice type used by several elements is read once.
+            if type_.key not in seen:
+                seen.add(type_.key)
+                types.append(type_)
     first = structures[0]
     url = str(first.get("url") or "")
     base = url.split("/StructureDefinition/")[0] if "/StructureDefinition/" in url else None
@@ -150,7 +155,7 @@ class _Reader:
         fields: List[CanonicalField] = []
         nested: List[Type] = []
         for number, element in enumerate(children, start=1):
-            field_name = element["path"].rsplit(".", 1)[-1]
+            field_name = element["path"].rsplit(".", 1)[-1].removesuffix("[x]")
             type_name, nested_types = self._type_of(name, element, elements)
             nested.extend(nested_types)
             maximum = str(element.get("max", "1"))
@@ -160,6 +165,12 @@ class _Reader:
             if int(element.get("min", 0) or 0) > 0:
                 ref = ref.model_copy(update={"nullable": False})
             kept = {k: v for k, v in element.items() if k not in ("id", "path", "short", "definition", "min", "max")}
+            # The explicit type name is re-derived on export (it names the nested or choice type, read above).
+            extensions = [x for x in kept.get("extension") or [] if x.get("url") != _EXPLICIT_TYPE_NAME]
+            if extensions:
+                kept["extension"] = extensions
+            else:
+                kept.pop("extension", None)
             fields.append(CanonicalField(
                 key=Keys.field(key, field_name), name=field_name, type=ref, field_number=number,
                 description=element.get("definition"), extras={"fhir_element": kept},
@@ -170,7 +181,10 @@ class _Reader:
     def _type_of(self, parent: str, element: Mapping[str, Any],
                  elements: List[Mapping[str, Any]]) -> tuple:
         """``(canonical type name, nested records)`` for one element."""
-        code = str(((element.get("type") or [{}])[0] or {}).get("code") or "string")
+        codes = [str(t.get("code")) for t in element.get("type") or [] if isinstance(t, Mapping) and t.get("code")]
+        if element["path"].endswith("[x]") or len(codes) > 1:
+            return self._choice(parent, element, codes)
+        code = codes[0] if codes else "string"
         binding = (element.get("binding") or {}).get("valueSet")
         if binding in self._enums:
             return Keys.type(self._enums[binding], None), []
@@ -185,3 +199,22 @@ class _Reader:
         if code in self._model_names:
             return Keys.type(self._model_names[code], None), []
         return _PRIMITIVE_TO_CANONICAL.get(code, "string"), []
+
+    def _choice(self, parent: str, element: Mapping[str, Any], codes: List[str]) -> tuple:
+        """A choice element (``field[x]``): a union of its type codes, named by its explicit type name."""
+        explicit = next((x.get("valueString") for x in element.get("extension") or []
+                         if x.get("url") == _EXPLICIT_TYPE_NAME), None)
+        field_name = element["path"].rsplit(".", 1)[-1].removesuffix("[x]")
+        name = explicit or f"{parent}{field_name[:1].upper()}{field_name[1:]}"
+        binding = (element.get("binding") or {}).get("valueSet")
+        members = []
+        for code in codes:
+            if code == "code" and binding in self._enums:
+                members.append(Keys.type(self._enums[binding], None))
+            elif code in self._model_names:
+                members.append(Keys.type(self._model_names[code], None))
+            else:
+                members.append(_PRIMITIVE_TO_CANONICAL.get(code, "string"))
+        union = Type(key=Keys.type(name, None), name=name, kind=TypeKind.UNION, union_members=members,
+                     extras={"fhir_kind": "choice"})
+        return union.key, [union]

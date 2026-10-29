@@ -300,20 +300,31 @@ version it declares, or by Apiome's structural FHIR rules where the server has n
 - **Constraints.** `maxLength`, `minValue[x]` and `maxValue[x]`, and `defaultValue[x]` are written
   as element properties. Patterns, minimum lengths, exclusive bounds, `multipleOf` and allowed
   values become FHIRPath `constraint`s, such as `matches('^[A-Z]+$')`.
-- **Unions and maps.** A union becomes a model with one optional element per alternative and an
-  invariant that exactly one is present. A map becomes a repeating `entry` with a `key` and a
-  `value`.
+- **Unions.** A union whose alternatives are distinct single types (primitives, other models, at
+  most one enum) becomes a FHIR **choice element**: a field `value` of that union is written
+  `value[x]`, with one type per alternative. Any other union, such as one with two alternatives of
+  the same type or a list of the union, becomes a model with one optional element per
+  alternative, plus an invariant that exactly one is present.
 - **Operations.** FHIR cannot declare operations on logical models. The **capability_statement**
   option (on by default) lists the source's operations in a CapabilityStatement's REST
   documentation, which also carries the title, description and version.
 - **From a FHIR item.** An item imported from a FHIR profile or resource is written back in that
   form. An exported logical-model Bundle imports back unchanged.
 
-The fidelity report lists what FHIR cannot carry. **Dropped:** event operations and channels,
-servers, constraints with no FHIR form (`uniqueItems`, a `format` such as `email`) and defaults
-that do not fit. **Approximated:** operations summarized in the CapabilityStatement, unions, maps,
-aliases and named scalars written as their underlying type, coerced primitives, and renamed
-elements.
+The fidelity report lists what FHIR logical models cannot express, construct by construct:
+
+| Source construct | In the report |
+| --- | --- |
+| Operations | Approximated: they are summarized in the CapabilityStatement, and the report warns that the source has operations. Without the CapabilityStatement they are dropped |
+| A union of distinct single alternatives | Approximated: a choice element (`[x]`); the alternatives' names are not kept |
+| Any other union | Dropped as a type: a model of optional elements with an exactly-one invariant |
+| A map, and every field typed by one | Dropped |
+| A regular expression, or an `email`, `hostname`, `ipv4` or `ipv6` format | Approximated: a FHIRPath `matches()` constraint, whose regex dialect may differ |
+| Another format, `uniqueItems`, a default that does not fit | Dropped |
+| A type that contains itself | Approximated: it is modelled by reference, and FHIR tools expand it only to a limited depth |
+| A name that is not a FHIR name (`order-line`, `unit-price`) | Synthesized: `OrderLine`, `unitPrice` |
+| Event operations, channels, servers | Dropped |
+| Aliases, named scalars, coerced primitives | Approximated |
 
 ### OData (CSDL) from any source
 

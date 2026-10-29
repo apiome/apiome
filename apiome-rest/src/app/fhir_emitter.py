@@ -102,6 +102,13 @@ _STRING_FORMATS: Dict[str, str] = {
     "byte": "base64Binary", "binary": "base64Binary",
 }
 _NUMERIC = frozenset({"integer", "integer64", "decimal", "positiveInt", "unsignedInt"})
+#: String formats written as a FHIRPath ``matches()`` constraint (APPROX).
+_FORMAT_PATTERNS: Dict[str, str] = {
+    "email": r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+    "hostname": r"^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$",
+    "ipv4": r"^((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)$",
+    "ipv6": r"^[0-9A-Fa-f:]+$",
+}
 _VALUE_TYPES = frozenset({"integer", "integer64", "decimal", "date", "dateTime", "time", "instant",
                           "positiveInt", "unsignedInt"})
 _EVENT_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
@@ -151,12 +158,24 @@ class FhirFidelityRulePack(WriterLossRulePack):
     channels, operations (without the CapabilityStatement) and constraints with no FHIR form are ``DROP``.
     A carried type is ``OK`` and its ``target_mapping`` names what it became (``logical model Pet``,
     ``BackboneElement Pet.owner``, ``CodeSystem + ValueSet Status``).
+
+    MFX-26.2 (#4158) — the per-construct rules:
+
+    * **operations** — ``APPROX`` (warn) into the CapabilityStatement, ``DROP`` without it; the source as a whole
+      is warned (``operations-summarized`` / ``operations-dropped``);
+    * **unions** — a choice element (``field[x]``) where the shapes allow (distinct single alternatives),
+      ``APPROX``; else ``DROP`` (a model of optional elements with an exactly-one invariant);
+    * **maps** — ``DROP`` (the type and the elements typed by it);
+    * **regex / format** — a FHIRPath ``matches()`` constraint, ``APPROX``; a format with no pattern ``DROP``;
+    * **recursive types** — ``APPROX`` with a depth note;
+    * **naming** — a sanitized name is ``SYNTH``.
     """
 
     target_label = "FHIR"
     critical_drops = frozenset({"event-operation-dropped", "unsupported-type"})
     info_drops = frozenset({"servers-dropped"})
-    cosmetic = frozenset({"renamed-element"})
+    #: MFX-26.2: a sanitized name is synthesized — FHIR invents the name the source did not have.
+    synthesized = frozenset({"renamed-element"})
 
     def build_writer(self, api: CanonicalApi) -> "_FhirWriter":
         """Build the export (default options: R4, a bundle, a CapabilityStatement)."""
@@ -320,12 +339,27 @@ class _FhirWriter:
                                    f"{type_.name!r} is written as {name!r}.", pointer=type_.key)
             self._names[type_.key] = name
         self._inline = self._inline_records()
+        self._choices = self._choice_unions()
+        referenced = self._referenced_types()
+        self._recursion_notes()
         for type_ in self._api.types:
             if type_.kind is TypeKind.ENUM:
                 self._enum_resources(type_)
         for type_ in self._api.types:
             self._context = type_.key
-            if type_.kind in (TypeKind.RECORD, TypeKind.UNION, TypeKind.MAP) and type_.key not in self._inline:
+            if type_.kind is TypeKind.MAP:
+                self.losses.record(LossKind.NA, "map-dropped",
+                                   f"FHIR logical models have no maps; {type_.key!r} and the elements typed by it are "
+                                   "not written.", pointer=type_.key)
+            elif type_.key in self._choices and type_.key in referenced:
+                self.losses.record(LossKind.INFERRED, "union-as-choice-type",
+                                   f"FHIR has no union types; each element typed {type_.key!r} is a choice element "
+                                   f"(`[x]`) of {', '.join(self._choices[type_.key])}"
+                                   + (" — the alternatives' names are not kept." if type_.fields else "."),
+                                   pointer=type_.key)
+                self._written[type_.key] = f"choice type {self._names[type_.key]}[x]"
+                self.tracker.record(type_.key, Provenance.SOURCE)
+            elif type_.kind in (TypeKind.RECORD, TypeKind.UNION) and type_.key not in self._inline:
                 self.resources.append(self._logical_model(type_))
             elif type_.kind in (TypeKind.ALIAS, TypeKind.SCALAR):
                 self.losses.record(LossKind.INFERRED, "alias-inlined",
@@ -384,6 +418,12 @@ class _FhirWriter:
                 target = self._lookup(member)
                 if target is not None:
                     uses[target.key] = uses.get(target.key, 2) + 2
+            if type_.kind is TypeKind.UNION:
+                # A union's alternatives are referenced by URL (a choice element cannot hold a BackboneElement).
+                for field in type_.fields:
+                    target = self._lookup(field.type.name)
+                    if target is not None:
+                        uses[target.key] = uses.get(target.key, 0) + 2
 
         def reaches(start: str, goal: str) -> bool:
             seen, stack = set(), [start]
@@ -401,16 +441,95 @@ class _FhirWriter:
                 if count == 1 and not any(reaches(child, key) for child in edges.get(key, ()))
                 and source_kind.get(key, "backbone") == "backbone"}
 
+    def _choice_unions(self) -> Dict[str, List[str]]:
+        """Unions FHIR can write as a choice element (``value[x]``): type key → the alternatives' type codes.
+
+        The shapes that allow it: every alternative is a single (non-list) primitive, enum or other model, the
+        codes are distinct (at most one enum, which is a bound ``code``), and no field holds a list of the union.
+        """
+        listed = set()
+        for type_ in self._api.types:
+            for field in type_.fields:
+                if field.type.item is not None:
+                    target = self._lookup(field.type.item.name)
+                    if target is not None:
+                        listed.add(target.key)
+        choices: Dict[str, List[str]] = {}
+        for type_ in self._api.types:
+            if type_.kind is not TypeKind.UNION or type_.key in listed:
+                continue
+            refs = [f.type for f in type_.fields] or [TypeRef(name=m) for m in type_.union_members]
+            codes: List[str] = []
+            for ref in refs:
+                if ref.item is not None:
+                    break
+                target = self._lookup(ref.name)
+                if target is None or target.kind in (TypeKind.ALIAS, TypeKind.SCALAR):
+                    codes.append(fhir_primitive(target.aliased.name if target is not None and target.aliased
+                                                else (target.name if target else ref.name), None, self._version)[0])
+                elif target.kind is TypeKind.ENUM:
+                    codes.append("code")
+                elif target.kind is TypeKind.RECORD:
+                    codes.append(self._url("StructureDefinition", target))
+                else:
+                    break
+            else:
+                if codes and len(set(codes)) == len(codes):
+                    choices[type_.key] = codes
+        return choices
+
+    def _referenced_types(self) -> Set[str]:
+        """Keys of the types some field references (directly or as a list)."""
+        found: Set[str] = set()
+        for type_ in self._api.types:
+            for field in type_.fields:
+                ref = field.type.item if field.type.item is not None else field.type
+                target = self._lookup(ref.name if ref is not None else None)
+                if target is not None:
+                    found.add(target.key)
+        return found
+
+    def _recursion_notes(self) -> None:
+        """A record that reaches itself is reported: FHIR tools expand it only to a limited depth."""
+        edges: Dict[str, Set[str]] = {}
+        for type_ in self._api.types:
+            for field in type_.fields:
+                ref = field.type.item if field.type.item is not None else field.type
+                target = self._lookup(ref.name if ref is not None else None)
+                if target is not None:
+                    edges.setdefault(type_.key, set()).add(target.key)
+        for type_ in self._api.types:
+            if type_.kind is not TypeKind.RECORD:
+                continue
+            seen, stack = set(), list(edges.get(type_.key, ()))
+            while stack:
+                node = stack.pop()
+                if node == type_.key:
+                    self.losses.record(LossKind.INFERRED, "recursive-type",
+                                       f"{type_.key!r} contains itself (directly or through other types); FHIR models "
+                                       "it by reference, and snapshot generators and validators expand it only to a "
+                                       "limited depth.", pointer=type_.key)
+                    break
+                if node not in seen:
+                    seen.add(node)
+                    stack.extend(edges.get(node, ()))
+
     def _logical_model(self, type_: Type) -> Dict[str, Any]:
         name = self._names[type_.key]
         url = self._url("StructureDefinition", type_)
         root = {"id": name, "path": name, "short": _short(type_.description, name),
                 "definition": type_.description or f"A {name}.", "min": 0, "max": "*"}
         elements = [root]
-        if type_.kind is TypeKind.UNION:
+        if type_.kind is TypeKind.UNION and type_.key in self._choices:
+            # The union is the model itself: its choice element needs no type name of its own.
+            self._choice_element(type_, f"{name}.value", 1, elements, named=False)
+            self.losses.record(LossKind.INFERRED, "union-as-choice-type",
+                               f"FHIR has no union types; {type_.key!r} is a model whose one element `value[x]` is a "
+                               f"choice of {', '.join(self._choices[type_.key])}"
+                               + (" — the alternatives' names are not kept." if type_.fields else "."),
+                               pointer=type_.key)
+        elif type_.kind is TypeKind.UNION:
             self._union_elements(type_, name, elements, root)
-        elif type_.kind is TypeKind.MAP:
-            self._map_elements(type_, name, elements)
         else:
             self._record_elements(type_, name, elements)
         resource: Dict[str, Any] = {
@@ -476,6 +595,14 @@ class _FhirWriter:
         ref = field.type.item if is_list else field.type
         target = self._lookup(ref.name if ref is not None else None)
         nested: Optional[Type] = None
+        if target is not None and target.kind is TypeKind.MAP:
+            self.losses.record(LossKind.NA, "map-dropped",
+                               f"FHIR logical models have no maps; the element {field.key!r} (a map) is not written.",
+                               pointer=field.key)
+            return
+        if target is not None and target.key in self._choices and not is_list:
+            self._choice_element(target, path, element["min"], elements, base=element, field=field)
+            return
         if isinstance(stored, dict) and stored.get("type"):
             element["type"] = stored["type"]
             for key in ("binding", "maxLength", "constraint", "extension"):
@@ -486,6 +613,9 @@ class _FhirWriter:
                     element[key] = value
             if target is not None and target.key in self._inline:
                 nested = target
+                # The reader drops the explicit type name; it is re-derived here.
+                element["extension"] = [{"url": EXPLICIT_TYPE_NAME, "valueString": self._names[target.key]},
+                                        *element.get("extension", [])]
         elif target is not None and target.kind is TypeKind.ENUM:
             element["type"] = [{"code": "code"}]
             element["binding"] = {"strength": "required", "valueSet": self._value_sets[target.key]}
@@ -546,9 +676,11 @@ class _FhirWriter:
             if constraints.min_length is not None:
                 invariants.append((f"length() >= {int(constraints.min_length)}",
                                    f"At least {int(constraints.min_length)} characters."))
+            approximated: List[str] = []
             if constraints.pattern:
                 invariants.append((f"matches('{_fhirpath_string(constraints.pattern)}')",
                                    f"Matches the pattern {constraints.pattern}."))
+                approximated.append("the pattern")
             for bound, exclusive, attr, op in (
                     (constraints.minimum, constraints.exclusive_minimum, "minValue", ">"),
                     (constraints.maximum, constraints.exclusive_maximum, "maxValue", "<")):
@@ -577,8 +709,16 @@ class _FhirWriter:
             if constraints.unique_items:
                 dropped.append("uniqueItems")
             fmt = (constraints.format or "").lower()
-            if fmt and fmt not in _STRING_FORMATS and fmt not in ("int32", "int64", "float", "double", "decimal"):
+            if fmt in _FORMAT_PATTERNS and code == "string":
+                invariants.append((f"matches('{_fhirpath_string(_FORMAT_PATTERNS[fmt])}')", f"A valid {fmt}."))
+                approximated.append(f"format {constraints.format!r}")
+            elif fmt and fmt not in _STRING_FORMATS and fmt not in ("int32", "int64", "float", "double", "decimal"):
                 dropped.append(f"format {constraints.format!r}")
+            if approximated:
+                self.losses.record(LossKind.INFERRED, "regex-as-fhirpath",
+                                   f"FHIR has no pattern facet; {' and '.join(approximated)} of {field.key!r} is a "
+                                   "FHIRPath `matches()` constraint, whose regular-expression dialect may differ from "
+                                   "the source's.", pointer=field.key)
         if field.default is not None:
             value = _typed(field.default, code)
             if value is not None:
@@ -597,6 +737,29 @@ class _FhirWriter:
             self.losses.record(LossKind.NA, "constraint-dropped",
                                f"FHIR has no element property or FHIRPath constraint here for {', '.join(dropped)} on "
                                f"{code}; it is not written for {field.key!r}.", pointer=field.key)
+
+    def _choice_element(self, union: Type, path: str, minimum: int, elements: List[Dict[str, Any]], *,
+                        base: Optional[Dict[str, Any]] = None, field: Optional[CanonicalField] = None,
+                        named: bool = True) -> None:
+        """A choice element ``<path>[x]`` of the union's alternative types (``explicit-type-name`` keeps its name)."""
+        choice = f"{path}[x]"
+        element: Dict[str, Any] = {"id": choice, "path": choice}
+        element["short"] = (base or {}).get("short") or _short(union.description, union.name)
+        element["definition"] = (base or {}).get("definition") or union.description or f"One of the {union.name}."
+        element["min"], element["max"] = minimum, "1"
+        element["type"] = [{"code": code} for code in self._choices[union.key]]
+        names = [f.type.name for f in union.fields] or list(union.union_members)
+        alternatives = [self._lookup(name) for name in names]
+        enum = next((t for t in alternatives if t is not None and t.kind is TypeKind.ENUM), None)
+        if enum is not None:
+            element["binding"] = {"strength": "required", "valueSet": self._value_sets[enum.key]}
+        if named:
+            element["extension"] = [{"url": EXPLICIT_TYPE_NAME, "valueString": self._names[union.key]}]
+        if field is not None and field.deprecated:
+            element.setdefault("extension", []).append(
+                {"url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+                 "valueCode": "deprecated"})
+        elements.append(element)
 
     def _union_elements(self, type_: Type, name: str, elements: List[Dict[str, Any]],
                         root: Dict[str, Any]) -> None:
@@ -617,23 +780,10 @@ class _FhirWriter:
                 "human": "Exactly one of the alternatives is present.",
                 "expression": " + ".join(f"iif({p}.exists(), 1, 0)" for p in paths) + " = 1",
             }]
-        self.losses.record(LossKind.INFERRED, "union-as-choice",
-                           f"FHIR logical models have no unions; {type_.key!r} has one optional element per "
-                           "alternative and an invariant that exactly one is present.", pointer=type_.key)
-
-    def _map_elements(self, type_: Type, name: str, elements: List[Dict[str, Any]]) -> None:
-        elements.append({"id": f"{name}.entry", "path": f"{name}.entry", "short": "An entry of the map.",
-                         "definition": "One key and its value.", "min": 0, "max": "*",
-                         "type": [{"code": "BackboneElement"}]})
-        key = CanonicalField(key=f"{type_.key}.key", name="key", type=type_.key_type or TypeRef(name="string"),
-                             )
-        value = CanonicalField(key=f"{type_.key}.value", name="value",
-                               type=type_.value_type or TypeRef(name="string"))
-        for field in (key.model_copy(update={"type": key.type.model_copy(update={"nullable": False})}), value):
-            self._element(field, f"{name}.entry.{field.name}", elements, 0)
-        self.losses.record(LossKind.INFERRED, "map-as-entries",
-                           f"FHIR has no maps; {type_.key!r} is a repeating entry element with a key and a value.",
-                           pointer=type_.key)
+        self.losses.record(LossKind.NA, "union-dropped",
+                           f"FHIR has no union types and the alternatives of {type_.key!r} cannot be a choice element "
+                           "(a list, a repeated type or a nested union); it is a model of optional elements with an "
+                           "invariant that exactly one is present.", pointer=type_.key)
 
     def _enum_resources(self, type_: Type) -> None:
         """A CodeSystem with one concept per value and a ValueSet including it."""
@@ -698,6 +848,15 @@ class _FhirWriter:
                                f"FHIR logical models have no channels; {channel.address!r} is not written.",
                                pointer=channel.key)
         api = self._api
+        callable_ops = [op for op in api.operations() if op.kind not in _EVENT_KINDS]
+        if callable_ops and self._options.capability_statement:
+            self.losses.record(LossKind.INFERRED, "operations-summarized",
+                               f"This source has {len(callable_ops)} operation(s); FHIR logical models declare none, "
+                               "so they are only summarized in the CapabilityStatement.")
+        elif callable_ops:
+            self.losses.record(LossKind.NA, "operations-dropped",
+                               f"This source has {len(callable_ops)} operation(s); FHIR logical models declare none "
+                               "and the CapabilityStatement is off, so they are not written.")
         if self._options.capability_statement and (documented or api.title or api.description):
             self.resources.append(self._capability_statement(documented))
         elif api.title or api.description:

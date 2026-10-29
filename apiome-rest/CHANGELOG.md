@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.523.0] - 2026-10-29
+
+### Changed
+- **FHIR fidelity pack: per-construct losses (MFX-26.2, #4158).** Operations: APPROX into the CapabilityStatement
+  (DROP without it), and an operation-bearing source warns at the root (`operations-summarized` /
+  `operations-dropped`). Unions: a union of distinct single alternatives (primitives, models, at most one enum; not
+  used as a list) is written as a FHIR choice element `field[x]` (APPROX `union-as-choice-type`; standalone as a
+  model with `value[x]`); any other union is DROP `union-dropped` (a model of optional elements with an exactly-one
+  invariant). Maps: DROP — the type and every element typed by it are no longer written as key / value entries.
+  Regex / format: a pattern, or an `email` / `hostname` / `ipv4` / `ipv6` format, is a FHIRPath `matches()`
+  constraint reported APPROX `regex-as-fhirpath`; other formats DROP. Recursive types: APPROX `recursive-type` with a
+  depth note. Naming: a sanitized name is SYNTH.
+- The FHIR reader reads choice elements back as unions; the explicit type name of nested and choice elements is
+  re-derived on export, so FHIR → FHIR round-trips unchanged.
+- Goldens: the `fhir` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.522.0] - 2026-10-29
 
 ### Added
