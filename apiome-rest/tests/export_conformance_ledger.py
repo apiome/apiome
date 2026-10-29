@@ -701,59 +701,49 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; changed type NewOrder; changed type NewOrder_lines_item; changed type Order; changed t',
     ('wit', 'smithy'):
         'added operation examples.calculate.describe; added operation examples.calculate.eval; removed operat',
-    # --- thrift (26) ---
+    # --- thrift (21) ---
     ('arazzo', 'thrift'):
         'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
     ('avro-idl', 'thrift'):
-        'added operation OrderService.cancelOrder; added operation OrderService.getOrder; added operation Ord',
+        'changed operation com.example.orders.OrderService.cancelOrder; changed operation com.example.orders.',
     ('capnproto', 'thrift'):
         'changed operation Directory.add; changed operation Directory.lookup; changed root; changed type Addr',
     ('connectrpc', 'thrift'):
-        'added operation TaskService.CompleteTask; added operation TaskService.CreateTask; added operation Ta',
+        'changed operation tasks.v1.TaskService.CompleteTask; changed operation tasks.v1.TaskService.CreateTa',
     ('corbaidl', 'thrift'):
-        'added operation Bank.deposit; added operation Bank.getAccount; added operation Bank.openAccount; add',
-    ('edifact', 'thrift'):
-        'changed root; added type DTM; removed type EDIFACT-INVOIC.DTM; removed type EDIFACT-INVOIC.IMD; remo',
+        'changed operation Banking.Bank.deposit; changed operation Banking.Bank.getAccount; changed operation',
     ('edix12', 'thrift'):
-        'changed root; added type PO1; added type TransactionSet850; removed type X12-850.PO1; removed type X',
+        'changed root; removed type X12-850.PO1; removed type X12-850.TransactionSet850; added type X12_850.P',
     ('fix', 'thrift'):
-        'changed root; removed type FIX.4.4.Message8; added type Message8',
+        'changed root; removed type FIX.4.4.Message8; added type FIX._4._4.Message8',
     ('flatbuffers', 'thrift'):
-        'changed root; added type Color; added type Monster; added type Vec3; added type Weapon; removed type',
-    ('hl7v2', 'thrift'):
-        'changed root; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; added type MSH; added ty',
+        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
     ('idoc', 'thrift'):
-        'changed root; added type E1EDK01; added type E1EDK03; added type E1EDK14; added type E1EDKA1; added ',
+        'changed root; removed type IDOC-ORDERS05.E1EDK01; removed type IDOC-ORDERS05.E1EDK03; removed type I',
     ('iso20022', 'thrift'):
-        'changed root; added type Amt; added type CdtTrfTxInf; added type Cdtr; added type CdtrAcct; added ty',
+        'changed root; removed type pain.001.001.09.Amt; removed type pain.001.001.09.CdtTrfTxInf; removed ty',
     ('iso8583', 'thrift'):
         'changed root; removed type 0100.DE11; removed type 0100.DE12; removed type 0100.DE13; removed type 0',
     ('kafka-connect', 'thrift'):
-        'changed root; added type Order; removed type com.example.orders.Order',
+        'changed root; changed type com.example.orders.Order',
     ('lwm2m', 'thrift'):
-        'changed operation TemperatureService.ResetMinAndMaxMeasuredValues; changed root; changed service Tem',
+        'removed operation TemperatureService.ResetMinAndMaxMeasuredValues; added operation urn_oma_lwm2m_ext',
     ('matter', 'thrift'):
         'changed operation OnOffService.Off; changed operation OnOffService.OffWithEffect; changed operation ',
     ('nacha', 'thrift'):
-        'changed root; added type AchFile; added type Batch; added type BatchControl; added type BatchHeader;',
+        'changed root; removed type NACHA-ACH.AchFile; removed type NACHA-ACH.Batch; removed type NACHA-ACH.B',
     ('ncpdp', 'thrift'):
-        'changed root; added type Address; added type Body; added type CommunicationNumbers; added type DateO',
+        'changed root; removed type NCPDP-SCRIPT.Address; removed type NCPDP-SCRIPT.Body; removed type NCPDP-',
     ('protobuf', 'thrift'):
-        'added operation ProductService.CreateProduct; added operation ProductService.GetProduct; added opera',
+        'changed operation example.catalog.v1.ProductService.CreateProduct; changed operation example.catalog',
     ('protobuf-editions', 'thrift'):
-        'added operation OrderService.GetOrder; added operation OrderService.PlaceOrder; removed operation ex',
+        'changed operation example.orders.v1.OrderService.GetOrder; changed operation example.orders.v1.Order',
     ('sepa', 'thrift'):
-        'changed root; added type Amt; added type CdtTrfTxInf; added type Cdtr; added type CdtrAcct; added ty',
-    ('swift-mt', 'thrift'):
-        'changed root; added type CodeWord; added type Field13C; added type Field20; added type Field23B; add',
-    ('tradacoms', 'thrift'):
-        'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
+        'changed root; removed type pain.001.001.09.Amt; removed type pain.001.001.09.CdtTrfTxInf; removed ty',
     ('wsdl', 'thrift'):
-        'added operation OrderPort.CancelOrder; added operation OrderPort.CreateOrder; added operation OrderP',
+        'removed operation http://example.com/orders.OrderPort.CancelOrder; removed operation http://example.',
     ('wsdl2', 'thrift'):
-        'added operation OrderInterface.cancelOrder; added operation OrderInterface.getOrder; added operation',
-    ('xmlrpc', 'thrift'):
-        'removed operation inventory.reserveStock.inventory.reserveStock; changed root; removed service inven',
+        'removed operation http://example.com/orders.OrderInterface.cancelOrder; removed operation http://exa',
     # --- typespec (40) ---
     ('api-blueprint', 'typespec'):
         'removed operation GET /tasks; removed operation GET /tasks/{id}; removed operation POST /tasks; chan',

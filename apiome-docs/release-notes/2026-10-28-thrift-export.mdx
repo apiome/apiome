@@ -1,0 +1,23 @@
+---
+slug: thrift-export
+title: Thrift export compiles under the Thrift compiler
+description: Thrift exports use valid names, typedefs, unions, exceptions and request structs.
+authors: [apiome]
+---
+
+Exporting an item to **Apache Thrift** now writes a `.thrift` file the Thrift compiler accepts, from
+an OpenAPI, Protobuf, GraphQL or any other typed or service-bearing source.
+[How the Thrift is written](/ship/export-a-spec#thrift-from-any-source).
+
+{/* truncate */}
+
+- **Valid names.** Type, field, method and service names that are not Thrift identifiers, or that are
+  reserved words such as `default` and `class`, are renamed (`com.acme.Order` becomes
+  `com_acme_Order`). Each rename is in the fidelity report.
+- **Every kind of type.** Unions get a field per member, aliases and named scalars become
+  `typedef`s, and an item imported from Thrift keeps its own `typedef`s.
+- **Methods that compile.** Parameters are gathered into a `<Method>Request` struct, a method returns
+  its success response, and `throws` lists exceptions only.
+- **Namespaces per language**, with the new **namespaces** option.
+- **Checked.** Each export is compiled with `thrift` when the server has the Thrift compiler, and
+  read back by the Thrift importer otherwise.

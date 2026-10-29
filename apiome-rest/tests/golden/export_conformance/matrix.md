@@ -6,18 +6,18 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 65 |
-| lossy | 3308 |
+| ok | 61 |
+| lossy | 3317 |
 | refused | 1909 |
-| silent-loss | 442 |
+| silent-loss | 437 |
 | crash | 0 |
 | skipped | 0 |
 
 | Family | apiblueprint | apigee | arazzo | asn1 | asyncapi | avro | aws-apigateway | azure-apim | capnproto | cddl | cloudevents | cobolcopybook | connectrpc | corbaidl | edix12 | envoy-xds | fhir | fix | flatbuffers | gateway-api | graphql | hl7v2 | hoppscotch | http-file | idoc | iso20022 | iso8583 | istio | json-schema | jtd | k8s-crd | kafka-connect | kong | llm-tools | odata | odcs | oncrpc | openapi | openrpc | postman | protobuf | raml | smithy | thrift | thunder-client | traefik | typespec | wadl | wit | wsdl | xmlrpc | xsd | zosconnect |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| a2a | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | R | S | R | ok | L | S | R | S | L | ok | ok | R | R | ok | L | L | L | S | L | R |
-| acp | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | S | ok | R | R | ok | L | S | L | S | L | R |
-| agents-manifest | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | ok | ok | R | R | ok | L | S | L | S | L | R |
+| a2a | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | R | S | R | ok | L | S | R | S | L | ok | L | R | R | ok | L | L | L | S | L | R |
+| acp | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | S | L | R | R | ok | L | S | L | S | L | R |
+| agents-manifest | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | ok | L | R | R | ok | L | S | L | S | L | R |
 | api-blueprint | ok | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | S | L | L | L | R | L | R |
 | apigee | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | S | L | L | L | R | L | R |
 | arazzo | R | R | ok | L | L | R | R | R | S | L | L | R | S | S | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | S | S | S | R | S | L | S | S | R | R | S | L | S | L | S | L | R |
@@ -33,7 +33,7 @@ Every corpus source family exported to every production target through the catal
 | cddl | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | cics-bms | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | cloudevents | L | R | L | L | ok | L | R | R | L | L | ok | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
-| cobolcopybook | L | R | L | ok | L | L | R | R | L | S | L | L | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | ok | R | R | ok | L | L | L | R | S | R |
+| cobolcopybook | L | R | L | ok | L | L | R | R | L | S | L | L | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | ok | L | L | L | R | S | R |
 | connectrpc | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | S | L | R |
 | consul | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | S | L | L | L | R | L | R |
 | corbaidl | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | S | L | R |
@@ -43,7 +43,7 @@ Every corpus source family exported to every production target through the catal
 | dicom | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | discovery | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | dtd | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
-| edifact | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
+| edifact | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | S | L | L | L | R | S | R |
 | edix12 | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | L | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
 | envoy-xds | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | S | L | L | L | R | L | R |
 | fhir | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | ok | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | S | L | L | L | R | L | R |
@@ -54,7 +54,7 @@ Every corpus source family exported to every production target through the catal
 | graphql | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | R | L | L | S | L | R | R | L | L | S | L | L | L | R |
 | haproxy | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | ok | L | L | L | R | L | R |
 | har | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
-| hl7v2 | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | L | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
+| hl7v2 | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | L | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | S | L | L | L | R | S | R |
 | hl7v3 | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | hoppscotch | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | http-file | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
@@ -104,10 +104,10 @@ Every corpus source family exported to every production target through the catal
 | sql-ddl | L | R | L | L | ok | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | S | L | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | swagger | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | swagger-1.2 | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
-| swift-mt | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
+| swift-mt | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | S | L | L | L | R | S | R |
 | thrift | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | L | L | S | R | L | L | L | ok | R | R | S | L | L | L | S | L | R |
 | thunder-client | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
-| tradacoms | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
+| tradacoms | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | S | L | L | L | R | S | R |
 | traefik | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | S | L | L | L | R | L | R |
 | trpc | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | L | L | L | L | R |
 | tyk | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | ok | L | L | L | R | L | R |
@@ -118,7 +118,7 @@ Every corpus source family exported to every production target through the catal
 | wit | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | R | L | L | S | L | R | R | L | L | ok | L | L | L | R |
 | wsdl | L | R | L | L | L | L | R | R | L | L | L | R | L | S | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | S | L | S | R | L | L | L | S | R | R | S | L | L | L | S | L | R |
 | wsdl2 | L | R | L | L | L | L | R | R | L | L | L | R | L | S | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | S | L | S | R | L | L | L | S | R | R | S | L | L | L | S | L | R |
-| xmlrpc | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | ok | L | R |
+| xmlrpc | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | S | L | L | L | S | R | L | L | L | L | R | R | S | L | L | L | ok | L | R |
 | xregistry | L | R | L | L | ok | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | xsd | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | zod | L | R | L | L | S | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | S | L | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |

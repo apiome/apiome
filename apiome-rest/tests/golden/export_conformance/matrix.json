@@ -378,9 +378,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -862,9 +868,15 @@
     },
     {
       "family": "acp",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -1342,9 +1354,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -5534,15 +5552,15 @@
     },
     {
       "drift": [
-        "added operation OrderService.cancelOrder",
-        "added operation OrderService.getOrder",
-        "added operation OrderService.placeOrder",
-        "removed operation com.example.orders.OrderService.cancelOrder",
-        "removed operation com.example.orders.OrderService.getOrder",
-        "removed operation com.example.orders.OrderService.placeOrder"
+        "changed operation com.example.orders.OrderService.cancelOrder",
+        "changed operation com.example.orders.OrderService.getOrder",
+        "changed operation com.example.orders.OrderService.placeOrder",
+        "changed root",
+        "changed service com.example.orders.OrderService",
+        "changed type com.example.orders.Order"
       ],
       "family": "avro-idl",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -8313,7 +8331,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 9,
         "drop": 0,
         "synth": 0
       },
@@ -9827,9 +9845,15 @@
     },
     {
       "family": "cobolcopybook",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "cobolcopybook",
@@ -10329,15 +10353,15 @@
     },
     {
       "drift": [
-        "added operation TaskService.CompleteTask",
-        "added operation TaskService.CreateTask",
-        "added operation TaskService.GetTask",
-        "added operation TaskService.ListTasks",
-        "removed operation tasks.v1.TaskService.CompleteTask",
-        "removed operation tasks.v1.TaskService.CreateTask"
+        "changed operation tasks.v1.TaskService.CompleteTask",
+        "changed operation tasks.v1.TaskService.CreateTask",
+        "changed operation tasks.v1.TaskService.GetTask",
+        "changed operation tasks.v1.TaskService.ListTasks",
+        "changed root",
+        "changed type tasks.v1.CompleteTaskRequest"
       ],
       "family": "connectrpc",
-      "reason": "Fidelity report is empty but the round trip shows 25 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -11424,15 +11448,15 @@
     },
     {
       "drift": [
-        "added operation Bank.deposit",
-        "added operation Bank.getAccount",
-        "added operation Bank.openAccount",
-        "added operation Bank.withdraw",
-        "removed operation Banking.Bank.deposit",
-        "removed operation Banking.Bank.getAccount"
+        "changed operation Banking.Bank.deposit",
+        "changed operation Banking.Bank.getAccount",
+        "changed operation Banking.Bank.openAccount",
+        "changed operation Banking.Bank.withdraw",
+        "changed root",
+        "changed type Banking.Account"
       ],
       "family": "corbaidl",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -14578,7 +14602,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 4,
+        "approx": 14,
         "drop": 0,
         "synth": 0
       },
@@ -15092,18 +15116,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed root",
-        "added type DTM",
-        "removed type EDIFACT-INVOIC.DTM",
-        "removed type EDIFACT-INVOIC.IMD",
-        "removed type EDIFACT-INVOIC.LIN",
-        "removed type EDIFACT-INVOIC.MOA"
-      ],
       "family": "edifact",
-      "reason": "Fidelity report is empty but the round trip shows 21 difference(s).",
-      "status": "silent-loss",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 23,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "edifact",
@@ -15618,10 +15640,10 @@
     {
       "drift": [
         "changed root",
-        "added type PO1",
-        "added type TransactionSet850",
         "removed type X12-850.PO1",
-        "removed type X12-850.TransactionSet850"
+        "removed type X12-850.TransactionSet850",
+        "added type X12_850.PO1",
+        "added type X12_850.TransactionSet850"
       ],
       "family": "edix12",
       "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
@@ -16761,7 +16783,7 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -17284,7 +17306,7 @@
       "drift": [
         "changed root",
         "removed type FIX.4.4.Message8",
-        "added type Message8"
+        "added type FIX._4._4.Message8"
       ],
       "family": "fix",
       "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
@@ -18287,14 +18309,13 @@
     {
       "drift": [
         "changed root",
-        "added type Color",
-        "added type Monster",
-        "added type Vec3",
-        "added type Weapon",
-        "removed type example.game.Color"
+        "changed type example.game.Color",
+        "changed type example.game.Monster",
+        "changed type example.game.Vec3",
+        "changed type example.game.Weapon"
       ],
       "family": "flatbuffers",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -21046,17 +21067,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type ADT-A01.MSH",
-        "removed type ADT-A01.MessageADTA01",
-        "added type MSH",
-        "added type MessageADTA01"
-      ],
       "family": "hl7v2",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 49,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "hl7v2",
@@ -21559,7 +21579,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 2,
+        "approx": 5,
         "drop": 0,
         "synth": 0
       },
@@ -23249,11 +23269,11 @@
     {
       "drift": [
         "changed root",
-        "added type E1EDK01",
-        "added type E1EDK03",
-        "added type E1EDK14",
-        "added type E1EDKA1",
-        "added type E1EDP01"
+        "removed type IDOC-ORDERS05.E1EDK01",
+        "removed type IDOC-ORDERS05.E1EDK03",
+        "removed type IDOC-ORDERS05.E1EDK14",
+        "removed type IDOC-ORDERS05.E1EDKA1",
+        "removed type IDOC-ORDERS05.E1EDP01"
       ],
       "family": "idoc",
       "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
@@ -23765,7 +23785,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 15,
+        "approx": 18,
         "drop": 0,
         "synth": 0
       },
@@ -24871,11 +24891,11 @@
     {
       "drift": [
         "changed root",
-        "added type Amt",
-        "added type CdtTrfTxInf",
-        "added type Cdtr",
-        "added type CdtrAcct",
-        "added type CdtrAgt"
+        "removed type pain.001.001.09.Amt",
+        "removed type pain.001.001.09.CdtTrfTxInf",
+        "removed type pain.001.001.09.Cdtr",
+        "removed type pain.001.001.09.CdtrAcct",
+        "removed type pain.001.001.09.CdtrAgt"
       ],
       "family": "iso20022",
       "reason": "Fidelity report is empty but the round trip shows 37 difference(s).",
@@ -28493,11 +28513,10 @@
     {
       "drift": [
         "changed root",
-        "added type Order",
-        "removed type com.example.orders.Order"
+        "changed type com.example.orders.Order"
       ],
       "family": "kafka-connect",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -30089,13 +30108,15 @@
     },
     {
       "drift": [
-        "changed operation TemperatureService.ResetMinAndMaxMeasuredValues",
+        "removed operation TemperatureService.ResetMinAndMaxMeasuredValues",
+        "added operation urn_oma_lwm2m_ext_3303.TemperatureService.ResetMinAndMaxMeasuredValues",
         "changed root",
-        "changed service TemperatureService",
-        "changed type Temperature"
+        "removed service TemperatureService",
+        "added service urn_oma_lwm2m_ext_3303.TemperatureService",
+        "removed type Temperature"
       ],
       "family": "lwm2m",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -30623,7 +30644,7 @@
         "changed root"
       ],
       "family": "matter",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -31140,7 +31161,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 6,
+        "approx": 7,
         "drop": 0,
         "synth": 9
       },
@@ -31670,11 +31691,11 @@
     {
       "drift": [
         "changed root",
-        "added type AchFile",
-        "added type Batch",
-        "added type BatchControl",
-        "added type BatchHeader",
-        "added type EntryDetail"
+        "removed type NACHA-ACH.AchFile",
+        "removed type NACHA-ACH.Batch",
+        "removed type NACHA-ACH.BatchControl",
+        "removed type NACHA-ACH.BatchHeader",
+        "removed type NACHA-ACH.EntryDetail"
       ],
       "family": "nacha",
       "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
@@ -32186,7 +32207,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 8,
+        "approx": 19,
         "drop": 0,
         "synth": 0
       },
@@ -32702,11 +32723,11 @@
     {
       "drift": [
         "changed root",
-        "added type Address",
-        "added type Body",
-        "added type CommunicationNumbers",
-        "added type DateOfBirth",
-        "added type Diagnosis"
+        "removed type NCPDP-SCRIPT.Address",
+        "removed type NCPDP-SCRIPT.Body",
+        "removed type NCPDP-SCRIPT.CommunicationNumbers",
+        "removed type NCPDP-SCRIPT.DateOfBirth",
+        "removed type NCPDP-SCRIPT.Diagnosis"
       ],
       "family": "ncpdp",
       "reason": "Fidelity report is empty but the round trip shows 63 difference(s).",
@@ -38524,7 +38545,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 13,
+        "approx": 15,
         "drop": 0,
         "synth": 0
       },
@@ -40201,15 +40222,15 @@
     },
     {
       "drift": [
-        "added operation ProductService.CreateProduct",
-        "added operation ProductService.GetProduct",
-        "added operation ProductService.ListProducts",
-        "removed operation example.catalog.v1.ProductService.CreateProduct",
-        "removed operation example.catalog.v1.ProductService.GetProduct",
-        "removed operation example.catalog.v1.ProductService.ListProducts"
+        "changed operation example.catalog.v1.ProductService.CreateProduct",
+        "changed operation example.catalog.v1.ProductService.GetProduct",
+        "changed operation example.catalog.v1.ProductService.ListProducts",
+        "changed root",
+        "changed type example.catalog.v1.CreateProductRequest",
+        "changed type example.catalog.v1.Dimensions"
       ],
       "family": "protobuf",
-      "reason": "Fidelity report is empty but the round trip shows 23 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -40729,15 +40750,15 @@
     },
     {
       "drift": [
-        "added operation OrderService.GetOrder",
-        "added operation OrderService.PlaceOrder",
-        "removed operation example.orders.v1.OrderService.GetOrder",
-        "removed operation example.orders.v1.OrderService.PlaceOrder",
+        "changed operation example.orders.v1.OrderService.GetOrder",
+        "changed operation example.orders.v1.OrderService.PlaceOrder",
         "changed root",
-        "added service OrderService"
+        "changed type example.orders.v1.GetOrderRequest",
+        "changed type example.orders.v1.Order",
+        "changed type example.orders.v1.OrderLine"
       ],
       "family": "protobuf-editions",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
       "status": "silent-loss",
       "target": "thrift"
     },
@@ -43376,11 +43397,11 @@
     {
       "drift": [
         "changed root",
-        "added type Amt",
-        "added type CdtTrfTxInf",
-        "added type Cdtr",
-        "added type CdtrAcct",
-        "added type CdtrAgt"
+        "removed type pain.001.001.09.Amt",
+        "removed type pain.001.001.09.CdtTrfTxInf",
+        "removed type pain.001.001.09.Cdtr",
+        "removed type pain.001.001.09.CdtrAcct",
+        "removed type pain.001.001.09.CdtrAgt"
       ],
       "family": "sepa",
       "reason": "Fidelity report is empty but the round trip shows 51 difference(s).",
@@ -45499,7 +45520,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 2,
         "synth": 7
       },
@@ -47680,18 +47701,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed root",
-        "added type CodeWord",
-        "added type Field13C",
-        "added type Field20",
-        "added type Field23B",
-        "added type Field32A"
-      ],
       "family": "swift-mt",
-      "reason": "Fidelity report is empty but the round trip shows 31 difference(s).",
-      "status": "silent-loss",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 13,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "swift-mt",
@@ -49302,17 +49321,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed root",
-        "added type MessageORDERS",
-        "added type OLD",
-        "removed type TRADACOMS-ORDERS.MessageORDERS",
-        "removed type TRADACOMS-ORDERS.OLD"
-      ],
       "family": "tradacoms",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "tradacoms",
@@ -50393,7 +50411,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 19,
+        "approx": 20,
         "drop": 0,
         "synth": 28
       },
@@ -53684,7 +53702,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 3
       },
@@ -54203,12 +54221,12 @@
     },
     {
       "drift": [
-        "added operation OrderPort.CancelOrder",
-        "added operation OrderPort.CreateOrder",
-        "added operation OrderPort.GetOrder",
         "removed operation http://example.com/orders.OrderPort.CancelOrder",
         "removed operation http://example.com/orders.OrderPort.CreateOrder",
-        "removed operation http://example.com/orders.OrderPort.GetOrder"
+        "removed operation http://example.com/orders.OrderPort.GetOrder",
+        "added operation http_example.com_orders.OrderPort.CancelOrder",
+        "added operation http_example.com_orders.OrderPort.CreateOrder",
+        "added operation http_example.com_orders.OrderPort.GetOrder"
       ],
       "family": "wsdl",
       "reason": "Fidelity report is empty but the round trip shows 27 difference(s).",
@@ -54735,12 +54753,12 @@
     },
     {
       "drift": [
-        "added operation OrderInterface.cancelOrder",
-        "added operation OrderInterface.getOrder",
-        "added operation OrderInterface.placeOrder",
         "removed operation http://example.com/orders.OrderInterface.cancelOrder",
         "removed operation http://example.com/orders.OrderInterface.getOrder",
-        "removed operation http://example.com/orders.OrderInterface.placeOrder"
+        "removed operation http://example.com/orders.OrderInterface.placeOrder",
+        "added operation http_example.com_orders.OrderInterface.cancelOrder",
+        "added operation http_example.com_orders.OrderInterface.getOrder",
+        "added operation http_example.com_orders.OrderInterface.placeOrder"
       ],
       "family": "wsdl2",
       "reason": "Fidelity report is empty but the round trip shows 23 difference(s).",
@@ -55259,16 +55277,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation inventory.reserveStock.inventory.reserveStock",
-        "changed root",
-        "removed service inventory.reserveStock",
-        "changed type InventoryReserveStockParam3"
-      ],
       "family": "xmlrpc",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "thrift"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "thrift",
+      "tier": "lossy"
     },
     {
       "family": "xmlrpc",
@@ -57364,7 +57382,7 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 2,
+        "approx": 8,
         "drop": 0,
         "synth": 0
       },
@@ -57474,10 +57492,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3308,
-    "ok": 65,
+    "lossy": 3317,
+    "ok": 61,
     "refused": 1909,
-    "silent-loss": 442,
+    "silent-loss": 437,
     "skipped": 0
   },
   "families": [

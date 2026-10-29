@@ -337,6 +337,16 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         parses_json=False,
         runtime="native",
     ),
+    BundledTool(
+        key="thrift",
+        executable="thrift",
+        version="0.21.0",
+        description="Apache Thrift compiler: `thrift --gen json` checks an emitted .thrift IDL "
+        "(apache/thrift, MFX-25.1). Optional: without it the export is re-parsed by the Thrift reader.",
+        env_override_key="APIOME_THRIFT_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
 )
 
 # Fast key → BundledTool lookup.
