@@ -6,7 +6,7 @@
     "extras": {
       "typespec_enums": [
         {
-          "documentation": null,
+          "documentation": "Issue lifecycle state.",
           "name": "IssueState",
           "values": [
             "open",
@@ -20,11 +20,11 @@
       ],
       "typespec_interfaces": [
         {
-          "documentation": "Payload to creat",
+          "documentation": null,
           "name": "UserRepos",
           "operations": [
             {
-              "documentation": null,
+              "documentation": "List repositories for the authenticated user.",
               "is_array_return": true,
               "name": "list",
               "parameters": [
@@ -38,7 +38,7 @@
               "verb": "get"
             },
             {
-              "documentation": null,
+              "documentation": "Create a repository for the authenticated user.",
               "is_array_return": false,
               "name": "create",
               "parameters": [
@@ -59,7 +59,7 @@
           "name": "Issues",
           "operations": [
             {
-              "documentation": null,
+              "documentation": "List issues for a repository.",
               "is_array_return": true,
               "name": "list",
               "parameters": [
@@ -78,7 +78,7 @@
               "verb": "get"
             },
             {
-              "documentation": null,
+              "documentation": "Open a new issue on a repository.",
               "is_array_return": false,
               "name": "create",
               "parameters": [
@@ -97,33 +97,203 @@
               "verb": "post"
             }
           ],
-          "route_prefix": "/user/repos"
+          "route_prefix": "/repos"
         }
       ],
       "typespec_models": [
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "The account that owns a repository.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "login",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "ownerId",
+              "optional": false,
+              "type": "int64"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "siteAdmin",
+              "optional": false,
+              "type": "boolean"
+            }
+          ],
           "name": "Owner"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A source-code repository.",
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": null,
+              "name": "fullName",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "owner",
+              "optional": false,
+              "type": "Owner"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "description",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "private",
+              "optional": false,
+              "type": "boolean"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "defaultBranch",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "stargazersCount",
+              "optional": false,
+              "type": "int64"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "openIssuesCount",
+              "optional": false,
+              "type": "int64"
+            }
+          ],
           "name": "Repository"
         },
         {
-          "documentation": "The account that owns a repo",
-          "fields": [],
+          "documentation": "Payload to create a repository.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "description",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "private",
+              "optional": true,
+              "type": "boolean"
+            }
+          ],
           "name": "NewRepository"
         },
         {
-          "documentation": "A",
-          "fields": [],
+          "documentation": "An issue on a repository.",
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": null,
+              "name": "issueNumber",
+              "optional": false,
+              "type": "int64"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "title",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "body",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "state",
+              "optional": false,
+              "type": "IssueState"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "labels",
+              "optional": false,
+              "type": "string[]"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "createdAt",
+              "optional": false,
+              "type": "utcDateTime"
+            }
+          ],
           "name": "Issue"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Payload to open a new issue.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "title",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "body",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "labels",
+              "optional": true,
+              "type": "string[]"
+            }
+          ],
           "name": "NewIssue"
         }
       ],
@@ -149,7 +319,7 @@
       {
         "description": null,
         "extras": {
-          "typespec_route_prefix": "/user/repos"
+          "typespec_route_prefix": "/repos"
         },
         "key": "GitHubStyle.Issues",
         "name": "Issues",
@@ -157,15 +327,15 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "List issues for a repository.",
             "extras": {
               "typespec_interface": "Issues",
-              "typespec_route_prefix": "/user/repos",
+              "typespec_route_prefix": "/repos",
               "typespec_verb": "get"
             },
             "http_method": "GET",
-            "http_path": "/user/repos/{fullName}",
-            "key": "GET /user/repos/{fullName}",
+            "http_path": "/repos/{fullName}",
+            "key": "GET /repos/{fullName}",
             "kind": "request_response",
             "messages": [
               {
@@ -175,7 +345,7 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
-                "key": "GET /user/repos/{fullName}#response.200",
+                "key": "GET /repos/{fullName}#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
@@ -205,7 +375,7 @@
                   "typespec_location": "path",
                   "typespec_type": "string"
                 },
-                "key": "GET /user/repos/{fullName}#path.fullName",
+                "key": "GET /repos/{fullName}#path.fullName",
                 "location": "path",
                 "name": "fullName",
                 "required": true,
@@ -225,10 +395,10 @@
                   "typespec_location": "query",
                   "typespec_type": "string"
                 },
-                "key": "GET /user/repos/{fullName}#query.state",
+                "key": "GET /repos/{fullName}#query.state",
                 "location": "query",
                 "name": "state",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -243,15 +413,15 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Open a new issue on a repository.",
             "extras": {
               "typespec_interface": "Issues",
-              "typespec_route_prefix": "/user/repos",
+              "typespec_route_prefix": "/repos",
               "typespec_verb": "post"
             },
             "http_method": "POST",
-            "http_path": "/user/repos/{fullName}",
-            "key": "POST /user/repos/{fullName}",
+            "http_path": "/repos/{fullName}",
+            "key": "POST /repos/{fullName}",
             "kind": "request_response",
             "messages": [
               {
@@ -261,7 +431,7 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
-                "key": "POST /user/repos/{fullName}#request",
+                "key": "POST /repos/{fullName}#request",
                 "name": null,
                 "payload": {
                   "extras": {},
@@ -281,7 +451,7 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
-                "key": "POST /user/repos/{fullName}#response.200",
+                "key": "POST /repos/{fullName}#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
@@ -306,7 +476,7 @@
                   "typespec_location": "path",
                   "typespec_type": "string"
                 },
-                "key": "POST /user/repos/{fullName}#path.fullName",
+                "key": "POST /repos/{fullName}#path.fullName",
                 "location": "path",
                 "name": "fullName",
                 "required": true,
@@ -324,7 +494,7 @@
         ]
       },
       {
-        "description": "Payload to creat",
+        "description": null,
         "extras": {
           "typespec_route_prefix": "/user/repos"
         },
@@ -334,7 +504,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "List repositories for the authenticated user.",
             "extras": {
               "typespec_interface": "UserRepos",
               "typespec_route_prefix": "/user/repos",
@@ -385,7 +555,7 @@
                 "key": "GET /user/repos#query.visibility",
                 "location": "query",
                 "name": "visibility",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -400,7 +570,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Create a repository for the authenticated user.",
             "extras": {
               "typespec_interface": "UserRepos",
               "typespec_route_prefix": "/user/repos",
@@ -466,13 +636,149 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "A",
+        "description": "An issue on a repository.",
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "issueNumber"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 3,
+            "key": "GitHubStyle.Issue.body",
+            "name": "body",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "utcDateTime"
+            },
+            "field_number": 6,
+            "key": "GitHubStyle.Issue.createdAt",
+            "name": "createdAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "GitHubStyle.utcDateTime",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "int64"
+            },
+            "field_number": 1,
+            "key": "GitHubStyle.Issue.issueNumber",
+            "name": "issueNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string[]"
+            },
+            "field_number": 5,
+            "key": "GitHubStyle.Issue.labels",
+            "name": "labels",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": true
+              },
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "IssueState"
+            },
+            "field_number": 4,
+            "key": "GitHubStyle.Issue.state",
+            "name": "state",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "GitHubStyle.IssueState",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "GitHubStyle.Issue.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "GitHubStyle.Issue",
         "key_type": null,
         "kind": "record",
@@ -485,7 +791,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Issue lifecycle state.",
         "enum_values": [
           {
             "deprecated": false,
@@ -524,13 +830,82 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Payload to open a new issue.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "GitHubStyle.NewIssue.body",
+            "name": "body",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string[]"
+            },
+            "field_number": 3,
+            "key": "GitHubStyle.NewIssue.labels",
+            "name": "labels",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": true
+              },
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "GitHubStyle.NewIssue.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "GitHubStyle.NewIssue",
         "key_type": null,
         "kind": "record",
@@ -543,13 +918,77 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "The account that owns a repo",
+        "description": "Payload to create a repository.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "GitHubStyle.NewRepository.description",
+            "name": "description",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "GitHubStyle.NewRepository.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "boolean"
+            },
+            "field_number": 3,
+            "key": "GitHubStyle.NewRepository.private",
+            "name": "private",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": true
+            }
+          }
+        ],
         "key": "GitHubStyle.NewRepository",
         "key_type": null,
         "kind": "record",
@@ -562,13 +1001,77 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "The account that owns a repository.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "GitHubStyle.Owner.login",
+            "name": "login",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "int64"
+            },
+            "field_number": 2,
+            "key": "GitHubStyle.Owner.ownerId",
+            "name": "ownerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "boolean"
+            },
+            "field_number": 3,
+            "key": "GitHubStyle.Owner.siteAdmin",
+            "name": "siteAdmin",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": false
+            }
+          }
+        ],
         "key": "GitHubStyle.Owner",
         "key_type": null,
         "kind": "record",
@@ -581,13 +1084,186 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A source-code repository.",
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "fullName"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 6,
+            "key": "GitHubStyle.Repository.defaultBranch",
+            "name": "defaultBranch",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 4,
+            "key": "GitHubStyle.Repository.description",
+            "name": "description",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "GitHubStyle.Repository.fullName",
+            "name": "fullName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "GitHubStyle.Repository.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "int64"
+            },
+            "field_number": 8,
+            "key": "GitHubStyle.Repository.openIssuesCount",
+            "name": "openIssuesCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "Owner"
+            },
+            "field_number": 3,
+            "key": "GitHubStyle.Repository.owner",
+            "name": "owner",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "GitHubStyle.Owner",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "boolean"
+            },
+            "field_number": 5,
+            "key": "GitHubStyle.Repository.private",
+            "name": "private",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "int64"
+            },
+            "field_number": 7,
+            "key": "GitHubStyle.Repository.stargazersCount",
+            "name": "stargazersCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          }
+        ],
         "key": "GitHubStyle.Repository",
         "key_type": null,
         "kind": "record",
@@ -611,16 +1287,16 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:59fcfc70822e81b48dc602d84eefd0e3b074eb82601db91baef7fe9e02b6bdf4",
+  "fingerprint": "sha256:5e7818b192be75da8b65455c7f321e97c717ed8900065640ad1d693d90b96129",
   "lint": {
-    "findings": 15,
-    "grade": "D",
-    "report_fingerprint": "fe27d081792ac44a45b96bcaca657643e9a97a672a1428c56e95350e4a8db0ef",
-    "score": 61,
+    "findings": 30,
+    "grade": "C",
+    "report_fingerprint": "61f29dd207d9af89bdca6761a37667c9b8090810b9dc81134ac5df36d14aefdc",
+    "score": 73,
     "severity_counts": {
       "error": 0,
-      "info": 7,
-      "warning": 8
+      "info": 30,
+      "warning": 0
     }
   },
   "snapshot_version": 1

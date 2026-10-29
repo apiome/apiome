@@ -414,9 +414,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -908,9 +914,15 @@
     },
     {
       "family": "acp",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -1406,9 +1418,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -1989,18 +2007,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /tasks",
-        "removed operation GET /tasks/{id}",
-        "removed operation POST /tasks",
-        "changed root",
-        "removed service Task API",
-        "added type Exported.NewTask"
-      ],
       "family": "api-blueprint",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "api-blueprint",
@@ -2564,18 +2580,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{segment1}",
-        "added operation GET /{segment1}",
-        "added operation POST /",
-        "removed operation POST /v2/orders/orders"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -3068,18 +3082,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation checkout#addItem",
-        "removed operation checkout#createCart",
-        "removed operation checkout#pay",
-        "changed root",
-        "added service Exported.checkout"
-      ],
       "family": "arazzo",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "arazzo",
@@ -3592,8 +3604,8 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -4103,7 +4115,7 @@
       "family": "asn1",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -4576,15 +4588,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "typespec",
-      "tier": "lossy"
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
+      "target": "typespec"
     },
     {
       "family": "asyncapi",
@@ -5603,18 +5609,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation com.example.orders.OrderService.cancelOrder",
-        "removed operation com.example.orders.OrderService.getOrder",
-        "removed operation com.example.orders.OrderService.placeOrder",
-        "changed root",
-        "changed service com.example.orders.OrderService"
-      ],
       "family": "avro-idl",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "avro-idl",
@@ -6195,9 +6199,9 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 6
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -6759,17 +6763,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /orders",
-        "removed operation GET /orders/{orderId}",
-        "changed root",
-        "added service Exported.default",
-        "removed service default"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -7345,9 +7348,9 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 3
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -7859,18 +7862,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "removed operation Directory.add",
-        "removed operation Directory.lookup",
-        "added operation GET /",
-        "changed root",
-        "removed service Directory",
-        "added service Exported.Directory"
-      ],
       "family": "capnproto",
-      "reason": "Fidelity report is empty but the round trip shows 16 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "capnproto",
@@ -8381,8 +8382,8 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 3,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -8891,7 +8892,7 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -9389,9 +9390,9 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
-        "synth": 6
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -9895,9 +9896,15 @@
     },
     {
       "family": "cobolcopybook",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "cobolcopybook",
@@ -10404,18 +10411,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation tasks.v1.TaskService.CompleteTask",
-        "removed operation tasks.v1.TaskService.CreateTask",
-        "removed operation tasks.v1.TaskService.GetTask",
-        "removed operation tasks.v1.TaskService.ListTasks",
-        "changed root"
-      ],
       "family": "connectrpc",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "connectrpc",
@@ -10981,15 +10986,9 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "changed root",
-        "added service Exported.orders",
-        "removed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
       "target": "typespec"
     },
     {
@@ -11499,18 +11498,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "removed operation Banking.Bank.deposit",
-        "removed operation Banking.Bank.getAccount",
-        "removed operation Banking.Bank.openAccount",
-        "removed operation Banking.Bank.withdraw",
-        "added operation GET /",
-        "changed root"
-      ],
       "family": "corbaidl",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "corbaidl",
@@ -12024,9 +12021,9 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 9,
-        "drop": 0,
-        "synth": 13
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -12533,9 +12530,9 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 8
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -13048,9 +13045,9 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
-        "synth": 13
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -13558,8 +13555,8 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
+        "approx": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -14143,8 +14140,8 @@
       "family": "discovery",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
-        "synth": 12
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -14652,8 +14649,8 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
+        "approx": 3,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -15166,18 +15163,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type EDIFACT-INVOIC.DTM",
-        "removed type EDIFACT-INVOIC.IMD",
-        "removed type EDIFACT-INVOIC.LIN",
-        "removed type EDIFACT-INVOIC.MOA",
-        "removed type EDIFACT-INVOIC.MessageINVOIC"
-      ],
       "family": "edifact",
-      "reason": "Fidelity report is empty but the round trip shows 21 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "edifact",
@@ -15689,17 +15684,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type X12-850.PO1",
-        "removed type X12-850.TransactionSet850",
-        "added type X12.PO1",
-        "added type X12.TransactionSet850"
-      ],
       "family": "edix12",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "edix12",
@@ -16263,17 +16257,9 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root",
-        "added service Exported.storefront"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
       "target": "typespec"
     },
     {
@@ -16843,18 +16829,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation GET /Patient",
-        "removed operation GET /Patient/{id}",
-        "added operation POST /",
-        "removed operation POST /Patient",
-        "changed root"
-      ],
       "family": "fhir",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "fhir",
@@ -17352,14 +17336,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type FIX.4.4.Message8"
-      ],
       "family": "fix",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "fix",
@@ -17860,9 +17846,9 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 2
+        "approx": 1,
+        "drop": 13,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -18365,17 +18351,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type example.game.Color",
-        "changed type example.game.Monster",
-        "changed type example.game.Vec3",
-        "changed type example.game.Weapon"
-      ],
       "family": "flatbuffers",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "flatbuffers",
@@ -18942,9 +18927,15 @@
     },
     {
       "family": "gateway-api",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -19446,9 +19437,9 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 0,
+        "approx": 5,
         "drop": 0,
-        "synth": 16
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -20027,8 +20018,8 @@
     },
     {
       "family": "haproxy",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
       "target": "typespec"
     },
     {
@@ -20606,9 +20597,9 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 20
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -21122,17 +21113,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type ADT-A01.MSH",
-        "removed type ADT-A01.MessageADTA01",
-        "added type ADT.MSH",
-        "added type ADT.MessageADTA01"
-      ],
       "family": "hl7v2",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "hl7v2",
@@ -21634,7 +21624,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -22218,9 +22208,9 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -22802,9 +22792,9 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -23324,18 +23314,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type IDOC-ORDERS05.E1EDK01",
-        "removed type IDOC-ORDERS05.E1EDK03",
-        "removed type IDOC-ORDERS05.E1EDK14",
-        "removed type IDOC-ORDERS05.E1EDKA1",
-        "removed type IDOC-ORDERS05.E1EDP01"
-      ],
       "family": "idoc",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "idoc",
@@ -23840,7 +23828,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 15,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -24424,9 +24412,9 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 3
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -24946,18 +24934,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type pain.001.001.09.Amt",
-        "changed type pain.001.001.09.CdtTrfTxInf",
-        "changed type pain.001.001.09.Cdtr",
-        "changed type pain.001.001.09.CdtrAcct",
-        "changed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "iso20022",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "iso20022",
@@ -25474,18 +25460,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type 0100.DE11",
-        "changed type 0100.DE12",
-        "changed type 0100.DE13",
-        "changed type 0100.DE18",
-        "changed type 0100.DE2"
-      ],
       "family": "iso8583",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "iso8583",
@@ -26053,9 +26037,15 @@
     },
     {
       "family": "istio",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -26549,9 +26539,9 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 7
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -27052,9 +27042,9 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 14
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -27561,9 +27551,9 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 11
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -28068,9 +28058,9 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -28565,14 +28555,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type com.example.orders.Order"
-      ],
       "family": "kafka-connect",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "kafka-connect",
@@ -29136,9 +29128,15 @@
     },
     {
       "family": "kong",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -29643,9 +29641,9 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 5
+        "approx": 3,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -30165,18 +30163,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation TemperatureService.ResetMinAndMaxMeasuredValues",
-        "changed root",
-        "removed service TemperatureService",
-        "added service urn.TemperatureService",
-        "removed type Temperature"
-      ],
       "family": "lwm2m",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "lwm2m",
@@ -30693,18 +30689,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation OnOffService.Off",
-        "removed operation OnOffService.OffWithEffect",
-        "removed operation OnOffService.On",
-        "removed operation OnOffService.OnWithTimedOff",
-        "removed operation OnOffService.Toggle"
-      ],
       "family": "matter",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "matter",
@@ -31217,9 +31211,9 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 9
+        "approx": 7,
+        "drop": 6,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -31747,18 +31741,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type NACHA-ACH.AchFile",
-        "removed type NACHA-ACH.Batch",
-        "removed type NACHA-ACH.BatchControl",
-        "removed type NACHA-ACH.BatchHeader",
-        "removed type NACHA-ACH.EntryDetail"
-      ],
       "family": "nacha",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "nacha",
@@ -32263,7 +32255,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 8,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -32779,18 +32771,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type NCPDP-SCRIPT.Address",
-        "removed type NCPDP-SCRIPT.Body",
-        "removed type NCPDP-SCRIPT.CommunicationNumbers",
-        "removed type NCPDP-SCRIPT.DateOfBirth",
-        "removed type NCPDP-SCRIPT.Diagnosis"
-      ],
       "family": "ncpdp",
-      "reason": "Fidelity report is empty but the round trip shows 63 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "ncpdp",
@@ -33358,8 +33348,8 @@
     },
     {
       "family": "nginx",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
       "target": "typespec"
     },
     {
@@ -33929,18 +33919,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation GET /Orders",
-        "removed operation GET /Orders({key})",
-        "added operation POST /",
-        "removed operation POST /Orders",
-        "changed root"
-      ],
       "family": "odata",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "odata",
@@ -34515,18 +34503,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation GET /Customers",
-        "removed operation GET /Customers({key})",
-        "removed operation GET /Items",
-        "removed operation GET /Items({key})",
-        "removed operation GET /Orders"
-      ],
       "family": "odata-v2",
-      "reason": "Fidelity report is empty but the round trip shows 18 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "odata-v2",
@@ -35020,9 +35006,9 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 6
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -35530,7 +35516,7 @@
       "family": "oncrpc",
       "loss_counts": {
         "approx": 4,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -36047,9 +36033,9 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 0,
-        "synth": 4
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -36555,9 +36541,9 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 4,
+        "approx": 1,
         "drop": 0,
-        "synth": 6
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -37067,9 +37053,9 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 6
+        "approx": 3,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -37573,9 +37559,9 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 9
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -38090,9 +38076,9 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 14
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -38600,7 +38586,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 13,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -39178,9 +39164,9 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 3
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -39762,9 +39748,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -40278,18 +40264,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation example.catalog.v1.ProductService.CreateProduct",
-        "removed operation example.catalog.v1.ProductService.GetProduct",
-        "removed operation example.catalog.v1.ProductService.ListProducts",
-        "changed root",
-        "changed service example.catalog.v1.ProductService"
-      ],
       "family": "protobuf",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "protobuf",
@@ -40806,18 +40790,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation example.orders.v1.OrderService.GetOrder",
-        "removed operation example.orders.v1.OrderService.PlaceOrder",
-        "changed root",
-        "changed service example.orders.v1.OrderService",
-        "changed type example.orders.v1.GetOrderRequest"
-      ],
       "family": "protobuf-editions",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "protobuf-editions",
@@ -41332,9 +41314,9 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 11,
-        "drop": 0,
-        "synth": 16
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -41910,18 +41892,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /books",
-        "removed operation GET /books/{bookId}",
-        "removed operation POST /books",
-        "changed root",
-        "removed service Bookstore API",
-        "removed type Book"
-      ],
       "family": "raml",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "raml",
@@ -42424,8 +42404,8 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -42930,9 +42910,9 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 14
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -43453,18 +43433,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type pain.001.001.09.Amt",
-        "changed type pain.001.001.09.CdtTrfTxInf",
-        "changed type pain.001.001.09.Cdtr",
-        "changed type pain.001.001.09.CdtrAcct",
-        "changed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "sepa",
-      "reason": "Fidelity report is empty but the round trip shows 26 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "sepa",
@@ -43963,9 +43941,9 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 8
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -44471,9 +44449,9 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
-        "synth": 11
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -45063,9 +45041,9 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -45569,9 +45547,9 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
-        "synth": 7
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -46077,9 +46055,9 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 21
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -46657,9 +46635,9 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 23,
-        "drop": 0,
-        "synth": 36
+        "approx": 4,
+        "drop": 5,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -47236,9 +47214,9 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 12
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -47750,18 +47728,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type SWIFT-MT103.CodeWord",
-        "removed type SWIFT-MT103.Field13C",
-        "removed type SWIFT-MT103.Field20",
-        "removed type SWIFT-MT103.Field23B",
-        "removed type SWIFT-MT103.Field32A"
-      ],
       "family": "swift-mt",
-      "reason": "Fidelity report is empty but the round trip shows 31 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "swift-mt",
@@ -48264,18 +48240,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation com.example.user.UserService.createUser",
-        "removed operation com.example.user.UserService.deleteUser",
-        "removed operation com.example.user.UserService.getUser",
-        "changed root",
-        "changed service com.example.user.UserService"
-      ],
       "family": "thrift",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "thrift",
@@ -48860,9 +48834,9 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 2
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -49370,17 +49344,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type TRADACOMS-ORDERS.MessageORDERS",
-        "removed type TRADACOMS-ORDERS.OLD",
-        "added type TRADACOMS.MessageORDERS",
-        "added type TRADACOMS.OLD"
-      ],
       "family": "tradacoms",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "tradacoms",
@@ -49944,17 +49917,9 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root",
-        "added service Exported.noop",
-        "removed service catalogue-service"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
+      "reason": "TypeSpec export needs at least one type or operation to declare; this source has neither.",
+      "status": "refused",
       "target": "typespec"
     },
     {
@@ -50460,9 +50425,9 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 19,
-        "drop": 0,
-        "synth": 28
+        "approx": 5,
+        "drop": 4,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -51039,9 +51004,15 @@
     },
     {
       "family": "tyk",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -51554,9 +51525,9 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
-        "synth": 25
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -51628,7 +51599,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 7,
+        "approx": 9,
         "drop": 0,
         "synth": 1
       },
@@ -51677,7 +51648,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 3,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -51688,9 +51659,9 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
+        "approx": 2,
+        "drop": 11,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -51701,7 +51672,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -51713,7 +51684,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -51722,18 +51693,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /pets",
-        "removed operation GET /pets/{id}",
-        "removed operation POST /pets",
-        "added operation Pets.create",
-        "added operation Pets.read",
-        "changed root"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
-      "status": "silent-loss",
-      "target": "capnproto"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "capnproto",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -51751,7 +51720,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 0,
-        "drop": 3,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -51766,23 +51735,21 @@
       "target": "cobolcopybook"
     },
     {
-      "drift": [
-        "removed operation GET /pets",
-        "removed operation GET /pets/{id}",
-        "removed operation POST /pets",
-        "added operation PetStore.Pets.create",
-        "added operation PetStore.Pets.list",
-        "added operation PetStore.Pets.read"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "connectrpc"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "connectrpc",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 3,
+        "approx": 9,
         "drop": 0,
         "synth": 0
       },
@@ -51832,7 +51799,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 3,
         "synth": 0
       },
@@ -51857,7 +51824,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 3,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -51874,8 +51841,8 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 4,
-        "drop": 3,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -51886,8 +51853,8 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
+        "approx": 13,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -51953,7 +51920,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 0,
-        "drop": 3,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -51963,9 +51930,15 @@
     },
     {
       "family": "typespec",
-      "reason": "Kafka Connect export needs a record type with at least one field; every record in this source is empty.",
-      "status": "refused",
-      "target": "kafka-connect"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "kafka-connect",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
@@ -51983,7 +51956,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -52007,14 +51980,20 @@
     },
     {
       "family": "typespec",
-      "reason": "ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none",
-      "status": "refused",
-      "target": "odcs"
+      "loss_counts": {
+        "approx": 0,
+        "drop": 11,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "odcs",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 3,
+        "approx": 9,
         "drop": 0,
         "synth": 0
       },
@@ -52024,18 +52003,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /pets",
-        "changed operation GET /pets/{id}",
-        "changed operation POST /pets",
-        "changed root",
-        "removed service PetStore.Pets",
-        "added service default"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -52052,8 +52029,8 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 8,
-        "drop": 3,
+        "approx": 14,
+        "drop": 11,
         "synth": 3
       },
       "reason": null,
@@ -52062,18 +52039,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /pets",
-        "removed operation GET /pets/{id}",
-        "removed operation POST /pets",
-        "added operation PetStore.Pets.create",
-        "added operation PetStore.Pets.list",
-        "added operation PetStore.Pets.read"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "protobuf"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "protobuf",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -52091,7 +52066,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 2,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -52114,8 +52089,8 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 4,
-        "drop": 3,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -52136,19 +52111,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /pets"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 1 difference(s).",
-      "status": "silent-loss",
+      "reason": null,
+      "status": "ok",
       "target": "typespec"
     },
     {
       "family": "typespec",
       "loss_counts": {
         "approx": 5,
-        "drop": 0,
+        "drop": 8,
         "synth": 1
       },
       "reason": null,
@@ -52160,7 +52132,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 3,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -52172,7 +52144,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -52646,7 +52618,7 @@
       "family": "vsam-idcams",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -53231,18 +53203,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /books",
-        "removed operation GET /books/{bookId}",
-        "removed operation POST /books",
-        "changed root",
-        "removed service http://example.com/bookstore.WADL API",
-        "added type http.Book"
-      ],
       "family": "wadl",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "wadl",
@@ -53747,9 +53717,9 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 0,
-        "drop": 1,
-        "synth": 3
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -54267,18 +54237,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation http://example.com/orders.OrderPort.CancelOrder",
-        "removed operation http://example.com/orders.OrderPort.CreateOrder",
-        "removed operation http://example.com/orders.OrderPort.GetOrder",
-        "changed root",
-        "added service http.OrderPort"
-      ],
       "family": "wsdl",
-      "reason": "Fidelity report is empty but the round trip shows 25 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "wsdl",
@@ -54799,18 +54767,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "added operation GET /",
-        "removed operation http://example.com/orders.OrderInterface.cancelOrder",
-        "removed operation http://example.com/orders.OrderInterface.getOrder",
-        "removed operation http://example.com/orders.OrderInterface.placeOrder",
-        "changed root",
-        "added service http.OrderInterface"
-      ],
       "family": "wsdl2",
-      "reason": "Fidelity report is empty but the round trip shows 21 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "wsdl2",
@@ -55322,17 +55288,16 @@
       "target": "traefik"
     },
     {
-      "drift": [
-        "removed operation inventory.reserveStock.inventory.reserveStock",
-        "changed root",
-        "removed service inventory.reserveStock",
-        "added type Exported.InventoryReserveStockParam3",
-        "removed type InventoryReserveStockParam3"
-      ],
       "family": "xmlrpc",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "xmlrpc",
@@ -55829,9 +55794,9 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 2,
-        "drop": 4,
-        "synth": 5
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -56853,9 +56818,9 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 15,
-        "drop": 0,
-        "synth": 16
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -57437,18 +57402,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /items/{sku}/stock",
-        "added operation GET /{sku}",
-        "removed operation POST /items/{sku}/reservations",
-        "added operation POST /{sku}",
-        "changed root",
-        "changed service InventoryRequester.InventoryRequester"
-      ],
       "family": "zosconnect",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "typespec"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "typespec",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -57513,10 +57476,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3333,
-    "ok": 56,
-    "refused": 1909,
-    "silent-loss": 426,
+    "lossy": 3382,
+    "ok": 47,
+    "refused": 1913,
+    "silent-loss": 382,
     "skipped": 0
   },
   "families": [

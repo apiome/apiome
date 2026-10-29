@@ -220,6 +220,53 @@ The report predicts exactly what the export writes:
 - **Carried.** For each operation and type that is carried, the report names the Smithy shape it
   became, such as `operation getPet @http(GET /pets/{id})` or `structure Pet`.
 
+### TypeSpec from any source
+
+Exporting to **TypeSpec** writes one `.tsp` file that compiles with the TypeSpec compiler Apiome
+ships (`tsp` 0.65 with `@typespec/http`), whatever the item was imported from. Each export is
+compiled before it is offered; without the compiler on the server it is read back by the TypeSpec
+importer instead.
+
+- **Document.** The title becomes `@service({ title: "…" })` on the namespace, and the description
+  becomes its doc comment. The version becomes `@info({ version: "…" })` (from `@typespec/openapi`),
+  and each server becomes `@server(url, description)` with its variables.
+- **Types.** Objects become `model`s, enums `enum`s, and unions `union`s, with named variants or
+  their member types. Maps become `model X is Record<V>`, and named lists `model X is T[]`. A named
+  scalar becomes `scalar X extends string` (or `int64`, `utcDateTime` …), and an alias of another type
+  becomes `alias X = T`. An enum value that differs from its member name is written
+  `inProgress: "in-progress"`, and a numeric enum keeps its numbers.
+- **Members.** A field that may be null is optional (`tag?: string`). Length limits become
+  `@minLength` and `@maxLength`, numeric bounds `@minValue` and `@maxValue` (or their `Exclusive`
+  forms), list sizes `@minItems` and `@maxItems`, and patterns `@pattern`. A string format with a
+  TypeSpec type of its own becomes that type (`date-time` is `utcDateTime`); any other format is kept
+  with `@format`. A default becomes `= value`. Descriptions become `/** … */` doc comments, and
+  deprecated items get `#deprecated`.
+- **Operations.** Each service becomes an `interface`. An HTTP operation keeps its verb and
+  `@route`, with parameters marked `@path`, `@query`, `@header("Name")` or `@cookie("name")`, and
+  the body `@body`. A body that is not JSON names its media types in a `Content-Type` header. A plain
+  200 response is the return type. Other responses are variants such as
+  `{ @statusCode statusCode: 201; @body body: Pet; }`, a `4XX` range is a status between 400 and 499,
+  and a `default` error is an `@error` model. An operation with no HTTP binding is written
+  `@post @route("/<Service>/<operation>")`.
+- **Names.** Every name is kept: a name that is not a TypeSpec identifier, or is a keyword, is written
+  in backticks (`` `order-id` ``). A type cannot reuse a built-in name such as `string`, and a clash
+  gets a number (`string2`). Each rename is in the fidelity report.
+- **From a TypeSpec item.** An item imported from a `.tsp` file keeps its imports, namespace,
+  interface routes, field types and decorators, so it exports and re-imports unchanged.
+
+The fidelity report lists what TypeSpec cannot carry, on the type, field or operation it concerns:
+
+- **Dropped:** constraints with no decorator (`multipleOf`, `uniqueItems`, a list of allowed values),
+  a default that does not fit its type, and numeric enum values beside string ones. Also dropped:
+  operations on a method TypeSpec has no verb for (such as `OPTIONS`), a second operation on the same
+  route, a path parameter missing from its route, multipart media types on a body that is not an
+  object, and event operations and channels.
+- **Approximated:** renames, RPC operations given an HTTP route, aliases (they compile to the type
+  they alias), scalars written as `string`, inline schemas written as `unknown`, synthesized path
+  parameters and `default` response models.
+- **Carried.** For each operation and type that is carried, the report names what it became, such as
+  `op getPet @get /pets/{id}` or `model Pet`.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever

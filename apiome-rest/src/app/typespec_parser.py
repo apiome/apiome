@@ -7,6 +7,7 @@ regex and brace matching (no external ``tsp`` compiler dependency). Syntax error
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
@@ -32,17 +33,16 @@ _SMITHY_KEYWORD_RE = re.compile(
     re.MULTILINE,
 )
 _NAMESPACE_RE = re.compile(r"^\s*namespace\s+([\w.]+)\s*;?", re.MULTILINE)
-_SERVICE_RE = re.compile(r'@service\(#\{\s*title:\s*"([^"]+)"', re.MULTILINE)
-_ROUTE_RE = re.compile(r'@route\(\s*"([^"]+)"\s*\)')
-_HTTP_VERB_RE = re.compile(r"@(get|post|put|patch|delete)\b", re.IGNORECASE)
-_OPERATION_RE = re.compile(
-    r"@(get|post|put|patch|delete)\s+(\w+)\s*\(([^)]*)\)\s*:\s*([^;]+);",
-    re.IGNORECASE,
-)
-_FIELD_RE = re.compile(
-    r"^(?:@\w+(?:\([^)]*\))?\s+)*(?P<name>\w+)(\?)?\s*:\s*(?P<type>[^;]+);",
-    re.MULTILINE,
-)
+#: ``@service(#{ title: "…" })`` (TypeSpec 0.66+) or ``@service({ title: "…" })`` (the bundled 0.65).
+_SERVICE_RE = re.compile(r'@service\(\s*#?\{\s*title:\s*"((?:[^"\\]|\\.)*)"', re.MULTILINE)
+_VERBS = frozenset({"get", "post", "put", "patch", "delete", "head"})
+_LOCATIONS = frozenset({"path", "query", "header", "cookie", "body"})
+#: One decorator: ``@name`` with optional arguments (string literals may hold parentheses).
+_DECORATOR_RE = re.compile(r'@(\w+)(?:\((?P<args>(?:"(?:[^"\\]|\\.)*"|[^()"]|\([^()]*\))*)\))?\s*')
+#: One directive: ``#deprecated "reason"``.
+_DIRECTIVE_RE = re.compile(r'#\w+(?:\s+"(?:[^"\\]|\\.)*")?\s*')
+_STRING_ARG_RE = re.compile(r'^\s*"((?:[^"\\]|\\.)*)"')
+_NAME_RE = re.compile(r"^(`[^`]+`|[A-Za-z_$][\w$]*)(\?)?\s*:\s*", re.DOTALL)
 
 
 class TypeSpecParseError(ValueError):
@@ -77,6 +77,7 @@ class TypeSpecParameter:
     name: str
     type_expr: str
     location: str
+    optional: bool = False
 
 
 @dataclass(frozen=True)
@@ -87,6 +88,7 @@ class TypeSpecOperation:
     return_type: str
     is_array_return: bool
     documentation: Optional[str] = None
+    route: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -131,16 +133,44 @@ def is_typespec(content: str) -> bool:
 
 
 def _strip_comments(text: str) -> str:
-    text = re.sub(r"/\*[\s\S]*?\*/", " ", text)
-    text = re.sub(r"//[^\n]*", " ", text)
-    return text
+    """Blank out ``//`` and ``/* */`` comments, keeping every offset (and newline) where it was.
+
+    String literals are skipped, so a ``//`` inside ``"https://…"`` is not a comment.
+    """
+    out = list(text)
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch == '"':
+            i += 1
+            while i < n and text[i] != '"':
+                i += 2 if text[i] == "\\" else 1
+            i += 1
+        elif text.startswith("//", i):
+            while i < n and text[i] != "\n":
+                out[i] = " "
+                i += 1
+        elif text.startswith("/*", i):
+            close = text.find("*/", i + 2)
+            close = n if close == -1 else close + 2
+            for j in range(i, close):
+                if out[j] != "\n":
+                    out[j] = " "
+            i = close
+        else:
+            i += 1
+    return "".join(out)
 
 
 def _find_matching_brace(s: str, start: int) -> int:
     depth = 1
     i = start
     while i < len(s) and depth > 0:
-        if s[i] == "{":
+        if s[i] == '"':
+            i += 1
+            while i < len(s) and s[i] != '"':
+                i += 2 if s[i] == "\\" else 1
+        elif s[i] == "{":
             depth += 1
         elif s[i] == "}":
             depth -= 1
@@ -148,18 +178,60 @@ def _find_matching_brace(s: str, start: int) -> int:
     return i - 1 if depth == 0 else -1
 
 
+def _split_top(text: str, separator: str) -> List[Tuple[int, str]]:
+    """Split ``text`` at ``separator`` outside strings and brackets; each part with its offset."""
+    parts: List[Tuple[int, str]] = []
+    depth, start, i = 0, 0, 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '"':
+            i += 1
+            while i < len(text) and text[i] != '"':
+                i += 2 if text[i] == "\\" else 1
+        elif ch in "({[<":
+            depth += 1
+        elif ch in ")}]>":
+            depth -= 1
+        elif ch == separator and depth == 0:
+            parts.append((start, text[start:i]))
+            start = i + 1
+        i += 1
+    parts.append((start, text[start:]))
+    return parts
+
+
 def _leading_doc(raw: str, start: int) -> Optional[str]:
-    prefix = raw[:start]
-    lines = prefix.splitlines()
+    """The doc comment just before ``start``: a ``/** … */`` block or ``///`` lines.
+
+    Decorator and directive lines between the comment and the declaration (``@route("/x")``,
+    ``#deprecated "…"``) are skipped.
+    """
+    lines = raw[:start].splitlines()
+    if lines and lines[-1].strip() == "":
+        lines.pop()
+    elif lines and raw[:start] and not raw[:start].endswith("\n"):
+        # The declaration starts mid-line: decorators before it on its own line are skipped.
+        lines.pop()
+    while lines and (lines[-1].strip().startswith(("@", "#")) or not lines[-1].strip()):
+        lines.pop()
+    if lines and lines[-1].strip().endswith("*/"):
+        block: List[str] = []
+        while lines:
+            line = lines.pop().strip()
+            block.append(line)
+            if line.startswith("/**"):
+                break
+        else:
+            return None
+        text = "\n".join(reversed(block))
+        text = text[3:-2] if text.startswith("/**") and text.endswith("*/") else text
+        cleaned = [re.sub(r"^\s*\*\s?", "", line).rstrip() for line in text.strip().splitlines()]
+        return "\n".join(cleaned).strip().replace("*\\/", "*/") or None
     docs: List[str] = []
     for line in reversed(lines[-5:]):
         stripped = line.strip()
         if stripped.startswith("///"):
             docs.append(stripped[3:].strip())
-            continue
-        if not stripped:
-            if docs:
-                break
             continue
         break
     if not docs:
@@ -167,27 +239,58 @@ def _leading_doc(raw: str, start: int) -> Optional[str]:
     return " ".join(reversed(docs)).strip() or None
 
 
-def _parse_decorators(line: str) -> Tuple[str, ...]:
-    return tuple(match.group(0).strip() for match in re.finditer(r"@\w+(?:\([^)]*\))?", line))
+def _decorators(statement: str) -> Tuple[List[Tuple[str, Optional[str], str]], str]:
+    """Peel the leading decorators and directives off a statement.
+
+    Returns:
+        ``([(name, first string argument, text)], rest of the statement)``.
+    """
+    found: List[Tuple[str, Optional[str], str]] = []
+    rest = statement.lstrip()
+    while rest[:1] in ("@", "#"):
+        if rest.startswith("#"):
+            match = _DIRECTIVE_RE.match(rest)
+            if match is None:
+                break
+            rest = rest[match.end():]
+            continue
+        match = _DECORATOR_RE.match(rest)
+        if match is None:
+            break
+        args = match.group("args")
+        arg = _STRING_ARG_RE.match(args) if args else None
+        found.append((match.group(1), arg.group(1) if arg else None, match.group(0).strip()))
+        rest = rest[match.end():]
+    return found, rest
+
+
+def _unquote(name: str) -> str:
+    return name[1:-1] if name.startswith("`") and name.endswith("`") else name
+
+
+def _without_default(type_expr: str) -> str:
+    """A property's type without its ``= default`` (an ``=`` outside strings and brackets)."""
+    return _split_top(type_expr, "=")[0][1].strip()
 
 
 def _parse_model_fields(inner: str, raw: str, block_start: int) -> Tuple[TypeSpecField, ...]:
     fields: List[TypeSpecField] = []
-    for match in _FIELD_RE.finditer(inner):
-        name = match.group("name")
-        if name in {"version", "operations"}:
+    for offset, statement in _split_top(inner, ";"):
+        decorators, rest = _decorators(statement)
+        match = _NAME_RE.match(rest)
+        if match is None:
             continue
-        type_expr = match.group("type").strip()
-        optional = bool(match.group(2))
-        line_start = block_start + match.start()
-        decorators = _parse_decorators(match.group(0))
+        type_expr = _without_default(rest[match.end():])
+        if not type_expr:
+            continue
+        lead = len(statement) - len(statement.lstrip())
         fields.append(
             TypeSpecField(
-                name=name,
+                name=_unquote(match.group(1)),
                 type_expr=type_expr,
-                optional=optional,
-                decorators=decorators,
-                documentation=_leading_doc(raw, line_start),
+                optional=bool(match.group(2)),
+                decorators=tuple(text for _, _, text in decorators),
+                documentation=_leading_doc(raw, block_start + offset + lead),
             )
         )
     return tuple(fields)
@@ -195,42 +298,32 @@ def _parse_model_fields(inner: str, raw: str, block_start: int) -> Tuple[TypeSpe
 
 def _parse_enum_values(inner: str) -> Tuple[str, ...]:
     values: List[str] = []
-    for match in re.finditer(r"(\w+)\s*,?", inner):
-        value = match.group(1)
-        if value:
-            values.append(value)
+    for _, member in _split_top(inner, ","):
+        _, rest = _decorators(member)
+        name = _split_top(rest, ":")[0][1].strip()
+        if name:
+            values.append(_unquote(name))
     return tuple(values)
 
 
 def _parse_parameters(params_inner: str) -> Tuple[TypeSpecParameter, ...]:
-    if not params_inner.strip():
-        return ()
     parameters: List[TypeSpecParameter] = []
-    for chunk in params_inner.split(","):
-        decl = chunk.strip()
-        if not decl:
+    for _, chunk in _split_top(params_inner, ","):
+        decorators, rest = _decorators(chunk)
+        match = _NAME_RE.match(rest.strip())
+        if match is None:
             continue
-        location = "query"
-        if decl.startswith("@path "):
-            location = "path"
-            decl = decl[6:].strip()
-        elif decl.startswith("@query "):
-            location = "query"
-            decl = decl[7:].strip()
-        elif decl.startswith("@header "):
-            location = "header"
-            decl = decl[8:].strip()
-        elif decl.startswith("@body "):
-            location = "body"
-            decl = decl[6:].strip()
-        name_type = decl.split(":", 1)
-        if len(name_type) != 2:
-            continue
+        location, explicit = "query", None
+        for name, arg, _ in decorators:
+            if name in _LOCATIONS:
+                location, explicit = name, arg
+                break
         parameters.append(
             TypeSpecParameter(
-                name=name_type[0].strip(),
-                type_expr=name_type[1].strip(),
+                name=explicit or _unquote(match.group(1)),
+                type_expr=_without_default(rest.strip()[match.end():]),
                 location=location,
+                optional=bool(match.group(2)),
             )
         )
     return tuple(parameters)
@@ -238,23 +331,50 @@ def _parse_parameters(params_inner: str) -> Tuple[TypeSpecParameter, ...]:
 
 def _parse_operations(inner: str, raw: str, block_start: int) -> Tuple[TypeSpecOperation, ...]:
     operations: List[TypeSpecOperation] = []
-    for match in _OPERATION_RE.finditer(inner):
-        return_type = match.group(4).strip()
+    for offset, statement in _split_top(inner, ";"):
+        decorators, rest = _decorators(statement)
+        verb = next((name for name, _, _ in decorators if name in _VERBS), None)
+        route = next((arg for name, arg, _ in decorators if name == "route"), None)
+        head = re.match(r"\s*(`[^`]+`|\w+)\s*\(", rest)
+        if verb is None or head is None:
+            continue
+        close = head.end()
+        depth = 1
+        while close < len(rest) and depth:
+            if rest[close] == '"':
+                close = rest.find('"', close + 1)
+            elif rest[close] == "(":
+                depth += 1
+            elif rest[close] == ")":
+                depth -= 1
+            close += 1
+        after = rest[close:].strip()
+        if depth or not after.startswith(":"):
+            continue
+        return_type = after[1:].strip()
         is_array = return_type.endswith("[]")
         if is_array:
             return_type = return_type[:-2].strip()
-        line_start = block_start + match.start()
+        lead = len(statement) - len(statement.lstrip())
         operations.append(
             TypeSpecOperation(
-                name=match.group(2),
-                verb=match.group(1).lower(),
-                parameters=_parse_parameters(match.group(3)),
+                name=_unquote(head.group(1)),
+                verb=verb,
+                parameters=_parse_parameters(rest[head.end():close - 1]),
                 return_type=return_type,
                 is_array_return=is_array,
-                documentation=_leading_doc(raw, line_start),
+                documentation=_leading_doc(raw, block_start + offset + lead),
+                route=route,
             )
         )
     return tuple(operations)
+
+
+def _route_prefix(cleaned: str, start: int) -> Optional[str]:
+    """The ``@route`` among the decorators just before the declaration at ``start``."""
+    boundary = max(cleaned.rfind(";", 0, start), cleaned.rfind("}", 0, start))
+    decorators, _ = _decorators(cleaned[boundary + 1:start])
+    return next((arg for name, arg, _ in decorators if name == "route"), None)
 
 
 def parse_typespec(content: str, *, source_label: Optional[str] = None) -> TypeSpecDocument:
@@ -268,7 +388,7 @@ def parse_typespec(content: str, *, source_label: Optional[str] = None) -> TypeS
     namespace_match = _NAMESPACE_RE.search(cleaned)
     namespace = namespace_match.group(1) if namespace_match else None
     service_match = _SERVICE_RE.search(cleaned)
-    service_title = service_match.group(1) if service_match else None
+    service_title = json.loads(f'"{service_match.group(1)}"') if service_match else None
 
     imports = tuple(
         match.group(0).strip().rstrip(";")
@@ -280,8 +400,8 @@ def parse_typespec(content: str, *, source_label: Optional[str] = None) -> TypeS
     )
 
     enums: List[TypeSpecEnum] = []
-    for match in re.finditer(r"\benum\s+(\w+)\s*\{", cleaned):
-        name = match.group(1)
+    for match in re.finditer(r"\benum\s+(`[^`]+`|\w+)\s*\{", cleaned):
+        name = _unquote(match.group(1))
         open_brace = cleaned.find("{", match.start())
         close = _find_matching_brace(cleaned, open_brace + 1)
         if close == -1:
@@ -298,8 +418,8 @@ def parse_typespec(content: str, *, source_label: Optional[str] = None) -> TypeS
             )
 
     models: List[TypeSpecModel] = []
-    for match in re.finditer(r"\bmodel\s+(\w+)\s*\{", cleaned):
-        name = match.group(1)
+    for match in re.finditer(r"\bmodel\s+(`[^`]+`|\w+)\s*\{", cleaned):
+        name = _unquote(match.group(1))
         open_brace = cleaned.find("{", match.start())
         close = _find_matching_brace(cleaned, open_brace + 1)
         if close == -1:
@@ -315,11 +435,9 @@ def parse_typespec(content: str, *, source_label: Optional[str] = None) -> TypeS
         )
 
     interfaces: List[TypeSpecInterface] = []
-    for match in re.finditer(r"\binterface\s+(\w+)\s*\{", cleaned):
-        name = match.group(1)
-        prefix = cleaned[: match.start()]
-        route_match = _ROUTE_RE.search(prefix[-200:])
-        route_prefix = route_match.group(1) if route_match else None
+    for match in re.finditer(r"\binterface\s+(`[^`]+`|\w+)\s*\{", cleaned):
+        name = _unquote(match.group(1))
+        route_prefix = _route_prefix(cleaned, match.start())
         open_brace = cleaned.find("{", match.start())
         close = _find_matching_brace(cleaned, open_brace + 1)
         if close == -1:

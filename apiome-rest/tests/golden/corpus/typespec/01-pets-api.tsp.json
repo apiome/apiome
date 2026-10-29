@@ -6,7 +6,7 @@
     "extras": {
       "typespec_enums": [
         {
-          "documentation": null,
+          "documentation": "Lifecycle status of a pet listing.",
           "name": "PetStatus",
           "values": [
             "available",
@@ -25,7 +25,7 @@
           "name": "Pets",
           "operations": [
             {
-              "documentation": "Lifecycle status of",
+              "documentation": "List all pets.",
               "is_array_return": true,
               "name": "list",
               "parameters": [],
@@ -33,7 +33,7 @@
               "verb": "get"
             },
             {
-              "documentation": null,
+              "documentation": "Fetch a pet by id.",
               "is_array_return": false,
               "name": "read",
               "parameters": [
@@ -47,7 +47,7 @@
               "verb": "get"
             },
             {
-              "documentation": null,
+              "documentation": "Create a new pet.",
               "is_array_return": false,
               "name": "create",
               "parameters": [
@@ -66,13 +66,73 @@
       ],
       "typespec_models": [
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A pet available for adoption.",
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": "Unique pet identifier.",
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": "The pet's name.",
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": "Species, e.g. \"dog\" or \"cat\".",
+              "name": "species",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": "Age in years.",
+              "name": "age",
+              "optional": true,
+              "type": "int32"
+            },
+            {
+              "decorators": [],
+              "documentation": "Current listing status.",
+              "name": "status",
+              "optional": false,
+              "type": "PetStatus"
+            }
+          ],
           "name": "Pet"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Payload to create a pet (id is server-assigned).",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "species",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "age",
+              "optional": true,
+              "type": "int32"
+            }
+          ],
           "name": "NewPet"
         }
       ],
@@ -106,7 +166,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": "Lifecycle status of",
+            "description": "List all pets.",
             "extras": {
               "typespec_interface": "Pets",
               "typespec_route_prefix": "/pets",
@@ -151,7 +211,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch a pet by id.",
             "extras": {
               "typespec_interface": "Pets",
               "typespec_route_prefix": "/pets",
@@ -212,7 +272,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Create a new pet.",
             "extras": {
               "typespec_interface": "Pets",
               "typespec_route_prefix": "/pets",
@@ -278,13 +338,77 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Payload to create a pet (id is server-assigned).",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "int32"
+            },
+            "field_number": 3,
+            "key": "PetStore.NewPet.age",
+            "name": "age",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "PetStore.NewPet.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "PetStore.NewPet.species",
+            "name": "species",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "PetStore.NewPet",
         "key_type": null,
         "kind": "record",
@@ -297,13 +421,123 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A pet available for adoption.",
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "id"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Age in years.",
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "int32"
+            },
+            "field_number": 4,
+            "key": "PetStore.Pet.age",
+            "name": "age",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Unique pet identifier.",
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "PetStore.Pet.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "The pet's name.",
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "PetStore.Pet.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Species, e.g. \"dog\" or \"cat\".",
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 3,
+            "key": "PetStore.Pet.species",
+            "name": "species",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Current listing status.",
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "PetStatus"
+            },
+            "field_number": 5,
+            "key": "PetStore.Pet.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "PetStore.PetStatus",
+              "nullable": false
+            }
+          }
+        ],
         "key": "PetStore.Pet",
         "key_type": null,
         "kind": "record",
@@ -316,7 +550,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Lifecycle status of a pet listing.",
         "enum_values": [
           {
             "deprecated": false,
@@ -375,16 +609,16 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:0c3f4b5108bd1f80dddadecb32e5eb021782e165eaa02f17930774ef2f16b94a",
+  "fingerprint": "sha256:1cfdb76d0d73bad8b7d5a7cd8db50643440a9d71de5eddf31ddac2f0948543b9",
   "lint": {
-    "findings": 10,
-    "grade": "C",
-    "report_fingerprint": "d9bed31de183bf3f510c4a2a8ce9a63b73657950bcbf0f9f30584e8dc4d8ca59",
-    "score": 75,
+    "findings": 8,
+    "grade": "A",
+    "report_fingerprint": "291af4b2b6f8042a4c547e0ff916b2b0d9b4dbff9c151b97598ed4191819a857",
+    "score": 92,
     "severity_counts": {
       "error": 0,
-      "info": 5,
-      "warning": 5
+      "info": 8,
+      "warning": 0
     }
   },
   "snapshot_version": 1

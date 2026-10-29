@@ -4321,8 +4321,8 @@
         {
           "source_format": "typespec",
           "emit_key": "typespec",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

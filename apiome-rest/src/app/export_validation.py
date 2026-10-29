@@ -637,16 +637,35 @@ async def _validate_fhir(
 async def _validate_typespec(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted TypeSpec `.tsp` document by re-parsing it."""
+    """Re-validate an emitted TypeSpec ``.tsp`` document (MFX-15.1, #3893).
+
+    The bundled TypeSpec compiler — the one a multi-file TypeSpec import already runs (MFI-14.1) —
+    compiles the document with ``@typespec/http`` and ``@typespec/openapi3``; each compile error is a
+    finding and rejects the export, warnings do not. Without the compiler the document is re-parsed
+    through the built-in TypeSpec reader the single-file import uses.
+    """
+    from .import_source import ImportSourceError
+    from .typespec_compile import compile_typespec_set, parse_diagnostics
     from .typespec_emitter import validate_typespec_document
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
-        try:
-            validate_typespec_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The TypeSpec export wrote no file.")])
+    root = emit_result.files[0].path
+    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    try:
+        await asyncio.to_thread(compile_typespec_set, members, root)
+    except ImportSourceError as exc:
+        if exc.code == "ADAPTER_UNAVAILABLE":
+            return await _run_text_validator(target, emit_result, validate_typespec_document)
+        detail = str(exc).split(": ", 1)[-1]
+        diagnostics = [d for part in detail.split("; ") for d in parse_diagnostics(part)]
+        findings = [
+            ValidationFinding(message=d.message, file=d.file or root, line=d.line, column=d.column, keyword=d.code)
+            for d in diagnostics
+            if d.severity == "error"
+        ]
+        return _rejected(target, findings or [_finding_from_message(str(exc), file=root)])
+    return _passed(target)
 
 
 async def _validate_hl7v2(
