@@ -38,11 +38,14 @@ class WriterLossRulePack(CapabilityRulePack):
             ``info`` ``DROP``.
         cosmetic: Subjects of ``INFERRED`` losses that only change a name — an ``info`` ``APPROX``; any
             other ``INFERRED`` loss is a ``warn`` ``APPROX``.
+        synthesized: Subjects of ``INFERRED`` losses that add something the source lacks (a key the target
+            requires) — a ``SYNTH``.
     """
 
     critical_drops: FrozenSet[str] = frozenset()
     info_drops: FrozenSet[str] = frozenset()
     cosmetic: FrozenSet[str] = frozenset()
+    synthesized: FrozenSet[str] = frozenset()
 
     @abstractmethod
     def build_writer(self, api: CanonicalApi) -> Any:
@@ -79,6 +82,8 @@ class WriterLossRulePack(CapabilityRulePack):
                 )
                 verdicts.append(FidelityVerdict.drop(message=loss.detail, severity=severity,
                                                      target_mapping=loss.subject))
+            elif loss.subject in self.synthesized:
+                verdicts.append(FidelityVerdict.synth(message=loss.detail, target_mapping=loss.subject))
             else:
                 severity = LossinessSeverity.INFO if loss.subject in self.cosmetic else LossinessSeverity.WARN
                 verdicts.append(FidelityVerdict.approx(message=loss.detail, severity=severity,

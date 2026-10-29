@@ -9,7 +9,7 @@ import pytest
 from app.canonical_model import ApiParadigm, TypeKind
 from app.emitter import get_emitter
 from app.import_source import DetectionInput, ImportSourceError
-from app.odata_emitter import validate_odata_document
+from app.odata_emitter import ODataEmitOptions, validate_odata_document
 from app.odata_import_source import ODataImportSource
 from app.odata_normalizer import ODataNormalizer
 from app.odata_parser import is_odata, parse_odata
@@ -89,7 +89,8 @@ def test_emitter_round_trips_northwind_fixture():
     api = ODataNormalizer().normalize(doc)
     emitter = get_emitter("odata")
     assert emitter is not None
-    text = emitter().emit(api).files[0].content
+    # CSDL XML: CSDL JSON is the default output since MFX-16.1.
+    text = emitter().emit(api, opts=ODataEmitOptions(output="xml")).files[0].content
     assert "edmx:Edmx" in text or "Edmx" in text
     assert "EntityType Name=\"Product\"" in text or 'Name="Product"' in text
     assert "NavigationProperty" in text
@@ -101,7 +102,8 @@ def test_emitter_round_trips_orders_fixture():
     api = ODataNormalizer().normalize(doc)
     emitter = get_emitter("odata")
     assert emitter is not None
-    text = emitter().emit(api).files[0].content
+    # CSDL XML: CSDL JSON is the default output since MFX-16.1.
+    text = emitter().emit(api, opts=ODataEmitOptions(output="xml")).files[0].content
     assert "EnumType" in text
     assert "ComplexType" in text
     assert "EntitySet" in text

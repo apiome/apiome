@@ -1,0 +1,24 @@
+---
+slug: odata-csdl-export
+title: OData export writes CSDL JSON 4.01, with keys, Functions and Actions
+description: OData exports write valid CSDL JSON or XML from any source, keys included.
+authors: [apiome]
+---
+
+Exporting an item to **OData** now writes its metadata as **CSDL JSON 4.01**, or as CSDL XML when
+you set the **output** option. You can export from OpenAPI, gRPC, GraphQL, Avro or any other source.
+[How the CSDL is written](/ship/export-a-spec#odata-csdl-from-any-source).
+
+{/* truncate */}
+
+- **Valid CSDL.** Each export is checked against the OASIS CSDL schemas and read back before it is
+  offered. Before, an item with no OData metadata of its own could export an empty container.
+- **Every entity has a key.** A key is inferred from an `id`-like property, or synthesized when there
+  is none, and the fidelity report says which.
+- **Operations kept.** CRUD operations map onto entity sets, and every other operation becomes an
+  OData Function or Action instead of being left out.
+- **Types and constraints.** Primitives become their CSDL types, such as `Edm.Int64`,
+  `Edm.DateTimeOffset` and `Edm.Guid`. Patterns, ranges and allowed values become `Validation`
+  annotations, and descriptions become `Core.Description`.
+- **OData 2 and 3.** Older metadata is written as CSDL 4.01, with its facets kept and the change
+  reported.
