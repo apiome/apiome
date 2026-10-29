@@ -34,7 +34,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Returns the current conditions for a city.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -86,7 +86,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Returns the multi-day forecast for a city.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -363,7 +363,7 @@
         },
         "constraints": null,
         "deprecated": false,
-        "description": "Returns the multi-",
+        "description": null,
         "enum_values": [],
         "extras": {
           "smithy_kind": "list"
@@ -506,16 +506,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:e857149edc0a543c5c0c94404e8e58c867ee4e23b1b16ab09fe8f695c328eb2d",
+  "fingerprint": "sha256:f9ecaba7f3d6b60b3330f16723fc2360902a77703bb7f65851dd8f738d508300",
   "lint": {
-    "findings": 23,
-    "grade": "F",
-    "report_fingerprint": "fb4a266d9b73287a90675296ea7690374ca21a1e1b9da013cc18284969892a8d",
-    "score": 56,
+    "findings": 22,
+    "grade": "D",
+    "report_fingerprint": "f761e808684e51988fd72857f23ff318a44652389e49ce82d9a18551c6502717",
+    "score": 64,
     "severity_counts": {
       "error": 0,
       "info": 16,
-      "warning": 7
+      "warning": 6
     }
   },
   "snapshot_version": 1

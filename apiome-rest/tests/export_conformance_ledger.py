@@ -678,31 +678,25 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
     ('typespec', 'protobuf'):
         'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
-    # --- smithy (12) ---
-    ('acp', 'smithy'):
-        'removed agent research-assistant; removed operation research-assistant.Cite sources; removed operati',
+    # --- smithy (9) ---
     ('arazzo', 'smithy'):
-        'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
+        'added operation Storefront_checkout.checkout.addItem; added operation Storefront_checkout.checkout.c',
     ('graphql', 'smithy'):
-        'changed operation Query.product; changed operation Query.products; changed root; changed service Que',
+        'added operation GraphQL_Schema.Query.product2; added operation GraphQL_Schema.Query.products; remove',
     ('json-schema', 'smithy'):
-        'changed root; changed type Product',
+        'changed root; removed type Product; added type Product.Product; added type Product.StringList',
     ('jtd', 'smithy'):
-        'changed root; changed type User; changed type UserAddress; changed type UserStatus',
+        'changed root; removed type User; added type User.StringList; added type User.User; added type User.U',
     ('k8s-crd', 'smithy'):
-        'changed root; added service apps.example.io.CronWidget; removed service cronwidgets.apps.example.io;',
+        'changed root; added service apps.example.io.CronWidget2; removed service cronwidgets.apps.example.io',
     ('odcs', 'smithy'):
         'changed root; added type commerce.orders; removed type orders',
     ('owl', 'smithy'):
-        'changed root; changed type Agent; changed type Customer; changed type Order; changed type OrderLine;',
+        'changed root; removed type Agent; added type Commerce_ontology.Agent; added type Commerce_ontology.B',
     ('ros2', 'smithy'):
-        'changed root; changed type TypicalSensorMessage; changed type TypicalSensorMessage_Constants',
-    ('smithy', 'smithy'):
-        'changed type example.weather.CurrentConditions; changed type example.weather.DayForecast; changed ty',
+        'changed root; removed type TypicalSensorMessage; added type TypicalSensorMessage.FloatList; added ty',
     ('typescript-types', 'smithy'):
-        'changed root; changed type NewOrder; changed type NewOrder_lines_item; changed type Order; changed t',
-    ('wit', 'smithy'):
-        'added operation examples.calculate.describe; added operation examples.calculate.eval; removed operat',
+        'changed root; removed type NewOrder; removed type NewOrder_lines_item; removed type Order; removed t',
     # --- thrift (21) ---
     ('arazzo', 'thrift'):
         'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',

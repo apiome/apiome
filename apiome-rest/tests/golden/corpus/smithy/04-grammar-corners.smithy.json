@@ -33,7 +33,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Submit a payment using any supported payment method.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -253,7 +253,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Exactly one member of the union is present on the wire.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "union"
@@ -320,7 +320,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Returned when the payment cannot be accepted.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -375,7 +375,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "Exactly one member of the union is present o",
+        "description": null,
         "enum_values": [
           {
             "deprecated": false,
@@ -606,16 +606,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:8fe2784575db4e3d8d3beaf3316abdaa081d90ca158acab7fdfa399c37bc5a54",
+  "fingerprint": "sha256:e42a3c2d15585d3e6b7cff3aaf561a9176d438bb2431bfea7dc9235ceaa01203",
   "lint": {
-    "findings": 28,
-    "grade": "F",
-    "report_fingerprint": "6f6ada73dae6241f1a76fc1a8fbc46168876c11690dc561c56aec295759bffc9",
-    "score": 56,
+    "findings": 26,
+    "grade": "D",
+    "report_fingerprint": "221f8774025df7428bcf73fa17ebb2c07c2257e7201621c2010ea36603a2875f",
+    "score": 60,
     "severity_counts": {
       "error": 0,
       "info": 20,
-      "warning": 8
+      "warning": 6
     }
   },
   "snapshot_version": 1

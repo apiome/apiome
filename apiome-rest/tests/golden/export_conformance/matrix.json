@@ -378,9 +378,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "smithy"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "smithy",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -865,18 +871,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed agent research-assistant",
-        "removed operation research-assistant.Cite sources",
-        "removed operation research-assistant.Summarize",
-        "removed operation research-assistant.Web search",
-        "changed root",
-        "removed service research-assistant"
-      ],
       "family": "acp",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "smithy"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "smithy",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -1366,9 +1370,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "smithy"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "smithy",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -3021,15 +3031,15 @@
     },
     {
       "drift": [
+        "added operation Storefront_checkout.checkout.addItem",
+        "added operation Storefront_checkout.checkout.createCart",
+        "added operation Storefront_checkout.checkout.pay",
         "removed operation checkout#addItem",
         "removed operation checkout#createCart",
-        "removed operation checkout#pay",
-        "added operation checkout.addItem",
-        "added operation checkout.createCart",
-        "added operation checkout.pay"
+        "removed operation checkout#pay"
       ],
       "family": "arazzo",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -8337,7 +8347,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 9,
         "drop": 19,
         "synth": 0
       },
@@ -9852,7 +9862,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
+        "approx": 8,
         "drop": 7,
         "synth": 0
       },
@@ -14608,7 +14618,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 4,
+        "approx": 14,
         "drop": 15,
         "synth": 0
       },
@@ -15124,7 +15134,7 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 0,
+        "approx": 23,
         "drop": 49,
         "synth": 0
       },
@@ -16789,7 +16799,7 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 9,
         "synth": 0
       },
@@ -19401,15 +19411,15 @@
     },
     {
       "drift": [
-        "changed operation Query.product",
-        "changed operation Query.products",
+        "added operation GraphQL_Schema.Query.product2",
+        "added operation GraphQL_Schema.Query.products",
+        "removed operation Query.product",
+        "removed operation Query.products",
         "changed root",
-        "changed service Query",
-        "changed type DateTime",
-        "changed type Dimensions"
+        "added service GraphQL_Schema.Query"
       ],
       "family": "graphql",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 18 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -21082,7 +21092,7 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 49,
         "drop": 49,
         "synth": 0
       },
@@ -23798,7 +23808,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 15,
+        "approx": 18,
         "drop": 19,
         "synth": 0
       },
@@ -26507,10 +26517,12 @@
     {
       "drift": [
         "changed root",
-        "changed type Product"
+        "removed type Product",
+        "added type Product.Product",
+        "added type Product.StringList"
       ],
       "family": "json-schema",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -27517,12 +27529,14 @@
     {
       "drift": [
         "changed root",
-        "changed type User",
-        "changed type UserAddress",
-        "changed type UserStatus"
+        "removed type User",
+        "added type User.StringList",
+        "added type User.User",
+        "added type User.UserAddress",
+        "added type User.UserStatus"
       ],
       "family": "jtd",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -28024,7 +28038,7 @@
     {
       "drift": [
         "changed root",
-        "added service apps.example.io.CronWidget",
+        "added service apps.example.io.CronWidget2",
         "removed service cronwidgets.apps.example.io",
         "added type apps.example.io.CronWidget",
         "removed type apps.example.io/v1.CronWidget"
@@ -31174,7 +31188,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 6,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -32220,7 +32234,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 8,
+        "approx": 19,
         "drop": 12,
         "synth": 0
       },
@@ -37529,14 +37543,14 @@
     {
       "drift": [
         "changed root",
-        "changed type Agent",
-        "changed type Customer",
-        "changed type Order",
-        "changed type OrderLine",
-        "changed type OrderStatus"
+        "removed type Agent",
+        "added type Commerce_ontology.Agent",
+        "added type Commerce_ontology.BigDecimalList",
+        "added type Commerce_ontology.Customer",
+        "added type Commerce_ontology.CustomerList"
       ],
       "family": "owl",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 21 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -38558,7 +38572,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 13,
+        "approx": 15,
         "drop": 19,
         "synth": 0
       },
@@ -42888,11 +42902,14 @@
     {
       "drift": [
         "changed root",
-        "changed type TypicalSensorMessage",
-        "changed type TypicalSensorMessage_Constants"
+        "removed type TypicalSensorMessage",
+        "added type TypicalSensorMessage.FloatList",
+        "added type TypicalSensorMessage.TypicalSensorMessage",
+        "added type TypicalSensorMessage.TypicalSensorMessage_Constants",
+        "removed type TypicalSensorMessage_Constants"
       ],
       "family": "ros2",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -44432,16 +44449,9 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed type example.weather.CurrentConditions",
-        "changed type example.weather.DayForecast",
-        "changed type example.weather.DayForecastList",
-        "changed type example.weather.Forecast",
-        "changed type example.weather.GetForecastInput"
-      ],
       "family": "smithy",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
+      "reason": null,
+      "status": "ok",
       "target": "smithy"
     },
     {
@@ -45533,7 +45543,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 2,
         "synth": 0
       },
@@ -47716,7 +47726,7 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 0,
+        "approx": 13,
         "drop": 36,
         "synth": 0
       },
@@ -49336,7 +49346,7 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 0,
+        "approx": 8,
         "drop": 18,
         "synth": 0
       },
@@ -51518,14 +51528,14 @@
     {
       "drift": [
         "changed root",
-        "changed type NewOrder",
-        "changed type NewOrder_lines_item",
-        "changed type Order",
-        "changed type OrderLine",
-        "changed type OrderStatus"
+        "removed type NewOrder",
+        "removed type NewOrder_lines_item",
+        "removed type Order",
+        "removed type OrderLine",
+        "added type OrderLine.NewOrder"
       ],
       "family": "typescript-types",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
       "status": "silent-loss",
       "target": "smithy"
     },
@@ -53711,18 +53721,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation examples.calculate.describe",
-        "added operation examples.calculate.eval",
-        "removed operation examples:calculator.calculate.describe",
-        "removed operation examples:calculator.calculate.eval",
-        "changed root",
-        "added service examples.calculate"
-      ],
       "family": "wit",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
-      "status": "silent-loss",
-      "target": "smithy"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "smithy",
+      "tier": "lossy"
     },
     {
       "family": "wit",
@@ -55292,7 +55300,7 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 0
       },
@@ -57395,7 +57403,7 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 2,
+        "approx": 8,
         "drop": 2,
         "synth": 0
       },
@@ -57517,10 +57525,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3320,
-    "ok": 57,
+    "lossy": 3324,
+    "ok": 56,
     "refused": 1909,
-    "silent-loss": 438,
+    "silent-loss": 435,
     "skipped": 0
   },
   "families": [

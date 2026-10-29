@@ -25,7 +25,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A greeting returned to the caller.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -75,16 +75,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:9b8a801187aeab95a8c8a0e77b45671477519e9ccdf62231e65ad8721baa0604",
+  "fingerprint": "sha256:c8b89df1999586a89112456866842d7f73d8446eefb67f455f30fc73575194d1",
   "lint": {
-    "findings": 3,
+    "findings": 2,
     "grade": "A",
-    "report_fingerprint": "362aff42193de22a127ccd0705ca3db971b0ca04d35fd24089509d3295b3619e",
-    "score": 94,
+    "report_fingerprint": "eb24ae9c5fbf5f0b08f6d6d33c7e75d8c2e90224c7bef19048e94c13fdc440d8",
+    "score": 98,
     "severity_counts": {
       "error": 0,
       "info": 2,
-      "warning": 1
+      "warning": 0
     }
   },
   "snapshot_version": 1

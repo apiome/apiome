@@ -35,7 +35,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Cancel an open order.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -87,7 +87,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Place a new order.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -139,7 +139,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch an order by id.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -295,7 +295,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "An order as returned by the service.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -567,16 +567,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:a294d69057b5d3c387c832202dd5a76b901ad9b77d3a55d8133354524c1872c9",
+  "fingerprint": "sha256:4c5afb24e95987a2ff97603d4876f7c5b69aacf43561b43fe3bc2cf475617008",
   "lint": {
-    "findings": 27,
-    "grade": "F",
-    "report_fingerprint": "5971d90d2ea5195839ce1a83889db5abb5765a3d878cf6ebc0e0a977d611b5c1",
-    "score": 50,
+    "findings": 23,
+    "grade": "D",
+    "report_fingerprint": "7b9708056a24af6a77ffb3e327b616067551712ad1e2a33986dab78547923d26",
+    "score": 62,
     "severity_counts": {
       "error": 0,
       "info": 18,
-      "warning": 9
+      "warning": 5
     }
   },
   "snapshot_version": 1
