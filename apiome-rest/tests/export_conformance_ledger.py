@@ -742,49 +742,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation OrderService.cancelOrder; added operation OrderService.getOrder; added operation Ord',
     ('xmlrpc', 'openrpc'):
         'changed operation inventory.reserveStock.inventory.reserveStock; changed root; changed type Inventor',
-    # --- postman (21) ---
-    ('apigee', 'postman'):
-        'changed operation GET /v2/orders/orders; changed operation GET /v2/orders/orders/{segment1}; changed',
-    ('aws-apigateway', 'postman'):
-        'changed operation GET /orders; changed operation GET /orders/{orderId}; changed operation OPTIONS /o',
-    ('azure-apim', 'postman'):
-        'changed operation GET /orders; changed operation GET /orders/{orderId}; changed root; added service ',
-    ('bruno', 'postman'):
-        'changed operation POST /v2/orders; changed root; changed service Bruno collection; added type Order;',
-    ('consul', 'postman'):
-        'removed operation ANY /v2/orders; added operation GET /v2/orders; changed root; added service consul',
-    ('envoy-xds', 'postman'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
-    ('gateway-api', 'postman'):
-        'changed operation GET /users; changed operation GET /users/{userId}; changed operation POST /users; ',
-    ('haproxy', 'postman'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /metrics; removed ope',
-    ('har', 'postman'):
-        'changed operation DELETE /v1/users/{id}; changed operation GET /v1/users; changed operation GET /v1/',
-    ('hoppscotch', 'postman'):
-        'changed operation DELETE /v2/orders/{orderId}; changed operation GET /v2/orders; changed operation G',
-    ('http-file', 'postman'):
-        'changed operation GET /users; changed operation POST /users; changed root; changed service http-file',
-    ('insomnia', 'postman'):
-        'changed operation DELETE /v1/users/{userId}; changed operation GET /health; changed operation GET /v',
-    ('istio', 'postman'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; added o',
-    ('kong', 'postman'):
-        'changed operation DELETE /users/{userId}; changed operation GET /users; changed operation GET /users',
-    ('nginx', 'postman'):
-        'removed operation ANY /; removed operation ANY /#api.example.com:80@return; removed operation ANY /h',
-    ('postman-v2', 'postman'):
-        'changed operation DELETE /orders/{orderId}; changed operation GET /orders; changed operation GET /or',
-    ('soapui', 'postman'):
-        'changed operation DELETE /v2/orders/{orderId}; changed operation GET /v2/orders; changed operation G',
-    ('thunder-client', 'postman'):
-        'changed operation GET /healthz; changed operation GET /v2/orders; changed operation GET /v2/orders/{',
-    ('traefik', 'postman'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
-    ('tyk', 'postman'):
-        'changed operation DELETE /v2/orders/orders/{id}; changed operation GET /v2/orders/orders; changed op',
-    ('typespec', 'postman'):
-        'changed operation GET /pets; changed operation GET /pets/{id}; changed operation POST /pets; changed',
     # --- protobuf (16) ---
     ('a2a', 'protobuf'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',

@@ -1,0 +1,28 @@
+---
+slug: postman-export
+title: Postman export writes a ready-to-run v2.1 collection
+description: Postman exports group requests in folders, with example bodies, responses and collection auth.
+authors: [apiome]
+---
+
+Exporting an item to **Postman** now writes a Postman Collection v2.1 your team can import and run,
+from an OpenAPI or any other HTTP source.
+[What the collection holds](/ship/export-to-an-api-client#postman-options).
+
+{/* truncate */}
+
+- **Folders.** Requests are grouped by tag, or by service when the API has several. Choose `tag`,
+  `service` or `flat` with the **folder_strategy** option.
+- **Variables.** Every server becomes a collection variable (`{{baseUrl}}`, `{{baseUrl2}}`), and a
+  server's own variables (`{{region}}`) are declared too. Set **variable_style** to `inline` to write
+  the server address into each request instead.
+- **Examples.** Request bodies are examples built from the schema, not the schema itself. Each
+  response with a status code is saved as an example response. Set **example_depth** to `full` to
+  fill every field.
+- **Auth.** Bearer, Basic, Digest, API key and OAuth 2 become Postman auth, set once on the
+  collection when every request shares it. Credentials are empty variables for you to fill in.
+- **Checked.** Each export is validated against the published Postman v2.1.0 schema and read back
+  by the Postman importer. A collection imported from Postman exports and re-imports unchanged, and
+  a v2.0 one is written as v2.1.
+- **Refused when empty.** A source with no HTTP operation (a gRPC service, an event API, a set of
+  types) is refused with the reason, instead of exporting an empty collection.

@@ -342,15 +342,9 @@
     },
     {
       "family": "a2a",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "drift": [
@@ -826,15 +820,9 @@
     },
     {
       "family": "acp",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "drift": [
@@ -1322,15 +1310,9 @@
     },
     {
       "family": "agents-manifest",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "drift": [
@@ -1887,8 +1869,8 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 0,
-        "drop": 6,
+        "approx": 7,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -2460,18 +2442,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /v2/orders/orders",
-        "changed operation GET /v2/orders/orders/{segment1}",
-        "changed operation POST /v2/orders/orders",
-        "changed root",
-        "added service Orders v2",
-        "removed service default"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -2983,15 +2963,9 @@
     },
     {
       "family": "arazzo",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "drift": [
@@ -3517,15 +3491,9 @@
     },
     {
       "family": "arrow",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "arrow",
@@ -4033,15 +4001,9 @@
     },
     {
       "family": "asn1",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 13,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "asn1",
@@ -4514,15 +4476,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "asyncapi",
@@ -5030,15 +4986,9 @@
     },
     {
       "family": "avro",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "avro",
@@ -5554,15 +5504,9 @@
     },
     {
       "family": "avro-idl",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 14,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "avro-idl",
@@ -6133,18 +6077,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /orders",
-        "changed operation GET /orders/{orderId}",
-        "changed operation OPTIONS /orders",
-        "changed operation POST /orders",
-        "changed root",
-        "removed service default"
-      ],
       "family": "aws-apigateway",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "aws-apigateway",
@@ -6702,17 +6644,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /orders",
-        "changed operation GET /orders/{orderId}",
-        "changed root",
-        "added service Orders API",
-        "removed service default"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -7288,17 +7229,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation POST /v2/orders",
-        "changed root",
-        "changed service Bruno collection",
-        "added type Order",
-        "removed type PostOrderRequest"
-      ],
       "family": "bruno",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "bruno",
@@ -7824,15 +7764,9 @@
     },
     {
       "family": "capnproto",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 13,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "capnproto",
@@ -8352,15 +8286,9 @@
     },
     {
       "family": "cddl",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 19,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "cddl",
@@ -8868,15 +8796,9 @@
     },
     {
       "family": "cics-bms",
-      "loss_counts": {
-        "approx": 6,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "cics-bms",
@@ -9372,15 +9294,9 @@
     },
     {
       "family": "cloudevents",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "cloudevents",
@@ -9883,15 +9799,9 @@
     },
     {
       "family": "cobolcopybook",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "cobolcopybook",
@@ -10393,15 +10303,9 @@
     },
     {
       "family": "connectrpc",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 19,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "connectrpc",
@@ -10959,17 +10863,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "added operation GET /v2/orders",
-        "changed root",
-        "added service consul/02-typical-service-with-checks.json",
-        "removed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -11497,15 +11400,9 @@
     },
     {
       "family": "corbaidl",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 10,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "corbaidl",
@@ -12028,15 +11925,9 @@
     },
     {
       "family": "cue",
-      "loss_counts": {
-        "approx": 9,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "cue",
@@ -12543,15 +12434,9 @@
     },
     {
       "family": "dbt",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "dbt",
@@ -13064,15 +12949,9 @@
     },
     {
       "family": "dhall",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "dhall",
@@ -13580,15 +13459,9 @@
     },
     {
       "family": "dicom",
-      "loss_counts": {
-        "approx": 3,
-        "drop": 36,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "dicom",
@@ -14153,8 +14026,8 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
+        "approx": 7,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -14680,15 +14553,9 @@
     },
     {
       "family": "dtd",
-      "loss_counts": {
-        "approx": 4,
-        "drop": 15,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "dtd",
@@ -15204,15 +15071,9 @@
     },
     {
       "family": "edifact",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 49,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "edifact",
@@ -15733,15 +15594,9 @@
     },
     {
       "family": "edix12",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 23,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "edix12",
@@ -16295,18 +16150,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation GET /",
-        "added operation GET /health"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -16883,8 +16736,8 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 0,
-        "drop": 9,
+        "approx": 13,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -17408,15 +17261,9 @@
     },
     {
       "family": "fix",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 21,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "fix",
@@ -17919,15 +17766,9 @@
     },
     {
       "family": "fix-orchestra",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 13,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "fix-orchestra",
@@ -18425,15 +18266,9 @@
     },
     {
       "family": "flatbuffers",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 12,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "flatbuffers",
@@ -18990,18 +18825,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /users",
-        "changed operation GET /users/{userId}",
-        "changed operation POST /users",
-        "changed root",
-        "added service gateway-api/02-typical-hostnames-methods.yaml",
-        "removed service identity/users"
-      ],
       "family": "gateway-api",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -19516,15 +19349,9 @@
     },
     {
       "family": "graphql",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "graphql",
@@ -20087,18 +19914,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /metrics",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation GET /"
-      ],
       "family": "haproxy",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -20669,18 +20494,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /v1/users/{id}",
-        "changed operation GET /v1/users",
-        "changed operation GET /v1/users/{id}",
-        "changed operation PATCH /v1/users/{id}",
-        "changed operation POST /v1/users",
-        "changed root"
-      ],
       "family": "har",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 19,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "har",
@@ -21207,15 +21030,9 @@
     },
     {
       "family": "hl7v2",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 49,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "hl7v2",
@@ -21724,15 +21541,9 @@
     },
     {
       "family": "hl7v3",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 132,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "hl7v3",
@@ -22295,18 +22106,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /v2/orders/{orderId}",
-        "changed operation GET /v2/orders",
-        "changed operation GET /v2/orders/{orderId}",
-        "changed operation POST /v2/orders",
-        "changed root",
-        "changed service Orders API"
-      ],
       "family": "hoppscotch",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "hoppscotch",
@@ -22881,18 +22690,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /users",
-        "changed operation POST /users",
-        "changed root",
-        "changed service http-file/02-typical-vars-auth.http",
-        "removed type PostUserRequest",
-        "added type User"
-      ],
       "family": "http-file",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "http-file",
@@ -23426,15 +23233,9 @@
     },
     {
       "family": "idoc",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 34,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "idoc",
@@ -23948,15 +23749,9 @@
     },
     {
       "family": "ims",
-      "loss_counts": {
-        "approx": 15,
-        "drop": 19,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "ims",
@@ -24519,18 +24314,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /v1/users/{userId}",
-        "changed operation GET /health",
-        "changed operation GET /v1/users",
-        "changed operation GET /v1/users/{userId}",
-        "changed operation POST /v1/users",
-        "changed root"
-      ],
       "family": "insomnia",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 9,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "insomnia",
@@ -25064,15 +24857,9 @@
     },
     {
       "family": "iso20022",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 36,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "iso20022",
@@ -25600,15 +25387,9 @@
     },
     {
       "family": "iso8583",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 22,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "iso8583",
@@ -26167,18 +25948,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /v2/products",
-        "added operation GET /",
-        "added operation GET /healthz",
-        "changed operation GET /v2/orders"
-      ],
       "family": "istio",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -26685,8 +26464,8 @@
     },
     {
       "family": "json-schema",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -27186,15 +26965,9 @@
     },
     {
       "family": "jsonld",
-      "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "jsonld",
@@ -27701,8 +27474,8 @@
     },
     {
       "family": "jtd",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -28208,8 +27981,8 @@
     },
     {
       "family": "k8s-crd",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -28708,15 +28481,9 @@
     },
     {
       "family": "kafka-connect",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 8,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "kafka-connect",
@@ -29264,18 +29031,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /users/{userId}",
-        "changed operation GET /users",
-        "changed operation GET /users/{userId}",
-        "changed operation POST /users",
-        "changed operation PUT /users/{userId}",
-        "changed root"
-      ],
       "family": "kong",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -29793,15 +29558,9 @@
     },
     {
       "family": "llm-tools",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "llm-tools",
@@ -30322,15 +30081,9 @@
     },
     {
       "family": "lwm2m",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "lwm2m",
@@ -30856,15 +30609,9 @@
     },
     {
       "family": "matter",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 15,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "matter",
@@ -31386,15 +31133,9 @@
     },
     {
       "family": "mcp",
-      "loss_counts": {
-        "approx": 6,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "mcp",
@@ -31924,15 +31665,9 @@
     },
     {
       "family": "nacha",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 62,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "nacha",
@@ -32446,15 +32181,9 @@
     },
     {
       "family": "natural-ddm",
-      "loss_counts": {
-        "approx": 8,
-        "drop": 12,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "natural-ddm",
@@ -32970,15 +32699,9 @@
     },
     {
       "family": "ncpdp",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 92,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "ncpdp",
@@ -33537,18 +33260,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /#api.example.com:80@return",
-        "removed operation ANY /healthz",
-        "removed operation ANY /static/",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products"
-      ],
       "family": "nginx",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -34117,8 +33838,8 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 0,
-        "drop": 5,
+        "approx": 5,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -34705,8 +34426,8 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 0,
-        "drop": 12,
+        "approx": 14,
+        "drop": 15,
         "synth": 0
       },
       "reason": null,
@@ -35225,8 +34946,8 @@
     },
     {
       "family": "odcs",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -35733,15 +35454,9 @@
     },
     {
       "family": "oncrpc",
-      "loss_counts": {
-        "approx": 4,
-        "drop": 8,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "oncrpc",
@@ -36257,15 +35972,9 @@
     },
     {
       "family": "opcua-nodeset",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 1,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "opcua-nodeset",
@@ -36771,15 +36480,9 @@
     },
     {
       "family": "openapi",
-      "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "openapi",
@@ -37289,15 +36992,9 @@
     },
     {
       "family": "openrpc",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "openrpc",
@@ -37801,8 +37498,8 @@
     },
     {
       "family": "owl",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -38320,15 +38017,9 @@
     },
     {
       "family": "pkl",
-      "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "pkl",
@@ -38836,15 +38527,9 @@
     },
     {
       "family": "pli",
-      "loss_counts": {
-        "approx": 13,
-        "drop": 19,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "pli",
@@ -39985,16 +39670,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /orders/{orderId}",
-        "changed operation GET /orders",
-        "changed operation GET /orders/{orderId}",
-        "changed operation POST /orders"
-      ],
       "family": "postman-v2",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "postman-v2",
@@ -40522,15 +40207,9 @@
     },
     {
       "family": "protobuf",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 18,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "protobuf",
@@ -41058,15 +40737,9 @@
     },
     {
       "family": "protobuf-editions",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 12,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "protobuf-editions",
@@ -41590,15 +41263,9 @@
     },
     {
       "family": "pydantic",
-      "loss_counts": {
-        "approx": 11,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "pydantic",
@@ -42167,8 +41834,8 @@
     {
       "family": "raml",
       "loss_counts": {
-        "approx": 0,
-        "drop": 8,
+        "approx": 11,
+        "drop": 10,
         "synth": 0
       },
       "reason": null,
@@ -42690,15 +42357,9 @@
     },
     {
       "family": "relaxng",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 10,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "relaxng",
@@ -43202,8 +42863,8 @@
     },
     {
       "family": "ros2",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -43726,15 +43387,9 @@
     },
     {
       "family": "sepa",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 59,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "sepa",
@@ -44242,15 +43897,9 @@
     },
     {
       "family": "shacl",
-      "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "shacl",
@@ -44762,15 +44411,9 @@
     },
     {
       "family": "smithy",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "smithy",
@@ -45342,18 +44985,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /v2/orders/{orderId}",
-        "changed operation GET /v2/orders",
-        "changed operation GET /v2/orders/{orderId}",
-        "changed operation POST /v2/orders",
-        "changed root",
-        "changed service Orders API"
-      ],
       "family": "soapui",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "soapui",
@@ -45869,15 +45510,9 @@
     },
     {
       "family": "sparkplug",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "sparkplug",
@@ -46383,15 +46018,9 @@
     },
     {
       "family": "sql-ddl",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "sql-ddl",
@@ -46952,8 +46581,8 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 23,
-        "drop": 0,
+        "approx": 35,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -47531,8 +47160,8 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
+        "approx": 19,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -48066,15 +47695,9 @@
     },
     {
       "family": "swift-mt",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 36,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "swift-mt",
@@ -48596,15 +48219,9 @@
     },
     {
       "family": "thrift",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 12,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "thrift",
@@ -49171,18 +48788,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /healthz",
-        "changed operation GET /v2/orders",
-        "changed operation GET /v2/orders/{orderId}",
-        "changed operation POST /v2/orders",
-        "changed root",
-        "changed service Orders API"
-      ],
       "family": "thunder-client",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "family": "thunder-client",
@@ -49703,15 +49318,9 @@
     },
     {
       "family": "tradacoms",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 18,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "tradacoms",
@@ -50265,18 +49874,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation GET /",
-        "added operation GET /v2/orders",
-        "added operation GET /v2/products"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -50802,15 +50409,9 @@
     },
     {
       "family": "trpc",
-      "loss_counts": {
-        "approx": 19,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "trpc",
@@ -51369,18 +50970,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation DELETE /v2/orders/orders/{id}",
-        "changed operation GET /v2/orders/orders",
-        "changed operation GET /v2/orders/orders/{id}",
-        "changed operation POST /v2/orders/orders",
-        "changed root",
-        "changed service Orders API"
-      ],
       "family": "tyk",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -51906,8 +51505,8 @@
     },
     {
       "family": "typescript-types",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
       "target": "postman"
     },
     {
@@ -52473,18 +52072,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed operation GET /pets",
-        "changed operation GET /pets/{id}",
-        "changed operation POST /pets",
-        "changed root",
-        "removed service PetStore.Pets",
-        "added service Pets API"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "postman"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "postman",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -53003,15 +52600,9 @@
     },
     {
       "family": "vsam-idcams",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 1,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "vsam-idcams",
@@ -53582,8 +53173,8 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 0,
-        "drop": 4,
+        "approx": 4,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -54113,15 +53704,9 @@
     },
     {
       "family": "wit",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "wit",
@@ -54643,15 +54228,9 @@
     },
     {
       "family": "wsdl",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 21,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "wsdl",
@@ -55183,15 +54762,9 @@
     },
     {
       "family": "wsdl2",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 18,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "wsdl2",
@@ -55715,15 +55288,9 @@
     },
     {
       "family": "xmlrpc",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 3,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "xmlrpc",
@@ -56226,15 +55793,9 @@
     },
     {
       "family": "xregistry",
-      "loss_counts": {
-        "approx": 2,
-        "drop": 4,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "xregistry",
@@ -56742,15 +56303,9 @@
     },
     {
       "family": "xsd",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 14,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "xsd",
@@ -57262,15 +56817,9 @@
     },
     {
       "family": "zod",
-      "loss_counts": {
-        "approx": 15,
-        "drop": 0,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "postman",
-      "tier": "lossy"
+      "reason": "Postman export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "postman"
     },
     {
       "family": "zod",
@@ -57839,8 +57388,8 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 0,
-        "drop": 2,
+        "approx": 3,
+        "drop": 6,
         "synth": 0
       },
       "reason": null,
@@ -57997,10 +57546,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3307,
-    "ok": 72,
-    "refused": 1833,
-    "silent-loss": 512,
+    "lossy": 3259,
+    "ok": 65,
+    "refused": 1909,
+    "silent-loss": 491,
     "skipped": 0
   },
   "families": [
