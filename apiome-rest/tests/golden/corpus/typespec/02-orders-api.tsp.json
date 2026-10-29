@@ -86,12 +86,51 @@
       "typespec_models": [
         {
           "documentation": null,
-          "fields": [],
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": null,
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "customerId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "total",
+              "optional": false,
+              "type": "float64"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "status",
+              "optional": false,
+              "type": "OrderStatus"
+            }
+          ],
           "name": "Order"
         },
         {
           "documentation": null,
-          "fields": [],
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "status",
+              "optional": false,
+              "type": "OrderStatus"
+            }
+          ],
           "name": "OrderUpdate"
         }
       ],
@@ -361,10 +400,99 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "id"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "OrderStore.Order.customerId",
+            "name": "customerId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "OrderStore.Order.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "OrderStatus"
+            },
+            "field_number": 4,
+            "key": "OrderStore.Order.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrderStore.OrderStatus",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "float64"
+            },
+            "field_number": 3,
+            "key": "OrderStore.Order.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          }
+        ],
         "key": "OrderStore.Order",
         "key_type": null,
         "kind": "record",
@@ -431,7 +559,29 @@
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "OrderStatus"
+            },
+            "field_number": 1,
+            "key": "OrderStore.OrderUpdate.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "OrderStore.OrderStatus",
+              "nullable": false
+            }
+          }
+        ],
         "key": "OrderStore.OrderUpdate",
         "key_type": null,
         "kind": "record",
@@ -455,15 +605,15 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:eb4632c79b7b93b4eca571c8acaa25d7f91d88962972ae479be1c517e5ef30b1",
+  "fingerprint": "sha256:9a1c8d8fe14285914cd273c7f25370f74705c9eceec0cf433e1a525d793f4505",
   "lint": {
-    "findings": 12,
+    "findings": 17,
     "grade": "D",
-    "report_fingerprint": "7f6d696e4f4714061599b9e650fdbf1c2f40ab0029e023ec49932dc105ac6663",
-    "score": 67,
+    "report_fingerprint": "d807e6cd49a5f82e71c32b3e369ccb796dda8c23618d24800cd3a672a8044e04",
+    "score": 62,
     "severity_counts": {
       "error": 0,
-      "info": 5,
+      "info": 10,
       "warning": 7
     }
   },

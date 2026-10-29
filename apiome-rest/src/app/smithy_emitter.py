@@ -59,15 +59,15 @@ from .emitter import (
     EmitResult,
     EmittedFile,
     Emitter,
-    Loss,
     LossKind,
     LossTracker,
     Provenance,
     ProvenanceTracker,
 )
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessReport, LossinessSeverity
+from .lossiness import LossinessSeverity
 from .scalar_aliases import SMITHY_SCALAR_FOR_KIND, target_scalar
+from .writer_loss_rulepack import WriterLossRulePack
 
 __all__ = ["SMITHY_PRELUDE", "SmithyEmitOptions", "SmithyEmitter", "SmithyFidelityRulePack", "smithy_identifier"]
 
@@ -135,19 +135,12 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-#: Writer losses that leave a whole construct (or a parameter, body or error of an operation) out of the model.
-_CRITICAL_DROPS = frozenset({"event-operation-dropped", "resource-dropped", "unsupported-type", "parameter-dropped",
-                             "body-dropped", "error-dropped"})
-#: Writer approximations that only change a name (the wire name or meaning is kept).
-_COSMETIC = frozenset({"renamed-shape", "renamed-member", "renamed-operation", "renamed-enum-member",
-                       "union-member-names", "structure-as-error"})
-
-
-class SmithyFidelityRulePack(CapabilityRulePack):
+class SmithyFidelityRulePack(WriterLossRulePack):
     """Fidelity rules for Smithy export — MFX-20.2 (#3915).
 
     The pack builds the model with the Smithy writer and turns each loss the writer records into a verdict
-    on the construct it concerns, so the report predicts exactly what the export does:
+    on the construct it concerns (:class:`~app.writer_loss_rulepack.WriterLossRulePack`), so the report
+    predicts exactly what the export does:
 
     * **Trait coverage** — constraints become ``@length`` / ``@range`` / ``@pattern`` / ``@uniqueItems`` and
       are only reported where Smithy has no trait for them (``multipleOf``, an enum list, an exclusive bound
@@ -165,33 +158,17 @@ class SmithyFidelityRulePack(CapabilityRulePack):
     """
 
     target_label = "Smithy"
+    critical_drops = frozenset({"event-operation-dropped", "resource-dropped", "unsupported-type",
+                                "parameter-dropped", "body-dropped", "error-dropped"})
+    cosmetic = frozenset({"renamed-shape", "renamed-member", "renamed-operation", "renamed-enum-member",
+                          "union-member-names", "structure-as-error"})
 
-    def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Build the model once, file the writer's losses by construct, then walk the model."""
+    def build_writer(self, api: CanonicalApi) -> "_SmithyWriter":
+        """Build the Smithy model (default options: they change no loss)."""
+        self._smithy_source = api.format == "smithy"
         writer = _SmithyWriter(api, SmithyEmitOptions())
         writer.build()
-        self._writer = writer
-        self._smithy_source = api.format == "smithy"
-        self._losses = _losses_by_construct(api, writer.losses.records())
-        return super().evaluate(api)
-
-    def _loss_verdicts(self, key: str) -> List[FidelityVerdict]:
-        """One verdict per distinct writer loss filed under ``key``."""
-        verdicts: List[FidelityVerdict] = []
-        seen: Set[Tuple[str, str]] = set()
-        for loss in self._losses.get(key, []):
-            if (loss.subject, loss.detail) in seen:
-                continue
-            seen.add((loss.subject, loss.detail))
-            if loss.kind is LossKind.NA:
-                severity = LossinessSeverity.CRITICAL if loss.subject in _CRITICAL_DROPS else LossinessSeverity.WARN
-                verdicts.append(FidelityVerdict.drop(message=loss.detail, severity=severity,
-                                                     target_mapping=loss.subject))
-            else:
-                severity = LossinessSeverity.INFO if loss.subject in _COSMETIC else LossinessSeverity.WARN
-                verdicts.append(FidelityVerdict.approx(message=loss.detail, severity=severity,
-                                                       target_mapping=loss.subject))
-        return verdicts
+        return writer
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """The document envelope (non-Smithy sources), agent descriptors and losses with no construct."""
@@ -226,28 +203,11 @@ class SmithyFidelityRulePack(CapabilityRulePack):
                 message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
                 target_mapping="agents → dropped",
             ))
-        return verdicts + self._loss_verdicts(ROOT_CONSTRUCT_KEY)
-
-    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
-        """The writer's losses for the operation and its parameters, else ``OK`` naming the shape."""
-        return self._loss_verdicts(operation.key) or [self.operation_verdict(operation)]
-
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        written = self._writer.written_as(operation.key)
-        if written is None:
-            return super().operation_verdict(operation)
-        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}", target_mapping=written)
-
-    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
-        """The writer's losses for the type (and its union members / enum values), else ``OK`` naming the shape."""
-        return self._loss_verdicts(type_.key) or [self.type_verdict(type_)]
+        return verdicts + self.loss_verdicts(ROOT_CONSTRUCT_KEY)
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
-        written = self._writer.written_as(type_.key)
-        if written is not None:
-            return FidelityVerdict.ok(message=f"{type_.kind.value} type carried to {self.target_label}",
-                                      target_mapping=written)
-        if type_.kind is TypeKind.ALIAS:
+        """``OK`` naming the shape; an alias of a named shape is not declared (references target the shape)."""
+        if self.written_as(type_.key) is None and type_.kind is TypeKind.ALIAS:
             return FidelityVerdict.approx(
                 message=f"Smithy has no alias of a named shape; {type_.key!r} is not declared and references "
                 "target its aliased shape",
@@ -258,42 +218,9 @@ class SmithyFidelityRulePack(CapabilityRulePack):
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
         """The writer's losses for the member, plus a dropped field number (Smithy members have none)."""
-        verdicts = self._loss_verdicts(field.key)
+        verdicts = self.loss_verdicts(field.key)
         identity = self._field_identity_verdict(field)
         return verdicts + ([identity] if identity is not None else [])
-
-
-def _losses_by_construct(api: CanonicalApi, losses: List[Loss]) -> Dict[str, List[Loss]]:
-    """File each writer loss under the construct the fidelity report keys it by.
-
-    A record field keeps its own key; a union member and an enum value belong to their type; a parameter
-    belongs to its operation. A loss with no construct of the model is filed under the root, except the
-    channel loss, which each channel's own ``DROP`` already reports.
-
-    Args:
-        api: The model the writer wrote.
-        losses: The writer's losses.
-
-    Returns:
-        Construct key → its losses, in the order recorded.
-    """
-    owners: Dict[str, str] = {}
-    for type_ in api.types:
-        owners[type_.key] = type_.key
-        for field in type_.fields:
-            owners[field.key] = field.key if type_.kind is TypeKind.RECORD else type_.key
-        for value in type_.enum_values:
-            owners[value.key] = type_.key
-    for operation in api.operations():
-        owners[operation.key] = operation.key
-        for param in operation.parameters:
-            owners[param.key] = operation.key
-    filed: Dict[str, List[Loss]] = {}
-    for loss in losses:
-        if loss.pointer == "channels":
-            continue
-        filed.setdefault(owners.get(loss.pointer or "", ROOT_CONSTRUCT_KEY), []).append(loss)
-    return filed
 
 
 class SmithyEmitOptions(EmitOptions):

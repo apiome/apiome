@@ -46,13 +46,11 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
     # --- azure-apim (1) ---
     ('azure-apim', 'azure-apim'):
         'changed root',
-    # --- capnproto (4) ---
+    # --- capnproto (3) ---
     ('arazzo', 'capnproto'):
         'added operation Checkout.addItem; added operation Checkout.createCart; added operation Checkout.pay;',
     ('flatbuffers', 'capnproto'):
         'changed root; added type Color; added type Monster; added type Vec3; added type Weapon; removed type',
-    ('typespec', 'capnproto'):
-        'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
     ('wadl', 'capnproto'):
         'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
     # --- cddl (15) ---
@@ -103,7 +101,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation d784c0c3-9de9-4418-b772-c8',
     ('typescript-types', 'cloudevents'):
         'added channel com.example.orderline; added operation 6337af43-2863-4988-9430-d5111c42fb4a; changed r',
-    # --- connectrpc (16) ---
+    # --- connectrpc (15) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
     ('acp', 'connectrpc'):
@@ -134,8 +132,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
     ('tyk', 'connectrpc'):
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
-    ('typespec', 'connectrpc'):
-        'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
     # --- corbaidl (5) ---
     ('arazzo', 'corbaidl'):
         'added operation Storefront_checkout.checkout.addItem; added operation Storefront_checkout.checkout.c',
@@ -477,7 +473,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation OrderPort.OrderPort.CancelOrder; added operation OrderPort.OrderPort.CreateOrder; ad',
     ('wsdl2', 'oncrpc'):
         'added operation OrderInterface.OrderInterface.cancelOrder; added operation OrderInterface.OrderInter',
-    # --- openapi (52) ---
+    # --- openapi (51) ---
     ('acp', 'openapi'):
         'removed agent research-assistant; added operation POST /research-assistant.Cite_sources; added opera',
     ('agents-manifest', 'openapi'):
@@ -576,8 +572,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed operation DELETE /v2/orders/orders/{id}; changed operation GET /v2/orders/orders; changed op',
     ('typescript-types', 'openapi'):
         'changed root; changed type NewOrder; changed type NewOrder_lines_item; changed type Order; changed t',
-    ('typespec', 'openapi'):
-        'changed operation GET /pets; changed operation GET /pets/{id}; changed operation POST /pets; changed',
     ('wit', 'openapi'):
         'added operation POST /examples:calculator.calculate/describe; added operation POST /examples:calcula',
     ('zod', 'openapi'):
@@ -645,7 +639,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation OrderService.cancelOrder; added operation OrderService.getOrder; added operation Ord',
     ('xmlrpc', 'openrpc'):
         'changed operation inventory.reserveStock.inventory.reserveStock; changed root; changed type Inventor',
-    # --- protobuf (16) ---
+    # --- protobuf (15) ---
     ('a2a', 'protobuf'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
     ('acp', 'protobuf'):
@@ -676,8 +670,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
     ('tyk', 'protobuf'):
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
-    ('typespec', 'protobuf'):
-        'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
     # --- thrift (21) ---
     ('arazzo', 'thrift'):
         'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
@@ -721,87 +713,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation http://example.com/orders.OrderPort.CancelOrder; removed operation http://example.',
     ('wsdl2', 'thrift'):
         'removed operation http://example.com/orders.OrderInterface.cancelOrder; removed operation http://exa',
-    # --- typespec (40) ---
-    ('api-blueprint', 'typespec'):
-        'removed operation GET /tasks; removed operation GET /tasks/{id}; removed operation POST /tasks; chan',
-    ('apigee', 'typespec'):
-        'added operation GET /; removed operation GET /v2/orders/orders; removed operation GET /v2/orders/ord',
-    ('arazzo', 'typespec'):
-        'added operation GET /; removed operation checkout#addItem; removed operation checkout#createCart; re',
-    ('avro-idl', 'typespec'):
-        'added operation GET /; removed operation com.example.orders.OrderService.cancelOrder; removed operat',
-    ('azure-apim', 'typespec'):
-        'removed operation GET /orders; removed operation GET /orders/{orderId}; changed root; added service ',
-    ('capnproto', 'typespec'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation GET /; changed ',
-    ('connectrpc', 'typespec'):
-        'added operation GET /; removed operation tasks.v1.TaskService.CompleteTask; removed operation tasks.',
-    ('consul', 'typespec'):
-        'removed operation ANY /v2/orders; changed root; added service Exported.orders; removed service order',
-    ('corbaidl', 'typespec'):
-        'removed operation Banking.Bank.deposit; removed operation Banking.Bank.getAccount; removed operation',
-    ('edifact', 'typespec'):
-        'changed root; removed type EDIFACT-INVOIC.DTM; removed type EDIFACT-INVOIC.IMD; removed type EDIFACT',
-    ('edix12', 'typespec'):
-        'changed root; removed type X12-850.PO1; removed type X12-850.TransactionSet850; added type X12.PO1; ',
-    ('envoy-xds', 'typespec'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
-    ('fhir', 'typespec'):
-        'added operation GET /; removed operation GET /Patient; removed operation GET /Patient/{id}; added op',
-    ('fix', 'typespec'):
-        'changed root; changed type FIX.4.4.Message8',
-    ('flatbuffers', 'typespec'):
-        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
-    ('hl7v2', 'typespec'):
-        'changed root; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; added type ADT.MSH; adde',
-    ('idoc', 'typespec'):
-        'changed root; removed type IDOC-ORDERS05.E1EDK01; removed type IDOC-ORDERS05.E1EDK03; removed type I',
-    ('iso20022', 'typespec'):
-        'changed root; changed type pain.001.001.09.Amt; changed type pain.001.001.09.CdtTrfTxInf; changed ty',
-    ('iso8583', 'typespec'):
-        'changed root; changed type 0100.DE11; changed type 0100.DE12; changed type 0100.DE13; changed type 0',
-    ('kafka-connect', 'typespec'):
-        'changed root; changed type com.example.orders.Order',
-    ('lwm2m', 'typespec'):
-        'added operation GET /; removed operation TemperatureService.ResetMinAndMaxMeasuredValues; changed ro',
-    ('matter', 'typespec'):
-        'added operation GET /; removed operation OnOffService.Off; removed operation OnOffService.OffWithEff',
-    ('nacha', 'typespec'):
-        'changed root; removed type NACHA-ACH.AchFile; removed type NACHA-ACH.Batch; removed type NACHA-ACH.B',
-    ('ncpdp', 'typespec'):
-        'changed root; removed type NCPDP-SCRIPT.Address; removed type NCPDP-SCRIPT.Body; removed type NCPDP-',
-    ('odata', 'typespec'):
-        'added operation GET /; removed operation GET /Orders; removed operation GET /Orders({key}); added op',
-    ('odata-v2', 'typespec'):
-        'added operation GET /; removed operation GET /Customers; removed operation GET /Customers({key}); re',
-    ('protobuf', 'typespec'):
-        'added operation GET /; removed operation example.catalog.v1.ProductService.CreateProduct; removed op',
-    ('protobuf-editions', 'typespec'):
-        'added operation GET /; removed operation example.orders.v1.OrderService.GetOrder; removed operation ',
-    ('raml', 'typespec'):
-        'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
-    ('sepa', 'typespec'):
-        'changed root; changed type pain.001.001.09.Amt; changed type pain.001.001.09.CdtTrfTxInf; changed ty',
-    ('swift-mt', 'typespec'):
-        'changed root; removed type SWIFT-MT103.CodeWord; removed type SWIFT-MT103.Field13C; removed type SWI',
-    ('thrift', 'typespec'):
-        'added operation GET /; removed operation com.example.user.UserService.createUser; removed operation ',
-    ('tradacoms', 'typespec'):
-        'changed root; removed type TRADACOMS-ORDERS.MessageORDERS; removed type TRADACOMS-ORDERS.OLD; added ',
-    ('traefik', 'typespec'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; chang',
-    ('typespec', 'typespec'):
-        'changed operation GET /pets',
-    ('wadl', 'typespec'):
-        'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
-    ('wsdl', 'typespec'):
-        'added operation GET /; removed operation http://example.com/orders.OrderPort.CancelOrder; removed op',
-    ('wsdl2', 'typespec'):
-        'added operation GET /; removed operation http://example.com/orders.OrderInterface.cancelOrder; remov',
-    ('xmlrpc', 'typespec'):
-        'removed operation inventory.reserveStock.inventory.reserveStock; changed root; removed service inven',
-    ('zosconnect', 'typespec'):
-        'removed operation GET /items/{sku}/stock; added operation GET /{sku}; removed operation POST /items/',
     # --- wit (12) ---
     ('acp', 'wit'):
         'removed agent research-assistant; added operation apiome:research-assistant.research-assistant.cite-',

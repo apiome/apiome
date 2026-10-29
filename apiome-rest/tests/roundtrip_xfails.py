@@ -3604,7 +3604,6 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('typespec', 'thrift'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('typespec', 'thunder-client'): "unexplained: removed service 'PetStore.Pets', added service 'Pets API', added type 'PostPetRequest'",
     ('typespec', 'traefik'): "unexplained: removed service 'PetStore.Pets', added service 'Pets'",
-    ('typespec', 'typespec'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('typespec', 'wadl'): 'Re-import failed: Content does not appear to be a WADL document',
     ("typespec", "wit"): "unexplained: removed operation 'GET /pets', removed operation 'GET /pets/{id}', removed operation 'POST /pets', added operation 'pet-store:pets-api.pets.%list', added operation 'pet-store:pets-api.pets.create', added operation 'pet-store:pets-api.pets.read', changed root '', removed service 'PetStore.Pets', added service 'pet-store:pets-api.pets', added service 'pet-store:pets-api.pets-api', removed type 'PetStore.NewPet', removed type 'PetStore.Pet', removed type 'PetStore.PetStatus', added type 'pet-store:pets-api.types.new-pet', added type 'pet-store:pets-api.types.pet', added type 'pet-store:pets-api.types.pet-status'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus'",
     ('typespec', 'wsdl'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',

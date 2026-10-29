@@ -15,7 +15,7 @@
           "name": "Books",
           "operations": [
             {
-              "documentation": null,
+              "documentation": "List all books.",
               "is_array_return": true,
               "name": "list",
               "parameters": [],
@@ -23,7 +23,7 @@
               "verb": "get"
             },
             {
-              "documentation": "A publi",
+              "documentation": "Fetch a book by id.",
               "is_array_return": false,
               "name": "read",
               "parameters": [
@@ -44,7 +44,7 @@
           "name": "Borrowers",
           "operations": [
             {
-              "documentation": null,
+              "documentation": "Fetch a borrower by id.",
               "is_array_return": false,
               "name": "read",
               "parameters": [
@@ -58,33 +58,117 @@
               "verb": "get"
             }
           ],
-          "route_prefix": "/books"
+          "route_prefix": "/borrowers"
         }
       ],
       "typespec_models": [
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Shared identity fields, spread into every persisted model.",
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": null,
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            }
+          ],
           "name": "ResourceBase"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Shared audit timestamps, spread into every persisted model.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "createdAt",
+              "optional": false,
+              "type": "utcDateTime"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "updatedAt",
+              "optional": false,
+              "type": "utcDateTime"
+            }
+          ],
           "name": "AuditFields"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A publisher, nested inside Book as a model-typed field.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "country",
+              "optional": true,
+              "type": "string"
+            }
+          ],
           "name": "Publisher"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A book composed from the shared base models plus its own fields.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "title",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "author",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "publisher",
+              "optional": false,
+              "type": "Publisher"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "isbn",
+              "optional": true,
+              "type": "string"
+            }
+          ],
           "name": "Book"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A borrower record reusing the same shared base models.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "fullName",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "email",
+              "optional": false,
+              "type": "string"
+            }
+          ],
           "name": "Borrower"
         }
       ],
@@ -118,7 +202,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "List all books.",
             "extras": {
               "typespec_interface": "Books",
               "typespec_route_prefix": "/books",
@@ -163,7 +247,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": "A publi",
+            "description": "Fetch a book by id.",
             "extras": {
               "typespec_interface": "Books",
               "typespec_route_prefix": "/books",
@@ -226,7 +310,7 @@
       {
         "description": null,
         "extras": {
-          "typespec_route_prefix": "/books"
+          "typespec_route_prefix": "/borrowers"
         },
         "key": "Library.Borrowers",
         "name": "Borrowers",
@@ -234,15 +318,15 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch a borrower by id.",
             "extras": {
               "typespec_interface": "Borrowers",
-              "typespec_route_prefix": "/books",
+              "typespec_route_prefix": "/borrowers",
               "typespec_verb": "get"
             },
             "http_method": "GET",
-            "http_path": "/books/{id}",
-            "key": "GET /books/{id}",
+            "http_path": "/borrowers/{id}",
+            "key": "GET /borrowers/{id}",
             "kind": "request_response",
             "messages": [
               {
@@ -252,7 +336,7 @@
                 "description": null,
                 "extras": {},
                 "headers": [],
-                "key": "GET /books/{id}#response.200",
+                "key": "GET /borrowers/{id}#response.200",
                 "name": null,
                 "payload": {
                   "extras": {},
@@ -277,7 +361,7 @@
                   "typespec_location": "path",
                   "typespec_type": "string"
                 },
-                "key": "GET /books/{id}#path.id",
+                "key": "GET /borrowers/{id}#path.id",
                 "location": "path",
                 "name": "id",
                 "required": true,
@@ -301,13 +385,56 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Shared audit timestamps, spread into every persisted model.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "utcDateTime"
+            },
+            "field_number": 1,
+            "key": "Library.AuditFields.createdAt",
+            "name": "createdAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Library.utcDateTime",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "utcDateTime"
+            },
+            "field_number": 2,
+            "key": "Library.AuditFields.updatedAt",
+            "name": "updatedAt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Library.utcDateTime",
+              "nullable": false
+            }
+          }
+        ],
         "key": "Library.AuditFields",
         "key_type": null,
         "kind": "record",
@@ -320,13 +447,98 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A book composed from the shared base models plus its own fields.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "Library.Book.author",
+            "name": "author",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 4,
+            "key": "Library.Book.isbn",
+            "name": "isbn",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "Publisher"
+            },
+            "field_number": 3,
+            "key": "Library.Book.publisher",
+            "name": "publisher",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "Library.Publisher",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "Library.Book.title",
+            "name": "title",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "Library.Book",
         "key_type": null,
         "kind": "record",
@@ -339,13 +551,56 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A borrower record reusing the same shared base models.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "Library.Borrower.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "Library.Borrower.fullName",
+            "name": "fullName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "Library.Borrower",
         "key_type": null,
         "kind": "record",
@@ -358,13 +613,56 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A publisher, nested inside Book as a model-typed field.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "Library.Publisher.country",
+            "name": "country",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "Library.Publisher.name",
+            "name": "name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "Library.Publisher",
         "key_type": null,
         "kind": "record",
@@ -377,13 +675,39 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Shared identity fields, spread into every persisted model.",
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "id"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "Library.ResourceBase.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "Library.ResourceBase",
         "key_type": null,
         "kind": "record",
@@ -407,16 +731,16 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:a42b4479d77f1b047bd3a453c432ef9c4b438dd3fb19e198f29bc6f7bb149a84",
+  "fingerprint": "sha256:534c097ea8bbf0f5fcefd23c05864dc5e693a7d04805b1d2b9de8a57b71fbc41",
   "lint": {
-    "findings": 11,
-    "grade": "D",
-    "report_fingerprint": "e7437ec2c772a05b05b03a8003d36a4aeab4c477a98d502b25ee2c5ccfd37760",
-    "score": 68,
+    "findings": 15,
+    "grade": "B",
+    "report_fingerprint": "53105758de8ca4bf1048165bb80bdf19605b6a960314d52bf63b3385b7369439",
+    "score": 85,
     "severity_counts": {
       "error": 0,
-      "info": 4,
-      "warning": 7
+      "info": 15,
+      "warning": 0
     }
   },
   "snapshot_version": 1

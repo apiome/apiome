@@ -20,6 +20,13 @@ Import the definition like any other catalog format: in the [import wizard](./im
 | One `.tsp` file | Read by the built-in TypeSpec reader. |
 | A TypeSpec project: several `.tsp` files, or a `.tsp` file with its `tspconfig.yaml` (a `.zip`, `.tar.gz` or `.tar`, or a directory from the CLI) | Compiled to OpenAPI by the **TypeSpec compiler**, then cataloged from that OpenAPI. |
 
+The built-in reader reads each model's properties, including their decorators, optional `?` marks
+and backticked names, and each enum's members. It reads every interface operation with its verb, its
+own `@route`, and its `@path`, `@query`, `@header` and `@cookie` parameters. A parameter is required
+unless it is marked `?`. It also reads `/** … */` and `///` doc comments, and the
+`@service({ title: "…" })` title. A path parameter that the route does not name is added to the
+path, as the compiler does.
+
 ## Multi-file projects
 
 A TypeSpec API is often split across files. The main file imports its siblings and the TypeSpec

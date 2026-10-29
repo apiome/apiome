@@ -6,7 +6,7 @@
     "extras": {
       "typespec_enums": [
         {
-          "documentation": null,
+          "documentation": "Operational state reported by a device.",
           "name": "DeviceState",
           "values": [
             "provisioning",
@@ -26,7 +26,7 @@
           "name": "Devices",
           "operations": [
             {
-              "documentation": "Sparse update payload; e",
+              "documentation": "List devices, filtered by state and paged with a query cursor.",
               "is_array_return": true,
               "name": "list",
               "parameters": [
@@ -45,7 +45,7 @@
               "verb": "get"
             },
             {
-              "documentation": null,
+              "documentation": "Fetch one device; supports conditional reads via an entity-tag header.",
               "is_array_return": false,
               "name": "read",
               "parameters": [
@@ -64,7 +64,7 @@
               "verb": "get"
             },
             {
-              "documentation": "A firmware rollou",
+              "documentation": "Apply a sparse update to a device.",
               "is_array_return": false,
               "name": "update",
               "parameters": [
@@ -83,7 +83,7 @@
               "verb": "patch"
             },
             {
-              "documentation": null,
+              "documentation": "Decommission a device.",
               "is_array_return": false,
               "name": "remove",
               "parameters": [
@@ -100,11 +100,11 @@
           "route_prefix": "/devices"
         },
         {
-          "documentation": "Summary returned",
+          "documentation": null,
           "name": "Rollouts",
           "operations": [
             {
-              "documentation": null,
+              "documentation": "Start a firmware rollout across the fleet.",
               "is_array_return": false,
               "name": "create",
               "parameters": [
@@ -123,23 +123,141 @@
       ],
       "typespec_models": [
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A managed device in the fleet.",
+          "fields": [
+            {
+              "decorators": [
+                "@key"
+              ],
+              "documentation": null,
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "serialNumber",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "state",
+              "optional": false,
+              "type": "DeviceState"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "firmwareVersion",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "batteryPercent",
+              "optional": true,
+              "type": "int32"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "tags",
+              "optional": false,
+              "type": "string[]"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "lastSeen",
+              "optional": true,
+              "type": "utcDateTime"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "shadowEnabled",
+              "optional": false,
+              "type": "boolean"
+            }
+          ],
           "name": "Device"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Sparse update payload; every field is optional.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "state",
+              "optional": true,
+              "type": "DeviceState"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "firmwareVersion",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "shadowEnabled",
+              "optional": true,
+              "type": "boolean"
+            }
+          ],
           "name": "DevicePatch"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "A firmware rollout request body.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "targetVersion",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "maxFailuresPercent",
+              "optional": false,
+              "type": "float32"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "dryRun",
+              "optional": false,
+              "type": "boolean"
+            }
+          ],
           "name": "RolloutRequest"
         },
         {
-          "documentation": null,
-          "fields": [],
+          "documentation": "Summary returned by the rollout endpoint.",
+          "fields": [
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "rolloutId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "decorators": [],
+              "documentation": null,
+              "name": "deviceCount",
+              "optional": false,
+              "type": "int64"
+            }
+          ],
           "name": "RolloutSummary"
         }
       ],
@@ -173,7 +291,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Decommission a device.",
             "extras": {
               "typespec_interface": "Devices",
               "typespec_route_prefix": "/devices",
@@ -213,7 +331,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": "Sparse update payload; e",
+            "description": "List devices, filtered by state and paged with a query cursor.",
             "extras": {
               "typespec_interface": "Devices",
               "typespec_route_prefix": "/devices",
@@ -264,7 +382,7 @@
                 "key": "GET /devices#query.cursor",
                 "location": "query",
                 "name": "cursor",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -284,7 +402,7 @@
                 "key": "GET /devices#query.state",
                 "location": "query",
                 "name": "state",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -299,7 +417,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch one device; supports conditional reads via an entity-tag header.",
             "extras": {
               "typespec_interface": "Devices",
               "typespec_route_prefix": "/devices",
@@ -345,7 +463,7 @@
                 "key": "GET /devices/{id}#header.ifNoneMatch",
                 "location": "header",
                 "name": "ifNoneMatch",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -380,7 +498,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": "A firmware rollou",
+            "description": "Apply a sparse update to a device.",
             "extras": {
               "typespec_interface": "Devices",
               "typespec_route_prefix": "/devices",
@@ -461,7 +579,7 @@
         ]
       },
       {
-        "description": "Summary returned",
+        "description": null,
         "extras": {
           "typespec_route_prefix": "/rollouts"
         },
@@ -471,7 +589,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Start a firmware rollout across the fleet.",
             "extras": {
               "typespec_interface": "Rollouts",
               "typespec_route_prefix": "/rollouts",
@@ -537,13 +655,191 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A managed device in the fleet.",
         "enum_values": [],
         "extras": {
-          "typespec_key_fields": [],
+          "typespec_key_fields": [
+            "id"
+          ],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "int32"
+            },
+            "field_number": 5,
+            "key": "DeviceFleet.Device.batteryPercent",
+            "name": "batteryPercent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 4,
+            "key": "DeviceFleet.Device.firmwareVersion",
+            "name": "firmwareVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [
+                "@key"
+              ],
+              "typespec_key": true,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "DeviceFleet.Device.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "utcDateTime"
+            },
+            "field_number": 7,
+            "key": "DeviceFleet.Device.lastSeen",
+            "name": "lastSeen",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DeviceFleet.utcDateTime",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "DeviceFleet.Device.serialNumber",
+            "name": "serialNumber",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "boolean"
+            },
+            "field_number": 8,
+            "key": "DeviceFleet.Device.shadowEnabled",
+            "name": "shadowEnabled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "DeviceState"
+            },
+            "field_number": 3,
+            "key": "DeviceFleet.Device.state",
+            "name": "state",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DeviceFleet.DeviceState",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string[]"
+            },
+            "field_number": 6,
+            "key": "DeviceFleet.Device.tags",
+            "name": "tags",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "string",
+                "nullable": true
+              },
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "DeviceFleet.Device",
         "key_type": null,
         "kind": "record",
@@ -556,13 +852,77 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Sparse update payload; every field is optional.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "string"
+            },
+            "field_number": 2,
+            "key": "DeviceFleet.DevicePatch.firmwareVersion",
+            "name": "firmwareVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "boolean"
+            },
+            "field_number": 3,
+            "key": "DeviceFleet.DevicePatch.shadowEnabled",
+            "name": "shadowEnabled",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": true,
+              "typespec_type": "DeviceState"
+            },
+            "field_number": 1,
+            "key": "DeviceFleet.DevicePatch.state",
+            "name": "state",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "DeviceFleet.DeviceState",
+              "nullable": true
+            }
+          }
+        ],
         "key": "DeviceFleet.DevicePatch",
         "key_type": null,
         "kind": "record",
@@ -575,7 +935,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Operational state reported by a device.",
         "enum_values": [
           {
             "deprecated": false,
@@ -632,13 +992,77 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A firmware rollout request body.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "boolean"
+            },
+            "field_number": 3,
+            "key": "DeviceFleet.RolloutRequest.dryRun",
+            "name": "dryRun",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "bool",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "float32"
+            },
+            "field_number": 2,
+            "key": "DeviceFleet.RolloutRequest.maxFailuresPercent",
+            "name": "maxFailuresPercent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "float",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "DeviceFleet.RolloutRequest.targetVersion",
+            "name": "targetVersion",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "DeviceFleet.RolloutRequest",
         "key_type": null,
         "kind": "record",
@@ -651,13 +1075,56 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Summary returned by the rollout endpoint.",
         "enum_values": [],
         "extras": {
           "typespec_key_fields": [],
           "typespec_kind": "model"
         },
-        "fields": [],
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "int64"
+            },
+            "field_number": 2,
+            "key": "DeviceFleet.RolloutSummary.deviceCount",
+            "name": "deviceCount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "typespec_decorators": [],
+              "typespec_key": false,
+              "typespec_optional": false,
+              "typespec_type": "string"
+            },
+            "field_number": 1,
+            "key": "DeviceFleet.RolloutSummary.rolloutId",
+            "name": "rolloutId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
         "key": "DeviceFleet.RolloutSummary",
         "key_type": null,
         "kind": "record",
@@ -681,16 +1148,16 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:2cfbc7cdb037d5b6b1ebcf7c22c5b434d22599c478bd6961914233c24664f882",
+  "fingerprint": "sha256:a8c1179a9954e51d4f428aeb027d2fc91be8b08a4e6976468408a017bfbd80b7",
   "lint": {
-    "findings": 15,
-    "grade": "D",
-    "report_fingerprint": "3f8fd211c2bd48f2752a431c644de7605875addc1d21faf43250dbb2819bf027",
-    "score": 61,
+    "findings": 23,
+    "grade": "C",
+    "report_fingerprint": "a1193dadab49713b3746104fe961514525584e008206dbece0ddb28a9800e3ea",
+    "score": 77,
     "severity_counts": {
       "error": 0,
-      "info": 7,
-      "warning": 8
+      "info": 23,
+      "warning": 0
     }
   },
   "snapshot_version": 1

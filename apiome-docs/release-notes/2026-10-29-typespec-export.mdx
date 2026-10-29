@@ -1,0 +1,26 @@
+---
+slug: typespec-export
+title: TypeSpec export that compiles, from any source
+description: TypeSpec exports compile with tsp and keep routes, statuses and constraints.
+authors: [apiome]
+---
+
+Exporting an item to **TypeSpec** now writes a `.tsp` file that the TypeSpec compiler accepts. You can
+export from OpenAPI, Protobuf, GraphQL, Avro or any other typed or service-bearing source.
+[How the TypeSpec is written](/ship/export-a-spec#typespec-from-any-source).
+
+{/* truncate */}
+
+- **Compiles.** Each export is compiled with the bundled `tsp` before it is offered. The title is
+  written in the `@service({ title })` form that compiler accepts.
+- **Routes and responses.** Operations keep their verb and full `@route`, and their path, query,
+  header and cookie parameters. Responses keep their statuses, headers and error bodies.
+- **Types and constraints.** Unions, maps, named lists, scalars and aliases are written, not dropped.
+  Constraints become `@minLength`, `@maxValue`, `@pattern` and similar decorators, and defaults are
+  kept.
+- **Names kept.** A name that is not a TypeSpec identifier is written in backticks rather than
+  changed.
+- **Exact fidelity report.** Whatever TypeSpec cannot carry is listed on the construct it concerns.
+- **Fixed:** importing a single `.tsp` file now reads model properties, which were missing. It also
+  reads doc comments, operation routes and optional parameters. An interface's operations are no
+  longer filed under the previous interface's route.

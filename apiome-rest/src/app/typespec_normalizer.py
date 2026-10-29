@@ -56,6 +56,7 @@ _PARAM_LOCATIONS = {
     "path": ParameterLocation.PATH,
     "query": ParameterLocation.QUERY,
     "header": ParameterLocation.HEADER,
+    "cookie": ParameterLocation.COOKIE,
 }
 
 
@@ -133,7 +134,7 @@ def _parameter(
         key=Keys.parameter(operation_key, param.location, param.name),
         name=param.name,
         location=location,
-        required=param.location in {"path", "body"},
+        required=param.location in {"path", "body"} or not param.optional,
         type=_type_ref_from_expr(
             param.type_expr,
             namespace=namespace,
@@ -144,8 +145,14 @@ def _parameter(
 
 
 def _operation_path(route_prefix: Optional[str], operation: TypeSpecOperation) -> str:
+    """The operation's path: the interface's ``@route``, the operation's own ``@route``, then — as
+    TypeSpec does — every ``@path`` parameter the route does not name, appended as ``/{name}``."""
     base = route_prefix or ""
-    path_params = [param.name for param in operation.parameters if param.location == "path"]
+    if operation.route is not None:
+        base = base.rstrip("/") + operation.route if operation.route.startswith("/") else (
+            f"{base.rstrip('/')}/{operation.route}" if base else f"/{operation.route}")
+    path_params = [param.name for param in operation.parameters
+                   if param.location == "path" and f"{{{param.name}}}" not in base]
     if path_params:
         suffix = "/".join(f"{{{name}}}" for name in path_params)
         if base.endswith("/"):

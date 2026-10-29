@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.516.0] - 2026-10-29
+
+### Added
+- **TypeSpec emitter: compiling `.tsp` from any source (MFX-15.1, #3893).** The `typespec` writer is rebuilt for the
+  bundled `tsp` 0.65 + `@typespec/http`. Document: `@service({ title })` (the `#{}` form the old writer used does not
+  compile on 0.65), the description as the namespace's doc comment, `@info({ version })` (`@typespec/openapi`),
+  `@server(url, description, { variables })`. Types: `model`, `enum` (string values when they differ from the
+  name, numeric values kept), `union` (named variants or member types), `model X is Record<V>`, `model X is T[]`,
+  `scalar X extends <base>`, `alias X = T`. Members: optional `?` from nullability, `@minLength` / `@maxLength` /
+  `@pattern` / `@format` / `@minValue` / `@maxValue` (+ `Exclusive`) / `@minItems` / `@maxItems`, `= default`
+  (literals, enum members, `#[…]` lists), `/** */` docs, `#deprecated`; names that are not identifiers are
+  backticked, not renamed. Operations: one `interface` per service, `@get` … `@head` + `@route`, `@path` / `@query`
+  / `@header("Name")` / `@cookie("name")` / `@body`, a non-JSON body's `Content-Type`, responses as the return
+  type (plain 200, `@statusCode` variants, `NXX` ranges, a `default` error as an `@error` model, response
+  headers); an RPC operation is `@post @route("/<Service>/<op>")`. A TypeSpec source keeps its imports,
+  namespace, interface route prefixes, field type expressions and decorators. Nothing to declare → 422.
+- `TypeSpecFidelityRulePack` predicts exactly the writer's losses (dropped constraints, defaults, numeric enum
+  values beside strings, verbs TypeSpec lacks, duplicate routes, unplaceable path parameters, multipart bodies
+  that are not models, events; approximated renames, RPC routes, aliases, custom scalars, inline schemas,
+  synthesized path parameters, default-response models). `app.writer_loss_rulepack.WriterLossRulePack` is the
+  shared base of the Smithy and TypeSpec packs (losses filed by construct, severity by subject).
+- Export validation compiles a TypeSpec export with the bundled compiler (each compile error is a finding) and
+  re-parses it when the compiler is not installed.
+
+### Fixed
+- The built-in TypeSpec reader (single `.tsp` imports) read no model properties (its field pattern never matched
+  an indented line); it now reads them with their decorators, `?`, backticked names and `= default`. Doc comments
+  were taken from shifted offsets (comment stripping changed lengths); comments are now blanked in place, strings
+  aware, and `/** */` docs are read. Operations: their own `@route`, `@head`, parameters with `("name")`
+  arguments and `?`, response types holding `;`. Parameters are required unless marked `?` (path and body
+  always). An interface's `@route` is the one decorating it (it could be the previous interface's).
+  `@service({ title })` is read. Cookie parameters. Enum members with values.
+- Goldens: TypeSpec corpus snapshots; the `typespec` cells of the round-trip and export-conformance matrices.
+
 ## [1.515.0] - 2026-10-29
 
 ### Changed
