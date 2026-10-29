@@ -1,0 +1,22 @@
+---
+slug: openrpc-export
+title: OpenRPC export that passes the meta-schema, from RPC or REST
+description: OpenRPC exports validate, write notifications and errors, and reframe REST operations.
+authors: [apiome]
+---
+
+Exporting an item to **OpenRPC** now writes a document that is valid against the OpenRPC
+meta-schema. You can export from gRPC, Thrift, GraphQL, OpenAPI or any other source.
+[How the OpenRPC is written](/ship/export-a-spec#openrpc-from-any-source).
+
+{/* truncate */}
+
+- **Valid.** Every method has `params`, and `info.version` is always written. Each export is checked
+  against the meta-schema before it is offered.
+- **REST operations kept.** REST operations used to be left out. They are now methods with by-name
+  params, a result and error codes, and the HTTP binding is kept as `x-http`.
+- **Notifications and errors.** One-way operations are written as notifications. Errors, tags and
+  deprecations are written, and an imported OpenRPC document now keeps them.
+- **Working schema references.** Every `$ref` names a written component, and scalars such as
+  `int64` get their JSON Schema form instead of a reference to nothing.
+- **Exact fidelity report.** Whatever OpenRPC cannot carry is listed on the construct it concerns.

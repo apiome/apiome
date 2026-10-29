@@ -1095,6 +1095,19 @@ async def _validate_thrift(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_openrpc(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted OpenRPC document (MFX-33.1, #4301).
+
+    The OpenRPC meta-schema (``@open-rpc/meta-schema`` 1.14.9, vendored, offline) and then a re-parse
+    through the OpenRPC reader the import uses (:func:`app.openrpc_emitter.validate_openrpc_document`).
+    """
+    from .openrpc_emitter import validate_openrpc_document
+
+    return await _run_text_validator(target, emit_result, validate_openrpc_document)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1160,6 +1173,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "thunder-client": _validate_thunder_client,
     # MFX-31.1 (#4289)
     "postman": _validate_postman,
+    # MFX-33.1 (#4301)
+    "openrpc": _validate_openrpc,
     # MFX-25.1 (#4151)
     "thrift": _validate_thrift,
 }

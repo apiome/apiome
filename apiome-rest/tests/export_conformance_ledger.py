@@ -576,69 +576,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation POST /examples:calculator.calculate/describe; added operation POST /examples:calcula',
     ('zod', 'openapi'):
         'changed root; changed type NewOrder; changed type Order; changed type OrderLine; changed type OrderS',
-    # --- openrpc (31) ---
-    ('a2a', 'openrpc'):
-        'removed agent Travel Concierge; added operation Travel Concierge.Build itinerary; added operation Tr',
-    ('acp', 'openrpc'):
-        'removed agent research-assistant; changed operation research-assistant.Cite sources; changed operati',
-    ('agents-manifest', 'openrpc'):
-        'added operation Northwind Store.https://returns.northwind.example/.well-known/agent-card.json; added',
-    ('arazzo', 'openrpc'):
-        'added operation Storefront checkout.addItem; added operation Storefront checkout.createCart; added o',
-    ('avro-idl', 'openrpc'):
-        'added operation OrderService.cancelOrder; added operation OrderService.getOrder; added operation Ord',
-    ('capnproto', 'openrpc'):
-        'changed operation Directory.add; changed operation Directory.lookup; changed root; changed type Addr',
-    ('cobolcopybook', 'openrpc'):
-        'changed root; added service CUSTOMER-RECORD; added type CUSTOMER-RECORD; removed type CUSTOMER-RECOR',
-    ('connectrpc', 'openrpc'):
-        'added operation tasks.v1.CompleteTask; added operation tasks.v1.CreateTask; added operation tasks.v1',
-    ('corbaidl', 'openrpc'):
-        'removed operation Banking.Bank.deposit; removed operation Banking.Bank.getAccount; removed operation',
-    ('edifact', 'openrpc'):
-        'changed root; added service EDIFACT INVOIC; added type DTM; removed type EDIFACT-INVOIC.DTM; removed',
-    ('edix12', 'openrpc'):
-        'changed root; added service X12 850; added type PO1; added type TransactionSet850; removed type X12-',
-    ('fix', 'openrpc'):
-        'changed root; added service ExecutionReport (FIX.4.4); removed type FIX.4.4.Message8; added type Mes',
-    ('flatbuffers', 'openrpc'):
-        'changed root; added service example.game; added type Color; added type Monster; added type Vec3; add',
-    ('hl7v2', 'openrpc'):
-        'changed root; added service ADT^A01; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; a',
-    ('idoc', 'openrpc'):
-        'changed root; added service IDoc ORDERS05; added type E1EDK01; added type E1EDK03; added type E1EDK1',
-    ('iso20022', 'openrpc'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('iso8583', 'openrpc'):
-        'changed root; added service Authorization Request; removed type 0100.DE11; removed type 0100.DE12; r',
-    ('kafka-connect', 'openrpc'):
-        'changed root; added service Order; added type Order; removed type com.example.orders.Order',
-    ('lwm2m', 'openrpc'):
-        'added operation Temperature.ResetMinAndMaxMeasuredValues; removed operation TemperatureService.Reset',
-    ('matter', 'openrpc'):
-        'added operation On/Off.Off; added operation On/Off.OffWithEffect; added operation On/Off.On; added o',
-    ('nacha', 'openrpc'):
-        'changed root; added service NACHA ACH file (PPD); added type AchFile; added type Batch; added type B',
-    ('ncpdp', 'openrpc'):
-        'changed root; added service NCPDP SCRIPT NewRx; added type Address; added type Body; added type Comm',
-    ('protobuf', 'openrpc'):
-        'added operation example.catalog.v1.CreateProduct; added operation example.catalog.v1.GetProduct; add',
-    ('protobuf-editions', 'openrpc'):
-        'added operation example.orders.v1.GetOrder; removed operation example.orders.v1.OrderService.GetOrde',
-    ('sepa', 'openrpc'):
-        'changed root; added service CstmrCdtTrfInitn (pain.001.001.09); added type Amt; added type CdtTrfTxI',
-    ('swift-mt', 'openrpc'):
-        'changed root; added service SWIFT MT103; added type CodeWord; added type Field13C; added type Field2',
-    ('thrift', 'openrpc'):
-        'removed operation com.example.user.UserService.createUser; removed operation com.example.user.UserSe',
-    ('tradacoms', 'openrpc'):
-        'changed root; added service TRADACOMS ORDERS; added type MessageORDERS; added type OLD; removed type',
-    ('wsdl', 'openrpc'):
-        'added operation OrderService.CancelOrder; added operation OrderService.CreateOrder; added operation ',
-    ('wsdl2', 'openrpc'):
-        'added operation OrderService.cancelOrder; added operation OrderService.getOrder; added operation Ord',
-    ('xmlrpc', 'openrpc'):
-        'changed operation inventory.reserveStock.inventory.reserveStock; changed root; changed type Inventor',
     # --- protobuf (15) ---
     ('a2a', 'protobuf'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',

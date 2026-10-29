@@ -39,6 +39,19 @@
             "messages": [
               {
                 "content_types": [],
+                "description": "Customer not found",
+                "extras": {},
+                "headers": [],
+                "key": "Order Desk API.createOrder#error.-32001",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "-32001"
+              },
+              {
+                "content_types": [],
                 "description": null,
                 "extras": {
                   "openrpc_params": [
@@ -175,6 +188,19 @@
             "key": "Order Desk API.listOrders",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": "Customer not found",
+                "extras": {},
+                "headers": [],
+                "key": "Order Desk API.listOrders#error.-32001",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "-32001"
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -468,7 +494,7 @@
     "confidence": 0.98,
     "format": "openrpc"
   },
-  "fingerprint": "sha256:70d7d3e85227b34b55d6dff09010e047be1b398554989737bd7a893480266cc6",
+  "fingerprint": "sha256:413cb1e6c597070b7295be1045ce886d1bc1d6b4a937bbd7f151ed20f3dc9893",
   "lint": {
     "findings": 14,
     "grade": "B",

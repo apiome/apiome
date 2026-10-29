@@ -278,6 +278,45 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 
+### OpenRPC from any source
+
+Exporting to **OpenRPC** writes an `openrpc.json` document that is valid against the OpenRPC
+meta-schema. Each export is checked against that meta-schema before it is offered, then read back
+by the OpenRPC importer.
+
+- **Document.** `info` carries the title, version and description. OpenRPC requires a version, so
+  an item without one gets `0.0.0`, and the report says so. Servers keep their name, description
+  and variables. An item imported from OpenRPC keeps its own `openrpc` version.
+- **Methods.** Each operation becomes a method named after the operation. When two services have
+  an operation with the same name, the second is written `<Service>.<operation>`. The request
+  becomes `params`: an OpenRPC item keeps its own parameter list, and another RPC item gets one
+  `params` parameter holding its request type. The response becomes `result`, error responses
+  `errors` (`code`, `message` and `data`), tags `tags`, and a deprecated operation gets
+  `deprecated: true`.
+- **Notifications.** A one-way operation is written as a notification: a method with no `result`.
+  An item imported from OpenRPC reads its result-less methods back as notifications.
+- **From a REST source.** Each REST operation is reframed as a method, and the report lists each
+  one:
+  - its path, query, header and cookie parameters and its body become by-name `params`
+    (`paramStructure: by-name`), each labeled with where it came from;
+  - the success response becomes `result`, and a response with no body is `{"type": "null"}`;
+  - numeric error statuses become `errors` with the status as the `code`;
+  - the HTTP method and path are kept in the extension `x-http`.
+- **Schemas.** Named types become `components/schemas`, written with the same JSON Schema mapping
+  as the OpenAPI export. Every `$ref` names a written component, and scalars such as `int64` or
+  `timestamp` become their JSON Schema form (`{"type": "integer", "format": "int64"}`).
+
+The fidelity report lists what OpenRPC cannot carry:
+
+- **Dropped:** event operations and channels, and streams and subscriptions (written as one call). A
+  method has one `result`, so a second success response is dropped. Error responses without an
+  integer code (`default`, `4XX`) are dropped too, and so are error payload types, since an OpenRPC
+  error carries a `data` value, not a schema. Response headers and repeated field names are dropped.
+- **Approximated:** REST operations reframed as methods, a synthesized version, renamed methods and
+  components, and types with no JSON Schema form (written as any value).
+- **Carried.** For each operation that is carried, the report names the method or notification it
+  became, such as `method getPet`.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever

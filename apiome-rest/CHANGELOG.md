@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.518.0] - 2026-10-29
+
+### Added
+- **OpenRPC emitter (MFX-33.1, #4301).** The `openrpc` writer is rebuilt to emit documents valid against the
+  OpenRPC meta-schema (`@open-rpc/meta-schema` 1.14.9, vendored as `app/data/openrpc_meta_schema_1_14_9.json`;
+  its JSONSchema reference points at draft-07). Every method has `params`; `info.version` is always written (`0.0.0`
+  synthesized and reported); servers keep name, description and variables. RPC methods: an OpenRPC source's
+  params as written, else one `params` descriptor; `result`; `errors` (`code` / `message` / `data`); `tags`;
+  `deprecated`; one-way operations are notifications (no `result`); method names unique across services. REST
+  sources are reframed instead of dropped: parameters and body → by-name params labeled with their location,
+  the success response → `result` (`{"type": "null"}` without a body), numeric statuses → error codes, the
+  binding → `x-http`. Schemas: `components/schemas` through `SchemaEmitter`, every `$ref` pointing at a written
+  component (names made JSON-pointer safe), canonical scalars resolved through `CANONICAL_SCALAR_SCHEMAS`.
+- `OpenRpcFidelityRulePack` predicts exactly the writer's losses (`WriterLossRulePack`): REST reframing,
+  synthesized version, renames and unknown scalars approximated; events, streams, extra success responses,
+  errors without an integer code, error payload types, response headers and repeated fields dropped; a REST
+  root reported as `rest → JSON-RPC`.
+- Export validation for `openrpc`: the meta-schema, then a re-parse (`validate_openrpc_document`).
+
+### Fixed
+- The OpenRPC reader keeps each method's `errors` (following `#/components/errors/` references), `tags`
+  and `deprecated`, and reads a method with no `result` as a notification (a one-way operation).
+- Goldens: OpenRPC corpus snapshots (03, 04); the `openrpc` cells of the round-trip and export-conformance
+  matrices; corpus parity.
+
 ## [1.517.0] - 2026-10-29
 
 ### Changed

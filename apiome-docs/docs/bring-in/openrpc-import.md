@@ -22,6 +22,10 @@ Parameters and results written as references to reusable content descriptors
 (`{"$ref": "#/components/contentDescriptors/BlockNumber"}`) are resolved, so every method keeps all
 of its parameters, in order.
 
+Each method keeps its parameters, `paramStructure`, result, `errors` (with their `code`,
+`message` and `data`), `tags` and `deprecated` flag. A reference into `components/errors` is
+followed. A method with no `result` is a notification and is cataloged as a one-way operation.
+
 ## Discover a live service
 
 A JSON-RPC service that supports OpenRPC service discovery answers the reserved method
