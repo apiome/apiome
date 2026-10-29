@@ -828,7 +828,7 @@ def build_projection_manifest(
     """
     emitter_cls: type[Emitter] = emitter if isinstance(emitter, type) else type(emitter)
     if report is None:
-        report = compute_lossiness_for_emitter(api, emitter_cls)
+        report = compute_lossiness_for_emitter(api, emitter_cls, options=options)
     normalized_options = _normalize_options_for_hash(emitter_cls, options)
 
     lookup = _index_constructs(api)

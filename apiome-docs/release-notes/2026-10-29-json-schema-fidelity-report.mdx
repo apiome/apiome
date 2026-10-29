@@ -1,0 +1,19 @@
+---
+slug: json-schema-fidelity-report
+title: The JSON Schema export's report follows the draft you pick
+description: JSON Schema fidelity report warns types-only and lists each draft downgrade keyword.
+authors: [apiome]
+---
+
+The fidelity report of a **JSON Schema** export is now computed for the options you choose, and says
+what each draft drops or approximates, field by field.
+[What the report lists](/ship/export-a-spec#json-schema-from-any-source).
+
+{/* truncate */}
+
+- **Types-only warning.** Exporting an item with operations or channels raises a critical warning
+  that counts what is left out, and suggests OpenAPI or AsyncAPI to keep it.
+- **Draft downgrades.** Choosing `draft-07` or `draft-04` lists every keyword the draft drops
+  (`deprecated`, `examples`, `unevaluatedItems` …) or writes another way (`prefixItems` as a tuple,
+  `const` as an `enum`, exclusive bounds as flags), on the type or field it is in.
+- **Formats.** A value with a `format` is noted: JSON Schema validators treat it as an annotation.

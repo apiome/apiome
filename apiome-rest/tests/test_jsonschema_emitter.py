@@ -386,3 +386,169 @@ def test_a_json_schema_source_is_not_reported_as_rewritten_or_renamed() -> None:
     report = compute_lossiness_for_emitter(_json_schema_item("03-multiple-defs.json"), JsonSchemaEmitter)
     assert not [item for item in report.items if item.construct_key == ""]
     assert not [item for item in report.items if "$defs/" in (item.target_mapping or "")]
+
+
+# ===========================================================================
+# Fidelity pack — MFX-21.2 (#4127)
+# ===========================================================================
+
+
+def _report(api: CanonicalApi, **options):
+    from app.fidelity_engine import compute_lossiness_for_emitter
+
+    return compute_lossiness_for_emitter(api, JsonSchemaEmitter, options=options or None)
+
+
+def _with_surface() -> CanonicalApi:
+    api = _orders_api()
+    api.services.append(Service(key="Shop", name="Shop", operations=[
+        Operation(key="Shop.Get", name="Get", kind=OperationKind.REQUEST_RESPONSE),
+        Operation(key="Shop.Put", name="Put", kind=OperationKind.REQUEST_RESPONSE),
+    ]))
+    from app.canonical_model import Channel
+
+    api.channels.append(Channel(key="orders", name="orders", address="orders"))
+    return api
+
+
+def test_an_operation_bearing_source_carries_the_critical_types_only_advisory_with_counts() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_with_surface())
+    advisory = next(item for item in report.items if item.target_mapping == "types-only")
+    assert advisory.construct_key == ""
+    assert (advisory.kind, advisory.severity) == (LossinessKind.DROP, LossinessSeverity.CRITICAL)
+    assert "1 service(s) with 2 operation(s) and 1 channel(s) are not exported" in advisory.message
+    for key in ("Shop.Get", "Shop.Put", "orders"):
+        item = next(i for i in report.items if i.construct_key == key)
+        assert (item.kind, item.severity) == (LossinessKind.DROP, LossinessSeverity.CRITICAL)
+    emitted = _emit(_with_surface())
+    assert any(advisory.message == loss.detail for loss in emitted.losses)
+
+
+def test_a_types_only_source_has_no_advisory() -> None:
+    assert not [i for i in _report(_orders_api()).items if i.target_mapping == "types-only"]
+
+
+def _downgrades(report) -> Dict[str, List[str]]:
+    subjects = {"keyword-dropped", "exclusive-bound-merged", "exclusive-bound-boolean", "const-as-enum",
+                "prefix-items-as-tuple", "unevaluated-as-additional"}
+    out: Dict[str, List[str]] = {}
+    for item in report.items:
+        if item.target_mapping in subjects:
+            out.setdefault(item.construct_key, []).append(item.target_mapping)
+    return out
+
+
+def test_2020_12_reports_no_downgrade() -> None:
+    assert _downgrades(_report(_orders_api())) == {}
+
+
+def test_draft_07_enumerates_each_dropped_keyword_on_its_field() -> None:
+    from app.lossiness import LossinessKind
+
+    report = _report(_orders_api(), draft="draft-07")
+    assert _downgrades(report) == {"shop.Order.status": ["keyword-dropped"]}
+    item = next(i for i in report.items if i.target_mapping == "keyword-dropped")
+    assert item.kind is LossinessKind.DROP and "`deprecated`" in item.message
+
+
+def test_draft_04_enumerates_drops_and_approximations() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_orders_api(), draft="draft-04")
+    assert _downgrades(report) == {
+        "shop.Order.quantity": ["exclusive-bound-boolean"],
+        "shop.Order.status": ["keyword-dropped"],
+    }
+    bound = next(i for i in report.items if i.target_mapping == "exclusive-bound-boolean")
+    assert (bound.kind, bound.severity) == (LossinessKind.APPROX, LossinessSeverity.INFO)
+
+
+def test_the_report_matches_the_export_losses_for_the_same_options() -> None:
+    options = {"draft": "draft-04", "packaging": "per-type"}
+    emitted = {loss.detail for loss in _emit(_orders_api(), **options).losses
+               if loss.subject in {"keyword-dropped", "exclusive-bound-boolean"}}
+    reported = {i.message for i in _report(_orders_api(), **options).items
+                if i.target_mapping in {"keyword-dropped", "exclusive-bound-boolean"}}
+    assert emitted == reported and len(reported) == 2
+
+
+def test_per_type_and_bundle_downgrades_land_on_the_same_constructs() -> None:
+    bundle = _downgrades(_report(_orders_api(), draft="draft-04"))
+    per_type = _downgrades(_report(_orders_api(), draft="draft-04", packaging="per-type"))
+    assert bundle == per_type
+
+
+def test_invalid_options_fall_back_to_the_defaults() -> None:
+    assert _downgrades(_report(_orders_api(), draft="draft-99")) == {}
+
+
+def test_format_is_reported_as_an_annotation() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_orders_api())
+    notes = {i.construct_key: i for i in report.items if (i.target_mapping or "").startswith("format ")}
+    assert set(notes) == {"shop.Order.id", "shop.Order.quantity", "shop.Line.price"}
+    assert notes["shop.Order.id"].target_mapping == "format int64 → annotation"
+    assert (notes["shop.Order.id"].kind, notes["shop.Order.id"].severity) == (
+        LossinessKind.APPROX, LossinessSeverity.INFO,
+    )
+
+
+def test_other_targets_ignore_options() -> None:
+    from app.fidelity_engine import compute_lossiness_for_emitter
+    from app.xsd_emitter import XsdEmitter
+
+    plain = compute_lossiness_for_emitter(_orders_api(), XsdEmitter)
+    with_options = compute_lossiness_for_emitter(_orders_api(), XsdEmitter, options={"xsd_version": "1.1"})
+    assert plain == with_options
+
+
+# ===========================================================================
+# Draft downgrader — keywords the emitter does not write itself
+# ===========================================================================
+
+
+def _downgrade(schema: Dict[str, Any], draft: str):
+    from app.emitter import LossTracker
+    from app.jsonschema_drafts import downgrade_schema
+
+    losses = LossTracker()
+    out = downgrade_schema({"$schema": DRAFT_URIS["2020-12"], **schema}, draft, losses)
+    return out, {(loss.subject, loss.pointer) for loss in losses.records()}
+
+
+def test_prefix_items_become_the_tuple_form() -> None:
+    out, losses = _downgrade({"type": "array", "prefixItems": [{"type": "string"}], "items": {"type": "integer"}},
+                             "draft-07")
+    assert out["items"] == [{"type": "string"}] and out["additionalItems"] == {"type": "integer"}
+    Draft7Validator.check_schema(out)
+    assert losses == {("prefix-items-as-tuple", "#")}
+
+
+def test_unevaluated_properties_and_dynamic_refs() -> None:
+    out, losses = _downgrade({"type": "object", "properties": {"a": {"type": "string"}},
+                              "unevaluatedProperties": False, "$dynamicAnchor": "node"}, "draft-07")
+    assert out["additionalProperties"] is False and "$dynamicAnchor" not in out
+    assert losses == {("unevaluated-as-additional", "#"), ("keyword-dropped", "#")}
+    out, losses = _downgrade({"allOf": [{"type": "object"}], "unevaluatedProperties": False}, "draft-07")
+    assert "unevaluatedProperties" not in out and "additionalProperties" not in out
+    assert losses == {("keyword-dropped", "#")}
+
+
+def test_dependent_keywords_become_dependencies() -> None:
+    out, losses = _downgrade({"dependentRequired": {"a": ["b"]}, "dependentSchemas": {"c": {"required": ["d"]}}},
+                             "draft-04")
+    assert out["dependencies"] == {"a": ["b"], "c": {"required": ["d"]}}
+    Draft4Validator.check_schema(out)
+    assert not losses
+
+
+def test_draft_04_const_and_newer_keywords() -> None:
+    out, losses = _downgrade({"properties": {"kind": {"const": "pet", "readOnly": True}},
+                              "if": {"required": ["a"]}, "then": {"required": ["b"]}}, "draft-04")
+    assert out["properties"]["kind"] == {"enum": ["pet"]} and "if" not in out
+    Draft4Validator.check_schema(out)
+    assert ("const-as-enum", "#/properties/kind") in losses
+    assert ("keyword-dropped", "#/properties/kind") in losses and ("keyword-dropped", "#") in losses

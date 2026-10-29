@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.527.0] - 2026-10-29
+
+### Changed
+- **JSON Schema fidelity pack (MFX-21.2, #4127).** The JSON Schema report is computed for the export's options: rule
+  packs get an opt-in `apply_options` hook (default: ignored, so every other target is unchanged), and
+  `compute_lossiness_for_emitter` / `build_export_fidelity` / the projection manifest pass the preview's and the job's
+  options through. The pack builds the export with those options and reports:
+  - **types-only** — every operation / channel a critical DROP, plus a critical root advisory with counts
+    (`types-only`, shared helper `fidelity_rulepack.types_only_advisory`); the emit loss carries the same text;
+  - **draft downgrades** — each keyword the chosen draft drops (`keyword-dropped`) or rewrites (`prefix-items-as-tuple`,
+    `unevaluated-as-additional`, `exclusive-bound-merged`; info `exclusive-bound-boolean`, `const-as-enum`), filed under
+    the type or field its JSON Pointer is in (per-type files use their bundle pointer `#/$defs/<key>`);
+  - **format** — an info APPROX note on each value written with a `format` (annotation only).
+- `jsonschema_drafts`: `prefixItems` → tuple `items` (+ `additionalItems`), `unevaluatedProperties` →
+  `additionalProperties` when no applicator is beside it, `dependentRequired` / `dependentSchemas` → `dependencies`;
+  drops `$dynamicRef`, `$dynamicAnchor`, `$anchor`, `unevaluatedItems`, and in draft-04 `contentMediaType`, `$comment`,
+  `readOnly`, `writeOnly`, `if` / `then` / `else`, `contains`, `propertyNames`.
+- Goldens: the `json-schema` cells of the round-trip and export-conformance matrices (no status changes).
+
 ## [1.526.0] - 2026-10-29
 
 ### Changed

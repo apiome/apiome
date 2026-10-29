@@ -51,7 +51,7 @@ on build) is insensitive to the order the walk visits constructs.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Mapping, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -79,6 +79,7 @@ __all__ = [
     "FidelityRulePack",
     "CapabilityRulePack",
     "rename_verdict",
+    "types_only_advisory",
 ]
 
 #: The canonical construct key of the artifact **root** — its title, version,
@@ -213,6 +214,39 @@ class FidelityVerdict(BaseModel):
         )
 
 
+def types_only_advisory(api: CanonicalApi, *, target_label: str, keep_in: str) -> Optional["FidelityVerdict"]:
+    """The critical root advisory of a types-only export of a source that has more than types.
+
+    The per-construct verdicts drop each operation and channel; this one says, once and loudly, what
+    the export as a whole leaves out, with counts — MFX-21.2 (#4127), the pattern of Avro (MFX-19.2).
+
+    Args:
+        api: The source model.
+        target_label: The target's label (``"JSON Schema"``).
+        keep_in: Where the dropped surface can be exported instead (``"OpenAPI or AsyncAPI"``).
+
+    Returns:
+        A critical ``DROP`` (``target_mapping="types-only"``), or ``None`` when the source has no
+        services, operations or channels.
+    """
+    services = len(api.services)
+    operations = sum(len(service.operations) for service in api.services)
+    channels = len(api.channels)
+    if not (services or operations or channels):
+        return None
+    parts = []
+    if services:
+        parts.append(f"{services} service(s) with {operations} operation(s)")
+    if channels:
+        parts.append(f"{channels} channel(s)")
+    return FidelityVerdict.drop(
+        message=f"{target_label} is types-only — only data schemas are exported: {' and '.join(parts)} "
+        f"are not exported. Export to {keep_in} as well to keep them",
+        severity=LossinessSeverity.CRITICAL,
+        target_mapping="types-only",
+    )
+
+
 def rename_verdict(
     source: str, emitted: str, *, target_label: str, noun: str
 ) -> Optional[FidelityVerdict]:
@@ -292,6 +326,19 @@ class FidelityRulePack(ABC):
         """
         self.profile = profile
         self.target_label = target_label
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Bind the per-target emit options the report is computed for — MFX-21.2 (#4127).
+
+        Opt-in: the default ignores them, so a pack whose losses do not depend on its options
+        predicts the same report for every option set. A pack whose losses do (the JSON Schema
+        draft) overrides this; the export preview and job pass the options they emit with, so the
+        two stay identical for the same inputs.
+
+        Args:
+            options: The raw emit options (validated by the pack that reads them).
+        """
+        return None
 
     # --- override points ----------------------------------------------------
 
