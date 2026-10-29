@@ -18,6 +18,9 @@ can export from OpenAPI, Protobuf, GraphQL, Thrift or any other typed or service
 - **HTTP bindings.** REST operations keep their method, path and status as `@http`, with labels,
   query parameters, headers and payloads bound. A type returned only as an error becomes an `@error`
   structure.
+- **Exact fidelity report.** The report lists each constraint, default, parameter, body, error and
+  route that Smithy cannot carry, on the construct it concerns. Constraints that become traits and
+  HTTP operations that keep `@http` are no longer reported as lost.
 - **Protocol traits.** The new **protocol** option marks each service `restJson1` or `rpcv2Cbor`.
 - **Valid names.** Shape and member names are made unique without regard to case. A renamed member
   keeps its wire name with `@jsonName`.

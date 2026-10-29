@@ -59,13 +59,14 @@ from .emitter import (
     EmitResult,
     EmittedFile,
     Emitter,
+    Loss,
     LossKind,
     LossTracker,
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
-from .lossiness import LossinessKind, LossinessReport
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessReport, LossinessSeverity
 from .scalar_aliases import SMITHY_SCALAR_FOR_KIND, target_scalar
 
 __all__ = ["SMITHY_PRELUDE", "SmithyEmitOptions", "SmithyEmitter", "SmithyFidelityRulePack", "smithy_identifier"]
@@ -134,82 +135,165 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-class SmithyFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for Smithy export.
+#: Writer losses that leave a whole construct (or a parameter, body or error of an operation) out of the model.
+_CRITICAL_DROPS = frozenset({"event-operation-dropped", "resource-dropped", "unsupported-type", "parameter-dropped",
+                             "body-dropped", "error-dropped"})
+#: Writer approximations that only change a name (the wire name or meaning is kept).
+_COSMETIC = frozenset({"renamed-shape", "renamed-member", "renamed-operation", "renamed-enum-member",
+                       "union-member-names", "structure-as-error"})
 
-    Beyond the capability defaults, it predicts what the writer renames (a name that is not a Smithy
-    identifier, MFX-20.1) and that agent descriptors are not written. A Smithy source's names are already
-    identifiers. Trait coverage and protocol-binding gaps are refined by the Smithy fidelity pack (MFX-20.2).
+
+class SmithyFidelityRulePack(CapabilityRulePack):
+    """Fidelity rules for Smithy export — MFX-20.2 (#3915).
+
+    The pack builds the model with the Smithy writer and turns each loss the writer records into a verdict
+    on the construct it concerns, so the report predicts exactly what the export does:
+
+    * **Trait coverage** — constraints become ``@length`` / ``@range`` / ``@pattern`` / ``@uniqueItems`` and
+      are only reported where Smithy has no trait for them (``multipleOf``, an enum list, an exclusive bound
+      on a decimal, a length on a number); a default that does not fit its target and a Smithy source's
+      trait imported without its value are dropped; renames, inlined aliases and wrapped payloads are
+      approximations.
+    * **Protocol-binding gaps** — an HTTP operation keeps ``@http``; the pack reports a route Smithy cannot
+      bind (not a URI pattern, a duplicate), a GET / HEAD / DELETE body, a parameter that cannot be bound
+      (cookie, transport header, a structure in the query), an error response that is not a record, and a
+      stream.
+    * **The document** — Smithy has no title, description or servers, and the model is written in a
+      namespace, so a non-Smithy source's root is always reported; agent descriptors are dropped.
+
+    A construct with no loss is ``OK`` and its ``target_mapping`` names the shape it became.
     """
 
     target_label = "Smithy"
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Note whether the model came from Smithy (its names are already identifiers)."""
+        """Build the model once, file the writer's losses by construct, then walk the model."""
+        writer = _SmithyWriter(api, SmithyEmitOptions())
+        writer.build()
+        self._writer = writer
         self._smithy_source = api.format == "smithy"
+        self._losses = _losses_by_construct(api, writer.losses.records())
         return super().evaluate(api)
 
-    def _renamed(self, name: Optional[str]) -> bool:
-        return not getattr(self, "_smithy_source", True) and smithy_identifier(name) != (name or "")
-
-    def _rename_verdict(self, what: str, name: str) -> FidelityVerdict:
-        return FidelityVerdict.approx(
-            message=f"{self.target_label} {what} names are identifiers; {name!r} is written as "
-            f"{smithy_identifier(name)!r}",
-            target_mapping=f"{what} → renamed",
-        )
-
-    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """Agent descriptors have no Smithy form."""
-        if not api.agents:
-            return []
-        return [FidelityVerdict.drop(
-            message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
-            target_mapping="agents → dropped",
-        )]
-
-    def type_verdict(self, type_: Type) -> FidelityVerdict:
-        verdict = super().type_verdict(type_)
-        if verdict.kind is LossinessKind.OK and self._renamed(type_.name):
-            return self._rename_verdict("shape", type_.name)
-        return verdict
-
-    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        """The capability verdicts, plus an ``APPROX`` when the writer renames the member."""
-        verdicts = super().field_verdicts(field)
-        if self._renamed(field.name):
-            verdicts.append(self._rename_verdict("member", field.name))
+    def _loss_verdicts(self, key: str) -> List[FidelityVerdict]:
+        """One verdict per distinct writer loss filed under ``key``."""
+        verdicts: List[FidelityVerdict] = []
+        seen: Set[Tuple[str, str]] = set()
+        for loss in self._losses.get(key, []):
+            if (loss.subject, loss.detail) in seen:
+                continue
+            seen.add((loss.subject, loss.detail))
+            if loss.kind is LossKind.NA:
+                severity = LossinessSeverity.CRITICAL if loss.subject in _CRITICAL_DROPS else LossinessSeverity.WARN
+                verdicts.append(FidelityVerdict.drop(message=loss.detail, severity=severity,
+                                                     target_mapping=loss.subject))
+            else:
+                severity = LossinessSeverity.INFO if loss.subject in _COSMETIC else LossinessSeverity.WARN
+                verdicts.append(FidelityVerdict.approx(message=loss.detail, severity=severity,
+                                                       target_mapping=loss.subject))
         return verdicts
 
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        if (
-            operation.kind not in _EVENT_OPERATION_KINDS
-            and not (operation.http_method or operation.http_path)
-            and self._renamed(operation.name)
-        ):
-            return self._rename_verdict("operation", operation.name)
-        if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.drop(
-                message=f"{self.target_label} has no event vocabulary; "
-                f"{operation.kind.value} operation {operation.key!r} is dropped",
-                target_mapping="event operation → dropped",
-            )
-        if operation.http_method or operation.http_path:
-            return FidelityVerdict.approx(
-                message=f"{self.target_label} has no HTTP binding; reframing "
-                f"{operation.key!r} as an RPC operation",
-                target_mapping="HTTP operation → RPC operation",
-            )
-        return super().operation_verdict(operation)
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The document envelope (non-Smithy sources), agent descriptors and losses with no construct."""
+        verdicts: List[FidelityVerdict] = []
+        if not self._smithy_source:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"A Smithy model has no document of its own; it is written in the namespace "
+                f"{self._writer.namespace!r} and read back as a Smithy RPC model",
+                target_mapping=f"document → namespace {self._writer.namespace}",
+            ))
+            if api.title:
+                verdicts.append(FidelityVerdict.drop(message=f"Smithy has no title; {api.title!r} is not written",
+                                                     severity=LossinessSeverity.WARN, target_mapping="title → dropped"))
+            if api.description:
+                verdicts.append(FidelityVerdict.drop(message="Smithy has no document description; it is not written",
+                                                     severity=LossinessSeverity.WARN,
+                                                     target_mapping="description → dropped"))
+            if api.version and api.services:
+                verdicts.append(FidelityVerdict.approx(
+                    message=f"Smithy versions services, not models; {api.version!r} is each service's version",
+                    severity=LossinessSeverity.INFO, target_mapping="version → service version"))
+            elif api.version:
+                verdicts.append(FidelityVerdict.drop(
+                    message=f"Smithy versions services and this model has none; {api.version!r} is not written",
+                    severity=LossinessSeverity.WARN, target_mapping="version → dropped"))
+            if api.servers:
+                verdicts.append(FidelityVerdict.drop(
+                    message=f"Smithy has no servers; {len(api.servers)} server(s) are not written",
+                    severity=LossinessSeverity.WARN, target_mapping="servers → dropped"))
+        if api.agents:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
+                target_mapping="agents → dropped",
+            ))
+        return verdicts + self._loss_verdicts(ROOT_CONSTRUCT_KEY)
 
-    def field_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
-        if _has_any_constraint(field.constraints):
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The writer's losses for the operation and its parameters, else ``OK`` naming the shape."""
+        return self._loss_verdicts(operation.key) or [self.operation_verdict(operation)]
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        written = self._writer.written_as(operation.key)
+        if written is None:
+            return super().operation_verdict(operation)
+        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}", target_mapping=written)
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The writer's losses for the type (and its union members / enum values), else ``OK`` naming the shape."""
+        return self._loss_verdicts(type_.key) or [self.type_verdict(type_)]
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        written = self._writer.written_as(type_.key)
+        if written is not None:
+            return FidelityVerdict.ok(message=f"{type_.kind.value} type carried to {self.target_label}",
+                                      target_mapping=written)
+        if type_.kind is TypeKind.ALIAS:
             return FidelityVerdict.approx(
-                message=f"{self.target_label} cannot enforce validation constraints; "
-                f"{field.key!r} is approximated without facets",
-                target_mapping="constraints → dropped",
+                message=f"Smithy has no alias of a named shape; {type_.key!r} is not declared and references "
+                "target its aliased shape",
+                severity=LossinessSeverity.INFO,
+                target_mapping="alias → inlined",
             )
-        return super().field_verdict(field)
+        return super().type_verdict(type_)
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """The writer's losses for the member, plus a dropped field number (Smithy members have none)."""
+        verdicts = self._loss_verdicts(field.key)
+        identity = self._field_identity_verdict(field)
+        return verdicts + ([identity] if identity is not None else [])
+
+
+def _losses_by_construct(api: CanonicalApi, losses: List[Loss]) -> Dict[str, List[Loss]]:
+    """File each writer loss under the construct the fidelity report keys it by.
+
+    A record field keeps its own key; a union member and an enum value belong to their type; a parameter
+    belongs to its operation. A loss with no construct of the model is filed under the root, except the
+    channel loss, which each channel's own ``DROP`` already reports.
+
+    Args:
+        api: The model the writer wrote.
+        losses: The writer's losses.
+
+    Returns:
+        Construct key → its losses, in the order recorded.
+    """
+    owners: Dict[str, str] = {}
+    for type_ in api.types:
+        owners[type_.key] = type_.key
+        for field in type_.fields:
+            owners[field.key] = field.key if type_.kind is TypeKind.RECORD else type_.key
+        for value in type_.enum_values:
+            owners[value.key] = type_.key
+    for operation in api.operations():
+        owners[operation.key] = operation.key
+        for param in operation.parameters:
+            owners[param.key] = operation.key
+    filed: Dict[str, List[Loss]] = {}
+    for loss in losses:
+        if loss.pointer == "channels":
+            continue
+        filed.setdefault(owners.get(loss.pointer or "", ROOT_CONSTRUCT_KEY), []).append(loss)
+    return filed
 
 
 class SmithyEmitOptions(EmitOptions):
@@ -254,6 +338,7 @@ class SmithyEmitter(Emitter, register=True):
             events=False,
             unions=True,
             nullability=True,
+            constraints=True,
             field_identity=False,
         )
 
@@ -363,6 +448,11 @@ class _SmithyWriter:
         self._names: Dict[str, str] = {}
         self._list_shapes: Dict[str, str] = {}
         self._enum_values: Dict[str, Set[str]] = {}
+        #: Key of the construct being written, the pointer of a loss recorded deep in a reference.
+        self._context: Optional[str] = None
+        #: ``(shape, member)`` → the key of the field written as that member.
+        self._member_keys: Dict[Tuple[str, str], str] = {}
+        self._operation_names: Dict[str, str] = {}
 
     # ------------------------------------------------------------------
     # Build
@@ -391,7 +481,6 @@ class _SmithyWriter:
         for type_ in self._api.types:
             if type_.key in self._names:
                 self._build_type(type_)
-        self._operation_names: Dict[str, str] = {}
         self._http_routes: Set[Tuple[str, str]] = set()
         for service in self._api.services:
             self._build_service(service)
@@ -519,7 +608,8 @@ class _SmithyWriter:
             return mapped
         if name.lower() not in _STRING_LIKE and record:
             self.losses.record(LossKind.INFERRED, "unknown-type",
-                               f"The type {name!r} has no Smithy equivalent; it is written as a String.")
+                               f"The type {name!r} has no Smithy equivalent; it is written as a String.",
+                               pointer=self._context)
         return "String"
 
     def _kind(self, target: str) -> str:
@@ -559,6 +649,7 @@ class _SmithyWriter:
     # ------------------------------------------------------------------
 
     def _build_type(self, type_: Type) -> None:
+        self._context = type_.key
         name = self._names[type_.key]
         kind = self._kinds[name]
         traits = self._common_traits(type_.description, type_.deprecated)
@@ -665,6 +756,7 @@ class _SmithyWriter:
         if type_.fields or not union:
             for field in self._ordered_fields(type_):
                 name = scope.claim(field.name, "member")
+                self._member_keys[(self._names[type_.key], name)] = field.key
                 members[name] = self._member(field, name, union=union)
         else:
             for member in type_.union_members:
@@ -682,6 +774,7 @@ class _SmithyWriter:
 
     def _member(self, field: CanonicalField, name: str, *, union: bool) -> Dict[str, Any]:
         """One structure / union member: its target and traits."""
+        outer, self._context = self._context, field.key
         fmt = field.constraints.format if field.constraints is not None else None
         target = self._target(field.type, fmt)
         if target == "Unit" and not union:
@@ -713,6 +806,7 @@ class _SmithyWriter:
         if traits:
             node["traits"] = traits
         self.tracker.record(field.key, Provenance.SOURCE)
+        self._context = outer
         return node
 
     def _source_traits(self, field: CanonicalField, traits: Dict[str, Any]) -> None:
@@ -831,7 +925,7 @@ class _SmithyWriter:
                         LossKind.INFERRED,
                         "recursive-member-optional",
                         f"Smithy refuses a cycle of required members; {name}.{member_name} is written optional.",
-                        pointer=f"{name}.{member_name}",
+                        pointer=self._member_keys.get((name, member_name), f"{name}.{member_name}"),
                     )
                 elif target not in state and target in self._shapes:
                     visit(target)
@@ -871,6 +965,7 @@ class _SmithyWriter:
         self.tracker.record(service.key, Provenance.SOURCE)
 
     def _build_operation(self, operation: Operation) -> Optional[str]:
+        self._context = operation.key
         if operation.kind in _EVENT_OPERATION_KINDS:
             self.losses.record(LossKind.NA, "event-operation-dropped",
                                f"Smithy has no events; {operation.kind.value} operation {operation.key!r} is dropped.",
@@ -977,6 +1072,7 @@ class _SmithyWriter:
         scope = _Scope()
         bound_names: Set[str] = set()
         for param in operation.parameters:
+            self._context = param.key
             member = scope.claim(param.name, "param")
             fmt = param.constraints.format if param.constraints is not None else None
             target = self._target(param.type, fmt)
@@ -999,6 +1095,7 @@ class _SmithyWriter:
             if traits:
                 node["traits"] = traits
             members[member] = node
+        self._context = operation.key
         for label in labels:
             if label not in bound_names:
                 member = scope.claim(label, "label")
@@ -1097,6 +1194,17 @@ class _SmithyWriter:
     def has_shapes(self) -> bool:
         """Whether the model declares any shape."""
         return bool(self._shapes)
+
+    def written_as(self, key: str) -> Optional[str]:
+        """How the type or operation ``key`` is written (``structure Pet``, ``operation GetPet @http(GET /pets/{id})``),
+        or ``None`` when it is not written as a shape of its own."""
+        name = self._names.get(key) or self._operation_names.get(key)
+        shape = self._shapes.get(name) if name else None
+        if shape is None:
+            return None
+        http = shape.get("traits", {}).get("http")
+        binding = f" @http({http['method']} {http['uri']})" if http else ""
+        return f"{shape['type']} {name}{binding}"
 
     def ast(self) -> Dict[str, Any]:
         """The model as a Smithy JSON AST (absolute shape and trait ids)."""

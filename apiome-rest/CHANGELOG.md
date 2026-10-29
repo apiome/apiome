@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.515.0] - 2026-10-29
+
+### Changed
+- **Smithy fidelity pack: trait coverage and protocol-binding gaps (MFX-20.2, #3915).** `SmithyFidelityRulePack`
+  now builds the model with the Smithy writer and files each loss the writer records under its construct, so the
+  fidelity report predicts exactly what the export reports. Trait coverage: constraints with a Smithy trait
+  (`@length` / `@range` / `@pattern` / `@uniqueItems`) are carried (the pack used to call every constraint "dropped",
+  and the capability profile now declares `constraints`); `multipleOf`, an enum list, a length on a number, an
+  unfitting default and a Smithy source's value-less trait are a `DROP`; renames (`INFO`), inlined aliases, wrapped
+  payloads, unknown scalars and a broken required cycle are an `APPROX`. Protocol bindings: an HTTP operation is `OK`
+  with its `@http(method uri)` binding as the target mapping (it used to be reported "reframed as RPC"); an
+  unbindable or duplicate route, a GET / HEAD / DELETE body, a cookie or transport-header parameter and a non-record
+  error response are a `DROP` on the operation. The document: a non-Smithy source's root reports its namespace, and
+  the title, description, servers and version (moved to the service, or dropped with no service) Smithy has no place
+  for. A carried type or operation names the shape it became.
+- The Smithy writer gives an unknown scalar's loss the key of the field, parameter or type that uses it, and a broken
+  required cycle the key of its field (it was the shape-qualified member name).
+- Goldens: the `smithy` cells of the round-trip and export-conformance matrices; the `smithy` silent-loss ledger
+  goes from 9 pairs to 0.
+
 ## [1.514.0] - 2026-10-28
 
 ### Added
