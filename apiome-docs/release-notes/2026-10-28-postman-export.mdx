@@ -24,5 +24,8 @@ from an OpenAPI or any other HTTP source.
 - **Checked.** Each export is validated against the published Postman v2.1.0 schema and read back
   by the Postman importer. A collection imported from Postman exports and re-imports unchanged, and
   a v2.0 one is written as v2.1.
+- **An honest report.** The fidelity report names each trade a collection makes: request and
+  response schemas become examples, a union shows one alternative, example values are generated, and
+  streaming and auth Postman has no type for are listed. Each is its own item with its reason.
 - **Refused when empty.** A source with no HTTP operation (a gRPC service, an event API, a set of
   types) is refused with the reason, instead of exporting an empty collection.

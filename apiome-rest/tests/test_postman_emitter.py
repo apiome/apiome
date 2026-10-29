@@ -387,10 +387,12 @@ def test_a_source_with_no_http_operation_is_refused() -> None:
 
 
 def test_fidelity_for_another_format() -> None:
-    kinds = {item.construct_key: item.kind for item in compute_lossiness_for_emitter(_api(), PostmanEmitter()).items}
-    assert kinds[""] is LossinessKind.APPROX
-    assert kinds["GET /pets"] is LossinessKind.APPROX
-    assert kinds["Pet"] is LossinessKind.DROP
+    kinds: Dict[str, set] = {}
+    for item in compute_lossiness_for_emitter(_api(), PostmanEmitter()).items:
+        kinds.setdefault(item.construct_key, set()).add(item.kind)
+    assert kinds[""] == {LossinessKind.APPROX}
+    assert kinds["GET /pets"] == {LossinessKind.APPROX, LossinessKind.SYNTH}  # see test_collection_fidelity_pack
+    assert kinds["Pet"] == {LossinessKind.DROP}
 
 
 async def test_emitted_output_validation() -> None:

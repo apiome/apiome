@@ -45,7 +45,6 @@ from .client_collection import scrub_value
 from .client_collection_emit import (
     ClientAuth,
     ClientBody,
-    ClientCollectionFidelityRulePack,
     ClientPair,
     CollectionPlan,
     PlannedRequest,
@@ -54,6 +53,7 @@ from .client_collection_emit import (
     output_slug,
     plan_collection,
 )
+from .client_collection_fidelity import ExampleCollectionFidelityRulePack
 from .emitter import CapabilityProfile, EmitOptions, EmitOptionsError, EmitResult, EmittedFile, Emitter, LossKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 
@@ -127,33 +127,19 @@ def validate_postman_collection(text: str) -> None:
 # ===========================================================================
 
 
-class PostmanFidelityRulePack(ClientCollectionFidelityRulePack):
+class PostmanFidelityRulePack(ExampleCollectionFidelityRulePack):
     """Fidelity rules for Postman export.
 
-    The client-collection rules (see the base class), with what a Postman collection carries that
-    the other clients do not: the API description and version, every server (as a collection
-    variable), and saved example responses synthesized from the response schemas.
+    The example-collection rules (MFX-31.2, :mod:`app.client_collection_fidelity`) — schemas become
+    example bodies and saved example responses, unions one representative example, generated values
+    are synthesized, streaming and auth Postman has no type for are named — with what a Postman
+    collection carries that the other clients do not: the API description and version and every
+    server (as a collection variable).
     """
 
     target_label = "Postman collection"
     format_key = _FORMAT_KEY
-
-    def evaluate(self, api: CanonicalApi) -> Any:
-        """Note whether the model came from Postman (written back as read), then run the drive loop."""
-        self._native = api.format == self.format_key
-        return super().evaluate(api)
-
-    def type_verdict(self, type_: Any) -> FidelityVerdict:
-        """A Postman source's types were inferred from its example bodies, which are written back."""
-        if getattr(self, "_native", False):
-            return FidelityVerdict.ok(message="type inferred from an example body that is written back")
-        return super().type_verdict(type_)
-
-    def field_verdicts(self, field: Any) -> List[FidelityVerdict]:
-        """A Postman source's fields were inferred from its example bodies too: nothing is lost."""
-        if getattr(self, "_native", False):
-            return []
-        return super().field_verdicts(field)
+    auth_blocks = POSTMAN_AUTH_BLOCKS
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """A model from another format loses its format and identity; servers become variables.
@@ -177,20 +163,14 @@ class PostmanFidelityRulePack(ClientCollectionFidelityRulePack):
             )
         ]
 
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        """A request is saved with synthesized examples; a re-import infers the operation again."""
-        verdict = super().operation_verdict(operation)
-        if verdict.kind.value != "approx":
-            return verdict
-        if getattr(self, "_native", False):
-            return FidelityVerdict.ok(message="request written back as it was read")
+    def request_verdict(self, operation: Operation) -> FidelityVerdict:
+        """The saved request: a re-import infers the operation again from it."""
         return FidelityVerdict.approx(
             message=(
-                f"Postman collection saves {operation.key!r} as one request with a synthesized example "
-                "body and example responses; a re-import infers the operation again from those "
-                "examples, so parameter types and descriptions and extra tags are not carried"
+                f"Postman collection saves {operation.key!r} as one request; a re-import infers the operation "
+                "again from it, so parameter types and descriptions and extra tags are not carried"
             ),
-            target_mapping="operation → saved request + example responses",
+            target_mapping="operation → saved request",
         )
 
 

@@ -139,6 +139,30 @@ A collection describes calls, so the fidelity report lists what it leaves behind
 A collection exported from the same client re-imports to the same operations, parameters,
 folders, auth schemes, body media types, title and servers.
 
+### How a Postman export's fidelity report reads
+
+A Postman collection trades schemas for examples. The report names each trade as its own item on the
+operation it affects, with the reason:
+
+| What the source has | What the report says | Kind |
+| --- | --- | --- |
+| A request body schema | It becomes one example body; its types and constraints are not enforced | approximated |
+| Response schemas (`200`, `404` …) | They become saved example responses; a re-import infers the schemas again | approximated |
+| A status range (`4XX`, `default`) | It has no status code to save under and is not saved | dropped |
+| A union or `oneOf` in a body | The example shows one of its alternatives | approximated |
+| Any example body or response | Its values are generated from the schema, not taken from the source | synthesized |
+| A streaming operation | It is saved as one request and one response | dropped |
+| OpenID Connect | It is written as a bearer token | approximated |
+| A generic `Authorization` or `Cookie` requirement | It is sent as a header holding a variable reference | approximated |
+| Any other auth scheme (mutual TLS …) | Postman has no form for it | dropped |
+| Several auth schemes on one operation | Only the first is written | approximated |
+| Constraints on a field | The example satisfies them, but the collection does not enforce them | approximated |
+| Events, channels and gRPC or GraphQL operations | They have no saved request | dropped |
+
+Whenever an item is dropped, approximated or synthesized, the export shows its fidelity warning
+before you download. A collection imported from Postman is written back as it was read, so its
+report is empty.
+
 ## Related
 
 - [Understand export fidelity](./export-fidelity.md): how the fidelity report is worked out.
