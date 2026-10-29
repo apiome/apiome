@@ -89,6 +89,7 @@ class TypeSpecOperation:
     is_array_return: bool
     documentation: Optional[str] = None
     route: Optional[str] = None
+    tags: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -365,6 +366,7 @@ def _parse_operations(inner: str, raw: str, block_start: int) -> Tuple[TypeSpecO
                 is_array_return=is_array,
                 documentation=_leading_doc(raw, block_start + offset + lead),
                 route=route,
+                tags=tuple(arg for name, arg, _ in decorators if name == "tag" and arg),
             )
         )
     return tuple(operations)

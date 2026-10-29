@@ -119,7 +119,7 @@ _STRING_FORMATS: Dict[str, str] = {
     "uri": "url", "url": "url",
 }
 #: Spellings that are text without loss (a format TypeSpec writes with ``@format``).
-_STRING_LIKE = frozenset({"uuid", "email", "hostname", "ipv4", "ipv6", "char", "uri-reference", "password"})
+_STRING_LIKE = frozenset({"id", "uuid", "email", "hostname", "ipv4", "ipv6", "char", "uri-reference", "password"})
 
 _NUMERIC = frozenset({"int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64", "safeint",
                       "integer", "float", "float32", "float64", "numeric", "decimal", "decimal128"})
@@ -128,6 +128,13 @@ _INTEGRAL = frozenset({"int8", "int16", "int32", "int64", "uint8", "uint16", "ui
 _VERBS = frozenset({"get", "put", "post", "patch", "delete", "head"})
 _JSON = "application/json"
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+#: How a non-HTTP operation is named in the report, by kind.
+_NON_REST_NOUNS = {
+    OperationKind.QUERY: "GraphQL query",
+    OperationKind.MUTATION: "GraphQL mutation",
+    OperationKind.SUBSCRIPTION: "GraphQL subscription",
+    OperationKind.ONE_WAY: "one-way operation",
+}
 _IDENT_RE = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
 _TEMPLATE_RE = re.compile(r"\{([^{}]+)\}")
 
@@ -158,7 +165,7 @@ def _number(value: float) -> str:
 
 
 class TypeSpecFidelityRulePack(WriterLossRulePack):
-    """Fidelity rules for TypeSpec export — MFX-15.1 (#3893).
+    """Fidelity rules for TypeSpec export — MFX-15.1 (#3893), non-REST losses and decorator coverage MFX-15.2 (#3894).
 
     The pack builds the document with the TypeSpec writer and turns each loss the writer records into a
     verdict on the construct it concerns (:class:`~app.writer_loss_rulepack.WriterLossRulePack`), so the
@@ -170,13 +177,26 @@ class TypeSpecFidelityRulePack(WriterLossRulePack):
     numeric enum values beside string ones are dropped; RPC operations given an HTTP route, inlined
     aliases, custom scalars, inline schemas, synthesized path parameters and default-response models are
     approximations.
+
+    **Non-REST losses** (MFX-15.2): a source of another paradigm (GraphQL, gRPC, events, data schemas) is
+    reported at the root as reframed to HTTP; each operation without an HTTP binding names its kind (a
+    GraphQL query, mutation or subscription, a one-way or RPC operation) and the POST route it became; a
+    GraphQL subscription or a streaming call is reported as one request and response; event messages and a
+    second request are dropped.
+
+    **Decorator coverage** (MFX-15.2): what TypeSpec has a decorator for is written and not reported —
+    ``@tag`` for tags, ``@doc`` and ``#deprecated`` on parameters and headers, an ``enum`` constraint as a
+    union of literals, server-variable enums and docs. What it has none for is reported: a response's own
+    description (an inline response gets its status's standard text), a type's namespace (one namespace per
+    document) and the identity's id.
     """
 
     target_label = "TypeSpec"
     critical_drops = frozenset({"event-operation-dropped", "operation-dropped", "parameter-dropped",
                                 "unsupported-type"})
-    info_drops = frozenset({"field-number-dropped"})
-    cosmetic = frozenset({"renamed-declaration", "renamed-member", "renamed-operation", "renamed-enum-member"})
+    info_drops = frozenset({"field-number-dropped", "response-description-dropped"})
+    cosmetic = frozenset({"renamed-declaration", "renamed-member", "renamed-operation", "renamed-enum-member",
+                          "namespace-flattened"})
 
     def build_writer(self, api: CanonicalApi) -> "_TypeSpecWriter":
         """Build the document (default options: they change no loss)."""
@@ -195,6 +215,17 @@ class TypeSpecFidelityRulePack(WriterLossRulePack):
                 severity=LossinessSeverity.INFO,
                 target_mapping=f"document → namespace {self._writer.namespace}",
             ))
+            if api.paradigm is not ApiParadigm.REST:
+                verdicts.append(FidelityVerdict.approx(
+                    message=f"TypeSpec HTTP describes REST APIs; this {api.paradigm.value.replace('_', ' ')} API's "
+                    "operations without an HTTP binding become POST routes, and it reads back as REST",
+                    target_mapping=f"{api.paradigm.value} → REST",
+                ))
+            if api.identity.id:
+                verdicts.append(FidelityVerdict.drop(
+                    message=f"TypeSpec has no document id; {api.identity.id!r} is not written",
+                    severity=LossinessSeverity.INFO, target_mapping="identity id → dropped",
+                ))
         if api.agents:
             verdicts.append(FidelityVerdict.drop(
                 message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
@@ -407,7 +438,9 @@ class _TypeSpecWriter:
             fields = []
             for variable in server.variables:
                 default = f" = {_string(str(variable.default))}" if variable.default is not None else ""
-                fields.append(f"{typespec_identifier(variable.name)}?: string{default}")
+                kind = " | ".join(_string(str(v)) for v in variable.enum) if variable.enum else "string"
+                doc = " ".join(_doc_decorator(variable.description))
+                fields.append(f"{doc + ' ' if doc else ''}{typespec_identifier(variable.name)}?: {kind}{default}")
             parts.append("{ " + ", ".join(fields) + " }")
         return f"@server({', '.join(parts)})"
 
@@ -502,6 +535,10 @@ class _TypeSpecWriter:
 
     def _write_type(self, type_: Type) -> None:
         self._context = type_.key
+        if type_.namespace and _namespace_path(type_.namespace) != self.namespace:
+            self.losses.record(LossKind.INFERRED, "namespace-flattened",
+                               f"The document is one TypeSpec namespace; {type_.key!r} from {type_.namespace!r} is "
+                               f"declared in {self.namespace!r}.", pointer=type_.key)
         name = self._names[type_.key]
         ident = typespec_identifier(name)
         lines = _doc(type_.description) + _deprecated(type_.deprecated, "")
@@ -615,8 +652,9 @@ class _TypeSpecWriter:
         decorators: List[str] = []
         if self._typespec_source:
             decorators += [str(d) for d in field.extras.get("typespec_decorators") or []]
-        decorators += self._constraint_decorators(field.constraints, self._kind_of(expression), field.key,
-                                                  format_used=used)
+        expression, kind, enum_written = self._enum_literals(field.constraints, expression)
+        decorators += self._constraint_decorators(field.constraints, kind, field.key, format_used=used,
+                                                  enum_written=enum_written)
         stored_optional = field.extras.get("typespec_optional") if self._typespec_source else None
         optional = "?" if (stored_optional if isinstance(stored_optional, bool) else field.type.nullable) else ""
         default = self._default(field.default, expression, field.key)
@@ -677,8 +715,25 @@ class _TypeSpecWriter:
         self._context = type_.key
         return lines
 
+    def _enum_literals(self, constraints: Optional[Constraints], expression: str) -> Tuple[str, str, bool]:
+        """An ``enum`` constraint on a string or number written as a union of literals (``"a" | "b"``).
+
+        Returns:
+            ``(expression, kind for the other decorators, enum written)``; the kind is ``union`` when the
+            literals replace the type, since length, range and pattern decorators do not apply to them.
+        """
+        kind = self._kind_of(expression)
+        values = [v for v in (constraints.enum or []) if v is not None] if constraints is not None else []
+        if not values or kind not in ("string", "numeric"):
+            return expression, kind, False
+        if kind == "string" and all(isinstance(v, str) for v in values):
+            return " | ".join(_string(v) for v in values), "union", True
+        if kind == "numeric" and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values):
+            return " | ".join(_number(v) for v in values), "union", True
+        return expression, kind, False
+
     def _constraint_decorators(self, constraints: Optional[Constraints], kind: str, pointer: str, *,
-                               format_used: bool = False) -> List[str]:
+                               format_used: bool = False, enum_written: bool = False) -> List[str]:
         """Constraint decorators for a target of ``kind``; constraints that do not apply are reported."""
         if constraints is None:
             return []
@@ -723,7 +778,7 @@ class _TypeSpecWriter:
             dropped.append("uniqueItems")
         if constraints.multiple_of is not None:
             dropped.append("multipleOf")
-        if constraints.enum:
+        if constraints.enum and not enum_written:
             dropped.append("enum")
         if dropped:
             self.losses.record(LossKind.NA, "constraint-dropped",
@@ -745,6 +800,10 @@ class _TypeSpecWriter:
 
     def _value(self, value: Any, expression: str) -> Optional[str]:
         """A TypeSpec value of type ``expression`` for ``value``, or ``None`` when it does not fit."""
+        if " | " in expression and not expression.endswith("[]"):
+            literal = _string(value) if isinstance(value, str) else (
+                _number(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None)
+            return literal if literal is not None and literal in expression.split(" | ") else None
         kind = self._kind_of(expression)
         name = expression.strip("`")
         if kind == "enum":
@@ -826,13 +885,22 @@ class _TypeSpecWriter:
             self.losses.record(LossKind.INFERRED, "renamed-operation",
                                f"TypeSpec operation names are unique in their interface; {operation.name!r} is "
                                f"written as {name!r}.", pointer=operation.key)
-        if operation.streaming.value != "none":
+        if operation.streaming.value != "none" or operation.kind is OperationKind.SUBSCRIPTION:
+            stream = ("a GraphQL subscription" if operation.kind is OperationKind.SUBSCRIPTION
+                      else f"{operation.streaming.value}-streaming")
             self.losses.record(LossKind.NA, "streaming-dropped",
-                               f"TypeSpec HTTP has no streams here; {operation.key!r} is one request and response.",
-                               pointer=operation.key)
+                               f"TypeSpec HTTP has no streams here; {operation.key!r} ({stream}) is one request and "
+                               "response.", pointer=operation.key)
+        for message in operation.messages:
+            if message.role is MessageRole.EVENT or (
+                    message.role is MessageRole.REQUEST
+                    and message is not next(m for m in operation.messages if m.role is MessageRole.REQUEST)):
+                self.losses.record(LossKind.NA, "message-dropped",
+                                   f"A TypeSpec HTTP operation has one request body and no event messages; "
+                                   f"{message.key!r} ({message.role.value}) is not written.", pointer=operation.key)
         params = self._parameters(operation, path)
         returns = self._responses(operation, name, error_models)
-        decorators = f"@{verb}"
+        decorators = "".join(f"@tag({_string(tag)}) " for tag in operation.tags) + f"@{verb}"
         op_route = self._op_route(operation, path, prefix)
         if op_route is not None:
             decorators += f" @route({_string(op_route)})"
@@ -849,9 +917,11 @@ class _TypeSpecWriter:
             path = (operation.http_path or "/").split("?", 1)[0] or "/"
             return operation.http_method.lower(), path if path.startswith("/") else f"/{path}"
         path = "/" + "/".join(re.sub(r"[^A-Za-z0-9._~-]+", "_", part) for part in (service.name, operation.name))
+        what = _NON_REST_NOUNS.get(operation.kind, "RPC operation")
+        reply = " (its reply is an empty 204)" if operation.kind is OperationKind.ONE_WAY else ""
         self.losses.record(LossKind.INFERRED, "rpc-as-http",
-                           f"TypeSpec operations here are HTTP; the RPC operation {operation.key!r} is written as "
-                           f"POST {path}.", pointer=operation.key)
+                           f"TypeSpec operations here are HTTP; the {what} {operation.key!r} is written as "
+                           f"POST {path}{reply}.", pointer=operation.key)
         return "post", path
 
     @staticmethod
@@ -891,6 +961,8 @@ class _TypeSpecWriter:
                 out.append(f"@path {typespec_identifier(scope.claim(name))}: string")
         self._context = operation.key
         request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
+        for header in request.headers if request is not None else []:
+            out.append(self._header_member(header, scope))
         if request is not None and (request.payload is not None or request.payload_schema):
             expression = self._payload(request, operation)
             out += self._content_type(request, expression, scope)
@@ -919,12 +991,13 @@ class _TypeSpecWriter:
             decorator = f"@{location.value}"
         else:
             decorator = f"@{location.value}({_string(param.name)})"
-        decorators = [decorator] + self._constraint_decorators(param.constraints, self._kind_of(expression), param.key,
-                                                               format_used=used)
+        expression, kind, enum_written = self._enum_literals(param.constraints, expression)
+        decorators = [decorator] + _doc_decorator(param.description) + self._constraint_decorators(
+            param.constraints, kind, param.key, format_used=used, enum_written=enum_written)
         optional = "" if param.required or location is ParameterLocation.PATH else "?"
         default = self._default(param.default, expression, param.key) if optional else ""
-        lines = " ".join(decorators)
-        return f"{lines} {typespec_identifier(member)}{optional}: {expression}{default}"
+        prefix = _inline_deprecated(param.deprecated) + " ".join(decorators)
+        return f"{prefix} {typespec_identifier(member)}{optional}: {expression}{default}"
 
     def _content_type(self, message: Message, payload: Optional[str], scope: _Scope) -> List[str]:
         """A ``Content-Type`` header when a body is not JSON (one literal per media type).
@@ -959,6 +1032,14 @@ class _TypeSpecWriter:
         responses = [m for m in operation.messages if m.role in (MessageRole.RESPONSE, MessageRole.ERROR)]
         if not responses:
             return "void"
+        described = [str(m.status_code or "200") for m in responses
+                     if m.description and str(m.status_code or "") != "default"
+                     and not (m.role is MessageRole.ERROR and m.status_code is None)]
+        if described:
+            self.losses.record(LossKind.NA, "response-description-dropped",
+                               f"TypeSpec gives an inline response its status's standard description; the "
+                               f"descriptions of {', '.join(described)} of {operation.key!r} are not written.",
+                               pointer=operation.key)
         if len(responses) == 1 and _plain(responses[0]):
             return self._payload(responses[0], operation)
         variants: List[str] = []
@@ -1001,11 +1082,19 @@ class _TypeSpecWriter:
         if payload is not None:
             members.append(f"@body {scope.claim('body')}: {payload}")
         for header in message.headers:
-            expression, _ = self._ref(header.type)
-            optional = "?" if header.type.nullable else ""
-            member = typespec_identifier(scope.claim(_camel(header.name), "header"))
-            members.append(f"@header({_string(header.name)}) {member}{optional}: {expression}")
+            members.append(self._header_member(header, scope))
         return members
+
+    def _header_member(self, header: CanonicalField, scope: _Scope) -> str:
+        """``@header("Name") name?: T`` for a message header, with its doc and deprecation."""
+        expression, used = self._ref(header.type, _format(header.constraints))
+        expression, kind, enum_written = self._enum_literals(header.constraints, expression)
+        decorators = [f"@header({_string(header.name)})", *_doc_decorator(header.description),
+                      *self._constraint_decorators(header.constraints, kind, header.key, format_used=used,
+                                                   enum_written=enum_written)]
+        optional = "?" if header.type.nullable else ""
+        member = typespec_identifier(scope.claim(_camel(header.name), "header"))
+        return f"{_inline_deprecated(header.deprecated)}{' '.join(decorators)} {member}{optional}: {expression}"
 
 
 # ===========================================================================
@@ -1061,6 +1150,16 @@ def _doc(text: Optional[str], indent: str = "") -> List[str]:
     return [f"{indent}/**", *(f"{indent} * {line}".rstrip() for line in body), f"{indent} */"]
 
 
+def _doc_decorator(text: Optional[str]) -> List[str]:
+    """``@doc("…")`` for a parameter or header (a doc comment cannot sit inside a parameter list)."""
+    return [f"@doc({_string(text.strip())})"] if text and text.strip() else []
+
+
+def _inline_deprecated(flag: bool) -> str:
+    """``#deprecated`` on its own line before a parameter or header member."""
+    return '#deprecated "Deprecated."\n    ' if flag else ""
+
+
 def _deprecated(flag: bool, indent: str) -> List[str]:
     return [f'{indent}#deprecated "Deprecated."'] if flag else []
 
@@ -1083,7 +1182,11 @@ def _capitalized(name: str) -> str:
 def _namespace(api: CanonicalApi) -> str:
     """A TypeSpec namespace: identifiers joined by ``.``."""
     raw = api.extras.get("typespec_namespace") if api.format == "typespec" else None
-    raw = raw or api.identity.namespace or api.identity.name or api.title or "Exported"
+    return _namespace_path(raw or api.identity.namespace or api.identity.name or api.title or "Exported")
+
+
+def _namespace_path(raw: str) -> str:
+    """``raw`` (``com.acme``, ``urn:acme:x``, ``Pet Store (v1)``) as dotted TypeSpec identifiers."""
     raw = re.sub(r"^[A-Za-z][A-Za-z0-9+.-]*://", "", str(raw))
     parts = []
     for part in re.split(r"::|[./:\\#\s]+", raw):

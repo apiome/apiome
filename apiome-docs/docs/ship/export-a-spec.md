@@ -248,6 +248,10 @@ importer instead.
   `{ @statusCode statusCode: 201; @body body: Pet; }`, a `4XX` range is a status between 400 and 499,
   and a `default` error is an `@error` model. An operation with no HTTP binding is written
   `@post @route("/<Service>/<operation>")`.
+- **Decorators.** Tags become `@tag("…")`. A parameter's or header's description becomes
+  `@doc("…")`, and a deprecated parameter or header gets `#deprecated`. A list of allowed values
+  becomes a union of literals (`sort?: "name" | "age"`). A server variable with allowed values gets
+  them as its type, and its description as `@doc`.
 - **Names.** Every name is kept: a name that is not a TypeSpec identifier, or is a keyword, is written
   in backticks (`` `order-id` ``). A type cannot reuse a built-in name such as `string`, and a clash
   gets a number (`string2`). Each rename is in the fidelity report.
@@ -256,14 +260,21 @@ importer instead.
 
 The fidelity report lists what TypeSpec cannot carry, on the type, field or operation it concerns:
 
-- **Dropped:** constraints with no decorator (`multipleOf`, `uniqueItems`, a list of allowed values),
-  a default that does not fit its type, and numeric enum values beside string ones. Also dropped:
-  operations on a method TypeSpec has no verb for (such as `OPTIONS`), a second operation on the same
-  route, a path parameter missing from its route, multipart media types on a body that is not an
-  object, and event operations and channels.
+- **Dropped:** constraints with no decorator (`multipleOf`, `uniqueItems`), a default that does not
+  fit its type, and numeric enum values beside string ones. Also dropped: operations on a method
+  TypeSpec has no verb for (such as `OPTIONS`), a second operation on the same route, a path
+  parameter missing from its route, multipart media types on a body that is not an object, and
+  event operations and channels. A response's own description is dropped too, since an inline
+  response gets its status's standard text, and so is the document's id.
 - **Approximated:** renames, RPC operations given an HTTP route, aliases (they compile to the type
   they alias), scalars written as `string`, inline schemas written as `unknown`, synthesized path
-  parameters and `default` response models.
+  parameters and `default` response models. Types from another namespace are declared in the
+  document's one namespace.
+- **Other API styles.** TypeSpec HTTP describes REST APIs. For a GraphQL, gRPC, event or data-schema
+  item the report says the API is reframed as HTTP. Each operation without an HTTP binding is
+  listed as a GraphQL query, mutation or subscription, a one-way call or an RPC call, with the
+  `POST` route it became. A GraphQL subscription or a streaming call is listed as one request and
+  response, and event messages and a second request body are listed as dropped.
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 

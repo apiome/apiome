@@ -415,8 +415,8 @@
     {
       "family": "a2a",
       "loss_counts": {
-        "approx": 5,
-        "drop": 9,
+        "approx": 6,
+        "drop": 14,
         "synth": 0
       },
       "reason": null,
@@ -915,8 +915,8 @@
     {
       "family": "acp",
       "loss_counts": {
-        "approx": 4,
-        "drop": 4,
+        "approx": 5,
+        "drop": 7,
         "synth": 0
       },
       "reason": null,
@@ -1419,7 +1419,7 @@
     {
       "family": "agents-manifest",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -3604,7 +3604,7 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -4114,7 +4114,7 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -5093,7 +5093,7 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -5611,7 +5611,7 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 1,
         "synth": 0
       },
@@ -6200,7 +6200,7 @@
       "family": "aws-apigateway",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -6766,7 +6766,7 @@
       "family": "azure-apim",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -7864,7 +7864,7 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 11,
         "synth": 0
       },
@@ -8382,7 +8382,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 1,
         "synth": 0
       },
@@ -8892,7 +8892,7 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -9390,7 +9390,7 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 0
       },
@@ -9897,7 +9897,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -10413,7 +10413,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -11500,7 +11500,7 @@
     {
       "family": "corbaidl",
       "loss_counts": {
-        "approx": 8,
+        "approx": 9,
         "drop": 1,
         "synth": 0
       },
@@ -12021,8 +12021,8 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 1,
-        "drop": 1,
+        "approx": 2,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -12530,8 +12530,8 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 2,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -13045,7 +13045,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -13555,7 +13555,7 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 0
       },
@@ -14140,7 +14140,7 @@
       "family": "discovery",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -14649,8 +14649,8 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 3,
-        "drop": 4,
+        "approx": 4,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -15165,7 +15165,7 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -15686,7 +15686,7 @@
     {
       "family": "edix12",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -17338,7 +17338,7 @@
     {
       "family": "fix",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -17846,7 +17846,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 13,
         "synth": 0
       },
@@ -18353,7 +18353,7 @@
     {
       "family": "flatbuffers",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 0
       },
@@ -19437,7 +19437,7 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 5,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -21115,7 +21115,7 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -21624,7 +21624,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -23316,7 +23316,7 @@
     {
       "family": "idoc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -23828,7 +23828,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -24936,7 +24936,7 @@
     {
       "family": "iso20022",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -25462,7 +25462,7 @@
     {
       "family": "iso8583",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -26539,8 +26539,8 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
+        "approx": 2,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -27042,7 +27042,7 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -27551,7 +27551,7 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -28058,8 +28058,8 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
+        "approx": 2,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -28557,7 +28557,7 @@
     {
       "family": "kafka-connect",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -29641,8 +29641,8 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 3,
-        "drop": 1,
+        "approx": 4,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -30165,7 +30165,7 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 6,
         "synth": 0
       },
@@ -30691,7 +30691,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 6,
+        "approx": 9,
         "drop": 10,
         "synth": 0
       },
@@ -31211,8 +31211,8 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 7,
-        "drop": 6,
+        "approx": 8,
+        "drop": 7,
         "synth": 0
       },
       "reason": null,
@@ -31743,7 +31743,7 @@
     {
       "family": "nacha",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -32255,7 +32255,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -32773,7 +32773,7 @@
     {
       "family": "ncpdp",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -35006,8 +35006,8 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
+        "approx": 2,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -35515,7 +35515,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 2,
         "synth": 0
       },
@@ -36033,7 +36033,7 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -37053,8 +37053,8 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 3,
-        "drop": 1,
+        "approx": 4,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -37559,7 +37559,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -38076,8 +38076,8 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 2,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -38586,7 +38586,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -40266,7 +40266,7 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 0,
         "synth": 0
       },
@@ -40792,7 +40792,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -41314,7 +41314,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -42404,8 +42404,8 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 1,
-        "drop": 1,
+        "approx": 2,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -42910,7 +42910,7 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -43435,7 +43435,7 @@
     {
       "family": "sepa",
       "loss_counts": {
-        "approx": 7,
+        "approx": 8,
         "drop": 0,
         "synth": 0
       },
@@ -43941,8 +43941,8 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 2,
+        "drop": 1,
         "synth": 0
       },
       "reason": null,
@@ -44449,7 +44449,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -45547,7 +45547,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 0
       },
@@ -46055,7 +46055,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -46636,7 +46636,7 @@
       "family": "swagger",
       "loss_counts": {
         "approx": 4,
-        "drop": 5,
+        "drop": 7,
         "synth": 0
       },
       "reason": null,
@@ -47215,7 +47215,7 @@
       "family": "swagger-1.2",
       "loss_counts": {
         "approx": 1,
-        "drop": 2,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -47730,7 +47730,7 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -48242,7 +48242,7 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 6,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -49346,7 +49346,7 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -50425,8 +50425,8 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 5,
-        "drop": 4,
+        "approx": 6,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -51525,7 +51525,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -52617,7 +52617,7 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },
@@ -53717,7 +53717,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 0,
         "synth": 0
       },
@@ -55290,7 +55290,7 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 0
       },
@@ -55794,7 +55794,7 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 5,
         "synth": 0
       },
@@ -56304,7 +56304,7 @@
     {
       "family": "xsd",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -56818,7 +56818,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 1,
         "synth": 0
       },

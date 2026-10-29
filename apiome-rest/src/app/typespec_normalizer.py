@@ -7,6 +7,7 @@ Maps a parsed :class:`~app.typespec_parser.TypeSpecDocument` into a
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
 from .canonical_model import (
@@ -222,6 +223,7 @@ def _interface_operations(
                 description=operation.documentation,
                 http_method=operation.verb.upper(),
                 http_path=http_path,
+                tags=[json.loads(f'"{tag}"') for tag in operation.tags],
                 parameters=[
                     _parameter(
                         param,
