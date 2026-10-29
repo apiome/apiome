@@ -19,6 +19,8 @@ none writes a no-namespace schema. A type whose namespace is a different URI is 
 document of its own, so a multi-namespace source exports one ``.xsd`` per namespace — the first is
 the main document — each ``xs:import`` ing the namespaces it references (delivered as a zip).
 Operations and channels are dropped: XSD describes data only.
+
+**Fidelity** (MFX-22.2): :class:`XsdFidelityRulePack` predicts the report from the writer's own losses.
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from pydantic import Field
 
-from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Type
+from .canonical_model import ApiParadigm, CanonicalApi, Channel, Operation, TypeKind
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -40,17 +42,10 @@ from .emitter import (
     LossTracker,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessKind, LossinessSeverity
-from .xsd_schema import (
-    TNS_PREFIX,
-    XSD_NS,
-    XSD_PREFIX,
-    XsdSchemaWriter,
-    comment_safe,
-    schema_field_verdicts,
-    schema_type_verdict,
-)
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessSeverity
+from .writer_loss_rulepack import WriterLossRulePack
+from .xsd_schema import TNS_PREFIX, XSD_NS, XSD_PREFIX, XsdSchemaWriter, comment_safe
 from .xsd_types import xsd_builtin
 
 __all__ = ["XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces"]
@@ -61,51 +56,73 @@ _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 _URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
-class XsdFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for XSD export.
+class XsdFidelityRulePack(WriterLossRulePack):
+    """Fidelity rules for XSD export — MFX-22.2 (#4133).
 
-    XSD is types-only: operations and channels are dropped. On top of the capability rules, the
-    shared XSD rules (:mod:`app.xsd_schema`) report renamed names, maps written as entry lists,
-    untyped values and constraints with no facet.
+    The pack builds the export with the XSD writer (default options: XSD 1.0) and turns each loss the
+    writer records into a verdict on the construct it concerns
+    (:class:`~app.writer_loss_rulepack.WriterLossRulePack`), so the report names exactly what the
+    export does:
+
+    * **operations / channels** — ``DROP``: XSD is types-only. An operation-bearing source also gets
+      the **types-only advisory** at the root, counting what is not exported;
+    * **untyped maps** (a free-form ``additionalProperties`` object) — ``xs:any``, ``APPROX``; a typed
+      map is a list of ``entry`` elements, ``APPROX``;
+    * **unions** — an ``xs:choice`` of child elements, ``APPROX``; a union with no alternatives,
+      ``DROP``;
+    * **JSON null vs absent** — a nullable value is ``nillable`` and optional, an info ``APPROX`` note;
+    * **examples** — kept as ``xs:documentation``, an info ``APPROX``;
+    * **attribute vs element** — every property of a non-XSD source is written as a child element, a
+      ``SYNTH`` note at the root;
+    * renamed names (info), untyped values, constraints with no facet and dropped ``deprecated`` flags.
     """
 
     target_label = "XSD"
+    info_drops = frozenset({"deprecated-dropped"})
+    cosmetic = frozenset({"renamed-identifier", "null-as-nillable", "example-as-annotation"})
+
+    def build_writer(self, api: CanonicalApi) -> "_XsdWriter":
+        """Build the export with the default options (XSD 1.0)."""
+        writer = _XsdWriter(api, XsdEmitOptions())
+        writer.render()
+        return writer
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """A document of another format is rewritten as an XML Schema and reads back as an XSD item."""
-        if api.format == _XSD_FORMAT:
-            return []
-        return [
-            FidelityVerdict.approx(
-                message=f"The {api.format or 'source'} document is written as an XML Schema and reads back as an "
-                "XSD item; details specific to its format are not kept",
-                severity=LossinessSeverity.INFO,
-                target_mapping="document → XML Schema",
+        """The rewrite of another format, the element-only choice, and the types-only advisory."""
+        verdicts: List[FidelityVerdict] = []
+        if api.format != _XSD_FORMAT:
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is written as an XML Schema and reads back as "
+                    "an XSD item; details specific to its format are not kept",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="document → XML Schema",
+                )
             )
-        ]
+            if any(t.kind is TypeKind.RECORD and t.fields for t in api.types):
+                verdicts.append(
+                    FidelityVerdict.synth(
+                        message="XML can carry a scalar property as an attribute or as a child element; the export "
+                        "chooses: every property is written as a child element",
+                        severity=LossinessSeverity.INFO,
+                        target_mapping="property → child element",
+                    )
+                )
+        return verdicts + self.loss_verdicts(ROOT_CONSTRUCT_KEY)
 
-    def operation_verdict(self, operation) -> FidelityVerdict:
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
             message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
             f"the {operation.kind.value} operation is dropped",
             target_mapping="operation → dropped (types-only export)",
         )
 
-    def channel_verdict(self, channel) -> FidelityVerdict:
+    def channel_verdict(self, channel: Channel) -> FidelityVerdict:
         return FidelityVerdict.drop(
             message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
             "the event channel is dropped",
             target_mapping="channel → dropped (types-only export)",
         )
-
-    def type_verdict(self, type_: Type) -> FidelityVerdict:
-        verdict = super().type_verdict(type_)
-        if verdict.kind is not LossinessKind.OK:
-            return verdict
-        return schema_type_verdict(type_, target_label=self.target_label) or verdict
-
-    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        return [*super().field_verdicts(field), *schema_field_verdicts(field, target_label=self.target_label)]
 
 
 class XsdEmitOptions(EmitOptions):
@@ -229,6 +246,7 @@ class _XsdWriter:
             type_namespaces=type_namespaces,
             prefixes=prefixes,
             xsd_version=options.xsd_version,
+            standalone=True,
         )
         self.paths = _document_paths(api, self.namespaces)
 
@@ -236,12 +254,7 @@ class _XsdWriter:
         """Every schema document as ``(path, text)``, the main document first."""
         ET.register_namespace(XSD_PREFIX, XSD_NS)
         if self._api.services or self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "services-dropped",
-                "XSD export omits service/operation constructs",
-                pointer="services",
-            )
+            self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
         from_xsd = self._api.format == _XSD_FORMAT
         documents: List[Tuple[str, str]] = []
         for namespace in self.namespaces:
@@ -254,6 +267,14 @@ class _XsdWriter:
             self._prepend_imports(schema_el)
             documents.append((self.paths[namespace], self._serialize(schema_el)))
         return documents
+
+    def written_as(self, key: str) -> Optional[str]:
+        """What the type ``key`` became (``complexType Pet``, ``simpleType Status``), or ``None``."""
+        type_ = self._schema.types_by_key.get(key)
+        if type_ is None or key not in self._schema.type_names:
+            return None
+        kind = "simpleType" if self._schema.is_simple(type_) else "complexType"
+        return f"{kind} {self._schema.type_names[key]}"
 
     def _prepend_source_elements(self, schema_el: ET.Element) -> None:
         """An XSD source's own global elements, first (the first is the document's root element)."""
@@ -295,6 +316,18 @@ class _XsdWriter:
         ET.indent(schema_el, space="  ")
         parts.append(ET.tostring(schema_el, encoding="unicode"))
         return "\n".join(parts) + "\n"
+
+
+def _types_only_advisory(api: CanonicalApi) -> str:
+    """The advisory a standalone export of an operation-bearing source carries: what it leaves out."""
+    operations = sum(1 for _ in api.operations())
+    parts = [f"{operations} operation(s)"] if operations else []
+    if api.channels:
+        parts.append(f"{len(api.channels)} channel(s)")
+    return (
+        f"XSD is types-only — {_TYPES_ONLY_DROP_MESSAGE}: {' and '.join(parts) or 'the services'} are not "
+        "exported. Export to WSDL, OpenAPI or AsyncAPI as well to keep them."
+    )
 
 
 def _document_paths(api: CanonicalApi, namespaces: List[Optional[str]]) -> Dict[Optional[str], str]:
