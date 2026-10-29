@@ -132,6 +132,40 @@ compiler, and read back with Apiome's Thrift importer otherwise.
 - **uuid.** A UUID is written as `string`, because only Thrift 0.21 and later compilers know the
   `uuid` type. An item imported from Thrift keeps `uuid`.
 
+### OMG IDL (CORBA or DDS) from any source
+
+Exporting to **CORBA IDL** writes one `<Name>.idl` file in OMG IDL 4.2 that reference IDL compilers
+accept: omniidl for the CORBA parts and Cyclone DDS `idlc` for the annotated data types. Before you
+download it, Apiome reads the export back with its CORBA IDL importer.
+
+- **Profile.** The **profile** option picks what is written. `corba` (the default) writes interfaces
+  and exceptions. `dds` writes only the data types a DDS topic can use: no interfaces, no exceptions
+  and no member that refers back to its own type. It also marks identifier fields `@key`. A source
+  with no data types cannot be exported with `dds`, and the dialog says why.
+- **Types.** Objects become `struct`s, enums `enum`s, and aliases and named scalars `typedef`s. Lists
+  become `sequence<…>`. A map becomes a sequence of `<Map>Entry` key/value structs. A union becomes
+  a discriminated `union` that switches on a generated `<Union>Kind` enum, with one case per member.
+  A nullable field is marked `@optional`.
+- **Modules.** The item's namespace becomes nested modules: `com.acme.orders` is written
+  `module com { module acme { module orders { … }; }; };`. Set the **module** option (`acme::orders`)
+  to choose another path. Every type reference is written in full (`::com::acme::orders::Order`).
+- **Interfaces.** Each service becomes an `interface` and each operation an IDL operation. Its
+  parameters and request body are `in` arguments, and it returns its success response's type. A list
+  in a signature is given a `typedef` (`PetSeq`). A type returned only as an error response becomes
+  an `exception` and is listed in the operation's `raises`. Any other error response is left out, and
+  the report says so.
+- **Keys (DDS).** A field named `id`, `<type>Id` or `<type>_id` gets `@key`. Set the **key_fields**
+  option to choose the keys yourself, for example `{"Order": ["region", "number"]}`.
+- **Names.** IDL names are identifiers, compared without regard to case. `order-id` is written
+  `order_id`, `module` is `module_`, and of two members `id` and `ID` the second becomes `ID2`. A
+  member cannot share its type's name, and an enum value must be unique in its module, so it may be
+  prefixed with its enum's name (`Status_ACTIVE`). Each rename is in the fidelity report.
+- **Recursion.** A type may contain itself only through a `sequence`. A direct reference to itself is
+  written as a sequence of at most one element. A member that refers back through another type is
+  left out, and so is any recursive member under the `dds` profile.
+- **From a CORBA item.** An item imported from CORBA IDL keeps its module, `typedef`s, interfaces and
+  parameter directions (`in`, `out`, `inout`).
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever

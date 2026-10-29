@@ -43,6 +43,9 @@ _CORBA_BASE_TO_CANONICAL: Dict[str, str] = {
     "unsigned short": "uint16",
     "long": "i32",
     "unsigned long": "uint32",
+    "long long": "i64",
+    "unsigned long long": "uint64",
+    "long double": "double",
     "float": "float",
     "double": "double",
     "string": "string",
@@ -73,7 +76,7 @@ def _type_ref_from_expr(
     struct_names: frozenset[str],
 ) -> TypeRef:
     resolved = _resolve_typedef(type_expr, typedefs)
-    seq_match = re.fullmatch(r"sequence\s*<\s*([\w.<>, \t]+)\s*>", resolved)
+    seq_match = re.fullmatch(r"sequence\s*<\s*([\w.<>, \t]+?)(?:\s*,\s*\d+)?\s*>", resolved)
     if seq_match:
         inner = _type_ref_from_expr(
             seq_match.group(1).strip(),

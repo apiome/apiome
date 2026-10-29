@@ -6,18 +6,18 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 61 |
-| lossy | 3317 |
+| ok | 57 |
+| lossy | 3320 |
 | refused | 1909 |
-| silent-loss | 437 |
+| silent-loss | 438 |
 | crash | 0 |
 | skipped | 0 |
 
 | Family | apiblueprint | apigee | arazzo | asn1 | asyncapi | avro | aws-apigateway | azure-apim | capnproto | cddl | cloudevents | cobolcopybook | connectrpc | corbaidl | edix12 | envoy-xds | fhir | fix | flatbuffers | gateway-api | graphql | hl7v2 | hoppscotch | http-file | idoc | iso20022 | iso8583 | istio | json-schema | jtd | k8s-crd | kafka-connect | kong | llm-tools | odata | odcs | oncrpc | openapi | openrpc | postman | protobuf | raml | smithy | thrift | thunder-client | traefik | typespec | wadl | wit | wsdl | xmlrpc | xsd | zosconnect |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| a2a | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | R | S | R | ok | L | S | R | S | L | ok | L | R | R | ok | L | L | L | S | L | R |
-| acp | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | S | L | R | R | ok | L | S | L | S | L | R |
-| agents-manifest | R | R | L | L | L | R | R | R | L | L | L | R | S | ok | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | ok | L | R | R | ok | L | S | L | S | L | R |
+| a2a | R | R | L | L | L | R | R | R | L | L | L | R | S | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | R | S | R | ok | L | S | R | S | L | ok | L | R | R | ok | L | L | L | S | L | R |
+| acp | R | R | L | L | L | R | R | R | L | L | L | R | S | L | R | R | S | R | L | R | L | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | S | L | R | R | ok | L | S | L | S | L | R |
+| agents-manifest | R | R | L | L | L | R | R | R | L | L | L | R | S | L | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | ok | S | S | R | S | L | ok | L | R | R | ok | L | S | L | S | L | R |
 | api-blueprint | ok | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | S | L | L | L | R | L | R |
 | apigee | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | S | L | L | L | R | L | R |
 | arazzo | R | R | ok | L | L | R | R | R | S | L | L | R | S | S | R | R | S | R | L | R | S | R | R | R | R | R | R | R | L | L | L | R | R | L | S | R | S | S | S | R | S | L | S | S | R | R | S | L | S | L | S | L | R |
@@ -49,7 +49,7 @@ Every corpus source family exported to every production target through the catal
 | fhir | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | ok | R | L | L | L | R | L | L | R | R | R | L | L | L | L | L | L | L | S | L | L | L | L | L | L | L | L | L | L | L | S | L | L | L | R | L | R |
 | fix | L | R | L | ok | L | L | R | R | L | S | L | R | L | L | R | R | S | L | L | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | L | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
 | fix-orchestra | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
-| flatbuffers | L | R | L | ok | L | L | R | R | S | S | L | R | L | ok | R | R | S | R | ok | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | ok | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
+| flatbuffers | L | R | L | ok | L | L | R | R | S | S | L | R | L | S | R | R | S | R | ok | R | L | R | R | R | R | R | R | R | S | S | L | L | R | L | S | L | ok | L | S | R | L | L | L | S | R | R | S | L | L | L | R | S | R |
 | gateway-api | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | ok | L | L | L | R | L | R |
 | graphql | L | R | L | L | L | L | R | R | L | L | L | R | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | R | L | L | S | L | R | R | L | L | S | L | L | L | R |
 | haproxy | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | S | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | S | R | L | S | L | L | S | L | L | L | L | L | ok | L | L | L | R | L | R |

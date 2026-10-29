@@ -617,7 +617,8 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 version="OMG IDL",
                 format_key="corbaidl",
                 support=VersionSupport.UNGATED,
-                note="The written definition declares no OMG IDL revision either.",
+                note="Written as OMG IDL 4.2 (`@optional` / `@key` annotations), CORBA or DDS profile; the "
+                "file declares no revision.",
             )
         ],
         default_write="OMG IDL",

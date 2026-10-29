@@ -9,8 +9,8 @@ writes those names as type references, and the file does not compile — Protobu
 
 This module reduces a spelling (plus its ``format``) to a small set of :data:`ScalarKind` values,
 and each emitter maps a kind to its own keyword (:data:`PROTO_SCALAR_FOR_KIND`,
-:data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`). Stored canonical models are
-untouched; only the emitted text changes.
+:data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`, :data:`OMG_IDL_SCALAR_FOR_KIND`).
+Stored canonical models are untouched; only the emitted text changes.
 
 Only spellings with one clear meaning are listed. A name that is not listed — a named type, or a
 scalar such as ``decimal`` or ``date`` whose mapping is a choice — resolves to ``None``, and the
@@ -23,6 +23,7 @@ from typing import Dict, Mapping, Optional
 
 __all__ = [
     "CAPNP_SCALAR_FOR_KIND",
+    "OMG_IDL_SCALAR_FOR_KIND",
     "PROTO_SCALAR_FOR_KIND",
     "THRIFT_SCALAR_FOR_KIND",
     "ScalarKind",
@@ -130,6 +131,25 @@ CAPNP_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
     "double": "Float64",
     "string": "Text",
     "bytes": "Data",
+}
+
+#: OMG IDL type per kind (MFX-28.1). The classic CORBA spellings, which every IDL compiler reads
+#: (IDL 4's ``int8`` / ``int64`` … are not in omniidl): a signed 8-bit integer widens to ``short``,
+#: and ``bytes`` is a sequence of octets.
+OMG_IDL_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "boolean",
+    "int8": "short",
+    "int16": "short",
+    "int32": "long",
+    "int64": "long long",
+    "uint8": "octet",
+    "uint16": "unsigned short",
+    "uint32": "unsigned long",
+    "uint64": "unsigned long long",
+    "float": "float",
+    "double": "double",
+    "string": "string",
+    "bytes": "sequence<octet>",
 }
 
 
