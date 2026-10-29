@@ -54,9 +54,23 @@ class FbsEnum:
 
 @dataclass(frozen=True)
 class FbsField:
+    """One table / struct field (or union member).
+
+    Attributes:
+        name: The field name.
+        type_expr: Its type as written (``string``, ``[Vec3]``, ``Color``).
+        default: The ``= value`` default as written, if any.
+        field_id: The ``(id: N)`` attribute, if any (MFX-30.1).
+        deprecated: Whether it carries the ``(deprecated)`` attribute — a slot kept only for its id.
+        attributes: Every attribute as ``(name, value)``; ``value`` is ``None`` for a flag.
+    """
+
     name: str
     type_expr: str
     default: Optional[str] = None
+    field_id: Optional[int] = None
+    deprecated: bool = False
+    attributes: Tuple[Tuple[str, Optional[str]], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -136,21 +150,48 @@ def _parse_enum_values(inner: str) -> Tuple[Tuple[str, Optional[int]], ...]:
     return tuple(values)
 
 
+#: ``name: type [= default] [(attributes)]`` — the attribute list is optional (MFX-30.1).
+_FIELD_RE = re.compile(
+    r"(\w+)\s*:\s*(\[[\w.]+\]|[\w.]+)(?:\s*=\s*([^()]+?))?\s*(?:\((?P<attrs>[^()]*)\))?$",
+    re.DOTALL,
+)
+
+
+def _parse_attributes(text: Optional[str]) -> Tuple[Tuple[str, Optional[str]], ...]:
+    """``id: 3, required, key`` → ``(("id", "3"), ("required", None), ("key", None))``."""
+    attributes: List[Tuple[str, Optional[str]]] = []
+    for part in (text or "").split(","):
+        name, colon, value = part.partition(":")
+        if name.strip():
+            attributes.append((name.strip(), value.strip().strip('"') if colon else None))
+    return tuple(attributes)
+
+
 def _parse_fields(inner: str) -> Tuple[FbsField, ...]:
     fields: List[FbsField] = []
     for part in inner.split(";"):
         chunk = part.strip()
         if not chunk:
             continue
-        match = re.match(r"(\w+)\s*:\s*(\[[\w.]+\]|\w+)(?:\s*=\s*(.+))?$", chunk)
+        match = _FIELD_RE.match(chunk)
         if not match:
             continue
         default = match.group(3).strip() if match.group(3) else None
+        attributes = _parse_attributes(match.group("attrs"))
+        named = dict(attributes)
+        field_id: Optional[int] = None
+        try:
+            field_id = int(named["id"]) if named.get("id") is not None else None
+        except ValueError:
+            field_id = None
         fields.append(
             FbsField(
                 name=match.group(1),
                 type_expr=match.group(2).strip(),
                 default=default,
+                field_id=field_id,
+                deprecated="deprecated" in named,
+                attributes=attributes,
             )
         )
     return tuple(fields)

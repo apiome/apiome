@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.531.0] - 2026-10-29
+
+### Changed
+- **FlatBuffers schema emitter (MFX-30.1, #4178).** The `flatbuffers` export is rebuilt to write one `.fbs` that
+  `flatc` compiles, for any source: records → `table` (a source `struct` stays one when every field fits), enums with
+  an underlying integer type and ascending values (and a valid default when `0` is not a value), unions, vectors,
+  maps → vectors of `<Map>Entry` tables with a `(key)` field, wrapper tables for vectors of vectors / unions and for
+  union members that are not tables, aliases inlined, FlatBuffers identifiers (`order-id` → `order_id`, keywords
+  get `_`), `(required)`, scalar / enum defaults, and a `root_type` option (default: the imported one; a non-table
+  is refused with 422). Operations are dropped with the types-only advisory.
+- **Stable field ids:** every table field is written `(id: N)` in id order. A `.fbs` source keeps its ids; other
+  sources get contiguous ids from 0 (a union takes two: `<name>_type` at N-1) from
+  `app.flatbuffers_identity.FieldIdAllocator`, persisted in the MFX-12.2 store under the new `flatbuffers` target
+  (`export_service` loads and persists them), so a re-export is byte-identical; a removed field keeps its id as a
+  `(deprecated)` placeholder.
+- The FlatBuffers parser reads field attributes (`id`, `deprecated`, `required`, `key`, …) — fields with attributes
+  were previously dropped — and qualified type names; the normalizer skips deprecated slots (kept in
+  `extras.fbs_deprecated`) and keeps ids that differ from their position in `extras.fbs_id`.
+- **flatc:** new optional bundled tool `flatc` 25.12.19 (`APIOME_FLATC_BIN`; built from source in the Dockerfile)
+  and `app/flatbuffers_compile.py`; the export validator compiles FlatBuffers exports with
+  `flatc --binary --schema`, falling back to the FlatBuffers reader without `flatc` or for a schema with includes.
+- **Database:** V338 lets the `flatbuffers` target store ids from 0 to 65534 in `export_field_identities`.
+
 ## [1.530.0] - 2026-10-29
 
 ### Changed

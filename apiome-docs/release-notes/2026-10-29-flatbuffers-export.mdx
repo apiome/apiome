@@ -1,0 +1,19 @@
+---
+slug: flatbuffers-export
+title: FlatBuffers export with stable field ids
+description: FlatBuffers export writes flatc-ready schemas whose field ids never change between exports.
+authors: [apiome]
+---
+
+Exporting to **FlatBuffers** now writes a `.fbs` schema that compiles with `flatc`, whatever the item
+was imported from, and keeps every table field's id stable from one export to the next.
+[How types and ids are written](/ship/export-a-spec#flatbuffers-from-any-source).
+
+{/* truncate */}
+
+- **Types.** Objects, enums, unions and lists become tables, enums, unions and vectors; maps become
+  keyed entry tables, and anything a vector or union cannot hold gets a small wrapper table.
+- **Stable ids.** Every field is written with `(id: N)`. Apiome remembers the ids, so re-exporting an
+  unchanged item gives the same file, a new field gets the next id, and a removed field keeps its slot
+  as `(deprecated)`.
+- **root_type.** Choose the table a buffer starts with; a FlatBuffers import keeps its own.

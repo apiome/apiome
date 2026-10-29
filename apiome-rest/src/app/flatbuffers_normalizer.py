@@ -5,6 +5,11 @@ Maps a parsed :class:`~app.flatbuffers_parser.FlatBuffersDocument` into a
 :attr:`~app.canonical_model.ApiParadigm.DATA_SCHEMA`. ``table`` / ``struct`` / ``union`` and
 ``enum`` definitions become :class:`~app.canonical_model.Type` entries with declaration-order
 field numbers preserved on :class:`~app.canonical_model.CanonicalField.field_number`.
+
+Field ids (MFX-30.1): a ``(deprecated)`` field is a slot kept only for its id, so it is not a field of
+the model; a table records ``{id: name}`` of those in ``extras["fbs_deprecated"]``. A field whose id is
+not the one its position implies (``(id: N)`` out of order, or after a deprecated slot) keeps it in
+``extras["fbs_id"]``, so the FlatBuffers export writes the same ids.
 """
 
 from __future__ import annotations
@@ -22,7 +27,8 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
-from .flatbuffers_parser import FbsField, FlatBuffersDocument
+from .flatbuffers_identity import compact_field_ids
+from .flatbuffers_parser import FbsField, FbsTypeDef, FlatBuffersDocument
 from .normalizer import Keys, Normalizer, normalize_ordering
 
 __all__ = ["FlatBuffersNormalizer"]
@@ -57,7 +63,7 @@ def _type_ref_from_expr(
     type_names: frozenset[str],
 ) -> TypeRef:
     t = type_expr.strip()
-    vector_match = re.fullmatch(r"\[(\w+)\]", t)
+    vector_match = re.fullmatch(r"\[([\w.]+)\]", t)
     if vector_match:
         inner = vector_match.group(1)
         return TypeRef(
@@ -87,10 +93,13 @@ def _canonical_field(
     enum_names: frozenset[str],
     type_names: frozenset[str],
     field_number: int,
+    field_id: Optional[int] = None,
 ) -> CanonicalField:
     extras: Dict[str, Any] = {}
     if field.default is not None:
         extras["fbs_default"] = field.default
+    if field_id is not None:
+        extras["fbs_id"] = field_id
     return CanonicalField(
         key=Keys.field(type_key, field.name),
         name=field.name,
@@ -165,6 +174,8 @@ class FlatBuffersNormalizer(Normalizer, register=True):
                 )
                 continue
 
+            union_names = frozenset(t.name for t in source.types if t.kind == "union")
+            kept, moved_ids, deprecated = _field_ids(typedef, union_names)
             fields = [
                 _canonical_field(
                     field,
@@ -173,9 +184,13 @@ class FlatBuffersNormalizer(Normalizer, register=True):
                     enum_names=enum_names,
                     type_names=type_names,
                     field_number=index + 1,
+                    field_id=moved_ids.get(index),
                 )
-                for index, field in enumerate(typedef.fields)
+                for index, field in enumerate(kept)
             ]
+            type_extras: Dict[str, Any] = {"fbs_kind": typedef.kind}
+            if deprecated:
+                type_extras["fbs_deprecated"] = deprecated
             types.append(
                 Type(
                     key=type_key,
@@ -183,7 +198,7 @@ class FlatBuffersNormalizer(Normalizer, register=True):
                     kind=TypeKind.RECORD,
                     namespace=namespace,
                     fields=fields,
-                    extras={"fbs_kind": typedef.kind},
+                    extras=type_extras,
                 )
             )
 
@@ -202,3 +217,28 @@ class FlatBuffersNormalizer(Normalizer, register=True):
             },
         )
         return normalize_ordering(api)
+
+
+def _field_ids(
+    typedef: FbsTypeDef, union_names: frozenset[str]
+) -> tuple[List[FbsField], Dict[int, int], Dict[str, str]]:
+    """Split a table's fields into the model's and its deprecated slots, keeping ids that move.
+
+    Args:
+        typedef: The parsed table or struct.
+        union_names: Names of the schema's unions (a union field takes two ids).
+
+    Returns:
+        ``(kept fields, {kept index: id} for each field whose id is not the compact one,
+        {"<id>": name} of the deprecated slots)``. A struct has no ids: everything is kept as is.
+    """
+    if typedef.kind != "table":
+        return list(typedef.fields), {}, {}
+    widths = [2 if f.type_expr in union_names else 1 for f in typedef.fields]
+    implied = compact_field_ids(widths)
+    actual = [f.field_id if f.field_id is not None else implied[i] for i, f in enumerate(typedef.fields)]
+    kept = [i for i, f in enumerate(typedef.fields) if not f.deprecated]
+    compact = compact_field_ids([widths[i] for i in kept])
+    moved = {n: actual[i] for n, i in enumerate(kept) if actual[i] != compact[n]}
+    deprecated = {str(actual[i]): f.name for i, f in enumerate(typedef.fields) if f.deprecated}
+    return [typedef.fields[i] for i in kept], moved, deprecated

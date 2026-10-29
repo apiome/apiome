@@ -19,7 +19,7 @@ What lives here:
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
   ``zod-schema-extractor``, ``cue``, ``pkl``, ``dhall``, ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``, ``capnp``.
+  ``openapi-changes``, ``capnp``, ``flatc``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -356,6 +356,16 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         description="Apache Thrift compiler: `thrift --gen json` checks an emitted .thrift IDL "
         "(apache/thrift, MFX-25.1). Optional: without it the export is re-parsed by the Thrift reader.",
         env_override_key="APIOME_THRIFT_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="flatc",
+        executable="flatc",
+        version="25.12.19",
+        description="FlatBuffers compiler: `flatc --binary --schema` checks an emitted .fbs schema "
+        "(google/flatbuffers, MFX-30.1). Optional: without it the export is re-parsed by the FlatBuffers reader.",
+        env_override_key="APIOME_FLATC_BIN",
         parses_json=False,
         runtime="native",
     ),

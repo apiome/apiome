@@ -1,9 +1,10 @@
 """Persisted field-identity store for export targets — MFX-12.2 (#3880), MFX-25.2 (#4152),
-MFX-30.2 (#4179).
+MFX-30.2 (#4179), MFX-30.1 (#4178).
 
-Protobuf, Thrift and Cap'n Proto (and later FlatBuffers, Iceberg, FIX Orchestra) require stable
+Protobuf, Thrift, Cap'n Proto and FlatBuffers (and later Iceberg, FIX Orchestra) require stable
 positional field numbers. Cap'n Proto also keeps its file ``@0x`` id here; its rules (ordinals from
-``@0`` with no holes) live in :mod:`app.capnproto_identity`.
+``@0`` with no holes) live in :mod:`app.capnproto_identity`, and FlatBuffers' (ids from ``0``, a union
+taking two) in :mod:`app.flatbuffers_identity`.
 
 Sources converted from OpenAPI, GraphQL, and other formats often lack them. The proto emitter
 synthesizes numbers on first export; this module **persists** those assignments per
@@ -24,6 +25,7 @@ from .database import db
 
 __all__ = [
     "CAPNP_TARGET",
+    "FLATBUFFERS_TARGET",
     "PROTO3_TARGET",
     "THRIFT_TARGET",
     "field_number_in_reserved",
@@ -39,6 +41,8 @@ THRIFT_TARGET = "thrift"
 #: The store key for Cap'n Proto ordinals, the file id and field layouts (MFX-30.2). The only target
 #: whose numbers may be ``0`` or wider than 32 bits (V337 relaxes the column's check for it).
 CAPNP_TARGET = "capnproto"
+#: The store key for FlatBuffers table field ids (MFX-30.1). Ids start at ``0`` (V338 allows it).
+FLATBUFFERS_TARGET = "flatbuffers"
 _PROTO_MAX_FIELD_NUMBER = 536_870_911
 
 

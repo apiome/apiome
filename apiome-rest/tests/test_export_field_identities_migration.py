@@ -38,3 +38,20 @@ def test_capnp_migration_widens_the_number_for_capnproto_only(repo_root: Path) -
     text = (repo_root / _CAPNP_MIGRATION).read_text()
     missing = [frag for frag in _CAPNP_FRAGMENTS if frag not in text]
     assert not missing, f"Migration missing expected fragments: {missing}"
+
+
+_FLATBUFFERS_MIGRATION = "apiome-db/scripts/V338__export_field_identities_flatbuffers_4178.sql"
+
+_FLATBUFFERS_FRAGMENTS = (
+    "DROP CONSTRAINT IF EXISTS export_field_identities_number_check",
+    "(target = 'capnproto' AND field_number >= 0)",
+    "(target = 'flatbuffers' AND field_number >= 0 AND field_number <= 65534)",
+    "OR (field_number >= 1 AND field_number <= 536870911)",
+)
+
+
+def test_flatbuffers_migration_allows_id_zero_for_flatbuffers_only(repo_root: Path) -> None:
+    """V338 (MFX-30.1, #4178): FlatBuffers field ids start at 0; capnproto keeps its V337 range."""
+    text = (repo_root / _FLATBUFFERS_MIGRATION).read_text()
+    missing = [frag for frag in _FLATBUFFERS_FRAGMENTS if frag not in text]
+    assert not missing, f"Migration missing expected fragments: {missing}"

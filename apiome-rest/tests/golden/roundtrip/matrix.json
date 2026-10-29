@@ -39302,7 +39302,7 @@
     },
     {
       "corpus_path": "cobol-copybook/01-customer-record.cpy",
-      "diff_count": 0,
+      "diff_count": 3,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 7,
@@ -39310,11 +39310,35 @@
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 0,
-      "overclaims": [],
-      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "overclaims": [
+        {
+          "construct": "CUSTOMER-RECORD.CUSTOMER-RECORD",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: unexplained: changed root '', removed type 'CUSTOMER-RECORD.CUSTOMER-RECORD', added type 'CUSTOMER_RECORD.CUSTOMER_RECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
       "source_format": "cobolcopybook",
       "status": "xfail",
-      "unexplained": []
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "CUSTOMER-RECORD.CUSTOMER-RECORD"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CUSTOMER_RECORD.CUSTOMER_RECORD"
+        }
+      ]
     },
     {
       "corpus_path": "cobol-copybook/01-customer-record.cpy",
@@ -68320,7 +68344,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'DTM', removed type 'EDIFACT-INVOIC.DTM', removed type 'EDIFACT-INVOIC.IMD', removed type 'EDIFACT-INVOIC.LIN', removed type 'EDIFACT-INVOIC.MOA', removed type 'EDIFACT-INVOIC.MessageINVOIC', removed type 'EDIFACT-INVOIC.NAD', removed type 'EDIFACT-INVOIC.PRI', removed type 'EDIFACT-INVOIC.QTY', removed type 'EDIFACT-INVOIC.RFF', removed type 'EDIFACT-INVOIC.TAX', added type 'IMD', added type 'LIN', added type 'MOA', added type 'MessageINVOIC', added type 'NAD', added type 'PRI', added type 'QTY', added type 'RFF', added type 'TAX'; overclaim: OK 'EDIFACT-INVOIC.DTM', OK 'EDIFACT-INVOIC.IMD', OK 'EDIFACT-INVOIC.LIN', OK 'EDIFACT-INVOIC.MOA', OK 'EDIFACT-INVOIC.MessageINVOIC', OK 'EDIFACT-INVOIC.NAD', OK 'EDIFACT-INVOIC.PRI', OK 'EDIFACT-INVOIC.QTY', OK 'EDIFACT-INVOIC.RFF', OK 'EDIFACT-INVOIC.TAX')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'EDIFACT-INVOIC.DTM', removed type 'EDIFACT-INVOIC.IMD', removed type 'EDIFACT-INVOIC.LIN', removed type 'EDIFACT-INVOIC.MOA', removed type 'EDIFACT-INVOIC.MessageINVOIC', removed type 'EDIFACT-INVOIC.NAD', removed type 'EDIFACT-INVOIC.PRI', removed type 'EDIFACT-INVOIC.QTY', removed type 'EDIFACT-INVOIC.RFF', removed type 'EDIFACT-INVOIC.TAX', added type 'EDIFACT_INVOIC.DTM', added type 'EDIFACT_INVOIC.IMD', added type 'EDIFACT_INVOIC.LIN', added type 'EDIFACT_INVOIC.MOA', added type 'EDIFACT_INVOIC.MessageINVOIC', added type 'EDIFACT_INVOIC.NAD', added type 'EDIFACT_INVOIC.PRI', added type 'EDIFACT_INVOIC.QTY', added type 'EDIFACT_INVOIC.RFF', added type 'EDIFACT_INVOIC.TAX'; overclaim: OK 'EDIFACT-INVOIC.DTM', OK 'EDIFACT-INVOIC.IMD', OK 'EDIFACT-INVOIC.LIN', OK 'EDIFACT-INVOIC.MOA', OK 'EDIFACT-INVOIC.MessageINVOIC', OK 'EDIFACT-INVOIC.NAD', OK 'EDIFACT-INVOIC.PRI', OK 'EDIFACT-INVOIC.QTY', OK 'EDIFACT-INVOIC.RFF', OK 'EDIFACT-INVOIC.TAX')",
       "source_format": "edifact",
       "status": "xfail",
       "unexplained": [
@@ -68328,11 +68352,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "DTM"
         },
         {
           "change": "removed",
@@ -68387,47 +68406,52 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "IMD"
+          "key": "EDIFACT_INVOIC.DTM"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "LIN"
+          "key": "EDIFACT_INVOIC.IMD"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "MOA"
+          "key": "EDIFACT_INVOIC.LIN"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "MessageINVOIC"
+          "key": "EDIFACT_INVOIC.MOA"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "NAD"
+          "key": "EDIFACT_INVOIC.MessageINVOIC"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "PRI"
+          "key": "EDIFACT_INVOIC.NAD"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "QTY"
+          "key": "EDIFACT_INVOIC.PRI"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "RFF"
+          "key": "EDIFACT_INVOIC.QTY"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "TAX"
+          "key": "EDIFACT_INVOIC.RFF"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "EDIFACT_INVOIC.TAX"
         }
       ]
     },
@@ -71593,7 +71617,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'PO1', added type 'TransactionSet850', removed type 'X12-850.PO1', removed type 'X12-850.TransactionSet850'; overclaim: OK 'X12-850.PO1', OK 'X12-850.TransactionSet850')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'X12-850.PO1', removed type 'X12-850.TransactionSet850', added type 'X12_850.PO1', added type 'X12_850.TransactionSet850'; overclaim: OK 'X12-850.PO1', OK 'X12-850.TransactionSet850')",
       "source_format": "edix12",
       "status": "xfail",
       "unexplained": [
@@ -71601,16 +71625,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "PO1"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "TransactionSet850"
         },
         {
           "change": "removed",
@@ -71621,6 +71635,16 @@
           "change": "removed",
           "entity": "type",
           "key": "X12-850.TransactionSet850"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "X12_850.PO1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "X12_850.TransactionSet850"
         }
       ]
     },
@@ -77757,14 +77781,14 @@
     },
     {
       "corpus_path": "fix/02-executionreport.fix",
-      "diff_count": 2,
+      "diff_count": 3,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 21,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 0,
       "overclaims": [
         {
           "construct": "FIX.4.4.Message8",
@@ -77774,7 +77798,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'FIX.4.4.Message8')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'FIX.4.4.Message8', added type 'FIX._4._4.Message8'; overclaim: OK 'FIX.4.4.Message8')",
       "source_format": "fix",
       "status": "xfail",
       "unexplained": [
@@ -77782,6 +77806,16 @@
           "change": "changed",
           "entity": "root",
           "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "FIX.4.4.Message8"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "FIX._4._4.Message8"
         }
       ]
     },
@@ -79682,7 +79716,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'FIX.4.4_EP001.Instrument', added type 'FIX.4.4_EP001.NewOrderSingle', added type 'FIX.4.4_EP001.OrdTypeCodeSet', added type 'FIX.4.4_EP001.OrderCancelRequest', added type 'FIX.4.4_EP001.SideCodeSet', added type 'FIX.4.4_EP001.TimeInForceCodeSet', removed type 'Instrument', removed type 'NewOrderSingle', removed type 'OrdTypeCodeSet', removed type 'OrderCancelRequest', removed type 'SideCodeSet', removed type 'TimeInForceCodeSet'; overclaim: OK 'Instrument', OK 'NewOrderSingle', OK 'OrdTypeCodeSet', OK 'OrderCancelRequest', OK 'SideCodeSet', OK 'TimeInForceCodeSet')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'FIX._4._4_EP001.Instrument', added type 'FIX._4._4_EP001.NewOrderSingle', added type 'FIX._4._4_EP001.OrdTypeCodeSet', added type 'FIX._4._4_EP001.OrderCancelRequest', added type 'FIX._4._4_EP001.SideCodeSet', added type 'FIX._4._4_EP001.TimeInForceCodeSet', removed type 'Instrument', removed type 'NewOrderSingle', removed type 'OrdTypeCodeSet', removed type 'OrderCancelRequest', removed type 'SideCodeSet', removed type 'TimeInForceCodeSet'; overclaim: OK 'Instrument', OK 'NewOrderSingle', OK 'OrdTypeCodeSet', OK 'OrderCancelRequest', OK 'SideCodeSet', OK 'TimeInForceCodeSet')",
       "source_format": "fix-orchestra",
       "status": "xfail",
       "unexplained": [
@@ -79694,32 +79728,32 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.Instrument"
+          "key": "FIX._4._4_EP001.Instrument"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.NewOrderSingle"
+          "key": "FIX._4._4_EP001.NewOrderSingle"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.OrdTypeCodeSet"
+          "key": "FIX._4._4_EP001.OrdTypeCodeSet"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.OrderCancelRequest"
+          "key": "FIX._4._4_EP001.OrderCancelRequest"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.SideCodeSet"
+          "key": "FIX._4._4_EP001.SideCodeSet"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "FIX.4.4_EP001.TimeInForceCodeSet"
+          "key": "FIX._4._4_EP001.TimeInForceCodeSet"
         },
         {
           "change": "removed",
@@ -95831,7 +95865,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'ADT-A01.MSH', removed type 'ADT-A01.MessageADTA01', added type 'MSH', added type 'MessageADTA01'; overclaim: OK 'ADT-A01.MSH', OK 'ADT-A01.MessageADTA01')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'ADT-A01.MSH', removed type 'ADT-A01.MessageADTA01', added type 'ADT_A01.MSH', added type 'ADT_A01.MessageADTA01'; overclaim: OK 'ADT-A01.MSH', OK 'ADT-A01.MessageADTA01')",
       "source_format": "hl7v2",
       "status": "xfail",
       "unexplained": [
@@ -95853,12 +95887,12 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "MSH"
+          "key": "ADT_A01.MSH"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "MessageADTA01"
+          "key": "ADT_A01.MessageADTA01"
         }
       ]
     },
@@ -114191,7 +114225,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'E1EDK01', added type 'E1EDK03', added type 'E1EDK14', added type 'E1EDKA1', added type 'E1EDP01', added type 'E1EDP19', added type 'E1EDP26', added type 'E1EDS01', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'IDOC-ORDERS05.E1EDK01', removed type 'IDOC-ORDERS05.E1EDK03', removed type 'IDOC-ORDERS05.E1EDK14', removed type 'IDOC-ORDERS05.E1EDKA1', removed type 'IDOC-ORDERS05.E1EDP01', removed type 'IDOC-ORDERS05.E1EDP19', removed type 'IDOC-ORDERS05.E1EDP26', removed type 'IDOC-ORDERS05.E1EDS01', removed type 'IDOC-ORDERS05.ORDERS05', added type 'IDOC_ORDERS05.E1EDK01', added type 'IDOC_ORDERS05.E1EDK03', added type 'IDOC_ORDERS05.E1EDK14', added type 'IDOC_ORDERS05.E1EDKA1', added type 'IDOC_ORDERS05.E1EDP01', added type 'IDOC_ORDERS05.E1EDP19', added type 'IDOC_ORDERS05.E1EDP26', added type 'IDOC_ORDERS05.E1EDS01', added type 'IDOC_ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
       "source_format": "idoc",
       "status": "xfail",
       "unexplained": [
@@ -114199,46 +114233,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDK01"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDK03"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDK14"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDKA1"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDP01"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDP19"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDP26"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "E1EDS01"
         },
         {
           "change": "removed",
@@ -114288,7 +114282,47 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "ORDERS05"
+          "key": "IDOC_ORDERS05.E1EDK01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDK03"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDK14"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDKA1"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDP01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDP19"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDP26"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.E1EDS01"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "IDOC_ORDERS05.ORDERS05"
         }
       ]
     },
@@ -117307,7 +117341,7 @@
     },
     {
       "corpus_path": "ims/02-typical-hdam-dbd.dbd",
-      "diff_count": 0,
+      "diff_count": 7,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 34,
@@ -117315,11 +117349,69 @@
       "loss_ok": 3,
       "loss_synth": 0,
       "matched_count": 0,
-      "overclaims": [],
-      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "overclaims": [
+        {
+          "construct": "ims.CUSTDB.ADDRESS",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ims.CUSTDB.CUSTOMER",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "ims.CUSTDB.ORDER",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: unexplained: changed root '', removed type 'ims.CUSTDB.ADDRESS', removed type 'ims.CUSTDB.CUSTOMER', removed type 'ims.CUSTDB.ORDER', added type 'ims.CUSTDB_ADDRESS', added type 'ims.CUSTDB_CUSTOMER', added type 'ims.CUSTDB_ORDER'; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER')",
       "source_format": "ims",
       "status": "xfail",
-      "unexplained": []
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "ims.CUSTDB.ADDRESS"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "ims.CUSTDB.CUSTOMER"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "ims.CUSTDB.ORDER"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ims.CUSTDB_ADDRESS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ims.CUSTDB_CUSTOMER"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ims.CUSTDB_ORDER"
+        }
+      ]
     },
     {
       "corpus_path": "ims/02-typical-hdam-dbd.dbd",
@@ -123685,14 +123777,14 @@
     },
     {
       "corpus_path": "iso20022/01-pain.001-credit-transfer.xml",
-      "diff_count": 19,
+      "diff_count": 37,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 36,
       "loss_drop": 0,
       "loss_ok": 18,
       "loss_synth": 0,
-      "matched_count": 18,
+      "matched_count": 0,
       "overclaims": [
         {
           "construct": "pain.001.001.09.Amt",
@@ -123821,7 +123913,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'pain.001.001.09.Amt', removed type 'pain.001.001.09.CdtTrfTxInf', removed type 'pain.001.001.09.Cdtr', removed type 'pain.001.001.09.CdtrAcct', removed type 'pain.001.001.09.CdtrAgt', removed type 'pain.001.001.09.CstmrCdtTrfInitn', removed type 'pain.001.001.09.Dbtr', removed type 'pain.001.001.09.DbtrAcct', removed type 'pain.001.001.09.DbtrAgt', removed type 'pain.001.001.09.Document', removed type 'pain.001.001.09.FinInstnId', removed type 'pain.001.001.09.GrpHdr', removed type 'pain.001.001.09.Id', removed type 'pain.001.001.09.InitgPty', removed type 'pain.001.001.09.PmtId', removed type 'pain.001.001.09.PmtInf', removed type 'pain.001.001.09.ReqdExctnDt', removed type 'pain.001.001.09.RmtInf', added type 'pain._001._001._09.Amt', added type 'pain._001._001._09.CdtTrfTxInf', added type 'pain._001._001._09.Cdtr', added type 'pain._001._001._09.CdtrAcct', added type 'pain._001._001._09.CdtrAgt', added type 'pain._001._001._09.CstmrCdtTrfInitn', added type 'pain._001._001._09.Dbtr', added type 'pain._001._001._09.DbtrAcct', added type 'pain._001._001._09.DbtrAgt', added type 'pain._001._001._09.Document', added type 'pain._001._001._09.FinInstnId', added type 'pain._001._001._09.GrpHdr', added type 'pain._001._001._09.Id', added type 'pain._001._001._09.InitgPty', added type 'pain._001._001._09.PmtId', added type 'pain._001._001._09.PmtInf', added type 'pain._001._001._09.ReqdExctnDt', added type 'pain._001._001._09.RmtInf'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf')",
       "source_format": "iso20022",
       "status": "xfail",
       "unexplained": [
@@ -123829,6 +123921,186 @@
           "change": "changed",
           "entity": "root",
           "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Amt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtTrfTxInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Cdtr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtrAcct"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtrAgt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CstmrCdtTrfInitn"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Dbtr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.DbtrAcct"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.DbtrAgt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Document"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.FinInstnId"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.GrpHdr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Id"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.InitgPty"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PmtId"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PmtInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.ReqdExctnDt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.RmtInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Amt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtTrfTxInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Cdtr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtrAcct"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtrAgt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CstmrCdtTrfInitn"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Dbtr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.DbtrAcct"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.DbtrAgt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Document"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.FinInstnId"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.GrpHdr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Id"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.InitgPty"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PmtId"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PmtInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.ReqdExctnDt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.RmtInf"
         }
       ]
     },
@@ -129461,14 +129733,14 @@
     },
     {
       "corpus_path": "iso8583/01-authorization-0100.json",
-      "diff_count": 13,
+      "diff_count": 25,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 22,
       "loss_drop": 0,
       "loss_ok": 12,
       "loss_synth": 0,
-      "matched_count": 12,
+      "matched_count": 0,
       "overclaims": [
         {
           "construct": "0100.DE11",
@@ -129555,7 +129827,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK '0100.DE11', OK '0100.DE12', OK '0100.DE13', OK '0100.DE18', OK '0100.DE2', OK '0100.DE3', OK '0100.DE32', OK '0100.DE4', OK '0100.DE41', OK '0100.DE49', OK '0100.DE7', OK '0100.Message0100')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type '0100.DE11', removed type '0100.DE12', removed type '0100.DE13', removed type '0100.DE18', removed type '0100.DE2', removed type '0100.DE3', removed type '0100.DE32', removed type '0100.DE4', removed type '0100.DE41', removed type '0100.DE49', removed type '0100.DE7', removed type '0100.Message0100', added type '_0100.DE11', added type '_0100.DE12', added type '_0100.DE13', added type '_0100.DE18', added type '_0100.DE2', added type '_0100.DE3', added type '_0100.DE32', added type '_0100.DE4', added type '_0100.DE41', added type '_0100.DE49', added type '_0100.DE7', added type '_0100.Message0100'; overclaim: OK '0100.DE11', OK '0100.DE12', OK '0100.DE13', OK '0100.DE18', OK '0100.DE2', OK '0100.DE3', OK '0100.DE32', OK '0100.DE4', OK '0100.DE41', OK '0100.DE49', OK '0100.DE7', OK '0100.Message0100')",
       "source_format": "iso8583",
       "status": "xfail",
       "unexplained": [
@@ -129563,6 +129835,126 @@
           "change": "changed",
           "entity": "root",
           "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE11"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE12"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE13"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE18"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE2"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE3"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE32"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE4"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE41"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE49"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.DE7"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "0100.Message0100"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE11"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE12"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE13"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE18"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE2"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE3"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE32"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE4"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE41"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE49"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.DE7"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "_0100.Message0100"
         }
       ]
     },
@@ -136966,7 +137358,7 @@
     },
     {
       "corpus_path": "jsonld/02-typical-context.jsonld",
-      "diff_count": 4,
+      "diff_count": 6,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 3,
@@ -136997,7 +137389,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
+      "reason": "unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: changed root '', removed type 'LanguageMap', added type 'LanguageMapEntry', added type 'TypicalContextTagsItem'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
       "source_format": "jsonld",
       "status": "xfail",
       "unexplained": [
@@ -137010,6 +137402,16 @@
           "change": "removed",
           "entity": "type",
           "key": "LanguageMap"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "LanguageMapEntry"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TypicalContextTagsItem"
         }
       ]
     },
@@ -148518,14 +148920,14 @@
     },
     {
       "corpus_path": "lwm2m/02-typical-ipso-temperature.xml",
-      "diff_count": 4,
+      "diff_count": 5,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Temperature",
@@ -148535,7 +148937,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'TemperatureService'; overclaim: OK 'Temperature' (observed: unexplained: changed root '', removed service 'TemperatureService'; overclaim: OK 'Temperature')",
+      "reason": "unexplained: changed root '', removed service 'TemperatureService'; overclaim: OK 'Temperature' (observed: unexplained: changed root '', removed service 'TemperatureService', removed type 'Temperature', added type 'urn_oma_lwm2m_ext_3303.Temperature'; overclaim: OK 'Temperature')",
       "source_format": "lwm2m",
       "status": "xfail",
       "unexplained": [
@@ -148548,6 +148950,16 @@
           "change": "removed",
           "entity": "service",
           "key": "TemperatureService"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Temperature"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "urn_oma_lwm2m_ext_3303.Temperature"
         }
       ]
     },
@@ -158842,7 +159254,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'AchFile', added type 'Batch', added type 'BatchControl', added type 'BatchHeader', added type 'EntryDetail', added type 'FileControl', added type 'FileHeader', removed type 'NACHA-ACH.AchFile', removed type 'NACHA-ACH.Batch', removed type 'NACHA-ACH.BatchControl', removed type 'NACHA-ACH.BatchHeader', removed type 'NACHA-ACH.EntryDetail', removed type 'NACHA-ACH.FileControl', removed type 'NACHA-ACH.FileHeader'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'NACHA-ACH.AchFile', removed type 'NACHA-ACH.Batch', removed type 'NACHA-ACH.BatchControl', removed type 'NACHA-ACH.BatchHeader', removed type 'NACHA-ACH.EntryDetail', removed type 'NACHA-ACH.FileControl', removed type 'NACHA-ACH.FileHeader', added type 'NACHA_ACH.AchFile', added type 'NACHA_ACH.Batch', added type 'NACHA_ACH.BatchControl', added type 'NACHA_ACH.BatchHeader', added type 'NACHA_ACH.EntryDetail', added type 'NACHA_ACH.FileControl', added type 'NACHA_ACH.FileHeader'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
       "source_format": "nacha",
       "status": "xfail",
       "unexplained": [
@@ -158850,41 +159262,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "AchFile"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Batch"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "BatchControl"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "BatchHeader"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "EntryDetail"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "FileControl"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "FileHeader"
         },
         {
           "change": "removed",
@@ -158920,6 +159297,41 @@
           "change": "removed",
           "entity": "type",
           "key": "NACHA-ACH.FileHeader"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.AchFile"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.Batch"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.BatchControl"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.BatchHeader"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.EntryDetail"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.FileControl"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NACHA_ACH.FileHeader"
         }
       ]
     },
@@ -161398,7 +161810,7 @@
     },
     {
       "corpus_path": "natural-ddm/02-typical-customer-ddm.ddm",
-      "diff_count": 0,
+      "diff_count": 3,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 20,
@@ -161406,11 +161818,35 @@
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 0,
-      "overclaims": [],
-      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "overclaims": [
+        {
+          "construct": "natural.CUSTOMER-FILE",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: unexplained: changed root '', removed type 'natural.CUSTOMER-FILE', added type 'natural.CUSTOMER_FILE'; overclaim: OK 'natural.CUSTOMER-FILE')",
       "source_format": "natural-ddm",
       "status": "xfail",
-      "unexplained": []
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "natural.CUSTOMER-FILE"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "natural.CUSTOMER_FILE"
+        }
+      ]
     },
     {
       "corpus_path": "natural-ddm/02-typical-customer-ddm.ddm",
@@ -166009,7 +166445,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'Address', added type 'Body', added type 'CommunicationNumbers', added type 'DateOfBirth', added type 'Diagnosis', added type 'DrugCoded', added type 'DrugDBCode', added type 'From', added type 'Header', added type 'HumanPatient', added type 'Identification', added type 'MedicationPrescribed', added type 'Message', removed type 'NCPDP-SCRIPT.Address', removed type 'NCPDP-SCRIPT.Body', removed type 'NCPDP-SCRIPT.CommunicationNumbers', removed type 'NCPDP-SCRIPT.DateOfBirth', removed type 'NCPDP-SCRIPT.Diagnosis', removed type 'NCPDP-SCRIPT.DrugCoded', removed type 'NCPDP-SCRIPT.DrugDBCode', removed type 'NCPDP-SCRIPT.From', removed type 'NCPDP-SCRIPT.Header', removed type 'NCPDP-SCRIPT.HumanPatient', removed type 'NCPDP-SCRIPT.Identification', removed type 'NCPDP-SCRIPT.MedicationPrescribed', removed type 'NCPDP-SCRIPT.Message', removed type 'NCPDP-SCRIPT.Name', removed type 'NCPDP-SCRIPT.NewRx', removed type 'NCPDP-SCRIPT.NonVeterinarian', removed type 'NCPDP-SCRIPT.Patient', removed type 'NCPDP-SCRIPT.Pharmacy', removed type 'NCPDP-SCRIPT.PracticeLocation', removed type 'NCPDP-SCRIPT.Prescriber', removed type 'NCPDP-SCRIPT.Primary', removed type 'NCPDP-SCRIPT.PrimaryTelephone', removed type 'NCPDP-SCRIPT.Quantity', removed type 'NCPDP-SCRIPT.QuantityUnitOfMeasure', removed type 'NCPDP-SCRIPT.SenderSoftware', removed type 'NCPDP-SCRIPT.Sig', removed type 'NCPDP-SCRIPT.Strength', removed type 'NCPDP-SCRIPT.StrengthForm', removed type 'NCPDP-SCRIPT.StrengthUnitOfMeasure', removed type 'NCPDP-SCRIPT.To', removed type 'NCPDP-SCRIPT.WrittenDate', added type 'Name', added type 'NewRx', added type 'NonVeterinarian', added type 'Patient', added type 'Pharmacy', added type 'PracticeLocation', added type 'Prescriber', added type 'Primary', added type 'PrimaryTelephone', added type 'Quantity', added type 'QuantityUnitOfMeasure', added type 'SenderSoftware', added type 'Sig', added type 'Strength', added type 'StrengthForm', added type 'StrengthUnitOfMeasure', added type 'To', added type 'WrittenDate'; overclaim: OK 'NCPDP-SCRIPT.Address', OK 'NCPDP-SCRIPT.Body', OK 'NCPDP-SCRIPT.CommunicationNumbers', OK 'NCPDP-SCRIPT.DateOfBirth', OK 'NCPDP-SCRIPT.Diagnosis', OK 'NCPDP-SCRIPT.DrugCoded', OK 'NCPDP-SCRIPT.DrugDBCode', OK 'NCPDP-SCRIPT.From', OK 'NCPDP-SCRIPT.Header', OK 'NCPDP-SCRIPT.HumanPatient', OK 'NCPDP-SCRIPT.Identification', OK 'NCPDP-SCRIPT.MedicationPrescribed', OK 'NCPDP-SCRIPT.Message', OK 'NCPDP-SCRIPT.Name', OK 'NCPDP-SCRIPT.NewRx', OK 'NCPDP-SCRIPT.NonVeterinarian', OK 'NCPDP-SCRIPT.Patient', OK 'NCPDP-SCRIPT.Pharmacy', OK 'NCPDP-SCRIPT.PracticeLocation', OK 'NCPDP-SCRIPT.Prescriber', OK 'NCPDP-SCRIPT.Primary', OK 'NCPDP-SCRIPT.PrimaryTelephone', OK 'NCPDP-SCRIPT.Quantity', OK 'NCPDP-SCRIPT.QuantityUnitOfMeasure', OK 'NCPDP-SCRIPT.SenderSoftware', OK 'NCPDP-SCRIPT.Sig', OK 'NCPDP-SCRIPT.Strength', OK 'NCPDP-SCRIPT.StrengthForm', OK 'NCPDP-SCRIPT.StrengthUnitOfMeasure', OK 'NCPDP-SCRIPT.To', OK 'NCPDP-SCRIPT.WrittenDate')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'NCPDP-SCRIPT.Address', removed type 'NCPDP-SCRIPT.Body', removed type 'NCPDP-SCRIPT.CommunicationNumbers', removed type 'NCPDP-SCRIPT.DateOfBirth', removed type 'NCPDP-SCRIPT.Diagnosis', removed type 'NCPDP-SCRIPT.DrugCoded', removed type 'NCPDP-SCRIPT.DrugDBCode', removed type 'NCPDP-SCRIPT.From', removed type 'NCPDP-SCRIPT.Header', removed type 'NCPDP-SCRIPT.HumanPatient', removed type 'NCPDP-SCRIPT.Identification', removed type 'NCPDP-SCRIPT.MedicationPrescribed', removed type 'NCPDP-SCRIPT.Message', removed type 'NCPDP-SCRIPT.Name', removed type 'NCPDP-SCRIPT.NewRx', removed type 'NCPDP-SCRIPT.NonVeterinarian', removed type 'NCPDP-SCRIPT.Patient', removed type 'NCPDP-SCRIPT.Pharmacy', removed type 'NCPDP-SCRIPT.PracticeLocation', removed type 'NCPDP-SCRIPT.Prescriber', removed type 'NCPDP-SCRIPT.Primary', removed type 'NCPDP-SCRIPT.PrimaryTelephone', removed type 'NCPDP-SCRIPT.Quantity', removed type 'NCPDP-SCRIPT.QuantityUnitOfMeasure', removed type 'NCPDP-SCRIPT.SenderSoftware', removed type 'NCPDP-SCRIPT.Sig', removed type 'NCPDP-SCRIPT.Strength', removed type 'NCPDP-SCRIPT.StrengthForm', removed type 'NCPDP-SCRIPT.StrengthUnitOfMeasure', removed type 'NCPDP-SCRIPT.To', removed type 'NCPDP-SCRIPT.WrittenDate', added type 'NCPDP_SCRIPT.Address', added type 'NCPDP_SCRIPT.Body', added type 'NCPDP_SCRIPT.CommunicationNumbers', added type 'NCPDP_SCRIPT.DateOfBirth', added type 'NCPDP_SCRIPT.Diagnosis', added type 'NCPDP_SCRIPT.DrugCoded', added type 'NCPDP_SCRIPT.DrugDBCode', added type 'NCPDP_SCRIPT.From', added type 'NCPDP_SCRIPT.Header', added type 'NCPDP_SCRIPT.HumanPatient', added type 'NCPDP_SCRIPT.Identification', added type 'NCPDP_SCRIPT.MedicationPrescribed', added type 'NCPDP_SCRIPT.Message', added type 'NCPDP_SCRIPT.Name', added type 'NCPDP_SCRIPT.NewRx', added type 'NCPDP_SCRIPT.NonVeterinarian', added type 'NCPDP_SCRIPT.Patient', added type 'NCPDP_SCRIPT.Pharmacy', added type 'NCPDP_SCRIPT.PracticeLocation', added type 'NCPDP_SCRIPT.Prescriber', added type 'NCPDP_SCRIPT.Primary', added type 'NCPDP_SCRIPT.PrimaryTelephone', added type 'NCPDP_SCRIPT.Quantity', added type 'NCPDP_SCRIPT.QuantityUnitOfMeasure', added type 'NCPDP_SCRIPT.SenderSoftware', added type 'NCPDP_SCRIPT.Sig', added type 'NCPDP_SCRIPT.Strength', added type 'NCPDP_SCRIPT.StrengthForm', added type 'NCPDP_SCRIPT.StrengthUnitOfMeasure', added type 'NCPDP_SCRIPT.To', added type 'NCPDP_SCRIPT.WrittenDate'; overclaim: OK 'NCPDP-SCRIPT.Address', OK 'NCPDP-SCRIPT.Body', OK 'NCPDP-SCRIPT.CommunicationNumbers', OK 'NCPDP-SCRIPT.DateOfBirth', OK 'NCPDP-SCRIPT.Diagnosis', OK 'NCPDP-SCRIPT.DrugCoded', OK 'NCPDP-SCRIPT.DrugDBCode', OK 'NCPDP-SCRIPT.From', OK 'NCPDP-SCRIPT.Header', OK 'NCPDP-SCRIPT.HumanPatient', OK 'NCPDP-SCRIPT.Identification', OK 'NCPDP-SCRIPT.MedicationPrescribed', OK 'NCPDP-SCRIPT.Message', OK 'NCPDP-SCRIPT.Name', OK 'NCPDP-SCRIPT.NewRx', OK 'NCPDP-SCRIPT.NonVeterinarian', OK 'NCPDP-SCRIPT.Patient', OK 'NCPDP-SCRIPT.Pharmacy', OK 'NCPDP-SCRIPT.PracticeLocation', OK 'NCPDP-SCRIPT.Prescriber', OK 'NCPDP-SCRIPT.Primary', OK 'NCPDP-SCRIPT.PrimaryTelephone', OK 'NCPDP-SCRIPT.Quantity', OK 'NCPDP-SCRIPT.QuantityUnitOfMeasure', OK 'NCPDP-SCRIPT.SenderSoftware', OK 'NCPDP-SCRIPT.Sig', OK 'NCPDP-SCRIPT.Strength', OK 'NCPDP-SCRIPT.StrengthForm', OK 'NCPDP-SCRIPT.StrengthUnitOfMeasure', OK 'NCPDP-SCRIPT.To', OK 'NCPDP-SCRIPT.WrittenDate')",
       "source_format": "ncpdp",
       "status": "xfail",
       "unexplained": [
@@ -166017,71 +166453,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Address"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Body"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CommunicationNumbers"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "DateOfBirth"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Diagnosis"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "DrugCoded"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "DrugDBCode"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "From"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Header"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "HumanPatient"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Identification"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "MedicationPrescribed"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Message"
         },
         {
           "change": "removed",
@@ -166241,92 +166612,157 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "Name"
+          "key": "NCPDP_SCRIPT.Address"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "NewRx"
+          "key": "NCPDP_SCRIPT.Body"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "NonVeterinarian"
+          "key": "NCPDP_SCRIPT.CommunicationNumbers"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Patient"
+          "key": "NCPDP_SCRIPT.DateOfBirth"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Pharmacy"
+          "key": "NCPDP_SCRIPT.Diagnosis"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "PracticeLocation"
+          "key": "NCPDP_SCRIPT.DrugCoded"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Prescriber"
+          "key": "NCPDP_SCRIPT.DrugDBCode"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Primary"
+          "key": "NCPDP_SCRIPT.From"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "PrimaryTelephone"
+          "key": "NCPDP_SCRIPT.Header"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Quantity"
+          "key": "NCPDP_SCRIPT.HumanPatient"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "QuantityUnitOfMeasure"
+          "key": "NCPDP_SCRIPT.Identification"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "SenderSoftware"
+          "key": "NCPDP_SCRIPT.MedicationPrescribed"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Sig"
+          "key": "NCPDP_SCRIPT.Message"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "Strength"
+          "key": "NCPDP_SCRIPT.Name"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "StrengthForm"
+          "key": "NCPDP_SCRIPT.NewRx"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "StrengthUnitOfMeasure"
+          "key": "NCPDP_SCRIPT.NonVeterinarian"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "To"
+          "key": "NCPDP_SCRIPT.Patient"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "WrittenDate"
+          "key": "NCPDP_SCRIPT.Pharmacy"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.PracticeLocation"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.Prescriber"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.Primary"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.PrimaryTelephone"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.Quantity"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.QuantityUnitOfMeasure"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.SenderSoftware"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.Sig"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.Strength"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.StrengthForm"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.StrengthUnitOfMeasure"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.To"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "NCPDP_SCRIPT.WrittenDate"
         }
       ]
     },
@@ -185961,7 +186397,7 @@
     },
     {
       "corpus_path": "onc-rpc/01-key-value-store.x",
-      "diff_count": 9,
+      "diff_count": 10,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 8,
@@ -185999,7 +186435,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'KV_PROG.KV_PROG', changed type 'KV_PROG.kv_get_res', changed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_get_res', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'KV_PROG.KV_PROG', added type 'KV_PROG.KvGetResVoid', changed type 'KV_PROG.kv_get_res', changed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_get_res', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": [
@@ -186012,6 +186448,11 @@
           "change": "removed",
           "entity": "service",
           "key": "KV_PROG.KV_PROG"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "KV_PROG.KvGetResVoid"
         },
         {
           "change": "changed",
@@ -188707,14 +189148,14 @@
     },
     {
       "corpus_path": "opcua-nodeset/02-typical-machine-type.xml",
-      "diff_count": 6,
+      "diff_count": 9,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 5,
       "loss_drop": 1,
       "loss_ok": 3,
       "loss_synth": 4,
-      "matched_count": 3,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "MachineState",
@@ -188738,7 +189179,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'MachineType', changed type 'MachineState'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request' (observed: unexplained: changed root '', removed service 'MachineType', changed type 'MachineState'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request')",
+      "reason": "unexplained: changed root '', removed service 'MachineType', changed type 'MachineState'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request' (observed: unexplained: changed root '', removed service 'MachineType', removed type 'MachineState', removed type 'MachineType', removed type 'MachineType_Start_Request', added type 'http_example.com_UA_Machine.MachineState', added type 'http_example.com_UA_Machine.MachineType', added type 'http_example.com_UA_Machine.MachineType_Start_Request'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request')",
       "source_format": "opcua-nodeset",
       "status": "xfail",
       "unexplained": [
@@ -188753,9 +189194,34 @@
           "key": "MachineType"
         },
         {
-          "change": "changed",
+          "change": "removed",
           "entity": "type",
           "key": "MachineState"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "MachineType"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "MachineType_Start_Request"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_UA_Machine.MachineState"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_UA_Machine.MachineType"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_UA_Machine.MachineType_Start_Request"
         }
       ]
     },
@@ -200816,7 +201282,7 @@
     },
     {
       "corpus_path": "pli/02-typical-customer-record.pli",
-      "diff_count": 4,
+      "diff_count": 6,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 32,
@@ -200847,7 +201313,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: changed root '', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
+      "reason": "unexplained: changed root '', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: changed root '', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS', added type 'pli.CUSTOMER_REC_CUST_ADDRESS', added type 'pli.CUSTOMER_REC_CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
       "source_format": "pli",
       "status": "xfail",
       "unexplained": [
@@ -200865,6 +201331,16 @@
           "change": "removed",
           "entity": "type",
           "key": "pli.CUSTOMER_REC.CUST_CONTACTS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pli.CUSTOMER_REC_CUST_ADDRESS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pli.CUSTOMER_REC_CUST_CONTACTS"
         }
       ]
     },
@@ -208189,7 +208665,7 @@
     },
     {
       "corpus_path": "protobuf/02-grpc-service.proto",
-      "diff_count": 12,
+      "diff_count": 13,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 2,
@@ -208248,7 +208724,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'example.catalog.v1.ProductService', changed type 'example.catalog.v1.CreateProductRequest', changed type 'example.catalog.v1.Dimensions', changed type 'example.catalog.v1.GetProductRequest', changed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'example.catalog.v1.ProductService', added type 'example.catalog.v1.AttributesEntryEntry', changed type 'example.catalog.v1.CreateProductRequest', changed type 'example.catalog.v1.Dimensions', changed type 'example.catalog.v1.GetProductRequest', changed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry')",
       "source_format": "protobuf",
       "status": "xfail",
       "unexplained": [
@@ -208261,6 +208737,11 @@
           "change": "removed",
           "entity": "service",
           "key": "example.catalog.v1.ProductService"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.catalog.v1.AttributesEntryEntry"
         },
         {
           "change": "changed",
@@ -225607,14 +226088,14 @@
     },
     {
       "corpus_path": "sepa/02-typical-pain001-batch.xml",
-      "diff_count": 26,
+      "diff_count": 51,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 59,
       "loss_drop": 0,
       "loss_ok": 25,
       "loss_synth": 0,
-      "matched_count": 25,
+      "matched_count": 0,
       "overclaims": [
         {
           "construct": "pain.001.001.09.Amt",
@@ -225792,7 +226273,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.CtgyPurp', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.OrgId', OK 'pain.001.001.09.Othr', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.PmtTpInf', OK 'pain.001.001.09.PstlAdr', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf', OK 'pain.001.001.09.SchmeNm', OK 'pain.001.001.09.SvcLvl')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'pain.001.001.09.Amt', removed type 'pain.001.001.09.CdtTrfTxInf', removed type 'pain.001.001.09.Cdtr', removed type 'pain.001.001.09.CdtrAcct', removed type 'pain.001.001.09.CdtrAgt', removed type 'pain.001.001.09.CstmrCdtTrfInitn', removed type 'pain.001.001.09.CtgyPurp', removed type 'pain.001.001.09.Dbtr', removed type 'pain.001.001.09.DbtrAcct', removed type 'pain.001.001.09.DbtrAgt', removed type 'pain.001.001.09.Document', removed type 'pain.001.001.09.FinInstnId', removed type 'pain.001.001.09.GrpHdr', removed type 'pain.001.001.09.Id', removed type 'pain.001.001.09.InitgPty', removed type 'pain.001.001.09.OrgId', removed type 'pain.001.001.09.Othr', removed type 'pain.001.001.09.PmtId', removed type 'pain.001.001.09.PmtInf', removed type 'pain.001.001.09.PmtTpInf', removed type 'pain.001.001.09.PstlAdr', removed type 'pain.001.001.09.ReqdExctnDt', removed type 'pain.001.001.09.RmtInf', removed type 'pain.001.001.09.SchmeNm', removed type 'pain.001.001.09.SvcLvl', added type 'pain._001._001._09.Amt', added type 'pain._001._001._09.CdtTrfTxInf', added type 'pain._001._001._09.Cdtr', added type 'pain._001._001._09.CdtrAcct', added type 'pain._001._001._09.CdtrAgt', added type 'pain._001._001._09.CstmrCdtTrfInitn', added type 'pain._001._001._09.CtgyPurp', added type 'pain._001._001._09.Dbtr', added type 'pain._001._001._09.DbtrAcct', added type 'pain._001._001._09.DbtrAgt', added type 'pain._001._001._09.Document', added type 'pain._001._001._09.FinInstnId', added type 'pain._001._001._09.GrpHdr', added type 'pain._001._001._09.Id', added type 'pain._001._001._09.InitgPty', added type 'pain._001._001._09.OrgId', added type 'pain._001._001._09.Othr', added type 'pain._001._001._09.PmtId', added type 'pain._001._001._09.PmtInf', added type 'pain._001._001._09.PmtTpInf', added type 'pain._001._001._09.PstlAdr', added type 'pain._001._001._09.ReqdExctnDt', added type 'pain._001._001._09.RmtInf', added type 'pain._001._001._09.SchmeNm', added type 'pain._001._001._09.SvcLvl'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.CtgyPurp', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.OrgId', OK 'pain.001.001.09.Othr', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.PmtTpInf', OK 'pain.001.001.09.PstlAdr', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf', OK 'pain.001.001.09.SchmeNm', OK 'pain.001.001.09.SvcLvl')",
       "source_format": "sepa",
       "status": "xfail",
       "unexplained": [
@@ -225800,6 +226281,256 @@
           "change": "changed",
           "entity": "root",
           "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Amt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtTrfTxInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Cdtr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtrAcct"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CdtrAgt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CstmrCdtTrfInitn"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.CtgyPurp"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Dbtr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.DbtrAcct"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.DbtrAgt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Document"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.FinInstnId"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.GrpHdr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Id"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.InitgPty"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.OrgId"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.Othr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PmtId"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PmtInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PmtTpInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.PstlAdr"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.ReqdExctnDt"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.RmtInf"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.SchmeNm"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "pain.001.001.09.SvcLvl"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Amt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtTrfTxInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Cdtr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtrAcct"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CdtrAgt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CstmrCdtTrfInitn"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.CtgyPurp"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Dbtr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.DbtrAcct"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.DbtrAgt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Document"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.FinInstnId"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.GrpHdr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Id"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.InitgPty"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.OrgId"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.Othr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PmtId"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PmtInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PmtTpInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.PstlAdr"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.ReqdExctnDt"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.RmtInf"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.SchmeNm"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "pain._001._001._09.SvcLvl"
         }
       ]
     },
@@ -239195,7 +239926,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH')",
+      "reason": "unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1._0.NBIRTH'; overclaim: OK 'NBIRTH')",
       "source_format": "sparkplug",
       "status": "xfail",
       "unexplained": [
@@ -239217,7 +239948,7 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "spBv1.0.NBIRTH"
+          "key": "spBv1._0.NBIRTH"
         }
       ]
     },
@@ -253843,7 +254574,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'CodeWord', added type 'Field13C', added type 'Field20', added type 'Field23B', added type 'Field32A', added type 'Field33B', added type 'Field50K', added type 'Field52A', added type 'Field53B', added type 'Field57A', added type 'Field59', added type 'Field70', added type 'Field71A', added type 'Field72', added type 'MT103', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'SWIFT-MT103.CodeWord', removed type 'SWIFT-MT103.Field13C', removed type 'SWIFT-MT103.Field20', removed type 'SWIFT-MT103.Field23B', removed type 'SWIFT-MT103.Field32A', removed type 'SWIFT-MT103.Field33B', removed type 'SWIFT-MT103.Field50K', removed type 'SWIFT-MT103.Field52A', removed type 'SWIFT-MT103.Field53B', removed type 'SWIFT-MT103.Field57A', removed type 'SWIFT-MT103.Field59', removed type 'SWIFT-MT103.Field70', removed type 'SWIFT-MT103.Field71A', removed type 'SWIFT-MT103.Field72', removed type 'SWIFT-MT103.MT103', added type 'SWIFT_MT103.CodeWord', added type 'SWIFT_MT103.Field13C', added type 'SWIFT_MT103.Field20', added type 'SWIFT_MT103.Field23B', added type 'SWIFT_MT103.Field32A', added type 'SWIFT_MT103.Field33B', added type 'SWIFT_MT103.Field50K', added type 'SWIFT_MT103.Field52A', added type 'SWIFT_MT103.Field53B', added type 'SWIFT_MT103.Field57A', added type 'SWIFT_MT103.Field59', added type 'SWIFT_MT103.Field70', added type 'SWIFT_MT103.Field71A', added type 'SWIFT_MT103.Field72', added type 'SWIFT_MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
       "source_format": "swift-mt",
       "status": "xfail",
       "unexplained": [
@@ -253851,81 +254582,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CodeWord"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field13C"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field20"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field23B"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field32A"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field33B"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field50K"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field52A"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field53B"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field57A"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field59"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field70"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field71A"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Field72"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "MT103"
         },
         {
           "change": "removed",
@@ -254001,6 +254657,81 @@
           "change": "removed",
           "entity": "type",
           "key": "SWIFT-MT103.MT103"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.CodeWord"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field13C"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field20"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field23B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field32A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field33B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field50K"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field52A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field53B"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field57A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field59"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field70"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field71A"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.Field72"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "SWIFT_MT103.MT103"
         }
       ]
     },
@@ -263665,7 +264396,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'MessageORDERS', added type 'OLD', removed type 'TRADACOMS-ORDERS.MessageORDERS', removed type 'TRADACOMS-ORDERS.OLD'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'TRADACOMS-ORDERS.MessageORDERS', removed type 'TRADACOMS-ORDERS.OLD', added type 'TRADACOMS_ORDERS.MessageORDERS', added type 'TRADACOMS_ORDERS.OLD'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
       "source_format": "tradacoms",
       "status": "xfail",
       "unexplained": [
@@ -263673,16 +264404,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "MessageORDERS"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "OLD"
         },
         {
           "change": "removed",
@@ -263693,6 +264414,16 @@
           "change": "removed",
           "entity": "type",
           "key": "TRADACOMS-ORDERS.OLD"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TRADACOMS_ORDERS.MessageORDERS"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "TRADACOMS_ORDERS.OLD"
         }
       ]
     },
@@ -283259,7 +283990,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/bookstore.WADL API', added type 'Book', removed type 'http://example.com/bookstore.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/bookstore.WADL API', removed type 'http://example.com/bookstore.Book', added type 'http_example.com_bookstore.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
       "source_format": "wadl",
       "status": "xfail",
       "unexplained": [
@@ -283274,14 +284005,14 @@
           "key": "http://example.com/bookstore.WADL API"
         },
         {
-          "change": "added",
-          "entity": "type",
-          "key": "Book"
-        },
-        {
           "change": "removed",
           "entity": "type",
           "key": "http://example.com/bookstore.Book"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_bookstore.Book"
         }
       ]
     },
@@ -285638,7 +286369,7 @@
     },
     {
       "corpus_path": "wit/02-typical-calculator.wit",
-      "diff_count": 10,
+      "diff_count": 12,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 3,
@@ -285669,7 +286400,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'examples:calculator.calculate', removed service 'examples:calculator.calculator', removed type 'examples:calculator.calculate.calc-error', removed type 'examples:calculator.calculate.op', removed type 'examples:calculator.calculate.request', added type 'op', added type 'request'; overclaim: OK 'examples:calculator.calculate.calc-error', OK 'examples:calculator.calculate.op', OK 'examples:calculator.calculate.request')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'examples:calculator.calculate', removed service 'examples:calculator.calculator', removed type 'examples:calculator.calculate.calc-error', removed type 'examples:calculator.calculate.op', removed type 'examples:calculator.calculate.request', added type 'examples_calculator.CalcErrorString', added type 'examples_calculator.calc_error', added type 'examples_calculator.op', added type 'examples_calculator.request'; overclaim: OK 'examples:calculator.calculate.calc-error', OK 'examples:calculator.calculate.op', OK 'examples:calculator.calculate.request')",
       "source_format": "wit",
       "status": "xfail",
       "unexplained": [
@@ -285706,12 +286437,22 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "op"
+          "key": "examples_calculator.CalcErrorString"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "request"
+          "key": "examples_calculator.calc_error"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "examples_calculator.op"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "examples_calculator.request"
         }
       ]
     },
@@ -289204,7 +289945,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderPort', added type 'CancelOrderRequest', added type 'CancelOrderResponse', added type 'CreateOrderRequest', added type 'CreateOrderResponse', added type 'GetOrderRequest', added type 'GetOrderResponse', added type 'Order', added type 'OrderFault', added type 'OrderLine', removed type 'http://example.com/orders.CancelOrderRequest', removed type 'http://example.com/orders.CancelOrderResponse', removed type 'http://example.com/orders.CreateOrderRequest', removed type 'http://example.com/orders.CreateOrderResponse', removed type 'http://example.com/orders.GetOrderRequest', removed type 'http://example.com/orders.GetOrderResponse', removed type 'http://example.com/orders.Order', removed type 'http://example.com/orders.OrderFault', removed type 'http://example.com/orders.OrderLine'; overclaim: OK 'http://example.com/orders.CancelOrderRequest', OK 'http://example.com/orders.CancelOrderResponse', OK 'http://example.com/orders.CreateOrderRequest', OK 'http://example.com/orders.CreateOrderResponse', OK 'http://example.com/orders.GetOrderRequest', OK 'http://example.com/orders.GetOrderResponse', OK 'http://example.com/orders.Order', OK 'http://example.com/orders.OrderFault', OK 'http://example.com/orders.OrderLine')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderPort', removed type 'http://example.com/orders.CancelOrderRequest', removed type 'http://example.com/orders.CancelOrderResponse', removed type 'http://example.com/orders.CreateOrderRequest', removed type 'http://example.com/orders.CreateOrderResponse', removed type 'http://example.com/orders.GetOrderRequest', removed type 'http://example.com/orders.GetOrderResponse', removed type 'http://example.com/orders.Order', removed type 'http://example.com/orders.OrderFault', removed type 'http://example.com/orders.OrderLine', added type 'http_example.com_orders.CancelOrderRequest', added type 'http_example.com_orders.CancelOrderResponse', added type 'http_example.com_orders.CreateOrderRequest', added type 'http_example.com_orders.CreateOrderResponse', added type 'http_example.com_orders.GetOrderRequest', added type 'http_example.com_orders.GetOrderResponse', added type 'http_example.com_orders.Order', added type 'http_example.com_orders.OrderFault', added type 'http_example.com_orders.OrderLine'; overclaim: OK 'http://example.com/orders.CancelOrderRequest', OK 'http://example.com/orders.CancelOrderResponse', OK 'http://example.com/orders.CreateOrderRequest', OK 'http://example.com/orders.CreateOrderResponse', OK 'http://example.com/orders.GetOrderRequest', OK 'http://example.com/orders.GetOrderResponse', OK 'http://example.com/orders.Order', OK 'http://example.com/orders.OrderFault', OK 'http://example.com/orders.OrderLine')",
       "source_format": "wsdl",
       "status": "xfail",
       "unexplained": [
@@ -289217,51 +289958,6 @@
           "change": "removed",
           "entity": "service",
           "key": "http://example.com/orders.OrderPort"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CancelOrderRequest"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CancelOrderResponse"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CreateOrderRequest"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "CreateOrderResponse"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "GetOrderRequest"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "GetOrderResponse"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Order"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "OrderFault"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "OrderLine"
         },
         {
           "change": "removed",
@@ -289307,6 +290003,51 @@
           "change": "removed",
           "entity": "type",
           "key": "http://example.com/orders.OrderLine"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.CancelOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.CancelOrderResponse"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.CreateOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.CreateOrderResponse"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.GetOrderRequest"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.GetOrderResponse"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.Order"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.OrderFault"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.OrderLine"
         }
       ]
     },
@@ -293698,7 +294439,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', added type 'cancelOrder', added type 'getOrder', removed type 'http://example.com/orders.cancelOrder', removed type 'http://example.com/orders.getOrder', removed type 'http://example.com/orders.order', removed type 'http://example.com/orders.orderAck', removed type 'http://example.com/orders.orderFault', removed type 'http://example.com/orders.orderLine', removed type 'http://example.com/orders.placeOrder', added type 'order', added type 'orderAck', added type 'orderFault', added type 'orderLine', added type 'placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder' (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', added type 'cancelOrder', added type 'getOrder', removed type 'http://example.com/orders.cancelOrder', removed type 'http://example.com/orders.getOrder', removed type 'http://example.com/orders.order', removed type 'http://example.com/orders.orderAck', removed type 'http://example.com/orders.orderFault', removed type 'http://example.com/orders.orderLine', removed type 'http://example.com/orders.placeOrder', added type 'order', added type 'orderAck', added type 'orderFault', added type 'orderLine', added type 'placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder')",
+      "reason": "unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', added type 'cancelOrder', added type 'getOrder', removed type 'http://example.com/orders.cancelOrder', removed type 'http://example.com/orders.getOrder', removed type 'http://example.com/orders.order', removed type 'http://example.com/orders.orderAck', removed type 'http://example.com/orders.orderFault', removed type 'http://example.com/orders.orderLine', removed type 'http://example.com/orders.placeOrder', added type 'order', added type 'orderAck', added type 'orderFault', added type 'orderLine', added type 'placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder' (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', removed type 'http://example.com/orders.cancelOrder', removed type 'http://example.com/orders.getOrder', removed type 'http://example.com/orders.order', removed type 'http://example.com/orders.orderAck', removed type 'http://example.com/orders.orderFault', removed type 'http://example.com/orders.orderLine', removed type 'http://example.com/orders.placeOrder', added type 'http_example.com_orders.cancelOrder', added type 'http_example.com_orders.getOrder', added type 'http_example.com_orders.order', added type 'http_example.com_orders.orderAck', added type 'http_example.com_orders.orderFault', added type 'http_example.com_orders.orderLine', added type 'http_example.com_orders.placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder')",
       "source_format": "wsdl2",
       "status": "xfail",
       "unexplained": [
@@ -293711,16 +294452,6 @@
           "change": "removed",
           "entity": "service",
           "key": "http://example.com/orders.OrderInterface"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "cancelOrder"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "getOrder"
         },
         {
           "change": "removed",
@@ -293760,27 +294491,37 @@
         {
           "change": "added",
           "entity": "type",
-          "key": "order"
+          "key": "http_example.com_orders.cancelOrder"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "orderAck"
+          "key": "http_example.com_orders.getOrder"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "orderFault"
+          "key": "http_example.com_orders.order"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "orderLine"
+          "key": "http_example.com_orders.orderAck"
         },
         {
           "change": "added",
           "entity": "type",
-          "key": "placeOrder"
+          "key": "http_example.com_orders.orderFault"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.orderLine"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_orders.placeOrder"
         }
       ]
     },
@@ -300853,7 +301594,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'Address', added type 'Item', added type 'PurchaseOrder', added type 'Status', removed type 'http://example.com/po.Address', removed type 'http://example.com/po.Item', removed type 'http://example.com/po.PurchaseOrder', removed type 'http://example.com/po.Status'; overclaim: OK 'http://example.com/po.Address', OK 'http://example.com/po.Item', OK 'http://example.com/po.PurchaseOrder', OK 'http://example.com/po.Status')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'http://example.com/po.Address', removed type 'http://example.com/po.Item', removed type 'http://example.com/po.PurchaseOrder', removed type 'http://example.com/po.Status', added type 'http_example.com_po.Address', added type 'http_example.com_po.Item', added type 'http_example.com_po.PurchaseOrder', added type 'http_example.com_po.Status'; overclaim: OK 'http://example.com/po.Address', OK 'http://example.com/po.Item', OK 'http://example.com/po.PurchaseOrder', OK 'http://example.com/po.Status')",
       "source_format": "xsd",
       "status": "xfail",
       "unexplained": [
@@ -300861,26 +301602,6 @@
           "change": "changed",
           "entity": "root",
           "key": ""
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Address"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Item"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "PurchaseOrder"
-        },
-        {
-          "change": "added",
-          "entity": "type",
-          "key": "Status"
         },
         {
           "change": "removed",
@@ -300901,6 +301622,26 @@
           "change": "removed",
           "entity": "type",
           "key": "http://example.com/po.Status"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_po.Address"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_po.Item"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_po.PurchaseOrder"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "http_example.com_po.Status"
         }
       ]
     },
@@ -305804,19 +306545,99 @@
     },
     {
       "corpus_path": "zos-connect/01-api-requester.json",
-      "diff_count": 0,
+      "diff_count": 12,
       "emit_format": "flatbuffers",
       "emit_key": "flatbuffers",
       "loss_approx": 0,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [],
-      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "matched_count": 2,
+      "overclaims": [
+        {
+          "construct": "InventoryRequester.GET-STOCK-REQUEST",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "InventoryRequester.GET-STOCK-RESPONSE",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "InventoryRequester.RESERVE-REQUEST",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "InventoryRequester.RESERVE-RESPONSE",
+          "kind": "ok",
+          "message": "object carried to FlatBuffers",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: unexplained: changed root '', removed service 'InventoryRequester.InventoryRequester', removed type 'InventoryRequester.GET-STOCK-REQUEST', removed type 'InventoryRequester.GET-STOCK-RESPONSE', added type 'InventoryRequester.GET_STOCK_REQUEST', added type 'InventoryRequester.GET_STOCK_RESPONSE', removed type 'InventoryRequester.RESERVE-REQUEST', removed type 'InventoryRequester.RESERVE-RESPONSE', added type 'InventoryRequester.RESERVE_REQUEST', added type 'InventoryRequester.RESERVE_RESPONSE'; overclaim: OK 'InventoryRequester.GET-STOCK-REQUEST', OK 'InventoryRequester.GET-STOCK-RESPONSE', OK 'InventoryRequester.RESERVE-REQUEST', OK 'InventoryRequester.RESERVE-RESPONSE')",
       "source_format": "zosconnect",
       "status": "xfail",
-      "unexplained": []
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "InventoryRequester.InventoryRequester"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "InventoryRequester.GET-STOCK-REQUEST"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "InventoryRequester.GET-STOCK-RESPONSE"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "InventoryRequester.GET_STOCK_REQUEST"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "InventoryRequester.GET_STOCK_RESPONSE"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "InventoryRequester.RESERVE-REQUEST"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "InventoryRequester.RESERVE-RESPONSE"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "InventoryRequester.RESERVE_REQUEST"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "InventoryRequester.RESERVE_RESPONSE"
+        }
+      ]
     },
     {
       "corpus_path": "zos-connect/01-api-requester.json",
