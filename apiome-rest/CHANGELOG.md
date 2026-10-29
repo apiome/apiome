@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.528.0] - 2026-10-29
+
+### Added
+- **JSON Type Definition output mode (MFX-21.3, #4128).** The `json-schema` export takes `mode: "jtd"` and writes one
+  RFC 8927 document, `<Item>.jtd.json`, from the same canonical projection (`jsonschema_jtd.jtd_from_bundle`):
+  `$defs` → `definitions` and a root `ref`; records → `properties` / `optionalProperties`; maps → `values`; arrays →
+  `elements`; string enums → `enum`; `int32`, `float32` / `float64`, `boolean`, `string`, `date-time` → `timestamp`;
+  `description` → `metadata.description` (the only `metadata` key ajv's strict mode accepts). `mode: "jtd"` rejects
+  `draft`, `packaging` and `id_base`; a JSON Schema item is always rebuilt, never re-emitted.
+- Expressiveness losses, recorded with their JSON Pointer and filed by `JsonSchemaFidelityRulePack` on their type or
+  field when the report is computed for `mode: "jtd"`: `jtd-keyword-dropped` (DROP warn: `pattern`, bounds,
+  `multipleOf`, lengths, item counts, `uniqueItems`, formats other than `date-time`, `contentEncoding`),
+  `jtd-annotation-dropped` (DROP info: `title`, `deprecated`, `default`, `examples`), `jtd-widened` (APPROX warn: unions
+  and multi-type values written `{}`), `jtd-integer-as-float` (APPROX warn: non-`int32` integers as `float64`),
+  `jtd-enum-as-type` (APPROX warn) and `jtd-closed-records` (APPROX info, root). The root note reads
+  `document → JSON Type Definition` and renamed types map to `definitions/<key>`; format notes are not raised.
+- `jsonschema_jtd.check_jtd_schema` checks RFC 8927 §2.2 schema rules; `validate_jsonschema_document` (and so the
+  export validation gate) applies it to JTD output. Tests compile the output with ajv's JTD validator when Node is
+  available.
+
 ## [1.527.0] - 2026-10-29
 
 ### Changed

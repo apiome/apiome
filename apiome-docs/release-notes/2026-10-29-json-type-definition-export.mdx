@@ -1,0 +1,18 @@
+---
+slug: json-type-definition-export
+title: Export JSON Schema types as JSON Type Definition
+description: JSON Schema export gains a JTD mode with every expressiveness loss listed.
+authors: [apiome]
+---
+
+The **JSON Schema** export has a new **mode**, `jtd`, that writes the item's types as one
+JSON Type Definition (RFC 8927) document — the strict format ajv and the JTD code generators read.
+[How the types are written](/ship/export-a-spec#json-type-definition-jtd-mode).
+
+{/* truncate */}
+
+- **One document.** `<Name>.jtd.json`, with each type under `definitions`, records split into
+  `properties` and `optionalProperties`, and timestamps, 32-bit integers and floats as their JTD types.
+- **Every loss listed.** JTD has no patterns, bounds, formats, 64-bit integers or untagged unions; the
+  fidelity report names each one on the type or field it is in.
+- **Checked.** Every JTD export is checked against the schema rules of RFC 8927.
