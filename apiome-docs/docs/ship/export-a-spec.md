@@ -657,7 +657,8 @@ encoding:
 | An exclusive bound on an integer | The same range, inclusive: `> 0` is written `1..` |
 | An exclusive bound on a real | Approximated: written inclusive, because `asn1tools` cannot read `<` |
 | An `enum` of integers | A value set, `INTEGER (1 \| 2 \| 5)` |
-| `pattern` | `(PATTERN "…")` — noted, because X.680 reads it in its own regular-expression syntax |
+| A `pattern` that only lists the allowed characters, anchored at both ends (`^[A-Z0-9_]{3,8}$`, `^\d{4}$`) | A permitted alphabet with its length: `UTF8String (SIZE (3..8)) (FROM ("A".."Z" \| "0".."9" \| "_"))` |
+| Any other `pattern` (`^[A-Z]{3}-\d+$`) | A `-- pattern: …` comment above the field — `asn1tools` does not check it |
 | `multipleOf`, `uniqueItems`, an `enum` of strings, formats such as `email` | Dropped, and listed in the report |
 
 Options:
@@ -668,11 +669,25 @@ Options:
   (`{ iso(1) identified-organization(3) 6 }`). It is written after the module name.
 - **automatic_tags** — on by default (`AUTOMATIC TAGS`). Turn it off to keep an imported module's
   own tagging.
-- **include_comments** — on by default; turn it off to leave out the header and description comments.
+- **include_comments** — on by default; turn it off to leave out the header, description and pattern
+  comments.
 
 An item imported from ASN.1 exports back to an equivalent module that reads back unchanged, built-in
 types such as `OBJECT IDENTIFIER` and `PrintableString` included. A type the module imports from
 another module has no definition to write, so it is written as `UTF8String` and listed in the report.
+
+The fidelity report lists, on each type or field:
+
+| In the source | In the report |
+|---|---|
+| Operations, services and channels | Dropped (critical). An item that has any also gets a **types-only** warning counting them — export it to OpenAPI or AsyncAPI as well to keep them |
+| A rule written as subtype notation (lengths, bounds, item counts, a set of integers) | Carried, naming the notation used (`minLength/maxLength → SIZE`) |
+| A pattern written as a permitted alphabet | Approximated (note) |
+| Any other pattern, `multipleOf`, `uniqueItems`, a set of strings, a default with no ASN.1 value | Dropped |
+| An exclusive bound on a real, a map, a type with no ASN.1 form | Approximated |
+| A name respelled to the ASN.1 rules (`order_id` → `order-id`) | Synthesized (note) |
+| A type that refers to itself (`Node.next: Node`) | Carried |
+| A description, a document of another format, types read back under the module name | Approximated (note) |
 
 ### WADL from any source
 

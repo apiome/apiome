@@ -11,7 +11,9 @@ accepts it, kept apart from :mod:`app.asn1_emitter` so the writer reads as a map
 * **literals** — :func:`number_literal`, :func:`cstring_literal`;
 * **subtype notation** — :func:`value_range` (``(0..255)``, ``(1..MAX)``, ``(5)``) and
   :func:`size_constraint` (``(SIZE (1..20))``);
-* **module identifiers** — :func:`module_oid` (``1.3.6.1.4.1.99999`` → ``{ 1 3 6 1 4 1 99999 }``).
+* **module identifiers** — :func:`module_oid` (``1.3.6.1.4.1.99999`` → ``{ 1 3 6 1 4 1 99999 }``);
+* **permitted alphabets** — :func:`pattern_alphabet` turns an anchored one-class pattern
+  (``^[A-Z0-9_]{3,8}$``) into ``(FROM (…))`` and a size (MFX-27.2).
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ from __future__ import annotations
 import math
 import re
 from decimal import Decimal
-from typing import Dict, Optional, Set, Union
+from typing import Dict, List, Optional, Set, Union
 
 __all__ = [
     "RESERVED_WORDS",
@@ -29,6 +31,7 @@ __all__ = [
     "integer_bounds",
     "module_oid",
     "number_literal",
+    "pattern_alphabet",
     "size_constraint",
     "type_reference",
     "value_range",
@@ -192,3 +195,100 @@ def integer_bounds(
     if exclusive_maximum is not None:
         highs.append(math.ceil(exclusive_maximum) - 1)
     return (max(lows) if lows else None), (min(highs) if highs else None)
+
+
+#: ``^`` one character class (``[…]``, ``\d`` or ``\w``) one quantifier ``$`` — the patterns that say only
+#: "every character is one of these" (and how many there are).
+_SIMPLE_PATTERN = re.compile(r"^\^(\[(?!\^)(?P<cls>(?:\\.|[^\]\\])+)\]|\\(?P<esc>[dw]))"
+                             r"(?P<q>[*+?]|\{(?P<n>\d+)(?P<comma>,(?P<m>\d*))?\})\$$")
+#: The characters a class shorthand stands for.
+_SHORTHANDS = {"d": ["0-9"], "w": ["A-Z", "a-z", "0-9", "_"]}
+
+
+def pattern_alphabet(pattern: str) -> Optional[tuple[str, Optional[int], Optional[int]]]:
+    r"""A permitted-alphabet constraint equal to a simple pattern, or ``None`` when it is not simple.
+
+    Simple is anchored at both ends, one character class with no negation (``[A-Z0-9_-]``, ``\d``,
+    ``\w``) and one quantifier (``*``, ``+``, ``?``, ``{n}``, ``{n,}``, ``{n,m}``). An unanchored pattern
+    only asks for a match *somewhere*, so it says nothing about the whole value's alphabet.
+
+    Args:
+        pattern: An ECMAScript (JSON Schema) regular expression.
+
+    Returns:
+        ``('(FROM ("A".."Z" | "_"))', min_length, max_length)`` — the lengths the quantifier allows
+        (``None`` when unbounded) — or ``None``.
+    """
+    match = _SIMPLE_PATTERN.match(pattern or "")
+    if match is None:
+        return None
+    pieces = _class_pieces(match.group("cls")) if match.group("cls") else _SHORTHANDS[match.group("esc")]
+    if not pieces:
+        return None
+    alternatives: List[str] = []
+    for piece in pieces:
+        if piece in _SHORTHANDS:
+            piece_list = _SHORTHANDS[piece]
+        else:
+            piece_list = [piece]
+        for item in piece_list:
+            low, _, high = item.partition("-") if len(item) == 3 and item[1] == "-" else (item, "", "")
+            for char in (low, high):
+                if char and (cstring_literal(char) is None or not char.isprintable()):
+                    return None
+            alternatives.append(f'"{low}".."{high}"' if high else f'"{low}"')
+    quantifier = match.group("q")
+    if quantifier == "*":
+        size: tuple[Optional[int], Optional[int]] = (0, None)
+    elif quantifier == "+":
+        size = (1, None)
+    elif quantifier == "?":
+        size = (0, 1)
+    else:
+        n = int(match.group("n"))
+        if match.group("comma") is None:
+            size = (n, n)
+        else:
+            size = (n, int(match.group("m")) if match.group("m") else None)
+    return "(FROM (" + " | ".join(dict.fromkeys(alternatives)) + "))", size[0], size[1]
+
+
+def _class_pieces(body: str) -> Optional[List[str]]:
+    r"""The members of a character class body: ``a-z`` ranges, single characters, ``d`` / ``w`` shorthands.
+
+    Returns ``None`` for what an alphabet cannot state (``\s``, ``\b``, other escapes of letters).
+    """
+    tokens: List[str] = []
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if char == "\\":
+            if index + 1 >= len(body):
+                return None
+            escaped = body[index + 1]
+            if escaped in _SHORTHANDS:
+                tokens.append(escaped)
+                index += 2
+                continue
+            if escaped.isalnum():
+                return None
+            tokens.append(escaped)
+            index += 2
+            continue
+        tokens.append(char)
+        index += 1
+    pieces: List[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        is_range = (index + 2 < len(tokens) and tokens[index + 1] == "-" and token not in _SHORTHANDS
+                    and tokens[index + 2] not in _SHORTHANDS)
+        if is_range:
+            if ord(token) > ord(tokens[index + 2]):
+                return None
+            pieces.append(f"{token}-{tokens[index + 2]}")
+            index += 3
+        else:
+            pieces.append(token)
+            index += 1
+    return pieces

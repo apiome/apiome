@@ -1,0 +1,19 @@
+---
+slug: asn1-fidelity-report
+title: The ASN.1 export's report shows which constraints survive
+description: ASN.1 fidelity report marks subtype-covered constraints as carried and patterns as alphabets.
+authors: [apiome]
+---
+
+The fidelity report of an **ASN.1** export now says, field by field, which validation rules the
+module keeps and how. [What the report lists](/ship/export-a-spec#asn1-from-any-source).
+
+{/* truncate */}
+
+- **Constraints carried.** Lengths, bounds, item counts and sets of integers written as ASN.1
+  subtype notation are reported as carried, with the notation used.
+- **Patterns.** A pattern that only lists the allowed characters (`^[A-Z0-9_]{3,8}$`) becomes a
+  permitted alphabet that validators check; any other pattern is kept as a comment and reported as
+  dropped.
+- **Types-only warning.** Exporting an item with operations or channels raises a critical warning that
+  counts what is left out.

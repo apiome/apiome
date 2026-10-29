@@ -120,7 +120,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -2385,7 +2385,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -4615,7 +4615,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -7010,7 +7010,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 8,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 0,
       "matched_count": 4,
@@ -9625,7 +9625,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -11609,7 +11609,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -13591,10 +13591,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 8,
+      "loss_approx": 2,
       "loss_drop": 0,
-      "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_ok": 2,
+      "loss_synth": 4,
       "matched_count": 1,
       "overclaims": [
         {
@@ -13603,9 +13603,16 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Schema.currency",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 10: 'order>!<_id UTF8String,': Expected Type. (observed: unexplained: removed type 'Schema', added type 'Schema.Schema'; overclaim: OK 'Schema')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 10: 'order>!<_id UTF8String,': Expected Type. (observed: unexplained: removed type 'Schema', added type 'Schema.Schema'; overclaim: OK 'Schema', OK 'Schema.currency')",
       "source_format": "arrow",
       "status": "xfail",
       "unexplained": [
@@ -14937,7 +14944,7 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 1,
+      "loss_approx": 0,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -17401,7 +17408,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -18655,10 +18662,10 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
+      "loss_approx": 9,
       "loss_drop": 1,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 2,
       "overclaims": [
         {
@@ -20428,10 +20435,10 @@
       "diff_count": 13,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 6,
-      "loss_drop": 3,
+      "loss_approx": 2,
+      "loss_drop": 4,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 4,
       "matched_count": 4,
       "overclaims": [
         {
@@ -23582,7 +23589,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 3,
       "loss_synth": 6,
       "matched_count": 5,
@@ -26766,7 +26773,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -28463,10 +28470,10 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 3,
-      "loss_drop": 1,
+      "loss_approx": 2,
+      "loss_drop": 2,
       "loss_ok": 1,
-      "loss_synth": 3,
+      "loss_synth": 4,
       "matched_count": 2,
       "overclaims": [
         {
@@ -30401,7 +30408,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 5,
       "loss_synth": 0,
       "matched_count": 3,
@@ -33577,10 +33584,10 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
+      "loss_approx": 4,
       "loss_drop": 1,
-      "loss_ok": 6,
-      "loss_synth": 0,
+      "loss_ok": 8,
+      "loss_synth": 7,
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: 'Type' object has no attribute 'scalar' (observed: Re-import failed: 1 validation error for Type\nscalar\n  Extra inputs are not permitted [type=extra_forbidden, input_value='string', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden)",
@@ -36118,10 +36125,10 @@
       "diff_count": 2,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 20,
+      "loss_approx": 8,
       "loss_drop": 0,
-      "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_ok": 7,
+      "loss_synth": 6,
       "matched_count": 2,
       "overclaims": [
         {
@@ -37454,7 +37461,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 6,
       "matched_count": 3,
@@ -38940,10 +38947,10 @@
       "diff_count": 2,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 15,
+      "loss_approx": 8,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 7,
       "matched_count": 2,
       "overclaims": [
         {
@@ -40317,10 +40324,10 @@
       "diff_count": 20,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 8,
-      "loss_drop": 4,
+      "loss_approx": 2,
+      "loss_drop": 5,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -44470,7 +44477,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 1,
+      "loss_drop": 2,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -45994,10 +46001,10 @@
       "diff_count": 10,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 4,
-      "loss_drop": 4,
+      "loss_approx": 1,
+      "loss_drop": 5,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 6,
       "overclaims": [
         {
@@ -49157,11 +49164,11 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
-      "loss_drop": 1,
-      "loss_ok": 4,
+      "loss_approx": 2,
+      "loss_drop": 3,
+      "loss_ok": 10,
       "loss_synth": 13,
-      "matched_count": 2,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Money",
@@ -49171,11 +49178,39 @@
           "target_mapping": null
         },
         {
+          "construct": "Money.value",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "Order",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Order.customerId",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.lines",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
+          "construct": "Order.note",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "OrderLine",
@@ -49185,6 +49220,20 @@
           "target_mapping": null
         },
         {
+          "construct": "OrderLine.discount",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrderLine.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "OrderStatus",
           "kind": "ok",
           "message": "enum type carried to ASN.1",
@@ -49192,7 +49241,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 21, column 14: 'discount >!<number OPTIONAL,': Expected Type. (observed: unexplained: added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 21, column 14: 'discount >!<number OPTIONAL,': Expected Type. (observed: unexplained: added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Money.value', OK 'Order', OK 'Order.customerId', OK 'Order.lines', OK 'Order.note', OK 'OrderLine', OK 'OrderLine.discount', OK 'OrderLine.quantity', OK 'OrderStatus')",
       "source_format": "cue",
       "status": "xfail",
       "unexplained": [
@@ -49215,16 +49264,6 @@
           "change": "added",
           "entity": "type",
           "key": "Money.OrderStatus"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Order"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "OrderLine"
         },
         {
           "change": "removed",
@@ -51527,10 +51566,10 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 19,
+      "loss_approx": 10,
       "loss_drop": 2,
       "loss_ok": 2,
-      "loss_synth": 8,
+      "loss_synth": 15,
       "matched_count": 3,
       "overclaims": [
         {
@@ -53284,10 +53323,10 @@
       "diff_count": 11,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 11,
+      "loss_approx": 2,
       "loss_drop": 0,
-      "loss_ok": 5,
-      "loss_synth": 13,
+      "loss_ok": 7,
+      "loss_synth": 20,
       "matched_count": 1,
       "overclaims": [
         {
@@ -53305,6 +53344,13 @@
           "target_mapping": null
         },
         {
+          "construct": "Money.value",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "Order",
           "kind": "ok",
           "message": "object carried to ASN.1",
@@ -53319,6 +53365,13 @@
           "target_mapping": null
         },
         {
+          "construct": "OrderLine.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "OrderStatus",
           "kind": "ok",
           "message": "enum type carried to ASN.1",
@@ -53326,7 +53379,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 29: 'Currency ::= ENUMERATED { >!<EUR(EUR), GBP(GBP), USD(USD) }': Expected {Forward: Group:({identifier '(' {Forward: Combine:({['-'] number ~{'.'}}) | DefinedValue} ')'}) | identifier}. (observed: unexplained: removed type 'Currency', removed type 'Money', added type 'Money.Currency', added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 29: 'Currency ::= ENUMERATED { >!<EUR(EUR), GBP(GBP), USD(USD) }': Expected {Forward: Group:({identifier '(' {Forward: Combine:({['-'] number ~{'.'}}) | DefinedValue} ')'}) | identifier}. (observed: unexplained: removed type 'Currency', removed type 'Money', added type 'Money.Currency', added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Money.value', OK 'Order', OK 'OrderLine', OK 'OrderLine.quantity', OK 'OrderStatus')",
       "source_format": "dhall",
       "status": "xfail",
       "unexplained": [
@@ -56125,10 +56178,10 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 84,
+      "loss_approx": 45,
       "loss_drop": 0,
-      "loss_ok": 11,
-      "loss_synth": 0,
+      "loss_ok": 20,
+      "loss_synth": 36,
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: 'Type' object has no attribute 'alias_of' (observed: Re-import failed: 1 validation error for Type\nscalar\n  Extra inputs are not permitted [type=extra_forbidden, input_value='string', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden)",
@@ -60490,8 +60543,8 @@
       "diff_count": 17,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 4,
-      "loss_drop": 6,
+      "loss_approx": 3,
+      "loss_drop": 7,
       "loss_ok": 5,
       "loss_synth": 12,
       "matched_count": 7,
@@ -64430,10 +64483,10 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 23,
+      "loss_approx": 4,
       "loss_drop": 4,
       "loss_ok": 6,
-      "loss_synth": 0,
+      "loss_synth": 15,
       "matched_count": 0,
       "overclaims": [],
       "reason": "Emit failed: 'Type' object has no attribute 'scalar' (observed: Re-import failed: 1 validation error for Type\nscalar\n  Extra inputs are not permitted [type=extra_forbidden, input_value='string', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden)",
@@ -67043,10 +67096,10 @@
       "diff_count": 11,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 50,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 10,
-      "loss_synth": 0,
+      "loss_synth": 49,
       "matched_count": 11,
       "overclaims": [
         {
@@ -71036,10 +71089,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 24,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 23,
       "matched_count": 3,
       "overclaims": [
         {
@@ -72752,7 +72805,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -74830,10 +74883,10 @@
       "diff_count": 7,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 2,
-      "loss_drop": 3,
+      "loss_approx": 1,
+      "loss_drop": 4,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 1,
       "matched_count": 5,
       "overclaims": [
         {
@@ -77305,10 +77358,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 45,
+      "loss_approx": 24,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 21,
       "matched_count": 1,
       "overclaims": [
         {
@@ -78659,10 +78712,10 @@
       "diff_count": 13,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 26,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 2,
+      "loss_synth": 22,
       "matched_count": 1,
       "overclaims": [
         {
@@ -81739,10 +81792,10 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 5,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 1,
       "overclaims": [
         {
@@ -83990,7 +84043,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -85915,7 +85968,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 23,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 4,
       "loss_synth": 16,
       "matched_count": 0,
@@ -88740,7 +88793,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -91024,7 +91077,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 6,
       "loss_synth": 20,
       "matched_count": 6,
@@ -95282,10 +95335,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 50,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 49,
       "matched_count": 3,
       "overclaims": [
         {
@@ -97294,11 +97347,11 @@
       "diff_count": 73,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 20,
-      "loss_drop": 0,
+      "loss_approx": 15,
+      "loss_drop": 2,
       "loss_ok": 36,
-      "loss_synth": 0,
-      "matched_count": 1,
+      "loss_synth": 1,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "POCD_HD000040.AD",
@@ -97553,7 +97606,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 15, column 22: 'useablePeriod IVL>!<_TS OPTIONAL,': Expected '}'. (observed: unexplained: added type 'Continuity-of-Care-Document.AD', added type 'Continuity-of-Care-Document.Act', added type 'Continuity-of-Care-Document.AssignedAuthor', added type 'Continuity-of-Care-Document.AssignedCustodian', added type 'Continuity-of-Care-Document.AssignedPerson', added type 'Continuity-of-Care-Document.Author', added type 'Continuity-of-Care-Document.BL', added type 'Continuity-of-Care-Document.CD', added type 'Continuity-of-Care-Document.CE', added type 'Continuity-of-Care-Document.CS', added type 'Continuity-of-Care-Document.ClinicalDocument', added type 'Continuity-of-Care-Document.ClinicalDocumentComponent', added type 'Continuity-of-Care-Document.Consumable', added type 'Continuity-of-Care-Document.Custodian', added type 'Continuity-of-Care-Document.DocumentationOf', added type 'Continuity-of-Care-Document.Entry', added type 'Continuity-of-Care-Document.II', added type 'Continuity-of-Care-Document.INT', added type 'Continuity-of-Care-Document.IVL-TS', added type 'Continuity-of-Care-Document.LanguageCommunication', added type 'Continuity-of-Care-Document.ManufacturedMaterial', added type 'Continuity-of-Care-Document.ManufacturedProduct', added type 'Continuity-of-Care-Document.PN', added type 'Continuity-of-Care-Document.PQ', added type 'Continuity-of-Care-Document.Patient', added type 'Continuity-of-Care-Document.PatientRole', added type 'Continuity-of-Care-Document.RecordTarget', added type 'Continuity-of-Care-Document.RepresentedCustodianOrganization', added type 'Continuity-of-Care-Document.RepresentedOrganization', added type 'Continuity-of-Care-Document.Section', added type 'Continuity-of-Care-Document.ServiceEvent', added type 'Continuity-of-Care-Document.StructuredBody', added type 'Continuity-of-Care-Document.StructuredBodyComponent', added type 'Continuity-of-Care-Document.SubstanceAdministration', added type 'Continuity-of-Care-Document.TEL', added type 'Continuity-of-Care-Document.TS', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CD', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.IVL_TS', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL', removed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 15, column 22: 'useablePeriod IVL>!<_TS OPTIONAL,': Expected '}'. (observed: unexplained: added type 'Continuity-of-Care-Document.AD', added type 'Continuity-of-Care-Document.Act', added type 'Continuity-of-Care-Document.AssignedAuthor', added type 'Continuity-of-Care-Document.AssignedCustodian', added type 'Continuity-of-Care-Document.AssignedPerson', added type 'Continuity-of-Care-Document.Author', added type 'Continuity-of-Care-Document.BL', added type 'Continuity-of-Care-Document.CD', added type 'Continuity-of-Care-Document.CE', added type 'Continuity-of-Care-Document.CS', added type 'Continuity-of-Care-Document.ClinicalDocument', added type 'Continuity-of-Care-Document.ClinicalDocumentComponent', added type 'Continuity-of-Care-Document.Consumable', added type 'Continuity-of-Care-Document.Custodian', added type 'Continuity-of-Care-Document.DocumentationOf', added type 'Continuity-of-Care-Document.Entry', added type 'Continuity-of-Care-Document.II', added type 'Continuity-of-Care-Document.INT', added type 'Continuity-of-Care-Document.IVL-TS', added type 'Continuity-of-Care-Document.LanguageCommunication', added type 'Continuity-of-Care-Document.ManufacturedMaterial', added type 'Continuity-of-Care-Document.ManufacturedProduct', added type 'Continuity-of-Care-Document.PN', added type 'Continuity-of-Care-Document.PQ', added type 'Continuity-of-Care-Document.Patient', added type 'Continuity-of-Care-Document.PatientRole', added type 'Continuity-of-Care-Document.RecordTarget', added type 'Continuity-of-Care-Document.RepresentedCustodianOrganization', added type 'Continuity-of-Care-Document.RepresentedOrganization', added type 'Continuity-of-Care-Document.Section', added type 'Continuity-of-Care-Document.ServiceEvent', added type 'Continuity-of-Care-Document.StructuredBody', added type 'Continuity-of-Care-Document.StructuredBodyComponent', added type 'Continuity-of-Care-Document.SubstanceAdministration', added type 'Continuity-of-Care-Document.TEL', added type 'Continuity-of-Care-Document.TS', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CD', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
       "source_format": "hl7v3",
       "status": "xfail",
       "unexplained": [
@@ -97830,11 +97883,6 @@
         {
           "change": "removed",
           "entity": "type",
-          "key": "POCD_HD000040.IVL_TS"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
           "key": "POCD_HD000040.LanguageCommunication"
         },
         {
@@ -97911,11 +97959,6 @@
           "change": "removed",
           "entity": "type",
           "key": "POCD_HD000040.TEL"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "POCD_HD000040.TS"
         }
       ]
     },
@@ -108400,7 +108443,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 5,
@@ -110950,7 +110993,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 3,
@@ -113023,10 +113066,10 @@
       "diff_count": 10,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 34,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 9,
-      "loss_synth": 0,
+      "loss_synth": 32,
       "matched_count": 10,
       "overclaims": [
         {
@@ -116647,10 +116690,10 @@
       "diff_count": 7,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 61,
+      "loss_approx": 24,
       "loss_drop": 0,
-      "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_ok": 18,
+      "loss_synth": 22,
       "matched_count": 1,
       "overclaims": [
         {
@@ -116661,6 +116704,48 @@
           "target_mapping": null
         },
         {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRCITY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRCTRY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRLIN1",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRLIN2",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRPOST",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ADDRESS.ADDRTYPE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "ims.CUSTDB.CUSTOMER",
           "kind": "ok",
           "message": "object carried to ASN.1",
@@ -116668,14 +116753,77 @@
           "target_mapping": null
         },
         {
+          "construct": "ims.CUSTDB.CUSTOMER.CUSTCCY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.CUSTOMER.CUSTID",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.CUSTOMER.CUSTNAME",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.CUSTOMER.CUSTOPEN",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.CUSTOMER.CUSTSTAT",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "ims.CUSTDB.ORDER",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "ims.CUSTDB.ORDER.ORDCCY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ORDER.ORDDATE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ORDER.ORDERID",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "ims.CUSTDB.ORDER.ORDSTAT",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 9: 'CUSTDB>!<.ADDRESS ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'CUSTDB.CUSTDB-ADDRESS', added type 'CUSTDB.CUSTDB-CUSTOMER', added type 'CUSTDB.CUSTDB-ORDER', removed type 'ims.CUSTDB.ADDRESS', removed type 'ims.CUSTDB.CUSTOMER', removed type 'ims.CUSTDB.ORDER'; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 9: 'CUSTDB>!<.ADDRESS ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'CUSTDB.CUSTDB-ADDRESS', added type 'CUSTDB.CUSTDB-CUSTOMER', added type 'CUSTDB.CUSTDB-ORDER', removed type 'ims.CUSTDB.ADDRESS', removed type 'ims.CUSTDB.CUSTOMER', removed type 'ims.CUSTDB.ORDER'; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.ADDRESS.ADDRCITY', OK 'ims.CUSTDB.ADDRESS.ADDRCTRY', OK 'ims.CUSTDB.ADDRESS.ADDRLIN1', OK 'ims.CUSTDB.ADDRESS.ADDRLIN2', OK 'ims.CUSTDB.ADDRESS.ADDRPOST', OK 'ims.CUSTDB.ADDRESS.ADDRTYPE', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.CUSTOMER.CUSTCCY', OK 'ims.CUSTDB.CUSTOMER.CUSTID', OK 'ims.CUSTDB.CUSTOMER.CUSTNAME', OK 'ims.CUSTDB.CUSTOMER.CUSTOPEN', OK 'ims.CUSTDB.CUSTOMER.CUSTSTAT', OK 'ims.CUSTDB.ORDER', OK 'ims.CUSTDB.ORDER.ORDCCY', OK 'ims.CUSTDB.ORDER.ORDDATE', OK 'ims.CUSTDB.ORDER.ORDERID', OK 'ims.CUSTDB.ORDER.ORDSTAT')",
       "source_format": "ims",
       "status": "xfail",
       "unexplained": [
@@ -118495,7 +118643,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 1,
       "loss_synth": 3,
       "matched_count": 6,
@@ -121421,10 +121569,10 @@
       "diff_count": 37,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 32,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 18,
-      "loss_synth": 0,
+      "loss_synth": 30,
       "matched_count": 1,
       "overclaims": [
         {
@@ -127880,10 +128028,10 @@
       "diff_count": 25,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 36,
+      "loss_approx": 25,
       "loss_drop": 0,
       "loss_ok": 12,
-      "loss_synth": 0,
+      "loss_synth": 11,
       "matched_count": 1,
       "overclaims": [
         {
@@ -132706,7 +132854,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -136346,7 +136494,7 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
+      "loss_approx": 6,
       "loss_drop": 3,
       "loss_ok": 3,
       "loss_synth": 14,
@@ -140191,7 +140339,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 3,
-      "loss_drop": 0,
+      "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 1,
@@ -141815,10 +141963,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 8,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 4,
       "matched_count": 1,
       "overclaims": [
         {
@@ -143225,7 +143373,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -145567,10 +145715,10 @@
       "diff_count": 8,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 11,
-      "loss_drop": 3,
-      "loss_ok": 2,
-      "loss_synth": 5,
+      "loss_approx": 7,
+      "loss_drop": 4,
+      "loss_ok": 3,
+      "loss_synth": 7,
       "matched_count": 4,
       "overclaims": [
         {
@@ -145586,9 +145734,16 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "search_docsParams.limit",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 9: 'create>!<_ticketParams ::= SEQUENCE {': Expected Type. (observed: unexplained: removed service '02-typical-anthropic', added type 'T-02-typical-anthropic.Create-ticketParams', added type 'T-02-typical-anthropic.Search-docsParams', removed type 'search_docsParams'; overclaim: OK 'create_ticketParams', OK 'search_docsParams')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 9: 'create>!<_ticketParams ::= SEQUENCE {': Expected Type. (observed: unexplained: removed service '02-typical-anthropic', added type 'T-02-typical-anthropic.Create-ticketParams', added type 'T-02-typical-anthropic.Search-docsParams', removed type 'search_docsParams'; overclaim: OK 'create_ticketParams', OK 'search_docsParams', OK 'search_docsParams.limit')",
       "source_format": "llm-tools",
       "status": "xfail",
       "unexplained": [
@@ -147895,10 +148050,10 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 15,
-      "loss_drop": 1,
+      "loss_approx": 9,
+      "loss_drop": 2,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 6,
       "matched_count": 2,
       "overclaims": [
         {
@@ -149777,10 +149932,10 @@
       "diff_count": 17,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 19,
-      "loss_drop": 5,
+      "loss_approx": 5,
+      "loss_drop": 6,
       "loss_ok": 5,
-      "loss_synth": 0,
+      "loss_synth": 14,
       "matched_count": 6,
       "overclaims": [
         {
@@ -153818,11 +153973,11 @@
       "diff_count": 16,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
-      "loss_drop": 9,
-      "loss_ok": 3,
-      "loss_synth": 9,
-      "matched_count": 9,
+      "loss_approx": 3,
+      "loss_drop": 11,
+      "loss_ok": 5,
+      "loss_synth": 12,
+      "matched_count": 10,
       "overclaims": [
         {
           "construct": "Toolclose_ticketInput",
@@ -153839,14 +153994,28 @@
           "target_mapping": null
         },
         {
+          "construct": "Toolcreate_ticketInput.subject",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "Toolsearch_ticketsInput",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Toolsearch_ticketsInput.limit",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<acmetickets DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools', added type 'Acme-tickets.Toolclose-ticketInput', added type 'Acme-tickets.Toolcreate-ticketInput', added type 'Acme-tickets.Toolsearch-ticketsInput', removed type 'Toolclose_ticketInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<acmetickets DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools', added type 'Acme-tickets.Toolclose-ticketInput', added type 'Acme-tickets.Toolcreate-ticketInput', added type 'Acme-tickets.Toolsearch-ticketsInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolcreate_ticketInput.subject', OK 'Toolsearch_ticketsInput', OK 'Toolsearch_ticketsInput.limit')",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": [
@@ -153879,11 +154048,6 @@
           "change": "added",
           "entity": "type",
           "key": "Acme-tickets.Toolsearch-ticketsInput"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Toolclose_ticketInput"
         }
       ]
     },
@@ -160812,10 +160976,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 35,
+      "loss_approx": 15,
       "loss_drop": 0,
-      "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_ok": 9,
+      "loss_synth": 12,
       "matched_count": 1,
       "overclaims": [
         {
@@ -160824,9 +160988,65 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.ADDRESS-CITY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.ADDRESS-COUNTRY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.ADDRESS-LINE-1",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.ADDRESS-POSTCODE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.CURRENCY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.CUSTOMER-NAME",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.CUSTOMER-NUMBER",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "natural.CUSTOMER-FILE.CUSTOMER-STATUS",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 5: '>!<CUSTOMER-NUMBER UTF8String,': Expected '}'. (observed: unexplained: added type 'CUSTOMER-FILE.CUSTOMER-FILE', removed type 'natural.CUSTOMER-FILE'; overclaim: OK 'natural.CUSTOMER-FILE')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 5: '>!<CUSTOMER-NUMBER UTF8String,': Expected '}'. (observed: unexplained: added type 'CUSTOMER-FILE.CUSTOMER-FILE', removed type 'natural.CUSTOMER-FILE'; overclaim: OK 'natural.CUSTOMER-FILE', OK 'natural.CUSTOMER-FILE.ADDRESS-CITY', OK 'natural.CUSTOMER-FILE.ADDRESS-COUNTRY', OK 'natural.CUSTOMER-FILE.ADDRESS-LINE-1', OK 'natural.CUSTOMER-FILE.ADDRESS-POSTCODE', OK 'natural.CUSTOMER-FILE.CURRENCY', OK 'natural.CUSTOMER-FILE.CUSTOMER-NAME', OK 'natural.CUSTOMER-FILE.CUSTOMER-NUMBER', OK 'natural.CUSTOMER-FILE.CUSTOMER-STATUS')",
       "source_format": "natural-ddm",
       "status": "xfail",
       "unexplained": [
@@ -162403,10 +162623,10 @@
       "diff_count": 32,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 73,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 31,
-      "loss_synth": 0,
+      "loss_synth": 72,
       "matched_count": 24,
       "overclaims": [
         {
@@ -172726,7 +172946,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 6,
+      "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -175450,10 +175670,10 @@
       "diff_count": 11,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
-      "loss_drop": 3,
+      "loss_approx": 2,
+      "loss_drop": 4,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 7,
       "matched_count": 4,
       "overclaims": [
         {
@@ -178695,10 +178915,10 @@
       "diff_count": 19,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 12,
-      "loss_drop": 9,
+      "loss_approx": 2,
+      "loss_drop": 10,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 10,
       "matched_count": 10,
       "overclaims": [
         {
@@ -183517,10 +183737,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 6,
+      "loss_synth": 11,
       "matched_count": 1,
       "overclaims": [
         {
@@ -184959,10 +185179,10 @@
       "diff_count": 13,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
-      "loss_drop": 3,
-      "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_approx": 2,
+      "loss_drop": 4,
+      "loss_ok": 8,
+      "loss_synth": 7,
       "matched_count": 4,
       "overclaims": [
         {
@@ -184971,6 +185191,20 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "KV_PROG.kv_entry.key",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "KV_PROG.kv_entry.value",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "KV_PROG.kv_get_res",
@@ -184987,6 +185221,20 @@
           "target_mapping": null
         },
         {
+          "construct": "KV_PROG.kv_put_args.key",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "KV_PROG.kv_put_args.value",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "KV_PROG.kv_status",
           "kind": "ok",
           "message": "enum type carried to ASN.1",
@@ -184994,7 +185242,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 5: 'kv>!<_entry ::= SEQUENCE {': Expected Type. (observed: unexplained: removed service 'KV_PROG.KV_PROG', added type 'KV-PROG.Kv-entry', added type 'KV-PROG.Kv-get-res', added type 'KV-PROG.Kv-put-args', added type 'KV-PROG.Kv-status', removed type 'KV_PROG.kv_entry', removed type 'KV_PROG.kv_get_res', removed type 'KV_PROG.kv_put_args', removed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_get_res', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 5: 'kv>!<_entry ::= SEQUENCE {': Expected Type. (observed: unexplained: removed service 'KV_PROG.KV_PROG', added type 'KV-PROG.Kv-entry', added type 'KV-PROG.Kv-get-res', added type 'KV-PROG.Kv-put-args', added type 'KV-PROG.Kv-status', removed type 'KV_PROG.kv_entry', removed type 'KV_PROG.kv_get_res', removed type 'KV_PROG.kv_put_args', removed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_entry.key', OK 'KV_PROG.kv_entry.value', OK 'KV_PROG.kv_get_res', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_put_args.key', OK 'KV_PROG.kv_put_args.value', OK 'KV_PROG.kv_status')",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": [
@@ -187836,10 +188084,10 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 14,
-      "loss_drop": 1,
+      "loss_approx": 4,
+      "loss_drop": 2,
       "loss_ok": 3,
-      "loss_synth": 4,
+      "loss_synth": 13,
       "matched_count": 2,
       "overclaims": [
         {
@@ -190363,9 +190611,9 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 12,
-      "loss_drop": 1,
-      "loss_ok": 1,
+      "loss_approx": 7,
+      "loss_drop": 2,
+      "loss_ok": 2,
       "loss_synth": 6,
       "matched_count": 2,
       "overclaims": [
@@ -190375,9 +190623,16 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "UserProfile.age",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'Nullable-Types-Example.UserProfile'; overclaim: OK 'UserProfile')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'Nullable-Types-Example.UserProfile'; overclaim: OK 'UserProfile', OK 'UserProfile.age')",
       "source_format": "openapi",
       "status": "xfail",
       "unexplained": [
@@ -191743,8 +191998,8 @@
       "diff_count": 8,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 10,
-      "loss_drop": 3,
+      "loss_approx": 8,
+      "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 6,
       "matched_count": 4,
@@ -193921,10 +194176,10 @@
       "diff_count": 15,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 7,
+      "loss_approx": 3,
       "loss_drop": 0,
       "loss_ok": 7,
-      "loss_synth": 9,
+      "loss_synth": 13,
       "matched_count": 1,
       "overclaims": [
         {
@@ -197128,9 +197383,9 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 13,
-      "loss_drop": 1,
-      "loss_ok": 6,
+      "loss_approx": 3,
+      "loss_drop": 3,
+      "loss_ok": 12,
       "loss_synth": 14,
       "matched_count": 0,
       "overclaims": [],
@@ -199950,10 +200205,10 @@
       "diff_count": 7,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 63,
+      "loss_approx": 24,
       "loss_drop": 0,
-      "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_ok": 17,
+      "loss_synth": 26,
       "matched_count": 1,
       "overclaims": [
         {
@@ -199971,14 +200226,112 @@
           "target_mapping": null
         },
         {
+          "construct": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_CITY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_COUNTRY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE1",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE2",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_POSTCODE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_CONTACTS",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_CONTACTS",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
           "construct": "pli.CUSTOMER_REC.CUST_CONTACTS",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_TYPE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_VALUE",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_CURRENCY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_ID",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_NAME",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.CUST_STATUS",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "pli.CUSTOMER_REC.FILLER_1",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 11: 'CUSTOMER>!<_REC ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'CUSTOMER-REC.CUSTOMER-REC', added type 'CUSTOMER-REC.CUSTOMER-REC-CUST-ADDRESS', added type 'CUSTOMER-REC.CUSTOMER-REC-CUST-CONTACTS', removed type 'pli.CUSTOMER_REC', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 11: 'CUSTOMER>!<_REC ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'CUSTOMER-REC.CUSTOMER-REC', added type 'CUSTOMER-REC.CUSTOMER-REC-CUST-ADDRESS', added type 'CUSTOMER-REC.CUSTOMER-REC-CUST-CONTACTS', removed type 'pli.CUSTOMER_REC', removed type 'pli.CUSTOMER_REC.CUST_ADDRESS', removed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_CITY', OK 'pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_COUNTRY', OK 'pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE1', OK 'pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_LINE2', OK 'pli.CUSTOMER_REC.CUST_ADDRESS.ADDR_POSTCODE', OK 'pli.CUSTOMER_REC.CUST_CONTACTS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_TYPE', OK 'pli.CUSTOMER_REC.CUST_CONTACTS.CONTACT_VALUE', OK 'pli.CUSTOMER_REC.CUST_CURRENCY', OK 'pli.CUSTOMER_REC.CUST_ID', OK 'pli.CUSTOMER_REC.CUST_NAME', OK 'pli.CUSTOMER_REC.CUST_STATUS', OK 'pli.CUSTOMER_REC.FILLER_1')",
       "source_format": "pli",
       "status": "xfail",
       "unexplained": [
@@ -201782,7 +202135,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 3,
       "matched_count": 4,
@@ -204211,7 +204564,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 5,
@@ -206923,10 +207276,10 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 10,
-      "loss_drop": 3,
+      "loss_approx": 3,
+      "loss_drop": 4,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 7,
       "matched_count": 0,
       "overclaims": [],
       "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<examplecatalogv1 DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: Re-import failed: 1 validation error for Type\nalias_of\n  Extra inputs are not permitted [type=extra_forbidden, input_value=TypeRef(extras={}, name=N...e=True), nullable=False), input_type=TypeRef]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden)",
@@ -210816,10 +211169,10 @@
       "diff_count": 12,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 11,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 3,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 9,
       "matched_count": 3,
       "overclaims": [
         {
@@ -213773,11 +214126,11 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 24,
-      "loss_drop": 1,
-      "loss_ok": 4,
-      "loss_synth": 16,
-      "matched_count": 2,
+      "loss_approx": 3,
+      "loss_drop": 2,
+      "loss_ok": 12,
+      "loss_synth": 25,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -213794,11 +214147,67 @@
           "target_mapping": null
         },
         {
+          "construct": "Order.currency",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.customer_id",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.lines",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
+          "construct": "Order.note",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "OrderLine",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "OrderLine.discount",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrderLine.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrderLine.unit_price",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         },
         {
           "construct": "OrderStatus",
@@ -213808,7 +214217,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 13: 'customer>!<_id UTF8String,': Expected Type. (observed: unexplained: removed type 'NewOrder', removed type 'OrderLine', added type 'OrderLine.NewOrder', added type 'OrderLine.Order', added type 'OrderLine.OrderLine', added type 'OrderLine.OrderStatus', removed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 6, column 13: 'customer>!<_id UTF8String,': Expected Type. (observed: unexplained: removed type 'NewOrder', added type 'OrderLine.NewOrder', added type 'OrderLine.Order', added type 'OrderLine.OrderLine', added type 'OrderLine.OrderStatus', removed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'Order.currency', OK 'Order.customer_id', OK 'Order.lines', OK 'Order.note', OK 'Order.total', OK 'OrderLine', OK 'OrderLine.discount', OK 'OrderLine.quantity', OK 'OrderLine.unit_price', OK 'OrderStatus')",
       "source_format": "pydantic",
       "status": "xfail",
       "unexplained": [
@@ -213816,11 +214225,6 @@
           "change": "removed",
           "entity": "type",
           "key": "NewOrder"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "OrderLine"
         },
         {
           "change": "added",
@@ -216241,7 +216645,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 9,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 0,
       "matched_count": 4,
@@ -218817,11 +219221,11 @@
       "diff_count": 7,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 8,
-      "loss_drop": 1,
+      "loss_approx": 2,
+      "loss_drop": 2,
       "loss_ok": 3,
-      "loss_synth": 0,
-      "matched_count": 2,
+      "loss_synth": 3,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -218845,7 +219249,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<catalogue DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: added type 'Catalogue.Catalogue', added type 'Catalogue.Money', added type 'Catalogue.Product', removed type 'catalogue', removed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<catalogue DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: added type 'Catalogue.Catalogue', added type 'Catalogue.Money', added type 'Catalogue.Product', removed type 'catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": [
@@ -218868,11 +219272,6 @@
           "change": "removed",
           "entity": "type",
           "key": "catalogue"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "product"
         }
       ]
     },
@@ -220670,10 +221069,10 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 25,
+      "loss_approx": 12,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 14,
+      "loss_synth": 27,
       "matched_count": 1,
       "overclaims": [
         {
@@ -222567,10 +222966,10 @@
       "diff_count": 51,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 57,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 25,
-      "loss_synth": 0,
+      "loss_synth": 55,
       "matched_count": 1,
       "overclaims": [
         {
@@ -230456,9 +230855,9 @@
       "diff_count": 5,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
-      "loss_drop": 1,
-      "loss_ok": 2,
+      "loss_approx": 3,
+      "loss_drop": 2,
+      "loss_ok": 5,
       "loss_synth": 8,
       "matched_count": 2,
       "overclaims": [
@@ -230470,14 +230869,35 @@
           "target_mapping": null
         },
         {
+          "construct": "OrganisationShape.employeeCount",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrganisationShape.legalName",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
           "construct": "PersonShape",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "PersonShape.givenName",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 11, column 15: 'birthDate >!<date OPTIONAL,': Expected Type. (observed: unexplained: removed type 'OrganisationShape', added type 'T-02-typical-person-shapes.OrganisationShape', added type 'T-02-typical-person-shapes.PersonShape'; overclaim: OK 'OrganisationShape', OK 'PersonShape')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 11, column 15: 'birthDate >!<date OPTIONAL,': Expected Type. (observed: unexplained: removed type 'OrganisationShape', added type 'T-02-typical-person-shapes.OrganisationShape', added type 'T-02-typical-person-shapes.PersonShape'; overclaim: OK 'OrganisationShape', OK 'OrganisationShape.employeeCount', OK 'OrganisationShape.legalName', OK 'PersonShape', OK 'PersonShape.givenName')",
       "source_format": "shacl",
       "status": "xfail",
       "unexplained": [
@@ -232173,10 +232593,10 @@
       "diff_count": 0,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 6,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 3,
       "loss_ok": 6,
-      "loss_synth": 11,
+      "loss_synth": 15,
       "matched_count": 0,
       "overclaims": [],
       "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 30: 'Condition ::= ENUMERATED { >!<SUNNY(0), CLOUDY(1), RAIN(2), SNOW(3) }': Expected {Forward: Group:({identifier '(' {Forward: Combine:({['-'] number ~{'.'}}) | DefinedValue} ')'}) | identifier}. (observed: Re-import failed: 1 validation error for Type\nalias_of\n  Extra inputs are not permitted [type=extra_forbidden, input_value=TypeRef(extras={}, name=N...e=True), nullable=False), input_type=TypeRef]\n    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden)",
@@ -235755,7 +236175,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 5,
@@ -238293,10 +238713,10 @@
       "diff_count": 6,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
-      "loss_drop": 2,
+      "loss_approx": 3,
+      "loss_drop": 3,
       "loss_ok": 1,
-      "loss_synth": 7,
+      "loss_synth": 13,
       "matched_count": 3,
       "overclaims": [
         {
@@ -240023,10 +240443,10 @@
       "diff_count": 11,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 20,
+      "loss_approx": 4,
       "loss_drop": 0,
-      "loss_ok": 5,
-      "loss_synth": 21,
+      "loss_ok": 7,
+      "loss_synth": 35,
       "matched_count": 1,
       "overclaims": [
         {
@@ -240035,6 +240455,13 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "commerce.customer.country_code",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "commerce.open_orders",
@@ -240051,6 +240478,13 @@
           "target_mapping": null
         },
         {
+          "construct": "commerce.order.currency",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "commerce.order_line",
           "kind": "ok",
           "message": "object carried to ASN.1",
@@ -240065,7 +240499,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<commerce DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: added type 'Commerce.Customer', added type 'Commerce.Open-orders', added type 'Commerce.Order', added type 'Commerce.Order-line', added type 'Commerce.Order-status', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<commerce DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: added type 'Commerce.Customer', added type 'Commerce.Open-orders', added type 'Commerce.Order', added type 'Commerce.Order-line', added type 'Commerce.Order-status', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status'; overclaim: OK 'commerce.customer', OK 'commerce.customer.country_code', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order.currency', OK 'commerce.order_line', OK 'commerce.order_status')",
       "source_format": "sql-ddl",
       "status": "xfail",
       "unexplained": [
@@ -242978,9 +243412,9 @@
       "diff_count": 24,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 53,
-      "loss_drop": 12,
-      "loss_ok": 8,
+      "loss_approx": 30,
+      "loss_drop": 13,
+      "loss_ok": 13,
       "loss_synth": 36,
       "matched_count": 13,
       "overclaims": [
@@ -242990,6 +243424,13 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Category.name",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "Error",
@@ -243006,11 +243447,25 @@
           "target_mapping": null
         },
         {
+          "construct": "NewPet.name",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "Order",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Order.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         },
         {
           "construct": "Pet",
@@ -243020,11 +243475,25 @@
           "target_mapping": null
         },
         {
+          "construct": "Pet.name",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "UpdatePet",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "UpdatePet.name",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "UploadResponse",
@@ -243041,7 +243510,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 19, column 32: 'status UTF8String OPTIONAL >!<DEFAULT available,': Expected '}'. (observed: unexplained: removed service 'pet', removed type 'Category', removed type 'Error', added type 'Pet-Store-API.Category', added type 'Pet-Store-API.Error', added type 'Pet-Store-API.NewPet', added type 'Pet-Store-API.Order', added type 'Pet-Store-API.Pet', added type 'Pet-Store-API.UpdatePet', added type 'Pet-Store-API.UploadResponse', added type 'Pet-Store-API.User'; overclaim: OK 'Category', OK 'Error', OK 'NewPet', OK 'Order', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 19, column 32: 'status UTF8String OPTIONAL >!<DEFAULT available,': Expected '}'. (observed: unexplained: removed service 'pet', removed type 'Category', removed type 'Error', added type 'Pet-Store-API.Category', added type 'Pet-Store-API.Error', added type 'Pet-Store-API.NewPet', added type 'Pet-Store-API.Order', added type 'Pet-Store-API.Pet', added type 'Pet-Store-API.UpdatePet', added type 'Pet-Store-API.UploadResponse', added type 'Pet-Store-API.User'; overclaim: OK 'Category', OK 'Category.name', OK 'Error', OK 'NewPet', OK 'NewPet.name', OK 'Order', OK 'Order.quantity', OK 'Pet', OK 'Pet.name', OK 'UpdatePet', OK 'UpdatePet.name', OK 'UploadResponse', OK 'User')",
       "source_format": "swagger",
       "status": "xfail",
       "unexplained": [
@@ -248053,9 +248522,9 @@
       "diff_count": 14,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
-      "loss_drop": 5,
-      "loss_ok": 4,
+      "loss_approx": 3,
+      "loss_drop": 6,
+      "loss_ok": 5,
       "loss_synth": 12,
       "matched_count": 6,
       "overclaims": [
@@ -248086,9 +248555,16 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "OrderLine.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 20, column 11: 'total >!<number OPTIONAL': Expected Type. (observed: unexplained: removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine', added type 'Orders.ErrorModel', added type 'Orders.NewOrder', added type 'Orders.Order', added type 'Orders.OrderLine'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 20, column 11: 'total >!<number OPTIONAL': Expected Type. (observed: unexplained: removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine', added type 'Orders.ErrorModel', added type 'Orders.NewOrder', added type 'Orders.Order', added type 'Orders.OrderLine'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderLine.quantity')",
       "source_format": "swagger-1.2",
       "status": "xfail",
       "unexplained": [
@@ -251604,10 +252080,10 @@
       "diff_count": 15,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 28,
+      "loss_approx": 15,
       "loss_drop": 0,
       "loss_ok": 15,
-      "loss_synth": 0,
+      "loss_synth": 13,
       "matched_count": 15,
       "overclaims": [
         {
@@ -257072,10 +257548,10 @@
       "diff_count": 13,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 5,
-      "loss_drop": 3,
+      "loss_approx": 2,
+      "loss_drop": 4,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 4,
       "overclaims": [
         {
@@ -260146,7 +260622,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 2,
       "matched_count": 5,
@@ -262693,10 +263169,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 19,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 18,
       "matched_count": 3,
       "overclaims": [
         {
@@ -264421,7 +264897,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -266645,10 +267121,10 @@
       "diff_count": 26,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 23,
-      "loss_drop": 13,
-      "loss_ok": 10,
-      "loss_synth": 28,
+      "loss_approx": 2,
+      "loss_drop": 14,
+      "loss_ok": 17,
+      "loss_synth": 30,
       "matched_count": 11,
       "overclaims": [
         {
@@ -266666,11 +267142,25 @@
           "target_mapping": null
         },
         {
+          "construct": "ByIdOutput.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "CancelInput",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "CancelInput.reason",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         },
         {
           "construct": "CancelOutput",
@@ -266687,6 +267177,13 @@
           "target_mapping": null
         },
         {
+          "construct": "ListInput.limit",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "ListOutput",
           "kind": "ok",
           "message": "object carried to ASN.1",
@@ -266701,11 +267198,25 @@
           "target_mapping": null
         },
         {
+          "construct": "ListOutput_items_item.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "PlaceInput",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "PlaceInput.lines",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
         },
         {
           "construct": "PlaceInput_lines_item",
@@ -266715,14 +267226,28 @@
           "target_mapping": null
         },
         {
+          "construct": "PlaceInput_lines_item.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "PlaceOutput",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "PlaceOutput.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<orderRouter DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: removed service 'orderRouter', removed type 'CancelOutput', removed type 'ListOutput', added type 'OrderRouter.ByIdInput', added type 'OrderRouter.ByIdOutput', added type 'OrderRouter.CancelInput', added type 'OrderRouter.CancelOutput', added type 'OrderRouter.ListInput', added type 'OrderRouter.ListOutput', added type 'OrderRouter.ListOutput-items-item', added type 'OrderRouter.PlaceInput', added type 'OrderRouter.PlaceInput-lines-item', added type 'OrderRouter.PlaceOutput', removed type 'PlaceInput', removed type 'PlaceInput_lines_item'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<orderRouter DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: unexplained: removed service 'orderRouter', removed type 'CancelOutput', removed type 'ListOutput', added type 'OrderRouter.ByIdInput', added type 'OrderRouter.ByIdOutput', added type 'OrderRouter.CancelInput', added type 'OrderRouter.CancelOutput', added type 'OrderRouter.ListInput', added type 'OrderRouter.ListOutput', added type 'OrderRouter.ListOutput-items-item', added type 'OrderRouter.PlaceInput', added type 'OrderRouter.PlaceInput-lines-item', added type 'OrderRouter.PlaceOutput', removed type 'PlaceInput', removed type 'PlaceInput_lines_item'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'ByIdOutput.total', OK 'CancelInput', OK 'CancelInput.reason', OK 'CancelOutput', OK 'ListInput', OK 'ListInput.limit', OK 'ListOutput', OK 'ListOutput_items_item', OK 'ListOutput_items_item.total', OK 'PlaceInput', OK 'PlaceInput.lines', OK 'PlaceInput_lines_item', OK 'PlaceInput_lines_item.quantity', OK 'PlaceOutput', OK 'PlaceOutput.total')",
       "source_format": "trpc",
       "status": "xfail",
       "unexplained": [
@@ -272315,7 +272840,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -274506,10 +275031,10 @@
       "diff_count": 13,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 5,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 25,
+      "loss_synth": 26,
       "matched_count": 1,
       "overclaims": [
         {
@@ -277781,7 +278306,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 9,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 3,
       "loss_synth": 0,
       "matched_count": 7,
@@ -280720,10 +281245,10 @@
       "diff_count": 3,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 7,
+      "loss_approx": 4,
       "loss_drop": 0,
-      "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_ok": 2,
+      "loss_synth": 2,
       "matched_count": 1,
       "overclaims": [
         {
@@ -280732,9 +281257,16 @@
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "vsam.EXAMPLE_CUSTOMER_KSDS.PRIMARY_KEY",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 10: 'EXAMPLE>!<_CUSTOMER_KSDS ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'EXAMPLE-CUSTOMER-KSDS.EXAMPLE-CUSTOMER-KSDS', removed type 'vsam.EXAMPLE_CUSTOMER_KSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 5, column 10: 'EXAMPLE>!<_CUSTOMER_KSDS ::= SEQUENCE {': Expected ::=. (observed: unexplained: added type 'EXAMPLE-CUSTOMER-KSDS.EXAMPLE-CUSTOMER-KSDS', removed type 'vsam.EXAMPLE_CUSTOMER_KSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS', OK 'vsam.EXAMPLE_CUSTOMER_KSDS.PRIMARY_KEY')",
       "source_format": "vsam-idcams",
       "status": "xfail",
       "unexplained": [
@@ -282136,7 +282668,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 4,
@@ -284435,10 +284967,10 @@
       "diff_count": 11,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 5,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 3,
       "loss_ok": 3,
-      "loss_synth": 3,
+      "loss_synth": 6,
       "matched_count": 3,
       "overclaims": [
         {
@@ -287322,7 +287854,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 3,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 9,
       "loss_synth": 0,
       "matched_count": 4,
@@ -292095,10 +292627,10 @@
       "diff_count": 19,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 9,
-      "loss_drop": 3,
+      "loss_approx": 2,
+      "loss_drop": 4,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 7,
       "matched_count": 4,
       "overclaims": [
         {
@@ -296037,7 +296569,7 @@
       "emit_format": "asn1",
       "emit_key": "asn1",
       "loss_approx": 2,
-      "loss_drop": 1,
+      "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 2,
@@ -297772,9 +298304,9 @@
       "diff_count": 10,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 4,
-      "loss_drop": 5,
-      "loss_ok": 2,
+      "loss_approx": 2,
+      "loss_drop": 6,
+      "loss_ok": 3,
       "loss_synth": 5,
       "matched_count": 6,
       "overclaims": [
@@ -297786,6 +298318,13 @@
           "target_mapping": null
         },
         {
+          "construct": "OrderCreated.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "OrderShipped",
           "kind": "ok",
           "message": "object carried to ASN.1",
@@ -297793,7 +298332,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 8, column 11: 'total >!<number': Expected Type. (observed: unexplained: removed service 'orders.mqtt', added type 'Order-events.OrderCreated', added type 'Order-events.OrderShipped', removed type 'OrderCreated'; overclaim: OK 'OrderCreated', OK 'OrderShipped')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 8, column 11: 'total >!<number': Expected Type. (observed: unexplained: removed service 'orders.mqtt', added type 'Order-events.OrderCreated', added type 'Order-events.OrderShipped', removed type 'OrderCreated'; overclaim: OK 'OrderCreated', OK 'OrderCreated.total', OK 'OrderShipped')",
       "source_format": "xregistry",
       "status": "xfail",
       "unexplained": [
@@ -299594,7 +300133,7 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 3,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -301886,11 +302425,11 @@
       "diff_count": 9,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 18,
-      "loss_drop": 2,
-      "loss_ok": 4,
+      "loss_approx": 2,
+      "loss_drop": 3,
+      "loss_ok": 15,
       "loss_synth": 16,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -301900,11 +302439,67 @@
           "target_mapping": null
         },
         {
+          "construct": "NewOrder.customerId",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "NewOrder.lines",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
+          "construct": "NewOrder.note",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
           "construct": "Order",
           "kind": "ok",
           "message": "object carried to ASN.1",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "Order.currency",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.customerId",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.lines",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minItems/maxItems → SEQUENCE (SIZE) OF"
+        },
+        {
+          "construct": "Order.note",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minLength/maxLength → SIZE"
+        },
+        {
+          "construct": "Order.total",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
         },
         {
           "construct": "OrderLine",
@@ -301914,6 +302509,27 @@
           "target_mapping": null
         },
         {
+          "construct": "OrderLine.discount",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrderLine.quantity",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
+          "construct": "OrderLine.unitPrice",
+          "kind": "ok",
+          "message": "ASN.1 keeps the rule as subtype notation, which a validator checks",
+          "severity": "info",
+          "target_mapping": "minimum/maximum → value range"
+        },
+        {
           "construct": "OrderStatus",
           "kind": "ok",
           "message": "enum type carried to ASN.1",
@@ -301921,7 +302537,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 19, column 33: 'status OrderStatus OPTIONAL >!<DEFAULT new,': Expected '}'. (observed: unexplained: removed type 'NewOrder', removed type 'OrderLine', added type 'OrderLine.NewOrder', added type 'OrderLine.Order', added type 'OrderLine.OrderLine', added type 'OrderLine.OrderStatus', removed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 19, column 33: 'status OrderStatus OPTIONAL >!<DEFAULT new,': Expected '}'. (observed: unexplained: removed type 'NewOrder', added type 'OrderLine.NewOrder', added type 'OrderLine.Order', added type 'OrderLine.OrderLine', added type 'OrderLine.OrderStatus', removed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'NewOrder.customerId', OK 'NewOrder.lines', OK 'NewOrder.note', OK 'Order', OK 'Order.currency', OK 'Order.customerId', OK 'Order.lines', OK 'Order.note', OK 'Order.total', OK 'OrderLine', OK 'OrderLine.discount', OK 'OrderLine.quantity', OK 'OrderLine.unitPrice', OK 'OrderStatus')",
       "source_format": "zod",
       "status": "xfail",
       "unexplained": [
@@ -301929,11 +302545,6 @@
           "change": "removed",
           "entity": "type",
           "key": "NewOrder"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "OrderLine"
         },
         {
           "change": "added",
@@ -304387,10 +304998,10 @@
       "diff_count": 8,
       "emit_format": "asn1",
       "emit_key": "asn1",
-      "loss_approx": 5,
-      "loss_drop": 2,
+      "loss_approx": 3,
+      "loss_drop": 3,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 2,
       "matched_count": 5,
       "overclaims": [
         {
