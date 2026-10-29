@@ -58,8 +58,10 @@ from .schema_validation import DRAFT_2020_12, DRAFT_2020_12_META_URI
 __all__ = [
     "CANONICAL_SCALAR_SCHEMAS",
     "MAX_PROJECTED_DEFS",
+    "CanonicalSchemaBundle",
     "CanonicalSchemaProjection",
     "CanonicalTypeNotFoundError",
+    "build_bundle_schemas",
     "build_ref_json_schema",
     "build_type_json_schema",
     "list_projectable_types",
@@ -207,6 +209,23 @@ class CanonicalSchemaProjection:
     truncated: bool = False
 
 
+@dataclass(frozen=True)
+class CanonicalSchemaBundle:
+    """Every type of a model projected into ``$defs`` subschemas — the JSON Schema export's body.
+
+    Attributes:
+        defs: ``$defs`` key → subschema, one per type, in the model's declaration order. A
+            reference between types is ``{"$ref": "#/$defs/<key>"}``.
+        defs_keys: Canonical type key → the ``$defs`` key it is written under (the type's name
+            when that is unique and safe, else its sanitized key).
+        unmapped_scalars: Sorted canonical scalar names that had no JSON analogue (written ``{}``).
+    """
+
+    defs: Dict[str, Dict[str, Any]]
+    defs_keys: Dict[str, str]
+    unmapped_scalars: Tuple[str, ...] = ()
+
+
 @dataclass
 class _Walk:
     """Mutable bookkeeping shared by one projection walk."""
@@ -273,6 +292,71 @@ def build_type_json_schema(
         type_key=root.key,
         type_name=root.name or root.key,
     )
+
+
+def build_bundle_schemas(api: CanonicalApi, *, wire_enums: bool = True) -> CanonicalSchemaBundle:
+    """Project **every** type of a model into ``$defs`` subschemas — MFX-21.1 (#4126).
+
+    Unlike :func:`build_type_json_schema`, nothing is left out for being unreachable: the JSON
+    Schema export writes the whole model. ``$defs`` keys are allocated in declaration order, from
+    each type's name (``Pet``) and from its key only when names collide (``acme.v1.Pet``).
+
+    Args:
+        api: The canonical model.
+        wire_enums: ``True`` (the validation default) writes an enum by its declared wire values;
+            ``False`` writes it as the JSON form of the data carries it — see :func:`json_enum_schema`.
+
+    Returns:
+        The :class:`CanonicalSchemaBundle`.
+    """
+    walk = _Walk(types_by_key={t.key: t for t in api.types if t.key})
+    names = [t.name for t in api.types]
+    for type_ in api.types:
+        if type_.key:
+            unique_name = type_.name and names.count(type_.name) == 1
+            _defs_key_for(type_.key, walk, preferred=type_.name if unique_name else None)
+    defs: Dict[str, Dict[str, Any]] = {}
+    for type_ in api.types:
+        if not type_.key:
+            continue
+        schema = _type_to_schema(type_, walk)
+        if type_.kind is TypeKind.ENUM and not wire_enums:
+            enum_schema = json_enum_schema(type_)
+            schema = {**{k: v for k, v in schema.items() if k not in ("enum", "type")}, **enum_schema}
+        defs[walk.defs_keys[type_.key]] = schema
+    return CanonicalSchemaBundle(
+        defs=defs, defs_keys=dict(walk.defs_keys), unmapped_scalars=tuple(sorted(walk.unmapped))
+    )
+
+
+def json_enum_schema(type_: Type) -> Dict[str, Any]:
+    """An ENUM as its JSON form carries it: numbers only for a numeric enum, else strings.
+
+    A numeric enum is one whose every value is an integer named by itself (JSON Schema
+    ``enum: [1, 2]``). Any other enum is written by its string wire values, else its symbol names:
+    an Avro symbol's value is its position and a protobuf enum's value its tag, while their JSON
+    encodings carry the name. (The XSD writer, :mod:`app.xsd_schema`, follows the same rule.)
+
+    Args:
+        type_: An ENUM type.
+
+    Returns:
+        ``{"type": "integer" | "string", "enum": [...]}``, or ``{}`` for an enum with no values.
+    """
+    members = type_.enum_values
+    if not members:
+        return {}
+    integral = all(
+        isinstance(m.value, int) and not isinstance(m.value, bool) and m.name == str(m.value) for m in members
+    )
+    if integral:
+        return {"type": "integer", "enum": [m.value for m in members]}
+    values: List[Any] = []
+    for member in members:
+        value = member.value if isinstance(member.value, str) else member.name
+        if value not in values:
+            values.append(value)
+    return {"type": "string", "enum": values}
 
 
 def build_ref_json_schema(
@@ -537,12 +621,18 @@ def _scalar_to_schema(name: str, walk: _Walk) -> Dict[str, Any]:
     return {}
 
 
-def _defs_key_for(canonical_key: str, walk: _Walk) -> str:
-    """Return (allocating on first use) the collision-free ``$defs`` key for a canonical key."""
+def _defs_key_for(canonical_key: str, walk: _Walk, *, preferred: Optional[str] = None) -> str:
+    """Return (allocating on first use) the collision-free ``$defs`` key for a canonical key.
+
+    Args:
+        canonical_key: The type's canonical key.
+        walk: The projection's bookkeeping.
+        preferred: A name to allocate from instead of the key (the bundle uses the type's name).
+    """
     existing = walk.defs_keys.get(canonical_key)
     if existing is not None:
         return existing
-    base = _DEFS_KEY_UNSAFE.sub("_", canonical_key).strip("_") or "Type"
+    base = _DEFS_KEY_UNSAFE.sub("_", preferred or canonical_key).strip("_") or "Type"
     candidate = base
     suffix = 2
     while candidate in walk.used_defs_keys:
