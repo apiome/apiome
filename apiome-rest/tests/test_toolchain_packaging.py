@@ -54,6 +54,7 @@ _EXPECTED_KEYS = {
     "oasdiff",
     "openapi-changes",
     "capnp",
+    "thrift",
 }
 
 _AUTH = {

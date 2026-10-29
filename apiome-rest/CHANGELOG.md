@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.512.0] - 2026-10-28
+
+### Added
+- **Thrift IDL emitter compiles (MFX-25.1, #4151).** The `thrift` writer is rebuilt so its output compiles under the
+  Apache Thrift compiler: every type, field, enum member, method, service and parameter name is a valid, unique,
+  non-reserved identifier (`thrift_identifier`, `THRIFT_RESERVED`; renames reported and predicted); a member-list
+  union gets one optional field per member; aliases and named scalars become `typedef`s; a Thrift source's own
+  typedefs are written back (they were dropped); a record only ever returned as an error becomes an `exception`, and
+  `throws` lists exceptions only (others reported, `throws-dropped`); an operation with parameters takes a synthesized
+  `<Method>Request` struct; a method returns its first 2xx response type; union fields are never `required`; enum
+  values are written only when they are integers; `uuid` is written as `string` except for a Thrift source; services
+  keep `extends`. New option `namespaces` (language → namespace, `*` allowed).
+- **`thrift` bundled tool** (`APIOME_THRIFT_BIN`, Thrift 0.21.0 built in the image) and `app.thrift_compile`:
+  `thrift --gen json` in a scratch directory through the toolchain runner.
+- **Emitted-output validation for `thrift`**: the Thrift compiler when present (a multi-file source's export, which
+  `include`s files it does not carry, is re-parsed instead), else a re-parse through the Thrift reader.
+
+### Changed
+- `ThriftFidelityRulePack` predicts the writer's type, method and field renames (`APPROX`) and dropped agents
+  (`DROP`).
+- Goldens: the `thrift` silent-loss ledger goes from 26 pairs to 21; the `thrift` cells of the round-trip and
+  export-conformance matrices are regenerated.
+
 ## [1.511.0] - 2026-10-28
 
 ### Added

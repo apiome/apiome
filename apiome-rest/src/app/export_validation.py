@@ -43,6 +43,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
   :func:`app.apiblueprint_parser.parse_apiblueprint`;
 * ``raml`` — AMF's RAML 1.0 validation (:func:`app.raml_amf.validate_raml_set_with_amf`) when the
   ``amf`` toolchain is present, else a re-parse through :func:`app.raml_parser.parse_raml`;
+* ``thrift`` — the Apache Thrift compiler (``thrift --gen json``,
+  :func:`app.thrift_compile.compile_thrift_idl`) when the toolchain has it, else a re-parse through
+  :func:`app.thrift_parser.parse_thrift`;
 * ``postman`` — :func:`app.postman_emitter.validate_postman_collection` (the published Postman
   Collection v2.1.0 JSON Schema, vendored, then a re-parse through the Postman reader);
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
@@ -1043,6 +1046,36 @@ async def _validate_thunder_client(
     return await _run_fileset_validator(target, emit_result, validate_thunder_client_export)
 
 
+async def _validate_thrift(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Thrift IDL (MFX-25.1, #4151).
+
+    The Apache Thrift compiler (``thrift --gen json``) compiles the file when the toolchain has it;
+    a file that includes others (a multi-file Thrift source) cannot be compiled alone, so it —
+    and any export without the compiler — is re-parsed through the Thrift reader instead.
+    """
+    from .thrift_compile import ThriftCompileError, compile_thrift_idl, thrift_available
+    from .thrift_parser import parse_thrift
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Thrift export wrote no file.")])
+    includes = api.extras.get("thrift_includes") if api.format == "thrift" else None
+    if not thrift_available() or includes:
+        return await _run_text_validator(target, emit_result, parse_thrift)
+    findings: List[ValidationFinding] = []
+    for emitted in emit_result.files:
+        try:
+            await compile_thrift_idl(emitted.path, str(emitted.content))
+        except ThriftCompileError as exc:
+            if exc.unavailable:
+                return await _run_text_validator(target, emit_result, parse_thrift)
+            findings.extend(
+                _finding_from_message(line, file=emitted.path) for line in (exc.diagnostics or [str(exc)])
+            )
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1108,6 +1141,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "thunder-client": _validate_thunder_client,
     # MFX-31.1 (#4289)
     "postman": _validate_postman,
+    # MFX-25.1 (#4151)
+    "thrift": _validate_thrift,
 }
 
 

@@ -66,6 +66,8 @@ ARG PKL_VERSION=0.32.2
 ARG DHALL_VERSION=1.42.2
 # Cap'n Proto compiler (MFX-30.2, #4179) — optional: it re-validates an emitted .capnp schema.
 ARG CAPNP_VERSION=1.0.1
+# Apache Thrift compiler (MFX-25.1, #4151) — optional: it compiles an emitted .thrift IDL.
+ARG THRIFT_VERSION=0.21.0
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -307,6 +309,22 @@ RUN curl -fsSL "https://capnproto.org/capnproto-c++-${CAPNP_VERSION}.tar.gz" | t
     && printf '@0x8f1d5c3a2b4e6d70;\nstruct Smoke { id @0 :Text; }\n' > /tmp/smoke.capnp \
     && ${TOOLS_PREFIX}/bin/capnp compile -o- /tmp/smoke.capnp > /dev/null \
     && rm -f /tmp/smoke.capnp
+
+# thrift — Apache Thrift compiler (MFX-25.1). No official Linux binary, so build only the compiler from
+# the pinned release tarball (BUILD_LIBRARIES=OFF: no language runtimes); it needs flex and bison.
+RUN apt-get update && apt-get install -y --no-install-recommends flex bison && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL "https://archive.apache.org/dist/thrift/${THRIFT_VERSION}/thrift-${THRIFT_VERSION}.tar.gz" \
+       | tar -xz -C /tmp \
+    && cmake -S /tmp/thrift-${THRIFT_VERSION} -B /tmp/thrift-build -DCMAKE_BUILD_TYPE=Release \
+         -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF \
+         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
+    && cmake --build /tmp/thrift-build --target thrift-compiler -j "$(nproc)" \
+    && cp "$(find /tmp/thrift-build -type f -name thrift -perm -u+x | head -n 1)" ${TOOLS_PREFIX}/bin/thrift \
+    && chmod +x ${TOOLS_PREFIX}/bin/thrift \
+    && rm -rf /tmp/thrift-${THRIFT_VERSION} /tmp/thrift-build \
+    && printf 'struct Smoke {\n  1: required string id,\n}\n' > /tmp/smoke.thrift \
+    && ${TOOLS_PREFIX}/bin/thrift -o /tmp --gen json /tmp/smoke.thrift \
+    && rm -rf /tmp/smoke.thrift /tmp/gen-json
 
 # ── Stage 2: runtime — Python REST API + a Node runtime to execute the TS import worker ──
 FROM python:3.12-slim

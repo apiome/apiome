@@ -106,6 +106,32 @@ reordered. A field added since gets the next number not used yet. The fidelity r
 number Apiome assigned as *synthesized*. A source that has its own numbers, such as a Protobuf or
 Thrift import, keeps them.
 
+### Thrift from any source
+
+Exporting to **Apache Thrift** writes one `<Name>.thrift` file that the Thrift compiler accepts.
+Each export is compiled with `thrift` before you download it, when the server has the Thrift
+compiler, and read back with Apiome's Thrift importer otherwise.
+
+- **Types.** Objects become `struct`s, enums `enum`s, and unions `union`s. A union that only lists
+  its member types gets one optional field per member. Aliases and named scalars become `typedef`s,
+  lists `list<…>`, sets `set<…>`, and maps `map<…, …>`. A required field is `required`; every other
+  field is `optional`.
+- **Errors.** A type returned only as an error response becomes an `exception` and is listed in the
+  method's `throws`. An error type also used elsewhere stays a `struct`, and the report says its
+  `throws` entry is not written, because Thrift throws only exceptions.
+- **Services.** Each service becomes a `service` and each operation a method. A method returns its
+  success response's type. An operation with parameters (an OpenAPI path or query parameter, say)
+  takes one `<Method>Request` struct that holds them and the body; otherwise it takes its request
+  type as `1: T arg`.
+- **Names.** Thrift names are plain identifiers that are not reserved words. `com.acme.Order` is
+  written `com_acme_Order`, `order-id` is `order_id`, and `default` is `default_`. Each rename is in
+  the fidelity report, and a clash gets a number (`addPet2`).
+- **Namespaces.** Set the **namespaces** option to write one `namespace` line per language, for
+  example `{"java": "com.acme.shop", "py": "acme_shop"}`, or `*` for every language. A Thrift item
+  keeps its own namespaces and `typedef`s.
+- **uuid.** A UUID is written as `string`, because only Thrift 0.21 and later compilers know the
+  `uuid` type. An item imported from Thrift keeps `uuid`.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever
