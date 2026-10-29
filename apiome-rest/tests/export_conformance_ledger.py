@@ -166,37 +166,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation Mutation.GetCurrentConditions; added operation Mutation.GetForecast; added operation',
     ('typescript-types', 'graphql'):
         'added operation Query._; changed root; added service Query; removed type NewOrder; removed type NewO',
-    # --- json-schema (15) ---
-    ('cobolcopybook', 'json-schema'):
-        'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',
-    ('edifact', 'json-schema'):
-        'changed root; added type DTM; added type EDIFACT INVOIC; removed type EDIFACT-INVOIC.DTM; removed ty',
-    ('edix12', 'json-schema'):
-        'changed root; added type PO1; added type TransactionSet850; added type X12 850; removed type X12-850',
-    ('fix', 'json-schema'):
-        'changed root; added type ExecutionReport (FIX.4.4); removed type FIX.4.4.Message8',
-    ('flatbuffers', 'json-schema'):
-        'changed root; added type Color; added type Monster; added type Vec3; added type Weapon; added type e',
-    ('hl7v2', 'json-schema'):
-        'changed root; removed type ADT-A01.MSH; removed type ADT-A01.MessageADTA01; added type ADT^A01; adde',
-    ('idoc', 'json-schema'):
-        'changed root; added type E1EDK01; added type E1EDK03; added type E1EDK14; added type E1EDKA1; added ',
-    ('iso20022', 'json-schema'):
-        'changed root; added type Amt; added type CdtTrfTxInf; added type Cdtr; added type CdtrAcct; added ty',
-    ('iso8583', 'json-schema'):
-        'changed root; removed type 0100.DE11; removed type 0100.DE12; removed type 0100.DE13; removed type 0',
-    ('kafka-connect', 'json-schema'):
-        'changed root; added type Order; removed type com.example.orders.Order',
-    ('nacha', 'json-schema'):
-        'changed root; added type AchFile; added type Batch; added type BatchControl; added type BatchHeader;',
-    ('ncpdp', 'json-schema'):
-        'changed root; added type Address; added type Body; added type CommunicationNumbers; added type DateO',
-    ('sepa', 'json-schema'):
-        'changed root; added type Amt; added type CdtTrfTxInf; added type Cdtr; added type CdtrAcct; added ty',
-    ('swift-mt', 'json-schema'):
-        'changed root; added type CodeWord; added type Field13C; added type Field20; added type Field23B; add',
-    ('tradacoms', 'json-schema'):
-        'changed root; added type MessageORDERS; added type OLD; added type TRADACOMS ORDERS; removed type TR',
     # --- jtd (15) ---
     ('cobolcopybook', 'jtd'):
         'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',

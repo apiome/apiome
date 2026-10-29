@@ -234,6 +234,12 @@ def test_json_schema_target_accepts_faithfully_emitted_entities():
     assert target.conformance_failures == 0 and target.transcode_failures == 0
 
 
+def _json_schema_item(raw: Dict[str, Any]) -> CanonicalApi:
+    """The test model as a JSON Schema item, so the export re-emits its ``raw["source"]`` document
+    (MFX-21.1: only a JSON Schema item's imported document is re-emitted)."""
+    return _api(raw=raw).model_copy(update={"format": "json-schema"})
+
+
 def test_json_schema_missing_entity_is_a_conformance_loss_not_a_pass():
     # A re-emitted raw source document that never mentions Widget: the emitted schema
     # lost the entity entirely, which is the strongest instance-level loss.
@@ -244,7 +250,7 @@ def test_json_schema_missing_entity_is_a_conformance_loss_not_a_pass():
             "type": "object",
         }
     }
-    report = _run(_api(raw=raw), targets=["json-schema"])
+    report = _run(_json_schema_item(raw), targets=["json-schema"])
     target = _target(report, "json-schema")
     assert target.valid is False
     entity = target.entities[0]
@@ -270,7 +276,7 @@ def test_json_schema_reports_the_lost_constraint_per_entity():
             },
         }
     }
-    report = _run(_api(raw=raw), targets=["json-schema"])
+    report = _run(_json_schema_item(raw), targets=["json-schema"])
     target = _target(report, "json-schema")
     assert target.valid is False
     entity = target.entities[0]

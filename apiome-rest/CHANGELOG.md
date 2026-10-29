@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.526.0] - 2026-10-29
+
+### Changed
+- **JSON Schema emitter (MFX-21.1, #4126).** The `json-schema` export rebuilds a valid standalone JSON Schema from any
+  typed source instead of writing canonical scalar names into `type` (`{"type": "i32"}`). The body comes from the
+  instance-validation projection (`app.canonical_json_schema`, new `build_bundle_schemas`): every type under `$defs`
+  (named after the type, its full key on a name clash), scalars as JSON types with a `format`, constraints as keywords,
+  `required` from non-optional fields, unions as `oneOf`, maps as `additionalProperties`; enums as their JSON values
+  (names for Avro / Protobuf enums, numbers only for numeric enums); the root `$ref`s the item's own type.
+- Options (replacing `schema_uri`): `draft` (`2020-12` default, `draft-07`, `draft-04` — `app.jsonschema_drafts`
+  rewrites `$defs`, `$ref` siblings, exclusive bounds and `$id`, and records dropped keywords as losses), `packaging`
+  (`bundle` / `per-type`: one `<Type>.schema.json` per type with file `$ref`s, zipped with a manifest) and `id_base`
+  (absolute `$id` base URI).
+- A JSON Schema item's imported document is re-emitted only for a JSON Schema item (previously any item carrying
+  `raw["source"]`), and only under the default packaging, no `id_base` and its own draft.
+- `validate_jsonschema_document` (export validation) also checks the document against its draft's metaschema.
+- Fidelity: constraints are carried; a non-JSON-Schema document gets an info APPROX root verdict, and a type written
+  under a `$defs` key other than its canonical key (namespace dropped) an info APPROX.
+- Goldens: the `json-schema` cells of the round-trip and export-conformance matrices; 15 `json-schema` silent-loss
+  cells are now lossy and leave the ledger.
+
 ## [1.525.0] - 2026-10-29
 
 ### Changed

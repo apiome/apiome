@@ -499,6 +499,42 @@ To get one file with the types inline, set the **layout** option to `single`.
 An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
 versions and XSD details round-trip unchanged.
 
+### JSON Schema from any source
+
+Exporting to **JSON Schema** writes the item's data types as a standalone JSON Schema, whatever it
+was imported from — for validation pipelines, schema registries and contract tests. By default you
+get one draft **2020-12** document, `<Name>.schema.json`, with every type under `$defs`; the
+document itself refers (`$ref`) to the type named after the item, when there is one.
+
+- **Types.** Scalars become JSON types, keeping their width as a `format`: a 32-bit integer is
+  `{"type": "integer", "format": "int32"}`, a timestamp `{"type": "string", "format": "date-time"}`,
+  bytes `{"type": "string", "contentEncoding": "base64"}`. A field that is not optional is listed in
+  `required`; a list is an `array`, a union a `oneOf`, a map an object with `additionalProperties`.
+  A type with no JSON form is written as `{}` (any value), and the fidelity report names it.
+- **Rules.** `minLength`, `maxLength`, `pattern`, `minimum`, `maximum`, the exclusive bounds,
+  `multipleOf` and the item counts are written as the same keywords.
+- **Enumerations** are written as their JSON values: names for an Avro or Protobuf enum (their JSON
+  encodings carry the name), numbers only for an enum of numbers.
+- **Names.** Each type is a `$defs` entry named after it (`Order`); two types with the same name
+  keep their full keys (`v1.Pet`, `v2.Pet`).
+
+Options:
+
+- **draft** — `2020-12` (default), `draft-07` or `draft-04`. An older draft gets `definitions` instead
+  of `$defs`, a `$ref` with other keywords beside it wrapped in `allOf`, and drops what it has no
+  keyword for (`deprecated`; in draft-04 also `contentEncoding` and `examples`). Draft-04 writes an
+  exclusive bound as `minimum` / `maximum` with `exclusiveMinimum: true` and `$id` as `id`.
+- **packaging** — `bundle` (default), or `per-type`: one `<Type>.schema.json` per type, which refer to
+  each other by file name (`{"$ref": "Line.schema.json"}`), downloaded together as a `.zip` with a
+  `manifest.json`.
+- **id_base** — a base URI such as `https://example.com/schemas`: each document's `$id` becomes
+  `https://example.com/schemas/<file name>`, so per-type files resolve each other wherever they are
+  published.
+
+Every exported document validates against its draft's metaschema. An item imported from JSON Schema is
+re-exported exactly as it was imported unless you pick another draft, `per-type` or an **id_base**.
+Operations and channels are left out: JSON Schema describes data only.
+
 ### XSD (XML Schema) on its own
 
 Exporting to **XSD** writes just the data types as an XML Schema, without the WSDL around them — for

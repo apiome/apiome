@@ -1,0 +1,21 @@
+---
+slug: json-schema-export
+title: JSON Schema export from any source, in three drafts
+description: JSON Schema export writes valid 2020-12, draft-07 or draft-04, bundled or per type.
+authors: [apiome]
+---
+
+Exporting an item to **JSON Schema** now writes a valid standalone schema from any typed source — a
+2020-12 bundle by default, or draft-07 / draft-04, or one file per type.
+[How the JSON Schema is written](/ship/export-a-spec#json-schema-from-any-source).
+
+{/* truncate */}
+
+- **Real JSON types.** Scalars such as `i32` or `timestamp` become JSON types with a `format`
+  (`{"type": "integer", "format": "int32"}`), and validation rules become keywords. Every document
+  validates against its draft's metaschema.
+- **Every type.** All of the item's types are written under `$defs`, named after the type.
+- **Drafts.** The **draft** option writes `draft-07` or `draft-04`, rewriting what the older draft
+  spells differently and reporting what it cannot carry.
+- **One file per type.** **packaging** `per-type` downloads a `.zip` of `<Type>.schema.json` files,
+  with a manifest; **id_base** gives each file an `$id` under your own URI.
