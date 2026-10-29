@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.519.0] - 2026-10-29
+
+### Changed
+- **OpenRPC fidelity pack: REST, gRPC and event losses enumerated (MFX-33.2, #4302).** JSON-RPC 2.0 has no HTTP
+  semantics, streams or channels; each loss is now its own report item with kind and reason. HTTP (per REST
+  operation, replacing the single `rest-as-method` approximation): `http-binding-dropped` (DROP — method and path,
+  kept only as `x-http`), `http-parameters-reframed` (APPROX — the locations of path / query / header / cookie
+  params and the body), `http-status-dropped` (DROP — a success status other than 200), `http-status-as-error-code`
+  (APPROX), alongside `response-header-dropped` and `error-dropped`. Streaming: gRPC streams and GraphQL
+  subscriptions stay DROP. Events: publish / subscribe operations are now written as notifications (APPROX
+  `event-as-notification`) with their message and channel parameters as by-name params and the channel address as
+  `x-channel`, instead of being dropped; a channel used by one is APPROX `channel-as-notification`, an unused one
+  DROP `channel-dropped`. Field identity: a source field number is DROP (info).
+- `FidelityRulePack.channel_verdicts()` list hook (default: the single verdict); `WriterLossRulePack` files writer
+  losses by channel key and reports them per channel.
+- Goldens: the `openrpc` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.518.0] - 2026-10-29
 
 ### Added

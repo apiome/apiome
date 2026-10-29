@@ -20,3 +20,7 @@ meta-schema. You can export from gRPC, Thrift, GraphQL, OpenAPI or any other sou
 - **Working schema references.** Every `$ref` names a written component, and scalars such as
   `int64` get their JSON Schema form instead of a reference to nothing.
 - **Exact fidelity report.** Whatever OpenRPC cannot carry is listed on the construct it concerns.
+  Each REST operation lists its HTTP binding, parameter locations, success status and error statuses
+  separately. Streams, channels and field numbers are listed too.
+- **Events as notifications.** AsyncAPI publish and subscribe operations become notifications, with
+  the channel address kept as `x-channel`.

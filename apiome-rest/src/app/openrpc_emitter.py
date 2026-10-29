@@ -86,19 +86,31 @@ _RESERVED_CODES = range(-32768, -31999)
 
 
 class OpenRpcFidelityRulePack(WriterLossRulePack):
-    """Fidelity rules for OpenRPC export — MFX-33.1 (#4301).
+    """Fidelity rules for OpenRPC export — MFX-33.1 (#4301), loss enumeration MFX-33.2 (#4302).
 
     The pack builds the document with the OpenRPC writer and turns each loss the writer records into a
-    verdict on the construct it concerns (:class:`~app.writer_loss_rulepack.WriterLossRulePack`): a REST
-    operation reframed as a method, a synthesized version, renamed methods and components, scalars with
-    no JSON-Schema form are approximations; events, channels, streams, extra success responses, error
-    responses with no numeric code and error payload schemas are dropped. A carried operation is ``OK``
-    and its ``target_mapping`` names the method it became (``method getPet``, ``notification ping``).
-    A REST source's root is reported as reframed to JSON-RPC; agent descriptors are dropped.
+    verdict on the construct it concerns (:class:`~app.writer_loss_rulepack.WriterLossRulePack`), so the
+    report predicts exactly what the export writes. JSON-RPC 2.0 has no HTTP semantics, no streams and no
+    channels, so a REST or gRPC source's losses are enumerated one by one:
+
+    * **HTTP** — per REST operation: the method and path are dropped (``DROP``; kept only as ``x-http``),
+      the parameter locations reframed as by-name params (``APPROX``), a success status other than 200
+      dropped (``DROP``), error statuses turned into error codes (``APPROX``), response headers dropped;
+      errors without an integer status (``default``, ``4XX``) dropped.
+    * **Streaming** — a gRPC client / server / bidi stream and a GraphQL subscription are ``DROP``: the
+      call is written as one request and one response.
+    * **Events** — a publish / subscribe operation is a notification (``APPROX``) carrying its message and
+      channel parameters; a channel used by one is ``APPROX`` (its address is the notification's
+      ``x-channel``), an unused channel ``DROP``.
+    * **Field identity** — a source field number (Protobuf, Thrift) is ``DROP`` (``info``): JSON Schema
+      properties have no numbers.
+
+    A carried operation is ``OK`` and its ``target_mapping`` names the method or notification it became.
+    A non-OpenRPC document and a REST API's reframing are reported at the root; agents are dropped.
     """
 
     target_label = "OpenRPC"
-    critical_drops = frozenset({"event-operation-dropped", "unsupported-type"})
+    critical_drops = frozenset({"unsupported-type"})
     info_drops = frozenset({"error-payload-dropped"})
     cosmetic = frozenset({"renamed-method", "renamed-component"})
 
@@ -130,6 +142,11 @@ class OpenRpcFidelityRulePack(WriterLossRulePack):
                 target_mapping="agents → dropped",
             ))
         return verdicts + self.loss_verdicts(ROOT_CONSTRUCT_KEY)
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """The writer's losses for the field, plus a dropped field number (JSON Schema has none)."""
+        identity = self._field_identity_verdict(field)
+        return self.loss_verdicts(field.key) + ([identity] if identity is not None else [])
 
 
 class OpenRpcEmitOptions(EmitOptions):
@@ -226,8 +243,7 @@ class _OpenRpcWriter:
         schemas = self._schemas()
         if schemas:
             document["components"] = {"schemas": schemas}
-        if self._api.channels:
-            self.losses.record(LossKind.NA, "channels-dropped", "OpenRPC has no event channels.", pointer="channels")
+        self._channel_losses()
         self.document = document
 
     def render(self) -> str:
@@ -374,10 +390,7 @@ class _OpenRpcWriter:
 
     def _method(self, operation: Operation, service: Service, names: Set[str]) -> Optional[Dict[str, Any]]:
         if operation.kind in _EVENT_OPERATION_KINDS:
-            self.losses.record(LossKind.NA, "event-operation-dropped",
-                               f"OpenRPC has no events; {operation.kind.value} operation {operation.key!r} is not "
-                               "written.", pointer=operation.key)
-            return None
+            return self._event_notification(operation, service, names)
         name = self._method_name(operation, service, names)
         method: Dict[str, Any] = {"name": name}
         summary = operation.extras.get("openrpc_summary") if self._openrpc_source else None
@@ -415,13 +428,95 @@ class _OpenRpcWriter:
                                "written as one call.", pointer=operation.key)
         if rest:
             method["x-http"] = {"method": operation.http_method.upper(), "path": operation.http_path or "/"}
-            self.losses.record(LossKind.INFERRED, "rest-as-method",
-                               f"OpenRPC methods have no HTTP binding; {operation.http_method.upper()} "
-                               f"{operation.http_path or '/'} is the method {name!r} with its parameters and body "
-                               "as by-name params (the binding is kept as x-http).", pointer=operation.key)
+            self._http_losses(operation, name)
         self._written[operation.key] = f"{'notification' if notification else 'method'} {name}"
         self.tracker.record(operation.key, Provenance.SOURCE)
         return method
+
+    def _event_notification(self, operation: Operation, service: Service, names: Set[str]) -> Dict[str, Any]:
+        """A publish / subscribe operation as a JSON-RPC notification (MFX-33.2).
+
+        Its channel's address parameters and its event message(s) become by-name params, and the channel
+        address is kept as the extension ``x-channel``.
+        """
+        name = self._method_name(operation, service, names)
+        method: Dict[str, Any] = {"name": name}
+        if operation.description:
+            method["description"] = operation.description
+        if operation.tags:
+            method["tags"] = [{"name": tag} for tag in operation.tags]
+        channel = next((c for c in self._api.channels if c.key == operation.channel_ref), None)
+        taken: Set[str] = set()
+        params = [self._header_descriptor(field, taken) for field in (channel.parameters if channel else [])]
+        for param in params:
+            param["description"] = param["description"].replace("(header)", "(channel parameter)")
+        events = [m for m in operation.messages if m.payload is not None or m.payload_schema]
+        if events:
+            schemas = [self._type_schema(m.payload) if m.payload is not None else dict(m.payload_schema)
+                       for m in events]
+            message: Dict[str, Any] = {"name": _unique("message", taken),
+                                       "schema": schemas[0] if len(schemas) == 1 else {"oneOf": schemas},
+                                       "required": True}
+            params.append(message)
+        method["params"] = params
+        method["paramStructure"] = "by-name"
+        if operation.deprecated:
+            method["deprecated"] = True
+        if channel is not None:
+            method["x-channel"] = channel.address
+        direction = "the service sends" if operation.kind is OperationKind.PUBLISH else "the service receives"
+        self.losses.record(LossKind.INFERRED, "event-as-notification",
+                           f"JSON-RPC has no channels; the {operation.kind.value} operation {operation.key!r} is the "
+                           f"notification {name!r} {direction}, its message and channel parameters as by-name params "
+                           f"(the address{' ' + repr(channel.address) if channel else ''} is kept as x-channel).",
+                           pointer=operation.key)
+        self._written[operation.key] = f"notification {name}"
+        self.tracker.record(operation.key, Provenance.SOURCE)
+        return method
+
+    def _channel_losses(self) -> None:
+        """A channel used by a written event operation is carried by its notifications; another is dropped."""
+        for channel in self._api.channels:
+            users = [self._written[op.key].split(" ", 1)[1] for op in self._api.operations()
+                     if op.channel_ref == channel.key and op.key in self._written]
+            if users:
+                self.losses.record(LossKind.INFERRED, "channel-as-notification",
+                                   f"JSON-RPC has no channels; {channel.address!r} is carried by the notification(s) "
+                                   f"{', '.join(users)} as their x-channel.", pointer=channel.key)
+            else:
+                self.losses.record(LossKind.NA, "channel-dropped",
+                                   f"JSON-RPC has no channels and no operation uses {channel.address!r}; it is not "
+                                   "written.", pointer=channel.key)
+
+    def _http_losses(self, operation: Operation, name: str) -> None:
+        """Enumerate what a REST operation loses as a JSON-RPC method (MFX-33.2): its HTTP binding, the
+        locations of its parameters, its success status and the meaning of its error statuses."""
+        verb, path = operation.http_method.upper(), operation.http_path or "/"
+        self.losses.record(LossKind.NA, "http-binding-dropped",
+                           f"JSON-RPC has no HTTP method or path; {verb} {path} is the method {name!r} (the binding is "
+                           "kept only as the x-http extension, which JSON-RPC clients ignore).", pointer=operation.key)
+        located = [f"{p.location.value} {p.name}" for p in operation.parameters]
+        request = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
+        located += [f"header {h.name}" for h in (request.headers if request is not None else [])]
+        if request is not None and (request.payload is not None or request.payload_schema):
+            located.append("the body")
+        if located:
+            self.losses.record(LossKind.INFERRED, "http-parameters-reframed",
+                               f"JSON-RPC params have no location; {', '.join(located)} of {operation.key!r} become "
+                               "by-name params (each description names its location).", pointer=operation.key)
+        statuses = sorted({str(m.status_code) for m in operation.messages
+                           if m.role is MessageRole.RESPONSE and m.status_code and str(m.status_code) != "200"})
+        if statuses:
+            self.losses.record(LossKind.NA, "http-status-dropped",
+                               f"A JSON-RPC result has no status; the {', '.join(statuses)} status of "
+                               f"{operation.key!r} is not carried.", pointer=operation.key)
+        codes = sorted({str(m.status_code) for m in operation.messages
+                        if m.role is MessageRole.ERROR and _error_code(m.status_code) is not None})
+        if codes:
+            self.losses.record(LossKind.INFERRED, "http-status-as-error-code",
+                               f"JSON-RPC errors have codes, not HTTP statuses; the {', '.join(codes)} error "
+                               f"response(s) of {operation.key!r} are errors with that number as their code.",
+                               pointer=operation.key)
 
     def _method_name(self, operation: Operation, service: Service, names: Set[str]) -> str:
         """The operation name, unique in the document (qualified by its service on a clash)."""

@@ -302,18 +302,34 @@ by the OpenRPC importer.
   - the success response becomes `result`, and a response with no body is `{"type": "null"}`;
   - numeric error statuses become `errors` with the status as the `code`;
   - the HTTP method and path are kept in the extension `x-http`.
+- **Events.** A publish or subscribe operation (from AsyncAPI, for example) becomes a notification.
+  Its message and its channel's address parameters become by-name `params`, and the channel address
+  is kept in the extension `x-channel`.
 - **Schemas.** Named types become `components/schemas`, written with the same JSON Schema mapping
   as the OpenAPI export. Every `$ref` names a written component, and scalars such as `int64` or
   `timestamp` become their JSON Schema form (`{"type": "integer", "format": "int64"}`).
 
-The fidelity report lists what OpenRPC cannot carry:
+The fidelity report lists what OpenRPC cannot carry. JSON-RPC 2.0 has no HTTP semantics, no
+streams and no channels, so each loss of a REST, gRPC or event item is listed on its own:
 
-- **Dropped:** event operations and channels, and streams and subscriptions (written as one call). A
-  method has one `result`, so a second success response is dropped. Error responses without an
-  integer code (`default`, `4XX`) are dropped too, and so are error payload types, since an OpenRPC
-  error carries a `data` value, not a schema. Response headers and repeated field names are dropped.
-- **Approximated:** REST operations reframed as methods, a synthesized version, renamed methods and
-  components, and types with no JSON Schema form (written as any value).
+| Source construct | In the report | Why |
+| --- | --- | --- |
+| HTTP method and path | Dropped | A method has a name only. `x-http` keeps them, but JSON-RPC clients ignore it. |
+| Path, query, header and cookie parameters | Approximated | They become by-name `params`, and each one's description names where it came from. |
+| A success status other than 200, such as `201` | Dropped | A result has no status. |
+| Error statuses such as `404` | Approximated | They become error codes with the same number. |
+| `default` and `4XX` error responses | Dropped | An error needs an integer code. |
+| Response headers | Dropped | A result has no headers. |
+| gRPC streams, GraphQL subscriptions | Dropped | A JSON-RPC call is one request and one response. |
+| Publish and subscribe operations | Approximated | They become notifications. |
+| A channel used by an operation | Approximated | Its address is the notification's `x-channel`. |
+| A channel no operation uses | Dropped | Nothing carries it. |
+| Field numbers (Protobuf, Thrift) | Dropped (info) | JSON Schema properties have no numbers. |
+
+Also dropped: a second success response (a method has one `result`), error payload types (an
+OpenRPC error carries a `data` value, not a schema) and repeated field names. Also approximated: a
+synthesized version, renamed methods and components, and types with no JSON Schema form (written as
+any value).
 - **Carried.** For each operation that is carried, the report names the method or notification it
   became, such as `method getPet`.
 

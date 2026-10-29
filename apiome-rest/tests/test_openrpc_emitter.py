@@ -219,8 +219,8 @@ def test_events_streams_and_extra_responses_are_reported() -> None:
            _op("Wallet.Fire", name="Fire", kind=OperationKind.ONE_WAY,
                messages=[_msg("Wallet.Fire#response", MessageRole.RESPONSE, "string")])]
     result = _emit(_api(operations=ops))
-    assert [m["name"] for m in json.loads(result.files[0].content)["methods"]] == ["Watch", "Sub", "Fire"]
-    assert {("event-operation-dropped", "Wallet.onTx"), ("streaming-dropped", "Wallet.Watch"),
+    assert [m["name"] for m in json.loads(result.files[0].content)["methods"]] == ["onTx", "Watch", "Sub", "Fire"]
+    assert {("event-as-notification", "Wallet.onTx"), ("streaming-dropped", "Wallet.Watch"),
             ("streaming-dropped", "Wallet.Sub"), ("response-dropped", "Wallet.Fire")} <= set(_subjects(result))
 
 
@@ -249,7 +249,7 @@ def test_rest_operations_are_reframed_as_by_name_methods() -> None:
     assert methods["createPet"]["params"] == [
         {"name": "body", "schema": {"$ref": "#/components/schemas/Pet"}, "required": True}]
     found = set(_subjects(result))
-    assert {("rest-as-method", "GET /pets/{id}"), ("error-dropped", "GET /pets/{id}"),
+    assert {("http-binding-dropped", "GET /pets/{id}"), ("error-dropped", "GET /pets/{id}"),
             ("error-payload-dropped", "GET /pets/{id}"), ("response-dropped", "POST /pets")} <= found
 
 
@@ -258,7 +258,7 @@ def test_the_rest_reframing_is_in_the_fidelity_report() -> None:
     root = {item.target_mapping: item for item in report.items if item.construct_key == ""}
     assert root["rest → JSON-RPC"].kind is LossinessKind.APPROX
     get = {item.target_mapping: item for item in report.items if item.construct_key == "GET /pets/{id}"}
-    assert get["rest-as-method"].kind is LossinessKind.APPROX and "x-http" in get["rest-as-method"].message
+    assert get["http-binding-dropped"].kind is LossinessKind.DROP and "x-http" in get["http-binding-dropped"].message
     assert get["error-dropped"].kind is LossinessKind.DROP
 
 
