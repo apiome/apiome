@@ -1,0 +1,25 @@
+---
+slug: smithy-export
+title: Smithy export with traits, HTTP bindings and a JSON AST
+description: Smithy exports validate with smithy validate and carry constraints and HTTP bindings.
+authors: [apiome]
+---
+
+Exporting an item to **Smithy** now writes a Smithy 2.0 model that `smithy validate` accepts. You
+can export from OpenAPI, Protobuf, GraphQL, Thrift or any other typed or service-bearing source.
+[How the Smithy is written](/ship/export-a-spec#smithy-from-any-source).
+
+{/* truncate */}
+
+- **IDL, JSON AST or both.** The new **output** option writes `<Name>.smithy`, the Smithy JSON AST
+  (`<Name>.json`), or both.
+- **Constraints as traits.** Nullability becomes `@required`, defaults `@default`, and constraints
+  `@length`, `@range`, `@pattern` and `@uniqueItems`.
+- **HTTP bindings.** REST operations keep their method, path and status as `@http`, with labels,
+  query parameters, headers and payloads bound. A type returned only as an error becomes an `@error`
+  structure.
+- **Protocol traits.** The new **protocol** option marks each service `restJson1` or `rpcv2Cbor`.
+- **Valid names.** Shape and member names are made unique without regard to case. A renamed member
+  keeps its wire name with `@jsonName`.
+- **Fixed:** lists are no longer written as their element type. Doc comments in an imported Smithy
+  file now attach to the right shape.

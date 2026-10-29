@@ -141,11 +141,16 @@ def is_smithy(content: str) -> bool:
     return False
 
 
+def _blank(match: re.Match) -> str:
+    """Spaces in place of a comment, newlines kept — offsets into the stripped text stay offsets into the
+    source, which :func:`_leading_doc` reads doc comments from."""
+    return re.sub(r"[^\n]", " ", match.group(0))
+
+
 def _strip_comments(text: str) -> str:
-    text = re.sub(r"/\*[\s\S]*?\*/", " ", text)
-    text = re.sub(r"//[^\n]*", " ", text)
-    text = re.sub(r"///[^\n]*", " ", text)
-    text = re.sub(r"#[^\n]*", " ", text)
+    text = re.sub(r"/\*[\s\S]*?\*/", _blank, text)
+    text = re.sub(r"//[^\n]*", _blank, text)
+    text = re.sub(r"#[^\n]*", _blank, text)
     return text
 
 
@@ -165,10 +170,13 @@ def _leading_doc(raw: str, shape_start: int) -> Optional[str]:
     prefix = raw[:shape_start]
     lines = prefix.splitlines()
     docs: List[str] = []
-    for line in reversed(lines[-5:]):
+    for line in reversed(lines[-30:]):
         stripped = line.strip()
         if stripped.startswith("///"):
             docs.append(stripped[3:].strip())
+            continue
+        if stripped.startswith("@") and not docs:
+            # A trait applied to the shape sits between its doc comment and the shape.
             continue
         if not stripped:
             if docs:
@@ -178,6 +186,39 @@ def _leading_doc(raw: str, shape_start: int) -> Optional[str]:
     if not docs:
         return None
     return " ".join(reversed(docs)).strip() or None
+
+
+def _leading_traits(line: str) -> Tuple[List[str], str]:
+    """Split the trait applications off the start of a member line: ``@range(min: 1) @required count: Integer``
+    → ``(["range", "required"], "count: Integer")``. A trait's value may hold ``:`` and ``)`` inside strings."""
+    names: List[str] = []
+    rest = line
+    while True:
+        match = re.match(r"@([\w.#]+)\s*", rest)
+        if not match:
+            return names, rest.strip()
+        names.append(match.group(1).split("#")[-1])
+        rest = rest[match.end():]
+        if not rest.startswith("("):
+            continue
+        depth, index, quoted = 0, 0, False
+        while index < len(rest):
+            char = rest[index]
+            if quoted:
+                if char == "\\":
+                    index += 1
+                elif char == '"':
+                    quoted = False
+            elif char == '"':
+                quoted = True
+            elif char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            index += 1
+        rest = rest[index + 1:].lstrip()
 
 
 def _parse_fields(inner: str) -> Tuple[SmithyField, ...]:
@@ -190,11 +231,10 @@ def _parse_fields(inner: str) -> Tuple[SmithyField, ...]:
         stripped = line.strip()
         if not stripped:
             continue
-        trait_only = re.fullmatch(r"@(\w+)(?:\([^)]*\))?", stripped)
-        if trait_only:
-            pending_traits.append(trait_only.group(1))
+        inline_traits, stripped = _leading_traits(stripped)
+        if not stripped:
+            pending_traits.extend(inline_traits)
             continue
-        inline_traits = re.findall(r"@(\w+)", stripped)
         field_match = re.search(r"(?P<name>\w+)\s*:\s*(?P<type>[\w.]+)", stripped)
         if not field_match:
             pending_traits = []
@@ -239,6 +279,9 @@ def _parse_enum_values(inner: str) -> Tuple[str, ...]:
         }
     )
     values: List[str] = []
+    # Member values (``ACTIVE = "active"``) and trait applications are not member names.
+    inner = re.sub(r'"(?:[^"\\]|\\.)*"', " ", inner)
+    inner = re.sub(r"@[\w.#]+(?:\([^)]*\))?", " ", inner)
     for token in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\b", inner):
         if token in reserved:
             continue

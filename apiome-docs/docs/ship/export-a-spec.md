@@ -166,6 +166,43 @@ download it, Apiome reads the export back with its CORBA IDL importer.
 - **From a CORBA item.** An item imported from CORBA IDL keeps its module, `typedef`s, interfaces and
   parameter directions (`in`, `out`, `inout`).
 
+### Smithy from any source
+
+Exporting to **Smithy** writes a Smithy 2.0 model that `smithy validate` accepts. Set the **output**
+option to choose the form: `idl` (the default) writes `<Name>.smithy`, `json-ast` writes the Smithy
+JSON AST as `<Name>.json`, and `both` writes the two. They describe the same model, so load one of
+them, not both together.
+
+- **Shapes.** Objects become `structure`s, unions `union`s, enums `enum`s, maps `map`s, and named
+  lists `list`s. A list with no name of its own gets a `<Element>List` shape. A named scalar or an
+  alias of a scalar becomes a simple shape (`string AccountId`). An enum value that differs from its
+  member name is written `in_progress = "in-progress"`.
+- **Traits.** A field that may not be null is `@required`, and a field default becomes `@default`.
+  Length limits become `@length`, numeric bounds `@range`, and regular expressions `@pattern`. A list
+  that must hold unique items targets a `<Element>Set` shape marked `@uniqueItems`. Descriptions
+  become doc comments, and deprecated items get `@deprecated`. A constraint Smithy cannot express,
+  such as `multipleOf`, is in the fidelity report.
+- **Services.** Each service becomes a `service` and each operation an `operation`. An HTTP
+  operation keeps its binding: `@http(method, uri, code)`, with path, query and header parameters
+  bound by `@httpLabel`, `@httpQuery` and `@httpHeader`, and the body by `@httpPayload`. When an
+  operation needs one, its input and output are generated structures (`<Operation>Input`,
+  `<Operation>Output`). GET operations are `@readonly`, PUT and DELETE operations `@idempotent`. A
+  GET, HEAD or DELETE request has no body in Smithy, and transport headers such as `Authorization`
+  are not bound. The report lists both.
+- **Errors.** A type returned only as an error response becomes an `@error` structure, with
+  `@httpError` for its status, and is listed in the operation's `errors`.
+- **Protocol.** Set the **protocol** option to `restJson1` or `rpcv2Cbor` to mark each service with
+  that protocol trait. These traits come from separate Smithy packages, so a build needs them as
+  dependencies.
+- **Names.** Smithy names are identifiers that must stay unique when case is ignored. `order-id` is
+  written `order_id` and keeps its wire name with `@jsonName("order-id")`. A shape cannot reuse a
+  prelude name such as `String`, and a clash gets a number (`String2`). Each rename is in the
+  fidelity report.
+- **From a Smithy item.** An item imported from Smithy keeps its namespace, `$version`, service
+  version and operation order. Traits that were imported by name only, such as a `@length` whose
+  limits were not kept, cannot be written back, and the report says so. A `resource` is not written
+  back either; its operations stay on the service.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever

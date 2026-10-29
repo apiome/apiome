@@ -35,7 +35,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch a single item by its primary key.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -87,7 +87,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Store an item in a table, replacing any existing item with the same key.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -139,7 +139,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Query items sharing a partition key.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -225,7 +225,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A single DynamoDB-style attribute value; exactly one member is set.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "union"
@@ -292,7 +292,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "Fetch a",
+        "description": null,
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -347,7 +347,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "Query items sharing",
+        "description": null,
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -689,16 +689,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:082651f6088d1bbe4ed8b623e4519fce087142b11fa3ff798afbc928c524f386",
+  "fingerprint": "sha256:8b71f54b6ed942ae5035b16f5bcf404bd7698aaeac80aefb5b63fdb67c73e81e",
   "lint": {
-    "findings": 34,
+    "findings": 32,
     "grade": "F",
-    "report_fingerprint": "ca2c306aac974807c43e0846027c8d47821083d29572e10a9c428bd324dd8ffd",
-    "score": 44,
+    "report_fingerprint": "b1e48f44b8bdb0a8ff3b11e64ad25be8a500038ff625a6088b8ee9d283efc276",
+    "score": 56,
     "severity_counts": {
       "error": 0,
       "info": 24,
-      "warning": 10
+      "warning": 8
     }
   },
   "snapshot_version": 1

@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.514.0] - 2026-10-28
+
+### Added
+- **Smithy 2.0 emitter: JSON AST + IDL, traits and HTTP bindings (MFX-20.1, #3914).** The `smithy` writer is rebuilt
+  around one model built as a Smithy JSON AST and rendered as IDL too, so the two always agree; both validate under
+  `smithy validate`. Shapes: `structure`, `union` (fields or member types; `void` members target `Unit`), `enum`
+  (`= "value"` when the wire value differs), `map` (string keys), named `list`s and a synthesized `<Element>List` for
+  an anonymous list (lists were written as their element type), simple shapes for named scalars and scalar aliases;
+  an alias of a named shape is inlined. Traits: `@required` from nullability, `@default` when it fits the target,
+  `@length` / `@range` (an exclusive integer bound made inclusive) / `@pattern` on the shapes they apply to,
+  `@uniqueItems` on a `<Element>Set` list, doc comments, `@deprecated`, `@jsonName` for a renamed member. Names are
+  Smithy identifiers unique case-insensitively and never a prelude shape (`smithy_identifier`; renames reported); a
+  trait shadowed by a model shape is written fully qualified; a cycle of required members has one `@required`
+  dropped. Operations take a structure payload as input / output, else a synthesized `<Operation>Input` /
+  `<Operation>Output`; HTTP operations get `@http(method, uri, code)`, `@httpLabel` / `@httpQuery` / `@httpHeader` /
+  `@httpPayload` members and `@readonly` / `@idempotent`; GET / HEAD / DELETE bodies, transport headers (e.g.
+  `Authorization`), and unbindable or duplicate routes are reported; a record only ever returned as an error becomes
+  an `@error` / `@httpError` structure in the operation's `errors`. A Smithy source keeps its namespace, versions and
+  operation order; resources and value-less traits are reported. Nothing to declare → 422 (`EmitPreconditionError`).
+- New options: `output` (`idl` | `json-ast` | `both`) and `protocol` (`none` | `restJson1` | `rpcv2Cbor`).
+- `SMITHY_SCALAR_FOR_KIND` in `app.scalar_aliases`.
+
+### Changed
+- `SmithyFidelityRulePack` predicts the writer's shape, member and operation renames (`APPROX`) and dropped agents
+  (`DROP`).
+
+### Fixed
+- The Smithy IDL reader attaches doc comments to the right shape (offsets came from the comment-stripped text) and
+  past trait lines; member traits whose value holds `:` or `)` (`@range(min: 1)`, `@pattern("^(a|b)$")`) are read; enum
+  members written `NAME = "value"` are read.
+- Goldens: Smithy corpus snapshots (descriptions), the `smithy` cells of the round-trip and export-conformance
+  matrices; `smithy -> smithy` now round-trips (xfail removed); the `smithy` silent-loss ledger goes from 12 pairs to 9.
+
 ## [1.513.0] - 2026-10-28
 
 ### Added

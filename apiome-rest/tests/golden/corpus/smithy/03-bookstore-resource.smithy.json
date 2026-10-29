@@ -35,7 +35,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": "A book catalog entry",
+            "description": "Add a new book to the catalog.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -87,7 +87,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "Fetch a single book by id.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -139,7 +139,7 @@
           {
             "channel_ref": null,
             "deprecated": false,
-            "description": null,
+            "description": "List all books in the catalog.",
             "extras": {},
             "http_method": null,
             "http_path": null,
@@ -197,7 +197,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "A book catalog entry modeled as a Smithy resource.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "resource"
@@ -264,7 +264,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": null,
+        "description": "Shared representation of a book, reused by read and list operations.",
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -501,7 +501,7 @@
         "aliased": null,
         "constraints": null,
         "deprecated": false,
-        "description": "Fetch a single book by",
+        "description": null,
         "enum_values": [],
         "extras": {
           "smithy_kind": "structure"
@@ -618,16 +618,16 @@
     "confidence": 0.95,
     "format": "smithy"
   },
-  "fingerprint": "sha256:bb5af0cf14d1b05aa65bb5ffc61192241f864787a097a944c5c0de60227874f1",
+  "fingerprint": "sha256:2326563db42c3a1db0f862d7a658aa36da22893f8a186d3635151a49c44f501e",
   "lint": {
-    "findings": 30,
+    "findings": 27,
     "grade": "F",
-    "report_fingerprint": "97b934b05931333e9e11657fd54b75ef4ffe1e7f616f1fe89c82b877c14e5f6a",
-    "score": 50,
+    "report_fingerprint": "701ee854e678f1814a0db4d6dcfdf8995945faa792bba0315554ff19a5a27614",
+    "score": 58,
     "severity_counts": {
       "error": 0,
       "info": 22,
-      "warning": 8
+      "warning": 5
     }
   },
   "snapshot_version": 1

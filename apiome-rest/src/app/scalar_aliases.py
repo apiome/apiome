@@ -9,7 +9,8 @@ writes those names as type references, and the file does not compile — Protobu
 
 This module reduces a spelling (plus its ``format``) to a small set of :data:`ScalarKind` values,
 and each emitter maps a kind to its own keyword (:data:`PROTO_SCALAR_FOR_KIND`,
-:data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`, :data:`OMG_IDL_SCALAR_FOR_KIND`).
+:data:`THRIFT_SCALAR_FOR_KIND`, :data:`CAPNP_SCALAR_FOR_KIND`, :data:`OMG_IDL_SCALAR_FOR_KIND`,
+:data:`SMITHY_SCALAR_FOR_KIND`).
 Stored canonical models are untouched; only the emitted text changes.
 
 Only spellings with one clear meaning are listed. A name that is not listed — a named type, or a
@@ -24,6 +25,7 @@ from typing import Dict, Mapping, Optional
 __all__ = [
     "CAPNP_SCALAR_FOR_KIND",
     "OMG_IDL_SCALAR_FOR_KIND",
+    "SMITHY_SCALAR_FOR_KIND",
     "PROTO_SCALAR_FOR_KIND",
     "THRIFT_SCALAR_FOR_KIND",
     "ScalarKind",
@@ -150,6 +152,24 @@ OMG_IDL_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
     "double": "double",
     "string": "string",
     "bytes": "sequence<octet>",
+}
+
+#: Smithy prelude shape per kind (MFX-20.1). Smithy has no unsigned integers: an unsigned value widens
+#: to the next signed size, and ``uint64`` to ``BigInteger``.
+SMITHY_SCALAR_FOR_KIND: Mapping[ScalarKind, str] = {
+    "bool": "Boolean",
+    "int8": "Byte",
+    "int16": "Short",
+    "int32": "Integer",
+    "int64": "Long",
+    "uint8": "Short",
+    "uint16": "Integer",
+    "uint32": "Long",
+    "uint64": "BigInteger",
+    "float": "Float",
+    "double": "Double",
+    "string": "String",
+    "bytes": "Blob",
 }
 
 
