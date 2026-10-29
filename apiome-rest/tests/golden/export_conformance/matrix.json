@@ -295,8 +295,8 @@
     {
       "family": "a2a",
       "loss_counts": {
-        "approx": 9,
-        "drop": 8,
+        "approx": 13,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -26844,7 +26844,7 @@
       "family": "jsonld",
       "loss_counts": {
         "approx": 2,
-        "drop": 1,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -31003,7 +31003,7 @@
       "family": "mcp",
       "loss_counts": {
         "approx": 8,
-        "drop": 3,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -36337,7 +36337,7 @@
       "family": "openapi",
       "loss_counts": {
         "approx": 2,
-        "drop": 2,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -41089,7 +41089,7 @@
       "family": "pydantic",
       "loss_counts": {
         "approx": 6,
-        "drop": 3,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -46389,7 +46389,7 @@
       "family": "swagger",
       "loss_counts": {
         "approx": 8,
-        "drop": 9,
+        "drop": 11,
         "synth": 4
       },
       "reason": null,
@@ -56561,7 +56561,7 @@
       "family": "zod",
       "loss_counts": {
         "approx": 2,
-        "drop": 4,
+        "drop": 5,
         "synth": 1
       },
       "reason": null,

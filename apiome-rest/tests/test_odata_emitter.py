@@ -313,7 +313,7 @@ def test_rpc_events_and_streams() -> None:
     result = _emit(_api(operations=ops, paradigm=ApiParadigm.RPC, format="protobuf"))
     schema = _schema(json.loads(result.files[0].content))
     assert schema["Get"][0]["$Kind"] == "Function" and schema["Do"][0]["$Kind"] == "Action"
-    assert {("event-operation-dropped", "onEvent"), ("streaming-dropped", "Svc.Watch")} <= set(_losses(result))
+    assert {("event-operation-dropped", "onEvent"), ("stream-as-collection", "Svc.Watch")} <= set(_losses(result))
 
 
 def test_a_types_only_source_exposes_its_root_records() -> None:
