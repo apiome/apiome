@@ -519,11 +519,28 @@ the same name, so a document can start with it.
   `http://example.com/common`), you get one `.xsd` per namespace, downloaded together as a `.zip`:
   `<Name>.xsd` is the main schema, `<Name>-common.xsd` the next, and each schema `xs:import`s the
   others it uses.
-- **Operations.** XSD describes data only: operations and channels are left out, and the fidelity
-  report lists each one.
+- **Operations.** XSD describes data only: operations and channels are left out. The fidelity report
+  lists each one, and an item with operations carries a **types-only** advisory saying how many were
+  left out — export it to WSDL, OpenAPI or AsyncAPI as well to keep them.
 
 An item imported from XSD is written back with its own global elements, attributes, occurrences and
 enumeration values.
+
+The fidelity report lists, construct by construct, what XML Schema cannot say the way the source does:
+
+| In the source | In the XSD export |
+|---|---|
+| An operation or channel | Dropped (types-only), with the advisory above |
+| A free-form object (`additionalProperties: {}` or `{type: object}`, with no properties) | Approximated: `xs:any` — any child elements, named by their keys |
+| A map with typed values | Approximated: a list of `entry` elements, each with a `key` and a `value` |
+| A `oneOf` (or another union) | Approximated: an `xs:choice` of child elements, so a document wraps the value in the element of its alternative |
+| A union with no alternatives | Dropped: an empty `complexType` |
+| A nullable value | Approximated (note): `nillable="true" minOccurs="0"` — XML tells an absent element from one marked `xsi:nil`, JSON tells `null` from absent, and either form is accepted |
+| A property's examples | Approximated (note): kept as `<xsd:documentation source="example">`, which a validator ignores |
+| Properties of a non-XSD item | Synthesized (note): each is written as a child element, not an attribute |
+| `multipleOf` (XSD 1.0), `uniqueItems`, a pattern XSD cannot express | Dropped: the rule is not written |
+| A deprecated property | Dropped (note): XSD has no deprecation marker |
+| A name that is not an XML name (`first name`) | Approximated (note): `firstName` |
 
 ### WADL from any source
 

@@ -1,0 +1,22 @@
+---
+slug: xsd-fidelity-report
+title: The XSD export's fidelity report names every approximation
+description: XSD export reports maps, unions, nulls, examples and operations construct by construct.
+authors: [apiome]
+---
+
+The fidelity report of an **XSD** export now lists, construct by construct, what XML Schema cannot
+say the way the source does, and why.
+[What each construct becomes](/ship/export-a-spec#xsd-xml-schema-on-its-own).
+
+{/* truncate */}
+
+- **Types-only advisory.** Exporting an item with operations or channels says how many are left out,
+  and suggests exporting to WSDL, OpenAPI or AsyncAPI as well to keep them.
+- **Free-form objects.** An untyped map (`additionalProperties: {}`) is written as `xs:any` and
+  reported as approximated; a typed map is a list of `entry` elements.
+- **Unions.** A `oneOf` is an `xs:choice` of child elements, reported as approximated; a union with no
+  alternatives is reported as dropped.
+- **Null vs absent, examples, attributes.** Notes say that a nullable value is `nillable` and
+  optional, that examples are kept as annotations, and that every property is written as a child
+  element rather than an attribute.

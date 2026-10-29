@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.525.0] - 2026-10-29
+
+### Changed
+- **XSD fidelity pack (MFX-22.2, #4133).** `XsdFidelityRulePack` is now a `WriterLossRulePack`: it builds the export
+  with the XSD writer and turns each recorded loss into a verdict on its construct, so the report predicts exactly what
+  the export does. Rules: operations / channels → DROP, and an operation-bearing source carries a root **types-only
+  advisory** (`types-only`, counting the operations and channels left out); a free-form map (untyped
+  `additionalProperties`) → `xs:any` APPROX (`map-as-any`), a typed map → entry list APPROX; a union → `xs:choice` of
+  child elements APPROX (`union-as-choice`), a union with no alternatives → DROP (`union-dropped`); a nullable value →
+  `nillable` + optional, info APPROX (`null-as-nillable`); examples → `xs:documentation source="example"`, info APPROX
+  (`example-as-annotation`); a non-XSD source's properties → child elements, info SYNTH (`property → child element`).
+- Shared XSD writer: a `standalone` mode (used by the XSD export only — WSDL / WADL output is unchanged) writes untyped
+  maps as `xs:any`, writes field examples (`extras` `examples` / `odcs_examples` / `pydantic_examples`) as
+  annotations, and records the approximations above.
+- Goldens: the `xsd` cells of the round-trip and export-conformance matrices (no status changes).
+
 ## [1.524.0] - 2026-10-29
 
 ### Changed

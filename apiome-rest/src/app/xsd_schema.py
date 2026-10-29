@@ -18,6 +18,12 @@ referenced by bare name). The standalone XSD export can spread the types over se
 type is placed in its namespace (``type_namespaces``) and referenced through that namespace's prefix
 (``prefixes``); :meth:`XsdSchemaWriter.append_types` writes one namespace's types per schema document.
 
+**Standalone mode** (``standalone=True``, the XSD export — MFX-22.2, #4133): an untyped map becomes
+``xs:any`` (any child elements), a field's examples are written as ``xs:documentation source="example"``,
+and the approximations a fidelity report must name are recorded as losses — a union written as an
+``xs:choice`` (or dropped when it has no alternatives), a nullable value written ``nillable`` and
+optional, an example kept only as an annotation. WSDL and WADL keep their own behaviour.
+
 **XSD 1.1** (``xsd_version="1.1"``): the schema is marked ``vc:minVersion="1.1"`` and ``multipleOf``
 becomes an ``xs:assertion`` facet (``$value mod 5 = 0``), which XSD 1.0 has no facet for.
 
@@ -29,6 +35,7 @@ and :func:`target_namespace_verdicts`.
 
 from __future__ import annotations
 
+import json
 import math
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Set, Tuple
@@ -48,6 +55,7 @@ __all__ = [
     "XsdSchemaWriter",
     "anonymous_sequence",
     "comment_safe",
+    "field_examples",
     "schema_field_verdicts",
     "schema_type_verdict",
     "target_namespace_verdicts",
@@ -62,6 +70,11 @@ TNS_PREFIX = "tns"
 
 #: Writes every type (the default of :meth:`XsdSchemaWriter.append_types`).
 _EVERY_NAMESPACE = object()
+
+#: Field ``extras`` keys an import keeps a property's examples under (JSON Schema, ODCS, Pydantic).
+_EXAMPLE_KEYS = ("examples", "example", "odcs_examples", "pydantic_examples")
+#: Type names that say "any value" rather than naming a type.
+_UNTYPED_NAMES = frozenset({"any", "anytype", "object", "json", "unknown"})
 
 #: XSD built-ins that take length facets, and those that take range facets.
 _LENGTH_BASES = frozenset({"string", "normalizedString", "token", "anyURI", "base64Binary", "hexBinary"})
@@ -105,6 +118,7 @@ class XsdSchemaWriter:
         prefixes: Namespace → the prefix references to its types use (default: ``tns`` for
             ``target_namespace``). Every namespace in ``type_namespaces`` needs one.
         xsd_version: ``"1.0"`` (default) or ``"1.1"``.
+        standalone: Write and record the standalone XSD export's conventions (see the module docstring).
     """
 
     def __init__(
@@ -119,6 +133,7 @@ class XsdSchemaWriter:
         type_namespaces: Optional[Mapping[str, Optional[str]]] = None,
         prefixes: Optional[Mapping[str, str]] = None,
         xsd_version: str = "1.0",
+        standalone: bool = False,
     ) -> None:
         self._api = api
         self.target_namespace = target_namespace
@@ -127,7 +142,10 @@ class XsdSchemaWriter:
         self.tracker = tracker
         self._skip = skip_types
         self.xsd_version = xsd_version
+        self.standalone = standalone
         self._types_by_key = {t.key: t for t in api.types}
+        #: Type key → type, for callers that describe what a type became.
+        self.types_by_key = self._types_by_key
         #: Namespace → prefix; a no-namespace schema's types are referenced by bare name.
         self.prefixes: Dict[str, str] = dict(prefixes or {})
         if target_namespace and target_namespace not in self.prefixes:
@@ -274,8 +292,26 @@ class XsdSchemaWriter:
         complex_el = ET.SubElement(schema_el, ET.QName(XSD_NS, "complexType"), {"name": name})
         annotate(complex_el, type_.description)
         if type_.kind is TypeKind.UNION:
-            choice = ET.SubElement(complex_el, ET.QName(XSD_NS, "choice"))
-            self._append_union_members(choice, type_)
+            if self.standalone and not (type_.fields or type_.union_members):
+                self.losses.record(
+                    LossKind.NA, "union-dropped",
+                    f"Union {type_.key!r} has no alternatives an xs:choice can name; it is written as an "
+                    "empty complexType.",
+                    pointer=type_.key,
+                )
+            else:
+                choice = ET.SubElement(complex_el, ET.QName(XSD_NS, "choice"))
+                self._append_union_members(choice, type_)
+                if self.standalone:
+                    names = ", ".join(el.get("name") or "" for el in choice)
+                    self.losses.record(
+                        LossKind.INFERRED, "union-as-choice",
+                        f"XSD has no union of shapes; {type_.key!r} is an xs:choice of child elements ({names}), "
+                        "so a document wraps the value in the element of its alternative.",
+                        pointer=type_.key,
+                    )
+        elif type_.kind is TypeKind.MAP and self.standalone and _untyped(type_.value_type, self.type_names):
+            self._append_any_body(complex_el, type_)
         elif type_.kind is TypeKind.MAP:
             self._append_map_body(complex_el, type_)
         else:
@@ -360,6 +396,21 @@ class XsdSchemaWriter:
             element = scope.claim(ncname(local[:1].lower() + local[1:], fallback="variant"))
             self.append_value(choice, element, TypeRef(name=member), pointer=type_.key, optional=False)
 
+    def _append_any_body(self, complex_el: ET.Element, type_: Type) -> None:
+        """An untyped map (free-form object): any child elements, validated where a schema is known."""
+        self.losses.record(
+            LossKind.INFERRED,
+            "map-as-any",
+            f"XSD has no map type; the free-form map {type_.key!r} is written as xs:any — any child elements, "
+            "named by their keys.",
+            pointer=type_.key,
+        )
+        sequence_el = ET.SubElement(complex_el, ET.QName(XSD_NS, "sequence"))
+        ET.SubElement(
+            sequence_el, ET.QName(XSD_NS, "any"),
+            {"minOccurs": "0", "maxOccurs": "unbounded", "processContents": "lax"},
+        )
+
     def _append_map_body(self, complex_el: ET.Element, type_: Type) -> None:
         """A map: a sequence of ``entry`` elements, each a ``key`` and a ``value``."""
         self.losses.record(
@@ -408,6 +459,10 @@ class XsdSchemaWriter:
             self._append_xsd_source_field(parent, field, name)
             return
         fmt = field.constraints.format if field.constraints is not None else None
+        optional = field.type.nullable and not in_choice
+        examples = field_examples(field) if self.standalone else []
+        if self.standalone:
+            self._record_standalone_notes(field, optional=optional, examples=examples)
         self.append_value(
             parent,
             name,
@@ -418,9 +473,27 @@ class XsdSchemaWriter:
             constraints=field.constraints,
             default=field.default,
             description=field.description,
-            optional=field.type.nullable and not in_choice,
+            examples=examples,
+            optional=optional,
             pointer=field.key,
         )
+
+    def _record_standalone_notes(self, field: CanonicalField, *, optional: bool, examples: List[Any]) -> None:
+        """Record what a standalone XSD export approximates about one field (null vs absent, examples)."""
+        if optional and field.type.item is None:
+            self.losses.record(
+                LossKind.INFERRED, "null-as-nillable",
+                f"XML tells an absent element from one marked xsi:nil, JSON tells null from absent; {field.key!r} is "
+                'written nillable="true" minOccurs="0", so either form is accepted for a null value.',
+                pointer=field.key,
+            )
+        if examples:
+            self.losses.record(
+                LossKind.INFERRED, "example-as-annotation",
+                f"XSD has no examples; the example(s) of {field.key!r} are kept as xs:documentation, which a "
+                "validator ignores.",
+                pointer=field.key,
+            )
 
     def _append_xsd_source_field(self, parent: ET.Element, field: CanonicalField, name: str) -> None:
         """A field imported from XSD: written back with the occurrence and facets it was read with."""
@@ -467,6 +540,7 @@ class XsdSchemaWriter:
         default: Any = None,
         description: Optional[str] = None,
         hint: Optional[str] = None,
+        examples: Tuple[Any, ...] | List[Any] = (),
     ) -> ET.Element:
         """Write ``ref`` as an element named ``name``: lists repeat, scalars keep facets.
 
@@ -481,6 +555,7 @@ class XsdSchemaWriter:
             default: A scalar default (``default`` attribute).
             description: Written as ``xs:annotation``.
             hint: An XSD type an XML import recorded for the value; wins when it is a built-in.
+            examples: Example values, written as ``xs:documentation source="example"``.
 
         Returns:
             The element written.
@@ -494,13 +569,13 @@ class XsdSchemaWriter:
             if ref.item.item is not None:
                 # A list of lists: XSD has no nested occurrence, so the inner list gets a wrapper.
                 element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
-                annotate(element, description)
+                annotate(element, description, examples)
                 inner = anonymous_sequence(element)
                 self.append_value(inner, "item", ref.item, pointer=pointer, optional=False, fmt=fmt, hint=hint)
                 return element
             attributes["type"] = self.type_qname(ref.item, fmt, pointer, hint=hint)
             element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
-            annotate(element, description)
+            annotate(element, description, examples)
             return element
         if optional:
             attributes["minOccurs"] = "0"
@@ -513,7 +588,7 @@ class XsdSchemaWriter:
             attributes["default"] = _literal(default)
         if builtin is not None and _has_facets(constraints, builtin, self.xsd_version):
             element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
-            annotate(element, description)
+            annotate(element, description, examples)
             restriction = ET.SubElement(
                 ET.SubElement(element, ET.QName(XSD_NS, "simpleType")),
                 ET.QName(XSD_NS, "restriction"),
@@ -523,7 +598,7 @@ class XsdSchemaWriter:
             return element
         attributes["type"] = self.type_qname(ref, fmt, pointer, hint=hint)
         element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
-        annotate(element, description)
+        annotate(element, description, examples)
         return element
 
     def wrapper(self, schema_el: ET.Element, name: str) -> ET.Element:
@@ -773,11 +848,40 @@ def anonymous_sequence(element: ET.Element) -> ET.Element:
     return ET.SubElement(ET.SubElement(element, ET.QName(XSD_NS, "complexType")), ET.QName(XSD_NS, "sequence"))
 
 
-def annotate(element: ET.Element, description: Optional[str]) -> None:
-    """Add ``<xs:annotation><xs:documentation>`` (it must be the element's first child)."""
+def annotate(element: ET.Element, description: Optional[str], examples: Any = ()) -> None:
+    """Add ``<xs:annotation>`` (it must be the element's first child): the description, then each example.
+
+    An example is an ``<xs:documentation source="example">`` holding the value (JSON for an object or list).
+    """
+    if not description and not examples:
+        return
+    annotation = ET.SubElement(element, ET.QName(XSD_NS, "annotation"))
     if description:
-        annotation = ET.SubElement(element, ET.QName(XSD_NS, "annotation"))
         ET.SubElement(annotation, ET.QName(XSD_NS, "documentation")).text = description
+    for example in examples:
+        text = json.dumps(example, ensure_ascii=False) if isinstance(example, (dict, list)) else _literal(example)
+        ET.SubElement(annotation, ET.QName(XSD_NS, "documentation"), {"source": "example"}).text = text
+
+
+def field_examples(field: CanonicalField) -> List[Any]:
+    """The examples an import kept on ``field`` (``extras["examples"]``, ``odcs_examples`` …), in order."""
+    extras = field.extras or {}
+    for key in _EXAMPLE_KEYS:
+        value = extras.get(key)
+        if value is None:
+            continue
+        values = value if isinstance(value, list) else [value]
+        return [v for v in values if v is not None]
+    return []
+
+
+def _untyped(ref: Optional[TypeRef], type_names: Mapping[str, str]) -> bool:
+    """Whether a map's value type says "any value" (absent, unnamed, or ``any`` / ``object`` …)."""
+    if ref is None:
+        return True
+    if ref.item is not None:
+        return False
+    return not ref.name or (ref.name not in type_names and ref.name.lower() in _UNTYPED_NAMES)
 
 
 def comment_safe(text: str) -> str:

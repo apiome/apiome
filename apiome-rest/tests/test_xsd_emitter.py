@@ -38,7 +38,7 @@ from app.canonical_model import (
 from app.emitter import LossKind
 from app.fidelity_engine import compute_lossiness_for_emitter
 from app.import_source import canonical_diff, get_import_source
-from app.lossiness import LossinessKind
+from app.lossiness import LossinessKind, LossinessSeverity
 from app.roundtrip_matrix import import_source_text, reimport_emitted
 from app.wsdl_emitter import WsdlEmitter
 from app.xsd_emitter import XsdEmitOptions, XsdEmitter, xsd_namespaces
@@ -348,21 +348,22 @@ def _with_operation() -> CanonicalApi:
 
 def test_operations_are_dropped_and_reported() -> None:
     result = _emit(_with_operation())
-    assert any(loss.kind is LossKind.NA and loss.subject == "services-dropped" for loss in result.losses)
+    advisory = next(loss for loss in result.losses if loss.subject == "types-only")
+    assert advisory.kind is LossKind.NA and "1 operation(s) are not exported" in advisory.detail
     assert "getPet" not in result.files[0].content
 
 
-def test_the_fidelity_report_drops_operations_and_carries_unions_and_facets() -> None:
+def test_the_fidelity_report_drops_operations_and_carries_facets() -> None:
     report = compute_lossiness_for_emitter(_with_operation(), XsdEmitter)
     by_key = {item.construct_key: item for item in report.items}
     assert by_key["Pets.getPet"].kind is LossinessKind.DROP
-    # The union (an xs:choice) and the constrained field (facets) are carried: nothing is reported for them.
-    for key in ("Contact", "Pet.name", "Pet.age"):
-        assert key not in by_key or by_key[key].kind is LossinessKind.OK
+    # Constrained fields are written as facets: only the null-vs-absent note is reported for them.
+    for key in ("Pet.name", "Pet.age"):
+        assert by_key[key].target_mapping == "null-as-nillable"
 
 
 def test_renamed_names_are_reported() -> None:
-    api = _api([_record("my pet", _field("first name", TypeRef(name="string"), owner="my pet"))])
+    api = _api([_record("my pet", _field("first name", TypeRef(name="string", nullable=False), owner="my pet"))])
     result = _emit(api)
     assert {loss.subject for loss in result.losses} == {"renamed-identifier"}
     root = _schema(result).root
@@ -372,8 +373,8 @@ def test_renamed_names_are_reported() -> None:
 def test_a_document_of_another_format_is_reported_at_the_root() -> None:
     report = compute_lossiness_for_emitter(_pet_api(namespace=_NS), XsdEmitter)
     root = [item for item in report.items if item.construct_key == ""]
-    assert [item.kind for item in root] == [LossinessKind.APPROX]
-    assert "XML Schema" in root[0].message
+    assert [item.kind for item in root] == [LossinessKind.APPROX, LossinessKind.SYNTH]
+    assert "XML Schema" in root[0].message and "child element" in root[1].message
     xsd_report = compute_lossiness_for_emitter(_purchase_order(), XsdEmitter)
     assert not [item for item in xsd_report.items if item.construct_key == ""]
 
@@ -409,3 +410,120 @@ def test_an_enum_typed_field_keeps_its_default() -> None:
     schema = _schema(_emit(_api([pet, status])))
     assert _by_name(schema.root, "element", "status").get("default") == "ACTIVE"
     assert schema.is_valid("<Pet><status/></Pet>")
+
+
+# ===========================================================================
+# Fidelity pack — MFX-22.2 (#4133)
+# ===========================================================================
+
+
+def _rich_json_source() -> CanonicalApi:
+    """A JSON-first model with every construct XSD approximates or drops."""
+    pet = _record(
+        "Pet",
+        _field("name", TypeRef(name="string", nullable=False), field_number=1),
+        _field("nickname", TypeRef(name="string", nullable=True), field_number=2),
+        _field("age", TypeRef(name="integer", nullable=False), field_number=3,
+               constraints=Constraints(multiple_of=2)),
+        _field("color", TypeRef(name="string", nullable=False), field_number=4,
+               extras={"examples": ["brown", "white"]}),
+        _field("legacyId", TypeRef(name="string", nullable=False), field_number=5, deprecated=True),
+        _field("first name", TypeRef(name="string", nullable=False), field_number=6),
+        _field("labels", TypeRef(name="Labels", nullable=False), field_number=7),
+        _field("contact", TypeRef(name="Contact", nullable=False), field_number=8),
+    )
+    labels = Type(key="Labels", name="Labels", kind=TypeKind.MAP,
+                  key_type=TypeRef(name="string"), value_type=TypeRef(name="integer"))
+    metadata = Type(key="Metadata", name="Metadata", kind=TypeKind.MAP, key_type=TypeRef(name="string"))
+    contact = Type(key="Contact", name="Contact", kind=TypeKind.UNION, union_members=["Email", "Phone"])
+    email = _record("Email", _field("address", TypeRef(name="string", nullable=False), owner="Email"))
+    phone = _record("Phone", _field("number", TypeRef(name="string", nullable=False), owner="Phone"))
+    nothing = Type(key="Nothing", name="Nothing", kind=TypeKind.UNION)
+    api = _api([pet, labels, metadata, contact, email, phone, nothing], namespace=_NS)
+    api.services.append(
+        Service(key="Pets", name="Pets", operations=[
+            Operation(key="Pets.listPets", name="listPets", kind=OperationKind.REQUEST_RESPONSE,
+                      http_method="GET", http_path="/pets"),
+            Operation(key="Pets.addPet", name="addPet", kind=OperationKind.REQUEST_RESPONSE,
+                      http_method="POST", http_path="/pets"),
+        ])
+    )
+    return api
+
+
+def _items(api: CanonicalApi) -> Dict[str, list]:
+    report = compute_lossiness_for_emitter(api, XsdEmitter)
+    by_key: Dict[str, list] = {}
+    for item in report.items:
+        by_key.setdefault(item.construct_key, []).append(item)
+    return by_key
+
+
+def _mappings(items) -> Dict[str, LossinessKind]:
+    return {item.target_mapping: item.kind for item in items}
+
+
+def test_a_rich_json_source_enumerates_each_approximation_and_drop_with_a_reason() -> None:
+    by_key = _items(_rich_json_source())
+    assert all(item.message for items in by_key.values() for item in items)
+    assert _mappings(by_key["Metadata"]) == {"map-as-any": LossinessKind.APPROX}
+    assert _mappings(by_key["Labels"]) == {"map-as-entry-list": LossinessKind.APPROX}
+    assert _mappings(by_key["Contact"]) == {"union-as-choice": LossinessKind.APPROX}
+    assert "xs:choice of child elements (email, phone)" in by_key["Contact"][0].message
+    assert _mappings(by_key["Nothing"]) == {"union-dropped": LossinessKind.DROP}
+    assert _mappings(by_key["Pet.nickname"]) == {"null-as-nillable": LossinessKind.APPROX}
+    assert _mappings(by_key["Pet.color"]) == {"example-as-annotation": LossinessKind.APPROX}
+    assert _mappings(by_key["Pet.age"]) == {"unsupported-facet": LossinessKind.DROP}
+    assert _mappings(by_key["Pet.legacyId"]) == {"deprecated-dropped": LossinessKind.DROP}
+    assert _mappings(by_key["Pet.first name"]) == {"renamed-identifier": LossinessKind.APPROX}
+    for key in ("Pets.listPets", "Pets.addPet"):
+        assert [item.kind for item in by_key[key]] == [LossinessKind.DROP]
+    assert "name" not in {k.split(".")[-1] for k in by_key if k.startswith("Pet.") and k != "Pet.first name"}
+    severities = {item.target_mapping: item.severity for items in by_key.values() for item in items}
+    assert severities["null-as-nillable"] is LossinessSeverity.INFO
+    assert severities["example-as-annotation"] is LossinessSeverity.INFO
+    assert severities["deprecated-dropped"] is LossinessSeverity.INFO
+    assert severities["union-as-choice"] is LossinessSeverity.WARN
+
+
+def test_an_operation_bearing_api_carries_the_types_only_advisory() -> None:
+    root = {item.target_mapping: item for item in _items(_rich_json_source())[""]}
+    assert {mapping: item.kind for mapping, item in root.items()} == {
+        "document → XML Schema": LossinessKind.APPROX,
+        "property → child element": LossinessKind.SYNTH,
+        "types-only": LossinessKind.DROP,
+    }
+    advisory = root["types-only"].message
+    assert "2 operation(s) are not exported" in advisory and "WSDL" in advisory
+    assert "types-only" not in _mappings(_items(_pet_api(namespace=_NS)).get("", []))
+
+
+def test_the_report_predicts_exactly_what_the_export_records() -> None:
+    api = _rich_json_source()
+    emitted = {(loss.subject, loss.pointer) for loss in _emit(api).losses}
+    by_key = _items(api)
+    reported = {item.target_mapping for items in by_key.values() for item in items}
+    assert {subject for subject, _ in emitted} <= reported
+
+
+def test_an_untyped_map_is_written_as_xs_any() -> None:
+    root = _schema(_emit(_rich_json_source())).root
+    any_el = _by_name(root, "complexType", "Metadata").find(f"{_XSD}sequence/{_XSD}any")
+    assert (any_el.get("minOccurs"), any_el.get("maxOccurs"), any_el.get("processContents")) == (
+        "0", "unbounded", "lax",
+    )
+    assert _by_name(root, "complexType", "Labels").find(f"{_XSD}sequence/{_XSD}element").get("name") == "entry"
+
+
+def test_examples_are_written_as_documentation() -> None:
+    root = _schema(_emit(_rich_json_source())).root
+    docs = _by_name(root, "element", "color").findall(f"{_XSD}annotation/{_XSD}documentation")
+    assert [(d.get("source"), d.text) for d in docs] == [("example", "brown"), ("example", "white")]
+
+
+def test_wsdl_keeps_its_own_conventions() -> None:
+    """Standalone mode is the XSD export's: WSDL still writes a free-form map as entries and records no notes."""
+    result = WsdlEmitter().emit(_rich_json_source())
+    subjects = {loss.subject for loss in result.losses}
+    assert not subjects & {"union-as-choice", "null-as-nillable", "example-as-annotation", "map-as-any"}
+    assert "<xsd:any" not in "".join(str(f.content) for f in result.files)
