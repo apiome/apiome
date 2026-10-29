@@ -13,18 +13,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "removed agent Travel Concierge",
-        "added operation Travel Concierge#Build itinerary",
-        "added operation Travel Concierge#Search flights",
-        "added operation Travel Concierge#Search hotels",
-        "added operation Travel Concierge#Visa requirements",
-        "removed operation Travel Concierge.build-itinerary"
-      ],
       "family": "a2a",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -483,18 +481,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "removed agent research-assistant",
-        "added operation research-assistant#Cite sources",
-        "added operation research-assistant#Summarize",
-        "added operation research-assistant#Web search",
-        "removed operation research-assistant.Cite sources",
-        "removed operation research-assistant.Summarize"
-      ],
       "family": "acp",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -971,18 +967,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation a2a#https://returns.northwind.example/.well-known/agent-card.json",
-        "added operation a2a#https://shop.northwind.example/.well-known/agent-card.json",
-        "removed operation a2a.https://returns.northwind.example/.well-known/agent-card.json",
-        "removed operation a2a.https://shop.northwind.example/.well-known/agent-card.json",
-        "added operation mcp#https://shop.northwind.example/mcp",
-        "removed operation mcp.https://shop.northwind.example/mcp"
-      ],
       "family": "agents-manifest",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -1459,18 +1453,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /tasks",
-        "removed operation GET /tasks/{id}",
-        "removed operation POST /tasks",
-        "added operation Task API#Create a task",
-        "added operation Task API#Get a task",
-        "added operation Task API#List all tasks"
-      ],
       "family": "api-blueprint",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "api-blueprint",
@@ -2049,18 +2041,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{segment1}",
-        "removed operation POST /v2/orders/orders",
-        "added operation default#CreateOrder",
-        "added operation default#GetOrder",
-        "added operation default#ListOrders"
-      ],
       "family": "apigee",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -3138,8 +3128,8 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -3649,7 +3639,7 @@
       "family": "asn1",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 6,
         "synth": 0
       },
       "reason": null,
@@ -4152,8 +4142,8 @@
     {
       "family": "asyncapi",
       "loss_counts": {
-        "approx": 0,
-        "drop": 4,
+        "approx": 1,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -4634,7 +4624,7 @@
       "family": "avro",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -5141,18 +5131,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation com.example.orders.OrderService#cancelOrder",
-        "added operation com.example.orders.OrderService#getOrder",
-        "added operation com.example.orders.OrderService#placeOrder",
-        "removed operation com.example.orders.OrderService.cancelOrder",
-        "removed operation com.example.orders.OrderService.getOrder",
-        "removed operation com.example.orders.OrderService.placeOrder"
-      ],
       "family": "avro-idl",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "avro-idl",
@@ -5679,9 +5667,9 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 6
+        "approx": 5,
+        "drop": 3,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -6257,18 +6245,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /orders",
-        "removed operation GET /orders/{orderId}",
-        "added operation default#get-order",
-        "added operation default#list-orders",
-        "changed root",
-        "changed service default"
-      ],
       "family": "azure-apim",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -6828,9 +6814,9 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 3
+        "approx": 2,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -7403,18 +7389,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation Directory#add",
-        "added operation Directory#lookup",
-        "removed operation Directory.add",
-        "removed operation Directory.lookup",
-        "changed root",
-        "changed service Directory"
-      ],
       "family": "capnproto",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "capnproto",
@@ -7933,8 +7917,8 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 8,
         "synth": 0
       },
       "reason": null,
@@ -8443,8 +8427,8 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
+        "approx": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -8953,9 +8937,9 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 6
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -9449,14 +9433,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type CUSTOMER-RECORD.CUSTOMER-RECORD"
-      ],
       "family": "cobolcopybook",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "cobolcopybook",
@@ -9940,18 +9926,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation tasks.v1.TaskService#CompleteTask",
-        "added operation tasks.v1.TaskService#CreateTask",
-        "added operation tasks.v1.TaskService#GetTask",
-        "added operation tasks.v1.TaskService#ListTasks",
-        "removed operation tasks.v1.TaskService.CompleteTask",
-        "removed operation tasks.v1.TaskService.CreateTask"
-      ],
       "family": "connectrpc",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "connectrpc",
@@ -10476,16 +10460,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "added operation orders#ANY /v2/orders",
-        "changed root",
-        "changed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 4 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -11037,18 +11021,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation Banking.Bank#deposit",
-        "added operation Banking.Bank#getAccount",
-        "added operation Banking.Bank#openAccount",
-        "added operation Banking.Bank#withdraw",
-        "removed operation Banking.Bank.deposit",
-        "removed operation Banking.Bank.getAccount"
-      ],
       "family": "corbaidl",
-      "reason": "Fidelity report is empty but the round trip shows 14 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "corbaidl",
@@ -11569,9 +11551,9 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 9,
-        "drop": 0,
-        "synth": 13
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -12082,9 +12064,9 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 8
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -12591,9 +12573,9 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 13
+        "approx": 1,
+        "drop": 6,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -13106,8 +13088,8 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
+        "approx": 1,
+        "drop": 12,
         "synth": 0
       },
       "reason": null,
@@ -13622,9 +13604,9 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
-        "synth": 12
+        "approx": 6,
+        "drop": 5,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -14200,8 +14182,8 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
+        "approx": 1,
+        "drop": 7,
         "synth": 0
       },
       "reason": null,
@@ -14708,18 +14690,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type EDIFACT-INVOIC.DTM",
-        "removed type EDIFACT-INVOIC.IMD",
-        "removed type EDIFACT-INVOIC.LIN",
-        "removed type EDIFACT-INVOIC.MOA",
-        "removed type EDIFACT-INVOIC.MessageINVOIC"
-      ],
       "family": "edifact",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "edifact",
@@ -15232,15 +15212,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type X12-850.PO1",
-        "removed type X12-850.TransactionSet850"
-      ],
       "family": "edix12",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "edix12",
@@ -15756,18 +15737,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation storefront#ANY /",
-        "added operation storefront#ANY /health"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -16334,18 +16313,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /Patient",
-        "removed operation GET /Patient/{id}",
-        "removed operation POST /Patient",
-        "added operation Patient.Patient#createPatient",
-        "added operation Patient.Patient#readPatient",
-        "added operation Patient.Patient#searchPatient"
-      ],
       "family": "fhir",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "fhir",
@@ -16910,14 +16887,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type FIX.4.4.Message8"
-      ],
       "family": "fix",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "fix",
@@ -17413,9 +17392,9 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 2
+        "approx": 1,
+        "drop": 7,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -17921,17 +17900,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type example.game.Color",
-        "removed type example.game.Monster",
-        "removed type example.game.Vec3",
-        "removed type example.game.Weapon"
-      ],
       "family": "flatbuffers",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "flatbuffers",
@@ -18431,18 +18409,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "added operation identity/users#GET /users",
-        "added operation identity/users#GET /users/{userId}",
-        "added operation identity/users#POST /users"
-      ],
       "family": "gateway-api",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -18997,9 +18973,9 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 16
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -19520,18 +19496,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /metrics",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation frontend api_public#ANY /"
-      ],
       "family": "haproxy",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -20092,9 +20066,9 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 20
+        "approx": 6,
+        "drop": 6,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -20668,15 +20642,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type ADT-A01.MSH",
-        "removed type ADT-A01.MessageADTA01"
-      ],
       "family": "hl7v2",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "hl7v2",
@@ -21188,8 +21163,8 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 37,
         "synth": 0
       },
       "reason": null,
@@ -21704,9 +21679,9 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 5,
+        "drop": 1,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -22288,9 +22263,9 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 3,
+        "drop": 1,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -22864,18 +22839,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type IDOC-ORDERS05.E1EDK01",
-        "removed type IDOC-ORDERS05.E1EDK03",
-        "removed type IDOC-ORDERS05.E1EDK14",
-        "removed type IDOC-ORDERS05.E1EDKA1",
-        "removed type IDOC-ORDERS05.E1EDP01"
-      ],
       "family": "idoc",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "idoc",
@@ -23396,8 +23369,8 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 15,
-        "drop": 0,
+        "approx": 1,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -23912,9 +23885,9 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 3
+        "approx": 6,
+        "drop": 1,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -24488,18 +24461,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type pain.001.001.09.Amt",
-        "removed type pain.001.001.09.CdtTrfTxInf",
-        "removed type pain.001.001.09.Cdtr",
-        "removed type pain.001.001.09.CdtrAcct",
-        "removed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "iso20022",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "iso20022",
@@ -25018,18 +24989,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type 0100.DE11",
-        "removed type 0100.DE12",
-        "removed type 0100.DE13",
-        "removed type 0100.DE18",
-        "removed type 0100.DE2"
-      ],
       "family": "iso8583",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "iso8583",
@@ -25554,18 +25523,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /v2/products",
-        "removed operation GET /v2/orders",
-        "removed operation POST /v2/orders",
-        "added operation storefront/orders#ANY /"
-      ],
       "family": "istio",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -26120,9 +26087,9 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 7
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -26618,9 +26585,9 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 14
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -27122,9 +27089,9 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 11
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -27633,9 +27600,9 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -28137,14 +28104,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type com.example.orders.Order"
-      ],
       "family": "kafka-connect",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "kafka-connect",
@@ -28637,18 +28606,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation DELETE /users/{userId}",
-        "removed operation GET /users",
-        "removed operation GET /users/{userId}",
-        "removed operation POST /users",
-        "removed operation PUT /users/{userId}",
-        "added operation users-service#DELETE /users/{userId}"
-      ],
       "family": "kong",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -29203,9 +29170,9 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 5
+        "approx": 3,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -29719,17 +29686,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation TemperatureService#ResetMinAndMaxMeasuredValues",
-        "removed operation TemperatureService.ResetMinAndMaxMeasuredValues",
-        "changed root",
-        "changed service TemperatureService",
-        "removed type Temperature"
-      ],
       "family": "lwm2m",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "lwm2m",
@@ -30246,18 +30212,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation OnOffService#Off",
-        "added operation OnOffService#OffWithEffect",
-        "added operation OnOffService#On",
-        "added operation OnOffService#OnWithTimedOff",
-        "added operation OnOffService#Toggle",
-        "removed operation OnOffService.Off"
-      ],
       "family": "matter",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "matter",
@@ -30778,9 +30742,9 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 9
+        "approx": 7,
+        "drop": 3,
+        "synth": 7
       },
       "reason": null,
       "status": "lossy",
@@ -31294,18 +31258,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type NACHA-ACH.AchFile",
-        "removed type NACHA-ACH.Batch",
-        "removed type NACHA-ACH.BatchControl",
-        "removed type NACHA-ACH.BatchHeader",
-        "removed type NACHA-ACH.EntryDetail"
-      ],
       "family": "nacha",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "drift": [
@@ -31828,8 +31790,8 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
+        "approx": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -32336,18 +32298,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type NCPDP-SCRIPT.Address",
-        "removed type NCPDP-SCRIPT.Body",
-        "removed type NCPDP-SCRIPT.CommunicationNumbers",
-        "removed type NCPDP-SCRIPT.DateOfBirth",
-        "removed type NCPDP-SCRIPT.Diagnosis"
-      ],
       "family": "ncpdp",
-      "reason": "Fidelity report is empty but the round trip shows 32 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 32,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "ncpdp",
@@ -32866,18 +32826,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /#api.example.com:80@return",
-        "removed operation ANY /healthz",
-        "removed operation ANY /static/",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products"
-      ],
       "family": "nginx",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -33436,18 +33394,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation Example.Orders.Orders#createOrder",
-        "added operation Example.Orders.Orders#getOrder",
-        "added operation Example.Orders.Orders#listOrders",
-        "removed operation GET /Orders",
-        "removed operation GET /Orders({key})",
-        "removed operation POST /Orders"
-      ],
       "family": "odata",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "odata",
@@ -34018,18 +33974,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /Customers",
-        "removed operation GET /Customers({key})",
-        "removed operation GET /Items",
-        "removed operation GET /Items({key})",
-        "removed operation GET /Orders",
-        "removed operation GET /Orders({key})"
-      ],
       "family": "odata-v2",
-      "reason": "Fidelity report is empty but the round trip shows 25 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 10,
+        "drop": 3,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "odata-v2",
@@ -34602,9 +34556,9 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 6
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -35102,8 +35056,8 @@
       "family": "oncrpc",
       "loss_counts": {
         "approx": 4,
-        "drop": 1,
-        "synth": 0
+        "drop": 4,
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -35617,9 +35571,9 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
-        "synth": 4
+        "approx": 2,
+        "drop": 3,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -36135,9 +36089,9 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 6
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -36637,9 +36591,9 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 6
+        "approx": 3,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -37155,9 +37109,9 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 9
+        "approx": 1,
+        "drop": 8,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -37659,9 +37613,9 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 14
+        "approx": 1,
+        "drop": 7,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -38174,8 +38128,8 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 13,
-        "drop": 0,
+        "approx": 1,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -38690,9 +38644,9 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 3
+        "approx": 4,
+        "drop": 1,
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -39268,9 +39222,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 5,
+        "drop": 1,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -39844,18 +39798,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation example.catalog.v1.ProductService#CreateProduct",
-        "added operation example.catalog.v1.ProductService#GetProduct",
-        "added operation example.catalog.v1.ProductService#ListProducts",
-        "removed operation example.catalog.v1.ProductService.CreateProduct",
-        "removed operation example.catalog.v1.ProductService.GetProduct",
-        "removed operation example.catalog.v1.ProductService.ListProducts"
-      ],
       "family": "protobuf",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "protobuf",
@@ -40374,18 +40326,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation example.orders.v1.OrderService#GetOrder",
-        "added operation example.orders.v1.OrderService#PlaceOrder",
-        "removed operation example.orders.v1.OrderService.GetOrder",
-        "removed operation example.orders.v1.OrderService.PlaceOrder",
-        "changed root",
-        "changed service example.orders.v1.OrderService"
-      ],
       "family": "protobuf-editions",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "protobuf-editions",
@@ -40906,9 +40856,9 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 11,
-        "drop": 0,
-        "synth": 16
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -41424,18 +41374,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "added operation Bookstore API#GET /books",
-        "added operation Bookstore API#GET /books/{bookId}",
-        "added operation Bookstore API#POST /books",
-        "removed operation GET /books",
-        "removed operation GET /books/{bookId}",
-        "removed operation POST /books"
-      ],
       "family": "raml",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "raml",
@@ -42004,8 +41952,8 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
+        "approx": 1,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -42514,9 +42462,9 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 14
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -43018,18 +42966,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type pain.001.001.09.Amt",
-        "removed type pain.001.001.09.CdtTrfTxInf",
-        "removed type pain.001.001.09.Cdtr",
-        "removed type pain.001.001.09.CdtrAcct",
-        "removed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "sepa",
-      "reason": "Fidelity report is empty but the round trip shows 26 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 26,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "sepa",
@@ -43550,9 +43496,9 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 8
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -44054,9 +44000,9 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 11
+        "approx": 3,
+        "drop": 6,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -44583,9 +44529,9 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 5,
+        "drop": 1,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -45161,9 +45107,9 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
-        "drop": 2,
-        "synth": 7
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -45667,9 +45613,9 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 21
+        "approx": 1,
+        "drop": 6,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -46181,9 +46127,9 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 23,
-        "drop": 0,
-        "synth": 36
+        "approx": 7,
+        "drop": 8,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -46761,9 +46707,9 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 12
+        "approx": 5,
+        "drop": 4,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -47332,18 +47278,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type SWIFT-MT103.CodeWord",
-        "removed type SWIFT-MT103.Field13C",
-        "removed type SWIFT-MT103.Field20",
-        "removed type SWIFT-MT103.Field23B",
-        "removed type SWIFT-MT103.Field32A"
-      ],
       "family": "swift-mt",
-      "reason": "Fidelity report is empty but the round trip shows 16 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 16,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "swift-mt",
@@ -47856,18 +47800,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation com.example.user.UserService#createUser",
-        "added operation com.example.user.UserService#deleteUser",
-        "added operation com.example.user.UserService#getUser",
-        "removed operation com.example.user.UserService.createUser",
-        "removed operation com.example.user.UserService.deleteUser",
-        "removed operation com.example.user.UserService.getUser"
-      ],
       "family": "thrift",
-      "reason": "Fidelity report is empty but the round trip shows 12 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "thrift",
@@ -48386,9 +48328,9 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 2
+        "approx": 5,
+        "drop": 1,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -48962,15 +48904,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "changed root",
-        "removed type TRADACOMS-ORDERS.MessageORDERS",
-        "removed type TRADACOMS-ORDERS.OLD"
-      ],
       "family": "tradacoms",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "tradacoms",
@@ -49480,18 +49423,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "added operation catalogue-service#ANY /v2/products",
-        "added operation noop#ANY /",
-        "added operation orders-service#ANY /v2/orders"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -50054,9 +49995,9 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 19,
-        "drop": 0,
-        "synth": 28
+        "approx": 5,
+        "drop": 10,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -50576,18 +50517,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation DELETE /v2/orders/orders/{id}",
-        "removed operation GET /v2/orders/orders",
-        "removed operation GET /v2/orders/orders/{id}",
-        "added operation Orders API#DELETE /v2/orders/orders/{id}",
-        "added operation Orders API#GET /v2/orders/orders",
-        "added operation Orders API#GET /v2/orders/orders/{id}"
-      ],
       "family": "tyk",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -51142,9 +51081,9 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 0,
-        "drop": 0,
-        "synth": 25
+        "approx": 1,
+        "drop": 7,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -51670,18 +51609,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /pets",
-        "removed operation GET /pets/{id}",
-        "removed operation POST /pets",
-        "added operation PetStore.Pets#create",
-        "added operation PetStore.Pets#list",
-        "added operation PetStore.Pets#read"
-      ],
       "family": "typespec",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -52248,7 +52185,7 @@
       "family": "vsam-idcams",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -52761,18 +52698,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /books",
-        "removed operation GET /books/{bookId}",
-        "removed operation POST /books",
-        "added operation http://example.com/bookstore.WADL API#createBook",
-        "added operation http://example.com/bookstore.WADL API#getBook",
-        "added operation http://example.com/bookstore.WADL API#listBooks"
-      ],
       "family": "wadl",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "wadl",
@@ -53349,8 +53284,8 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 0,
-        "drop": 1,
+        "approx": 3,
+        "drop": 3,
         "synth": 3
       },
       "reason": null,
@@ -53861,18 +53796,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation http://example.com/orders.OrderPort#CancelOrder",
-        "added operation http://example.com/orders.OrderPort#CreateOrder",
-        "added operation http://example.com/orders.OrderPort#GetOrder",
-        "removed operation http://example.com/orders.OrderPort.CancelOrder",
-        "removed operation http://example.com/orders.OrderPort.CreateOrder",
-        "removed operation http://example.com/orders.OrderPort.GetOrder"
-      ],
       "family": "wsdl",
-      "reason": "Fidelity report is empty but the round trip shows 17 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 9,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "wsdl",
@@ -54395,18 +54328,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation http://example.com/orders.OrderInterface#cancelOrder",
-        "added operation http://example.com/orders.OrderInterface#getOrder",
-        "added operation http://example.com/orders.OrderInterface#placeOrder",
-        "removed operation http://example.com/orders.OrderInterface.cancelOrder",
-        "removed operation http://example.com/orders.OrderInterface.getOrder",
-        "removed operation http://example.com/orders.OrderInterface.placeOrder"
-      ],
       "family": "wsdl2",
-      "reason": "Fidelity report is empty but the round trip shows 15 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "wsdl2",
@@ -54929,17 +54860,16 @@
       "target": "apigee"
     },
     {
-      "drift": [
-        "added operation inventory.reserveStock#inventory.reserveStock",
-        "removed operation inventory.reserveStock.inventory.reserveStock",
-        "changed root",
-        "changed service inventory.reserveStock",
-        "removed type InventoryReserveStockParam3"
-      ],
       "family": "xmlrpc",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "xmlrpc",
@@ -55446,9 +55376,9 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 2,
-        "drop": 4,
-        "synth": 5
+        "approx": 1,
+        "drop": 7,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -55951,7 +55881,7 @@
       "family": "xsd",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -56460,9 +56390,9 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 15,
-        "drop": 0,
-        "synth": 16
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -56978,18 +56908,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation GET /items/{sku}/stock",
-        "added operation InventoryRequester.InventoryRequester#getStockLevel",
-        "added operation InventoryRequester.InventoryRequester#reserveStock",
-        "removed operation POST /items/{sku}/reservations",
-        "changed root",
-        "changed service InventoryRequester.InventoryRequester"
-      ],
       "family": "zosconnect",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "arazzo"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arazzo",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -57546,10 +57474,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3259,
+    "lossy": 3308,
     "ok": 65,
     "refused": 1909,
-    "silent-loss": 491,
+    "silent-loss": 442,
     "skipped": 0
   },
   "families": [

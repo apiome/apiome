@@ -3502,8 +3502,8 @@
         {
           "source_format": "postman-v2",
           "emit_key": "postman",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

@@ -241,6 +241,27 @@ An item imported from WADL is written back as it was read. Import now also reads
 as `<wadl:application>`, the query and header params a method's request declares, and — when you
 upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
 
+### Arazzo from any source
+
+**Arazzo** describes workflows: sequences of API calls. It is not a description of the API itself,
+so exporting a plain REST, RPC or event API to Arazzo gives you only the sequencing Apiome can make
+of it. The fidelity report warns about this first: *this target captures workflows, not the full API
+surface*.
+
+- **An item imported from Arazzo** is written back as it was read, with its own workflows, steps,
+  inputs and outputs.
+- **Any other item** gets one workflow per service. The workflow's steps call that service's
+  operations by id, in the order they are declared. The source declares no such workflow, so the
+  report marks it **synthesized**. When an operation has no id of its own, the step uses the
+  operation's key (`POST /orders`), and the report marks that synthesized too.
+- **Each operation** becomes a step and is marked **approximated**. Its parameters, request and
+  response schemas stay in the source description and are not written.
+- **Types, servers and event channels** are not written. Types and channels are marked **dropped**.
+- **An item with nothing to sequence**, such as a set of types or an event API, exports as a
+  near-empty document with no workflow, marked **dropped**.
+
+Every export from a non-Arazzo item shows the fidelity warning before you download.
+
 ### API Blueprint from any source
 
 Exporting to **API Blueprint** writes one `<Name>.apib` file in API Blueprint 1A: Markdown, with

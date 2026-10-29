@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.511.0] - 2026-10-28
+
+### Added
+- **Arazzo fidelity pack (MFX-10.2, #3871).** `ArazzoFidelityRulePack` tells a non-workflow source what Arazzo makes
+  of it: the root leads with `WORKFLOWS_ONLY_WARNING` ("this target captures workflows, not the full API surface";
+  `APPROX`, warn), names the workflows synthesized from services (`SYNTH`) or a source with nothing to sequence
+  (near-empty document, `DROP`, warn); each operation becomes a step (`APPROX`), with a `SYNTH` when its
+  `operationId` is made up from the operation key; type declarations are `DROP` (fields with them); event operations
+  and channels stay `DROP`. An Arazzo source keeps the capability rules. The writer records matching losses
+  (`workflows-only`, `workflows-synthesized`, `no-workflow`, `types-not-written`).
+
+### Changed
+- A non-Arazzo source no longer gets a synthesized workflow with no steps (a service of event operations only).
+- Goldens: 46 `* → arazzo` round trips pass (xfails removed); the `arazzo` silent-loss ledger goes from 49 pairs to
+  0; round-trip, export-conformance and parity goldens regenerated (`arazzo` cells only).
+
 ## [1.510.0] - 2026-10-28
 
 ### Added
