@@ -608,6 +608,8 @@ def test_a_v2_model_still_emits_a_valid_v4_document():
     api = ODataNormalizer().normalize(
         parse_odata(_text("v2", "compound-key"))
     )
-    emitted = get_emitter("odata")().emit(api).files[0].content
+    from app.odata_emitter import ODataEmitOptions
+
+    emitted = get_emitter("odata")().emit(api, opts=ODataEmitOptions(output="xml")).files[0].content
     assert 'EntityType Name="Customer"' in emitted
     validate_odata_document(emitted)

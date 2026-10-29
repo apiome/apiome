@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.520.0] - 2026-10-29
+
+### Added
+- **OData CSDL emitter: CSDL JSON 4.01 + CSDL XML (MFX-16.1, #3897).** The `odata` writer is rebuilt around one CSDL
+  JSON model (the canonical output, `<Namespace>.csdl.json`); option `output` (`json` | `xml` | `both`) also renders
+  it as CSDL XML (`.edmx`). Records an HTTP operation sends or returns become `EntityType`s with entity sets (a
+  types-only source exposes its root records), others `ComplexType`s; every entity has a `$Key` (the source's, an
+  id-like property — `key-inferred` — or a synthesized `Id` — `key-synthesized`, SYNTH). Primitives coerced through
+  `edm_type` (widths, `Edm.DateTimeOffset` / `Date` / `TimeOfDay` / `Duration` / `Guid` / `Decimal` / `Untyped`;
+  unsigned widened and unknowns reported). Enums (integer values; string wire values reported), `TypeDefinition`s,
+  unions as complex types and maps as open types (reported), aliases inlined. `$MaxLength` / `$DefaultValue`,
+  `Validation` (Pattern, Minimum / Maximum + Exclusive, MinItems / MaxItems, AllowedValues) and `Core`
+  (Description, Revisions) annotations with their `$Reference`s. CRUD operations served by entity sets
+  (`crud-as-entity-set`); every other operation an unbound Function (GET / query with a result) or Action with an
+  import; headers, cookies and error responses reported; events dropped. OData 2 / 3 sources keep `MaxLength` /
+  `Precision` / `Scale`, coerce `Edm.DateTime` / `Edm.Time`, report `sap:` / `m:` annotations and the upgrade.
+- `ODataFidelityRulePack` predicts exactly the writer's losses; `WriterLossRulePack.synthesized` maps writer
+  losses to SYNTH.
+- Export validation for `odata` checks the OASIS CSDL JSON schema (or the CSDL XML schemas), then re-parses.
+
+### Changed
+- The `odata` export's default output is CSDL JSON; CSDL XML is `output: xml`.
+- Goldens: the `odata` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.519.0] - 2026-10-29
 
 ### Changed

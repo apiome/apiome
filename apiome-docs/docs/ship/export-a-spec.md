@@ -278,6 +278,49 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 
+### OData (CSDL) from any source
+
+Exporting to **OData** writes the service's metadata as **CSDL JSON 4.01** (`<Namespace>.csdl.json`),
+the canonical form. Set the **output** option to `xml` for CSDL XML (`<Namespace>.edmx`), or `both`
+for the two. Each export is checked against the OASIS CSDL JSON schema, or the CSDL XML schemas,
+then read back by the OData importer.
+
+- **Entity and complex types.** An object an HTTP operation sends or returns is a resource and
+  becomes an `EntityType` with an entity set. Any other object becomes a `ComplexType`. An item
+  with no operations (a data schema) exposes each object that no other object contains. An item
+  imported from OData keeps its own entity types, complex types and entity sets.
+- **Keys.** Every entity type has a `$Key`. An OData item keeps its own key. Otherwise a property
+  named `id`, `<Type>Id` or `key` becomes the key, and the report says it was inferred. With no such
+  property, a string `Id` property is added as the key, and the report says it was synthesized.
+- **Types.** Primitives become their CSDL type: `int64` is `Edm.Int64`, `date-time` is
+  `Edm.DateTimeOffset`, and `uuid` is `Edm.Guid`. An unsigned type is widened (`uint32` is
+  `Edm.Int64`), and an unknown one is `Edm.String`; the report lists both. Enums become `EnumType`s,
+  and a named scalar becomes a `TypeDefinition`. Unions become complex types with one nullable
+  property per variant, and maps become open complex types; the report lists both.
+- **Properties.** Lists become `$Collection`, and a property whose type is an entity becomes a
+  `NavigationProperty`. `maxLength` becomes `$MaxLength` and a default `$DefaultValue`. Patterns,
+  ranges, list sizes and allowed values become `Validation` annotations, descriptions
+  `Core.Description`, and deprecations `Core.Revisions`.
+- **Operations.** An entity set serves the CRUD operations on its resource: `GET /pets`,
+  `GET /pets/{id}`, `POST /pets`, and `PUT`, `PATCH` and `DELETE /pets/{id}`. Every other operation
+  becomes an unbound **Function** (a `GET` or query that returns a result) or **Action**, imported
+  into the entity container. Its path and query parameters and its body become the operation's
+  parameters.
+- **From an OData 2 or 3 item.** It is written as CSDL 4.01. `MaxLength`, `Precision` and `Scale`
+  stay facets, and `Edm.DateTime` becomes `Edm.DateTimeOffset`. The report lists the version
+  upgrade and the `sap:` and `m:` annotations, which are not written.
+
+The fidelity report lists what OData cannot carry:
+
+- **Dropped:** event operations and channels, header and cookie parameters, declared error responses
+  (OData uses its standard error format), constraints with no CSDL form (`minLength`,
+  `multipleOf`, `uniqueItems`), defaults that do not fit, servers, and the document's title,
+  description and version. A stream is written as one call.
+- **Approximated:** CRUD operations served by an entity set (their query parameters become OData
+  query options such as `$top` and `$filter`), other operations reframed as Functions or Actions,
+  inferred keys, coerced primitives, unions, maps, aliases and renamed elements.
+- **Synthesized:** a key added to an entity that has none.
+
 ### OpenRPC from any source
 
 Exporting to **OpenRPC** writes an `openrpc.json` document that is valid against the OpenRPC

@@ -10,6 +10,10 @@ The **OData** importer (`odata`) reads an OData service's metadata into the
 entity set becomes a set of operations. You can then search, version, diff, lint and convert it like
 any other catalog item.
 
+
+An item imported from OData exports back to OData with its entity sets, keys and types unchanged. See
+[OData (CSDL) from any source](../ship/export-a-spec.md#odata-csdl-from-any-source).
+
 ## Import it
 
 Import the metadata like any other catalog format: in the [import wizard](./import-wizard.mdx)
