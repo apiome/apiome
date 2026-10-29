@@ -1987,13 +1987,13 @@
       "diff_count": 16,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
-      "loss_drop": 9,
+      "loss_approx": 6,
+      "loss_drop": 14,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 9,
+      "matched_count": 10,
       "overclaims": [],
-      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (a2a->typespec) (observed: unexplained: added operation 'POST /Travel_Concierge/Build_itinerary', added operation 'POST /Travel_Concierge/Search_flights', added operation 'POST /Travel_Concierge/Search_hotels', added operation 'POST /Travel_Concierge/Visa_requirements', added service 'Example.Travel.Co.Travel Concierge', removed skill 'Travel Concierge.build-itinerary', removed skill 'Travel Concierge.search-flights')",
+      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (a2a->typespec) (observed: unexplained: added operation 'POST /Travel_Concierge/Build_itinerary', added operation 'POST /Travel_Concierge/Search_flights', added operation 'POST /Travel_Concierge/Search_hotels', added operation 'POST /Travel_Concierge/Visa_requirements', added service 'Example.Travel.Co.Travel Concierge', removed skill 'Travel Concierge.build-itinerary')",
       "source_format": "a2a",
       "status": "xfail",
       "unexplained": [
@@ -2026,11 +2026,6 @@
           "change": "removed",
           "entity": "skill",
           "key": "Travel Concierge.build-itinerary"
-        },
-        {
-          "change": "removed",
-          "entity": "skill",
-          "key": "Travel Concierge.search-flights"
         }
       ]
     },
@@ -4338,13 +4333,13 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 4,
-      "loss_drop": 4,
+      "loss_approx": 5,
+      "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 4,
+      "matched_count": 7,
       "overclaims": [],
-      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (acp->typespec) (observed: unexplained: added operation 'POST /research-assistant/Cite_sources', added operation 'POST /research-assistant/Summarize', added operation 'POST /research-assistant/Web_search', removed operation 'research-assistant.Cite sources', removed service 'research-assistant', added service 'research_assistant.research-assistant', removed skill 'research-assistant.Cite sources', removed skill 'research-assistant.Summarize', removed skill 'research-assistant.Web search')",
+      "reason": "Re-import failed: No enum, model, or interface definitions found in the TypeSpec file (acp->typespec) (observed: unexplained: added operation 'POST /research-assistant/Cite_sources', added operation 'POST /research-assistant/Summarize', added operation 'POST /research-assistant/Web_search', added service 'research_assistant.research-assistant', removed skill 'research-assistant.Cite sources', removed skill 'research-assistant.Summarize')",
       "source_format": "acp",
       "status": "xfail",
       "unexplained": [
@@ -4364,16 +4359,6 @@
           "key": "POST /research-assistant/Web_search"
         },
         {
-          "change": "removed",
-          "entity": "operation",
-          "key": "research-assistant.Cite sources"
-        },
-        {
-          "change": "removed",
-          "entity": "service",
-          "key": "research-assistant"
-        },
-        {
           "change": "added",
           "entity": "service",
           "key": "research_assistant.research-assistant"
@@ -4387,11 +4372,6 @@
           "change": "removed",
           "entity": "skill",
           "key": "research-assistant.Summarize"
-        },
-        {
-          "change": "removed",
-          "entity": "skill",
-          "key": "research-assistant.Web search"
         }
       ]
     },
@@ -6801,7 +6781,7 @@
       "diff_count": 12,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -15321,7 +15301,7 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -17713,7 +17693,7 @@
       "diff_count": 6,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -19221,7 +19201,7 @@
       "diff_count": 0,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -20841,7 +20821,7 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -23711,7 +23691,7 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
+      "loss_approx": 6,
       "loss_drop": 1,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -27078,25 +27058,11 @@
       "emit_format": "typespec",
       "emit_key": "typespec",
       "loss_approx": 1,
-      "loss_drop": 1,
-      "loss_ok": 6,
+      "loss_drop": 4,
+      "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 5,
       "overclaims": [
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op GET /orders @get /orders"
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op GET /orders/{orderId} @get /orders/{orderId}"
-        },
         {
           "construct": "NewOrder",
           "kind": "ok",
@@ -27117,34 +27083,12 @@
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model OrderList"
-        },
-        {
-          "construct": "POST /orders",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op POST /orders @post /orders"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders', removed service 'default', added service 'orders_api.default', removed type 'NewOrder', removed type 'Order', removed type 'OrderList', added type 'orders_api.NewOrder', added type 'orders_api.Order', added type 'orders_api.OrderList'; overclaim: OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderList', OK 'POST /orders')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'default', added service 'orders_api.default', removed type 'NewOrder', removed type 'Order', removed type 'OrderList', added type 'orders_api.NewOrder', added type 'orders_api.Order', added type 'orders_api.OrderList'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderList')",
       "source_format": "aws-apigateway",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /orders"
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -29172,40 +29116,15 @@
       "emit_format": "typespec",
       "emit_key": "typespec",
       "loss_approx": 1,
-      "loss_drop": 0,
-      "loss_ok": 2,
+      "loss_drop": 2,
+      "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
-      "overclaims": [
-        {
-          "construct": "GET /orders",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op list-orders @get /orders"
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op get-order @get /orders/{orderId}"
-        }
-      ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /orders', changed operation 'GET /orders/{orderId}', added service 'Orders.API.default', removed service 'default'; overclaim: OK 'GET /orders', OK 'GET /orders/{orderId}')",
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Orders.API.default', removed service 'default')",
       "source_format": "azure-apim",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
         {
           "change": "added",
           "entity": "service",
@@ -33985,7 +33904,7 @@
       "diff_count": 17,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 11,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -36814,7 +36733,7 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 1,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -38547,7 +38466,7 @@
       "diff_count": 2,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -40000,7 +39919,7 @@
       "diff_count": 6,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -41392,7 +41311,7 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -45067,7 +44986,7 @@
       "diff_count": 17,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -50120,7 +50039,7 @@
       "diff_count": 17,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 8,
+      "loss_approx": 9,
       "loss_drop": 1,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -52780,11 +52699,11 @@
       "diff_count": 9,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 1,
+      "loss_approx": 2,
+      "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Money",
@@ -52815,10 +52734,15 @@
           "target_mapping": "enum OrderStatus"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.Money', added type 'Exported.Order', added type 'Exported.OrderLine', added type 'Exported.OrderStatus', removed type 'Money', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "unexplained: changed root '', added type 'Exported.Money', added type 'Exported.Order', added type 'Exported.OrderLine', added type 'Exported.OrderStatus', removed type 'Money', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: removed type 'Money', added type 'Money.Money', added type 'Money.Order', added type 'Money.OrderLine', added type 'Money.OrderStatus', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
       "source_format": "cue",
       "status": "xfail",
       "unexplained": [
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Money"
+        },
         {
           "change": "added",
           "entity": "type",
@@ -54621,11 +54545,11 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "customers",
@@ -54642,7 +54566,7 @@
           "target_mapping": "model orders"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.customers', added type 'Exported.orders', removed type 'customers', removed type 'orders'; overclaim: OK 'customers', OK 'orders' (observed: unexplained: added type 'N02_typical_schema.customers', added type 'N02_typical_schema.orders'; overclaim: OK 'customers', OK 'orders')",
+      "reason": "unexplained: changed root '', added type 'Exported.customers', added type 'Exported.orders', removed type 'customers', removed type 'orders'; overclaim: OK 'customers', OK 'orders' (observed: unexplained: added type 'N02_typical_schema.customers', added type 'N02_typical_schema.orders', removed type 'customers', removed type 'orders'; overclaim: OK 'customers', OK 'orders')",
       "source_format": "dbt",
       "status": "xfail",
       "unexplained": [
@@ -54655,6 +54579,16 @@
           "change": "added",
           "entity": "type",
           "key": "N02_typical_schema.orders"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "customers"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "orders"
         }
       ]
     },
@@ -57153,7 +57087,7 @@
       "diff_count": 11,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -61376,7 +61310,7 @@
       "diff_count": 12,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 2,
       "loss_ok": 9,
       "loss_synth": 0,
@@ -65549,10 +65483,10 @@
       "emit_format": "typespec",
       "emit_key": "typespec",
       "loss_approx": 1,
-      "loss_drop": 1,
+      "loss_drop": 0,
       "loss_ok": 10,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Author",
@@ -65625,7 +65559,7 @@
           "target_mapping": "op bookstore.checkouts.create @post /bookstore/v1/checkouts"
         }
       ],
-      "reason": "unexplained: removed operation 'GET /bookstore/v1/books', removed operation 'GET /bookstore/v1/books/{bookId}', removed operation 'GET /bookstore/v1/books/{b... (observed: unexplained: changed operation 'GET /bookstore/v1/books', changed operation 'GET /bookstore/v1/books/{bookId}', changed operation 'GET /bookstore/v1/books/{bookId}/reviews', changed operation 'POST /bookstore/v1/books', changed operation 'POST /bookstore/v1/checkouts', removed service 'Bookstore API', added service 'Bookstore.API.Bookstore API', removed type 'Author', removed type 'BookList', added type 'Bookstore.API.Author', added type 'Bookstore.API.Book', added type 'Bookstore.API.BookList', added type 'Bookstore.API.CheckoutReceipt', added type 'Bookstore.API.CheckoutRequest', removed type 'CheckoutReceipt', removed type 'CheckoutRequest'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest', OK 'GET /bookstore/v1/books', OK 'GET /bookstore/v1/books/{bookId}', OK 'GET /bookstore/v1/books/{bookId}/reviews', OK 'POST /bookstore/v1/books', OK 'POST /bookstore/v1/checkouts')",
+      "reason": "unexplained: removed operation 'GET /bookstore/v1/books', removed operation 'GET /bookstore/v1/books/{bookId}', removed operation 'GET /bookstore/v1/books/{b... (observed: unexplained: changed operation 'GET /bookstore/v1/books', changed operation 'GET /bookstore/v1/books/{bookId}', changed operation 'GET /bookstore/v1/books/{bookId}/reviews', changed operation 'POST /bookstore/v1/books', changed operation 'POST /bookstore/v1/checkouts', removed service 'Bookstore API', added service 'Bookstore.API.Bookstore API', removed type 'Author', removed type 'Book', removed type 'BookList', added type 'Bookstore.API.Author', added type 'Bookstore.API.Book', added type 'Bookstore.API.BookList', added type 'Bookstore.API.CheckoutReceipt', added type 'Bookstore.API.CheckoutRequest', removed type 'CheckoutReceipt', removed type 'CheckoutRequest'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest', OK 'GET /bookstore/v1/books', OK 'GET /bookstore/v1/books/{bookId}', OK 'GET /bookstore/v1/books/{bookId}/reviews', OK 'POST /bookstore/v1/books', OK 'POST /bookstore/v1/checkouts')",
       "source_format": "discovery",
       "status": "xfail",
       "unexplained": [
@@ -65668,6 +65602,11 @@
           "change": "removed",
           "entity": "type",
           "key": "Author"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Book"
         },
         {
           "change": "removed",
@@ -68454,11 +68393,11 @@
       "diff_count": 11,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
-      "loss_drop": 4,
+      "loss_approx": 4,
+      "loss_drop": 1,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -68489,7 +68428,7 @@
           "target_mapping": "model tag"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.catalogue', added type 'Exported.price', added type 'Exported.product', added type 'Exported.tag', removed ty... (observed: unexplained: removed type 'catalogue', added type 'catalogue.catalogue', added type 'catalogue.price', added type 'catalogue.product', added type 'catalogue.tag', removed type 'description', removed type 'name', removed type 'tag'; overclaim: OK 'catalogue', OK 'price', OK 'product', OK 'tag')",
+      "reason": "unexplained: changed root '', added type 'Exported.catalogue', added type 'Exported.price', added type 'Exported.product', added type 'Exported.tag', removed ty... (observed: unexplained: removed type 'catalogue', added type 'catalogue.catalogue', added type 'catalogue.price', added type 'catalogue.product', added type 'catalogue.tag', removed type 'description', removed type 'name', removed type 'product', removed type 'tag'; overclaim: OK 'catalogue', OK 'price', OK 'product', OK 'tag')",
       "source_format": "dtd",
       "status": "xfail",
       "unexplained": [
@@ -68527,6 +68466,11 @@
           "change": "removed",
           "entity": "type",
           "key": "name"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "product"
         },
         {
           "change": "removed",
@@ -72421,7 +72365,7 @@
       "diff_count": 21,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 10,
       "loss_synth": 0,
@@ -74581,7 +74525,7 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -80712,7 +80656,7 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -83362,7 +83306,7 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 13,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -85836,7 +85780,7 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -90426,7 +90370,7 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -99121,7 +99065,7 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -108917,7 +108861,7 @@
       "diff_count": 37,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 36,
       "loss_synth": 0,
@@ -118815,7 +118759,7 @@
       "diff_count": 19,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 9,
       "loss_synth": 0,
@@ -120978,7 +120922,7 @@
       "diff_count": 4,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -129545,7 +129489,7 @@
       "diff_count": 37,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 18,
       "loss_synth": 0,
@@ -134582,7 +134526,7 @@
       "diff_count": 25,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 12,
       "loss_synth": 0,
@@ -138979,8 +138923,8 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 0,
+      "loss_approx": 2,
+      "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 1,
@@ -140816,7 +140760,7 @@
       "diff_count": 6,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -142721,7 +142665,7 @@
       "diff_count": 7,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -144528,8 +144472,8 @@
       "diff_count": 4,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 0,
+      "loss_approx": 2,
+      "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 1,
@@ -145959,7 +145903,7 @@
       "diff_count": 2,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -150525,11 +150469,11 @@
       "diff_count": 11,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
-      "loss_drop": 1,
+      "loss_approx": 4,
+      "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "create_ticketParams",
@@ -150546,7 +150490,7 @@
           "target_mapping": "model search_docsParams"
         }
       ],
-      "reason": "unexplained: removed operation '02-typical-anthropic.create_ticket', removed operation '02-typical-anthropic.search_docs', changed root '', removed service '... (observed: unexplained: removed operation '02-typical-anthropic.create_ticket', removed operation '02-typical-anthropic.search_docs', added operation 'POST /02-typical-anthropic/create_ticket', added operation 'POST /02-typical-anthropic/search_docs', removed service '02-typical-anthropic', added service 'N02_typical_anthropic.02-typical-anthropic', added type 'N02_typical_anthropic.create_ticketParams', added type 'N02_typical_anthropic.search_docsParams', removed type 'search_docsParams'; overclaim: OK 'create_ticketParams', OK 'search_docsParams')",
+      "reason": "unexplained: removed operation '02-typical-anthropic.create_ticket', removed operation '02-typical-anthropic.search_docs', changed root '', removed service '... (observed: unexplained: removed operation '02-typical-anthropic.create_ticket', removed operation '02-typical-anthropic.search_docs', added operation 'POST /02-typical-anthropic/create_ticket', added operation 'POST /02-typical-anthropic/search_docs', removed service '02-typical-anthropic', added service 'N02_typical_anthropic.02-typical-anthropic', added type 'N02_typical_anthropic.create_ticketParams', added type 'N02_typical_anthropic.search_docsParams', removed type 'create_ticketParams', removed type 'search_docsParams'; overclaim: OK 'create_ticketParams', OK 'search_docsParams')",
       "source_format": "llm-tools",
       "status": "xfail",
       "unexplained": [
@@ -150589,6 +150533,11 @@
           "change": "added",
           "entity": "type",
           "key": "N02_typical_anthropic.search_docsParams"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "create_ticketParams"
         },
         {
           "change": "removed",
@@ -152582,7 +152531,7 @@
       "diff_count": 7,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 2,
+      "loss_approx": 3,
       "loss_drop": 6,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -156172,9 +156121,9 @@
       "diff_count": 23,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 6,
+      "loss_approx": 9,
       "loss_drop": 10,
-      "loss_ok": 5,
+      "loss_ok": 3,
       "loss_synth": 0,
       "matched_count": 4,
       "overclaims": [
@@ -156184,20 +156133,6 @@
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model OnOff"
-        },
-        {
-          "construct": "OnOff.OffWithEffectRequest",
-          "kind": "ok",
-          "message": "record type carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "model OffWithEffectRequest"
-        },
-        {
-          "construct": "OnOff.OnWithTimedOffRequest",
-          "kind": "ok",
-          "message": "record type carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "model OnWithTimedOffRequest"
         },
         {
           "construct": "OnOffFeature",
@@ -156214,7 +156149,7 @@
           "target_mapping": "enum StartUpOnOffEnum"
         }
       ],
-      "reason": "unexplained: added operation 'GET /', removed operation 'OnOffService.Off', removed operation 'OnOffService.OffWithEffect', removed operation 'OnOffService.On', removed operation 'OnOffService.OnWithTimedOff', removed operation 'OnOffService.Toggle', changed root '', added service 'Exported.OnOffService', removed service 'OnOffService', added type 'Exported.OffWithEffectRequest', added type 'Exported.OnOff', added type 'Exported.OnOffFeature', added type 'Exported.OnWithTimedOffRequest', added type 'Exported.StartUpOnOffEnum', removed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'OnOffService.Off', OK 'OnOffService.OffWithEffect', OK 'OnOffService.On', OK 'OnOffService.OnWithTimedOff', OK 'OnOffService.Toggle', OK 'StartUpOnOffEnum' (observed: unexplained: removed operation 'OnOffService.Off', removed operation 'OnOffService.OffWithEffect', removed operation 'OnOffService.On', removed operation 'OnOffService.OnWithTimedOff', removed operation 'OnOffService.Toggle', added operation 'POST /OnOffService/Off', added operation 'POST /OnOffService/OffWithEffect', added operation 'POST /OnOffService/On', added operation 'POST /OnOffService/OnWithTimedOff', added operation 'POST /OnOffService/Toggle', added service 'On.Off.OnOffService', removed service 'OnOffService', added type 'On.Off.OffWithEffectRequest', added type 'On.Off.OnOff', added type 'On.Off.OnOffFeature', added type 'On.Off.OnWithTimedOffRequest', added type 'On.Off.StartUpOnOffEnum', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
+      "reason": "unexplained: added operation 'GET /', removed operation 'OnOffService.Off', removed operation 'OnOffService.OffWithEffect', removed operation 'OnOffService.On', removed operation 'OnOffService.OnWithTimedOff', removed operation 'OnOffService.Toggle', changed root '', added service 'Exported.OnOffService', removed service 'OnOffService', added type 'Exported.OffWithEffectRequest', added type 'Exported.OnOff', added type 'Exported.OnOffFeature', added type 'Exported.OnWithTimedOffRequest', added type 'Exported.StartUpOnOffEnum', removed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'OnOffService.Off', OK 'OnOffService.OffWithEffect', OK 'OnOffService.On', OK 'OnOffService.OnWithTimedOff', OK 'OnOffService.Toggle', OK 'StartUpOnOffEnum' (observed: unexplained: removed operation 'OnOffService.Off', removed operation 'OnOffService.OffWithEffect', removed operation 'OnOffService.On', removed operation 'OnOffService.OnWithTimedOff', removed operation 'OnOffService.Toggle', added operation 'POST /OnOffService/Off', added operation 'POST /OnOffService/OffWithEffect', added operation 'POST /OnOffService/On', added operation 'POST /OnOffService/OnWithTimedOff', added operation 'POST /OnOffService/Toggle', added service 'On.Off.OnOffService', removed service 'OnOffService', added type 'On.Off.OffWithEffectRequest', added type 'On.Off.OnOff', added type 'On.Off.OnOffFeature', added type 'On.Off.OnWithTimedOffRequest', added type 'On.Off.StartUpOnOffEnum', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
       "source_format": "matter",
       "status": "xfail",
       "unexplained": [
@@ -160211,11 +160146,11 @@
       "diff_count": 25,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 7,
-      "loss_drop": 6,
+      "loss_approx": 8,
+      "loss_drop": 7,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 7,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "Toolclose_ticketInput",
@@ -160239,7 +160174,7 @@
           "target_mapping": "model Toolsearch_ticketsInput"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'Acme Support Tickets.tools.close_ticket', removed operation 'Acme Support Tickets.tools.create_ticket', removed operation 'Acme Support Tickets.tools.search_tickets', added operation 'POST /prompts/summarize_ticket', added operation 'POST /resources/frontline-queue', added operation 'POST /resources/ticket', added operation 'POST /tools/close_ticket', added operation 'POST /tools/create_ticket', added operation 'POST /tools/search_tickets', removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.tools', added service 'acme_tickets.prompts', added service 'acme_tickets.resources', added service 'acme_tickets.tools', removed type 'Toolclose_ticketInput', added type 'acme_tickets.Toolclose_ticketInput', added type 'acme_tickets.Toolcreate_ticketInput', added type 'acme_tickets.Toolsearch_ticketsInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'Acme Support Tickets.tools.close_ticket', removed operation 'Acme Support Tickets.tools.create_ticket', removed operation 'Acme Support Tickets.tools.search_tickets', added operation 'POST /prompts/summarize_ticket', added operation 'POST /resources/frontline-queue', added operation 'POST /resources/ticket', added operation 'POST /tools/close_ticket', added operation 'POST /tools/create_ticket', added operation 'POST /tools/search_tickets', removed service 'Acme Support Tickets.tools', added service 'acme_tickets.prompts', added service 'acme_tickets.resources', added service 'acme_tickets.tools', removed type 'Toolclose_ticketInput', removed type 'Toolcreate_ticketInput', removed type 'Toolsearch_ticketsInput', added type 'acme_tickets.Toolclose_ticketInput', added type 'acme_tickets.Toolcreate_ticketInput', added type 'acme_tickets.Toolsearch_ticketsInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": [
@@ -160291,11 +160226,6 @@
         {
           "change": "removed",
           "entity": "service",
-          "key": "Acme Support Tickets.prompts"
-        },
-        {
-          "change": "removed",
-          "entity": "service",
           "key": "Acme Support Tickets.tools"
         },
         {
@@ -160317,6 +160247,16 @@
           "change": "removed",
           "entity": "type",
           "key": "Toolclose_ticketInput"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Toolcreate_ticketInput"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Toolsearch_ticketsInput"
         },
         {
           "change": "added",
@@ -164016,7 +163956,7 @@
       "diff_count": 15,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -165672,7 +165612,7 @@
       "diff_count": 2,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -174703,7 +174643,7 @@
       "diff_count": 63,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 31,
       "loss_synth": 0,
@@ -188808,8 +188748,8 @@
       "diff_count": 3,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 0,
+      "loss_approx": 2,
+      "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
       "matched_count": 1,
@@ -191419,7 +191359,7 @@
       "diff_count": 12,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 4,
+      "loss_approx": 5,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -194037,7 +193977,7 @@
       "diff_count": 11,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -197800,11 +197740,11 @@
       "diff_count": 11,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
-      "loss_drop": 1,
+      "loss_approx": 4,
+      "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Balance",
@@ -197821,7 +197761,7 @@
           "target_mapping": "model TransferReceipt"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'POST /Wallet_API/getBalance', added operation 'POST /Wallet_API/transfer', removed operation 'Wallet API.getBalance', removed operation 'Wallet API.transfer', removed service 'Wallet API', added service 'Wallet.API.Wallet API', removed type 'Balance', added type 'Wallet.API.Balance', added type 'Wallet.API.TransferReceipt'; overclaim: OK 'Balance', OK 'TransferReceipt')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'POST /Wallet_API/getBalance', added operation 'POST /Wallet_API/transfer', removed operation 'Wallet API.getBalance', removed operation 'Wallet API.transfer', removed service 'Wallet API', added service 'Wallet.API.Wallet API', removed type 'Balance', removed type 'TransferReceipt', added type 'Wallet.API.Balance', added type 'Wallet.API.TransferReceipt'; overclaim: OK 'Balance', OK 'TransferReceipt')",
       "source_format": "openrpc",
       "status": "xfail",
       "unexplained": [
@@ -197859,6 +197799,11 @@
           "change": "removed",
           "entity": "type",
           "key": "Balance"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "TransferReceipt"
         },
         {
           "change": "added",
@@ -200708,7 +200653,7 @@
       "diff_count": 15,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -203690,11 +203635,11 @@
       "diff_count": 12,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 1,
       "loss_ok": 6,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Money",
@@ -203739,10 +203684,15 @@
           "target_mapping": "scalar Sku"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.Money', added type 'Exported.Order', added type 'Exported.OrderLine', added type 'Exported.OrderStatus', added type 'Exported.Orders', removed type 'Money', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus', removed type 'Orders', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku' (observed: unexplained: removed type 'OrderLine', removed type 'OrderStatus', removed type 'Orders', added type 'Orders.Money', added type 'Orders.Order', added type 'Orders.OrderLine', added type 'Orders.OrderStatus', added type 'Orders.Orders', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku')",
+      "reason": "unexplained: changed root '', added type 'Exported.Money', added type 'Exported.Order', added type 'Exported.OrderLine', added type 'Exported.OrderStatus', added type 'Exported.Orders', removed type 'Money', removed type 'Order', removed type 'OrderLine', removed type 'OrderStatus', removed type 'Orders', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku' (observed: unexplained: removed type 'Money', removed type 'OrderLine', removed type 'OrderStatus', removed type 'Orders', added type 'Orders.Money', added type 'Orders.Order', added type 'Orders.OrderLine', added type 'Orders.OrderStatus', added type 'Orders.Orders', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku')",
       "source_format": "pkl",
       "status": "xfail",
       "unexplained": [
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Money"
+        },
         {
           "change": "removed",
           "entity": "type",
@@ -205811,7 +205761,7 @@
       "diff_count": 4,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -214705,7 +214655,7 @@
       "diff_count": 15,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 4,
+      "loss_approx": 5,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -218024,7 +217974,7 @@
       "diff_count": 10,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -220549,7 +220499,7 @@
       "diff_count": 9,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -225309,11 +225259,11 @@
       "diff_count": 7,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 1,
+      "loss_approx": 2,
+      "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -225337,7 +225287,7 @@
           "target_mapping": "model product"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.catalogue', added type 'Exported.money', added type 'Exported.product', removed type 'catalogue', removed type 'money', removed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: removed type 'catalogue', added type 'catalogue.catalogue', added type 'catalogue.money', added type 'catalogue.product', removed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
+      "reason": "unexplained: changed root '', added type 'Exported.catalogue', added type 'Exported.money', added type 'Exported.product', removed type 'catalogue', removed type 'money', removed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: removed type 'catalogue', added type 'catalogue.catalogue', added type 'catalogue.money', added type 'catalogue.product', removed type 'money', removed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": [
@@ -225360,6 +225310,11 @@
           "change": "added",
           "entity": "type",
           "key": "catalogue.product"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "money"
         },
         {
           "change": "removed",
@@ -227017,7 +226972,7 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -233850,7 +233805,7 @@
       "diff_count": 51,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 7,
+      "loss_approx": 8,
       "loss_drop": 0,
       "loss_ok": 25,
       "loss_synth": 0,
@@ -236711,11 +236666,11 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 1,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "OrganisationShape",
@@ -236732,7 +236687,7 @@
           "target_mapping": "model PersonShape"
         }
       ],
-      "reason": "unexplained: changed root '', added type 'Exported.OrganisationShape', added type 'Exported.PersonShape', removed type 'OrganisationShape', removed type 'PersonShape'; overclaim: OK 'OrganisationShape', OK 'PersonShape' (observed: unexplained: added type 'N02_typical_person_shapes.OrganisationShape', added type 'N02_typical_person_shapes.PersonShape'; overclaim: OK 'OrganisationShape', OK 'PersonShape')",
+      "reason": "unexplained: changed root '', added type 'Exported.OrganisationShape', added type 'Exported.PersonShape', removed type 'OrganisationShape', removed type 'PersonShape'; overclaim: OK 'OrganisationShape', OK 'PersonShape' (observed: unexplained: added type 'N02_typical_person_shapes.OrganisationShape', added type 'N02_typical_person_shapes.PersonShape', removed type 'PersonShape'; overclaim: OK 'OrganisationShape', OK 'PersonShape')",
       "source_format": "shacl",
       "status": "xfail",
       "unexplained": [
@@ -236745,6 +236700,11 @@
           "change": "added",
           "entity": "type",
           "key": "N02_typical_person_shapes.PersonShape"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PersonShape"
         }
       ]
     },
@@ -239930,7 +239890,7 @@
       "diff_count": 12,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 3,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -244865,7 +244825,7 @@
       "diff_count": 6,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -247369,7 +247329,7 @@
       "diff_count": 6,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -252079,10 +252039,10 @@
       "emit_format": "typespec",
       "emit_key": "typespec",
       "loss_approx": 4,
-      "loss_drop": 5,
-      "loss_ok": 11,
+      "loss_drop": 7,
+      "loss_ok": 8,
       "loss_synth": 0,
-      "matched_count": 8,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "Category",
@@ -252092,25 +252052,11 @@
           "target_mapping": "model Category"
         },
         {
-          "construct": "DELETE /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op deletePet @delete /pets/{petId}"
-        },
-        {
           "construct": "Error",
           "kind": "ok",
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model Error"
-        },
-        {
-          "construct": "GET /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op getPetById @get /pets/{petId}"
         },
         {
           "construct": "NewPet",
@@ -252125,13 +252071,6 @@
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model Order"
-        },
-        {
-          "construct": "PUT /pets/{petId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op updatePet @put /pets/{petId}"
         },
         {
           "construct": "Pet",
@@ -252162,25 +252101,10 @@
           "target_mapping": "model User"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'DELETE /pets/{petId}', changed operation 'GET /pets/{petId}', changed operation 'PUT /pets/{petId}', added service 'Pet.Store.API.pet', removed service 'pet', removed type 'Category', removed type 'Error', added type 'Pet.Store.API.Category', added type 'Pet.Store.API.CreatePetDefaultResponse', added type 'Pet.Store.API.Error', added type 'Pet.Store.API.ListPetsDefaultResponse', added type 'Pet.Store.API.NewPet', added type 'Pet.Store.API.Order', added type 'Pet.Store.API.Pet', added type 'Pet.Store.API.UpdatePet', added type 'Pet.Store.API.UploadResponse', added type 'Pet.Store.API.User', removed type 'UploadResponse', removed type 'User'; overclaim: OK 'Category', OK 'DELETE /pets/{petId}', OK 'Error', OK 'GET /pets/{petId}', OK 'NewPet', OK 'Order', OK 'PUT /pets/{petId}', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'Pet.Store.API.pet', removed service 'pet', removed type 'Category', removed type 'Error', removed type 'NewPet', removed type 'Order', removed type 'Pet', added type 'Pet.Store.API.Category', added type 'Pet.Store.API.CreatePetDefaultResponse', added type 'Pet.Store.API.Error', added type 'Pet.Store.API.ListPetsDefaultResponse', added type 'Pet.Store.API.NewPet', added type 'Pet.Store.API.Order', added type 'Pet.Store.API.Pet', added type 'Pet.Store.API.UpdatePet', added type 'Pet.Store.API.UploadResponse', added type 'Pet.Store.API.User', removed type 'UpdatePet', removed type 'UploadResponse', removed type 'User'; overclaim: OK 'Category', OK 'Error', OK 'NewPet', OK 'Order', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
       "source_format": "swagger",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /pets/{petId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /pets/{petId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "PUT /pets/{petId}"
-        },
         {
           "change": "added",
           "entity": "service",
@@ -252200,6 +252124,21 @@
           "change": "removed",
           "entity": "type",
           "key": "Error"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "NewPet"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Order"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Pet"
         },
         {
           "change": "added",
@@ -252250,6 +252189,11 @@
           "change": "added",
           "entity": "type",
           "key": "Pet.Store.API.User"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "UpdatePet"
         },
         {
           "change": "removed",
@@ -255989,31 +255933,17 @@
       "emit_format": "typespec",
       "emit_key": "typespec",
       "loss_approx": 1,
-      "loss_drop": 2,
-      "loss_ok": 7,
+      "loss_drop": 4,
+      "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 5,
       "overclaims": [
-        {
-          "construct": "DELETE /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op cancelOrder @delete /orders/{orderId}"
-        },
         {
           "construct": "ErrorModel",
           "kind": "ok",
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model ErrorModel"
-        },
-        {
-          "construct": "GET /orders/{orderId}",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op getOrder @get /orders/{orderId}"
         },
         {
           "construct": "NewOrder",
@@ -256035,34 +255965,12 @@
           "message": "record type carried to TypeSpec",
           "severity": "info",
           "target_mapping": "model OrderLine"
-        },
-        {
-          "construct": "POST /orders",
-          "kind": "ok",
-          "message": "operation carried to TypeSpec",
-          "severity": "info",
-          "target_mapping": "op placeOrder @post /orders"
         }
       ],
-      "reason": "unexplained: removed operation 'DELETE /orders/{orderId}', added operation 'DELETE /{orderId}', added operation 'GET /', removed operation 'GET /orders', removed operation 'GET /orders/{orderId}', added operation 'GET /{orderId}', added operation 'POST /', removed operation 'POST /orders', changed root '', added service 'Exported.orders', removed service 'orders', removed type 'ErrorModel', added type 'Exported.ErrorModel', added type 'Exported.NewOrder', added type 'Exported.Order', added type 'Exported.OrderLine', removed type 'NewOrder', removed type 'Order', removed type 'OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders' (observed: unexplained: changed operation 'DELETE /orders/{orderId}', changed operation 'GET /orders/{orderId}', changed operation 'POST /orders', added service 'Orders.orders', removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'OrderLine', added type 'Orders.ErrorModel', added type 'Orders.NewOrder', added type 'Orders.Order', added type 'Orders.OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders')",
+      "reason": "unexplained: removed operation 'DELETE /orders/{orderId}', added operation 'DELETE /{orderId}', added operation 'GET /', removed operation 'GET /orders', removed operation 'GET /orders/{orderId}', added operation 'GET /{orderId}', added operation 'POST /', removed operation 'POST /orders', changed root '', added service 'Exported.orders', removed service 'orders', removed type 'ErrorModel', added type 'Exported.ErrorModel', added type 'Exported.NewOrder', added type 'Exported.Order', added type 'Exported.OrderLine', removed type 'NewOrder', removed type 'Order', removed type 'OrderLine'; overclaim: OK 'DELETE /orders/{orderId}', OK 'ErrorModel', OK 'GET /orders', OK 'GET /orders/{orderId}', OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'POST /orders' (observed: unexplained: added service 'Orders.orders', removed service 'orders', removed type 'ErrorModel', removed type 'NewOrder', removed type 'Order', removed type 'OrderLine', added type 'Orders.ErrorModel', added type 'Orders.NewOrder', added type 'Orders.Order', added type 'Orders.OrderLine'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine')",
       "source_format": "swagger-1.2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "DELETE /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "GET /orders/{orderId}"
-        },
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "POST /orders"
-        },
         {
           "change": "added",
           "entity": "service",
@@ -256082,6 +255990,11 @@
           "change": "removed",
           "entity": "type",
           "key": "NewOrder"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "Order"
         },
         {
           "change": "removed",
@@ -261401,7 +261314,7 @@
       "diff_count": 31,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 15,
       "loss_synth": 0,
@@ -264924,7 +264837,7 @@
       "diff_count": 14,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 6,
+      "loss_approx": 7,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -269759,7 +269672,7 @@
       "diff_count": 5,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -276538,11 +276451,11 @@
       "diff_count": 31,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 5,
-      "loss_drop": 4,
+      "loss_approx": 6,
+      "loss_drop": 0,
       "loss_ok": 10,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "ByIdInput",
@@ -276615,7 +276528,7 @@
           "target_mapping": "model PlaceOutput"
         }
       ],
-      "reason": "unexplained: added operation 'GET /', removed operation 'orderRouter.byId', removed operation 'orderRouter.cancel', removed operation 'orderRouter.list', removed operation 'orderRouter.place', changed root '', added service 'Exported.orderRouter', removed service 'orderRouter', removed type 'ByIdInput', removed type 'ByIdOutput', removed type 'CancelInput', removed type 'CancelOutput', added type 'Exported.ByIdInput', added type 'Exported.ByIdOutput', added type 'Exported.CancelInput', added type 'Exported.CancelOutput', added type 'Exported.ListInput', added type 'Exported.ListOutput', added type 'Exported.ListOutput_items_item', added type 'Exported.PlaceInput', added type 'Exported.PlaceInput_lines_item', added type 'Exported.PlaceOutput', removed type 'ListInput', removed type 'ListOutput', removed type 'ListOutput_items_item', removed type 'PlaceInput', removed type 'PlaceInput_lines_item', removed type 'PlaceOutput'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput', OK 'orderRouter.byId', OK 'orderRouter.cancel', OK 'orderRouter.list', OK 'orderRouter.place' (observed: unexplained: added operation 'POST /orderRouter/byId', added operation 'POST /orderRouter/cancel', added operation 'POST /orderRouter/list', added operation 'POST /orderRouter/place', removed operation 'orderRouter.byId', removed operation 'orderRouter.cancel', removed operation 'orderRouter.list', removed operation 'orderRouter.place', removed service 'orderRouter', added service 'orderRouter.orderRouter', removed type 'ByIdInput', removed type 'CancelInput', removed type 'CancelOutput', removed type 'ListOutput', removed type 'PlaceInput', removed type 'PlaceInput_lines_item', added type 'orderRouter.ByIdInput', added type 'orderRouter.ByIdOutput', added type 'orderRouter.CancelInput', added type 'orderRouter.CancelOutput', added type 'orderRouter.ListInput', added type 'orderRouter.ListOutput', added type 'orderRouter.ListOutput_items_item', added type 'orderRouter.PlaceInput', added type 'orderRouter.PlaceInput_lines_item', added type 'orderRouter.PlaceOutput'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput')",
+      "reason": "unexplained: added operation 'GET /', removed operation 'orderRouter.byId', removed operation 'orderRouter.cancel', removed operation 'orderRouter.list', removed operation 'orderRouter.place', changed root '', added service 'Exported.orderRouter', removed service 'orderRouter', removed type 'ByIdInput', removed type 'ByIdOutput', removed type 'CancelInput', removed type 'CancelOutput', added type 'Exported.ByIdInput', added type 'Exported.ByIdOutput', added type 'Exported.CancelInput', added type 'Exported.CancelOutput', added type 'Exported.ListInput', added type 'Exported.ListOutput', added type 'Exported.ListOutput_items_item', added type 'Exported.PlaceInput', added type 'Exported.PlaceInput_lines_item', added type 'Exported.PlaceOutput', removed type 'ListInput', removed type 'ListOutput', removed type 'ListOutput_items_item', removed type 'PlaceInput', removed type 'PlaceInput_lines_item', removed type 'PlaceOutput'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput', OK 'orderRouter.byId', OK 'orderRouter.cancel', OK 'orderRouter.list', OK 'orderRouter.place' (observed: unexplained: added operation 'POST /orderRouter/byId', added operation 'POST /orderRouter/cancel', added operation 'POST /orderRouter/list', added operation 'POST /orderRouter/place', removed operation 'orderRouter.byId', removed operation 'orderRouter.cancel', removed operation 'orderRouter.list', removed operation 'orderRouter.place', removed service 'orderRouter', added service 'orderRouter.orderRouter', removed type 'ByIdInput', removed type 'ByIdOutput', removed type 'CancelInput', removed type 'CancelOutput', removed type 'ListInput', removed type 'ListOutput', removed type 'ListOutput_items_item', removed type 'PlaceInput', removed type 'PlaceInput_lines_item', removed type 'PlaceOutput', added type 'orderRouter.ByIdInput', added type 'orderRouter.ByIdOutput', added type 'orderRouter.CancelInput', added type 'orderRouter.CancelOutput', added type 'orderRouter.ListInput', added type 'orderRouter.ListOutput', added type 'orderRouter.ListOutput_items_item', added type 'orderRouter.PlaceInput', added type 'orderRouter.PlaceInput_lines_item', added type 'orderRouter.PlaceOutput'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput')",
       "source_format": "trpc",
       "status": "xfail",
       "unexplained": [
@@ -276677,6 +276590,11 @@
         {
           "change": "removed",
           "entity": "type",
+          "key": "ByIdOutput"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
           "key": "CancelInput"
         },
         {
@@ -276687,7 +276605,17 @@
         {
           "change": "removed",
           "entity": "type",
+          "key": "ListInput"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
           "key": "ListOutput"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "ListOutput_items_item"
         },
         {
           "change": "removed",
@@ -276698,6 +276626,11 @@
           "change": "removed",
           "entity": "type",
           "key": "PlaceInput_lines_item"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "PlaceOutput"
         },
         {
           "change": "added",
@@ -282659,7 +282592,7 @@
       "diff_count": 13,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -283881,7 +283814,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "Emitter raises: LossKind has no DROP (fidelity/loss tracker bug). (observed: unexplained: added channel 'com.example.pets.api', added operation '7aaf2586-2da7-4e2c-badf-fb6fdfc5749e', changed root '', removed service 'PetStore.Pets', added service 'com.example.pets.api', removed type 'PetStore.PetStatus'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
+      "reason": "Emitter raises: LossKind has no DROP (fidelity/loss tracker bug). (observed: unexplained: added channel 'com.example.pets.api', added operation 'd7391e4c-74b7-4477-9b6e-784636eee9e8', changed root '', removed service 'PetStore.Pets', added service 'com.example.pets.api', removed type 'PetStore.PetStatus'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
       "source_format": "typespec",
       "status": "xfail",
       "unexplained": [
@@ -283893,7 +283826,7 @@
         {
           "change": "added",
           "entity": "operation",
-          "key": "7aaf2586-2da7-4e2c-badf-fb6fdfc5749e"
+          "key": "d7391e4c-74b7-4477-9b6e-784636eee9e8"
         },
         {
           "change": "changed",
@@ -287606,7 +287539,7 @@
       "diff_count": 2,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -292584,7 +292517,7 @@
       "diff_count": 14,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 4,
+      "loss_approx": 5,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -303659,7 +303592,7 @@
       "diff_count": 7,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 2,
+      "loss_approx": 3,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -305430,11 +305363,11 @@
       "diff_count": 10,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 5,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "OrderCreated",
@@ -305451,7 +305384,7 @@
           "target_mapping": "model OrderShipped"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'orders.mqtt', added type 'Order.events.OrderCreated', added type 'Order.events.OrderShipped', removed type 'OrderCreated'; overclaim: OK 'OrderCreated', OK 'OrderShipped')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'orders.mqtt', added type 'Order.events.OrderCreated', added type 'Order.events.OrderShipped', removed type 'OrderCreated', removed type 'OrderShipped'; overclaim: OK 'OrderCreated', OK 'OrderShipped')",
       "source_format": "xregistry",
       "status": "xfail",
       "unexplained": [
@@ -305474,6 +305407,11 @@
           "change": "removed",
           "entity": "type",
           "key": "OrderCreated"
+        },
+        {
+          "change": "removed",
+          "entity": "type",
+          "key": "OrderShipped"
         }
       ]
     },
@@ -307709,7 +307647,7 @@
       "diff_count": 9,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -309996,7 +309934,7 @@
       "diff_count": 9,
       "emit_format": "typespec",
       "emit_key": "typespec",
-      "loss_approx": 1,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 4,
       "loss_synth": 0,

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.517.0] - 2026-10-29
+
+### Changed
+- **TypeSpec fidelity pack: non-REST losses and decorator coverage (MFX-15.2, #3894).** Non-REST: a source of
+  another paradigm gets a root `APPROX` (`graph → REST`, `rpc → REST` …: operations without an HTTP binding become
+  POST routes, the item reads back as REST); the `rpc-as-http` loss names the operation's kind (GraphQL query,
+  mutation, subscription, one-way — its reply an empty 204 —, RPC); a GraphQL subscription is reported as a
+  dropped stream like a streaming call; event-role messages and a second request are `message-dropped`.
+  Decorator coverage — written, no longer silently lost: operation tags as `@tag(...)` (and read back by the
+  TypeSpec reader), parameter and header descriptions as `@doc(...)` and deprecations as `#deprecated`, request
+  message headers as `@header` parameters, an `enum` constraint on a string or number as a union of literals
+  (defaults checked against it), server-variable enums and docs. Reported where TypeSpec has no place: response
+  descriptions (`response-description-dropped`, info), a type namespace other than the document's
+  (`namespace-flattened`, info), the identity id (root, info). GraphQL `ID` is written as `string` without an
+  unknown-type loss.
+- Goldens: the `typespec` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.516.0] - 2026-10-29
 
 ### Added

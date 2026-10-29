@@ -320,7 +320,7 @@ def test_non_positional_field_numbers_are_reported() -> None:
 
 
 def test_an_unknown_scalar_is_a_string_reported_on_its_field() -> None:
-    result = _emit(_api(types=[_record("User", _field("User", "id", "ID"))]))
+    result = _emit(_api(types=[_record("User", _field("User", "id", "Snowflake"))]))
     assert "  id?: string;" in result.files[0].content
     assert [(loss.subject, loss.pointer) for loss in result.losses] == [("unknown-type", "User.id")]
 
