@@ -97,6 +97,9 @@ _STRING_FORMATS: Dict[str, str] = {
     "date-time": "Edm.DateTimeOffset", "date": "Edm.Date", "time": "Edm.TimeOfDay", "duration": "Edm.Duration",
     "uuid": "Edm.Guid", "byte": "Edm.Binary", "binary": "Edm.Binary",
 }
+#: ``format`` values a CSDL type carries (they pick the Edm type, so they are not lost).
+_CONSUMED_FORMATS = frozenset(_STRING_FORMATS) | {"int8", "int16", "int32", "int64", "uint8", "float", "double",
+                                                  "decimal"}
 #: Spellings that are text without loss.
 _STRING_LIKE = frozenset({"id", "email", "uri", "url", "hostname", "ipv4", "ipv6", "char", "text", "str"})
 _NUMERIC = frozenset({"Edm.Byte", "Edm.SByte", "Edm.Int16", "Edm.Int32", "Edm.Int64", "Edm.Single", "Edm.Double",
@@ -120,10 +123,23 @@ class ODataFidelityRulePack(WriterLossRulePack):
     responses, constraints without a CSDL form and the document's servers are ``DROP``. A carried type or
     operation is ``OK`` and its ``target_mapping`` names what it became (``EntityType Pet``,
     ``Function search``, ``entity set Pets (read)``).
+
+    MFX-16.2 (#3898) — the epic's three loss classes:
+
+    * **Keyless types** — an entity with no key gets one: an id-like property (``APPROX``, made non-nullable
+      when it was nullable) or a synthesized ``Id`` (``SYNTH``); a record that is not a resource is a
+      complex type and needs none.
+    * **RPC and event DROP** — a unary RPC is an Action (or a Function for a query with a result,
+      ``APPROX``); a client / bidirectional stream and a GraphQL subscription have no OData form (critical
+      ``DROP``); a server stream is a result returning a collection (``APPROX``); publish / subscribe
+      operations and channels are ``DROP``.
+    * **Type coercion** — a primitive without a CSDL type (unsigned widened, unknown as ``Edm.String``) is an
+      ``APPROX``; a ``format`` no CSDL type carries (``email``, ``uri``) and a constraint with no facet or
+      ``Validation`` term (``minLength``, ``multipleOf``, ``uniqueItems``) are ``DROP``.
     """
 
     target_label = "OData"
-    critical_drops = frozenset({"event-operation-dropped", "unsupported-type"})
+    critical_drops = frozenset({"event-operation-dropped", "stream-dropped", "unsupported-type"})
     info_drops = frozenset({"errors-dropped", "servers-dropped", "version-dropped", "title-dropped"})
     cosmetic = frozenset({"renamed-element"})
     synthesized = frozenset({"key-synthesized"})
@@ -671,6 +687,8 @@ class _ODataWriter:
             self._vocabularies.add("Validation")
         if constraints.min_length is not None:
             dropped.append("minLength")
+        if constraints.format and constraints.format.lower() not in _CONSUMED_FORMATS:
+            dropped.append(f"format {constraints.format!r}")
         if constraints.multiple_of is not None:
             dropped.append("multipleOf")
         if constraints.unique_items:
@@ -702,10 +720,11 @@ class _ODataWriter:
             if self._lookup(field.type.name) is not None:
                 continue
             member["$Key"] = [name]
-            member[name].pop("$Nullable", None)
+            was_nullable = member[name].pop("$Nullable", None) is not None
             self.losses.record(LossKind.INFERRED, "key-inferred",
                                f"An OData entity needs a key; {type_.key!r} declares none, so its property {name!r} is "
-                               "the key.", pointer=type_.key)
+                               "the key" + (" and is written non-nullable (a key cannot be null)." if was_nullable
+                                            else "."), pointer=type_.key)
             return
         key = "Id" if "Id" not in member else "_Id"
         member[key] = {"@Core.Description": "Key synthesized by Apiome: the source declares none."}
@@ -803,10 +822,18 @@ class _ODataWriter:
                                f"OData has no events; {operation.kind.value} operation {operation.key!r} is not "
                                "written.", pointer=operation.key)
             return
-        if operation.streaming is not StreamingMode.NONE or operation.kind is OperationKind.SUBSCRIPTION:
-            self.losses.record(LossKind.NA, "streaming-dropped",
-                               f"OData requests are one request and one response; {operation.key!r} is written as "
-                               "one call.", pointer=operation.key)
+        if operation.kind is OperationKind.SUBSCRIPTION or operation.streaming in (StreamingMode.CLIENT,
+                                                                                   StreamingMode.BIDIRECTIONAL):
+            what = "GraphQL subscription" if operation.kind is OperationKind.SUBSCRIPTION else (
+                f"{operation.streaming.value}-streaming call")
+            self.losses.record(LossKind.NA, "stream-dropped",
+                               f"An OData Function or Action takes one request and returns one response; the {what} "
+                               f"{operation.key!r} has no OData form and is not written.", pointer=operation.key)
+            return
+        if operation.streaming is StreamingMode.SERVER:
+            self.losses.record(LossKind.INFERRED, "stream-as-collection",
+                               f"OData has no streams; the server stream of {operation.key!r} is written as a result "
+                               "returning a collection of its messages.", pointer=operation.key)
         crud = self._crud(operation, sets)
         if crud is not None:
             set_name, verb = crud
@@ -907,7 +934,7 @@ class _ODataWriter:
             type_name, collection, _ = self._ref(success.payload) if success.payload is not None else (
                 "Edm.Untyped", False, False)
             returns: Dict[str, Any] = {"$Type": type_name}
-            if collection:
+            if collection or operation.streaming is StreamingMode.SERVER:
                 returns["$Collection"] = True
             member["$ReturnType"] = returns
         self._annotate(member, operation.description, operation.deprecated)

@@ -20,5 +20,9 @@ you set the **output** option. You can export from OpenAPI, gRPC, GraphQL, Avro 
 - **Types and constraints.** Primitives become their CSDL types, such as `Edm.Int64`,
   `Edm.DateTimeOffset` and `Edm.Guid`. Patterns, ranges and allowed values become `Validation`
   annotations, and descriptions become `Core.Description`.
+- **Losses in three groups.** The fidelity report groups what OData cannot carry: keyless types,
+  RPC calls and events, and type coercion. A gRPC client or bidirectional stream, or a GraphQL
+  subscription, is no longer written as a single call; it is dropped and reported. A server stream
+  returns a collection.
 - **OData 2 and 3.** Older metadata is written as CSDL 4.01, with its facets kept and the change
   reported.

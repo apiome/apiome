@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.521.0] - 2026-10-29
+
+### Changed
+- **OData fidelity pack: keyless types, RPC / event DROP, type coercion (MFX-16.2, #3898).** Keyless types: an
+  inferred key says when it was made non-nullable; a synthesized key stays SYNTH; non-resource records need none.
+  RPC and events: a gRPC client / bidirectional stream and a GraphQL subscription are no longer written as one call
+  — they are not written (`stream-dropped`, critical DROP); a server stream is a Function / Action returning a
+  collection (`stream-as-collection`, APPROX); unary RPCs stay Actions / Functions; events and channels DROP. Type
+  coercion: a `format` no CSDL type carries (`email`, `uri` …) is now reported (`constraint-dropped`) instead of
+  silently lost; unsigned / unknown primitives APPROX; field numbers DROP (info).
+- Goldens: the `odata` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.520.0] - 2026-10-29
 
 ### Added

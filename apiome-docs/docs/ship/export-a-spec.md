@@ -310,16 +310,25 @@ then read back by the OData importer.
   stay facets, and `Edm.DateTime` becomes `Edm.DateTimeOffset`. The report lists the version
   upgrade and the `sap:` and `m:` annotations, which are not written.
 
-The fidelity report lists what OData cannot carry:
+The fidelity report lists what OData cannot carry, in three groups:
 
-- **Dropped:** event operations and channels, header and cookie parameters, declared error responses
-  (OData uses its standard error format), constraints with no CSDL form (`minLength`,
-  `multipleOf`, `uniqueItems`), defaults that do not fit, servers, and the document's title,
-  description and version. A stream is written as one call.
-- **Approximated:** CRUD operations served by an entity set (their query parameters become OData
-  query options such as `$top` and `$filter`), other operations reframed as Functions or Actions,
-  inferred keys, coerced primitives, unions, maps, aliases and renamed elements.
-- **Synthesized:** a key added to an entity that has none.
+| Group | Source construct | In the report |
+| --- | --- | --- |
+| Keyless types | An entity with an `id`-like property but no declared key | Approximated: the property becomes the key, and is made non-nullable if it was nullable |
+| Keyless types | An entity with no key and no `id`-like property | Synthesized: a string `Id` key is added |
+| RPC and events | A unary RPC or a GraphQL query or mutation | Approximated: it becomes an Action, or a Function when it is a query that returns a result |
+| RPC and events | A gRPC client or bidirectional stream, a GraphQL subscription | Dropped (critical): it is not written |
+| RPC and events | A gRPC server stream | Approximated: it returns a collection of its messages |
+| RPC and events | Publish and subscribe operations, channels | Dropped |
+| Type coercion | An unsigned or unknown primitive | Approximated: it is widened, or written as `Edm.String` |
+| Type coercion | A `format` with no CSDL type, such as `email` or `uri` | Dropped |
+| Type coercion | `minLength`, `multipleOf`, `uniqueItems` | Dropped |
+| Type coercion | Field numbers (Protobuf, Thrift) | Dropped (info) |
+
+Also dropped: header and cookie parameters, declared error responses (OData uses its standard
+error format), defaults that do not fit, servers, and the document's title, description and
+version. Also approximated: CRUD operations served by an entity set (their query parameters become
+OData query options such as `$top` and `$filter`), unions, maps, aliases and renamed elements.
 
 ### OpenRPC from any source
 

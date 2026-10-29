@@ -1262,20 +1262,40 @@
       "diff_count": 11,
       "emit_format": "odata",
       "emit_key": "odata",
-      "loss_approx": 9,
-      "loss_drop": 8,
+      "loss_approx": 13,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 1,
       "overclaims": [],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'Travel Concierge.build-itinerary', removed service 'Travel Concierge', removed skill 'Travel Concierge.build-itinerary', removed skill 'Travel Concierge.search-flights', removed skill 'Travel Concierge.search-hotels', removed skill 'Travel Concierge.visa-requirements')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed agent 'Travel Concierge', removed operation 'Travel Concierge.build-itinerary', removed operation 'Travel Concierge.search-flights', removed operation 'Travel Concierge.search-hotels', removed operation 'Travel Concierge.visa-requirements', removed service 'Travel Concierge', removed skill 'Travel Concierge.build-itinerary', removed skill 'Travel Concierge.search-flights', removed skill 'Travel Concierge.search-hotels', removed skill 'Travel Concierge.visa-requirements')",
       "source_format": "a2a",
       "status": "xfail",
       "unexplained": [
         {
           "change": "removed",
+          "entity": "agent",
+          "key": "Travel Concierge"
+        },
+        {
+          "change": "removed",
           "entity": "operation",
           "key": "Travel Concierge.build-itinerary"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "Travel Concierge.search-flights"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "Travel Concierge.search-hotels"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "Travel Concierge.visa-requirements"
         },
         {
           "change": "removed",
@@ -138533,10 +138553,10 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 2,
-      "loss_drop": 1,
+      "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 1,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Address",
@@ -138546,7 +138566,7 @@
           "target_mapping": "ComplexType Address"
         }
       ],
-      "reason": "unexplained: changed root '', removed type 'Address', removed type 'LanguageMap', removed type 'TypicalContext', added type 'TypicalContext.Address', added type 'TypicalContext.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: added operation 'GET /TypicalContexts', added operation 'GET /TypicalContexts({key})', added operation 'POST /TypicalContexts', added service 'TypicalContext.TypicalContexts', removed type 'Address', removed type 'LanguageMap', removed type 'TypicalContext', added type 'TypicalContext.Address', added type 'TypicalContext.LanguageMap', added type 'TypicalContext.TypicalContext'; overclaim: OK 'Address')",
+      "reason": "unexplained: changed root '', removed type 'Address', removed type 'LanguageMap', removed type 'TypicalContext', added type 'TypicalContext.Address', added type 'TypicalContext.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: added operation 'GET /TypicalContexts', added operation 'GET /TypicalContexts({key})', added operation 'POST /TypicalContexts', added service 'TypicalContext.TypicalContexts', removed type 'Address', removed type 'LanguageMap', added type 'TypicalContext.Address', added type 'TypicalContext.LanguageMap', added type 'TypicalContext.TypicalContext'; overclaim: OK 'Address')",
       "source_format": "jsonld",
       "status": "xfail",
       "unexplained": [
@@ -138579,11 +138599,6 @@
           "change": "removed",
           "entity": "type",
           "key": "LanguageMap"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "TypicalContext"
         },
         {
           "change": "added",
@@ -156938,10 +156953,10 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 8,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Toolclose_ticketInput",
@@ -156965,7 +156980,7 @@
           "target_mapping": "ComplexType Toolsearch_ticketsInput"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'Acme Support Tickets.prompts.summarize_ticket', removed operation 'Acme Support Tickets.resources.frontline-queue', removed operation 'Acme Support Tickets.resources.ticket', removed operation 'Acme Support Tickets.tools.close_ticket', removed operation 'Acme Support Tickets.tools.create_ticket', removed operation 'Acme Support Tickets.tools.search_tickets', removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools', removed type 'Toolclose_ticketInput', removed type 'Toolcreate_ticketInput', removed type 'Toolsearch_ticketsInput', added type 'acme_tickets.Toolclose_ticketInput', added type 'acme_tickets.Toolcreate_ticketInput', added type 'acme_tickets.Toolsearch_ticketsInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'Acme Support Tickets.prompts.summarize_ticket', removed operation 'Acme Support Tickets.resources.frontline-queue', removed operation 'Acme Support Tickets.resources.ticket', removed operation 'Acme Support Tickets.tools.close_ticket', removed operation 'Acme Support Tickets.tools.create_ticket', removed operation 'Acme Support Tickets.tools.search_tickets', removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools', removed type 'Toolclose_ticketInput', removed type 'Toolsearch_ticketsInput', added type 'acme_tickets.Toolclose_ticketInput', added type 'acme_tickets.Toolcreate_ticketInput', added type 'acme_tickets.Toolsearch_ticketsInput'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": [
@@ -157018,11 +157033,6 @@
           "change": "removed",
           "entity": "type",
           "key": "Toolclose_ticketInput"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "Toolcreate_ticketInput"
         },
         {
           "change": "removed",
@@ -193072,12 +193082,12 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 2,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /UserProfiles', added operation 'GET /UserProfiles({key})', added operation 'POST /UserProfiles', added service 'Nullable.Types.Example.UserProfiles', added type 'Nullable.Types.Example.UserProfile', removed type 'UserProfile')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /UserProfiles', added operation 'GET /UserProfiles({key})', added operation 'POST /UserProfiles', added service 'Nullable.Types.Example.UserProfiles', added type 'Nullable.Types.Example.UserProfile')",
       "source_format": "openapi",
       "status": "xfail",
       "unexplained": [
@@ -193105,11 +193115,6 @@
           "change": "added",
           "entity": "type",
           "key": "Nullable.Types.Example.UserProfile"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "UserProfile"
         }
       ]
     },
@@ -217317,7 +217322,7 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 6,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 1,
       "matched_count": 2,
@@ -247919,10 +247924,10 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 8,
-      "loss_drop": 9,
+      "loss_drop": 11,
       "loss_ok": 3,
       "loss_synth": 4,
-      "matched_count": 9,
+      "matched_count": 11,
       "overclaims": [
         {
           "construct": "Category",
@@ -247946,7 +247951,7 @@
           "target_mapping": "ComplexType User"
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'DELETE /pets/{petId}', added operation 'GET /Errors', added operation 'GET /Errors({key})', added operation 'GET /NewPets', added operation 'GET /NewPets({key})', added operation 'GET /UpdatePets', added operation 'GET /UpdatePets({key})', added operation 'GET /UploadResponses', added operation 'GET /UploadResponses({key})', added operation 'GET /pets({key})', added operation 'POST /Errors', added operation 'POST /NewPets', added operation 'POST /UpdatePets', added operation 'POST /UploadResponses', removed operation 'POST /pets/{petId}/upload', added service 'Pet.Store.API.Errors', added service 'Pet.Store.API.NewPets', added service 'Pet.Store.API.UpdatePets', added service 'Pet.Store.API.UploadResponses', added service 'Pet.Store.API.pets', removed service 'pet', removed type 'Error', removed type 'Order', added type 'Pet.Store.API.Category', added type 'Pet.Store.API.Error', added type 'Pet.Store.API.NewPet', added type 'Pet.Store.API.Order', added type 'Pet.Store.API.Pet', added type 'Pet.Store.API.UpdatePet', added type 'Pet.Store.API.UploadResponse', added type 'Pet.Store.API.User', removed type 'UploadResponse', removed type 'User'; overclaim: OK 'Category', OK 'Order', OK 'User')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'DELETE /pets/{petId}', added operation 'GET /Errors', added operation 'GET /Errors({key})', added operation 'GET /NewPets', added operation 'GET /NewPets({key})', added operation 'GET /UpdatePets', added operation 'GET /UpdatePets({key})', added operation 'GET /UploadResponses', added operation 'GET /UploadResponses({key})', added operation 'GET /pets({key})', added operation 'POST /Errors', added operation 'POST /NewPets', added operation 'POST /UpdatePets', added operation 'POST /UploadResponses', removed operation 'POST /pets/{petId}/upload', added service 'Pet.Store.API.Errors', added service 'Pet.Store.API.NewPets', added service 'Pet.Store.API.UpdatePets', added service 'Pet.Store.API.UploadResponses', added service 'Pet.Store.API.pets', removed service 'pet', removed type 'Error', removed type 'Order', added type 'Pet.Store.API.Category', added type 'Pet.Store.API.Error', added type 'Pet.Store.API.NewPet', added type 'Pet.Store.API.Order', added type 'Pet.Store.API.Pet', added type 'Pet.Store.API.UpdatePet', added type 'Pet.Store.API.UploadResponse', added type 'Pet.Store.API.User'; overclaim: OK 'Category', OK 'Order', OK 'User')",
       "source_format": "swagger",
       "status": "xfail",
       "unexplained": [
@@ -248104,16 +248109,6 @@
           "change": "added",
           "entity": "type",
           "key": "Pet.Store.API.User"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "UploadResponse"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "User"
         }
       ]
     },
@@ -305898,7 +305893,7 @@
       "emit_format": "odata",
       "emit_key": "odata",
       "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 2,
       "loss_synth": 1,
       "matched_count": 3,
