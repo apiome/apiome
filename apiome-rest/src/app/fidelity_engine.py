@@ -36,7 +36,7 @@ eventual export are byte-identical.
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Any, Mapping, Optional, Union
 
 from .canonical_model import CanonicalApi
 from .emitter import CapabilityProfile, Emitter
@@ -90,6 +90,8 @@ def compute_lossiness(
 def compute_lossiness_for_emitter(
     api: CanonicalApi,
     emitter: Union[Emitter, type[Emitter]],
+    *,
+    options: Optional[Mapping[str, Any]] = None,
 ) -> LossinessReport:
     """Compute the fidelity report for exporting ``api`` through ``emitter``.
 
@@ -105,6 +107,9 @@ def compute_lossiness_for_emitter(
     Args:
         api: The source canonical model to be exported.
         emitter: The target :class:`~app.emitter.Emitter` (instance or class).
+        options: The per-target emit options the report is for, handed to the pack's opt-in
+            :meth:`~app.fidelity_rulepack.FidelityRulePack.apply_options` (MFX-21.2); ``None``
+            or ``{}`` is the target defaults.
 
     Returns:
         The predicted :class:`~app.lossiness.LossinessReport` for the export.
@@ -113,4 +118,7 @@ def compute_lossiness_for_emitter(
     profile = emitter_cls.capability_profile()
     label = emitter_cls.label or emitter_cls.key or emitter_cls.format or "the target"
     pack_cls = emitter_cls.fidelity_rule_pack() or CapabilityRulePack
-    return compute_lossiness(api, profile, rule_pack=pack_cls(profile, label))
+    pack = pack_cls(profile, label)
+    if options:
+        pack.apply_options(options)
+    return compute_lossiness(api, profile, rule_pack=pack)

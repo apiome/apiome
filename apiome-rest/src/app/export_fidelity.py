@@ -241,13 +241,13 @@ def build_export_fidelity(
             unaffected by it.
         options: The per-target emit options this envelope describes; ``None``/``{}`` applies
             the target defaults. Folded (normalized) into the projection snapshot hash so a
-            different option set is a different snapshot, while the report and counts are
-            unaffected by it.
+            different option set is a different snapshot. The report and counts depend on them
+            only for a target whose rule pack opts in (MFX-21.2: the JSON Schema draft).
 
     Returns:
         The full fidelity envelope (target + summary + report + advisory + projection summary).
     """
-    report = compute_lossiness_for_emitter(api, emitter)
+    report = compute_lossiness_for_emitter(api, emitter, options=options)
     profile = emitter.capability_profile()
     descriptor = emitter.descriptor()
     advisory = build_export_advisory(

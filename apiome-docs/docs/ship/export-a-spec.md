@@ -535,6 +535,24 @@ Every exported document validates against its draft's metaschema. An item import
 re-exported exactly as it was imported unless you pick another draft, `per-type` or an **id_base**.
 Operations and channels are left out: JSON Schema describes data only.
 
+The fidelity report is computed for the options you pick, so changing **draft** in the export dialog
+updates it. It lists:
+
+| In the source | In the JSON Schema export |
+|---|---|
+| Operations, services and channels | Dropped (critical). An item that has any also gets a **types-only** warning counting them — export it to OpenAPI or AsyncAPI as well to keep them |
+| A document of another format | Approximated (note): written as JSON Schema, without what is specific to its format |
+| A type whose key has a namespace (`com.example.Status`) | Approximated (note): written as `$defs/Status`, and read back under that name |
+| A value with a `format` (`date-time`, `int64`, `email` …) | Approximated (note): `format` is an annotation — a validator checks it only when format assertion is switched on |
+| `deprecated` (draft-07 and draft-04) | Dropped |
+| `prefixItems` (draft-07 and draft-04) | Approximated: the tuple form of `items`, the other items as `additionalItems` |
+| `unevaluatedProperties` (draft-07 and draft-04) | Approximated as `additionalProperties` when nothing else applies beside it, else dropped |
+| `$dynamicRef`, `$dynamicAnchor`, `$anchor`, `unevaluatedItems` (draft-07 and draft-04) | Dropped |
+| An exclusive bound, `const` (draft-04) | Approximated (note): `minimum` with `exclusiveMinimum: true`, a one-value `enum` |
+| `examples`, `contentEncoding`, `readOnly`, `if` / `then` / `else` … (draft-04) | Dropped |
+
+Each downgrade is listed on the type or field it happened in.
+
 ### XSD (XML Schema) on its own
 
 Exporting to **XSD** writes just the data types as an XML Schema, without the WSDL around them — for

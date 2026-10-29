@@ -22,26 +22,27 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationError, field_validator
 
 from .canonical_json_schema import CanonicalSchemaBundle, build_bundle_schemas
-from .canonical_model import ApiParadigm, CanonicalApi, Type
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Type
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
     EmitResult,
     EmittedFile,
     Emitter,
+    Loss,
     LossKind,
     LossTracker,
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .jsonschema_drafts import DRAFT_URIS, JsonSchemaDraft, dialect_of, downgrade_schema
 from .jsonschema_import_source import JSON_SCHEMA_FORMAT, JsonSchemaImportSource
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
@@ -59,41 +60,74 @@ _ABSOLUTE_URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:\S+$")
 
 
 class JsonSchemaFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for JSON Schema export.
+    """Fidelity rules for JSON Schema export — MFX-21.1, MFX-21.2 (#4127).
 
-    XSD-style types-only rules (operations and channels are dropped), plus what the bundle changes
-    about the model as a whole (MFX-21.1): a document of another format is rewritten as JSON Schema,
-    and a type whose ``$defs`` key is not its canonical key (``com.example.Status`` → ``Status``)
-    reads back under that key, without its namespace. The per-construct rules are MFX-21.2.
+    The pack builds the export with the JSON Schema writer, for the options the report is computed for
+    (:meth:`apply_options`; the target defaults otherwise), and reports:
+
+    * **types-only** — every operation and channel is a critical ``DROP``, and a source that has any
+      carries the critical root advisory with counts (:func:`~app.fidelity_rulepack.types_only_advisory`);
+    * **the rewrite** — a document of another format is rewritten as JSON Schema (info ``APPROX``), and a
+      type written under a ``$defs`` key other than its canonical key reads back under that key (info
+      ``APPROX``, its namespace dropped);
+    * **draft downgrades** — each keyword the chosen draft drops (``DROP``) or writes another way
+      (``APPROX``: ``prefixItems`` → tuple ``items``, ``unevaluatedProperties`` → ``additionalProperties``,
+      draft-04 boolean exclusive bounds and ``const`` → ``enum``), filed under the type or field it is in;
+    * **format** — a value written with a ``format`` is only annotated: validators do not assert it
+      unless format assertion is switched on (info ``APPROX`` note).
     """
 
     target_label = "JSON Schema"
 
-    def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Allocate the ``$defs`` keys once (as the export does), then walk the model.
+    #: Writer loss subjects that are draft-downgrade rewrites, and those that keep the rule exactly.
+    _DOWNGRADE_SUBJECTS = frozenset({
+        "keyword-dropped", "exclusive-bound-merged", "exclusive-bound-boolean", "const-as-enum",
+        "prefix-items-as-tuple", "unevaluated-as-additional",
+    })
+    _EXACT_REWRITES = frozenset({"exclusive-bound-boolean", "const-as-enum"})
 
-        A 2020-12 JSON Schema item whose imported document is kept is re-emitted as it is under the
-        default options, so none of its types is renamed.
-        """
-        raw = api.raw.get("source") if isinstance(api.raw, dict) else None
-        reemitted = (
-            api.format == JSON_SCHEMA_FORMAT and isinstance(raw, dict) and (dialect_of(raw) or "2020-12") == "2020-12"
-        )
-        self._defs_keys = {} if reemitted else build_bundle_schemas(api).defs_keys
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for these emit options (invalid options fall back to the defaults)."""
+        try:
+            self._options = JsonSchemaEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = JsonSchemaEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Build the export once (as it will be emitted), file its downgrade losses, then walk the model."""
+        writer = _JsonSchemaWriter(api, getattr(self, "_options", None) or JsonSchemaEmitOptions())
+        writer.render()
+        bundle = writer.bundle
+        self._defs_keys = bundle.defs_keys if bundle is not None else {}
+        self._defs = bundle.defs if bundle is not None else {}
+        self._owners = {field.key: type_.key for type_ in api.types for field in type_.fields}
+        self._downgrades = self._file_downgrades(api, writer.losses.records())
         return super().evaluate(api)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """A document of another format is rewritten as JSON Schema and reads back as a JSON Schema item."""
-        if api.format == JSON_SCHEMA_FORMAT:
-            return []
-        return [
-            FidelityVerdict.approx(
-                message=f"The {api.format or 'source'} document is written as JSON Schema and reads back as a "
-                "JSON Schema item; details specific to its format are not kept",
-                severity=LossinessSeverity.INFO,
-                target_mapping="document → JSON Schema",
+        """The types-only advisory, the rewrite of another format, and downgrades of the document root."""
+        verdicts: List[FidelityVerdict] = []
+        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            verdicts.append(advisory)
+        if api.format != JSON_SCHEMA_FORMAT:
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is written as JSON Schema and reads back as a "
+                    "JSON Schema item; details specific to its format are not kept",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="document → JSON Schema",
+                )
             )
-        ]
+        return verdicts + self._downgrades.get(ROOT_CONSTRUCT_KEY, [])
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict, its format note, and the downgrades of its schema."""
+        verdicts = [self.type_verdict(type_)]
+        fmt = self._defs.get(self._defs_keys.get(type_.key, ""), {}).get("format")
+        if fmt:
+            verdicts.append(_format_note(fmt))
+        return verdicts + self._downgrades.get(type_.key, [])
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
         """The capability verdict, or a note that the type is keyed by its ``$defs`` name."""
@@ -109,6 +143,14 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
             target_mapping=f"{type_.key} → $defs/{defs_key}",
         )
 
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """The capability verdicts, the field's format note, and the downgrades of its schema."""
+        verdicts = super().field_verdicts(field)
+        fmt = _format_of(self._property_schema(field))
+        if fmt:
+            verdicts.append(_format_note(fmt))
+        return verdicts + self._downgrades.get(field.key, [])
+
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
             message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
@@ -122,6 +164,68 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
             "the event channel is dropped",
             target_mapping="channel → dropped (types-only export)",
         )
+
+    # --- helpers ------------------------------------------------------------
+
+    def _property_schema(self, field: CanonicalField) -> Dict[str, Any]:
+        """The schema the export writes for ``field`` (``{}`` when it writes none)."""
+        definition = self._defs.get(self._defs_keys.get(self._owners.get(field.key, ""), ""), {})
+        return (definition.get("properties") or {}).get(field.name) or {}
+
+    def _file_downgrades(self, api: CanonicalApi, losses: List[Loss]) -> Dict[str, List[FidelityVerdict]]:
+        """Each draft-downgrade loss as a verdict, filed under the type or field its JSON Pointer is in."""
+        owners: Dict[str, Tuple[str, Dict[str, str]]] = {}
+        for type_ in api.types:
+            defs_key = self._defs_keys.get(type_.key)
+            if defs_key is not None:
+                owners[defs_key] = (type_.key, {f.name: f.key for f in type_.fields})
+        filed: Dict[str, List[FidelityVerdict]] = {}
+        seen = set()
+        for loss in losses:
+            if loss.subject not in self._DOWNGRADE_SUBJECTS or (loss.subject, loss.detail) in seen:
+                continue
+            seen.add((loss.subject, loss.detail))
+            key = _construct_of(loss.pointer or "#", owners)
+            if loss.kind is LossKind.NA:
+                verdict = FidelityVerdict.drop(message=loss.detail, severity=LossinessSeverity.WARN,
+                                               target_mapping=loss.subject)
+            else:
+                severity = LossinessSeverity.INFO if loss.subject in self._EXACT_REWRITES else LossinessSeverity.WARN
+                verdict = FidelityVerdict.approx(message=loss.detail, severity=severity, target_mapping=loss.subject)
+            filed.setdefault(key, []).append(verdict)
+        return filed
+
+
+def _construct_of(pointer: str, owners: Dict[str, Tuple[str, Dict[str, str]]]) -> str:
+    """The construct a downgrade's JSON Pointer is in: a field, a type, else the root.
+
+    ``#/$defs/Order/properties/sku/…`` is the field ``Order.sku``, ``#/$defs/Order/…`` the type ``Order``.
+    """
+    parts = pointer.split("/")
+    if len(parts) < 3 or parts[1] != "$defs" or parts[2] not in owners:
+        return ROOT_CONSTRUCT_KEY
+    type_key, fields = owners[parts[2]]
+    if len(parts) >= 5 and parts[3] == "properties" and parts[4] in fields:
+        return fields[parts[4]]
+    return type_key
+
+
+def _format_of(schema: Dict[str, Any]) -> Optional[str]:
+    """The ``format`` a property schema (or its array items) carries."""
+    if schema.get("format"):
+        return str(schema["format"])
+    items = schema.get("items")
+    return str(items["format"]) if isinstance(items, dict) and items.get("format") else None
+
+
+def _format_note(fmt: str) -> FidelityVerdict:
+    """A ``format`` is an annotation: validators do not check it unless format assertion is on."""
+    return FidelityVerdict.approx(
+        message=f"JSON Schema treats `format: {fmt}` as an annotation: a validator does not check it unless "
+        "format assertion is switched on",
+        severity=LossinessSeverity.INFO,
+        target_mapping=f"format {fmt} → annotation",
+    )
 
 
 class JsonSchemaEmitOptions(EmitOptions):
@@ -220,15 +324,14 @@ class _JsonSchemaWriter:
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
         self.output_path = _output_path(api)
+        #: The projected types (``None`` when the imported document is re-emitted).
+        self.bundle: Optional[CanonicalSchemaBundle] = None
 
     def render(self) -> List[Tuple[str, str]]:
         """Every document as ``(path, text)``: the bundle, or one file per type."""
-        if self._api.services or self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "services-dropped",
-                "JSON Schema export is types-only; services and channels are omitted",
-            )
+        advisory = types_only_advisory(self._api, target_label="JSON Schema", keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            self.losses.record(LossKind.NA, "services-dropped", advisory.message)
         source = self._source_document()
         if source is not None:
             documents = [(self.output_path, source)]
@@ -241,8 +344,17 @@ class _JsonSchemaWriter:
                     "unavailable or the options ask for a different draft, packaging or $id",
                 )
             documents = self._per_type() if self._options.packaging == "per-type" else [self._bundle()]
+            per_type = self._options.packaging == "per-type"
             documents = [
-                (path, downgrade_schema(document, self._options.draft, self.losses)) for path, document in documents
+                (
+                    path,
+                    # A per-type file's losses point where its schema sits in the bundle (`#/$defs/<key>`).
+                    downgrade_schema(
+                        document, self._options.draft, self.losses,
+                        pointer=f"#/$defs/{path[: -len('.schema.json')]}" if per_type else "#",
+                    ),
+                )
+                for path, document in documents
             ]
         self.tracker.record(self._api.identity.name or "json-schema", Provenance.SOURCE)
         return [(path, self._serialize(document)) for path, document in documents]
@@ -296,6 +408,7 @@ class _JsonSchemaWriter:
     def _project(self) -> CanonicalSchemaBundle:
         """The model's types as ``$defs`` subschemas; scalars with no JSON type are reported."""
         bundle = build_bundle_schemas(self._api, wire_enums=False)
+        self.bundle = bundle
         for name in bundle.unmapped_scalars:
             self.losses.record(
                 LossKind.INFERRED,
