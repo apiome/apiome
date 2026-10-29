@@ -231,7 +231,8 @@ def _structure_issues(resource: Mapping[str, Any], value_sets: Optional[set]) ->
     for index, element in enumerate(elements):
         where = f"StructureDefinition/differential/element[{index}]"
         path = element.get("path")
-        if not isinstance(path, str) or not all(_PATH_SEGMENT_RE.match(p) for p in path.split(".")):
+        if not isinstance(path, str) or not all(_PATH_SEGMENT_RE.match(p.removesuffix("[x]"))
+                                                for p in path.split(".")):
             issues.append(f"{where}/path: {path!r} is not a valid element path (eld-19)")
             continue
         if resource.get("kind") == "logical" and path.split(".")[0] != root:
