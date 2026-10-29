@@ -136,15 +136,17 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
     ('typespec', 'connectrpc'):
         'removed operation GET /pets; removed operation GET /pets/{id}; removed operation POST /pets; added o',
-    # --- corbaidl (4) ---
+    # --- corbaidl (5) ---
     ('arazzo', 'corbaidl'):
-        'added operation Exported.checkout.addItem; added operation Exported.checkout.createCart; added opera',
+        'added operation Storefront_checkout.checkout.addItem; added operation Storefront_checkout.checkout.c',
     ('capnproto', 'corbaidl'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation Exported.Direct',
+        'removed operation Directory.add; removed operation Directory.lookup; added operation DirectoryModule',
+    ('flatbuffers', 'corbaidl'):
+        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
     ('wsdl', 'corbaidl'):
-        'added operation OrderPort.OrderPort.CancelOrder; added operation OrderPort.OrderPort.CreateOrder; ad',
+        'added operation example.com.orders.OrderPort.CancelOrder; added operation example.com.orders.OrderPo',
     ('wsdl2', 'corbaidl'):
-        'added operation OrderInterface.OrderInterface.cancelOrder; added operation OrderInterface.OrderInter',
+        'added operation example.com.orders.OrderInterface.cancelOrder; added operation example.com.orders.Or',
     # --- fhir (49) ---
     ('a2a', 'fhir'):
         'removed agent Travel Concierge; added operation GET /Travel Concierge; added operation GET /Travel C',

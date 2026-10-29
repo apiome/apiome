@@ -124,9 +124,15 @@
     },
     {
       "family": "a2a",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "corbaidl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "corbaidl",
+      "tier": "lossy"
     },
     {
       "family": "a2a",
@@ -598,9 +604,15 @@
     },
     {
       "family": "acp",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "corbaidl"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "corbaidl",
+      "tier": "lossy"
     },
     {
       "family": "acp",
@@ -1090,9 +1102,15 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
-      "target": "corbaidl"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "corbaidl",
+      "tier": "lossy"
     },
     {
       "family": "agents-manifest",
@@ -2729,9 +2747,9 @@
     },
     {
       "drift": [
-        "added operation Exported.checkout.addItem",
-        "added operation Exported.checkout.createCart",
-        "added operation Exported.checkout.pay",
+        "added operation Storefront_checkout.checkout.addItem",
+        "added operation Storefront_checkout.checkout.createCart",
+        "added operation Storefront_checkout.checkout.pay",
         "removed operation checkout#addItem",
         "removed operation checkout#createCart",
         "removed operation checkout#pay"
@@ -7518,8 +7536,8 @@
       "drift": [
         "removed operation Directory.add",
         "removed operation Directory.lookup",
-        "added operation Exported.Directory.add",
-        "added operation Exported.Directory.lookup",
+        "added operation DirectoryModule.Directory.add",
+        "added operation DirectoryModule.Directory.lookup",
         "changed root",
         "removed service Directory"
       ],
@@ -8049,7 +8067,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 18,
+        "approx": 25,
         "drop": 0,
         "synth": 0
       },
@@ -9566,7 +9584,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 15,
         "drop": 0,
         "synth": 0
       },
@@ -14320,7 +14338,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 15,
+        "approx": 25,
         "drop": 0,
         "synth": 0
       },
@@ -14826,7 +14844,7 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 49,
+        "approx": 72,
         "drop": 0,
         "synth": 0
       },
@@ -16463,7 +16481,7 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 12,
+        "approx": 13,
         "drop": 0,
         "synth": 0
       },
@@ -18034,9 +18052,16 @@
       "tier": "lossy"
     },
     {
+      "drift": [
+        "changed root",
+        "changed type example.game.Color",
+        "changed type example.game.Monster",
+        "changed type example.game.Vec3",
+        "changed type example.game.Weapon"
+      ],
       "family": "flatbuffers",
-      "reason": "Round trip skipped: the artifact could not be read back (ImportSourceError).",
-      "status": "ok",
+      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
+      "status": "silent-loss",
       "target": "corbaidl"
     },
     {
@@ -20774,7 +20799,7 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 49,
+        "approx": 98,
         "drop": 0,
         "synth": 0
       },
@@ -23503,7 +23528,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 34,
+        "approx": 37,
         "drop": 0,
         "synth": 0
       },
@@ -30877,7 +30902,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 12,
+        "approx": 13,
         "drop": 0,
         "synth": 9
       },
@@ -31925,7 +31950,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 20,
+        "approx": 31,
         "drop": 0,
         "synth": 0
       },
@@ -38263,7 +38288,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 32,
+        "approx": 34,
         "drop": 0,
         "synth": 0
       },
@@ -45238,7 +45263,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 2,
         "synth": 7
       },
@@ -47411,7 +47436,7 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 17,
+        "approx": 30,
         "drop": 0,
         "synth": 0
       },
@@ -49034,7 +49059,7 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 18,
+        "approx": 26,
         "drop": 0,
         "synth": 0
       },
@@ -53929,9 +53954,9 @@
     },
     {
       "drift": [
-        "added operation OrderPort.OrderPort.CancelOrder",
-        "added operation OrderPort.OrderPort.CreateOrder",
-        "added operation OrderPort.OrderPort.GetOrder",
+        "added operation example.com.orders.OrderPort.CancelOrder",
+        "added operation example.com.orders.OrderPort.CreateOrder",
+        "added operation example.com.orders.OrderPort.GetOrder",
         "removed operation http://example.com/orders.OrderPort.CancelOrder",
         "removed operation http://example.com/orders.OrderPort.CreateOrder",
         "removed operation http://example.com/orders.OrderPort.GetOrder"
@@ -54461,9 +54486,9 @@
     },
     {
       "drift": [
-        "added operation OrderInterface.OrderInterface.cancelOrder",
-        "added operation OrderInterface.OrderInterface.getOrder",
-        "added operation OrderInterface.OrderInterface.placeOrder",
+        "added operation example.com.orders.OrderInterface.cancelOrder",
+        "added operation example.com.orders.OrderInterface.getOrder",
+        "added operation example.com.orders.OrderInterface.placeOrder",
         "removed operation http://example.com/orders.OrderInterface.cancelOrder",
         "removed operation http://example.com/orders.OrderInterface.getOrder",
         "removed operation http://example.com/orders.OrderInterface.placeOrder"
@@ -54994,7 +55019,7 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 0
       },
@@ -57054,7 +57079,7 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 2,
+        "approx": 8,
         "drop": 0,
         "synth": 0
       },
@@ -57492,10 +57517,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3317,
-    "ok": 61,
+    "lossy": 3320,
+    "ok": 57,
     "refused": 1909,
-    "silent-loss": 437,
+    "silent-loss": 438,
     "skipped": 0
   },
   "families": [

@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.513.0] - 2026-10-28
+
+### Added
+- **OMG IDL 4.2 emitter for CORBA and DDS (MFX-28.1, #4168).** The `corbaidl` writer is rebuilt so its output parses
+  under reference IDL compilers (omniidl; Cyclone DDS `idlc`): every type, member, enumerator, operation, parameter,
+  interface and module name is a valid identifier, unique case-insensitively in its scope, unlike its enclosing
+  scope and not an IDL keyword (`idl_identifier`, `OMG_IDL_KEYWORDS`; renames reported); every type reference is
+  fully scoped (`::com::acme::Order`); definitions are declared before use, self-recursive types forward-declared
+  (a direct self reference is a one-element bounded sequence, mutual recursion is dropped and reported); unions are
+  discriminated on a synthesized `<Union>Kind` enum (one case per field or member type; `void` arms select no
+  member); maps are `sequence<<Map>Entry>`; nullable members are `@optional`; aliases and named scalars are
+  `typedef`s; empty structs get a placeholder member; the API namespace becomes nested modules (a module named like
+  one of its definitions is renamed `<Name>Module`); services become interfaces whose operations take parameters
+  and the body as `in` arguments, return the first 2xx response, typedef sequences in signatures, and `raises`
+  exceptions only (a record only ever returned as an error becomes one; other error responses are reported). A
+  CORBA source keeps its module, typedefs and interfaces. Nothing to declare → 422 (`EmitPreconditionError`).
+- New options: `profile` (`corba` | `dds` — the DDS profile writes data types only, no recursion or wide
+  characters, `@key` on identifier fields), `module` (module path) and `key_fields` (DDS keys per type).
+- `OMG_IDL_SCALAR_FOR_KIND` in `app.scalar_aliases` (classic CORBA spellings: `long long`, `unsigned short`, …).
+
+### Changed
+- The CORBA IDL reader reads what the writer writes: IDL 4 annotations are skipped, scoped names reduced, `long
+  long` / `unsigned …` / `long double` and bounded sequences read, a chain of single nested modules read as one
+  dotted module (`com.acme`), and a data-types-only module (the DDS profile) detected as CORBA IDL.
+- `CorbaIdlFidelityRulePack` predicts the writer's type, member and operation renames (`APPROX`) and dropped agents
+  (`DROP`).
+- Goldens: the `corbaidl` cells of the round-trip and export-conformance matrices are regenerated (their exports now
+  re-import, so drift is measured); the `corbaidl` silent-loss ledger goes from 4 pairs to 5 (`flatbuffers`, which
+  could not be read back before).
+
 ## [1.512.0] - 2026-10-28
 
 ### Added

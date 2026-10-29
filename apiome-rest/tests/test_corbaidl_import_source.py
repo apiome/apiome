@@ -95,7 +95,7 @@ def test_emitter_round_trips_bank_fixture():
     text = emitter().emit(api).files[0].content
     assert "module Banking" in text
     assert "interface Bank" in text
-    assert "raises (AccountNotFound, InsufficientFunds)" in text
+    assert "raises (::Banking::AccountNotFound, ::Banking::InsufficientFunds)" in text
     validate_corbaidl_document(text)
 
 
@@ -107,7 +107,7 @@ def test_emitter_round_trips_inventory_fixture():
     text = emitter().emit(api).files[0].content
     assert "module Inventory" in text
     assert "typedef sequence<string> StringList" in text
-    assert "lookup(in string sku) raises (ItemNotFound)" in text
+    assert "lookup(in string sku) raises (::Inventory::ItemNotFound)" in text
     validate_corbaidl_document(text)
 
 

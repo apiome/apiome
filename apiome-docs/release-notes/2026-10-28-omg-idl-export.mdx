@@ -1,0 +1,27 @@
+---
+slug: omg-idl-export
+title: OMG IDL export for CORBA and DDS
+description: CORBA IDL exports are OMG IDL 4.2 that reference compilers accept, with a DDS profile.
+authors: [apiome]
+---
+
+Exporting an item to **CORBA IDL** now writes an OMG IDL 4.2 `.idl` file that omniidl and Cyclone
+DDS `idlc` accept. You can export from OpenAPI, Protobuf, GraphQL, Thrift or any other typed or
+service-bearing source.
+[How the IDL is written](/ship/export-a-spec#omg-idl-corba-or-dds-from-any-source).
+
+{/* truncate */}
+
+- **A DDS profile.** Set **profile** to `dds` for the data types a DDS topic can use. Identifier
+  fields are marked `@key`, or you can choose the keys with the new **key_fields** option.
+- **Every kind of type.** Unions are discriminated unions with a generated `<Union>Kind` enum. Maps
+  become sequences of key/value entries, and nullable fields are marked `@optional`.
+- **Modules from the namespace.** `com.acme.orders` becomes nested modules, or you can choose the
+  path with the new **module** option. Type references are written in full, so a member named like
+  its type compiles.
+- **Interfaces that compile.** Parameters and the body are `in` arguments, and a list in a signature
+  gets a `typedef`. `raises` lists only exceptions: a type returned only as an error becomes one.
+- **Valid names.** Names are made unique without regard to case, keywords such as `module` are
+  renamed, and enum values are unique in their module. Each rename is in the fidelity report.
+- **Declared before use.** Types are ordered so each is declared before it is used. A type that
+  contains itself through a sequence is forward-declared.

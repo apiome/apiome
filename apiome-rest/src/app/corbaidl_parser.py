@@ -36,6 +36,9 @@ _CORBA_BASE_TYPES = frozenset(
         "unsigned short",
         "long",
         "unsigned long",
+        "long long",
+        "unsigned long long",
+        "long double",
         "float",
         "double",
         "string",
@@ -131,6 +134,13 @@ def is_corbaidl(content: str) -> bool:
         return True
     if re.search(r"\braises\s*\(", trimmed) and re.search(r"\bexception\s+\w+", trimmed):
         return True
+    # A data-types-only module, as the DDS profile writes it (MFX-28.1): ``module M { struct S { … }; };``.
+    if (
+        re.search(r"\bmodule\s+\w+\s*\{", trimmed)
+        and re.search(r"\b(struct|union)\s+\w+\s*(\{|switch\b)", trimmed)
+        and re.search(r"\}\s*;", trimmed)
+    ):
+        return True
     return False
 
 
@@ -138,6 +148,15 @@ def _strip_comments(text: str) -> str:
     text = re.sub(r"/\*[\s\S]*?\*/", " ", text)
     text = re.sub(r"//[^\n]*", " ", text)
     return text
+
+
+def _simplify(text: str) -> str:
+    """Drop IDL 4 annotations (``@optional``, ``@key``, ``@id(3)``), close nested sequences as ``>>``
+    and reduce scoped names (``::Banking::Account``) to their last identifier — the reader is flat
+    (MFX-28.1)."""
+    text = re.sub(r"@\w+(?:\s*\([^)]*\))?", " ", text)
+    text = re.sub(r">\s+(?=>)", ">", text)
+    return re.sub(r"(?:::)?(?:\b\w+::)*(\w+)", r"\1", text)
 
 
 def _find_matching_brace(s: str, start: int) -> int:
@@ -198,6 +217,9 @@ def _parse_field_type(s: str, start: int) -> Tuple[str, int]:
                 depth -= 1
             i += 1
         return re.sub(r"\s+", " ", s[type_start:i].strip()), i
+    multi_word = re.match(r"(?:unsigned\s+)?long\s+long\b|unsigned\s+(?:long|short)\b|long\s+double\b", s[i:])
+    if multi_word:
+        return re.sub(r"\s+", " ", multi_word.group(0)), i + multi_word.end()
     while i < len(s) and (s[i].isalnum() or s[i] in "._"):
         i += 1
     return s[type_start:i].strip(), i
@@ -308,6 +330,8 @@ def _parse_interface_operations(inner: str, typedefs: Dict[str, str]) -> Tuple[C
 
 
 def _extract_module_body(cleaned: str) -> Tuple[Optional[str], str]:
+    """The first module's name and body. A module holding nothing but one nested module is followed
+    down, the names joined with ``.`` — ``module com { module acme { … }; };`` is module ``com.acme``."""
     match = re.search(r"\bmodule\s+(\w+)\s*\{", cleaned)
     if not match:
         return None, cleaned
@@ -315,7 +339,18 @@ def _extract_module_body(cleaned: str) -> Tuple[Optional[str], str]:
     close = _find_matching_brace(cleaned, open_brace + 1)
     if close == -1:
         return match.group(1), cleaned
-    return match.group(1), cleaned[open_brace + 1 : close]
+    names = [match.group(1)]
+    body = cleaned[open_brace + 1 : close]
+    while True:
+        nested = re.match(r"\s*module\s+(\w+)\s*\{", body)
+        if not nested:
+            break
+        inner_close = _find_matching_brace(body, nested.end())
+        if inner_close == -1 or body[inner_close + 1 :].strip() not in ("", ";"):
+            break
+        names.append(nested.group(1))
+        body = body[nested.end() : inner_close]
+    return ".".join(names), body
 
 
 def _parse_definitions(
@@ -370,7 +405,7 @@ def parse_corbaidl(content: str, *, source_label: Optional[str] = None) -> Corba
     if not is_corbaidl(content):
         raise CorbaIdlParseError("Content does not appear to be a CORBA IDL definition")
 
-    cleaned = _strip_comments(content)
+    cleaned = _simplify(_strip_comments(content))
     module_name, scope = _extract_module_body(cleaned)
     typedef_map = _collect_typedefs(scope)
     enums, structs, interfaces = _parse_definitions(scope, typedef_map)

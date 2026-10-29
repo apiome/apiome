@@ -359,7 +359,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 **CORBA IDL**
 
 - Reads **OMG IDL** (ungated) — An `.idl` file declares no OMG IDL revision, so one grammar is read.
-- Writes **OMG IDL** (ungated) — The written definition declares no OMG IDL revision either.
+- Writes **OMG IDL** (ungated) — Written as OMG IDL 4.2 (`@optional` / `@key` annotations), CORBA or DDS profile; the file declares no revision.
 
 **CUE**
 
