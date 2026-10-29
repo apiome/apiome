@@ -530,6 +530,8 @@ Options:
 - **id_base** — a base URI such as `https://example.com/schemas`: each document's `$id` becomes
   `https://example.com/schemas/<file name>`, so per-type files resolve each other wherever they are
   published.
+- **mode** — `json-schema` (default), or `jtd` for a [JSON Type Definition](#json-type-definition-jtd-mode)
+  document instead.
 
 Every exported document validates against its draft's metaschema. An item imported from JSON Schema is
 re-exported exactly as it was imported unless you pick another draft, `per-type` or an **id_base**.
@@ -552,6 +554,33 @@ updates it. It lists:
 | `examples`, `contentEncoding`, `readOnly`, `if` / `then` / `else` … (draft-04) | Dropped |
 
 Each downgrade is listed on the type or field it happened in.
+
+#### JSON Type Definition (JTD) mode
+
+Set **mode** to `jtd` to get the same types as one [JSON Type Definition](https://www.rfc-editor.org/rfc/rfc8927)
+(RFC 8927) document, `<Name>.jtd.json` — the strict, code-generation-friendly sibling of JSON Schema
+that ajv and the `jtd-codegen` tools read. **draft**, **packaging** and **id_base** do not apply: leave
+them unset, or the export is refused.
+
+- **Types.** Each type is a `definitions` entry, and the document refers (`ref`) to the type named
+  after the item. A record lists its required fields under `properties` and the others under
+  `optionalProperties`; a list is `elements`, a map `values`, a string enumeration `enum`.
+- **Scalars.** `string`, `boolean`, `int32`, `float32` and `float64` keep their JTD type; a timestamp is
+  `timestamp`. A description is kept as `metadata.description`.
+- Every exported document is checked against the schema rules of RFC 8927.
+
+JTD states far less than JSON Schema, so the fidelity report lists every rule the document cannot
+carry, on the type or field it is in:
+
+| In the source | In the JTD export |
+|---|---|
+| `pattern`, `minimum` / `maximum`, the exclusive bounds, `multipleOf`, lengths, item counts, `uniqueItems` | Dropped |
+| A `format` other than `date-time` (`uuid`, `email` …), `contentEncoding` | Dropped: written as a plain `string` |
+| A 64-bit or unbounded integer (`int64`, `integer`) | Approximated: `float64`, which does not check that a value is whole or exact above 2^53 |
+| A union (`oneOf`), or a value of several types | Approximated: `{}` (any value) — JTD only unions records tagged with a discriminator |
+| An enumeration of numbers | Approximated: only the values' type is checked |
+| `title`, `deprecated`, `default`, `examples` | Dropped (note) |
+| Undeclared properties | Approximated (note): JTD rejects a property a record does not declare; the JSON Schema export allows it |
 
 ### XSD (XML Schema) on its own
 

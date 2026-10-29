@@ -1,4 +1,4 @@
-"""JSON Schema emitter: canonical model → standalone JSON Schema — MFX-34.1, MFX-21.1 (#4126).
+"""JSON Schema emitter: canonical model → standalone JSON Schema — MFX-34.1, MFX-21.1 (#4126), MFX-21.3 (#4128).
 
 The inverse of :class:`app.jsonschema_import_source.JsonSchemaImportSource` and an
 implementation of the :class:`app.emitter.Emitter` SPI.
@@ -12,7 +12,9 @@ referencing each other by file name — a multi-file export, delivered as a zip 
 
 **Options:** ``draft`` (``2020-12``, or a downgrade to ``draft-07`` / ``draft-04`` through
 :mod:`app.jsonschema_drafts`, which records what the older draft cannot carry), ``packaging`` and
-``id_base`` (the ``$id`` base URI: each document's ``$id`` is ``<id_base>/<file name>``).
+``id_base`` (the ``$id`` base URI: each document's ``$id`` is ``<id_base>/<file name>``) and ``mode``:
+``"jtd"`` writes the bundle as one JSON Type Definition (RFC 8927) document instead, ``<Item>.jtd.json``,
+through :mod:`app.jsonschema_jtd` (which records everything JTD cannot express).
 
 A JSON Schema item is re-emitted as it was imported when nothing asks for a change (a bundle, no
 ``id_base``, the draft its ``$schema`` names).
@@ -26,7 +28,7 @@ from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 
 from .canonical_json_schema import CanonicalSchemaBundle, build_bundle_schemas
 from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Type
@@ -45,6 +47,7 @@ from .emitter import (
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .jsonschema_drafts import DRAFT_URIS, JsonSchemaDraft, dialect_of, downgrade_schema
 from .jsonschema_import_source import JSON_SCHEMA_FORMAT, JsonSchemaImportSource
+from .jsonschema_jtd import JTD_LOSS_SUBJECTS, check_jtd_schema, jtd_from_bundle
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = [
@@ -74,7 +77,12 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
       (``APPROX``: ``prefixItems`` → tuple ``items``, ``unevaluatedProperties`` → ``additionalProperties``,
       draft-04 boolean exclusive bounds and ``const`` → ``enum``), filed under the type or field it is in;
     * **format** — a value written with a ``format`` is only annotated: validators do not assert it
-      unless format assertion is switched on (info ``APPROX`` note).
+      unless format assertion is switched on (info ``APPROX`` note);
+    * **JTD output** (``mode="jtd"``, MFX-21.3) — the rewrite note names JSON Type Definition, a renamed
+      type is keyed by its ``definitions`` name, and each expressiveness loss
+      :mod:`app.jsonschema_jtd` records (dropped keywords and annotations: ``DROP``; schemas widened to
+      ``{}``, integers written ``float64``, non-string enums, closed records: ``APPROX``) is filed under
+      the type or field it is in, in place of the draft downgrades and format notes.
     """
 
     target_label = "JSON Schema"
@@ -85,6 +93,14 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         "prefix-items-as-tuple", "unevaluated-as-additional",
     })
     _EXACT_REWRITES = frozenset({"exclusive-bound-boolean", "const-as-enum"})
+    #: Subjects reported at info severity: exact rewrites, and JTD losses that do not loosen a check.
+    _INFO_SUBJECTS = _EXACT_REWRITES | frozenset(
+        subject for subject, severity in JTD_LOSS_SUBJECTS.items() if severity == "info"
+    )
+    #: Every writer loss subject the pack files under a construct.
+    _FILED_SUBJECTS = _DOWNGRADE_SUBJECTS | frozenset(JTD_LOSS_SUBJECTS)
+    #: Whether the report is for JTD output (set by :meth:`evaluate` from the options).
+    _jtd = False
 
     def apply_options(self, options: Mapping[str, Any]) -> None:
         """Compute the report for these emit options (invalid options fall back to the defaults)."""
@@ -95,7 +111,9 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Build the export once (as it will be emitted), file its downgrade losses, then walk the model."""
-        writer = _JsonSchemaWriter(api, getattr(self, "_options", None) or JsonSchemaEmitOptions())
+        options = getattr(self, "_options", None) or JsonSchemaEmitOptions()
+        self._jtd = options.mode == "jtd"
+        writer = _JsonSchemaWriter(api, options)
         writer.render()
         bundle = writer.bundle
         self._defs_keys = bundle.defs_keys if bundle is not None else {}
@@ -110,7 +128,16 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
         if advisory is not None:
             verdicts.append(advisory)
-        if api.format != JSON_SCHEMA_FORMAT:
+        if self._jtd:
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is written as JSON Type Definition (RFC 8927), "
+                    "which states far less than JSON Schema; each rule it cannot express is listed",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="document → JSON Type Definition",
+                )
+            )
+        elif api.format != JSON_SCHEMA_FORMAT:
             verdicts.append(
                 FidelityVerdict.approx(
                     message=f"The {api.format or 'source'} document is written as JSON Schema and reads back as a "
@@ -125,7 +152,7 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         """The type's verdict, its format note, and the downgrades of its schema."""
         verdicts = [self.type_verdict(type_)]
         fmt = self._defs.get(self._defs_keys.get(type_.key, ""), {}).get("format")
-        if fmt:
+        if fmt and not self._jtd:
             verdicts.append(_format_note(fmt))
         return verdicts + self._downgrades.get(type_.key, [])
 
@@ -135,6 +162,13 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         defs_key = self._defs_keys.get(type_.key)
         if verdict.kind is not LossinessKind.OK or defs_key is None or defs_key == type_.key:
             return verdict
+        if self._jtd:
+            return FidelityVerdict.approx(
+                message=f"JTD names a type by its definitions key; {type_.key!r} is written as "
+                f"definitions/{defs_key}" + (f", without its namespace {type_.namespace!r}" if type_.namespace else ""),
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{type_.key} → definitions/{defs_key}",
+            )
         return FidelityVerdict.approx(
             message=f"JSON Schema names a type by its $defs key; {type_.key!r} is written as $defs/{defs_key} "
             "and reads back under that name"
@@ -147,7 +181,7 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         """The capability verdicts, the field's format note, and the downgrades of its schema."""
         verdicts = super().field_verdicts(field)
         fmt = _format_of(self._property_schema(field))
-        if fmt:
+        if fmt and not self._jtd:
             verdicts.append(_format_note(fmt))
         return verdicts + self._downgrades.get(field.key, [])
 
@@ -173,7 +207,7 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         return (definition.get("properties") or {}).get(field.name) or {}
 
     def _file_downgrades(self, api: CanonicalApi, losses: List[Loss]) -> Dict[str, List[FidelityVerdict]]:
-        """Each draft-downgrade loss as a verdict, filed under the type or field its JSON Pointer is in."""
+        """Each draft-downgrade or JTD loss as a verdict, filed under the type or field its JSON Pointer is in."""
         owners: Dict[str, Tuple[str, Dict[str, str]]] = {}
         for type_ in api.types:
             defs_key = self._defs_keys.get(type_.key)
@@ -182,15 +216,14 @@ class JsonSchemaFidelityRulePack(CapabilityRulePack):
         filed: Dict[str, List[FidelityVerdict]] = {}
         seen = set()
         for loss in losses:
-            if loss.subject not in self._DOWNGRADE_SUBJECTS or (loss.subject, loss.detail) in seen:
+            if loss.subject not in self._FILED_SUBJECTS or (loss.subject, loss.detail) in seen:
                 continue
             seen.add((loss.subject, loss.detail))
             key = _construct_of(loss.pointer or "#", owners)
+            severity = LossinessSeverity.INFO if loss.subject in self._INFO_SUBJECTS else LossinessSeverity.WARN
             if loss.kind is LossKind.NA:
-                verdict = FidelityVerdict.drop(message=loss.detail, severity=LossinessSeverity.WARN,
-                                               target_mapping=loss.subject)
+                verdict = FidelityVerdict.drop(message=loss.detail, severity=severity, target_mapping=loss.subject)
             else:
-                severity = LossinessSeverity.INFO if loss.subject in self._EXACT_REWRITES else LossinessSeverity.WARN
                 verdict = FidelityVerdict.approx(message=loss.detail, severity=severity, target_mapping=loss.subject)
             filed.setdefault(key, []).append(verdict)
         return filed
@@ -246,10 +279,31 @@ class JsonSchemaEmitOptions(EmitOptions):
         description="Base URI for `$id` (for example `https://example.com/schemas`): each document's `$id` "
         "is `<id_base>/<file name>`.",
     )
+    mode: Literal["json-schema", "jtd"] = Field(
+        default="json-schema",
+        description="`json-schema` (default) writes JSON Schema; `jtd` writes one JSON Type Definition "
+        "(RFC 8927) document, `<Item>.jtd.json` — what JTD cannot express (patterns, bounds, unions across "
+        "shapes, 64-bit integers…) is listed in the fidelity report. `jtd` takes no `draft`, `packaging` "
+        "or `id_base`.",
+    )
     pretty_print: bool = Field(
         default=True,
         description="Pretty-print the generated JSON Schema document.",
     )
+
+    @model_validator(mode="after")
+    def _jtd_is_one_plain_document(self) -> "JsonSchemaEmitOptions":
+        """JTD has no drafts, no ``$id`` and no references across files: those options stay at their defaults."""
+        if self.mode == "jtd":
+            changed = [
+                name for name, default in (("draft", "2020-12"), ("packaging", "bundle"), ("id_base", None))
+                if getattr(self, name) != default
+            ]
+            if changed:
+                raise ValueError(
+                    f"mode 'jtd' writes one JSON Type Definition document; leave {', '.join(changed)} unset"
+                )
+        return self
 
     @field_validator("id_base")
     @classmethod
@@ -323,15 +377,22 @@ class _JsonSchemaWriter:
         self._options = options
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
-        self.output_path = _output_path(api)
+        self._jtd = options.mode == "jtd"
+        self.output_path = _output_path(api, ".jtd.json" if self._jtd else ".schema.json")
         #: The projected types (``None`` when the imported document is re-emitted).
         self.bundle: Optional[CanonicalSchemaBundle] = None
 
     def render(self) -> List[Tuple[str, str]]:
-        """Every document as ``(path, text)``: the bundle, or one file per type."""
+        """Every document as ``(path, text)``: the bundle, one file per type, or the JTD document."""
         advisory = types_only_advisory(self._api, target_label="JSON Schema", keep_in="OpenAPI or AsyncAPI")
         if advisory is not None:
             self.losses.record(LossKind.NA, "services-dropped", advisory.message)
+        if self._jtd:
+            # Always rebuilt: a JTD document is never the imported JSON Schema text.
+            path, bundle = self._bundle()
+            document = jtd_from_bundle(bundle, self.losses)
+            self.tracker.record(self._api.identity.name or "json-schema", Provenance.SOURCE)
+            return [(path, self._serialize(document))]
         source = self._source_document()
         if source is not None:
             documents = [(self.output_path, source)]
@@ -451,20 +512,28 @@ def _refs_to_files(schema: Any, files: Dict[str, str]) -> Any:
     return out
 
 
-def _output_path(api: CanonicalApi) -> str:
+def _output_path(api: CanonicalApi, suffix: str = ".schema.json") -> str:
+    """The export's file name: the item's title made path-safe, plus ``suffix``."""
     base = api.title or api.identity.name or "schema"
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "-", base).strip("-") or "schema"
-    return f"{safe}.schema.json"
+    return f"{safe}{suffix}"
 
 
 def validate_jsonschema_document(content: str) -> None:
     """Validate JSON Schema text: it re-parses through the import adapter and passes its draft's metaschema.
 
+    A JSON Type Definition document (``mode="jtd"``: no ``$schema``, JTD ``definitions`` or a JTD form at
+    the root) is checked against the schema rules of RFC 8927 instead.
+
     Raises:
         ImportSourceError: The text is not a JSON Schema document.
         ValueError: The document does not validate against the metaschema of the draft it declares
-            (2020-12 when it declares none).
+            (2020-12 when it declares none), or a JTD document breaks an RFC 8927 rule.
     """
+    jtd = _jtd_document(content)
+    if jtd is not None:
+        check_jtd_schema(jtd)
+        return
     adapter = JsonSchemaImportSource()
     document = adapter.parse(content)
     if not isinstance(document, dict):
@@ -473,3 +542,18 @@ def validate_jsonschema_document(content: str) -> None:
         validator_for(document, default=validator_for({"$schema": DRAFT_URIS["2020-12"]})).check_schema(document)
     except SchemaError as exc:
         raise ValueError(f"Not a valid JSON Schema ({exc.message})") from exc
+
+
+def _jtd_document(content: str) -> Optional[Dict[str, Any]]:
+    """The parsed document when ``content`` is this emitter's JTD output, else ``None``.
+
+    The JTD output never carries ``$schema`` (every JSON Schema export does); its root has ``definitions``
+    and a ``ref`` when the model has types, and ``metadata`` when it has a description.
+    """
+    try:
+        document = json.loads(content)
+    except ValueError:
+        return None
+    if not isinstance(document, dict) or "$schema" in document or "$defs" in document:
+        return None
+    return document if {"definitions", "ref", "metadata"} & set(document) else None
