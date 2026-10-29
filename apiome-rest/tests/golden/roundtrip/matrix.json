@@ -2258,7 +2258,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -4503,7 +4503,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -6887,7 +6887,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -9490,11 +9490,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "NewTask",
@@ -9511,15 +9511,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Task API', changed type 'NewTask', changed type 'Task'; overclaim: OK 'NewTask', OK 'Task')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Task API', changed type 'NewTask', changed type 'Task'; overclaim: OK 'NewTask', OK 'Task')",
       "source_format": "api-blueprint",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -11573,7 +11568,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -13555,7 +13550,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -14835,7 +14830,7 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -14849,14 +14844,14 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'Schema' (observed: unexplained: changed root ''; overclaim: OK 'Schema')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'Schema' (observed: unexplained: changed type 'Schema'; overclaim: OK 'Schema')",
       "source_format": "arrow",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "Schema"
         }
       ]
     },
@@ -17394,19 +17389,19 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'PersonModule.Address', changed type 'PersonModule.PhoneNumber', changed type 'PersonModule.PhoneNumberType', changed type 'PersonModule.Status'; overclaim: OK 'PersonModule.Address', OK 'PersonModule.Person', OK 'PersonModule.PhoneNumber', OK 'PersonModule.PhoneNumberType', OK 'PersonModule.Status')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'PersonModule.Address', changed type 'PersonModule.Person', changed type 'PersonModule.PhoneNumber', changed type 'PersonModule.PhoneNumberType', changed type 'PersonModule.Status'; overclaim: OK 'PersonModule.Address', OK 'PersonModule.Person', OK 'PersonModule.PhoneNumber', OK 'PersonModule.PhoneNumberType', OK 'PersonModule.Status')",
       "source_format": "asn1",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "PersonModule.Address"
         },
         {
           "change": "changed",
           "entity": "type",
-          "key": "PersonModule.Address"
+          "key": "PersonModule.Person"
         },
         {
           "change": "changed",
@@ -18659,7 +18654,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -20360,19 +20355,19 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'com.example.user.Status'; overclaim: OK 'com.example.user.Status', OK 'com.example.user.User')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'com.example.user.Status', changed type 'com.example.user.User'; overclaim: OK 'com.example.user.Status', OK 'com.example.user.User')",
       "source_format": "avro",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "com.example.user.Status"
         },
         {
           "change": "changed",
           "entity": "type",
-          "key": "com.example.user.Status"
+          "key": "com.example.user.User"
         }
       ]
     },
@@ -23409,11 +23404,11 @@
       "diff_count": 9,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "com.example.orders.Order",
@@ -23444,15 +23439,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'com.example.orders.OrderService', changed type 'com.example.orders.Order', changed type 'com.example.orders.OrderLine', changed type 'com.example.orders.OrderNotFound', changed type 'com.example.orders.OrderStatus'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus' (observed: unexplained: changed root '', removed service 'com.example.orders.OrderService', changed type 'com.example.orders.Order', changed type 'com.example.orders.OrderLine', changed type 'com.example.orders.OrderNotFound', changed type 'com.example.orders.OrderStatus'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus')",
+      "reason": "unexplained: changed root '', removed service 'com.example.orders.OrderService', changed type 'com.example.orders.Order', changed type 'com.example.orders.OrderLine', changed type 'com.example.orders.OrderNotFound', changed type 'com.example.orders.OrderStatus'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus' (observed: unexplained: removed service 'com.example.orders.OrderService', changed type 'com.example.orders.Order', changed type 'com.example.orders.OrderLine', changed type 'com.example.orders.OrderNotFound', changed type 'com.example.orders.OrderStatus'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus')",
       "source_format": "avro-idl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -26624,11 +26614,11 @@
       "diff_count": 9,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 3,
       "loss_synth": 6,
-      "matched_count": 7,
+      "matched_count": 8,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -26652,15 +26642,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'default'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderList')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'default'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderList')",
       "source_format": "aws-apigateway",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -28375,7 +28360,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -30280,11 +30265,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 3,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "PostOrderRequest",
@@ -30294,15 +30279,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Bruno collection'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Bruno collection'; overclaim: OK 'PostOrderRequest')",
+      "reason": "unexplained: changed root '', removed service 'Bruno collection'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Bruno collection'; overclaim: OK 'PostOrderRequest')",
       "source_format": "bruno",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -33362,11 +33342,11 @@
       "diff_count": 11,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 5,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "AddressBook",
@@ -33404,15 +33384,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Directory', changed type 'AddressBook', changed type 'Date', changed type 'Person', removed type 'Person.PhoneNumber', removed type 'Person.PhoneNumber.Type', added type 'PhoneNumber', added type 'Type'; overclaim: OK 'AddressBook', OK 'Date', OK 'Person', OK 'Person.PhoneNumber', OK 'Person.PhoneNumber.Type')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Directory', changed type 'AddressBook', changed type 'Date', changed type 'Person', removed type 'Person.PhoneNumber', removed type 'Person.PhoneNumber.Type', added type 'PhoneNumber', added type 'Type'; overclaim: OK 'AddressBook', OK 'Date', OK 'Person', OK 'Person.PhoneNumber', OK 'Person.PhoneNumber.Type')",
       "source_format": "capnproto",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -35917,11 +35892,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
-      "loss_ok": 6,
+      "loss_ok": 7,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "address",
@@ -35964,17 +35939,19 @@
           "message": "object carried to XSD",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "status",
+          "kind": "ok",
+          "message": "scalar carried to XSD",
+          "severity": "info",
+          "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'address', changed type 'customer', changed type 'epoch-time', changed type 'line', changed type 'money'; overclaim: OK 'address', OK 'customer', OK 'epoch-time', OK 'line', OK 'money', OK 'order' (observed: unexplained: changed root '', changed type 'address', changed type 'customer', changed type 'epoch-time', changed type 'line', changed type 'money'; overclaim: OK 'address', OK 'customer', OK 'epoch-time', OK 'line', OK 'money', OK 'order')",
+      "reason": "unexplained: changed root '', changed type 'address', changed type 'customer', changed type 'epoch-time', changed type 'line', changed type 'money'; overclaim: OK 'address', OK 'customer', OK 'epoch-time', OK 'line', OK 'money', OK 'order' (observed: unexplained: changed type 'address', changed type 'customer', changed type 'epoch-time', changed type 'line', changed type 'money', changed type 'order', changed type 'status'; overclaim: OK 'address', OK 'customer', OK 'epoch-time', OK 'line', OK 'money', OK 'order', OK 'status')",
       "source_format": "cddl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -35999,6 +35976,16 @@
           "change": "changed",
           "entity": "type",
           "key": "money"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "order"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "status"
         }
       ]
     },
@@ -37309,7 +37296,7 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 6,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -37323,14 +37310,14 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'CUSTSET.CUSTMAP' (observed: unexplained: changed root ''; overclaim: OK 'CUSTSET.CUSTMAP')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'CUSTSET.CUSTMAP' (observed: unexplained: changed type 'CUSTSET.CUSTMAP'; overclaim: OK 'CUSTSET.CUSTMAP')",
       "source_format": "cics-bms",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "CUSTSET.CUSTMAP"
         }
       ]
     },
@@ -38780,11 +38767,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 6,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "OrderCreated",
@@ -38794,15 +38781,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'com.example.order.created'; overclaim: OK 'OrderCreated')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'com.example.order.created'; overclaim: OK 'OrderCreated')",
       "source_format": "cloudevents",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -40067,11 +40049,11 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "CUSTOMER-RECORD.CUSTOMER-RECORD",
@@ -40081,15 +40063,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'CUSTOMER-RECORD.CUSTOMER-RECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'CUSTOMER-RECORD.CUSTOMER-RECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
       "source_format": "cobolcopybook",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -44190,11 +44167,11 @@
       "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 7,
       "loss_synth": 0,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "tasks.v1.CompleteTaskRequest",
@@ -44246,15 +44223,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'tasks.v1.TaskService', changed type 'tasks.v1.CompleteTaskRequest', changed type 'tasks.v1.CreateTaskRequest', changed type 'tasks.v1.GetTaskRequest', changed type 'tasks.v1.ListTasksRequest', changed type 'tasks.v1.ListTasksResponse', changed type 'tasks.v1.Task', changed type 'tasks.v1.TaskState'; overclaim: OK 'tasks.v1.CompleteTaskRequest', OK 'tasks.v1.CreateTaskRequest', OK 'tasks.v1.GetTaskRequest', OK 'tasks.v1.ListTasksRequest', OK 'tasks.v1.ListTasksResponse', OK 'tasks.v1.Task', OK 'tasks.v1.TaskState')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'tasks.v1.TaskService', changed type 'tasks.v1.CompleteTaskRequest', changed type 'tasks.v1.CreateTaskRequest', changed type 'tasks.v1.GetTaskRequest', changed type 'tasks.v1.ListTasksRequest', changed type 'tasks.v1.ListTasksResponse', changed type 'tasks.v1.Task', changed type 'tasks.v1.TaskState'; overclaim: OK 'tasks.v1.CompleteTaskRequest', OK 'tasks.v1.CreateTaskRequest', OK 'tasks.v1.GetTaskRequest', OK 'tasks.v1.ListTasksRequest', OK 'tasks.v1.ListTasksResponse', OK 'tasks.v1.Task', OK 'tasks.v1.TaskState')",
       "source_format": "connectrpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -45762,7 +45734,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -48906,11 +48878,11 @@
       "diff_count": 10,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "Banking.Account",
@@ -48941,15 +48913,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Banking.Bank', changed type 'Banking.Account', changed type 'Banking.AccountKind', changed type 'Banking.AccountNotFound', changed type 'Banking.InsufficientFunds'; overclaim: OK 'Banking.Account', OK 'Banking.AccountKind', OK 'Banking.AccountNotFound', OK 'Banking.InsufficientFunds')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Banking.Bank', changed type 'Banking.Account', changed type 'Banking.AccountKind', changed type 'Banking.AccountNotFound', changed type 'Banking.InsufficientFunds'; overclaim: OK 'Banking.Account', OK 'Banking.AccountKind', OK 'Banking.AccountNotFound', OK 'Banking.InsufficientFunds')",
       "source_format": "corbaidl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -51270,11 +51237,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 9,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 13,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Money",
@@ -51305,15 +51272,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed type 'OrderStatus'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
       "source_format": "cue",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -52980,11 +52942,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 8,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "customers",
@@ -53001,16 +52963,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'customers', OK 'orders' (observed: unexplained: changed root ''; overclaim: OK 'customers', OK 'orders')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'customers', OK 'orders' (observed: overclaim: OK 'customers', OK 'orders')",
       "source_format": "dbt",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "dbt/02-typical-schema.yml",
@@ -55694,11 +55650,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 13,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Currency",
@@ -55736,15 +55692,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'Currency', changed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed root '', changed type 'Currency', changed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "unexplained: changed root '', changed type 'Currency', changed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed type 'Currency', changed type 'OrderStatus'; overclaim: OK 'Currency', OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
       "source_format": "dhall",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -59997,7 +59948,7 @@
       "diff_count": 12,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 3,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 11,
       "loss_synth": 0,
@@ -60081,17 +60032,12 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed type 'DICOM.CS', changed type 'DICOM.CTImageStorage', removed type 'DICOM.DA', removed type 'DICOM.DS', removed type 'DICOM.IS', removed type 'DICOM.LO', removed type 'DICOM.SH', removed type 'DICOM.TM', removed type 'DICOM.UI', removed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'DICOM.CS', changed type 'DICOM.CTImageStorage', changed type 'DICOM.DA', changed type 'DICOM.DS', changed type 'DICOM.IS', changed type 'DICOM.LO', changed type 'DICOM.PN', changed type 'DICOM.SH', changed type 'DICOM.TM', changed type 'DICOM.UI', changed type 'DICOM.US'; overclaim: OK 'DICOM.CS', OK 'DICOM.CTImageStorage', OK 'DICOM.DA', OK 'DICOM.DS', OK 'DICOM.IS', OK 'DICOM.LO', OK 'DICOM.PN', OK 'DICOM.SH', OK 'DICOM.TM', OK 'DICOM.UI', OK 'DICOM.US')",
       "source_format": "dicom",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "removed",
           "entity": "type",
           "key": "DICOM.CS"
         },
@@ -60101,42 +60047,47 @@
           "key": "DICOM.CTImageStorage"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.DA"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.DS"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.IS"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.LO"
         },
         {
-          "change": "removed",
+          "change": "changed",
+          "entity": "type",
+          "key": "DICOM.PN"
+        },
+        {
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.SH"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.TM"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.UI"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "DICOM.US"
         }
@@ -64181,7 +64132,7 @@
       "loss_drop": 5,
       "loss_ok": 5,
       "loss_synth": 12,
-      "matched_count": 10,
+      "matched_count": 11,
       "overclaims": [
         {
           "construct": "Author",
@@ -64219,15 +64170,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Bookstore API'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest' (observed: unexplained: changed root '', removed service 'Bookstore API'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest')",
+      "reason": "unexplained: changed root '', removed service 'Bookstore API'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest' (observed: unexplained: removed service 'Bookstore API'; overclaim: OK 'Author', OK 'Book', OK 'BookList', OK 'CheckoutReceipt', OK 'CheckoutRequest')",
       "source_format": "discovery",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -66678,11 +66624,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 4,
+      "loss_approx": 11,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -66727,20 +66673,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'catalogue', changed type 'description', changed type 'name', changed type 'tag'; overclaim: OK 'catalogue', OK 'desc... (observed: unexplained: changed root '', changed type 'catalogue', changed type 'description', changed type 'name', changed type 'tag'; overclaim: OK 'catalogue', OK 'description', OK 'name', OK 'price', OK 'product', OK 'tag')",
+      "reason": "unexplained: changed root '', changed type 'catalogue', changed type 'description', changed type 'name', changed type 'tag'; overclaim: OK 'catalogue', OK 'desc... (observed: unexplained: changed type 'description', changed type 'name'; overclaim: OK 'catalogue', OK 'description', OK 'name', OK 'price', OK 'product', OK 'tag')",
       "source_format": "dtd",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "changed",
-          "entity": "type",
-          "key": "catalogue"
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -66750,11 +66686,6 @@
           "change": "changed",
           "entity": "type",
           "key": "name"
-        },
-        {
-          "change": "changed",
-          "entity": "type",
-          "key": "tag"
         }
       ]
     },
@@ -70703,11 +70634,11 @@
       "diff_count": 11,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 10,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "EDIFACT-INVOIC.DTM",
@@ -70780,15 +70711,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'EDIFACT-INVOIC.DTM', changed type 'EDIFACT-INVOIC.IMD', changed type 'EDIFACT-INVOIC.LIN', changed type 'EDIFACT-INVOIC.MOA', changed type 'EDIFACT-INVOIC.MessageINVOIC', changed type 'EDIFACT-INVOIC.NAD', changed type 'EDIFACT-INVOIC.PRI', changed type 'EDIFACT-INVOIC.QTY', changed type 'EDIFACT-INVOIC.RFF', changed type 'EDIFACT-INVOIC.TAX'; overclaim: OK 'EDIFACT-INVOIC.DTM', OK 'EDIFACT-INVOIC.IMD', OK 'EDIFACT-INVOIC.LIN', OK 'EDIFACT-INVOIC.MOA', OK 'EDIFACT-INVOIC.MessageINVOIC', OK 'EDIFACT-INVOIC.NAD', OK 'EDIFACT-INVOIC.PRI', OK 'EDIFACT-INVOIC.QTY', OK 'EDIFACT-INVOIC.RFF', OK 'EDIFACT-INVOIC.TAX')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'EDIFACT-INVOIC.DTM', changed type 'EDIFACT-INVOIC.IMD', changed type 'EDIFACT-INVOIC.LIN', changed type 'EDIFACT-INVOIC.MOA', changed type 'EDIFACT-INVOIC.MessageINVOIC', changed type 'EDIFACT-INVOIC.NAD', changed type 'EDIFACT-INVOIC.PRI', changed type 'EDIFACT-INVOIC.QTY', changed type 'EDIFACT-INVOIC.RFF', changed type 'EDIFACT-INVOIC.TAX'; overclaim: OK 'EDIFACT-INVOIC.DTM', OK 'EDIFACT-INVOIC.IMD', OK 'EDIFACT-INVOIC.LIN', OK 'EDIFACT-INVOIC.MOA', OK 'EDIFACT-INVOIC.MessageINVOIC', OK 'EDIFACT-INVOIC.NAD', OK 'EDIFACT-INVOIC.PRI', OK 'EDIFACT-INVOIC.QTY', OK 'EDIFACT-INVOIC.RFF', OK 'EDIFACT-INVOIC.TAX')",
       "source_format": "edifact",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -72482,11 +72408,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "X12-850.PO1",
@@ -72503,15 +72429,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'X12-850.PO1', changed type 'X12-850.TransactionSet850'; overclaim: OK 'X12-850.PO1', OK 'X12-850.TransactionSet850')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'X12-850.PO1', changed type 'X12-850.TransactionSet850'; overclaim: OK 'X12-850.PO1', OK 'X12-850.TransactionSet850')",
       "source_format": "edix12",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -74577,7 +74498,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -77087,11 +77008,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Patient.BackboneElement",
@@ -77108,15 +77029,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Patient.Patient', changed type 'Patient.BackboneElement', changed type 'Patient.Patient'; overclaim: OK 'Patient.BackboneElement', OK 'Patient.Patient')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Patient.Patient', changed type 'Patient.BackboneElement', changed type 'Patient.Patient'; overclaim: OK 'Patient.BackboneElement', OK 'Patient.Patient')",
       "source_format": "fhir",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -78462,11 +78378,11 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "FIX.4.4.Message8",
@@ -78476,15 +78392,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'FIX.4.4.Message8'; overclaim: OK 'FIX.4.4.Message8')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'FIX.4.4.Message8'; overclaim: OK 'FIX.4.4.Message8')",
       "source_format": "fix",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -81318,11 +81229,11 @@
       "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 2,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Instrument",
@@ -81367,15 +81278,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added type 'FIX.4.4_EP001.Instrument', added type 'FIX.4.4_EP001.NewOrderSingle', added type 'FIX.4.4_EP001.OrdTypeCodeSet', added type 'FIX.4.4_EP001.OrderCancelRequest', added type 'FIX.4.4_EP001.SideCodeSet', added type 'FIX.4.4_EP001.TimeInForceCodeSet', removed type 'Instrument', removed type 'NewOrderSingle', removed type 'OrdTypeCodeSet', removed type 'OrderCancelRequest', removed type 'SideCodeSet', removed type 'TimeInForceCodeSet'; overclaim: OK 'Instrument', OK 'NewOrderSingle', OK 'OrdTypeCodeSet', OK 'OrderCancelRequest', OK 'SideCodeSet', OK 'TimeInForceCodeSet')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added type 'FIX.4.4_EP001.Instrument', added type 'FIX.4.4_EP001.NewOrderSingle', added type 'FIX.4.4_EP001.OrdTypeCodeSet', added type 'FIX.4.4_EP001.OrderCancelRequest', added type 'FIX.4.4_EP001.SideCodeSet', added type 'FIX.4.4_EP001.TimeInForceCodeSet', removed type 'Instrument', removed type 'NewOrderSingle', removed type 'OrdTypeCodeSet', removed type 'OrderCancelRequest', removed type 'SideCodeSet', removed type 'TimeInForceCodeSet'; overclaim: OK 'Instrument', OK 'NewOrderSingle', OK 'OrdTypeCodeSet', OK 'OrderCancelRequest', OK 'SideCodeSet', OK 'TimeInForceCodeSet')",
       "source_format": "fix-orchestra",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "type",
@@ -83584,11 +83490,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "example.game.Color",
@@ -83619,15 +83525,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'example.game.Color', changed type 'example.game.Monster', changed type 'example.game.Vec3', changed type 'example.game.Weapon'; overclaim: OK 'example.game.Color', OK 'example.game.Monster', OK 'example.game.Vec3', OK 'example.game.Weapon')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'example.game.Color', changed type 'example.game.Monster', changed type 'example.game.Vec3', changed type 'example.game.Weapon'; overclaim: OK 'example.game.Color', OK 'example.game.Monster', OK 'example.game.Vec3', OK 'example.game.Weapon')",
       "source_format": "flatbuffers",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -85605,7 +85506,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -88349,11 +88250,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 16,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "DateTime",
@@ -88384,15 +88285,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Query', changed type 'DateTime', changed type 'JSON'; overclaim: OK 'DateTime', OK 'Dimensions', OK 'JSON', OK 'Product')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Query', changed type 'DateTime', changed type 'JSON'; overclaim: OK 'DateTime', OK 'Dimensions', OK 'JSON', OK 'Product')",
       "source_format": "graphql",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -90663,7 +90559,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -94821,11 +94717,11 @@
       "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 6,
       "loss_synth": 20,
-      "matched_count": 11,
+      "matched_count": 12,
       "overclaims": [
         {
           "construct": "GetUserResponse200",
@@ -94870,15 +94766,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'api.example.com'; overclaim: OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201' (observed: unexplained: changed root '', removed service 'api.example.com'; overclaim: OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201')",
+      "reason": "unexplained: changed root '', removed service 'api.example.com'; overclaim: OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201' (observed: unexplained: removed service 'api.example.com'; overclaim: OK 'GetUserResponse200', OK 'GetUserResponse404', OK 'PatchUserRequest', OK 'PatchUserResponse200', OK 'PostUserRequest', OK 'PostUserResponse201')",
       "source_format": "har",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -96536,11 +96427,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "ADT-A01.MSH",
@@ -96557,15 +96448,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'ADT-A01.MSH', changed type 'ADT-A01.MessageADTA01'; overclaim: OK 'ADT-A01.MSH', OK 'ADT-A01.MessageADTA01')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'ADT-A01.MSH', changed type 'ADT-A01.MessageADTA01'; overclaim: OK 'ADT-A01.MSH', OK 'ADT-A01.MessageADTA01')",
       "source_format": "hl7v2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -107225,11 +107111,11 @@
       "diff_count": 37,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 36,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "POCD_HD000040.AD",
@@ -107484,15 +107370,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'POCD_HD000040.AD', changed type 'POCD_HD000040.Act', changed type 'POCD_HD000040.AssignedAuthor', changed type 'POCD_HD000040.AssignedCustodian', changed type 'POCD_HD000040.AssignedPerson', changed type 'POCD_HD000040.Author', changed type 'POCD_HD000040.BL', changed type 'POCD_HD000040.CD', changed type 'POCD_HD000040.CE', changed type 'POCD_HD000040.CS', changed type 'POCD_HD000040.ClinicalDocument', changed type 'POCD_HD000040.ClinicalDocumentComponent', changed type 'POCD_HD000040.Consumable', changed type 'POCD_HD000040.Custodian', changed type 'POCD_HD000040.DocumentationOf', changed type 'POCD_HD000040.Entry', changed type 'POCD_HD000040.II', changed type 'POCD_HD000040.INT', changed type 'POCD_HD000040.LanguageCommunication', changed type 'POCD_HD000040.ManufacturedMaterial', changed type 'POCD_HD000040.ManufacturedProduct', changed type 'POCD_HD000040.PN', changed type 'POCD_HD000040.PQ', changed type 'POCD_HD000040.Patient', changed type 'POCD_HD000040.PatientRole', changed type 'POCD_HD000040.RecordTarget', changed type 'POCD_HD000040.RepresentedCustodianOrganization', changed type 'POCD_HD000040.RepresentedOrganization', changed type 'POCD_HD000040.Section', changed type 'POCD_HD000040.ServiceEvent', changed type 'POCD_HD000040.StructuredBody', changed type 'POCD_HD000040.StructuredBodyComponent', changed type 'POCD_HD000040.SubstanceAdministration', changed type 'POCD_HD000040.TEL'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'POCD_HD000040.AD', changed type 'POCD_HD000040.Act', changed type 'POCD_HD000040.AssignedAuthor', changed type 'POCD_HD000040.AssignedCustodian', changed type 'POCD_HD000040.AssignedPerson', changed type 'POCD_HD000040.Author', changed type 'POCD_HD000040.BL', changed type 'POCD_HD000040.CD', changed type 'POCD_HD000040.CE', changed type 'POCD_HD000040.CS', changed type 'POCD_HD000040.ClinicalDocument', changed type 'POCD_HD000040.ClinicalDocumentComponent', changed type 'POCD_HD000040.Consumable', changed type 'POCD_HD000040.Custodian', changed type 'POCD_HD000040.DocumentationOf', changed type 'POCD_HD000040.Entry', changed type 'POCD_HD000040.II', changed type 'POCD_HD000040.INT', changed type 'POCD_HD000040.IVL_TS', changed type 'POCD_HD000040.LanguageCommunication', changed type 'POCD_HD000040.ManufacturedMaterial', changed type 'POCD_HD000040.ManufacturedProduct', changed type 'POCD_HD000040.PN', changed type 'POCD_HD000040.PQ', changed type 'POCD_HD000040.Patient', changed type 'POCD_HD000040.PatientRole', changed type 'POCD_HD000040.RecordTarget', changed type 'POCD_HD000040.RepresentedCustodianOrganization', changed type 'POCD_HD000040.RepresentedOrganization', changed type 'POCD_HD000040.Section', changed type 'POCD_HD000040.ServiceEvent', changed type 'POCD_HD000040.StructuredBody', changed type 'POCD_HD000040.StructuredBodyComponent', changed type 'POCD_HD000040.SubstanceAdministration', changed type 'POCD_HD000040.TEL', changed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
       "source_format": "hl7v3",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -107586,6 +107467,11 @@
         {
           "change": "changed",
           "entity": "type",
+          "key": "POCD_HD000040.IVL_TS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
           "key": "POCD_HD000040.LanguageCommunication"
         },
         {
@@ -107662,6 +107548,11 @@
           "change": "changed",
           "entity": "type",
           "key": "POCD_HD000040.TEL"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "POCD_HD000040.TS"
         }
       ]
     },
@@ -110245,11 +110136,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "PostOrderRequest",
@@ -110259,15 +110150,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
       "source_format": "hoppscotch",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -112252,11 +112138,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "PostUserRequest",
@@ -112266,15 +112152,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'http-file/02-typical-vars-auth.http'; overclaim: OK 'PostUserRequest' (observed: unexplained: changed root '', removed service 'http-file/02-typical-vars-auth.http'; overclaim: OK 'PostUserRequest')",
+      "reason": "unexplained: changed root '', removed service 'http-file/02-typical-vars-auth.http'; overclaim: OK 'PostUserRequest' (observed: unexplained: removed service 'http-file/02-typical-vars-auth.http'; overclaim: OK 'PostUserRequest')",
       "source_format": "http-file",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -115905,11 +115786,11 @@
       "diff_count": 10,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 9,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "IDOC-ORDERS05.E1EDK01",
@@ -115975,15 +115856,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'IDOC-ORDERS05.E1EDK01', changed type 'IDOC-ORDERS05.E1EDK03', changed type 'IDOC-ORDERS05.E1EDK14', changed type 'IDOC-ORDERS05.E1EDKA1', changed type 'IDOC-ORDERS05.E1EDP01', changed type 'IDOC-ORDERS05.E1EDP19', changed type 'IDOC-ORDERS05.E1EDP26', changed type 'IDOC-ORDERS05.E1EDS01', changed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'IDOC-ORDERS05.E1EDK01', changed type 'IDOC-ORDERS05.E1EDK03', changed type 'IDOC-ORDERS05.E1EDK14', changed type 'IDOC-ORDERS05.E1EDKA1', changed type 'IDOC-ORDERS05.E1EDP01', changed type 'IDOC-ORDERS05.E1EDP19', changed type 'IDOC-ORDERS05.E1EDP26', changed type 'IDOC-ORDERS05.E1EDS01', changed type 'IDOC-ORDERS05.ORDERS05'; overclaim: OK 'IDOC-ORDERS05.E1EDK01', OK 'IDOC-ORDERS05.E1EDK03', OK 'IDOC-ORDERS05.E1EDK14', OK 'IDOC-ORDERS05.E1EDKA1', OK 'IDOC-ORDERS05.E1EDP01', OK 'IDOC-ORDERS05.E1EDP19', OK 'IDOC-ORDERS05.E1EDP26', OK 'IDOC-ORDERS05.E1EDS01', OK 'IDOC-ORDERS05.ORDERS05')",
       "source_format": "idoc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -117731,11 +117607,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 15,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "ims.CUSTDB.ADDRESS",
@@ -117759,14 +117635,24 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER' (observed: unexplained: changed root ''; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER' (observed: unexplained: changed type 'ims.CUSTDB.ADDRESS', changed type 'ims.CUSTDB.CUSTOMER', changed type 'ims.CUSTDB.ORDER'; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER')",
       "source_format": "ims",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "ims.CUSTDB.ADDRESS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "ims.CUSTDB.CUSTOMER"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "ims.CUSTDB.ORDER"
         }
       ]
     },
@@ -120589,11 +120475,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 3,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "PostUserRequest",
@@ -120603,15 +120489,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Users API'; overclaim: OK 'PostUserRequest' (observed: unexplained: changed root '', removed service 'Users API'; overclaim: OK 'PostUserRequest')",
+      "reason": "unexplained: changed root '', removed service 'Users API'; overclaim: OK 'PostUserRequest' (observed: unexplained: removed service 'Users API'; overclaim: OK 'PostUserRequest')",
       "source_format": "insomnia",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -126733,11 +126614,11 @@
       "diff_count": 19,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 18,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "pain.001.001.09.Amt",
@@ -126866,15 +126747,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'pain.001.001.09.Amt', changed type 'pain.001.001.09.CdtTrfTxInf', changed type 'pain.001.001.09.Cdtr', changed type 'pain.001.001.09.CdtrAcct', changed type 'pain.001.001.09.CdtrAgt', changed type 'pain.001.001.09.CstmrCdtTrfInitn', changed type 'pain.001.001.09.Dbtr', changed type 'pain.001.001.09.DbtrAcct', changed type 'pain.001.001.09.DbtrAgt', changed type 'pain.001.001.09.Document', changed type 'pain.001.001.09.FinInstnId', changed type 'pain.001.001.09.GrpHdr', changed type 'pain.001.001.09.Id', changed type 'pain.001.001.09.InitgPty', changed type 'pain.001.001.09.PmtId', changed type 'pain.001.001.09.PmtInf', changed type 'pain.001.001.09.ReqdExctnDt', changed type 'pain.001.001.09.RmtInf'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'pain.001.001.09.Amt', changed type 'pain.001.001.09.CdtTrfTxInf', changed type 'pain.001.001.09.Cdtr', changed type 'pain.001.001.09.CdtrAcct', changed type 'pain.001.001.09.CdtrAgt', changed type 'pain.001.001.09.CstmrCdtTrfInitn', changed type 'pain.001.001.09.Dbtr', changed type 'pain.001.001.09.DbtrAcct', changed type 'pain.001.001.09.DbtrAgt', changed type 'pain.001.001.09.Document', changed type 'pain.001.001.09.FinInstnId', changed type 'pain.001.001.09.GrpHdr', changed type 'pain.001.001.09.Id', changed type 'pain.001.001.09.InitgPty', changed type 'pain.001.001.09.PmtId', changed type 'pain.001.001.09.PmtInf', changed type 'pain.001.001.09.ReqdExctnDt', changed type 'pain.001.001.09.RmtInf'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf')",
       "source_format": "iso20022",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -131567,11 +131443,11 @@
       "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 12,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "0100.DE11",
@@ -131658,15 +131534,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type '0100.DE11', changed type '0100.DE12', changed type '0100.DE13', changed type '0100.DE18', changed type '0100.DE2', changed type '0100.DE3', changed type '0100.DE32', changed type '0100.DE4', changed type '0100.DE41', changed type '0100.DE49', changed type '0100.DE7', changed type '0100.Message0100'; overclaim: OK '0100.DE11', OK '0100.DE12', OK '0100.DE13', OK '0100.DE18', OK '0100.DE2', OK '0100.DE3', OK '0100.DE32', OK '0100.DE4', OK '0100.DE41', OK '0100.DE49', OK '0100.DE7', OK '0100.Message0100')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type '0100.DE11', changed type '0100.DE12', changed type '0100.DE13', changed type '0100.DE18', changed type '0100.DE2', changed type '0100.DE3', changed type '0100.DE32', changed type '0100.DE4', changed type '0100.DE41', changed type '0100.DE49', changed type '0100.DE7', changed type '0100.Message0100'; overclaim: OK '0100.DE11', OK '0100.DE12', OK '0100.DE13', OK '0100.DE18', OK '0100.DE2', OK '0100.DE3', OK '0100.DE32', OK '0100.DE4', OK '0100.DE41', OK '0100.DE49', OK '0100.DE7', OK '0100.Message0100')",
       "source_format": "iso8583",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -134095,7 +133966,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -135409,11 +135280,11 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 7,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Product",
@@ -135423,16 +135294,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'Product')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'Product')",
       "source_format": "json-schema",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "json-schema/02-product-types.json",
@@ -137285,23 +137150,16 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 3,
+      "loss_approx": 2,
       "loss_drop": 0,
-      "loss_ok": 3,
+      "loss_ok": 2,
       "loss_synth": 14,
-      "matched_count": 2,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Address",
           "kind": "ok",
           "message": "object carried to XSD",
-          "severity": "info",
-          "target_mapping": null
-        },
-        {
-          "construct": "LanguageMap",
-          "kind": "ok",
-          "message": "map type carried to XSD",
           "severity": "info",
           "target_mapping": null
         },
@@ -137313,21 +137171,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
+      "reason": "unexplained: changed root '', removed type 'LanguageMap'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: overclaim: OK 'Address', OK 'TypicalContext')",
       "source_format": "jsonld",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "LanguageMap"
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "jsonld/02-typical-context.jsonld",
@@ -139194,11 +139041,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 11,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "User",
@@ -139222,15 +139069,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'UserStatus'; overclaim: OK 'User', OK 'UserAddress', OK 'UserStatus')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'UserStatus'; overclaim: OK 'User', OK 'UserAddress', OK 'UserStatus')",
       "source_format": "jtd",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -140857,11 +140699,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "apps.example.io/v1.CronWidget",
@@ -140871,15 +140713,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'cronwidgets.apps.example.io', added type 'apps.example.io.CronWidget', removed type 'apps.example.io/v1.CronWi... (observed: unexplained: changed root '', removed service 'cronwidgets.apps.example.io', added type 'apps.example.io.CronWidget', removed type 'apps.example.io/v1.CronWidget'; overclaim: OK 'apps.example.io/v1.CronWidget')",
+      "reason": "unexplained: changed root '', removed service 'cronwidgets.apps.example.io', added type 'apps.example.io.CronWidget', removed type 'apps.example.io/v1.CronWi... (observed: unexplained: removed service 'cronwidgets.apps.example.io', added type 'apps.example.io.CronWidget', removed type 'apps.example.io/v1.CronWidget'; overclaim: OK 'apps.example.io/v1.CronWidget')",
       "source_format": "k8s-crd",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -142189,11 +142026,11 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "com.example.orders.Order",
@@ -142203,15 +142040,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'com.example.orders.Order'; overclaim: OK 'com.example.orders.Order' (observed: unexplained: changed root '', changed type 'com.example.orders.Order'; overclaim: OK 'com.example.orders.Order')",
+      "reason": "unexplained: changed root '', changed type 'com.example.orders.Order'; overclaim: OK 'com.example.orders.Order' (observed: unexplained: changed type 'com.example.orders.Order'; overclaim: OK 'com.example.orders.Order')",
       "source_format": "kafka-connect",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -144622,7 +144454,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -146918,11 +146750,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 2,
       "loss_synth": 5,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "create_ticketParams",
@@ -146939,15 +146771,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service '02-typical-anthropic'; overclaim: OK 'create_ticketParams', OK 'search_docsParams' (observed: unexplained: changed root '', removed service '02-typical-anthropic'; overclaim: OK 'create_ticketParams', OK 'search_docsParams')",
+      "reason": "unexplained: changed root '', removed service '02-typical-anthropic'; overclaim: OK 'create_ticketParams', OK 'search_docsParams' (observed: unexplained: removed service '02-typical-anthropic'; overclaim: OK 'create_ticketParams', OK 'search_docsParams')",
       "source_format": "llm-tools",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -148725,11 +148552,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Temperature",
@@ -148739,15 +148566,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'TemperatureService', removed type 'Temperature', added type 'urn:oma:lwm2m:ext:3303.Temperature'; overclaim: OK 'Temperature' (observed: unexplained: changed root '', removed service 'TemperatureService', removed type 'Temperature', added type 'urn:oma:lwm2m:ext:3303.Temperature'; overclaim: OK 'Temperature')",
+      "reason": "unexplained: changed root '', removed service 'TemperatureService', removed type 'Temperature', added type 'urn:oma:lwm2m:ext:3303.Temperature'; overclaim: OK 'Temperature' (observed: unexplained: removed service 'TemperatureService', removed type 'Temperature', added type 'urn:oma:lwm2m:ext:3303.Temperature'; overclaim: OK 'Temperature')",
       "source_format": "lwm2m",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -152636,11 +152458,11 @@
       "diff_count": 14,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 5,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "OnOff",
@@ -152678,15 +152500,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'OnOffService', added type 'OffWithEffectRequest', changed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', changed type 'OnOffFeature', added type 'OnWithTimedOffRequest', changed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum' (observed: unexplained: changed root '', removed service 'OnOffService', added type 'OffWithEffectRequest', changed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', changed type 'OnOffFeature', added type 'OnWithTimedOffRequest', changed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
+      "reason": "unexplained: changed root '', removed service 'OnOffService', added type 'OffWithEffectRequest', changed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', changed type 'OnOffFeature', added type 'OnWithTimedOffRequest', changed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum' (observed: unexplained: removed service 'OnOffService', added type 'OffWithEffectRequest', changed type 'OnOff', removed type 'OnOff.OffWithEffectRequest', removed type 'OnOff.OnWithTimedOffRequest', changed type 'OnOffFeature', added type 'OnWithTimedOffRequest', changed type 'StartUpOnOffEnum'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
       "source_format": "matter",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -156517,11 +156334,11 @@
       "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 6,
+      "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 3,
       "loss_synth": 9,
-      "matched_count": 9,
+      "matched_count": 10,
       "overclaims": [
         {
           "construct": "Toolclose_ticketInput",
@@ -156545,15 +156362,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Acme Support Tickets.prompts', removed service 'Acme Support Tickets.resources', removed service 'Acme Support Tickets.tools'; overclaim: OK 'Toolclose_ticketInput', OK 'Toolcreate_ticketInput', OK 'Toolsearch_ticketsInput')",
       "source_format": "mcp",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -159797,11 +159609,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "NACHA-ACH.AchFile",
@@ -159853,15 +159665,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'NACHA-ACH.AchFile', changed type 'NACHA-ACH.Batch', changed type 'NACHA-ACH.BatchControl', changed type 'NACHA-ACH.BatchHeader', changed type 'NACHA-ACH.EntryDetail', changed type 'NACHA-ACH.FileControl', changed type 'NACHA-ACH.FileHeader'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'NACHA-ACH.AchFile', changed type 'NACHA-ACH.Batch', changed type 'NACHA-ACH.BatchControl', changed type 'NACHA-ACH.BatchHeader', changed type 'NACHA-ACH.EntryDetail', changed type 'NACHA-ACH.FileControl', changed type 'NACHA-ACH.FileHeader'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
       "source_format": "nacha",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -161154,7 +160961,7 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 8,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -161168,14 +160975,14 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'natural.CUSTOMER-FILE' (observed: unexplained: changed root ''; overclaim: OK 'natural.CUSTOMER-FILE')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'natural.CUSTOMER-FILE' (observed: unexplained: changed type 'natural.CUSTOMER-FILE'; overclaim: OK 'natural.CUSTOMER-FILE')",
       "source_format": "natural-ddm",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "natural.CUSTOMER-FILE"
         }
       ]
     },
@@ -171298,11 +171105,11 @@
       "diff_count": 32,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 31,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "NCPDP-SCRIPT.Address",
@@ -171522,15 +171329,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'NCPDP-SCRIPT.Address', changed type 'NCPDP-SCRIPT.Body', changed type 'NCPDP-SCRIPT.CommunicationNumbers', changed type 'NCPDP-SCRIPT.DateOfBirth', changed type 'NCPDP-SCRIPT.Diagnosis', changed type 'NCPDP-SCRIPT.DrugCoded', changed type 'NCPDP-SCRIPT.DrugDBCode', changed type 'NCPDP-SCRIPT.From', changed type 'NCPDP-SCRIPT.Header', changed type 'NCPDP-SCRIPT.HumanPatient', changed type 'NCPDP-SCRIPT.Identification', changed type 'NCPDP-SCRIPT.MedicationPrescribed', changed type 'NCPDP-SCRIPT.Message', changed type 'NCPDP-SCRIPT.Name', changed type 'NCPDP-SCRIPT.NewRx', changed type 'NCPDP-SCRIPT.NonVeterinarian', changed type 'NCPDP-SCRIPT.Patient', changed type 'NCPDP-SCRIPT.Pharmacy', changed type 'NCPDP-SCRIPT.PracticeLocation', changed type 'NCPDP-SCRIPT.Prescriber', changed type 'NCPDP-SCRIPT.Primary', changed type 'NCPDP-SCRIPT.PrimaryTelephone', changed type 'NCPDP-SCRIPT.Quantity', changed type 'NCPDP-SCRIPT.QuantityUnitOfMeasure', changed type 'NCPDP-SCRIPT.SenderSoftware', changed type 'NCPDP-SCRIPT.Sig', changed type 'NCPDP-SCRIPT.Strength', changed type 'NCPDP-SCRIPT.StrengthForm', changed type 'NCPDP-SCRIPT.StrengthUnitOfMeasure', changed type 'NCPDP-SCRIPT.To', changed type 'NCPDP-SCRIPT.WrittenDate'; overclaim: OK 'NCPDP-SCRIPT.Address', OK 'NCPDP-SCRIPT.Body', OK 'NCPDP-SCRIPT.CommunicationNumbers', OK 'NCPDP-SCRIPT.DateOfBirth', OK 'NCPDP-SCRIPT.Diagnosis', OK 'NCPDP-SCRIPT.DrugCoded', OK 'NCPDP-SCRIPT.DrugDBCode', OK 'NCPDP-SCRIPT.From', OK 'NCPDP-SCRIPT.Header', OK 'NCPDP-SCRIPT.HumanPatient', OK 'NCPDP-SCRIPT.Identification', OK 'NCPDP-SCRIPT.MedicationPrescribed', OK 'NCPDP-SCRIPT.Message', OK 'NCPDP-SCRIPT.Name', OK 'NCPDP-SCRIPT.NewRx', OK 'NCPDP-SCRIPT.NonVeterinarian', OK 'NCPDP-SCRIPT.Patient', OK 'NCPDP-SCRIPT.Pharmacy', OK 'NCPDP-SCRIPT.PracticeLocation', OK 'NCPDP-SCRIPT.Prescriber', OK 'NCPDP-SCRIPT.Primary', OK 'NCPDP-SCRIPT.PrimaryTelephone', OK 'NCPDP-SCRIPT.Quantity', OK 'NCPDP-SCRIPT.QuantityUnitOfMeasure', OK 'NCPDP-SCRIPT.SenderSoftware', OK 'NCPDP-SCRIPT.Sig', OK 'NCPDP-SCRIPT.Strength', OK 'NCPDP-SCRIPT.StrengthForm', OK 'NCPDP-SCRIPT.StrengthUnitOfMeasure', OK 'NCPDP-SCRIPT.To', OK 'NCPDP-SCRIPT.WrittenDate')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'NCPDP-SCRIPT.Address', changed type 'NCPDP-SCRIPT.Body', changed type 'NCPDP-SCRIPT.CommunicationNumbers', changed type 'NCPDP-SCRIPT.DateOfBirth', changed type 'NCPDP-SCRIPT.Diagnosis', changed type 'NCPDP-SCRIPT.DrugCoded', changed type 'NCPDP-SCRIPT.DrugDBCode', changed type 'NCPDP-SCRIPT.From', changed type 'NCPDP-SCRIPT.Header', changed type 'NCPDP-SCRIPT.HumanPatient', changed type 'NCPDP-SCRIPT.Identification', changed type 'NCPDP-SCRIPT.MedicationPrescribed', changed type 'NCPDP-SCRIPT.Message', changed type 'NCPDP-SCRIPT.Name', changed type 'NCPDP-SCRIPT.NewRx', changed type 'NCPDP-SCRIPT.NonVeterinarian', changed type 'NCPDP-SCRIPT.Patient', changed type 'NCPDP-SCRIPT.Pharmacy', changed type 'NCPDP-SCRIPT.PracticeLocation', changed type 'NCPDP-SCRIPT.Prescriber', changed type 'NCPDP-SCRIPT.Primary', changed type 'NCPDP-SCRIPT.PrimaryTelephone', changed type 'NCPDP-SCRIPT.Quantity', changed type 'NCPDP-SCRIPT.QuantityUnitOfMeasure', changed type 'NCPDP-SCRIPT.SenderSoftware', changed type 'NCPDP-SCRIPT.Sig', changed type 'NCPDP-SCRIPT.Strength', changed type 'NCPDP-SCRIPT.StrengthForm', changed type 'NCPDP-SCRIPT.StrengthUnitOfMeasure', changed type 'NCPDP-SCRIPT.To', changed type 'NCPDP-SCRIPT.WrittenDate'; overclaim: OK 'NCPDP-SCRIPT.Address', OK 'NCPDP-SCRIPT.Body', OK 'NCPDP-SCRIPT.CommunicationNumbers', OK 'NCPDP-SCRIPT.DateOfBirth', OK 'NCPDP-SCRIPT.Diagnosis', OK 'NCPDP-SCRIPT.DrugCoded', OK 'NCPDP-SCRIPT.DrugDBCode', OK 'NCPDP-SCRIPT.From', OK 'NCPDP-SCRIPT.Header', OK 'NCPDP-SCRIPT.HumanPatient', OK 'NCPDP-SCRIPT.Identification', OK 'NCPDP-SCRIPT.MedicationPrescribed', OK 'NCPDP-SCRIPT.Message', OK 'NCPDP-SCRIPT.Name', OK 'NCPDP-SCRIPT.NewRx', OK 'NCPDP-SCRIPT.NonVeterinarian', OK 'NCPDP-SCRIPT.Patient', OK 'NCPDP-SCRIPT.Pharmacy', OK 'NCPDP-SCRIPT.PracticeLocation', OK 'NCPDP-SCRIPT.Prescriber', OK 'NCPDP-SCRIPT.Primary', OK 'NCPDP-SCRIPT.PrimaryTelephone', OK 'NCPDP-SCRIPT.Quantity', OK 'NCPDP-SCRIPT.QuantityUnitOfMeasure', OK 'NCPDP-SCRIPT.SenderSoftware', OK 'NCPDP-SCRIPT.Sig', OK 'NCPDP-SCRIPT.Strength', OK 'NCPDP-SCRIPT.StrengthForm', OK 'NCPDP-SCRIPT.StrengthUnitOfMeasure', OK 'NCPDP-SCRIPT.To', OK 'NCPDP-SCRIPT.WrittenDate')",
       "source_format": "ncpdp",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -174422,7 +174224,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -177493,11 +177295,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Example.Orders.Address",
@@ -177521,15 +177323,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Example.Orders.Orders', changed type 'Example.Orders.Address', changed type 'Example.Orders.Order', changed type 'Example.Orders.OrderStatus'; overclaim: OK 'Example.Orders.Address', OK 'Example.Orders.Order', OK 'Example.Orders.OrderStatus')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Example.Orders.Orders', changed type 'Example.Orders.Address', changed type 'Example.Orders.Order', changed type 'Example.Orders.OrderStatus'; overclaim: OK 'Example.Orders.Address', OK 'Example.Orders.Order', OK 'Example.Orders.OrderStatus')",
       "source_format": "odata",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -182486,11 +182283,11 @@
       "diff_count": 16,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 9,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 9,
+      "matched_count": 10,
       "overclaims": [
         {
           "construct": "Northbound.Orders.Customer",
@@ -182514,15 +182311,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', changed type 'Northbound.Orders.Customer', changed type 'Northbound.Orders.Item', changed type 'Northbound.Orders.Order'; overclaim: OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order' (observed: unexplained: changed root '', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', changed type 'Northbound.Orders.Customer', changed type 'Northbound.Orders.Item', changed type 'Northbound.Orders.Order'; overclaim: OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order')",
+      "reason": "unexplained: changed root '', removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', changed type 'Northbound.Orders.Customer', changed type 'Northbound.Orders.Item', changed type 'Northbound.Orders.Order'; overclaim: OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order' (observed: unexplained: removed service 'Northbound.Orders.Customers', removed service 'Northbound.Orders.Items', removed service 'Northbound.Orders.Orders', changed type 'Northbound.Orders.Customer', changed type 'Northbound.Orders.Item', changed type 'Northbound.Orders.Order'; overclaim: OK 'Northbound.Orders.Customer', OK 'Northbound.Orders.Item', OK 'Northbound.Orders.Order')",
       "source_format": "odata-v2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -183893,11 +183685,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 6,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "orders",
@@ -183907,15 +183699,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added type 'commerce.orders', removed type 'orders'; overclaim: OK 'orders' (observed: unexplained: changed root '', added type 'commerce.orders', removed type 'orders'; overclaim: OK 'orders')",
+      "reason": "unexplained: changed root '', added type 'commerce.orders', removed type 'orders'; overclaim: OK 'orders' (observed: unexplained: added type 'commerce.orders', removed type 'orders'; overclaim: OK 'orders')",
       "source_format": "odcs",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "type",
@@ -186755,11 +186542,11 @@
       "diff_count": 9,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 4,
-      "loss_drop": 4,
-      "loss_ok": 3,
+      "loss_approx": 1,
+      "loss_drop": 3,
+      "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "KV_PROG.kv_entry",
@@ -186767,6 +186554,13 @@
           "message": "object carried to XSD",
           "severity": "info",
           "target_mapping": null
+        },
+        {
+          "construct": "KV_PROG.kv_get_res",
+          "kind": "ok",
+          "message": "union carried to XSD",
+          "severity": "info",
+          "target_mapping": "one-of / discriminated alternatives"
         },
         {
           "construct": "KV_PROG.kv_put_args",
@@ -186783,19 +186577,29 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'KV_PROG.KV_PROG', changed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'KV_PROG.KV_PROG', changed type 'KV_PROG.kv_entry', changed type 'KV_PROG.kv_get_res', changed type 'KV_PROG.kv_put_args', changed type 'KV_PROG.kv_status'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_get_res', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
           "change": "removed",
           "entity": "service",
           "key": "KV_PROG.KV_PROG"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "KV_PROG.kv_entry"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "KV_PROG.kv_get_res"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "KV_PROG.kv_put_args"
         },
         {
           "change": "changed",
@@ -189221,7 +189025,7 @@
       "loss_drop": 1,
       "loss_ok": 3,
       "loss_synth": 4,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "MachineState",
@@ -189245,15 +189049,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'MachineType', removed type 'MachineState', removed type 'MachineType', removed type 'MachineType_Start_Request', added type 'http://example.com/UA/Machine/.MachineState', added type 'http://example.com/UA/Machine/.MachineType', added type 'http://example.com/UA/Machine/.MachineType_Start_Request'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request' (observed: unexplained: changed root '', removed service 'MachineType', removed type 'MachineState', removed type 'MachineType', removed type 'MachineType_Start_Request', added type 'http://example.com/UA/Machine/.MachineState', added type 'http://example.com/UA/Machine/.MachineType', added type 'http://example.com/UA/Machine/.MachineType_Start_Request'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request')",
+      "reason": "unexplained: changed root '', removed service 'MachineType', removed type 'MachineState', removed type 'MachineType', removed type 'MachineType_Start_Request', added type 'http://example.com/UA/Machine/.MachineState', added type 'http://example.com/UA/Machine/.MachineType', added type 'http://example.com/UA/Machine/.MachineType_Start_Request'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request' (observed: unexplained: removed service 'MachineType', removed type 'MachineState', removed type 'MachineType', removed type 'MachineType_Start_Request', added type 'http://example.com/UA/Machine/.MachineState', added type 'http://example.com/UA/Machine/.MachineType', added type 'http://example.com/UA/Machine/.MachineType_Start_Request'; overclaim: OK 'MachineState', OK 'MachineType', OK 'MachineType_Start_Request')",
       "source_format": "opcua-nodeset",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -190650,11 +190449,11 @@
       "diff_count": 2,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 4,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 6,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "UserProfile",
@@ -190664,16 +190463,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root ''; overclaim: OK 'UserProfile')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'UserProfile')",
       "source_format": "openapi",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "openapi/07-nullable-types.yaml",
@@ -192861,11 +192654,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 2,
       "loss_synth": 6,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "Balance",
@@ -192882,15 +192675,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Wallet API'; overclaim: OK 'Balance', OK 'TransferReceipt')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Wallet API'; overclaim: OK 'Balance', OK 'TransferReceipt')",
       "source_format": "openrpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -195861,11 +195649,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 9,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "Agent",
@@ -195917,15 +195705,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'Agent', changed type 'OrderStatus', changed type 'Organisation'; overclaim: OK 'Agent', OK 'Customer', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Organisation', OK 'Product' (observed: unexplained: changed root '', changed type 'Agent', changed type 'OrderStatus', changed type 'Organisation'; overclaim: OK 'Agent', OK 'Customer', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Organisation', OK 'Product')",
+      "reason": "unexplained: changed root '', changed type 'Agent', changed type 'OrderStatus', changed type 'Organisation'; overclaim: OK 'Agent', OK 'Customer', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Organisation', OK 'Product' (observed: unexplained: changed type 'Agent', changed type 'OrderStatus', changed type 'Organisation'; overclaim: OK 'Agent', OK 'Customer', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Organisation', OK 'Product')",
       "source_format": "owl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -198726,11 +198509,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 8,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 14,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "Money",
@@ -198775,22 +198558,17 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'OrderStatus', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku' (observed: unexplained: changed root '', changed type 'OrderStatus', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku')",
+      "reason": "unexplained: changed root '', changed type 'OrderStatus', removed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku' (observed: unexplained: changed type 'OrderStatus', changed type 'Sku'; overclaim: OK 'Money', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'Orders', OK 'Sku')",
       "source_format": "pkl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
           "key": "OrderStatus"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "Sku"
         }
@@ -200516,11 +200294,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 13,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "pli.CUSTOMER_REC",
@@ -200544,14 +200322,24 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: changed root ''; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: changed type 'pli.CUSTOMER_REC', changed type 'pli.CUSTOMER_REC.CUST_ADDRESS', changed type 'pli.CUSTOMER_REC.CUST_CONTACTS'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
       "source_format": "pli",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "pli.CUSTOMER_REC"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "pli.CUSTOMER_REC.CUST_ADDRESS"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "pli.CUSTOMER_REC.CUST_CONTACTS"
         }
       ]
     },
@@ -202920,11 +202708,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 3,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "Task",
@@ -202934,15 +202722,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Tasks API'; overclaim: OK 'Task')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Tasks API'; overclaim: OK 'Task')",
       "source_format": "postman",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -205618,11 +205401,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "Order",
@@ -205632,15 +205415,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'Order' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'Order')",
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'Order' (observed: unexplained: removed service 'Orders API'; overclaim: OK 'Order')",
       "source_format": "postman-v2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -209563,14 +209341,14 @@
     },
     {
       "corpus_path": "protobuf/02-grpc-service.proto",
-      "diff_count": 12,
+      "diff_count": 13,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 3,
-      "loss_ok": 7,
+      "loss_ok": 6,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "example.catalog.v1.CreateProductRequest",
@@ -209613,28 +209391,21 @@
           "message": "object carried to XSD",
           "severity": "info",
           "target_mapping": null
-        },
-        {
-          "construct": "example.catalog.v1.Product.AttributesEntry",
-          "kind": "ok",
-          "message": "map type carried to XSD",
-          "severity": "info",
-          "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'example.catalog.v1.ProductService', changed type 'example.catalog.v1.CreateProductRequest', changed type 'example.catalog.v1.Dimensions', changed type 'example.catalog.v1.GetProductRequest', changed type 'example.catalog.v1.ListProductsRequest', changed type 'example.catalog.v1.ListProductsResponse', changed type 'example.catalog.v1.Product', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'example.catalog.v1.ProductService', added type 'example.catalog.v1.AttributesEntry', changed type 'example.catalog.v1.CreateProductRequest', changed type 'example.catalog.v1.Dimensions', changed type 'example.catalog.v1.GetProductRequest', changed type 'example.catalog.v1.ListProductsRequest', changed type 'example.catalog.v1.ListProductsResponse', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product')",
       "source_format": "protobuf",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
-        {
           "change": "removed",
           "entity": "service",
           "key": "example.catalog.v1.ProductService"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.catalog.v1.AttributesEntry"
         },
         {
           "change": "changed",
@@ -209660,11 +209431,6 @@
           "change": "changed",
           "entity": "type",
           "key": "example.catalog.v1.ListProductsResponse"
-        },
-        {
-          "change": "changed",
-          "entity": "type",
-          "key": "example.catalog.v1.Product"
         },
         {
           "change": "removed",
@@ -212577,11 +212343,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "example.orders.v1.GetOrderRequest",
@@ -212612,15 +212378,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'example.orders.v1.OrderService', changed type 'example.orders.v1.GetOrderRequest', changed type 'example.orders.v1.Order', changed type 'example.orders.v1.OrderLine', changed type 'example.orders.v1.OrderStatus'; overclaim: OK 'example.orders.v1.GetOrderRequest', OK 'example.orders.v1.Order', OK 'example.orders.v1.OrderLine', OK 'example.orders.v1.OrderStatus' (observed: unexplained: changed root '', removed service 'example.orders.v1.OrderService', changed type 'example.orders.v1.GetOrderRequest', changed type 'example.orders.v1.Order', changed type 'example.orders.v1.OrderLine', changed type 'example.orders.v1.OrderStatus'; overclaim: OK 'example.orders.v1.GetOrderRequest', OK 'example.orders.v1.Order', OK 'example.orders.v1.OrderLine', OK 'example.orders.v1.OrderStatus')",
+      "reason": "unexplained: changed root '', removed service 'example.orders.v1.OrderService', changed type 'example.orders.v1.GetOrderRequest', changed type 'example.orders.v1.Order', changed type 'example.orders.v1.OrderLine', changed type 'example.orders.v1.OrderStatus'; overclaim: OK 'example.orders.v1.GetOrderRequest', OK 'example.orders.v1.Order', OK 'example.orders.v1.OrderLine', OK 'example.orders.v1.OrderStatus' (observed: unexplained: removed service 'example.orders.v1.OrderService', changed type 'example.orders.v1.GetOrderRequest', changed type 'example.orders.v1.Order', changed type 'example.orders.v1.OrderLine', changed type 'example.orders.v1.OrderStatus'; overclaim: OK 'example.orders.v1.GetOrderRequest', OK 'example.orders.v1.Order', OK 'example.orders.v1.OrderLine', OK 'example.orders.v1.OrderStatus')",
       "source_format": "protobuf-editions",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -214959,11 +214720,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 11,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 16,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -214994,15 +214755,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
       "source_format": "pydantic",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -217647,11 +217403,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "Book",
@@ -217668,15 +217424,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'Bookstore API', changed type 'Book', changed type 'NewBook'; overclaim: OK 'Book', OK 'NewBook')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'Bookstore API', changed type 'Book', changed type 'NewBook'; overclaim: OK 'Book', OK 'NewBook')",
       "source_format": "raml",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -219455,11 +219206,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -219483,19 +219234,24 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: changed root '', changed type 'catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
+      "reason": "unexplained: changed root '', changed type 'catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: changed type 'catalogue', changed type 'money', changed type 'product'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "catalogue"
         },
         {
           "change": "changed",
           "entity": "type",
-          "key": "catalogue"
+          "key": "money"
+        },
+        {
+          "change": "changed",
+          "entity": "type",
+          "key": "product"
         }
       ]
     },
@@ -221078,11 +220834,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 14,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "TypicalSensorMessage",
@@ -221099,15 +220855,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "reason": "unexplained: changed root '', changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed type 'TypicalSensorMessage_Constants'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
       "source_format": "ros2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -228700,11 +228451,11 @@
       "diff_count": 26,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 25,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "pain.001.001.09.Amt",
@@ -228882,15 +228633,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'pain.001.001.09.Amt', changed type 'pain.001.001.09.CdtTrfTxInf', changed type 'pain.001.001.09.Cdtr', changed type 'pain.001.001.09.CdtrAcct', changed type 'pain.001.001.09.CdtrAgt', changed type 'pain.001.001.09.CstmrCdtTrfInitn', changed type 'pain.001.001.09.CtgyPurp', changed type 'pain.001.001.09.Dbtr', changed type 'pain.001.001.09.DbtrAcct', changed type 'pain.001.001.09.DbtrAgt', changed type 'pain.001.001.09.Document', changed type 'pain.001.001.09.FinInstnId', changed type 'pain.001.001.09.GrpHdr', changed type 'pain.001.001.09.Id', changed type 'pain.001.001.09.InitgPty', changed type 'pain.001.001.09.OrgId', changed type 'pain.001.001.09.Othr', changed type 'pain.001.001.09.PmtId', changed type 'pain.001.001.09.PmtInf', changed type 'pain.001.001.09.PmtTpInf', changed type 'pain.001.001.09.PstlAdr', changed type 'pain.001.001.09.ReqdExctnDt', changed type 'pain.001.001.09.RmtInf', changed type 'pain.001.001.09.SchmeNm', changed type 'pain.001.001.09.SvcLvl'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.CtgyPurp', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.OrgId', OK 'pain.001.001.09.Othr', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.PmtTpInf', OK 'pain.001.001.09.PstlAdr', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf', OK 'pain.001.001.09.SchmeNm', OK 'pain.001.001.09.SvcLvl')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'pain.001.001.09.Amt', changed type 'pain.001.001.09.CdtTrfTxInf', changed type 'pain.001.001.09.Cdtr', changed type 'pain.001.001.09.CdtrAcct', changed type 'pain.001.001.09.CdtrAgt', changed type 'pain.001.001.09.CstmrCdtTrfInitn', changed type 'pain.001.001.09.CtgyPurp', changed type 'pain.001.001.09.Dbtr', changed type 'pain.001.001.09.DbtrAcct', changed type 'pain.001.001.09.DbtrAgt', changed type 'pain.001.001.09.Document', changed type 'pain.001.001.09.FinInstnId', changed type 'pain.001.001.09.GrpHdr', changed type 'pain.001.001.09.Id', changed type 'pain.001.001.09.InitgPty', changed type 'pain.001.001.09.OrgId', changed type 'pain.001.001.09.Othr', changed type 'pain.001.001.09.PmtId', changed type 'pain.001.001.09.PmtInf', changed type 'pain.001.001.09.PmtTpInf', changed type 'pain.001.001.09.PstlAdr', changed type 'pain.001.001.09.ReqdExctnDt', changed type 'pain.001.001.09.RmtInf', changed type 'pain.001.001.09.SchmeNm', changed type 'pain.001.001.09.SvcLvl'; overclaim: OK 'pain.001.001.09.Amt', OK 'pain.001.001.09.CdtTrfTxInf', OK 'pain.001.001.09.Cdtr', OK 'pain.001.001.09.CdtrAcct', OK 'pain.001.001.09.CdtrAgt', OK 'pain.001.001.09.CstmrCdtTrfInitn', OK 'pain.001.001.09.CtgyPurp', OK 'pain.001.001.09.Dbtr', OK 'pain.001.001.09.DbtrAcct', OK 'pain.001.001.09.DbtrAgt', OK 'pain.001.001.09.Document', OK 'pain.001.001.09.FinInstnId', OK 'pain.001.001.09.GrpHdr', OK 'pain.001.001.09.Id', OK 'pain.001.001.09.InitgPty', OK 'pain.001.001.09.OrgId', OK 'pain.001.001.09.Othr', OK 'pain.001.001.09.PmtId', OK 'pain.001.001.09.PmtInf', OK 'pain.001.001.09.PmtTpInf', OK 'pain.001.001.09.PstlAdr', OK 'pain.001.001.09.ReqdExctnDt', OK 'pain.001.001.09.RmtInf', OK 'pain.001.001.09.SchmeNm', OK 'pain.001.001.09.SvcLvl')",
       "source_format": "sepa",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -230591,11 +230337,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 5,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 8,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "OrganisationShape",
@@ -230612,16 +230358,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'OrganisationShape', OK 'PersonShape' (observed: unexplained: changed root ''; overclaim: OK 'OrganisationShape', OK 'PersonShape')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'OrganisationShape', OK 'PersonShape' (observed: overclaim: OK 'OrganisationShape', OK 'PersonShape')",
       "source_format": "shacl",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "shacl/02-typical-person-shapes.ttl",
@@ -234186,11 +233926,11 @@
       "diff_count": 10,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 6,
       "loss_synth": 11,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "example.weather.Condition",
@@ -234235,15 +233975,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'example.weather.WeatherService', changed type 'example.weather.Condition', removed type 'example.weather.DayForecastList'; overclaim: OK 'example.weather.Condition', OK 'example.weather.CurrentConditions', OK 'example.weather.DayForecast', OK 'example.weather.DayForecastList', OK 'example.weather.Forecast', OK 'example.weather.GetForecastInput')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'example.weather.WeatherService', changed type 'example.weather.Condition', changed type 'example.weather.DayForecastList'; overclaim: OK 'example.weather.Condition', OK 'example.weather.CurrentConditions', OK 'example.weather.DayForecast', OK 'example.weather.DayForecastList', OK 'example.weather.Forecast', OK 'example.weather.GetForecastInput')",
       "source_format": "smithy",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -234255,7 +233990,7 @@
           "key": "example.weather.Condition"
         },
         {
-          "change": "removed",
+          "change": "changed",
           "entity": "type",
           "key": "example.weather.DayForecastList"
         }
@@ -236856,11 +236591,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "PostOrderRequest",
@@ -236870,15 +236605,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
       "source_format": "soapui",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -238538,11 +238268,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 7,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 7,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "NBIRTH",
@@ -238552,15 +238282,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH')",
+      "reason": "unexplained: changed root '', removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: removed service 'Sparkplug', removed type 'NBIRTH', added type 'spBv1.0.NBIRTH'; overclaim: OK 'NBIRTH')",
       "source_format": "sparkplug",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -241250,11 +240975,11 @@
       "diff_count": 11,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 21,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "commerce.customer",
@@ -241292,15 +241017,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'customer', added type 'open_orders', added type 'order', added type 'order_line', added type 'order_status'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status' (observed: unexplained: changed root '', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'customer', added type 'open_orders', added type 'order', added type 'order_line', added type 'order_status'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status')",
+      "reason": "unexplained: changed root '', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'customer', added type 'open_orders', added type 'order', added type 'order_line', added type 'order_status'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status' (observed: unexplained: removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'customer', added type 'open_orders', added type 'order', added type 'order_line', added type 'order_status'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status')",
       "source_format": "sql-ddl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "type",
@@ -246309,11 +246029,11 @@
       "diff_count": 16,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 23,
+      "loss_approx": 2,
       "loss_drop": 6,
       "loss_ok": 8,
       "loss_synth": 36,
-      "matched_count": 14,
+      "matched_count": 15,
       "overclaims": [
         {
           "construct": "Category",
@@ -246372,15 +246092,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'pet'; overclaim: OK 'Category', OK 'Error', OK 'NewPet', OK 'Order', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'pet'; overclaim: OK 'Category', OK 'Error', OK 'NewPet', OK 'Order', OK 'Pet', OK 'UpdatePet', OK 'UploadResponse', OK 'User')",
       "source_format": "swagger",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -249789,11 +249504,11 @@
       "diff_count": 10,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 6,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 4,
       "loss_synth": 12,
-      "matched_count": 8,
+      "matched_count": 9,
       "overclaims": [
         {
           "construct": "ErrorModel",
@@ -249824,15 +249539,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'orders'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine' (observed: unexplained: changed root '', removed service 'orders'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine')",
+      "reason": "unexplained: changed root '', removed service 'orders'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine' (observed: unexplained: removed service 'orders'; overclaim: OK 'ErrorModel', OK 'NewOrder', OK 'Order', OK 'OrderLine')",
       "source_format": "swagger-1.2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -255266,11 +254976,11 @@
       "diff_count": 16,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 14,
       "loss_drop": 0,
       "loss_ok": 15,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "SWIFT-MT103.CodeWord",
@@ -255378,15 +255088,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'SWIFT-MT103.CodeWord', changed type 'SWIFT-MT103.Field13C', changed type 'SWIFT-MT103.Field20', changed type 'SWIFT-MT103.Field23B', changed type 'SWIFT-MT103.Field32A', changed type 'SWIFT-MT103.Field33B', changed type 'SWIFT-MT103.Field50K', changed type 'SWIFT-MT103.Field52A', changed type 'SWIFT-MT103.Field53B', changed type 'SWIFT-MT103.Field57A', changed type 'SWIFT-MT103.Field59', changed type 'SWIFT-MT103.Field70', changed type 'SWIFT-MT103.Field71A', changed type 'SWIFT-MT103.Field72', changed type 'SWIFT-MT103.MT103'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'SWIFT-MT103.CodeWord', changed type 'SWIFT-MT103.Field13C', changed type 'SWIFT-MT103.Field20', changed type 'SWIFT-MT103.Field23B', changed type 'SWIFT-MT103.Field32A', changed type 'SWIFT-MT103.Field33B', changed type 'SWIFT-MT103.Field50K', changed type 'SWIFT-MT103.Field52A', changed type 'SWIFT-MT103.Field53B', changed type 'SWIFT-MT103.Field57A', changed type 'SWIFT-MT103.Field59', changed type 'SWIFT-MT103.Field70', changed type 'SWIFT-MT103.Field71A', changed type 'SWIFT-MT103.Field72'; overclaim: OK 'SWIFT-MT103.CodeWord', OK 'SWIFT-MT103.Field13C', OK 'SWIFT-MT103.Field20', OK 'SWIFT-MT103.Field23B', OK 'SWIFT-MT103.Field32A', OK 'SWIFT-MT103.Field33B', OK 'SWIFT-MT103.Field50K', OK 'SWIFT-MT103.Field52A', OK 'SWIFT-MT103.Field53B', OK 'SWIFT-MT103.Field57A', OK 'SWIFT-MT103.Field59', OK 'SWIFT-MT103.Field70', OK 'SWIFT-MT103.Field71A', OK 'SWIFT-MT103.Field72', OK 'SWIFT-MT103.MT103')",
       "source_format": "swift-mt",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -255456,11 +255161,6 @@
           "change": "changed",
           "entity": "type",
           "key": "SWIFT-MT103.Field72"
-        },
-        {
-          "change": "changed",
-          "entity": "type",
-          "key": "SWIFT-MT103.MT103"
         }
       ]
     },
@@ -258454,11 +258154,11 @@
       "diff_count": 9,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "com.example.user.CreateUserRequest",
@@ -258489,15 +258189,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'com.example.user.UserService', changed type 'com.example.user.CreateUserRequest', changed type 'com.example.user.NotFound', changed type 'com.example.user.Status', changed type 'com.example.user.User'; overclaim: OK 'com.example.user.CreateUserRequest', OK 'com.example.user.NotFound', OK 'com.example.user.Status', OK 'com.example.user.User')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'com.example.user.UserService', changed type 'com.example.user.CreateUserRequest', changed type 'com.example.user.NotFound', changed type 'com.example.user.Status', changed type 'com.example.user.User'; overclaim: OK 'com.example.user.CreateUserRequest', OK 'com.example.user.NotFound', OK 'com.example.user.Status', OK 'com.example.user.User')",
       "source_format": "thrift",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -261110,11 +260805,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 2,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "PostOrderRequest",
@@ -261124,15 +260819,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
+      "reason": "unexplained: changed root '', removed service 'Orders API'; overclaim: OK 'PostOrderRequest' (observed: unexplained: removed service 'Orders API'; overclaim: OK 'PostOrderRequest')",
       "source_format": "thunder-client",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -262773,11 +262463,11 @@
       "diff_count": 3,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "TRADACOMS-ORDERS.MessageORDERS",
@@ -262794,15 +262484,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', changed type 'TRADACOMS-ORDERS.MessageORDERS', changed type 'TRADACOMS-ORDERS.OLD'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed type 'TRADACOMS-ORDERS.MessageORDERS', changed type 'TRADACOMS-ORDERS.OLD'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
       "source_format": "tradacoms",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -265075,7 +264760,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -270454,11 +270139,11 @@
       "diff_count": 16,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 19,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 10,
       "loss_synth": 28,
-      "matched_count": 14,
+      "matched_count": 15,
       "overclaims": [
         {
           "construct": "ByIdInput",
@@ -270531,15 +270216,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'orderRouter'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput' (observed: unexplained: changed root '', removed service 'orderRouter'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput')",
+      "reason": "unexplained: changed root '', removed service 'orderRouter'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput' (observed: unexplained: removed service 'orderRouter'; overclaim: OK 'ByIdInput', OK 'ByIdOutput', OK 'CancelInput', OK 'CancelOutput', OK 'ListInput', OK 'ListOutput', OK 'ListOutput_items_item', OK 'PlaceInput', OK 'PlaceInput_lines_item', OK 'PlaceOutput')",
       "source_format": "trpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -272761,7 +272441,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
@@ -275834,11 +275514,11 @@
       "diff_count": 7,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 25,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -275883,15 +275563,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'NewOrder_lines_item', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'OrderSummary' (observed: unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'NewOrder_lines_item', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'OrderSummary')",
+      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'NewOrder_lines_item', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'OrderSummary' (observed: unexplained: changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'NewOrder_lines_item', OK 'Order', OK 'OrderLine', OK 'OrderStatus', OK 'OrderSummary')",
       "source_format": "typescript-types",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -278944,11 +278619,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "PetStore.NewPet",
@@ -278972,15 +278647,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'PetStore.Pets', changed type 'PetStore.NewPet', changed type 'PetStore.Pet', changed type 'PetStore.PetStatus'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'PetStore.Pets', changed type 'PetStore.NewPet', changed type 'PetStore.Pet', changed type 'PetStore.PetStatus'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
       "source_format": "typespec",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -280304,14 +279974,14 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root ''; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS' (observed: unexplained: changed root ''; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
+      "reason": "unexplained: changed root ''; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS' (observed: unexplained: changed type 'vsam.EXAMPLE_CUSTOMER_KSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
       "source_format": "vsam-idcams",
       "status": "xfail",
       "unexplained": [
         {
           "change": "changed",
-          "entity": "root",
-          "key": ""
+          "entity": "type",
+          "key": "vsam.EXAMPLE_CUSTOMER_KSDS"
         }
       ]
     },
@@ -282634,11 +282304,11 @@
       "diff_count": 6,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "http://example.com/bookstore.Book",
@@ -282648,15 +282318,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/bookstore.WADL API', changed type 'http://example.com/bookstore.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'http://example.com/bookstore.WADL API', changed type 'http://example.com/bookstore.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
       "source_format": "wadl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -285389,15 +285054,22 @@
     },
     {
       "corpus_path": "wit/02-typical-calculator.wit",
-      "diff_count": 10,
+      "diff_count": 11,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
-      "loss_drop": 3,
-      "loss_ok": 2,
+      "loss_approx": 1,
+      "loss_drop": 2,
+      "loss_ok": 3,
       "loss_synth": 3,
       "matched_count": 3,
       "overclaims": [
+        {
+          "construct": "examples:calculator.calculate.calc-error",
+          "kind": "ok",
+          "message": "union carried to XSD",
+          "severity": "info",
+          "target_mapping": "one-of / discriminated alternatives"
+        },
         {
           "construct": "examples:calculator.calculate.op",
           "kind": "ok",
@@ -285413,19 +285085,24 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'examples:calculator.calculator', removed type 'examples:calculator.calculate.calc-error', removed type 'examples:calculator.calculate.op', removed type 'examples:calculator.calculate.request', added type 'examples:calculator.op', added type 'examples:calculator.request'; overclaim: OK 'examples:calculator.calculate.op', OK 'examples:calculator.calculate.request')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'examples:calculator.calculate', removed service 'examples:calculator.calculator', added type 'examples:calculator.calc-error', removed type 'examples:calculator.calculate.calc-error', removed type 'examples:calculator.calculate.op', removed type 'examples:calculator.calculate.request', added type 'examples:calculator.op', added type 'examples:calculator.request'; overclaim: OK 'examples:calculator.calculate.calc-error', OK 'examples:calculator.calculate.op', OK 'examples:calculator.calculate.request')",
       "source_format": "wit",
       "status": "xfail",
       "unexplained": [
         {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
+          "change": "removed",
+          "entity": "service",
+          "key": "examples:calculator.calculate"
         },
         {
           "change": "removed",
           "entity": "service",
           "key": "examples:calculator.calculator"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "examples:calculator.calc-error"
         },
         {
           "change": "removed",
@@ -290031,11 +289708,11 @@
       "diff_count": 14,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 9,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "http://example.com/orders.CancelOrderRequest",
@@ -290101,15 +289778,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderPort', changed type 'http://example.com/orders.CancelOrderRequest', changed type 'http://example.com/orders.CancelOrderResponse', changed type 'http://example.com/orders.CreateOrderRequest', changed type 'http://example.com/orders.CreateOrderResponse', changed type 'http://example.com/orders.GetOrderRequest', changed type 'http://example.com/orders.GetOrderResponse', changed type 'http://example.com/orders.Order', changed type 'http://example.com/orders.OrderFault', changed type 'http://example.com/orders.OrderLine'; overclaim: OK 'http://example.com/orders.CancelOrderRequest', OK 'http://example.com/orders.CancelOrderResponse', OK 'http://example.com/orders.CreateOrderRequest', OK 'http://example.com/orders.CreateOrderResponse', OK 'http://example.com/orders.GetOrderRequest', OK 'http://example.com/orders.GetOrderResponse', OK 'http://example.com/orders.Order', OK 'http://example.com/orders.OrderFault', OK 'http://example.com/orders.OrderLine')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'http://example.com/orders.OrderPort', changed type 'http://example.com/orders.CancelOrderRequest', changed type 'http://example.com/orders.CancelOrderResponse', changed type 'http://example.com/orders.CreateOrderRequest', changed type 'http://example.com/orders.CreateOrderResponse', changed type 'http://example.com/orders.GetOrderRequest', changed type 'http://example.com/orders.GetOrderResponse', changed type 'http://example.com/orders.Order', changed type 'http://example.com/orders.OrderFault', changed type 'http://example.com/orders.OrderLine'; overclaim: OK 'http://example.com/orders.CancelOrderRequest', OK 'http://example.com/orders.CancelOrderResponse', OK 'http://example.com/orders.CreateOrderRequest', OK 'http://example.com/orders.CreateOrderResponse', OK 'http://example.com/orders.GetOrderRequest', OK 'http://example.com/orders.GetOrderResponse', OK 'http://example.com/orders.Order', OK 'http://example.com/orders.OrderFault', OK 'http://example.com/orders.OrderLine')",
       "source_format": "wsdl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -294031,11 +293703,11 @@
       "diff_count": 12,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 7,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "http://example.com/orders.cancelOrder",
@@ -294087,15 +293759,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', changed type 'http://example.com/orders.cancelOrder', changed type 'http://example.com/orders.getOrder', changed type 'http://example.com/orders.order', changed type 'http://example.com/orders.orderAck', changed type 'http://example.com/orders.orderFault', changed type 'http://example.com/orders.orderLine', changed type 'http://example.com/orders.placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder' (observed: unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', changed type 'http://example.com/orders.cancelOrder', changed type 'http://example.com/orders.getOrder', changed type 'http://example.com/orders.order', changed type 'http://example.com/orders.orderAck', changed type 'http://example.com/orders.orderFault', changed type 'http://example.com/orders.orderLine', changed type 'http://example.com/orders.placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder')",
+      "reason": "unexplained: changed root '', removed service 'http://example.com/orders.OrderInterface', changed type 'http://example.com/orders.cancelOrder', changed type 'http://example.com/orders.getOrder', changed type 'http://example.com/orders.order', changed type 'http://example.com/orders.orderAck', changed type 'http://example.com/orders.orderFault', changed type 'http://example.com/orders.orderLine', changed type 'http://example.com/orders.placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder' (observed: unexplained: removed service 'http://example.com/orders.OrderInterface', changed type 'http://example.com/orders.cancelOrder', changed type 'http://example.com/orders.getOrder', changed type 'http://example.com/orders.order', changed type 'http://example.com/orders.orderAck', changed type 'http://example.com/orders.orderFault', changed type 'http://example.com/orders.orderLine', changed type 'http://example.com/orders.placeOrder'; overclaim: OK 'http://example.com/orders.cancelOrder', OK 'http://example.com/orders.getOrder', OK 'http://example.com/orders.order', OK 'http://example.com/orders.orderAck', OK 'http://example.com/orders.orderFault', OK 'http://example.com/orders.orderLine', OK 'http://example.com/orders.placeOrder')",
       "source_format": "wsdl2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -295804,11 +295471,11 @@
       "diff_count": 4,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "InventoryReserveStockParam3",
@@ -295818,15 +295485,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'inventory.reserveStock', changed type 'InventoryReserveStockParam3'; overclaim: OK 'InventoryReserveStockParam3')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'inventory.reserveStock', changed type 'InventoryReserveStockParam3'; overclaim: OK 'InventoryReserveStockParam3')",
       "source_format": "xmlrpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -297579,11 +297241,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 2,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 5,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "OrderCreated",
@@ -297600,15 +297262,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'orders.mqtt'; overclaim: OK 'OrderCreated', OK 'OrderShipped')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'orders.mqtt'; overclaim: OK 'OrderCreated', OK 'OrderShipped')",
       "source_format": "xregistry",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -299862,7 +299519,7 @@
       "diff_count": 0,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 1,
+      "loss_approx": 0,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -302200,11 +301857,11 @@
       "diff_count": 5,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 15,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 16,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "NewOrder",
@@ -302235,15 +301892,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
+      "reason": "unexplained: changed root '', changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus' (observed: unexplained: changed type 'OrderStatus'; overclaim: OK 'NewOrder', OK 'Order', OK 'OrderLine', OK 'OrderStatus')",
       "source_format": "zod",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "changed",
           "entity": "type",
@@ -305284,11 +304936,11 @@
       "diff_count": 8,
       "emit_format": "xsd",
       "emit_key": "xsd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "InventoryRequester.GET-STOCK-REQUEST",
@@ -305319,15 +304971,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'InventoryRequester.InventoryRequester', changed type 'InventoryRequester.GET-STOCK-REQUEST', changed type 'InventoryRequester.GET-STOCK-RESPONSE', changed type 'InventoryRequester.RESERVE-REQUEST', changed type 'InventoryRequester.RESERVE-RESPONSE'; overclaim: OK 'InventoryRequester.GET-STOCK-REQUEST', OK 'InventoryRequester.GET-STOCK-RESPONSE', OK 'InventoryRequester.RESERVE-REQUEST', OK 'InventoryRequester.RESERVE-RESPONSE')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'InventoryRequester.InventoryRequester', changed type 'InventoryRequester.GET-STOCK-REQUEST', changed type 'InventoryRequester.GET-STOCK-RESPONSE', changed type 'InventoryRequester.RESERVE-REQUEST', changed type 'InventoryRequester.RESERVE-RESPONSE'; overclaim: OK 'InventoryRequester.GET-STOCK-REQUEST', OK 'InventoryRequester.GET-STOCK-RESPONSE', OK 'InventoryRequester.RESERVE-REQUEST', OK 'InventoryRequester.RESERVE-RESPONSE')",
       "source_format": "zosconnect",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",

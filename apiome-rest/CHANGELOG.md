@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.524.0] - 2026-10-29
+
+### Changed
+- **Standalone XSD emitter (MFX-22.1, #4132).** The `xsd` export is rebuilt on the shared XML Schema writer
+  (`app.xsd_schema`) that WSDL (MFX-14.1) and WADL use, so the three write the same types: `complexType` + `sequence`
+  and a global element per record, `oneOf` → `xs:choice`, nullable → `nillable="true" minOccurs="0"`, lists →
+  `maxOccurs="unbounded"`, constraints → facets (`pattern`, `minLength` / `maxLength`, `minInclusive` /
+  `maxInclusive` …), enums → `xs:enumeration`, descriptions → `xs:annotation`.
+- New option `xsd_version` (`1.0` default, `1.1`): XSD 1.1 marks the schema `vc:minVersion="1.1"` and writes
+  `multipleOf` as an `xs:assertion` facet.
+- The `targetNamespace` is the source's namespace (none → a no-namespace schema). A type in a different URI namespace
+  is written in its own document; a multi-namespace source exports one `.xsd` per namespace joined by `xs:import`
+  (a zip).
+- Shared writer: an XSD source's `xs:attribute` fields are written back as attributes, its enums keep their base and
+  values, and a list field keeps its item type (also in WSDL / WADL exports of XSD sources). The XSD fidelity pack
+  carries unions and constraints and reports renames, maps and unwritable facets like WSDL's.
+- Goldens: the `xsd` cells of the round-trip and export-conformance matrices, corpus parity.
+
 ## [1.523.0] - 2026-10-29
 
 ### Changed

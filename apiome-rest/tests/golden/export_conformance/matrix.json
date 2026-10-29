@@ -471,7 +471,7 @@
     {
       "family": "a2a",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -967,7 +967,7 @@
     {
       "family": "acp",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -1465,7 +1465,7 @@
     {
       "family": "agents-manifest",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -2041,7 +2041,7 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -2610,7 +2610,7 @@
     {
       "family": "apigee",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -3116,7 +3116,7 @@
     {
       "family": "arazzo",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -3626,7 +3626,7 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -4599,7 +4599,7 @@
     {
       "family": "asyncapi",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -5629,7 +5629,7 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -6209,7 +6209,7 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 6
       },
@@ -6771,7 +6771,7 @@
     {
       "family": "azure-apim",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 0
       },
@@ -7354,7 +7354,7 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 1,
         "synth": 3
       },
@@ -7872,7 +7872,7 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 0
       },
@@ -8382,7 +8382,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -8892,7 +8892,7 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -9390,7 +9390,7 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 6
       },
@@ -9895,14 +9895,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type CUSTOMER-RECORD.CUSTOMER-RECORD"
-      ],
       "family": "cobolcopybook",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -10415,7 +10417,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -10972,7 +10974,7 @@
     {
       "family": "consul",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 1,
         "synth": 0
       },
@@ -11492,7 +11494,7 @@
     {
       "family": "corbaidl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -12005,7 +12007,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 9,
+        "approx": 1,
         "drop": 0,
         "synth": 13
       },
@@ -12514,7 +12516,7 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 8
       },
@@ -13029,7 +13031,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 13
       },
@@ -13539,7 +13541,7 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 3,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -14633,7 +14635,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 4,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -15141,18 +15143,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type EDIFACT-INVOIC.DTM",
-        "changed type EDIFACT-INVOIC.IMD",
-        "changed type EDIFACT-INVOIC.LIN",
-        "changed type EDIFACT-INVOIC.MOA",
-        "changed type EDIFACT-INVOIC.MessageINVOIC"
-      ],
       "family": "edifact",
-      "reason": "Fidelity report is empty but the round trip shows 11 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -15659,15 +15659,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type X12-850.PO1",
-        "changed type X12-850.TransactionSet850"
-      ],
       "family": "edix12",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -16224,7 +16225,7 @@
     {
       "family": "envoy-xds",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -16806,7 +16807,7 @@
     {
       "family": "fhir",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -17311,14 +17312,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type FIX.4.4.Message8"
-      ],
       "family": "fix",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "fix",
@@ -17821,7 +17824,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 2
       },
@@ -18321,17 +18324,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type example.game.Color",
-        "changed type example.game.Monster",
-        "changed type example.game.Vec3",
-        "changed type example.game.Weapon"
-      ],
       "family": "flatbuffers",
-      "reason": "Fidelity report is empty but the round trip shows 5 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -18894,7 +18896,7 @@
     {
       "family": "gateway-api",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -19411,7 +19413,7 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 16
       },
@@ -19975,7 +19977,7 @@
     {
       "family": "haproxy",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 0
       },
@@ -20559,7 +20561,7 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 20
       },
@@ -21072,15 +21074,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type ADT-A01.MSH",
-        "changed type ADT-A01.MessageADTA01"
-      ],
       "family": "hl7v2",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "hl7v2",
@@ -21583,7 +21586,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -22167,7 +22170,7 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 2
       },
@@ -22751,7 +22754,7 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 2
       },
@@ -23267,18 +23270,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type IDOC-ORDERS05.E1EDK01",
-        "changed type IDOC-ORDERS05.E1EDK03",
-        "changed type IDOC-ORDERS05.E1EDK14",
-        "changed type IDOC-ORDERS05.E1EDKA1",
-        "changed type IDOC-ORDERS05.E1EDP01"
-      ],
       "family": "idoc",
-      "reason": "Fidelity report is empty but the round trip shows 10 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "idoc",
@@ -23781,7 +23782,7 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 15,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -24365,7 +24366,7 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 3
       },
@@ -24881,18 +24882,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type pain.001.001.09.Amt",
-        "changed type pain.001.001.09.CdtTrfTxInf",
-        "changed type pain.001.001.09.Cdtr",
-        "changed type pain.001.001.09.CdtrAcct",
-        "changed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "iso20022",
-      "reason": "Fidelity report is empty but the round trip shows 19 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "iso20022",
@@ -25401,18 +25400,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type 0100.DE11",
-        "changed type 0100.DE12",
-        "changed type 0100.DE13",
-        "changed type 0100.DE18",
-        "changed type 0100.DE2"
-      ],
       "family": "iso8583",
-      "reason": "Fidelity report is empty but the round trip shows 13 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -25975,7 +25972,7 @@
     {
       "family": "istio",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 0
       },
@@ -26475,7 +26472,7 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 7
       },
@@ -26979,7 +26976,7 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 3,
+        "approx": 2,
         "drop": 0,
         "synth": 14
       },
@@ -27490,7 +27487,7 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 11
       },
@@ -27995,7 +27992,7 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 2
       },
@@ -28492,14 +28489,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type com.example.orders.Order"
-      ],
       "family": "kafka-connect",
-      "reason": "Fidelity report is empty but the round trip shows 2 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -29062,7 +29061,7 @@
     {
       "family": "kong",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 0
       },
@@ -29580,7 +29579,7 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 2,
         "synth": 5
       },
@@ -30100,7 +30099,7 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 1,
         "synth": 0
       },
@@ -30620,7 +30619,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 5,
         "synth": 0
       },
@@ -31138,7 +31137,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 6,
         "synth": 9
       },
@@ -31656,18 +31655,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type NACHA-ACH.AchFile",
-        "changed type NACHA-ACH.Batch",
-        "changed type NACHA-ACH.BatchControl",
-        "changed type NACHA-ACH.BatchHeader",
-        "changed type NACHA-ACH.EntryDetail"
-      ],
       "family": "nacha",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "nacha",
@@ -32170,7 +32167,7 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 8,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -32680,18 +32677,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type NCPDP-SCRIPT.Address",
-        "changed type NCPDP-SCRIPT.Body",
-        "changed type NCPDP-SCRIPT.CommunicationNumbers",
-        "changed type NCPDP-SCRIPT.DateOfBirth",
-        "changed type NCPDP-SCRIPT.Diagnosis"
-      ],
       "family": "ncpdp",
-      "reason": "Fidelity report is empty but the round trip shows 32 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -33248,7 +33243,7 @@
     {
       "family": "nginx",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 6,
         "synth": 0
       },
@@ -33830,7 +33825,7 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -34412,7 +34407,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 9,
         "synth": 0
       },
@@ -34912,7 +34907,7 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 6
       },
@@ -35428,8 +35423,8 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 4,
-        "drop": 4,
+        "approx": 1,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -36448,7 +36443,7 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 4,
+        "approx": 2,
         "drop": 0,
         "synth": 6
       },
@@ -36960,7 +36955,7 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 2,
         "synth": 6
       },
@@ -37462,7 +37457,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 9
       },
@@ -37977,7 +37972,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 8,
+        "approx": 1,
         "drop": 0,
         "synth": 14
       },
@@ -38487,7 +38482,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 13,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -39065,7 +39060,7 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 3
       },
@@ -39649,7 +39644,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 2
       },
@@ -40169,7 +40164,7 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 3,
         "synth": 0
       },
@@ -40689,7 +40684,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 0
       },
@@ -41203,7 +41198,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 11,
+        "approx": 1,
         "drop": 0,
         "synth": 16
       },
@@ -41779,7 +41774,7 @@
     {
       "family": "raml",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -42289,7 +42284,7 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 0
       },
@@ -42796,7 +42791,7 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 14
       },
@@ -43312,18 +43307,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type pain.001.001.09.Amt",
-        "changed type pain.001.001.09.CdtTrfTxInf",
-        "changed type pain.001.001.09.Cdtr",
-        "changed type pain.001.001.09.CdtrAcct",
-        "changed type pain.001.001.09.CdtrAgt"
-      ],
       "family": "sepa",
-      "reason": "Fidelity report is empty but the round trip shows 26 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "sepa",
@@ -43820,7 +43813,7 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 1,
         "drop": 0,
         "synth": 8
       },
@@ -44336,7 +44329,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 11
       },
@@ -44920,7 +44913,7 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 2
       },
@@ -45426,7 +45419,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 0,
+        "approx": 7,
         "drop": 2,
         "synth": 7
       },
@@ -45934,7 +45927,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 0,
         "synth": 21
       },
@@ -46514,7 +46507,7 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 23,
+        "approx": 2,
         "drop": 6,
         "synth": 36
       },
@@ -47093,7 +47086,7 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 6,
+        "approx": 1,
         "drop": 4,
         "synth": 12
       },
@@ -47601,18 +47594,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type SWIFT-MT103.CodeWord",
-        "changed type SWIFT-MT103.Field13C",
-        "changed type SWIFT-MT103.Field20",
-        "changed type SWIFT-MT103.Field23B",
-        "changed type SWIFT-MT103.Field32A"
-      ],
       "family": "swift-mt",
-      "reason": "Fidelity report is empty but the round trip shows 16 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 14,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "swift-mt",
@@ -48117,7 +48108,7 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -48701,7 +48692,7 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 2
       },
@@ -49208,15 +49199,16 @@
       "target": "xmlrpc"
     },
     {
-      "drift": [
-        "changed root",
-        "changed type TRADACOMS-ORDERS.MessageORDERS",
-        "changed type TRADACOMS-ORDERS.OLD"
-      ],
       "family": "tradacoms",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "xsd"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "xsd",
+      "tier": "types-only"
     },
     {
       "family": "tradacoms",
@@ -49773,7 +49765,7 @@
     {
       "family": "traefik",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -50291,7 +50283,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 19,
+        "approx": 1,
         "drop": 4,
         "synth": 28
       },
@@ -50861,7 +50853,7 @@
     {
       "family": "tyk",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -51383,7 +51375,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 25
       },
@@ -51959,7 +51951,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -53053,7 +53045,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -53565,8 +53557,8 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 0,
-        "drop": 3,
+        "approx": 1,
+        "drop": 2,
         "synth": 3
       },
       "reason": null,
@@ -54089,7 +54081,7 @@
     {
       "family": "wsdl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -54613,7 +54605,7 @@
     {
       "family": "wsdl2",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 3,
         "synth": 0
       },
@@ -55123,7 +55115,7 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 1,
         "synth": 0
       },
@@ -55627,7 +55619,7 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 2,
+        "approx": 1,
         "drop": 4,
         "synth": 5
       },
@@ -56136,15 +56128,9 @@
     },
     {
       "family": "xsd",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 0,
-        "synth": 0
-      },
       "reason": null,
-      "status": "lossy",
-      "target": "xsd",
-      "tier": "types-only"
+      "status": "ok",
+      "target": "xsd"
     },
     {
       "family": "xsd",
@@ -56651,7 +56637,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 15,
+        "approx": 1,
         "drop": 0,
         "synth": 16
       },
@@ -57233,7 +57219,7 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 2,
         "synth": 0
       },
@@ -57251,10 +57237,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3511,
-    "ok": 46,
+    "lossy": 3525,
+    "ok": 47,
     "refused": 1914,
-    "silent-loss": 253,
+    "silent-loss": 238,
     "skipped": 0
   },
   "families": [
