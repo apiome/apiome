@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.414.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.415.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `spec-import` · 15 operations
 
@@ -713,6 +713,7 @@ The Changes step's payload.
 | `project_name` | string | yes | Project Name. |
 | `base_revision_id` | string | yes | The latest revision (`versions.id`) compared against. |
 | `base_version_label` | string | yes | Its version label, e.g. `2.4.0`. |
+| `existing_version_labels` | array of string | no | Every live version label of the project, oldest first (#590). The wizard checks whether the import's version is already taken and, if so, offers a free sub-version (`1.0.0b`, `1.0.0c` …). |
 | `overall` | enum `"breaking"`, `"unknown"`, `"safe"` | yes | The compatibility engine's overall verdict. |
 | `counts` | `ProjectDeltaCounts` | yes | Counts. |
 | `changes` | array of `ProjectDeltaChange` | no | Ranked: breaking first, then unknown, safe, ungraded. |

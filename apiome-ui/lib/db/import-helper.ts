@@ -18,7 +18,9 @@ import {
   getProjectIdBySlugTx,
   getVersionUuidForCatalogVersionLineTx,
   listProjectLibraryPropertiesTx,
+  listVersionLabelsForProjectTx,
 } from './import-transaction';
+import { nextFreeVersionLabel } from '../../src/app/utils/import-version-label';
 import { ImportSourceKind, getImporter, NormalizedClass, NormalizedProperty } from '../importers';
 import type { ArazzoResolution } from '../importers/arazzo-sources';
 import { randomUUID } from 'crypto';
@@ -139,6 +141,12 @@ export interface ImportJobInput {
      * without importing classes again (REST/CLI idempotency).
      */
     skipDuplicateVersions?: boolean;
+    /**
+     * What to do when the import lands in an existing project at a version label it already has
+     * (#590). `create-version` imports as the next free sub-version (`1.0.0b`, `1.0.0c` …) instead;
+     * omitted, the import fails on the duplicate as before.
+     */
+    onVersionConflict?: 'create-version';
   };
   /** When set, project creation is skipped and a new version is imported into this catalog project. */
   existingProjectId?: string;
@@ -160,6 +168,44 @@ function isDuplicateCatalogVersionLineError(message: string | undefined): boolea
   // project slug (e.g. `A version with ID "37" already exists in project "adyen-checkout-api"`) as
   // well as the legacy phrasing.
   return Boolean(message && /^A version with .+ already exists/i.test(message));
+}
+
+/**
+ * The version label an import into an existing project creates (#590).
+ *
+ * With `onVersionConflict: 'create-version'`, a label the project already has is replaced by the
+ * next free sub-version (`1.0.0` → `1.0.0b`), recorded on the job log and summary. Resolved before
+ * the INSERT: a duplicate inside the import transaction would abort the whole transaction.
+ *
+ * @param client The import's database client.
+ * @param job The running job.
+ * @param input The job input.
+ * @param existingProjectId The existing project the import lands in, or `null` for a new project.
+ * @returns The label to create.
+ */
+async function resolveImportVersionLabel(
+  client: PoolClient,
+  job: JobState,
+  input: ImportJobInput,
+  existingProjectId: string | null,
+): Promise<string> {
+  const requested = input.version.versionId.trim();
+  if (!existingProjectId || input.options.onVersionConflict !== 'create-version') return requested;
+  const label = nextFreeVersionLabel(requested, await listVersionLabelsForProjectTx(client, existingProjectId));
+  if (label !== requested) {
+    emit(
+      job,
+      'info',
+      'VERSION_LABEL_ADJUSTED',
+      `Version "${requested}" already exists in this project; importing as sub-version "${label}".`,
+      { requested, used: label }
+    );
+    if (job.summary) {
+      job.summary.versionLabelAdjusted = { requested, used: label };
+      job.summary.versionId = label;
+    }
+  }
+  return label;
 }
 
 /** Merge OpenAPI/Swagger `document.info` into project description + projects.metadata (all import entry points). */
@@ -226,6 +272,8 @@ interface JobState {
     incrementalMode?: boolean;
     /** True when import exited early because the catalog version line already existed (`skipDuplicateVersions`). */
     skippedDuplicateVersion?: boolean;
+    /** Set when the requested version label was taken and a sub-version was created instead (#590). */
+    versionLabelAdjusted?: { requested: string; used: string };
     /** Per-phase / per-DB-op timing breakdown for diagnosing slow imports (see finalizeBenchmark). */
     benchmark?: {
       totalMs: number;
@@ -1364,7 +1412,8 @@ export async function startImport(input: ImportJobInput) {
           emit(job, 'info', 'PROJECT_CREATED', `Created project: ${input.project.name}`, { projectId });
         }
         if (job.canceled) throw new Error('Import canceled');
-        setProgress(job, 'creating-version', 2, 1, input.version.versionId);
+        const versionLabelInc = await resolveImportVersionLabel(client!, job, input, existingInc);
+        setProgress(job, 'creating-version', 2, 1, versionLabelInc);
         const reuseLibraryInc = Boolean(existingInc);
         const parentVersionUuidInc = reuseLibraryInc
           ? await getLatestVersionUuidForProjectTx(client!, projectId)
@@ -1384,7 +1433,7 @@ export async function startImport(input: ImportJobInput) {
                 client!,
                 projectId,
                 input.userId,
-                input.version.versionId,
+                versionLabelInc,
                 input.version.description || '',
                 parentVersionUuidInc
                   ? 'Imported from specification (follow-on revision in same project)'
@@ -1400,14 +1449,14 @@ export async function startImport(input: ImportJobInput) {
             const existingUuid = await getVersionUuidForCatalogVersionLineTx(
               client!,
               projectId,
-              input.version.versionId
+              versionLabelInc
             );
             if (!existingUuid) throw new Error(verErr);
             emit(
               job,
               'info',
               'DUPLICATE_VERSION_SKIPPED',
-              `Catalog version "${input.version.versionId}" already exists for this project; skipping import.`,
+              `Catalog version "${versionLabelInc}" already exists for this project; skipping import.`,
               { projectId, versionRecordId: existingUuid }
             );
             job.result = { projectId, versionId: existingUuid };
@@ -1427,7 +1476,7 @@ export async function startImport(input: ImportJobInput) {
           throw new Error(verErr);
         }
         const versionId = resVer.version.id as string;
-        emit(job, 'info', 'VERSION_CREATED', `Created version: ${input.version.versionId}`, {
+        emit(job, 'info', 'VERSION_CREATED', `Created version: ${versionLabelInc}`, {
           versionId,
           parentVersionUuid: parentVersionUuidInc ?? undefined,
         });
@@ -1571,7 +1620,8 @@ export async function startImport(input: ImportJobInput) {
 
       if (job.canceled) throw new Error('Import canceled');
 
-      setProgress(job, 'creating-version', 2, 1, input.version.versionId);
+      const versionLabelTx = await resolveImportVersionLabel(client!, job, input, existingTx);
+      setProgress(job, 'creating-version', 2, 1, versionLabelTx);
       const reuseLibraryTx = Boolean(existingTx);
       const parentVersionUuidTx = reuseLibraryTx
         ? await getLatestVersionUuidForProjectTx(client!, projectId)
@@ -1591,7 +1641,7 @@ export async function startImport(input: ImportJobInput) {
               client!,
               projectId,
               input.userId,
-              input.version.versionId,
+              versionLabelTx,
               input.version.description || '',
               parentVersionUuidTx
                 ? 'Imported from specification (follow-on revision in same project)'
@@ -1607,7 +1657,7 @@ export async function startImport(input: ImportJobInput) {
           const existingUuid = await getVersionUuidForCatalogVersionLineTx(
             client!,
             projectId,
-            input.version.versionId
+            versionLabelTx
           );
           if (!existingUuid) throw new Error(verErr);
           if (job.transactionPending) {
@@ -1619,7 +1669,7 @@ export async function startImport(input: ImportJobInput) {
             job,
             'info',
             'DUPLICATE_VERSION_SKIPPED',
-            `Catalog version "${input.version.versionId}" already exists for this project; skipping import.`,
+            `Catalog version "${versionLabelTx}" already exists for this project; skipping import.`,
             { projectId, versionRecordId: existingUuid }
           );
           job.result = { projectId, versionId: existingUuid };
@@ -1638,7 +1688,7 @@ export async function startImport(input: ImportJobInput) {
         throw new Error(verErr);
       }
       const versionId = resVer.version.id as string;
-      emit(job, 'info', 'VERSION_CREATED', `Created version: ${input.version.versionId}`, {
+      emit(job, 'info', 'VERSION_CREATED', `Created version: ${versionLabelTx}`, {
         versionId,
         parentVersionUuid: parentVersionUuidTx ?? undefined,
       });

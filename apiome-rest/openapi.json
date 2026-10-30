@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.414.0",
+    "version": "1.415.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -165629,6 +165629,15 @@
             "title": "Base Version Label",
             "description": "Its version label, e.g. `2.4.0`.",
             "example": "1.0.0"
+          },
+          "existing_version_labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Existing Version Labels",
+            "description": "Every live version label of the project, oldest first (#590). The wizard checks whether the import's version is already taken and, if so, offers a free sub-version (`1.0.0b`, `1.0.0c` \u2026).",
+            "maxItems": 1000
           },
           "overall": {
             "type": "string",

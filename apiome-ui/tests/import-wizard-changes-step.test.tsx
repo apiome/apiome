@@ -477,6 +477,52 @@ describe('the wizard with a Changes step', () => {
     );
   });
 
+  it('imports as a sub-version when the project already has the version (#590)', async () => {
+    stubFetch(() =>
+      jsonResponse({ success: true, delta: { ...DELTA, existing_version_labels: ['2.4.0', '2.5.0', '2.5.0b'] } }),
+    );
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+
+    const notice = await screen.findByTestId('import-changes-version-taken');
+    expect(notice).toHaveTextContent('This version number is taken');
+    expect(notice).toHaveTextContent('Payments API already has version 2.5.0, so this import is added as 2.5.0c');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    expect(startImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: expect.objectContaining({ versionId: '2.5.0c' }),
+        options: expect.objectContaining({ onVersionConflict: 'create-version' }),
+      }),
+    );
+  });
+
+  it('keeps the requested version when the project does not have it (#590)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: { ...DELTA, existing_version_labels: ['2.4.0'] } }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    expect(screen.queryByTestId('import-changes-version-taken')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    expect(startImport).toHaveBeenCalledWith(
+      expect.objectContaining({ version: expect.objectContaining({ versionId: '2.5.0' }) }),
+    );
+  });
+
+  it('asks for no sub-version when the comparison could not run (#590)', async () => {
+    stubFetch(() => jsonResponse({ success: false, error: 'REST is down.' }, false));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes-error');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    const input = startImport.mock.calls[0][0] as { version: { versionId: string }; options: Record<string, unknown> };
+    expect(input.version.versionId).toBe('2.5.0');
+    expect(input.options.onVersionConflict).toBeUndefined();
+  });
+
   it('goes straight to Import for a first-time import', async () => {
     stubFetch(() => jsonResponse({ success: true, delta: null }));
     await reachPreview();

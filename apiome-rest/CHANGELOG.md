@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.551.0] - 2026-10-30
+
+### Added
+- **Resolution strategy "Create version" (#590).** `POST /v1/tenants/{tenant}/import/project-delta` now returns
+  `existing_version_labels`: every live version label of the target project, oldest first (new
+  `Database.list_version_labels_for_project`). The import wizard's Changes step uses it to tell whether the import's
+  version is already taken and, if so, adds the import as the next free sub-version (`1.0.0b`, `1.0.0c` …) instead of
+  failing on the duplicate.
+
 ## [1.550.0] - 2026-10-30
 
 ### Added

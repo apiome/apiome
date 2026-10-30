@@ -222,6 +222,10 @@ class _FakeDb:
     def get_latest_revision_id_for_project(self, project_id: str, tenant_id: str):
         return self.latest
 
+    def list_version_labels_for_project(self, project_id: str, tenant_id: str):
+        assert tenant_id == TENANT_ID
+        return ["2.3.0", "2.4.0"] if project_id == PROJECT_ID else []
+
     def get_version_by_id(self, version_id: str, tenant_id: str):
         if version_id != REVISION_ID:
             return None
@@ -281,6 +285,8 @@ def test_run_rebuilds_the_latest_revision_and_omits_documents_on_request(monkeyp
     assert calls[0]["id"] == REVISION_ID
     assert response.base_version_label == "2.4.0"
     assert response.project_name == "Payments API"
+    # #590: the wizard checks the import's version against every live label of the project.
+    assert response.existing_version_labels == ["2.3.0", "2.4.0"]
     assert response.base_document is None and response.incoming_document is None
 
 
@@ -318,6 +324,7 @@ def test_route_returns_the_delta_with_both_documents(fake_db):
     assert body["project_id"] == PROJECT_ID
     assert body["base_revision_id"] == REVISION_ID
     assert body["base_version_label"] == "2.4.0"
+    assert body["existing_version_labels"] == ["2.3.0", "2.4.0"]
     assert body["overall"] == "breaking"
     assert body["counts"] == {"added": 2, "changed": 1, "removed": 1, "breaking": 2, "total": 4}
     assert body["changes"][0]["severity"] == "breaking"

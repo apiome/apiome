@@ -162,6 +162,12 @@ class ProjectDeltaResponse(BaseModel):
     project_name: str
     base_revision_id: str = Field(..., description="The latest revision (`versions.id`) compared against.")
     base_version_label: str = Field(..., description="Its version label, e.g. `2.4.0`.")
+    existing_version_labels: List[str] = Field(
+        default_factory=list,
+        description="Every live version label of the project, oldest first (#590). The wizard checks "
+        "whether the import's version is already taken and, if so, offers a free sub-version "
+        "(`1.0.0b`, `1.0.0c` …).",
+    )
     overall: Severity = Field(..., description="The compatibility engine's overall verdict.")
     counts: ProjectDeltaCounts
     changes: List[ProjectDeltaChange] = Field(
@@ -414,6 +420,7 @@ def run_project_delta(
         project_name=str(project.get("name") or project.get("slug") or ""),
         base_revision_id=str(version["id"]),
         base_version_label=str(version.get("version_id") or ""),
+        existing_version_labels=db.list_version_labels_for_project(str(project["id"]), tenant_id),
         base_document=base_document if request.include_documents else None,
         incoming_document=request.document if request.include_documents else None,
         **delta,

@@ -55,6 +55,8 @@ export interface ProjectDelta {
   project_name: string;
   base_revision_id: string;
   base_version_label: string;
+  /** Every live version label of the project, oldest first (#590); absent from older servers. */
+  existing_version_labels?: string[];
   overall: ProjectDeltaSeverity;
   counts: ProjectDeltaCounts;
   changes: ProjectDeltaChange[];

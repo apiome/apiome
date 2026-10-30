@@ -51,6 +51,8 @@ interface RawImportSummary {
   versionId?: string;
   dryRun?: boolean;
   incrementalMode?: boolean;
+  /** Set when the requested version was taken and a sub-version was created instead (#590). */
+  versionLabelAdjusted?: { requested: string; used: string };
   classes?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -80,6 +82,8 @@ interface ImportSummary {
   versionId?: string;
   dryRun?: boolean;
   incrementalMode?: boolean;
+  /** Set when the requested version was taken and a sub-version was created instead (#590). */
+  versionLabelAdjusted?: { requested: string; used: string };
   schemas?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -127,6 +131,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             versionId: result?.versionId ?? rawSummary.versionId,
             dryRun: rawSummary.dryRun === true,
             incrementalMode: rawSummary.incrementalMode === true,
+            versionLabelAdjusted: rawSummary.versionLabelAdjusted,
             schemas: rawSummary.classes?.map((c) => ({
               name: c.name,
               status: c.status
@@ -397,6 +402,15 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
               <dt>Target</dt>
               <dd>
                 {summary.projectName || 'Project'} / {summary.versionId || 'Version'}
+              </dd>
+            </>
+          )}
+          {summary?.versionLabelAdjusted && (
+            // #590: the requested version existed, so the import was added as a sub-version.
+            <>
+              <dt>Version</dt>
+              <dd data-testid="import-complete-version-adjusted">
+                {summary.versionLabelAdjusted.used} ({summary.versionLabelAdjusted.requested} was taken)
               </dd>
             </>
           )}
