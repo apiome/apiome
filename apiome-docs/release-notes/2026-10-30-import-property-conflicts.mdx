@@ -1,0 +1,17 @@
+---
+slug: import-property-conflicts
+title: Import warns about property conflicts
+description: The Preview step lists properties defined differently across selected schemas.
+authors: [apiome]
+---
+
+The import wizard's **Preview** step now warns when the schemas you tick use the same property name
+with different definitions. [How it works](/bring-in/import-wizard#properties-defined-differently).
+
+{/* truncate */}
+
+- **Every definition is listed** with the schemas that use it. For example, `status` might be an
+  enum of `active | inactive` in **Customer** and `pending | completed` in **Transaction**.
+- **The import still runs.** Each definition becomes its own property in the project library
+  (`status`, `status_1`), and every schema keeps its own.
+- **It follows your selection.** Untick the schemas on one side and the warning clears.

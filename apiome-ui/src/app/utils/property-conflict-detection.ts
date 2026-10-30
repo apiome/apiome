@@ -59,6 +59,30 @@ function describeDefinition(propSchema: any): string {
   return `${t}${f}${e}`;
 }
 
+/** The longest definition summary shown before it is cut (#583). */
+const SUMMARY_MAX_LENGTH = 120;
+
+/**
+ * One definition as a reader compares it: its normalized JSON (sorted keys, no `$id` / `$schema`
+ * or `x-` fields), cut at {@link SUMMARY_MAX_LENGTH}. Always distinct for two distinct definitions
+ * up to the cut, which a type-only summary (`string` vs `string`) is not.
+ *
+ * @param propSchema The property schema.
+ * @returns The summary.
+ */
+export function summarizePropertyDefinition(propSchema: unknown): string {
+  const json = JSON.stringify(normalizePropertyDefinition(propSchema)) ?? 'undefined';
+  return json.length > SUMMARY_MAX_LENGTH ? `${json.slice(0, SUMMARY_MAX_LENGTH - 1)}…` : json;
+}
+
+/** One property name defined more than one way (#583). */
+export interface PropertyConflict {
+  /** The property name. */
+  property: string;
+  /** Each distinct definition, in the order first seen, with the schemas that use it. */
+  definitions: Array<{ schemas: string[]; summary: string }>;
+}
+
 export interface PropertyConflictInput {
   /** OpenAPI document (components.schemas or definitions) */
   document: any;
@@ -67,65 +91,74 @@ export interface PropertyConflictInput {
 }
 
 /**
- * Detect property definition conflicts (#583): for each property name that appears
- * in more than one schema with different definitions, returns one ImportConflict.
+ * Find every property name that the given schemas define in more than one way (#583).
+ *
+ * Definitions are compared after normalization: key order, `$id` / `$schema` and `x-` extensions do
+ * not count. Everything else does — a different `description` too, because the importer stores each
+ * distinct definition as its own library property.
+ *
+ * @param input The document and the schema names to compare.
+ * @returns One entry per conflicting property name, in the order the names were first seen.
  */
-export function detectPropertyConflicts(input: PropertyConflictInput): ImportConflict[] {
+export function findPropertyConflicts(input: PropertyConflictInput): PropertyConflict[] {
   const { document, schemaNames } = input;
   const schemas = document?.components?.schemas || document?.definitions || {};
   const nameSet = new Set(schemaNames);
   if (nameSet.size === 0) return [];
 
-  // propertyName -> { signature -> { schemaNames, sampleSchema for description } }
-  const byPropName = new Map<
-    string,
-    Map<string, { schemaNames: string[]; sample: any }>
-  >();
-
+  // propertyName -> { signature -> { schemaNames, sample } }
+  const byPropName = new Map<string, Map<string, { schemaNames: string[]; sample: any }>>();
   for (const schemaName of nameSet) {
     const schema = schemas[schemaName];
     if (!schema) continue;
-    const properties = extractDirectProperties(schema);
-    for (const [propName, propSchema] of Object.entries(properties)) {
+    for (const [propName, propSchema] of Object.entries(extractDirectProperties(schema))) {
       if (!propSchema || typeof propSchema !== 'object') continue;
       const sig = propertyDefinitionSignature(propSchema);
-      if (!byPropName.has(propName)) {
-        byPropName.set(propName, new Map());
-      }
+      if (!byPropName.has(propName)) byPropName.set(propName, new Map());
       const bySig = byPropName.get(propName)!;
-      if (!bySig.has(sig)) {
-        bySig.set(sig, { schemaNames: [], sample: propSchema });
-      }
+      if (!bySig.has(sig)) bySig.set(sig, { schemaNames: [], sample: propSchema });
       const entry = bySig.get(sig)!;
-      if (!entry.schemaNames.includes(schemaName)) {
-        entry.schemaNames.push(schemaName);
-      }
+      if (!entry.schemaNames.includes(schemaName)) entry.schemaNames.push(schemaName);
     }
   }
 
-  const conflicts: ImportConflict[] = [];
-  for (const [propName, bySig] of byPropName) {
-    const definitions = Array.from(bySig.entries());
-    if (definitions.length < 2) continue; // same definition everywhere or only one schema
-
-    const allSchemaNames = definitions.flatMap(([, e]) => e.schemaNames);
-    const uniqueSchemaNames = Array.from(new Set(allSchemaNames));
-    const parts = definitions.map(([_, e]) => {
-      const desc = describeDefinition(e.sample);
-      const names = e.schemaNames.slice(0, 3).join(', ');
-      const more = e.schemaNames.length > 3 ? ` +${e.schemaNames.length - 3} more` : '';
-      return `${names}${more} (${desc})`;
-    });
-    const firstSchema = uniqueSchemaNames[0];
+  const conflicts: PropertyConflict[] = [];
+  for (const [property, bySig] of byPropName) {
+    if (bySig.size < 2) continue; // one definition everywhere
     conflicts.push({
-      kind: 'property_conflict',
-      schemaName: firstSchema,
-      message: `Property "${propName}" has incompatible definitions across schemas.`,
-      detail: parts.join('; '),
-      impactIfResolved:
-        'The chosen property definition will be applied; the other will be discarded or merged per strategy.',
+      property,
+      definitions: Array.from(bySig.values()).map((entry) => ({
+        schemas: entry.schemaNames,
+        summary: summarizePropertyDefinition(entry.sample),
+      })),
     });
   }
-
   return conflicts;
+}
+
+/** What the import does with a conflicting property (#583). */
+const PROPERTY_CONFLICT_IMPACT =
+  'Each definition is imported as its own property in the project library (for example "status" and ' +
+  '"status_1"); every schema keeps its own definition.';
+
+/**
+ * Detect property definition conflicts (#583): for each property name that appears
+ * in more than one schema with different definitions, returns one ImportConflict.
+ */
+export function detectPropertyConflicts(input: PropertyConflictInput): ImportConflict[] {
+  const schemas = input.document?.components?.schemas || input.document?.definitions || {};
+  return findPropertyConflicts(input).map(({ property, definitions }) => ({
+    kind: 'property_conflict',
+    schemaName: definitions[0].schemas[0],
+    message: `Property "${property}" has incompatible definitions across schemas.`,
+    detail: definitions
+      .map(({ schemas: names }) => {
+        const sample = extractDirectProperties(schemas[names[0]])[property];
+        const shown = names.slice(0, 3).join(', ');
+        const more = names.length > 3 ? ` +${names.length - 3} more` : '';
+        return `${shown}${more} (${describeDefinition(sample)})`;
+      })
+      .join('; '),
+    impactIfResolved: PROPERTY_CONFLICT_IMPACT,
+  }));
 }
