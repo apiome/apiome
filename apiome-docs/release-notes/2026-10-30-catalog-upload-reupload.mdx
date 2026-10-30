@@ -1,0 +1,22 @@
+---
+slug: catalog-upload-reupload
+title: Uploaded catalog items say when they may be stale
+description: Uploaded items flag when they may be stale, and re-upload with their settings.
+authors: [apiome]
+---
+
+A catalog item you imported from an uploaded file now tells you when it **may be stale**, and
+**Re-upload…** brings it up to date with the same import settings the first upload used.
+[How it works](/bring-in/catalog-refresh#uploaded-files).
+
+{/* truncate */}
+
+- **The hint.** Apiome can't check an uploaded file for changes, so once an item's newest version
+  came from an upload at least 90 days ago, a banner above its tabs names the file and how long ago
+  it was uploaded. The **Uploaded file** card on the **Provenance** tab shows the same, for every
+  uploaded item.
+- **The re-upload.** Choose the current copy of the file. Apiome imports it with the settings the
+  first upload recorded, such as naming conventions and selected schemas, and adds a version with a
+  change report only when the file changed.
+- **The age.** An administrator can change the 90 days, from 1 to 3650, with
+  `PUT /v1/catalog/{tenant}/upload-policy`.

@@ -111,6 +111,12 @@ import {
   CatalogDriftBanner,
   CatalogDriftPanel,
   CatalogItemRefreshCard,
+  CatalogItemUploadCard,
+  CatalogReuploadDialog,
+  CatalogStaleUploadBanner,
+  reuploadResultText,
+  useCatalogItemUpload,
+  type CatalogReuploadResult,
   catalogDetailActions,
   catalogDetailBreadcrumb,
   catalogDetailIdLine,
@@ -457,6 +463,30 @@ export function CatalogItemDetailClient({
     void load();
   }, [load]);
 
+  /* RAR-6.2: whether the item is an upload that may be stale — read once, shared by the banner
+     above the panes and the Uploaded file card on the Provenance tab. */
+  const {
+    upload,
+    error: uploadError,
+    setUpload,
+  } = useCatalogItemUpload(itemId, Boolean(item && !item.deleted_at));
+  const [reuploadOpen, setReuploadOpen] = useState(false);
+  const [reuploadKey, setReuploadKey] = useState(0);
+  const [reuploadResult, setReuploadResult] = useState<string | null>(null);
+  const openReupload = useCallback(() => {
+    setReuploadKey((key) => key + 1);
+    setReuploadOpen(true);
+  }, []);
+  /** After a re-upload: show what it did, and reload the item when it added a version. */
+  const handleReuploaded = useCallback(
+    (result: CatalogReuploadResult) => {
+      setUpload(result.upload);
+      setReuploadResult(reuploadResultText(result));
+      if (result.status === 'changed') void load();
+    },
+    [load, setUpload],
+  );
+
   /** After a conversion (MFI-23.11), reload so the back-link appears and Convert relabels. */
   const handleConverted = useCallback(() => {
     void load();
@@ -784,6 +814,12 @@ export function CatalogItemDetailClient({
               onOpen={openDrift}
               onDismissed={setDismissedDriftId}
             />
+            <CatalogStaleUploadBanner
+              upload={upload}
+              canReupload={actions.reupload.shown}
+              onReupload={openReupload}
+              onOpenDetails={() => selectTab('provenance')}
+            />
             <CatalogConvertedStrip
               conversion={item.conversion}
               conversionCount={tabCounts.conversions ?? 0}
@@ -876,6 +912,13 @@ export function CatalogItemDetailClient({
             item={{ id: item.id, name: item.name }}
             active={activeTab === 'provenance'}
             canEdit={actions.refresh.shown}
+          />
+          <CatalogItemUploadCard
+            upload={upload}
+            error={uploadError}
+            canReupload={actions.reupload.shown}
+            onReupload={openReupload}
+            lastResult={reuploadResult}
           />
         </TabPanel>
 
@@ -999,6 +1042,17 @@ export function CatalogItemDetailClient({
               current ? { ...current, domain: saved.domain, tags: [...saved.tags].sort() } : current
             )
           }
+        />
+      ) : null}
+
+      {upload?.eligible && actions.reupload.shown ? (
+        <CatalogReuploadDialog
+          key={reuploadKey}
+          open={reuploadOpen}
+          item={{ id: item.id, name: item.name }}
+          upload={upload}
+          onOpenChange={setReuploadOpen}
+          onReuploaded={handleReuploaded}
         />
       ) : null}
 

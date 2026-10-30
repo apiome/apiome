@@ -23768,6 +23768,43 @@ button.cid-entity__head {
   color: var(--fg);
 }
 
+/* ---- Uploaded file (RAR-6.2, #3539) ----------------------------------------
+   The Provenance card of an item imported from an uploaded file, and the
+   re-upload dialog. They share the Live refresh card's head, facts and form
+   rules above; these only lay out the replayed-settings list and the
+   outcome line. Tokens only. */
+.cid-upload__settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.cid-upload__result {
+  margin-block-start: var(--space-2);
+}
+
+.cid-reupload__replay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* The file picker: the control's fixed height and flex box top-align the
+   browser's "Choose file" button and file name, so let it size to its
+   content with the control's own padding instead. */
+.cid-reupload__file {
+  block-size: auto;
+  padding-block: var(--space-2);
+}
+
+.cid-reupload__file::file-selector-button {
+  margin-inline-end: var(--space-3);
+}
+
 /* ---- Drift (MFI-31.3, #4400) ------------------------------------------------
    The banner above the panes, "What changed" on the Versions pane, and the
    workspace's Drift alerts dialog. The severity tint is the Alert / Badge

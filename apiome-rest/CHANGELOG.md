@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.554.0] - 2026-10-30
+
+### Added
+- **Reconcile one-shot file uploads (RAR-6.2, #3539).** A catalog item imported from an uploaded file has no live
+  source to refresh, so the import pipeline now records the spec it ran with on the revision's
+  `format_metadata.importSpec` (`{specSchemaVersion, sourceKind, options}`, the user's `SpecImportOptions` minus the
+  run-only `dry_run`, `skip_duplicate_versions`, `input_kind` and `git_source`) for every `file` / `fileset` upload. New
+  `GET /v1/catalog/{tenant}/{item}/upload` says whether the item's newest version is an upload, its age, and whether it
+  is `stale` (at least the tenant's `staleAfterDays` old); `POST /v1/catalog/{tenant}/{item}/reupload` (`imports:create`
+  and `projects:edit`; body `{filename, documentBase64}`) replays the stored importer and options over the new file
+  through the import pipeline and the tenant's import quality gate: an identical file answers `unchanged` and writes
+  nothing, a changed one adds a date/time-labelled version with a change report. An upload from before capture replays
+  the recorded source format with default options (`specReplayed: false`). `GET` / `PUT
+  /v1/catalog/{tenant}/upload-policy` (`imports:edit` to change) read and set `staleAfterDays` (1–3650, default 90),
+  stored in the new `apiome.tenants.catalog_upload_stale_after_days` column (migration V339). New
+  `app.catalog_upload_reconcile` and `app.catalog_upload_routes`. OpenAPI 1.418.0.
+
 ## [1.553.0] - 2026-10-30
 
 ### Added

@@ -177,6 +177,8 @@ export interface CatalogDetailActions {
   categorize: { shown: boolean };
   /** Live refresh's Set up / Edit / Check now / Turn off (MFI-31.1) — hidden once the item is deleted. */
   refresh: { shown: boolean };
+  /** Re-upload an uploaded item's file (RAR-6.2; `imports:create` + `projects:edit`) — hidden once deleted. */
+  reupload: { shown: boolean };
   /** "Export to another format…" — Export studio with the item as source (E1-1; released only). */
   exportStudio: { shown: boolean };
   /** Dismiss the item's drift banner and badge (MFI-31.3; `projects:edit`). */
@@ -215,6 +217,7 @@ export function catalogDetailActions(
     viewCode: { shown: true },
     categorize: { shown: live && can('projects:edit') },
     refresh: { shown: live && can('projects:edit') },
+    reupload: { shown: live && can('projects:edit') && can('imports:create') },
     dismissDrift: { shown: live && can('projects:edit') },
   };
 }

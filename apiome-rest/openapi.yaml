@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.417.0
+  version: 1.418.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11251,6 +11251,273 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for check catalog item refreshresponse422.
+  /v1/catalog/{tenant_slug}/upload-policy:
+    get:
+      tags:
+      - catalog-upload
+      summary: Get Catalog Upload Policy
+      description: Read the tenant's staleness threshold for uploaded catalog items
+        (``projects:view``).
+      operationId: get_catalog_upload_policy_v1_catalog__tenant_slug__upload_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Catalog Upload Policyauthorization schema.
+          - type: 'null'
+            description: Get Catalog Upload Policyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Catalog Upload Policy Xapikey schema.
+          - type: 'null'
+            description: Get Catalog Upload Policy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get catalog upload policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogUploadPolicy'
+                description: Response payload for get catalog upload policyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get catalog upload policyresponse422.
+    put:
+      tags:
+      - catalog-upload
+      summary: Set Catalog Upload Policy
+      description: Change how many days old an uploaded item's newest version is before
+        it may be stale (``imports:edit``).
+      operationId: set_catalog_upload_policy_v1_catalog__tenant_slug__upload_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Set Catalog Upload Policyauthorization schema.
+          - type: 'null'
+            description: Set Catalog Upload Policyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Set Catalog Upload Policy Xapikey schema.
+          - type: 'null'
+            description: Set Catalog Upload Policy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogUploadPolicy'
+              description: Request body for set catalog upload policyrequest.
+        description: Request body for set catalog upload policy.
+      responses:
+        '200':
+          description: Successful response for set catalog upload policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogUploadPolicy'
+                description: Response payload for set catalog upload policyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for set catalog upload policyresponse422.
+  /v1/catalog/{tenant_slug}/{item_id}/upload:
+    get:
+      tags:
+      - catalog-upload
+      summary: Get Catalog Item Upload
+      description: Whether the item came from an upload, how old it is and whether it
+        may be stale (``projects:view``).
+      operationId: get_catalog_item_upload_v1_catalog__tenant_slug___item_id__upload_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Item Id
+          description: Item Id schema.
+        description: Catalog item identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Catalog Item Uploadauthorization schema.
+          - type: 'null'
+            description: Get Catalog Item Uploadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Catalog Item Upload Xapikey schema.
+          - type: 'null'
+            description: Get Catalog Item Upload Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get catalog item upload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogUploadOut'
+                description: Response payload for get catalog item uploadresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get catalog item uploadresponse422.
+  /v1/catalog/{tenant_slug}/{item_id}/reupload:
+    post:
+      tags:
+      - catalog-upload
+      summary: Reupload Catalog Item
+      description: "Re-import a new copy of the item's uploaded file with the import\
+        \ spec it recorded.\n\nThe file goes through the import pipeline with the importer\
+        \ and options of the original upload,\nand the tenant's import quality gate,\
+        \ exactly as an upload would. A file identical to the\ncurrent version writes\
+        \ nothing (``unchanged``); a changed one adds a date/time-labelled version\n\
+        with a change report against the version it supersedes (``changed``).\n\nRaises:\n\
+        \    HTTPException: 404 when the item is not a catalog item in the tenant; 409\
+        \ ``not-an-upload``\n        when its newest version did not come from an upload;\
+        \ 409 ``QUALITY_POLICY_BLOCKED``;\n        413 when the file is over the intake\
+        \ limit; 422 when the file is not valid base64 or\n        cannot be imported."
+      operationId: reupload_catalog_item_v1_catalog__tenant_slug___item_id__reupload_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Item Id
+          description: Item Id schema.
+        description: Catalog item identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reupload Catalog Itemauthorization schema.
+          - type: 'null'
+            description: Reupload Catalog Itemauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reupload Catalog Item Xapikey schema.
+          - type: 'null'
+            description: Reupload Catalog Item Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogReuploadRequest'
+              description: Request body for reupload catalog itemrequest.
+        description: Request body for reupload catalog item.
+      responses:
+        '200':
+          description: Successful response for reupload catalog item.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogReuploadOut'
+                description: Response payload for reupload catalog itemresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for reupload catalog itemresponse422.
   /v1/catalog/{tenant_slug}/drift-notifications:
     get:
       tags:
@@ -86579,6 +86846,78 @@ components:
         or send an object
 
         to replace it.'
+    CatalogReuploadOut:
+      properties:
+        status:
+          type: string
+          enum:
+          - changed
+          - unchanged
+          title: Status
+          description: 'changed: the file differed, so a version was added; unchanged:
+            it matches the current version and nothing was written.'
+          example: changed
+        specReplayed:
+          type: boolean
+          title: Specreplayed
+          description: True when the stored import spec was replayed; false for an upload
+            from before spec capture, which ran with default options.
+          example: false
+        versionId:
+          anyOf:
+          - type: string
+            description: Response payload for catalog reupload.
+          - type: 'null'
+            description: Response payload for catalog reupload.
+          title: Versionid
+          description: Version ID.
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for catalog reupload.
+          - type: 'null'
+            description: Response payload for catalog reupload.
+          title: Versionlabel
+          description: Version Label.
+        upload:
+          $ref: '#/components/schemas/CatalogUploadOut'
+          description: Upload.
+      type: object
+      required:
+      - status
+      - specReplayed
+      - upload
+      title: CatalogReuploadOut
+      description: What a re-upload did, and the item's upload state afterwards.
+    CatalogReuploadRequest:
+      properties:
+        filename:
+          type: string
+          maxLength: 512
+          minLength: 1
+          title: Filename
+          description: The file's name.
+          example: Example
+        documentBase64:
+          type: string
+          title: Documentbase64
+          description: 'Standard base64 (RFC 4648) of the file bytes; no data: URL prefix.'
+          example: example
+        contentType:
+          anyOf:
+          - type: string
+            description: Request body for catalog reupload.
+          - type: 'null'
+            description: Request body for catalog reupload.
+          title: Contenttype
+          description: Optional MIME type hint.
+      additionalProperties: false
+      type: object
+      required:
+      - filename
+      - documentBase64
+      title: CatalogReuploadRequest
+      description: '``POST …/{item_id}/reupload``: the new copy of the file.'
     CatalogSourceDescriptor:
       properties:
         kind:
@@ -86643,6 +86982,124 @@ components:
         "stream the
 
         captured bytes" from "open the URL".'
+    CatalogUploadOut:
+      properties:
+        itemId:
+          type: string
+          title: Itemid
+          description: Item ID.
+          example: example
+        eligible:
+          type: boolean
+          title: Eligible
+          description: True when the item's newest version came from a file upload, so
+            it can be re-uploaded.
+          example: false
+        stale:
+          type: boolean
+          title: Stale
+          description: True when it is eligible and at least `staleAfterDays` old.
+          example: false
+        staleAfterDays:
+          type: integer
+          title: Staleafterdays
+          description: Stale After Days.
+          example: 1
+        uploadedAt:
+          anyOf:
+          - type: string
+            description: Response payload for catalog upload.
+          - type: 'null'
+            description: Response payload for catalog upload.
+          title: Uploadedat
+          description: Uploaded At.
+        ageDays:
+          anyOf:
+          - type: integer
+            description: Response payload for catalog upload.
+          - type: 'null'
+            description: Response payload for catalog upload.
+          title: Agedays
+          description: Age Days.
+        versionId:
+          anyOf:
+          - type: string
+            description: Response payload for catalog upload.
+          - type: 'null'
+            description: Response payload for catalog upload.
+          title: Versionid
+          description: Version ID.
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for catalog upload.
+          - type: 'null'
+            description: Response payload for catalog upload.
+          title: Versionlabel
+          description: Version Label.
+        sourceLabel:
+          anyOf:
+          - type: string
+            description: Response payload for catalog upload.
+          - type: 'null'
+            description: Response payload for catalog upload.
+          title: Sourcelabel
+          description: The uploaded file's name.
+        spec:
+          anyOf:
+          - $ref: '#/components/schemas/CatalogUploadSpec'
+          - type: 'null'
+            description: Response payload for catalog upload.
+          description: The stored import spec; null for an upload from before spec capture,
+            whose re-upload runs with default options.
+      type: object
+      required:
+      - itemId
+      - eligible
+      - stale
+      - staleAfterDays
+      title: CatalogUploadOut
+      description: Whether an item's current version came from an upload and whether it
+        may be stale.
+    CatalogUploadPolicy:
+      properties:
+        staleAfterDays:
+          type: integer
+          maximum: 3650.0
+          minimum: 1.0
+          title: Staleafterdays
+          description: An uploaded item's newest version this many days old or older may
+            be stale (default 90).
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - staleAfterDays
+      title: CatalogUploadPolicy
+      description: The tenant's staleness threshold for uploaded catalog items.
+    CatalogUploadSpec:
+      properties:
+        specSchemaVersion:
+          type: integer
+          title: Specschemaversion
+          description: Spec Schema Version.
+          example: 1
+        sourceKind:
+          type: string
+          title: Sourcekind
+          description: The importer the upload ran (for example `asyncapi-2`).
+          example: example
+        options:
+          additionalProperties: true
+          type: object
+          title: Options
+          description: The import options the user chose.
+      type: object
+      required:
+      - specSchemaVersion
+      - sourceKind
+      title: CatalogUploadSpec
+      description: The import spec an upload recorded, replayed by a re-upload.
     CertificateBody:
       properties:
         known:
