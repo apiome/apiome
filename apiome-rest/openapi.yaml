@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.418.0
+  version: 1.419.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11789,6 +11789,222 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for dismiss catalog item driftresponse422.
+  /v1/tenants/{tenant_slug}/url-imports:
+    post:
+      tags:
+      - url-imports
+      summary: Record a URL import for auto-refresh
+      description: "Record a URL import that just succeeded, so the URL refresh sweep\
+        \ keeps it up to date.\n\nREST fetches the URL once (SSRF-guarded) to store\
+        \ the ``ETag``, ``Last-Modified`` and SHA-256\na refresh compares with. When\
+        \ that fetch fails the lineage is still recorded, with the error,\nand the first\
+        \ check anchors on what the URL serves then. Recording the same URL for the\
+        \ same\nproject again replaces the stored spec and anchors and keeps the refresh\
+        \ settings.\n\nRaises:\n    HTTPException: 404 when the project is not the tenant's;\
+        \ 422 for a URL that is not\n        http/https or carries credentials, or a\
+        \ version that is not the project's."
+      operationId: record_url_import_route_v1_tenants__tenant_slug__url_imports_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recorda Urlimportforautorefreshauthorization schema.
+          - type: 'null'
+            description: Recorda Urlimportforautorefreshauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recorda Urlimportforautorefresh Xapikey schema.
+          - type: 'null'
+            description: Recorda Urlimportforautorefresh Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UrlImportRecordRequest'
+              description: Request body for recorda urlimportforautorefreshrequest.
+        description: Request body for record a url import for auto-refresh.
+      responses:
+        '201':
+          description: Successful response for record a url import for auto-refresh.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlImportOut'
+                description: Response payload for recorda urlimportforautorefreshresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for recorda urlimportforautorefreshresponse422.
+    get:
+      tags:
+      - url-imports
+      summary: List URL imports and their refresh state
+      description: List the tenant's URL imports, newest first, with when each was last
+        checked and refreshed.
+      operationId: list_url_imports_v1_tenants__tenant_slug__url_imports_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Urlimportsandtheirrefreshstateproject ID schema.
+          - type: 'null'
+            description: List Urlimportsandtheirrefreshstateproject ID schema.
+          description: Only this project's.
+          title: Projectid
+        description: Only this project's.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Urlimportsandtheirrefreshstateauthorization schema.
+          - type: 'null'
+            description: List Urlimportsandtheirrefreshstateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Urlimportsandtheirrefreshstate Xapikey schema.
+          - type: 'null'
+            description: List Urlimportsandtheirrefreshstate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list url imports and their refresh state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlImportList'
+                description: Response payload for list urlimportsandtheirrefreshstateresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list urlimportsandtheirrefreshstateresponse422.
+  /v1/tenants/{tenant_slug}/url-imports/{url_import_id}:
+    patch:
+      tags:
+      - url-imports
+      summary: Turn a URL import's refresh on or off, or set its cadence
+      description: "Change a URL import's refresh (``imports:edit``). Turning it on\
+        \ clears any backoff.\n\nRaises:\n    HTTPException: 404 when the URL import\
+        \ is not the tenant's."
+      operationId: patch_url_import_v1_tenants__tenant_slug__url_imports__url_import_id__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: url_import_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Url Import Id
+          description: Url Import Id schema.
+        description: Path parameter identifying the url import id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Turna Urlimportsrefreshonorofforsetitscadauthorization schema.
+          - type: 'null'
+            description: Turna Urlimportsrefreshonorofforsetitscadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Turna Urlimportsrefreshonorofforsetitscad Xapikey schema.
+          - type: 'null'
+            description: Turna Urlimportsrefreshonorofforsetitscad Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UrlImportSettingsPatch'
+              description: Request body for turna urlimportsrefreshonorofforsetitscadrequest.
+        description: Request body for turn a url import's refresh on or off, or set
+          its cadence.
+      responses:
+        '200':
+          description: Successful response for turn a url import's refresh on or off,
+            or set its cadence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlImportOut'
+                description: Response payload for turna urlimportsrefreshonorofforsetitscadresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for turna urlimportsrefreshonorofforsetitscadresponse422.
   /v1/catalog/{tenant_slug}:
     get:
       tags:
@@ -149249,6 +149465,295 @@ components:
         \    username: ``basic``: the user-id (may not contain ``:``, per RFC 7617).\n\
         \    password: ``basic``: the password (may be empty, for APIs that use the\
         \ key as username)."
+    UrlImportList:
+      properties:
+        urlImports:
+          items:
+            $ref: '#/components/schemas/UrlImportOut'
+          type: array
+          title: Urlimports
+          description: URL Imports.
+          maxItems: 1000
+      type: object
+      required:
+      - urlImports
+      title: UrlImportList
+      description: URL import lineages, newest first.
+    UrlImportOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        projectId:
+          type: string
+          title: Projectid
+          description: Project ID.
+          example: example
+        projectName:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Projectname
+          description: Project Name.
+        projectSlug:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Projectslug
+          description: Project Slug.
+        url:
+          type: string
+          title: Url
+          description: URL.
+          example: https://example.com/resource
+        sourceKind:
+          type: string
+          title: Sourcekind
+          description: Source Kind.
+          example: example
+        authenticated:
+          type: boolean
+          title: Authenticated
+          description: 'Imported with credentials: never refreshed.'
+          example: false
+        refreshable:
+          type: boolean
+          title: Refreshable
+          description: 'On, and not authenticated: the sweep checks it.'
+          example: false
+        autoRefreshEnabled:
+          type: boolean
+          title: Autorefreshenabled
+          description: Auto Refresh Enabled.
+          example: false
+        refreshIntervalSeconds:
+          anyOf:
+          - type: integer
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Refreshintervalseconds
+          description: Own cadence; null means the default.
+        effectiveIntervalSeconds:
+          type: integer
+          title: Effectiveintervalseconds
+          description: The cadence the sweep uses.
+          example: 1
+        etag:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Etag
+          description: ETag recorded at the last import.
+        lastModified:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lastmodified
+          description: Last-Modified recorded at the last import.
+        lastVersionId:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lastversionid
+          description: Last Version ID.
+        lastCheckedAt:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lastcheckedat
+          description: Last Checked At.
+        lastRefreshedAt:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lastrefreshedat
+          description: Last Refreshed At.
+        lastStatus:
+          anyOf:
+          - type: string
+            enum:
+            - up-to-date
+            - refreshing
+            - refreshed
+            - diverged
+            - failed
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Laststatus
+          description: Last Status.
+        lastReason:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lastreason
+          description: 'Why: not-modified, idempotent, stale, newer-content, baseline,
+            manual-edit, or an error class.'
+        lastError:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Lasterror
+          description: Last Error.
+        consecutiveFailures:
+          type: integer
+          title: Consecutivefailures
+          default: 0
+          description: Consecutive Failures.
+          example: 1
+        backoffUntil:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Backoffuntil
+          description: Backoff Until.
+        createdAt:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            description: Response payload for url import.
+          - type: 'null'
+            description: Response payload for url import.
+          title: Updatedat
+          description: Updated At.
+      type: object
+      required:
+      - id
+      - projectId
+      - url
+      - sourceKind
+      - authenticated
+      - refreshable
+      - autoRefreshEnabled
+      - effectiveIntervalSeconds
+      title: UrlImportOut
+      description: A URL import lineage and its refresh state.
+    UrlImportRecordRequest:
+      properties:
+        projectId:
+          type: string
+          title: Projectid
+          description: The project the import landed in.
+          example: example
+        url:
+          type: string
+          maxLength: 4096
+          title: Url
+          description: The http/https URL the spec was imported from.
+          example: https://example.com/resource
+        versionId:
+          anyOf:
+          - type: string
+            description: Request body for url import record.
+          - type: 'null'
+            description: Request body for url import record.
+          title: Versionid
+          description: The version the import produced (versions.id); its content is the
+            manual-edit baseline.
+        sourceKind:
+          type: string
+          maxLength: 128
+          title: Sourcekind
+          description: Importer kind (openapi, arazzo).
+          default: openapi
+          example: example
+        formatOverride:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for url import record.
+          - type: 'null'
+            description: Request body for url import record.
+          title: Formatoverride
+          description: Resolved spec format, when recorded.
+        contentType:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Request body for url import record.
+          - type: 'null'
+            description: Request body for url import record.
+          title: Contenttype
+          description: MIME type the document was parsed as.
+        options:
+          additionalProperties: true
+          type: object
+          title: Options
+          description: The import options, verbatim; a refresh replays them.
+        authenticated:
+          type: boolean
+          title: Authenticated
+          description: The import was fetched with credentials. Recorded but never refreshed;
+            credentials are not sent.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - projectId
+      - url
+      title: UrlImportRecordRequest
+      description: A URL import that just succeeded.
+    UrlImportSettingsPatch:
+      properties:
+        autoRefreshEnabled:
+          anyOf:
+          - type: boolean
+            description: URL Import Settings Patch schema.
+          - type: 'null'
+            description: URL Import Settings Patch schema.
+          title: Autorefreshenabled
+          description: Refresh this URL on its cadence.
+        refreshIntervalSeconds:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+            description: URL Import Settings Patch schema.
+          - type: 'null'
+            description: URL Import Settings Patch schema.
+          title: Refreshintervalseconds
+          description: Seconds between checks (raised to the deployment floor). Omit to
+            keep it.
+        useDefaultInterval:
+          type: boolean
+          title: Usedefaultinterval
+          description: Go back to the deployment's default cadence.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: UrlImportSettingsPatch
+      description: Change a URL lineage's refresh; an omitted field is left as it is.
     UsageIngestRejection:
       properties:
         index:
