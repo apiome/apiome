@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.547.0] - 2026-10-30
+
+### Added
+- **FHIR export validation gate (MFX-26.4, #4160).** The official HL7 FHIR validator gate (`fhir-validator` through the
+  toolchain runner, MFX-26.1) now has an end-to-end test that a rejected artifact fails the export job with the
+  validator's message, file, location and code, and R4 (`4.0.1`) / R5 (`5.0.0`) version tests for both packagings.
+- `fhir_validation.structural_problems(path, text)` — the fallback without the validator: one problem per broken
+  structural rule with its resource path (`fhir.structure`), `fhir.json` for non-JSON, `fhir.reimport` when the FHIR
+  reader cannot read it back.
+
+### Changed
+- **Export gate.** `fhir`'s no-validator fallback (and a validator that goes missing mid-run) reports one finding per
+  structural issue with `path` and `keyword`; it joined the first five into one message per file.
+
 ## [1.546.0] - 2026-10-30
 
 ### Added

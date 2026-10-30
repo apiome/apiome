@@ -31,6 +31,7 @@ __all__ = [
     "FhirValidationIssue",
     "fhir_validator_available",
     "structural_issues",
+    "structural_problems",
     "validate_with_fhir_validator",
 ]
 
@@ -148,6 +149,41 @@ def _outcome_file(outcome: Mapping[str, Any], files: Mapping[str, str]) -> Optio
 # ===========================================================================
 # Structural rules
 # ===========================================================================
+
+
+def structural_problems(path: str, text: str) -> List[Dict[str, Any]]:
+    """Check one emitted FHIR file without the validator — MFX-26.4 (#4160).
+
+    The fallback the export gate uses when the official validator is not in this runtime: each broken
+    structural rule is one problem (``fhir.structure``) carrying the resource path it is at, so a fallback
+    rejection names every issue the way the validator's ``OperationOutcome`` would. A file that is not
+    JSON is ``fhir.json``; one that the FHIR reader cannot read back is ``fhir.reimport``.
+
+    Args:
+        path: The file's export path.
+        text: Its JSON text.
+
+    Returns:
+        ``{"rule", "message", "file", "path"}`` dicts; empty when the file is sound.
+    """
+    from .fhir_parser import parse_fhir
+
+    try:
+        document = json.loads(text)
+    except ValueError as exc:
+        return [{"rule": "fhir.json", "message": f"Not JSON: {exc}", "file": path, "path": None}]
+    problems = []
+    for issue in structural_issues(document):
+        location, _, message = issue.partition(": ")
+        problems.append({"rule": "fhir.structure", "message": message or issue, "file": path,
+                         "path": location if message else None})
+    if not problems:
+        try:
+            parse_fhir(text, source_label=path)
+        except Exception as exc:  # noqa: BLE001 — any reader failure means "does not read back"
+            problems.append({"rule": "fhir.reimport", "message": f"The FHIR reader cannot read it: {exc}",
+                             "file": path, "path": None})
+    return problems
 
 
 def structural_issues(document: Any) -> List[str]:
