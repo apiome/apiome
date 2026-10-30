@@ -585,6 +585,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['timeline', 'mock', 'test bench', 'discussion', 'repository', 'changelog'],
   },
   {
+    id: 'version-control',
+    title: 'Git-like version control',
+    summary: 'How Apiome versions map to Git commits, tags, forks, branches and merges.',
+    page: 'apiome-docs/docs/build/version-control.mdx',
+    section: 'reference',
+    keywords: ['commit', 'branch', 'fork', 'rollback', 'history', 'FEATURE_GITLIKE'],
+  },
+  {
     id: 'revision-history',
     title: 'Revision history and merge base',
     summary: 'How revisions link to their parents, and the ancestors and merge-base queries.',
