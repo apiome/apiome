@@ -1,0 +1,1030 @@
+{
+  "adapter": "fhir",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fhir_capability_statement": {
+        "baseUrl": "https://lab.example.org/fhir",
+        "formats": [
+          "application/fhir+json"
+        ],
+        "resources": [
+          {
+            "interactions": [
+              "read",
+              "search-type",
+              "history-instance"
+            ],
+            "operations": [
+              "summary"
+            ],
+            "profile": "https://lab.example.org/fhir/StructureDefinition/lab-report",
+            "searchParams": [
+              "patient",
+              "status",
+              "issued"
+            ],
+            "supportedProfiles": [],
+            "type": "DiagnosticReport"
+          },
+          {
+            "interactions": [
+              "read",
+              "create",
+              "update",
+              "patch",
+              "delete",
+              "search-type"
+            ],
+            "operations": [],
+            "profile": null,
+            "searchParams": [
+              "subject",
+              "value-quantity",
+              "component-value-quantity"
+            ],
+            "supportedProfiles": [
+              "http://hl7.org/fhir/StructureDefinition/vitalsigns"
+            ],
+            "type": "Observation"
+          },
+          {
+            "interactions": [
+              "read",
+              "search-type"
+            ],
+            "operations": [],
+            "profile": null,
+            "searchParams": [],
+            "supportedProfiles": [],
+            "type": "Specimen"
+          }
+        ],
+        "software": "Example Lab FHIR",
+        "status": "active",
+        "systemInteractions": [
+          "transaction",
+          "search-system"
+        ],
+        "url": "https://lab.example.org/fhir/CapabilityStatement/lab-results-server",
+        "version": "2.1.0"
+      },
+      "fhir_kind": "capability_statement",
+      "fhir_release": "R5",
+      "fhir_version": "5.0.0"
+    },
+    "format": "fhir",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "LabResultsServer",
+      "namespace": "LabResultsServer"
+    },
+    "paradigm": "rest",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "LabResultsServer.DiagnosticReport",
+        "name": "DiagnosticReport",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "search-type"
+            },
+            "http_method": "GET",
+            "http_path": "/DiagnosticReport",
+            "key": "GET /DiagnosticReport",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /DiagnosticReport#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.DiagnosticReport",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "searchDiagnosticReport",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "date"
+                },
+                "key": "GET /DiagnosticReport#query.issued",
+                "location": "query",
+                "name": "issued",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "reference"
+                },
+                "key": "GET /DiagnosticReport#query.patient",
+                "location": "query",
+                "name": "patient",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "token"
+                },
+                "key": "GET /DiagnosticReport#query.status",
+                "location": "query",
+                "name": "status",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "read"
+            },
+            "http_method": "GET",
+            "http_path": "/DiagnosticReport/{id}",
+            "key": "GET /DiagnosticReport/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /DiagnosticReport/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.DiagnosticReport",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "readDiagnosticReport",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /DiagnosticReport/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "history-instance"
+            },
+            "http_method": "GET",
+            "http_path": "/DiagnosticReport/{id}/_history",
+            "key": "GET /DiagnosticReport/{id}/_history",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /DiagnosticReport/{id}/_history#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.DiagnosticReport",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "historyDiagnosticReport",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /DiagnosticReport/{id}/_history#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "operation",
+              "fhir_operation_definition": "https://lab.example.org/fhir/OperationDefinition/report-summary"
+            },
+            "http_method": "POST",
+            "http_path": "/DiagnosticReport/$summary",
+            "key": "POST /DiagnosticReport/$summary",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /DiagnosticReport/$summary#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /DiagnosticReport/$summary#response",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "$summary",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "key": "LabResultsServer.Observation",
+        "name": "Observation",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "delete"
+            },
+            "http_method": "DELETE",
+            "http_path": "/Observation/{id}",
+            "key": "DELETE /Observation/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "DELETE /Observation/{id}#response",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
+            "name": "deleteObservation",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "DELETE /Observation/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "search-type"
+            },
+            "http_method": "GET",
+            "http_path": "/Observation",
+            "key": "GET /Observation",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Observation#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "searchObservation",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "number"
+                },
+                "key": "GET /Observation#query.component-value-quantity",
+                "location": "query",
+                "name": "component-value-quantity",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "double",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "reference"
+                },
+                "key": "GET /Observation#query.subject",
+                "location": "query",
+                "name": "subject",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "quantity"
+                },
+                "key": "GET /Observation#query.value-quantity",
+                "location": "query",
+                "name": "value-quantity",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "read"
+            },
+            "http_method": "GET",
+            "http_path": "/Observation/{id}",
+            "key": "GET /Observation/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Observation/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "readObservation",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /Observation/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "patch"
+            },
+            "http_method": "PATCH",
+            "http_path": "/Observation/{id}",
+            "key": "PATCH /Observation/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "PATCH /Observation/{id}#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "PATCH /Observation/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "patchObservation",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "PATCH /Observation/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "create"
+            },
+            "http_method": "POST",
+            "http_path": "/Observation",
+            "key": "POST /Observation",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /Observation#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /Observation#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "201"
+              }
+            ],
+            "name": "createObservation",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "update"
+            },
+            "http_method": "PUT",
+            "http_path": "/Observation/{id}",
+            "key": "PUT /Observation/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "PUT /Observation/{id}#request",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "PUT /Observation/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Observation",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "updateObservation",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "PUT /Observation/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "key": "LabResultsServer.Specimen",
+        "name": "Specimen",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "search-type"
+            },
+            "http_method": "GET",
+            "http_path": "/Specimen",
+            "key": "GET /Specimen",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Specimen#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Specimen",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "searchSpecimen",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "read"
+            },
+            "http_method": "GET",
+            "http_path": "/Specimen/{id}",
+            "key": "GET /Specimen/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Specimen/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "LabResultsServer.Specimen",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "readSpecimen",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /Specimen/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "key": "LabResultsServer.system",
+        "name": "system",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "operation",
+              "fhir_operation_definition": "http://hl7.org/fhir/OperationDefinition/Patient-everything"
+            },
+            "http_method": "POST",
+            "http_path": "/$everything",
+            "key": "POST /$everything",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /$everything#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /$everything#response",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "$everything",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "LabResultsServer",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Finalised laboratory reports.",
+        "enum_values": [],
+        "extras": {
+          "fhir_kind": "resource",
+          "fhir_placeholder": true,
+          "fhir_profile": "https://lab.example.org/fhir/StructureDefinition/lab-report",
+          "fhir_supported_profiles": []
+        },
+        "fields": [],
+        "key": "LabResultsServer.DiagnosticReport",
+        "key_type": null,
+        "kind": "record",
+        "name": "DiagnosticReport",
+        "namespace": "LabResultsServer",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fhir_kind": "resource",
+          "fhir_placeholder": true,
+          "fhir_profile": null,
+          "fhir_supported_profiles": [
+            "http://hl7.org/fhir/StructureDefinition/vitalsigns"
+          ]
+        },
+        "fields": [],
+        "key": "LabResultsServer.Observation",
+        "key_type": null,
+        "kind": "record",
+        "name": "Observation",
+        "namespace": "LabResultsServer",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fhir_kind": "resource",
+          "fhir_placeholder": true,
+          "fhir_profile": null,
+          "fhir_supported_profiles": []
+        },
+        "fields": [],
+        "key": "LabResultsServer.Specimen",
+        "key_type": null,
+        "kind": "record",
+        "name": "Specimen",
+        "namespace": "LabResultsServer",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "2.1.0"
+  },
+  "corpus_path": "fhir/07-capability-statement-r5.json",
+  "counts": {
+    "channels": 0,
+    "operations": 13,
+    "servers": 0,
+    "services": 4,
+    "types": 3
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "fhir"
+  },
+  "fingerprint": "sha256:26836aa7a7deff61f6161b8898f2ebbcfe9abc5804c319ec35fe16ae13812039",
+  "lint": {
+    "findings": 36,
+    "grade": "F",
+    "report_fingerprint": "5a87700c5f7c5a4df39493b86f6ae220ac4b1e8f4f7709e5bafd440ae54a7496",
+    "score": 48,
+    "severity_counts": {
+      "error": 0,
+      "info": 20,
+      "warning": 16
+    }
+  },
+  "snapshot_version": 1
+}

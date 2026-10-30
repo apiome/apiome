@@ -4,7 +4,8 @@
  * Set up or edit a catalog item's live refresh — MFI-31.1 (#4398).
  *
  * Opened from the **Live refresh** card's **Set up refresh…** / **Edit refresh…** button. The user
- * picks how to discover the source (GraphQL introspection or gRPC server reflection), the endpoint,
+ * picks how to discover the source (GraphQL introspection, gRPC server reflection or a FHIR server's
+ * `/metadata`), the endpoint,
  * the cadence and an optional credential. An existing credential is never shown: the credential
  * select starts on **Keep current credential**, and a new one replaces it. Saving sends
  * `PUT /api/catalog/{id}/refresh`; anything REST refuses (an unsafe URL, a malformed credential) is

@@ -1,8 +1,16 @@
-"""HL7 FHIR R4 → canonical model normalizer — MFI-22.2.
+"""HL7 FHIR → canonical model normalizer — MFI-22.2, extended by MFI-20.1.
 
 Maps a parsed :class:`~app.fhir_parser.FhirDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.REST`.
+
+A **CapabilityStatement** (MFI-20.1) becomes the server's API: one service per resource type, with
+an operation for each interaction the server *declares* (read, vread, search-type with its search
+parameters, create, update, patch, delete, history) and each ``$operation``; the resource payloads
+are placeholder types naming the profile they conform to, since profiles are imported as their own
+StructureDefinitions. Every FHIR model records the FHIR version it targets and its release
+(``fhir_version`` / ``fhir_release`` extras, R4 / R4B / R5 / R6), which the fingerprint hashes —
+so a profile or server moving between releases is a new version with a change report.
 """
 
 from __future__ import annotations
@@ -27,11 +35,14 @@ from .canonical_model import (
     TypeRef,
 )
 from .fhir_parser import (
+    FhirCapabilityResource,
+    FhirCapabilityStatement,
     FhirDocument,
     FhirElement,
     FhirInferredField,
     FhirResourceProfile,
     FhirStructureDefinition,
+    fhir_release,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
 
@@ -231,6 +242,123 @@ def _resource_operations(resource_type: str, *, namespace: Optional[str], payloa
     return operations
 
 
+#: FHIR search-parameter types → canonical scalars (a token, reference or quantity is a string on the wire).
+_SEARCH_PARAM_TYPES: Dict[str, str] = {"number": "double"}
+
+_FHIR_JSON = ["application/fhir+json"]
+
+
+def _version_extras(version: Optional[str]) -> Dict[str, Any]:
+    """The ``fhir_version`` / ``fhir_release`` extras a FHIR model records (MFI-20.1).
+
+    Empty when the document names no ``fhirVersion``: extras are hashed into the fingerprint, so a
+    ``null`` key would change the fingerprint of every profile imported before MFI-20.1 and mint
+    a version on its next identical re-import.
+    """
+    if not version:
+        return {}
+    return {"fhir_version": version, "fhir_release": fhir_release(version)}
+
+
+def _response(key: str, status: str, payload: Optional[TypeRef]) -> Message:
+    return Message(key=f"{key}#response", role=MessageRole.RESPONSE, status_code=status,
+                   content_types=list(_FHIR_JSON), payload=payload)
+
+
+def _request(key: str, payload: Optional[TypeRef]) -> Message:
+    return Message(key=f"{key}#request", role=MessageRole.REQUEST, content_types=list(_FHIR_JSON),
+                   payload=payload, required=True)
+
+
+def _path_params(key: str, names: List[str]) -> List[Parameter]:
+    return [
+        Parameter(key=Keys.parameter(key, "path", name), name=name, location=ParameterLocation.PATH,
+                  type=TypeRef(name="string"), required=True)
+        for name in names
+    ]
+
+
+#: Interaction code → (method, path suffix, path parameters, request body, response status).
+_INTERACTIONS: Dict[str, tuple] = {
+    "read": ("GET", "/{id}", ["id"], False, "200"),
+    "vread": ("GET", "/{id}/_history/{vid}", ["id", "vid"], False, "200"),
+    "update": ("PUT", "/{id}", ["id"], True, "200"),
+    "patch": ("PATCH", "/{id}", ["id"], True, "200"),
+    "delete": ("DELETE", "/{id}", ["id"], False, "204"),
+    "history-instance": ("GET", "/{id}/_history", ["id"], False, "200"),
+    "history-type": ("GET", "/_history", [], False, "200"),
+    "create": ("POST", "", [], True, "201"),
+    "search-type": ("GET", "", [], False, "200"),
+}
+
+_INTERACTION_NAMES = {
+    "read": "read", "vread": "vread", "update": "update", "patch": "patch", "delete": "delete",
+    "history-instance": "history", "history-type": "historyAll", "create": "create", "search-type": "search",
+}
+
+
+def _capability_operations(
+    resource: FhirCapabilityResource, *, payload: TypeRef
+) -> List[Operation]:
+    """The operations a server declares for one resource type, in declaration order."""
+    base = f"/{resource.type}"
+    operations: List[Operation] = []
+    for code in resource.interactions:
+        shape = _INTERACTIONS.get(code)
+        if shape is None:
+            continue  # an unknown interaction code is the server's own extension; nothing to map
+        method, suffix, path_names, has_body, status = shape
+        path = base + suffix
+        key = Keys.operation_http(method, path)
+        parameters = _path_params(key, path_names)
+        if code == "search-type":
+            parameters += [
+                Parameter(
+                    key=Keys.parameter(key, "query", param.name),
+                    name=param.name,
+                    location=ParameterLocation.QUERY,
+                    type=TypeRef(name=_SEARCH_PARAM_TYPES.get(param.type, "string")),
+                    description=param.documentation,
+                    extras={"fhir_search_type": param.type},
+                )
+                for param in resource.search_params
+            ]
+        messages = ([_request(key, payload)] if has_body else []) + [
+            _response(key, status, None if status == "204" else payload)
+        ]
+        operations.append(
+            Operation(
+                key=key,
+                name=f"{_INTERACTION_NAMES[code]}{resource.type}",
+                kind=OperationKind.REQUEST_RESPONSE,
+                streaming=StreamingMode.NONE,
+                http_method=method,
+                http_path=path,
+                parameters=parameters,
+                messages=messages,
+                extras={"fhir_interaction": code},
+            )
+        )
+    for op in resource.operations:
+        operations.append(_dollar_operation(f"{base}/${op.name}", op.name, op.definition))
+    return operations
+
+
+def _dollar_operation(path: str, name: str, definition: Optional[str]) -> Operation:
+    """A ``$operation`` invoked with ``POST`` and a ``Parameters`` resource."""
+    key = Keys.operation_http("POST", path)
+    return Operation(
+        key=key,
+        name=f"${name}",
+        kind=OperationKind.REQUEST_RESPONSE,
+        streaming=StreamingMode.NONE,
+        http_method="POST",
+        http_path=path,
+        messages=[_request(key, None), _response(key, "200", None)],
+        extras={"fhir_interaction": "operation", "fhir_operation_definition": definition},
+    )
+
+
 def _structure_to_type(
     structure: FhirStructureDefinition,
     *,
@@ -304,6 +432,8 @@ class FhirNormalizer(Normalizer, register=True):
                                      include_raw=include_raw)
         if source.kind == "structure_definition" and source.structure_definition is not None:
             return self._normalize_structure_definition(source, include_raw=include_raw)
+        if source.kind == "capability_statement" and source.capability_statement is not None:
+            return self._normalize_capability_statement(source, include_raw=include_raw)
         if source.kind == "resource_profile" and source.resource_profile is not None:
             return self._normalize_resource_profile(source, include_raw=include_raw)
         raise ValueError("FHIR document is missing structure or resource profile content")
@@ -359,6 +489,7 @@ class FhirNormalizer(Normalizer, register=True):
             raw={"fhir": source.raw} if include_raw else None,
             extras={
                 "fhir_kind": "structure_definition",
+                **_version_extras(structure.fhir_version),
                 "fhir_structure_definition": {
                     "id": structure.id,
                     "url": structure.url,
@@ -380,6 +511,8 @@ class FhirNormalizer(Normalizer, register=True):
                                 for item in element.types
                             ],
                             "short": element.short,
+                            # Only when present, so pre-MFI-20.1 fingerprints stay put.
+                            **({"definition": element.definition} if element.definition else {}),
                         }
                         for element in structure.elements
                     ],
@@ -449,6 +582,87 @@ class FhirNormalizer(Normalizer, register=True):
                             "is_array": field.is_array,
                         }
                         for field in profile.fields
+                    ],
+                },
+            },
+        )
+        return normalize_ordering(api)
+
+    def _normalize_capability_statement(
+        self,
+        source: FhirDocument,
+        *,
+        include_raw: bool,
+    ) -> CanonicalApi:
+        """A server's CapabilityStatement → one service per resource type (MFI-20.1)."""
+        statement: FhirCapabilityStatement = source.capability_statement  # type: ignore[assignment]
+        namespace = statement.name
+        types: List[Type] = []
+        services: List[Service] = []
+        for resource in statement.resources:
+            type_key = _type_key(resource.type, namespace)
+            types.append(
+                Type(
+                    key=type_key,
+                    name=resource.type,
+                    kind=TypeKind.RECORD,
+                    namespace=namespace,
+                    description=resource.documentation,
+                    extras={
+                        "fhir_kind": "resource",
+                        "fhir_placeholder": True,
+                        "fhir_profile": resource.profile,
+                        "fhir_supported_profiles": list(resource.supported_profiles),
+                    },
+                )
+            )
+            services.append(
+                Service(
+                    key=type_key,
+                    name=resource.type,
+                    operations=_capability_operations(resource, payload=TypeRef(name=type_key)),
+                )
+            )
+        if statement.system_operations:
+            services.append(
+                Service(
+                    key=Keys.type("system", namespace),
+                    name="system",
+                    operations=[_dollar_operation(f"/${op.name}", op.name, op.definition)
+                                for op in statement.system_operations],
+                )
+            )
+
+        api = CanonicalApi(
+            paradigm=self.paradigm,
+            format=self.format,
+            identity=ApiIdentity(name=statement.name, namespace=namespace),
+            title=statement.name,
+            version=statement.version,
+            services=services,
+            types=types,
+            raw={"fhir": source.raw} if include_raw else None,
+            extras={
+                "fhir_kind": "capability_statement",
+                **_version_extras(statement.fhir_version),
+                "fhir_capability_statement": {
+                    "url": statement.url,
+                    "version": statement.version,
+                    "status": statement.status,
+                    "software": statement.software,
+                    "baseUrl": statement.base_url,
+                    "formats": list(statement.formats),
+                    "systemInteractions": list(statement.system_interactions),
+                    "resources": [
+                        {
+                            "type": r.type,
+                            "profile": r.profile,
+                            "supportedProfiles": list(r.supported_profiles),
+                            "interactions": list(r.interactions),
+                            "searchParams": [p.name for p in r.search_params],
+                            "operations": [o.name for o in r.operations],
+                        }
+                        for r in statement.resources
                     ],
                 },
             },

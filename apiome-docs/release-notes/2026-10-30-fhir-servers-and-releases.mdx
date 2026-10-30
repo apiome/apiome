@@ -1,0 +1,22 @@
+---
+slug: fhir-servers-and-releases
+title: Catalog FHIR servers in R4, R5 and R6
+description: FHIR CapabilityStatements import as APIs, with releases, live refresh and lint.
+authors: [apiome]
+---
+
+Apiome now imports a FHIR server's **CapabilityStatement**, the `/metadata` response, as the
+server's API. It also records whether each FHIR document targets **R4**, **R5** or **R6**.
+[How it works](/bring-in/fhir-import).
+
+{/* truncate */}
+
+- **A server's API.** Each resource becomes a service with the operations the server declares:
+  read, search (with its search parameters), create, update, patch, delete, history and
+  `$operations`.
+- **Releases in the diff.** Import a profile's R4 edition and then its R5 edition, and the second
+  import adds a version with a change report.
+- **Live refresh from `/metadata`.** **Live refresh** on a catalog item can now re-read a FHIR
+  server's CapabilityStatement on a schedule (**Discover with → FHIR server /metadata**).
+- **Lint.** New FHIR rules flag draft or unversioned profiles, constraints without a base, and
+  resources a server offers without a profile or search parameters.

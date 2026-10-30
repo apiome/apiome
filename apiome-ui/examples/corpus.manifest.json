@@ -10058,6 +10058,90 @@
       "rung": "real-world"
     },
     {
+      "path": "fhir/07-capability-statement-r5.json",
+      "format": "fhir",
+      "adapter_key": "fhir",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "fhir",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "capability-statement",
+        "fhir-r5",
+        "interactions",
+        "search-parameters",
+        "operations",
+        "lint-findings"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for MFI-20.1: a second server's R5 CapabilityStatement (patch/delete/history, type and system $operations; Specimen left without profile or searchParam on purpose for the hygiene lint).",
+      "rung": "composition"
+    },
+    {
+      "path": "fhir/08-patient-profile-r4.json",
+      "format": "fhir",
+      "adapter_key": "fhir",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "fhir",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "structure-definition",
+        "fhir-r4",
+        "differential",
+        "constraint"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for MFI-20.1: a Patient constraint profile targeting R4, paired with 09 for the cross-release diff.",
+      "rung": "composition"
+    },
+    {
+      "path": "fhir/09-patient-profile-r5.json",
+      "format": "fhir",
+      "adapter_key": "fhir",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "fhir",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "structure-definition",
+        "fhir-r5",
+        "differential",
+        "constraint"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for MFI-20.1: the 08 profile re-published for R5 (birthDate required, telecom added).",
+      "rung": "composition"
+    },
+    {
+      "path": "fhir/10-capability-statement-r6-ballot.json",
+      "format": "fhir",
+      "adapter_key": "fhir",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "fhir",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "capability-statement",
+        "fhir-r6"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for MFI-20.1: a minimal CapabilityStatement of a server on the R6 ballot (6.0.0-ballot3).",
+      "rung": "composition"
+    },
+    {
       "path": "fhir/negative/01-syntactic-unclosed-brace.json",
       "format": "fhir",
       "adapter_key": "fhir",

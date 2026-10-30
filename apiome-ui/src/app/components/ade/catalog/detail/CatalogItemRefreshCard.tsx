@@ -225,7 +225,7 @@ export function CatalogItemRefreshCard({ item, active, canEdit }: CatalogItemRef
               <>
                 <dt>Source</dt>
                 <dd className="cid-quiet">
-                  Not set up. GraphQL and gRPC sources can be re-checked hourly, daily or weekly.
+                  Not set up. GraphQL, gRPC and FHIR sources can be re-checked hourly, daily or weekly.
                 </dd>
               </>
             )}

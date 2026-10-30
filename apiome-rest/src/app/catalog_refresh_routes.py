@@ -98,11 +98,14 @@ class CatalogRefreshUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     cadence: CadenceName = Field(description="off · manual · hourly · daily · weekly.")
-    adapter: str = Field(min_length=1, max_length=64, description="The import adapter: `graphql` or `grpc`.")
+    adapter: str = Field(min_length=1, max_length=64, description="The import adapter: `graphql`, `grpc` or `fhir`.")
     endpoint: str = Field(
         min_length=1,
         max_length=2048,
-        description="An http(s) URL for GraphQL; a `host:port` target for gRPC.",
+        description=(
+            "An http(s) URL for GraphQL; a `host:port` target for gRPC; a FHIR server's base URL "
+            "(its `/metadata` is read)."
+        ),
     )
     options: Dict[str, Any] = Field(
         default_factory=dict, description="Adapter options; gRPC reads `secure` (TLS, default false)."
@@ -354,7 +357,7 @@ async def put_catalog_item_refresh(
 ) -> CatalogRefreshOut:
     """Create or replace an item's refresh setting (``projects:edit``).
 
-    The adapter must support live discovery and have a refresh runner (``graphql``, ``grpc``);
+    The adapter must support live discovery and have a refresh runner (``graphql``, ``grpc``, ``fhir``);
     the endpoint must pass the SSRF URL policy. Changing the adapter or endpoint resets the check
     history; saving always clears any failure backoff.
 

@@ -74,6 +74,11 @@ const ADAPTER_VIEW: Readonly<Record<string, { label: string; placeholder: string
     placeholder: 'grpc.example.com:443',
     hint: 'The server as host:port. Server reflection must be enabled.',
   },
+  fhir: {
+    label: 'FHIR server /metadata',
+    placeholder: 'https://fhir.example.com/r4',
+    hint: "The FHIR server's base URL. Apiome reads its CapabilityStatement from /metadata.",
+  },
 };
 
 /**

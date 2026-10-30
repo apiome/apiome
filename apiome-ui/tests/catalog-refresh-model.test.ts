@@ -8,7 +8,9 @@
 
 import {
   catalogDetailActions,
+  refreshAdapterLabel,
   refreshCanCheck,
+  refreshEndpointHint,
   refreshFormError,
   refreshFormFrom,
   refreshNextCheckText,
@@ -49,6 +51,20 @@ const FORM: RefreshForm = {
   headerName: '',
   keepVersions: '50',
 };
+
+describe('refreshAdapterLabel / refreshEndpointHint', () => {
+  it('names a FHIR server, whose endpoint is its base URL (MFI-20.1)', () => {
+    expect(refreshAdapterLabel('fhir')).toBe('FHIR server /metadata');
+    expect(refreshEndpointHint('fhir').placeholder).toBe('https://fhir.example.com/r4');
+    expect(refreshEndpointHint('fhir').hint).toMatch(/CapabilityStatement from \/metadata/);
+  });
+
+  it('checks a FHIR endpoint as an http(s) URL', () => {
+    const form = { ...refreshFormFrom(null), adapter: 'fhir', endpoint: 'fhir.example.com/r4' };
+    expect(refreshFormError(form)).toMatch(/http:\/\/ or https:\/\//);
+    expect(refreshFormError({ ...form, endpoint: 'https://fhir.example.com/r4' })).toBeNull();
+  });
+});
 
 describe('refreshStatusView', () => {
   it.each([

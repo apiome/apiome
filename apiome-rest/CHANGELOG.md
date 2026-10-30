@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.556.0] - 2026-10-30
+
+### Added
+- **FHIR healthcare APIs (MFI-20.1, #3985).** The `fhir` import adapter now reads a server's **CapabilityStatement**
+  as its API: one service per resource type, an operation for each interaction the server declares (`read`, `vread`,
+  `search-type` with a typed query parameter per `searchParam`, `create`, `update`, `patch`, `delete`,
+  `history-instance`, `history-type`), and each `$operation` (`POST /{type}/$name`, system-level ones under a `system`
+  service); resource types name the profile they conform to. Before, a CapabilityStatement was read as an inferred
+  resource instance. Every FHIR model now records the `fhirVersion` it targets and its release (`fhir_version` /
+  `fhir_release` extras: R4, R4B, R5, R6 incl. ballots), which the fingerprint hashes, so a profile moving from R4 to R5
+  is a new version with a change report; the keys are written only when declared, so profiles imported before keep
+  their fingerprint. **Live discovery:** `FhirImportSource.discover(base_url)` reads `<base>/metadata` over the
+  SSRF-guarded live-fetch client, and `fhir` is a catalog **Live refresh** adapter (`CatalogRefreshUpdate.adapter`).
+  **Lint:** new `fhir` rule pack (`app.fhir_lint`) — `fhir.profile-status`, `-url`, `-version`, `-base`,
+  `fhir.element-short`, `fhir.capability-version`, `-profile`, `-search`. Declared read versions: R4, R5, R6
+  (partial; ballot). Fixtures `fhir/07`–`10` (an R5 server, an R6-ballot server, one profile in R4 and R5). OpenAPI
+  1.420.0 (field descriptions only).
+
 ## [1.555.0] - 2026-10-30
 
 ### Added

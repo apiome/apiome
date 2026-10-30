@@ -63,14 +63,14 @@ export interface FormatCounts {
  */
 export const FORMAT_COUNTS: FormatCounts = {
   version: '1',
-  capabilityRegistryVersion: '38',
+  capabilityRegistryVersion: '39',
   total: 101,
   importable: 100,
   exportable: 54,
   roundTrip: 53,
   importOnly: 47,
   exportOnly: 1,
-  liveDiscovery: 11,
+  liveDiscovery: 12,
   publishable: 1,
   catalog: 99,
   toolchainGated: 9,

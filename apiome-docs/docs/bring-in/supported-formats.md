@@ -13,7 +13,7 @@ Every format Apiome reads or writes, generated from the running registries — t
 - **100 formats can be imported.**
 - **54 formats can be exported.**
 - **53 round-trip** — import *and* export.
-- **11** can introspect a live endpoint rather than reading a file.
+- **12** can introspect a live endpoint rather than reading a file.
 
 The same answer is machine-readable at `GET /v1/formats/matrix` and printed by `apiome formats` (`--json`, `--paradigm`, `--direction`). This page is *rendered from that response*, so the documentation, the API and the CLI cannot disagree: there is one traversal of the registries behind all three.
 
@@ -52,7 +52,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | Bruno collection | `bruno` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `bruno` | `.bru`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Consul service definitions | `consul` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `consul` | `.json`, `.hcl`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-consul) | Ready |
 | Envoy xDS routes | `envoy-xds` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `envoy-xds`, `envoy` | `.yaml`, `.yml`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
-| FHIR | `fhir` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `fhir`, `fhirr4`, `structuredefinition` | `.fhir.json`, `.structuredefinition.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| FHIR | `fhir` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | Yes | `fhir`, `fhirr4`, `structuredefinition` | `.fhir.json`, `.structuredefinition.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Gateway API HTTPRoute | `gateway-api` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `gateway-api`, `httproute` | `.yaml`, `.yml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | Google API Discovery | `discovery` | Import only | Catalog | `file`, `url`, `paste`, `discovery`, `fileset` | Yes | `discovery` | `.discovery.json`, `.discovery`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | HAProxy configuration | `haproxy` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `haproxy` | `.cfg`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-haproxy) | Ready |
@@ -210,7 +210,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | DTD | `dtd` | XML 1.0 DTD* | — | — |
 | EDI X12 | `edix12` | X12 interchange (004010, 005010, …)* | X12 interchange (004010, 005010, …)* | X12 interchange (004010, 005010, …) |
 | Envoy xDS routes | `envoy-xds` | xDS v3 (envoy.config.*.v3), xDS v2 (envoy.api.v2)* | xDS v3 RouteConfiguration (envoy.config.route.v3) | xDS v3 RouteConfiguration (envoy.config.route.v3) |
-| FHIR | `fhir` | R4 | R4, R5 | R4 |
+| FHIR | `fhir` | R4, R5, R6* | R4, R5 | R4 |
 | FIX | `fix` | tag=value message (any BeginString)* | tag=value message (any BeginString)* | tag=value message (any BeginString) |
 | FIX Orchestra | `fix-orchestra` | FIX Orchestra 1.0 repository | — | — |
 | FlatBuffers | `flatbuffers` | FlatBuffers schema (.fbs)* | FlatBuffers schema (.fbs)* | FlatBuffers schema (.fbs) |
@@ -387,6 +387,10 @@ A version marked * is qualified — reached through a projection or a downgrade,
 **Envoy xDS routes**
 
 - Reads **xDS v2 (envoy.api.v2)** (partial) — Read through the same route grammar: the legacy header matchers (`exact_match`, `prefix_match`, …) and the untyped `config` filter block are accepted; v2-only fields with no v3 equivalent are ignored.
+
+**FHIR**
+
+- Reads **R6** (partial) — R6 is still a ballot (6.0.0-ballot*): documents are read and labelled R6, but nothing R6 adds beyond R5 is interpreted yet.
 
 **FIX**
 

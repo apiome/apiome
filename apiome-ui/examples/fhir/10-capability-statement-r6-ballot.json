@@ -1,0 +1,26 @@
+{
+  "_comment": "FHIR R6 example — hand-authored minimal CapabilityStatement of a server running the R6 ballot (fhirVersion 6.0.0-ballot3): one resource, read and search only. No third-party text copied.",
+  "resourceType": "CapabilityStatement",
+  "id": "r6-preview",
+  "name": "R6PreviewServer",
+  "status": "draft",
+  "date": "2026-10-01",
+  "kind": "instance",
+  "software": { "name": "Example R6 Preview" },
+  "implementation": { "description": "R6 ballot sandbox", "url": "https://r6.example.org/fhir" },
+  "fhirVersion": "6.0.0-ballot3",
+  "format": ["application/fhir+json"],
+  "rest": [
+    {
+      "mode": "server",
+      "resource": [
+        {
+          "type": "Patient",
+          "profile": "http://hl7.org/fhir/StructureDefinition/Patient",
+          "interaction": [{ "code": "read" }, { "code": "search-type" }],
+          "searchParam": [{ "name": "family", "type": "string" }]
+        }
+      ]
+    }
+  ]
+}

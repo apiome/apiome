@@ -1,7 +1,13 @@
-"""HL7 FHIR R4 parser — MFI-22.2.
+"""HL7 FHIR parser — MFI-22.2, extended for R4 / R5 / R6 and CapabilityStatements by MFI-20.1.
 
-Parses FHIR JSON (StructureDefinition profiles and resource instances) into a typed
-:class:`FhirDocument` AST. Syntax errors surface as :class:`FhirParseError`.
+Parses FHIR JSON — StructureDefinition profiles, a server's CapabilityStatement, and resource
+instances — into a typed :class:`FhirDocument` AST. Syntax errors surface as
+:class:`FhirParseError`.
+
+**FHIR releases (MFI-20.1).** A StructureDefinition and a CapabilityStatement both say which FHIR
+version they target (``fhirVersion``); :func:`fhir_release` maps it to the release name
+(``R4`` for 4.0.x, ``R4B`` for 4.3.x, ``R5`` for 5.0.x, ``R6`` for 6.x including ballots) so the
+normalized model records it and a diff shows a profile moving from one release to another.
 """
 
 from __future__ import annotations
@@ -21,6 +27,11 @@ __all__ = [
     "FhirInferredField",
     "FhirResourceProfile",
     "FhirDocument",
+    "FhirCapabilityStatement",
+    "FhirCapabilityResource",
+    "FhirSearchParam",
+    "FhirCapabilityOperation",
+    "fhir_release",
     "is_fhir",
     "is_fhir_document",
     "parse_fhir",
@@ -67,6 +78,8 @@ class FhirElement:
     max: str
     types: Tuple[FhirElementType, ...]
     short: Optional[str] = None
+    #: The element's ``definition`` text (MFI-20.1, read by the profile-hygiene lint).
+    definition: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -81,6 +94,8 @@ class FhirStructureDefinition:
     base_definition: Optional[str]
     derivation: Optional[str]
     elements: Tuple[FhirElement, ...]
+    #: The FHIR version the profile targets (``fhirVersion``, e.g. ``4.0.1``), when it says.
+    fhir_version: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -99,13 +114,99 @@ class FhirResourceProfile:
 
 
 @dataclass(frozen=True)
+class FhirSearchParam:
+    """One ``searchParam`` a CapabilityStatement declares for a resource."""
+
+    name: str
+    type: str
+    documentation: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class FhirCapabilityOperation:
+    """One ``operation`` (``$name``) a CapabilityStatement declares, with its definition URL."""
+
+    name: str
+    definition: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class FhirCapabilityResource:
+    """What a server offers for one resource type (``rest[].resource[]``).
+
+    Attributes:
+        type: The resource type, e.g. ``Patient``.
+        profile: The base profile canonical URL the server uses for it.
+        supported_profiles: Further profiles it supports (``supportedProfile``).
+        interactions: The declared interaction codes (``read``, ``search-type`` …), in order.
+        search_params: The declared search parameters.
+        operations: The declared ``$operation``s on the type.
+        documentation: The server's note on the resource.
+    """
+
+    type: str
+    profile: Optional[str]
+    supported_profiles: Tuple[str, ...]
+    interactions: Tuple[str, ...]
+    search_params: Tuple[FhirSearchParam, ...]
+    operations: Tuple[FhirCapabilityOperation, ...]
+    documentation: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class FhirCapabilityStatement:
+    """A FHIR server's description of its own API (``GET <base>/metadata``) — MFI-20.1.
+
+    Only ``rest`` entries in ``server`` mode are read; a client-mode statement describes what a
+    client calls, not an API to catalog.
+    """
+
+    name: str
+    url: Optional[str]
+    version: Optional[str]
+    status: Optional[str]
+    fhir_version: Optional[str]
+    software: Optional[str]
+    base_url: Optional[str]
+    resources: Tuple[FhirCapabilityResource, ...]
+    system_interactions: Tuple[str, ...]
+    system_operations: Tuple[FhirCapabilityOperation, ...]
+    formats: Tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class FhirDocument:
-    kind: str  # structure_definition | resource_profile | logical
+    kind: str  # structure_definition | capability_statement | resource_profile | logical
     structure_definition: Optional[FhirStructureDefinition] = None
     resource_profile: Optional[FhirResourceProfile] = None
     raw: str = ""
     #: A logical-model export (MFX-26.1): the Bundle or StructureDefinition as parsed.
     logical: Optional[Mapping[str, Any]] = None
+    #: A server's CapabilityStatement (MFI-20.1).
+    capability_statement: Optional[FhirCapabilityStatement] = None
+
+
+def fhir_release(version: Optional[str]) -> Optional[str]:
+    """The FHIR release name for a ``fhirVersion`` value.
+
+    Args:
+        version: E.g. ``4.0.1``, ``4.3.0``, ``5.0.0``, ``6.0.0-ballot3``.
+
+    Returns:
+        ``R4``, ``R4B``, ``R5`` or ``R6``; ``None`` for a missing or unrecognised version.
+    """
+    text = (version or "").strip()
+    match = re.match(r"^(\d+)\.(\d+)", text)
+    if not match:
+        return None
+    major, minor = int(match.group(1)), int(match.group(2))
+    if major == 4:
+        return "R4B" if minor >= 3 else ("R4" if minor == 0 else None)
+    if major == 5:
+        return "R5"
+    if major == 6:
+        return "R6"
+    return None
 
 
 def _looks_like_fhir_mapping(document: Mapping[str, Any]) -> bool:
@@ -217,6 +318,7 @@ def _parse_structure_definition(document: Mapping[str, Any]) -> FhirStructureDef
             if not element_types:
                 continue
             short = raw_element.get("short")
+            definition = raw_element.get("definition")
             elements.append(
                 FhirElement(
                     path=path,
@@ -225,6 +327,7 @@ def _parse_structure_definition(document: Mapping[str, Any]) -> FhirStructureDef
                     max=max_str,
                     types=element_types,
                     short=short if isinstance(short, str) else None,
+                    definition=definition if isinstance(definition, str) else None,
                 )
             )
 
@@ -243,6 +346,90 @@ def _parse_structure_definition(document: Mapping[str, Any]) -> FhirStructureDef
         ),
         derivation=document.get("derivation") if isinstance(document.get("derivation"), str) else None,
         elements=tuple(elements),
+        fhir_version=_str(document.get("fhirVersion")),
+    )
+
+
+def _str(value: Any) -> Optional[str]:
+    """``value`` stripped when it is a non-empty string, else ``None``."""
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def _operations(raw: Any) -> Tuple[FhirCapabilityOperation, ...]:
+    out: List[FhirCapabilityOperation] = []
+    for item in raw if isinstance(raw, list) else []:
+        if isinstance(item, Mapping) and _str(item.get("name")):
+            out.append(FhirCapabilityOperation(name=str(_str(item.get("name"))).lstrip("$"),
+                                               definition=_str(item.get("definition"))))
+    return tuple(out)
+
+
+def _interactions(raw: Any) -> Tuple[str, ...]:
+    codes: List[str] = []
+    for item in raw if isinstance(raw, list) else []:
+        code = _str(item.get("code")) if isinstance(item, Mapping) else None
+        if code and code not in codes:
+            codes.append(code)
+    return tuple(codes)
+
+
+def _parse_capability_statement(document: Mapping[str, Any]) -> FhirCapabilityStatement:
+    """Read a CapabilityStatement's server ``rest`` entries into a :class:`FhirCapabilityStatement`."""
+    resources: List[FhirCapabilityResource] = []
+    system_interactions: List[str] = []
+    system_operations: List[FhirCapabilityOperation] = []
+    seen = set()
+    rest_entries = document.get("rest")
+    for rest in rest_entries if isinstance(rest_entries, list) else []:
+        if not isinstance(rest, Mapping) or (_str(rest.get("mode")) or "server") != "server":
+            continue
+        for code in _interactions(rest.get("interaction")):
+            if code not in system_interactions:
+                system_interactions.append(code)
+        system_operations.extend(_operations(rest.get("operation")))
+        for raw in rest.get("resource") if isinstance(rest.get("resource"), list) else []:
+            if not isinstance(raw, Mapping):
+                continue
+            resource_type = _str(raw.get("type"))
+            if not resource_type or resource_type in seen:
+                continue
+            seen.add(resource_type)
+            params: List[FhirSearchParam] = []
+            for param in raw.get("searchParam") if isinstance(raw.get("searchParam"), list) else []:
+                if isinstance(param, Mapping) and _str(param.get("name")):
+                    params.append(FhirSearchParam(name=str(_str(param.get("name"))),
+                                                  type=_str(param.get("type")) or "string",
+                                                  documentation=_str(param.get("documentation"))))
+            supported = raw.get("supportedProfile")
+            resources.append(
+                FhirCapabilityResource(
+                    type=resource_type,
+                    profile=_str(raw.get("profile")),
+                    supported_profiles=tuple(p for p in (supported if isinstance(supported, list) else [])
+                                             if isinstance(p, str) and p.strip()),
+                    interactions=_interactions(raw.get("interaction")),
+                    search_params=tuple(params),
+                    operations=_operations(raw.get("operation")),
+                    documentation=_str(raw.get("documentation")),
+                )
+            )
+    software = document.get("software")
+    implementation = document.get("implementation")
+    formats = document.get("format")
+    name = _str(document.get("name")) or _str(document.get("title")) or (
+        _str(software.get("name")) if isinstance(software, Mapping) else None) or "CapabilityStatement"
+    return FhirCapabilityStatement(
+        name=name,
+        url=_str(document.get("url")),
+        version=_str(document.get("version")),
+        status=_str(document.get("status")),
+        fhir_version=_str(document.get("fhirVersion")),
+        software=_str(software.get("name")) if isinstance(software, Mapping) else None,
+        base_url=_str(implementation.get("url")) if isinstance(implementation, Mapping) else None,
+        resources=tuple(resources),
+        system_interactions=tuple(system_interactions),
+        system_operations=tuple(system_operations),
+        formats=tuple(f for f in (formats if isinstance(formats, list) else []) if isinstance(f, str)),
     )
 
 
@@ -343,6 +530,13 @@ def parse_fhir(content: str, *, source_label: Optional[str] = None) -> FhirDocum
         return FhirDocument(
             kind="structure_definition",
             structure_definition=structure,
+            raw=content,
+        )
+
+    if document.get("resourceType") == "CapabilityStatement":
+        return FhirDocument(
+            kind="capability_statement",
+            capability_statement=_parse_capability_statement(document),
             raw=content,
         )
 

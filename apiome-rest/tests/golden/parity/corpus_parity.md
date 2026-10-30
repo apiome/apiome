@@ -43,7 +43,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `edix12` | EDI X12 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `edix12` |
 | `envoy-xds` | Envoy xDS routes | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `envoy-xds` |
-| `fhir` | FHIR | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `fhir` |
+| `fhir` | FHIR | rest | 10 | 5 | 0 | 0 | 15 | 5/6 (+1 waived) | 10 | `fhir` |
 | `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 7 | `fix` |
 | `fix-orchestra` | FIX Orchestra | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 14 | — |
 | `flatbuffers` | FlatBuffers | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `flatbuffers` |
