@@ -27,13 +27,14 @@ about a tenant's repositories for the price of one request.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Path, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Request
 
 from .database import db
 from .models import RepositoryWebhookReceiptResponse
 from .repository_webhook_dispatch import WebhookRejectedError, ingest_webhook_delivery
 from .repository_webhook_ingest import SUPPORTED_PROVIDERS, normalize_provider
 from .repository_webhook_ip_allowlist import guard_webhook_delivery
+from .repository_webhook_refresh import run_instant_refresh
 
 router = APIRouter(prefix="/v1/repositories", tags=["repository-webhooks"])
 
@@ -46,6 +47,7 @@ router = APIRouter(prefix="/v1/repositories", tags=["repository-webhooks"])
 )
 async def ingest_repository_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     provider: str = Path(
         ...,
         description=(
@@ -120,6 +122,18 @@ async def ingest_repository_webhook(
             status_code=400,
             detail={"code": "malformed_payload", "message": str(exc)},
         ) from exc
+
+    # RAR-6.3: refresh the tracked files the push changed right away — after the reply, since a
+    # branch rescan can outlast the provider's delivery timeout. The repository is already due,
+    # so if this cannot run the next sweep tick refreshes it instead.
+    if result.instant_refresh_paths and result.repository_id and result.tenant_id and result.branch:
+        background_tasks.add_task(
+            run_instant_refresh,
+            tenant_id=result.tenant_id,
+            repository_id=result.repository_id,
+            branch=result.branch,
+            paths=result.instant_refresh_paths,
+        )
 
     return RepositoryWebhookReceiptResponse(
         accepted=True,

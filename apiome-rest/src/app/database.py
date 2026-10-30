@@ -18706,6 +18706,28 @@ class Database:
         rows = self.execute_query(q, (repository_id,))
         return [str(r["branch"]) for r in rows if r.get("branch")]
 
+    def list_repository_import_spec_paths(self, repository_id: str, branch: str) -> List[str]:
+        """Paths on one branch that have a stored import spec — the tracked files (RAR-6.3).
+
+        A push webhook intersects the files it changed with these to decide which files to
+        refresh right away; it needs no scan index, so it costs one indexed query.
+
+        Args:
+            repository_id: The repository to inspect.
+            branch: The branch the push moved.
+
+        Returns:
+            Repository-relative paths, sorted.
+        """
+        q = """
+            SELECT path
+            FROM apiome.repository_import_spec
+            WHERE repository_id = %s::uuid AND branch = %s
+            ORDER BY path ASC
+        """
+        rows = self.execute_query(q, (repository_id, branch))
+        return [str(r["path"]) for r in rows if r.get("path")]
+
     def list_repository_refresh_candidates(
         self, repository_id: str, branch: str
     ) -> List[Dict[str, Any]]:

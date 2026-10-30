@@ -55,6 +55,8 @@ __all__ = [
     "signature_header_for_provider",
     "verify_signature",
     "parse_webhook_event",
+    "changed_paths_from_commits",
+    "GITHUB_PUSH_COMMIT_LIMIT",
 ]
 
 #: Providers whose deliveries this endpoint can verify and parse.
@@ -130,6 +132,12 @@ class ParsedWebhookEvent:
         pr_head_in_repo: True when the PR head lives in *this* repository rather than a
             fork. A fork head cannot be scanned by branch name through the repository's own
             tree API, so only same-repository heads can be preview-scanned.
+        changed_paths: For a push, every repository-relative path its commits added, modified
+            or removed (RAR-6.3), sorted and de-duplicated. ``None`` when the delivery cannot
+            say: Bitbucket push payloads carry no file lists, a force push rewrites history the
+            commit list does not describe, and a provider that truncated the commit list
+            (:func:`changed_paths_from_commits`) may have left files out. ``None`` makes the
+            webhook fall back to the cadence sweep; an empty tuple means "no files changed".
     """
 
     kind: str
@@ -140,6 +148,7 @@ class ParsedWebhookEvent:
     pr_number: Optional[int] = None
     pr_head_branch: Optional[str] = None
     pr_head_in_repo: bool = False
+    changed_paths: Optional[Tuple[str, ...]] = None
 
 
 def normalize_provider(raw: Any) -> Optional[str]:
@@ -301,6 +310,42 @@ def _mapping(value: Any) -> Dict[str, Any]:
     return dict(value) if isinstance(value, Mapping) else {}
 
 
+#: GitHub lists at most this many commits in a push delivery; a push at the cap may have more.
+GITHUB_PUSH_COMMIT_LIMIT = 2048
+
+
+def changed_paths_from_commits(commits: Any, *, complete: bool = True) -> Optional[Tuple[str, ...]]:
+    """The files a push touched, from its ``commits[].added / modified / removed`` lists (RAR-6.3).
+
+    GitHub and GitLab push deliveries list, per commit, the paths it added, modified and removed.
+    Their union is what the push changed. Removed paths are kept: the refresh path only acts on
+    files the branch still has, and a tracked file that disappeared is the sweep's to report.
+
+    Args:
+        commits: The delivery's ``commits`` value.
+        complete: False when the provider says the list was truncated, so files may be missing.
+
+    Returns:
+        The sorted, de-duplicated paths, or ``None`` when the list is missing, malformed or
+        incomplete — the caller then cannot tell which files changed and falls back to the cadence.
+    """
+    if not complete or not isinstance(commits, list):
+        return None
+    paths = set()
+    for commit in commits:
+        entry = _mapping(commit)
+        for key in ("added", "modified", "removed"):
+            listed = entry.get(key)
+            if listed is None:
+                continue
+            if not isinstance(listed, list):
+                return None
+            for path in listed:
+                if isinstance(path, str) and path.strip():
+                    paths.add(path.strip().lstrip("/"))
+    return tuple(sorted(paths))
+
+
 def _parse_github_push(payload: Mapping[str, Any], repo_full_name: str) -> ParsedWebhookEvent:
     """Parse a GitHub ``push`` delivery."""
     ref = str(payload.get("ref") or "")
@@ -316,11 +361,18 @@ def _parse_github_push(payload: Mapping[str, Any], repo_full_name: str) -> Parse
     head = str(payload.get("after") or _mapping(payload.get("head_commit")).get("id") or "")
     if not head or _is_null_sha(head):
         raise WebhookEventError("missing_commit", "Push delivery has no head commit.")
+    commits = payload.get("commits")
+    # A force push rewrites history the commit list does not describe, and a list at the cap
+    # may have been cut short: either way the files it changed are unknown.
+    complete = payload.get("forced") is not True and not (
+        isinstance(commits, list) and len(commits) >= GITHUB_PUSH_COMMIT_LIMIT
+    )
     return ParsedWebhookEvent(
         kind=EVENT_KIND_PUSH,
         repo_full_name=repo_full_name,
         branch=branch,
         head_sha=head[:64],
+        changed_paths=changed_paths_from_commits(commits, complete=complete),
     )
 
 
@@ -367,11 +419,18 @@ def _parse_gitlab(
                 "branch_deleted" if _is_null_sha(head) else "missing_commit",
                 "Push delivery has no head commit.",
             )
+        commits = payload.get("commits")
+        # GitLab lists at most 20 commits and says how many there were in total.
+        total = payload.get("total_commits_count")
+        complete = not (
+            isinstance(total, int) and isinstance(commits, list) and total > len(commits)
+        )
         return ParsedWebhookEvent(
             kind=EVENT_KIND_PUSH,
             repo_full_name=repo_full_name,
             branch=branch,
             head_sha=head[:64],
+            changed_paths=changed_paths_from_commits(commits, complete=complete),
         )
 
     if kind in ("merge_request", "merge request hook"):

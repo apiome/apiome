@@ -1,0 +1,20 @@
+---
+slug: refresh-on-push
+title: A push refreshes the specs it changed
+description: Push webhooks now refresh the changed imported specs within seconds.
+authors: [apiome]
+---
+
+When a repository sends Apiome its push webhooks, a push that changes a file you imported a spec
+from now refreshes that file within seconds, instead of waiting for the repository's next
+scheduled check. [How it works](/bring-in/repositories#refresh-on-push).
+
+{/* truncate */}
+
+- **Only what changed.** GitHub and GitLab pushes list the files they changed. Apiome refreshes the
+  imported ones among them and leaves every other file alone.
+- **Same rules as a scheduled refresh.** A file is re-imported only when it is newer than your last
+  import, with the import settings you first used. A version you edited by hand is still held for
+  review, and the refresh counts against your polling quota.
+- **Falls back to the schedule.** A Bitbucket push, a force push, or a push too large for the
+  provider to list every file refreshes on the repository's next scheduled check, as before.

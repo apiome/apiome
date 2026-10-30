@@ -57,7 +57,7 @@ the sweep and is never quota-limited.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, NamedTuple, Optional
+from typing import AbstractSet, Any, Dict, NamedTuple, Optional, Union
 
 from .database import Database
 from .refresh_source import GitBranchRefreshSource, decide_refresh
@@ -91,7 +91,7 @@ def enqueue_stale_files_for_branch(
     repo_row: Dict[str, Any],
     branch: str,
     *,
-    path_filter: Optional[str] = None,
+    path_filter: Optional[Union[str, AbstractSet[str]]] = None,
     max_enqueues: Optional[int] = None,
 ) -> BranchEnqueueResult:
     """Rescan one branch and enqueue a re-import job per stale + newer file.
@@ -109,8 +109,9 @@ def enqueue_stale_files_for_branch(
         branch: The branch to rescan and evaluate.
         path_filter: When set, only the file at this repository-relative path is
             considered (the rest of the branch's candidates are ignored). Used by
-            per-file "Refresh Now"; ``None`` evaluates every candidate on the
-            branch.
+            per-file "Refresh Now"; a set of paths limits it to those files (the
+            files a push changed, RAR-6.3); ``None`` evaluates every candidate on
+            the branch.
         max_enqueues: When set, at most this many jobs are inserted; further
             stale + newer candidates are counted as ``deferred`` instead
             (REPO-4.6 per-tenant polling quota). ``None`` (the manual-refresh
