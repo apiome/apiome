@@ -47,6 +47,9 @@ def _pic_to_type_ref(picture: Optional[str]) -> TypeRef:
 def _field_type_ref(field: CobolField, *, namespace: Optional[str]) -> TypeRef:
     if field.children:
         inner = TypeRef(name=_type_key(field.name, namespace), nullable=False)
+    elif not field.picture and field.usage in ("COMP-1", "COMP-2"):
+        # A floating-point item has a USAGE and no PICTURE (MFX-23.1).
+        inner = TypeRef(name="float" if field.usage == "COMP-1" else "double", nullable=False)
     else:
         inner = _pic_to_type_ref(field.picture)
     if field.occurs_max is not None:

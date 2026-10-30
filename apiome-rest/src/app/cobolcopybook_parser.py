@@ -22,8 +22,13 @@ __all__ = [
     "parse_cobolcopybook",
 ]
 
-_PIC_RE = re.compile(
-    r"PIC(?:TURE)?\s+(.+?)(?:\s+(COMP-\d+|BINARY|COMP))?(?:\.\s*)?$",
+#: ``PIC[TURE] [IS] <string>`` — a PICTURE character-string has no spaces, so it is the one token after
+#: the keyword (a trailing period ends the entry, not the picture). MFX-23.1: the picture used to run to
+#: the end of the entry, swallowing a following ``OCCURS`` clause (``X(2) OCCURS 5 TIMES``).
+_PIC_RE = re.compile(r"(?<![\w-])PIC(?:TURE)?\s+(?:IS\s+)?(\S+?)\.?(?=\s|$)", re.IGNORECASE)
+#: A USAGE, anywhere in the entry (``USAGE IS`` optional) — never part of a hyphenated data name.
+_USAGE_RE = re.compile(
+    r"(?<![\w-])(COMP(?:UTATIONAL)?(?:-[1-5])?|BINARY|PACKED-DECIMAL)(?![\w-])",
     re.IGNORECASE,
 )
 _OCCURS_RE = re.compile(
@@ -159,12 +164,17 @@ def is_cobolcopybook(content: str) -> bool:
 
 
 def _parse_picture(remainder: str) -> tuple[Optional[str], Optional[str]]:
+    """Read the PICTURE string and the USAGE of one entry's clause text.
+
+    Returns:
+        ``(picture, usage)``: the picture without ``PIC`` (``None`` when there is none — a ``COMP-1`` /
+        ``COMP-2`` float or a group), and the usage upper-cased with ``COMPUTATIONAL`` spelled ``COMP``.
+    """
     match = _PIC_RE.search(remainder)
-    if not match:
-        return None, None
-    picture = match.group(1).strip().rstrip(".")
-    usage = match.group(2).upper() if match.group(2) else None
-    return picture, usage
+    picture = match.group(1).strip().rstrip(".") if match else None
+    usage_match = _USAGE_RE.search(remainder)
+    usage = usage_match.group(1).upper().replace("COMPUTATIONAL", "COMP") if usage_match else None
+    return picture or None, usage
 
 
 def _parse_occurs(remainder: str) -> tuple[Optional[int], Optional[int], Optional[str]]:

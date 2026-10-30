@@ -104,7 +104,7 @@
     },
     {
       "family": "a2a",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -590,7 +590,7 @@
     },
     {
       "family": "acp",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -1086,7 +1086,7 @@
     },
     {
       "family": "agents-manifest",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -1608,9 +1608,15 @@
     },
     {
       "family": "api-blueprint",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "api-blueprint",
@@ -2184,7 +2190,7 @@
     },
     {
       "family": "apigee",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -2725,7 +2731,7 @@
     },
     {
       "family": "arazzo",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -3247,9 +3253,15 @@
     },
     {
       "family": "arrow",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "arrow",
@@ -3751,9 +3763,15 @@
     },
     {
       "family": "asn1",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 13,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "asn1",
@@ -4244,7 +4262,7 @@
     },
     {
       "family": "asyncapi",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -4724,9 +4742,15 @@
     },
     {
       "family": "avro",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "avro",
@@ -5234,9 +5258,15 @@
     },
     {
       "family": "avro-idl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 11,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "avro-idl",
@@ -5769,9 +5799,15 @@
     },
     {
       "family": "aws-apigateway",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "aws-apigateway",
@@ -6343,7 +6379,7 @@
     },
     {
       "family": "azure-apim",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -6914,9 +6950,15 @@
     },
     {
       "family": "bruno",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "bruno",
@@ -7473,9 +7515,15 @@
     },
     {
       "family": "capnproto",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "capnproto",
@@ -7997,9 +8045,15 @@
     },
     {
       "family": "cddl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 19,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "cddl",
@@ -8507,9 +8561,15 @@
     },
     {
       "family": "cics-bms",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 13,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "cics-bms",
@@ -9005,9 +9065,15 @@
     },
     {
       "family": "cloudevents",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 2,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "cloudevents",
@@ -10029,9 +10095,15 @@
     },
     {
       "family": "connectrpc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "connectrpc",
@@ -10561,7 +10633,7 @@
     },
     {
       "family": "consul",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -11106,9 +11178,15 @@
     },
     {
       "family": "corbaidl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "corbaidl",
@@ -11627,9 +11705,15 @@
     },
     {
       "family": "cue",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 20,
+        "drop": 0,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "cue",
@@ -12138,9 +12222,15 @@
     },
     {
       "family": "dbt",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "dbt",
@@ -12650,9 +12740,15 @@
     },
     {
       "family": "dhall",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 14,
+        "drop": 0,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "dhall",
@@ -13163,9 +13259,15 @@
     },
     {
       "family": "dicom",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 37,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -13691,9 +13793,15 @@
     },
     {
       "family": "discovery",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 5,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "discovery",
@@ -14257,9 +14365,15 @@
     },
     {
       "family": "dtd",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "dtd",
@@ -14769,9 +14883,15 @@
     },
     {
       "family": "edifact",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 50,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -15282,9 +15402,15 @@
     },
     {
       "family": "edix12",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 24,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -15813,7 +15939,7 @@
     },
     {
       "family": "envoy-xds",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -16383,9 +16509,15 @@
     },
     {
       "family": "fhir",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 10,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "fhir",
@@ -16946,9 +17078,15 @@
     },
     {
       "family": "fix",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 22,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "fix",
@@ -17461,9 +17599,15 @@
     },
     {
       "family": "fix-orchestra",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 14,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "fix-orchestra",
@@ -17975,9 +18119,15 @@
     },
     {
       "family": "flatbuffers",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -18489,7 +18639,7 @@
     },
     {
       "family": "gateway-api",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -19047,9 +19197,15 @@
     },
     {
       "family": "graphql",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 11,
+        "drop": 2,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "graphql",
@@ -19576,7 +19732,7 @@
     },
     {
       "family": "haproxy",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -20146,9 +20302,15 @@
     },
     {
       "family": "har",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 14,
+        "drop": 5,
+        "synth": 20
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "har",
@@ -20713,9 +20875,15 @@
     },
     {
       "family": "hl7v2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 50,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "hl7v2",
@@ -21231,9 +21399,15 @@
     },
     {
       "family": "hl7v3",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 73,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -21759,9 +21933,15 @@
     },
     {
       "family": "hoppscotch",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "hoppscotch",
@@ -22343,9 +22523,15 @@
     },
     {
       "family": "http-file",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "http-file",
@@ -22911,9 +23097,15 @@
     },
     {
       "family": "idoc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "idoc",
@@ -23431,9 +23623,15 @@
     },
     {
       "family": "ims",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 35,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -23959,9 +24157,15 @@
     },
     {
       "family": "insomnia",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "insomnia",
@@ -24527,9 +24731,15 @@
     },
     {
       "family": "iso20022",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 37,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "iso20022",
@@ -25049,9 +25259,15 @@
     },
     {
       "family": "iso8583",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 23,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -25581,7 +25797,7 @@
     },
     {
       "family": "istio",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -26134,9 +26350,15 @@
     },
     {
       "family": "json-schema",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -26633,9 +26855,15 @@
     },
     {
       "family": "jsonld",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "jsonld",
@@ -27139,9 +27367,15 @@
     },
     {
       "family": "jtd",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "jtd",
@@ -27655,9 +27889,15 @@
     },
     {
       "family": "k8s-crd",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -28158,9 +28398,15 @@
     },
     {
       "family": "kafka-connect",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -28677,7 +28923,7 @@
     },
     {
       "family": "kong",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -29235,9 +29481,15 @@
     },
     {
       "family": "llm-tools",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 2,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "llm-tools",
@@ -29753,9 +30005,15 @@
     },
     {
       "family": "lwm2m",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "lwm2m",
@@ -30273,9 +30531,15 @@
     },
     {
       "family": "matter",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "matter",
@@ -30793,9 +31057,15 @@
     },
     {
       "family": "mcp",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 13,
+        "drop": 6,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "mcp",
@@ -31313,9 +31583,15 @@
     },
     {
       "family": "nacha",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 63,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "nacha",
@@ -31827,9 +32103,15 @@
     },
     {
       "family": "natural-ddm",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 21,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "natural-ddm",
@@ -32339,9 +32621,15 @@
     },
     {
       "family": "ncpdp",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 85,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -32865,7 +33153,7 @@
     },
     {
       "family": "nginx",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -33435,9 +33723,15 @@
     },
     {
       "family": "odata",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -34017,9 +34311,15 @@
     },
     {
       "family": "odata-v2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "odata-v2",
@@ -34575,9 +34875,15 @@
     },
     {
       "family": "odcs",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -35081,9 +35387,15 @@
     },
     {
       "family": "oncrpc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 9,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -35597,9 +35909,15 @@
     },
     {
       "family": "opcua-nodeset",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "opcua-nodeset",
@@ -36113,9 +36431,15 @@
     },
     {
       "family": "openapi",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "openapi",
@@ -36617,9 +36941,15 @@
     },
     {
       "family": "openrpc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 2,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "openrpc",
@@ -37125,9 +37455,15 @@
     },
     {
       "family": "owl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "owl",
@@ -37633,9 +37969,15 @@
     },
     {
       "family": "pkl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 20,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -38146,9 +38488,15 @@
     },
     {
       "family": "pli",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 33,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -38674,9 +39022,15 @@
     },
     {
       "family": "postman",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -39252,9 +39606,15 @@
     },
     {
       "family": "postman-v2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "postman-v2",
@@ -39818,9 +40178,15 @@
     },
     {
       "family": "protobuf",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "protobuf",
@@ -40338,9 +40704,15 @@
     },
     {
       "family": "protobuf-editions",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "protobuf-editions",
@@ -40859,9 +41231,15 @@
     },
     {
       "family": "pydantic",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 24,
+        "drop": 0,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -41390,9 +41768,15 @@
     },
     {
       "family": "raml",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "raml",
@@ -41948,9 +42332,15 @@
     },
     {
       "family": "relaxng",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "relaxng",
@@ -42453,9 +42843,15 @@
     },
     {
       "family": "ros2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 15,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -42967,9 +43363,15 @@
     },
     {
       "family": "sepa",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 60,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "sepa",
@@ -43481,9 +43883,15 @@
     },
     {
       "family": "shacl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "shacl",
@@ -43991,9 +44399,15 @@
     },
     {
       "family": "smithy",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 2,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -44525,9 +44939,15 @@
     },
     {
       "family": "soapui",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "soapui",
@@ -45087,9 +45507,15 @@
     },
     {
       "family": "sparkplug",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -45591,9 +46017,15 @@
     },
     {
       "family": "sql-ddl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 23,
+        "drop": 0,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -46123,9 +46555,15 @@
     },
     {
       "family": "swagger",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 29,
+        "drop": 6,
+        "synth": 36
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "swagger",
@@ -46703,9 +47141,15 @@
     },
     {
       "family": "swagger-1.2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 15,
+        "drop": 4,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "swagger-1.2",
@@ -47266,9 +47710,15 @@
     },
     {
       "family": "swift-mt",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 18,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "swift-mt",
@@ -47778,9 +48228,15 @@
     },
     {
       "family": "thrift",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "thrift",
@@ -48308,9 +48764,15 @@
     },
     {
       "family": "thunder-client",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "thunder-client",
@@ -48875,9 +49337,15 @@
     },
     {
       "family": "tradacoms",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 19,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "tradacoms",
@@ -49399,7 +49867,7 @@
     },
     {
       "family": "traefik",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -49951,9 +50419,15 @@
     },
     {
       "family": "trpc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 43,
+        "drop": 4,
+        "synth": 28
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "trpc",
@@ -50481,7 +50955,7 @@
     },
     {
       "family": "tyk",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
+      "reason": "COBOL copybook export lays out record types, and this model has none (only enums, scalars or operations).",
       "status": "refused",
       "target": "cobolcopybook"
     },
@@ -51043,9 +51517,15 @@
     },
     {
       "family": "typescript-types",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 23,
+        "drop": 0,
+        "synth": 25
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -51579,9 +52059,15 @@
     },
     {
       "family": "typespec",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 7,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
@@ -52137,9 +52623,15 @@
     },
     {
       "family": "vsam-idcams",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "vsam-idcams",
@@ -52667,9 +53159,15 @@
     },
     {
       "family": "wadl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "wadl",
@@ -53231,9 +53729,15 @@
     },
     {
       "family": "wit",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "wit",
@@ -53743,9 +54247,15 @@
     },
     {
       "family": "wsdl",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "wsdl",
@@ -54267,9 +54777,15 @@
     },
     {
       "family": "wsdl2",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "wsdl2",
@@ -54791,9 +55307,15 @@
     },
     {
       "family": "xmlrpc",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "xmlrpc",
@@ -55295,9 +55817,15 @@
     },
     {
       "family": "xregistry",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 8,
+        "drop": 4,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "xregistry",
@@ -55805,9 +56333,15 @@
     },
     {
       "family": "xsd",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "xsd",
@@ -56310,9 +56844,15 @@
     },
     {
       "family": "zod",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 28,
+        "drop": 0,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -56841,9 +57381,15 @@
     },
     {
       "family": "zosconnect",
-      "reason": "Only a source imported as COBOL Copybook can be exported to COBOL Copybook.",
-      "status": "refused",
-      "target": "cobolcopybook"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cobolcopybook",
+      "tier": "types-only"
     },
     {
       "family": "zosconnect",
@@ -57292,8 +57838,8 @@
   ],
   "counts": {
     "ok": 34,
-    "lossy": 3554,
-    "refused": 1914,
+    "lossy": 3645,
+    "refused": 1823,
     "silent-loss": 222,
     "crash": 0,
     "skipped": 0

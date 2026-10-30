@@ -507,6 +507,49 @@ When the server has the FlatBuffers compiler, every export is compiled with `fla
 delivered; otherwise it is read back with Apiome's FlatBuffers importer. A schema that includes other
 `.fbs` files is not compiled on its own.
 
+### COBOL copybook from any source
+
+Exporting to **COBOL Copybook** writes the item's data types as copybook record layouts, `<Name>.cpy`,
+for z/OS Connect, CICS and IMS programs. An item imported from a copybook is written back exactly as
+it was imported — its pictures, usages, tables and `REDEFINES` — and the options below do not change it.
+Any other item is laid out like this:
+
+- **Records.** Each object that no other object contains is an `01` record. Objects inside it are
+  written inline as group items, with levels `05`, `10`, `15` … (a smaller step when a record nests too
+  deep to stay within level 49). An object that contains itself is written once; the inner reference is
+  left out and listed in the report. A model with no object is refused.
+- **Names.** COBOL data names: `orderLineItems` and `order_line_items` are written `ORDER-LINE-ITEMS`,
+  a reserved word gets `-X` (`STATUS-X`), and a name is cut to 30 characters. Every name is unique in the
+  copybook — a clash gets `-2`, `-3` … within the 30 — so nothing needs `OF` to be referenced, and the
+  same item always gets the same names.
+- **Text** is `PIC X(n)`, `n` from `maxLength`. Dates are `PIC X(10)` (`YYYY-MM-DD`), times `X(15)`,
+  timestamps `X(32)` and UUIDs `X(36)`. Other text gets the **default_string_length** (255), and the
+  report lists each.
+- **Numbers.** 16-, 32- and 64-bit integers are `PIC S9(4)`, `S9(9)` and `S9(18)` (`9(n)` when the
+  minimum is 0 or more), binary (`COMP`). A decimal is packed, `PIC S9(p)V9(s) COMP-3`, with 18 digits in
+  all and its scale from `multipleOf` (`0.01` is 2 places), else **decimal_scale**. A float is `COMP-1`
+  or `COMP-2`.
+- **Booleans and enumerations.** A boolean is a one-character flag with two condition names,
+  `88 <NAME>-TRUE VALUE 'Y'` and `88 <NAME>-FALSE VALUE 'N'`. An enumeration is `PIC X(n)` (or a number)
+  with one `88` level per value.
+- **Lists.** A list of a fixed size is `OCCURS n TIMES`. Any other list is
+  `OCCURS min TO max TIMES DEPENDING ON <NAME>-COUNT`, with the counter written just before it; `max` is
+  `maxItems`, else **default_occurs** (10). A list inside another list is a fixed table of its maximum,
+  because `DEPENDING ON` is not allowed there.
+- **Unions** are written as items that share storage: each member after the largest one
+  `REDEFINES` it.
+- **Left out:** maps, operations and channels — a copybook describes record layouts only.
+
+Options:
+
+- **numeric_usage** — `comp` (default): binary integers, packed decimals and floats; `display`: every
+  number zoned (`PIC S9(9)`, floats as decimals).
+- **default_string_length**, **default_occurs**, **decimal_scale** — what is used when the source does
+  not say (255, 10 and 2).
+- **fixed_format** — on by default: code in columns 8–72, a long entry continued on the next line, and
+  `*` comments in column 7. Turn it off for free format: no column limits and `*>` comments.
+- **include_comments** — on by default; turn it off to leave out the header comment.
+
 ### WSDL and XSD from any source
 
 Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the
@@ -884,7 +927,7 @@ server has it, and otherwise by reading it back with the API Blueprint importer.
 | Cap'n Proto | RPC | Any source |
 | CDDL | Data schema | Any source |
 | CloudEvents | Events | Any source |
-| COBOL Copybook | Data schema | A source imported as COBOL Copybook |
+| COBOL Copybook | Data schema | Any source |
 | Connect RPC | RPC | Any source |
 | CORBA IDL | RPC | Any source |
 | EDI X12 | Data schema | A source imported as EDI X12 |
