@@ -499,6 +499,20 @@
       ]
     },
     {
+      "id": "catalog/fhir-profile-url",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "fhir.profile-url"
+      ]
+    },
+    {
+      "id": "catalog/fhir-profile-base",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "fhir.profile-base"
+      ]
+    },
+    {
       "id": "catalog/avro-invalid-default",
       "kind": "catalog_import_source",
       "expected_blocking_rule_ids": [

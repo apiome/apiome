@@ -542,6 +542,67 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** An example that does not satisfy its own schema ships a payload consumers cannot use — docs render it, mocks replay it, and generated clients seed fixtures from it.
 
 
+## Pack: `fhir`
+
+### `fhir.capability-profile` {#fhir-capability-profile}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** Each resource a FHIR server offers should name the profile it conforms to.
+
+### `fhir.capability-search` {#fhir-capability-search}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A FHIR resource that supports search should declare its search parameters.
+
+### `fhir.capability-version` {#fhir-capability-version}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A FHIR CapabilityStatement should say which fhirVersion the server speaks.
+
+### `fhir.element-short` {#fhir-element-short}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** Every element a FHIR profile constrains should have a short label or a definition.
+
+### `fhir.profile-base` {#fhir-profile-base}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A FHIR constraint profile must name the baseDefinition it constrains.
+- **Reference:** https://hl7.org/fhir/R4/structuredefinition-definitions.html#StructureDefinition.baseDefinition
+- **Remediation:** Set `baseDefinition` to the canonical url of the profile or base resource it constrains (for example `http://hl7.org/fhir/StructureDefinition/Patient`).
+- **False-positive guidance:** Not a false positive: FHIR requires a baseDefinition whenever derivation is `constraint` (invariant sdf-4).
+- **Fixture:** `catalog/fhir-profile-base`
+- **Scan modes:** `lint`
+
+### `fhir.profile-status` {#fhir-profile-status}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A FHIR profile should be active, not draft, retired or unknown.
+
+### `fhir.profile-url` {#fhir-profile-url}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A FHIR profile must have a canonical url.
+- **Reference:** https://hl7.org/fhir/R4/structuredefinition.html
+- **Remediation:** Give the StructureDefinition a canonical `url`, typically `<publisher base>/StructureDefinition/<id>`, and keep it stable across versions.
+- **False-positive guidance:** Not a false positive: StructureDefinition.url is required (1..1) in every FHIR release.
+- **Fixture:** `catalog/fhir-profile-url`
+- **Scan modes:** `lint`
+
+### `fhir.profile-version` {#fhir-profile-version}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A FHIR profile should say which fhirVersion (R4, R5, R6) it targets.
+
+
 ## Pack: `graphql`
 
 ### `graphql.argument-missing-description` {#graphql-argument-missing-description}
