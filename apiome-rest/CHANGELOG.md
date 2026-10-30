@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.539.0] - 2026-10-30
+
+### Added
+- **API Blueprint validate + round-trip (MFX-18.3, #3907).** New `app.apiblueprint_roundtrip`:
+  - `validate_emitted_apiblueprint(emit_result)` parses every file with drafter when the toolchain is present; a good
+    blueprint has **zero warnings**, so every `error` and `warning` annotation is a problem (`BLOCKING_SEVERITIES`).
+    Without drafter (or when it goes missing mid-run) the built-in reader parses it. A drafter that is installed but
+    gives no answer (timeout, no parse result) is a problem, not a pass.
+  - `round_trip_apiblueprint(api, *, emit_result)` validates, re-imports through `ApiblueprintImportSource`, takes the
+    canonical diff against the source and reconciles it with the fidelity report; `status` is `invalid` /
+    `unparseable` / `lossy` / `lossless`, with `unexplained`, `overclaims`, `explained` and `diverges`.
+  - `reimport_with_reader(emit_result)` — the gate's re-import (malformed shapes become `INPUT_MALFORMED`).
+- `apiblueprint_drafter.run_drafter(text, *, strict=False)` — `strict=True` raises (`ToolchainError` / `ValueError`)
+  instead of returning `[]` when drafter gave no answer; the import keeps the best-effort default.
+- **Round-trip fixture.** `tests/fixtures/apiblueprint_roundtrip/openapi-petstore.json` (`APIOME_REGEN_APIB_ROUNDTRIP=1`
+  regenerates it); drafter paths replay the recorded drafter 4.0.0 output.
+
+### Changed
+- **Export gate.** The `apiblueprint` validator now rejects drafter **warnings** as well as errors (they passed
+  before), rejects a drafter that fails to run, and rejects a document that does not import again
+  (`apiblueprint.reimport`).
+
 ## [1.538.0] - 2026-10-30
 
 ### Added

@@ -974,40 +974,42 @@ async def _validate_raml(
 async def _validate_apiblueprint(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted API Blueprint document (MFX-18.1, #3905).
+    """Re-validate an emitted API Blueprint document (MFX-18.1, #3905; MFX-18.3, #3907).
 
     drafter — the reference API Blueprint parser the import already runs for its lint (MFI-16.3) —
-    parses the document when the toolchain has it; an ``error`` annotation rejects the export,
-    warnings do not. Without drafter the document is re-parsed through the API Blueprint reader the
-    import uses.
+    parses the document when the toolchain has it, and a good blueprint has **zero warnings**: every
+    ``error`` and ``warning`` annotation rejects the export. Without drafter the document is re-parsed
+    through the API Blueprint reader the import uses. The document must then import again
+    (``apiblueprint.reimport``) — see :mod:`app.apiblueprint_roundtrip`.
     """
-    from .apiblueprint_drafter import drafter_available, run_drafter
-    from .apiblueprint_parser import parse_apiblueprint
+    from .apiblueprint_roundtrip import reimport_with_reader, validate_emitted_apiblueprint
+    from .import_source import ImportSourceError
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The API Blueprint export wrote no file.")])
-    if not drafter_available():
-        return await _run_text_validator(target, emit_result, parse_apiblueprint)
-
-    def _run() -> List[ValidationFinding]:
-        findings: List[ValidationFinding] = []
-        for emitted in emit_result.files:
-            for annotation in run_drafter(str(emitted.content)):
-                if annotation.get("severity") != "error":
-                    continue
-                findings.append(
-                    ValidationFinding(
-                        message=annotation.get("message") or "drafter reported an API Blueprint error.",
-                        file=emitted.path,
-                        line=annotation.get("line"),
-                        column=annotation.get("column"),
-                        keyword=str(annotation["code"]) if annotation.get("code") is not None else None,
-                    )
-                )
-        return findings
-
-    findings = await asyncio.to_thread(_run)
-    return _passed(target) if not findings else _rejected(target, findings)
+    _validator, problems = await asyncio.to_thread(validate_emitted_apiblueprint, emit_result)
+    if problems:
+        findings = [
+            ValidationFinding(
+                message=problem.get("message") or "drafter reported an API Blueprint problem.",
+                file=problem.get("file"),
+                line=problem.get("line"),
+                column=problem.get("column"),
+                keyword=str(problem["code"]) if problem.get("code") is not None else None,
+            )
+            for problem in problems
+        ]
+        return _rejected(target, findings)
+    try:
+        await asyncio.to_thread(reimport_with_reader, emit_result)
+    except ImportSourceError as exc:
+        finding = ValidationFinding(
+            message=f"The API Blueprint document does not import: {exc}",
+            file=emit_result.files[0].path,
+            keyword="apiblueprint.reimport",
+        )
+        return _rejected(target, [finding])
+    return _passed(target)
 
 
 async def _validate_cddl(
