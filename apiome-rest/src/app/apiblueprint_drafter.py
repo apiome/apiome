@@ -103,15 +103,23 @@ def read_drafter_annotations(stdout: Optional[str]) -> Optional[List[Dict[str, A
     return annotations
 
 
-def run_drafter(text: str) -> List[Dict[str, Any]]:
+def run_drafter(text: str, *, strict: bool = False) -> List[Dict[str, Any]]:
     """Run ``drafter -f json`` on a blueprint and return its annotations.
 
     Args:
         text: The API Blueprint document.
+        strict: Raise instead of returning ``[]`` when drafter could not give an answer. The import
+            treats drafter as best effort; the export gate (MFX-18.3) must not mistake "drafter did
+            not run" for "drafter found nothing".
 
     Returns:
-        The annotations (:func:`read_drafter_annotations`); empty when drafter is missing, fails to
-        run, or prints no parse result — the import does not depend on it.
+        The annotations (:func:`read_drafter_annotations`). Without ``strict``, empty when drafter is
+        missing, fails to run, or prints no parse result — the import does not depend on it.
+
+    Raises:
+        ToolchainError: With ``strict``, when drafter is missing (``ToolNotAvailableError``) or failed
+            to run (a timeout, a resource limit…).
+        ValueError: With ``strict``, when drafter printed no parse result.
     """
     try:
         result = run_tool_blocking(
@@ -121,10 +129,14 @@ def run_drafter(text: str) -> List[Dict[str, Any]]:
     except ToolExecutionError as exc:
         stdout = exc.stdout
     except ToolchainError as exc:
+        if strict:
+            raise
         logger.warning("drafter did not run; the blueprint is imported without its annotations: %s", exc)
         return []
     annotations = read_drafter_annotations(stdout)
     if annotations is None:
+        if strict:
+            raise ValueError("drafter printed no parse result")
         logger.warning("drafter printed no parse result; the blueprint is imported without its annotations")
         return []
     return annotations

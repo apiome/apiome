@@ -542,26 +542,25 @@ async def test_validation_rejects_a_broken_document_without_drafter(no_drafter) 
     assert verdict.findings[0].file == "Pets.apib"
 
 
-async def test_drafter_errors_reject_and_warnings_pass(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_drafter_errors_and_warnings_both_reject(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MFX-18.3: a good blueprint has zero drafter warnings, so a warning rejects like an error."""
     api = _pets_api()
     result = _emit(api)
     monkeypatch.setattr("app.apiblueprint_drafter.drafter_available", lambda: True)
     reports = {
-        "warning": [{"severity": "warning", "code": 6, "message": "action is missing a response"}],
+        "warning": [{"severity": "warning", "code": 6, "message": "action is missing a response", "line": 3,
+                     "column": 1}],
         "error": [{"severity": "error", "code": 4, "message": "base type 'X' is not defined", "line": 9,
                    "column": 1}],
     }
+    expected = {"warning": ("action is missing a response", "Pets.apib", 3, 1, "6"),
+                "error": ("base type 'X' is not defined", "Pets.apib", 9, 1, "4")}
     for name, report in reports.items():
-        monkeypatch.setattr("app.apiblueprint_drafter.run_drafter", lambda text, r=report: r)
+        monkeypatch.setattr("app.apiblueprint_drafter.run_drafter", lambda text, r=report, **kw: r)
         verdict = await validate_emitted_artifact("apiblueprint", result, api=api)
-        if name == "warning":
-            assert verdict.valid and verdict.validated
-        else:
-            assert verdict.failed
-            finding = verdict.findings[0]
-            assert (finding.message, finding.file, finding.line, finding.column, finding.keyword) == (
-                "base type 'X' is not defined", "Pets.apib", 9, 1, "4"
-            )
+        assert verdict.failed, name
+        finding = verdict.findings[0]
+        assert (finding.message, finding.file, finding.line, finding.column, finding.keyword) == expected[name]
 
 
 # ===========================================================================
@@ -608,10 +607,10 @@ async def test_corpus_export_reparses_as_api_blueprint(path: Path, no_drafter) -
 
 
 @pytest.mark.parametrize("path", [*_CORPUS, *_APIB_CORPUS], ids=lambda p: p.name)
-def test_corpus_export_has_no_drafter_errors(path: Path) -> None:
+def test_corpus_export_has_no_drafter_errors_or_warnings(path: Path) -> None:
     from app.apiblueprint_drafter import drafter_available, run_drafter
 
     if not drafter_available():
         pytest.skip("the drafter toolchain is not available here")
     emitted = emit_canonical(_corpus_api(path), "apiblueprint").files[0]
-    assert [a for a in run_drafter(emitted.content) if a["severity"] == "error"] == []
+    assert [a for a in run_drafter(emitted.content) if a["severity"] in ("error", "warning")] == []

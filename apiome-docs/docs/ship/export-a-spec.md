@@ -1040,8 +1040,17 @@ An item imported from API Blueprint is written back as it was read. Import now a
 action's description, query parameters from the URI (`{?limit}`), a data structure's description,
 `+ Default:` values, and property names in backticks.
 
-Each export is validated before you download it: with drafter, the API Blueprint parser, when the
-server has it, and otherwise by reading it back with the API Blueprint importer.
+Each export is checked before you download it:
+
+1. **drafter**, the API Blueprint parser, reads it when the server has it. A good blueprint has no
+   warnings, so any drafter **error or warning** fails the export and names its code, line and
+   column. Without drafter, the API Blueprint importer reads the document instead, and a parse error
+   fails the export.
+2. The document is then imported again. If it does not import, the export fails
+   (`apiblueprint.reimport`).
+
+An item imported from API Blueprint exports and re-imports unchanged. From any other source, the
+re-import shows what API Blueprint could not keep; the fidelity report names those losses.
 
 | Format | Kind | Exports from |
 | --- | --- | --- |

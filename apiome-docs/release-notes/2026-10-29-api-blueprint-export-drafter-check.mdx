@@ -1,0 +1,17 @@
+---
+slug: api-blueprint-export-drafter-check
+title: API Blueprint exports must pass drafter with no warnings
+description: An API Blueprint export must parse in drafter with no warnings, then import.
+authors: [apiome]
+---
+
+An **API Blueprint** export is now parsed by drafter, and must have no errors **and no warnings**,
+then imported again before you download it.
+[How API Blueprint exports are checked](/ship/export-a-spec#api-blueprint-from-any-source).
+
+{/* truncate */}
+
+- **Zero warnings.** A drafter warning now fails the export, like an error, and names its code, line
+  and column. Without drafter on the server, the API Blueprint importer reads the document instead.
+- **Re-imports.** A document that does not import again fails with `apiblueprint.reimport`.
+- **Round trip.** An item imported from API Blueprint exports and re-imports unchanged.
