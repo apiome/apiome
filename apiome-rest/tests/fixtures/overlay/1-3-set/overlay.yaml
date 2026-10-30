@@ -1,0 +1,8 @@
+overlay: 1.3.0
+info:
+  title: An overlay from a revision Apiome does not read yet
+  version: 1.0.0
+actions:
+  - target: $.info
+    update:
+      x-audience: public

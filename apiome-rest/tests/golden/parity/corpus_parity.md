@@ -80,7 +80,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `odcs` | ODCS Data Contract | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `odcs` |
 | `oncrpc` | ONC RPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `oncrpc` |
 | `opcua-nodeset` | OPC UA NodeSet2 | rpc | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
-| `openapi` | OpenAPI / Swagger | rest | 47 | 12 | 0 | 0 | 59 | 6/6 | 42 | `openapi` |
+| `openapi` | OpenAPI / Swagger | rest | 51 | 12 | 0 | 0 | 63 | 6/6 | 44 | `openapi` |
 | `openrpc` | OpenRPC | rpc | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `openrpc` |
 | `owl` | OWL / RDFS ontologies | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 8 | — |
 | `pkl` | Pkl | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |

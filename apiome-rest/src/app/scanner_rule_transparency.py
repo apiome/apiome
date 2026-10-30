@@ -271,6 +271,21 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/odata-entity-key",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "overlay.version-unsupported": _meta(
+        "overlay.version-unsupported",
+        ENGINE_SCHEMA,
+        rationale="Each Overlay Specification revision has its own action semantics; applying an "
+        "overlay written for a revision Apiome does not implement would change the API with rules "
+        "the author did not intend.",
+        reference="https://spec.openapis.org/overlay/",
+        remediation="Declare `overlay: 1.0.0`, `1.1.0` or `1.2.0` (whichever the overlay's features "
+        "need), or keep the overlay out of Apiome until it supports the newer revision.",
+        false_positive_guidance="Not a false positive: the marker's major.minor selects the "
+        "feature set, and Apiome reads 1.0, 1.1 and 1.2 only. The patch number is ignored.",
+        scan_modes=("lint",),
+        fixture_id="catalog/overlay-version-unsupported",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "fhir.profile-url": _meta(
         "fhir.profile-url",
         ENGINE_SCHEMA,

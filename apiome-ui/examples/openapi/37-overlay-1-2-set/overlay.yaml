@@ -1,0 +1,30 @@
+overlay: 1.2.0
+$self: https://specs.example.org/museum/overlays/public.yaml
+info:
+  title: Public museum surface
+  version: 1.0.0
+# Overlay 1.2: resolved against $self, this names the base's own $self.
+extends: ../openapi.yaml
+components:
+  actions:
+    public-audience:
+      description: Mark an operation as part of the public surface.
+      fields:
+        update:
+          x-audience: public
+          tags: [public]
+    drop:
+      fields:
+        remove: true
+actions:
+  # Overlay 1.2: reusable actions, referenced with $ref and given a target.
+  - $ref: '#/components/actions/public-audience'
+    target: $.paths['/tickets'].get
+  - $ref: '#/components/actions/public-audience'
+    target: $.paths['/tickets/{id}'].get
+    description: The detail view is public too.
+  - $ref: '#/components/actions/drop'
+    target: $.paths['/internal/sales']
+  - target: $.info
+    update:
+      description: Public ticketing surface of the museum.

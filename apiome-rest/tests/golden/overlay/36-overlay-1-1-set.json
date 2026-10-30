@@ -1,0 +1,60 @@
+{
+  "applied": [
+    "overlay.yaml"
+  ],
+  "findings": [],
+  "provenance": [
+    {
+      "action_index": 0,
+      "kind": "appended",
+      "overlay": "overlay.yaml",
+      "pointer": "/servers/1",
+      "target": "$.servers"
+    },
+    {
+      "action_index": 0,
+      "kind": "appended",
+      "overlay": "overlay.yaml",
+      "pointer": "/servers/2",
+      "target": "$.servers"
+    },
+    {
+      "action_index": 1,
+      "kind": "appended",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1loans/get/parameters/0/schema/enum/2",
+      "target": "$.paths['/loans'].get.parameters[0].schema"
+    },
+    {
+      "action_index": 2,
+      "kind": "replaced",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1legacy~1loans/get/summary",
+      "target": "$.paths['/legacy/loans'].get.summary"
+    },
+    {
+      "action_index": 3,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1v2~1loans",
+      "target": "$.paths"
+    },
+    {
+      "action_index": 4,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1v2~1loans/get",
+      "target": "$.paths['/v2/loans']"
+    },
+    {
+      "action_index": 5,
+      "kind": "removed",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1legacy~1loans",
+      "target": "$.paths['/legacy/loans']"
+    }
+  ],
+  "revisions": {
+    "overlay.yaml": "1.1"
+  }
+}

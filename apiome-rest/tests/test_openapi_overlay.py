@@ -27,7 +27,7 @@ from app.import_preview_manifest import (
 from app.import_source import DetectionInput, ImportSourceError, LintReport
 from app.import_source_pipeline import run_adapter_import_job
 from app.intake_error_taxonomy import INTAKE_ERROR_TAXONOMY
-from app.intake_lint_rules import (
+from app.overlay_lint_rules import (
     RULE_OVERLAY_ACTION_INVALID,
     RULE_OVERLAY_UNMATCHED_TARGET,
 )
@@ -296,7 +296,6 @@ class TestApplyOverlays:
             {"target": "   ", "update": {"x": 1}},  # blank target
             {"target": "$.info", "remove": "yes"},  # non-boolean remove
             {"target": "$.info"},  # neither update nor remove
-            {"target": "$.[unparsable", "update": {}},  # invalid JSONPath
             {"target": "$.info", "update": "not-an-object"},  # object needs object
         ],
         ids=[
@@ -305,7 +304,6 @@ class TestApplyOverlays:
             "blank-target",
             "non-boolean-remove",
             "no-update-no-remove",
-            "invalid-jsonpath",
             "object-update-type-mismatch",
         ],
     )
@@ -313,6 +311,13 @@ class TestApplyOverlays:
         result = apply_overlays(_base_document(), [("o.yaml", _overlay([action]))])
         [finding] = result.findings
         assert finding.code == FINDING_ACTION_INVALID
+        assert not result.provenance
+
+    def test_an_unparsable_target_is_a_target_expression_finding(self) -> None:
+        # GVM-4.1 split this out of action-invalid into overlay.target-expression-invalid.
+        result = apply_overlays(_base_document(), [("o.yaml", _overlay([{"target": "$.[unparsable", "update": {}}]))])
+        [finding] = result.findings
+        assert finding.code == "target-expression-invalid"
         assert not result.provenance
 
     def test_removing_the_document_root_is_a_finding(self) -> None:
@@ -517,7 +522,7 @@ class TestAdapterOverlaySeams:
         )
         model = adapter.normalize(adapter.parse_fileset(fileset))
         report = adapter.lint(model)
-        overlay_rules = [f.rule for f in report.findings if f.rule.startswith("intake.overlay")]
+        overlay_rules = [f.rule for f in report.findings if f.rule.startswith("overlay.")]
         assert overlay_rules == [RULE_OVERLAY_UNMATCHED_TARGET]
         assert report.score is not None  # merged findings keep the report scored
 
@@ -535,7 +540,7 @@ actions:
         )
         model = adapter.normalize(adapter.parse_fileset(fileset))
         report = adapter.lint(model)
-        assert not [f for f in report.findings if f.rule.startswith("intake.overlay")]
+        assert not [f for f in report.findings if f.rule.startswith("overlay.")]
 
     def test_overlay_rules_are_registered(self) -> None:
         registered = {d.rule_id for d in builtin_rule_descriptors()}

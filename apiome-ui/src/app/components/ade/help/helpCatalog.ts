@@ -833,6 +833,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['http archive', 'devtools', 'network', 'traffic', 'proxy', 'recording', 'inferred', 'browser'],
   },
   {
+    id: 'fhir-import',
+    title: 'Import FHIR APIs and profiles',
+    summary: "Catalog a FHIR server's CapabilityStatement and its R4, R5 or R6 profiles.",
+    page: 'apiome-docs/docs/bring-in/fhir-import.md',
+    section: 'reference',
+    keywords: ['hl7', 'healthcare', 'capabilitystatement', 'metadata', 'structuredefinition', 'r4', 'r5', 'r6'],
+  },
+  {
+    id: 'overlays',
+    title: 'OpenAPI Overlays',
+    summary: 'Apply Overlay 1.0, 1.1 and 1.2 documents to a base OpenAPI description.',
+    page: 'apiome-docs/docs/bring-in/overlays.md',
+    section: 'reference',
+    keywords: ['actions', 'jsonpath', 'copy', 'remove', 'extends', 'lint'],
+  },
+  {
     id: 'odata-import',
     title: 'Import an OData service',
     summary: 'Catalog OData CSDL XML or JSON, validate it, or discover a live service.',

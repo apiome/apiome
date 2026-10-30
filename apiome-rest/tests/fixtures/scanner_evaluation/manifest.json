@@ -499,6 +499,13 @@
       ]
     },
     {
+      "id": "catalog/overlay-version-unsupported",
+      "kind": "catalog_overlay",
+      "expected_blocking_rule_ids": [
+        "overlay.version-unsupported"
+      ]
+    },
+    {
       "id": "catalog/fhir-profile-url",
       "kind": "catalog_import_source",
       "expected_blocking_rule_ids": [

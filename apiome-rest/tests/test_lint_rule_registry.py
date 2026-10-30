@@ -28,6 +28,7 @@ from app.lint_rule_registry import (
     docs_anchor_for,
 )
 from app.intake_lint_rules import INTAKE_RULES
+from app.overlay_lint_rules import OVERLAY_RULES
 from app.schema_lint import OPENAPI_RULES, RULE_CATALOGUE, lint_openapi_spec
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -48,7 +49,8 @@ def _all_engine_rule_ids() -> set:
     and every *paradigm* pack (FMT-5.5), which the engine dispatches on ``api.paradigm``
     rather than on a format key.
     """
-    ids = set(OPENAPI_RULES) | set(INTAKE_RULES)
+    # The OpenAPI Overlay pack (GVM-4.1) is emitted while overlays are applied, like intake rules.
+    ids = set(OPENAPI_RULES) | set(INTAKE_RULES) | set(OVERLAY_RULES)
     # Every pack the engine runs for all formats — the common pack and the IXH-5.4
     # example-conformance pack — taken from the engine itself rather than listed here.
     for pack in unconditional_rule_packs():

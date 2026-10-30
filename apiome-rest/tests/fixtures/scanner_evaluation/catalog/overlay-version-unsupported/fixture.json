@@ -1,0 +1,20 @@
+{
+  "kind": "catalog_overlay",
+  "id": "catalog/overlay-version-unsupported",
+  "description": "A bare OpenAPI Overlay with exactly one blocking defect: it declares overlay 1.3.0, a revision Apiome does not read.",
+  "document": {
+    "overlay": "1.3.0",
+    "info": {
+      "title": "Future overlay",
+      "version": "1.0.0"
+    },
+    "actions": [
+      {
+        "target": "$.info",
+        "update": {
+          "x-audience": "public"
+        }
+      }
+    ]
+  }
+}

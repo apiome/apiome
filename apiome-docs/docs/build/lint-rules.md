@@ -700,18 +700,6 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** warning
 - **Rationale:** An external $ref pointing at a non-public address (loopback, RFC1918, link-local, or the cloud metadata endpoint) or at a non-HTTP scheme is refused by the SSRF guard and is never fetched. Publish the referenced document at a public HTTPS URL, or bundle it into the import instead of referencing it.
 
-### `intake.overlay-action-invalid` {#intake-overlay-action-invalid}
-
-- **Category:** structure
-- **Default severity:** warning
-- **Rationale:** An OpenAPI Overlay action that declares no target, neither `update` nor `remove: true`, an invalid JSONPath, or an `update` value whose type does not fit the selected node cannot be applied as written (Overlay 1.0). Fix the action so the modification it describes actually reaches the resolved document.
-
-### `intake.overlay-unmatched-target` {#intake-overlay-unmatched-target}
-
-- **Category:** structure
-- **Default severity:** warning
-- **Rationale:** An OpenAPI Overlay action whose `target` JSONPath matches nothing in the base document has no effect: the modification the overlay describes was silently skipped everywhere the resolved document is used. Fix the target expression, or remove the action if the construct it targeted no longer exists in the base.
-
 ### `intake.unresolved-external-ref` {#intake-unresolved-external-ref}
 
 - **Category:** structure
@@ -928,6 +916,44 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Remediation:** Give each parameter of the method its own name.
 - **False-positive guidance:** Not a false positive: the OpenRPC specification forbids duplicated parameters within a method.
 - **Fixture:** `catalog/openrpc-unique-param-names`
+- **Scan modes:** `lint`
+
+
+## Pack: `overlay`
+
+### `overlay.action-invalid` {#overlay-action-invalid}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An Overlay action that cannot be applied as written for its revision — no target, nothing to do (`update`, `copy` or `remove: true`), an `update` or `copy` value whose type does not fit the selected nodes, a `copy` source that is not exactly one node, a feature the declared revision does not have (`copy` before 1.1, reusable actions before 1.2), or a broken reusable-action `$ref` — leaves the resolved document without the change the overlay describes. Fix the action, or declare the Overlay revision that has the feature.
+
+### `overlay.extends-unresolved` {#overlay-extends-unresolved}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An Overlay's `extends` says which document it was written for. When it names neither the base it is applied to (by path relative to the overlay) nor that base's `$self`, the overlay may be meant for a different document — its targets can still match by accident and change the wrong API. Point `extends` at the base, or apply the overlay to the document it names.
+
+### `overlay.target-expression-invalid` {#overlay-target-expression-invalid}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An Overlay action's `target` (or `copy` source) must be an RFC 9535 JSONPath query. An expression that does not parse or cannot be evaluated selects nothing, so the action is never applied. Correct the expression; avoid tool-specific JSONPath extensions.
+
+### `overlay.unmatched-target` {#overlay-unmatched-target}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An Overlay action whose `target` JSONPath matches nothing in the base document has no effect: the modification it describes is silently skipped everywhere the resolved document is used. Fix the target expression, or remove the action if the construct it targeted no longer exists in the base.
+
+### `overlay.version-unsupported` {#overlay-version-unsupported}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Apiome applies Overlay 1.0, 1.1 and 1.2 documents. An overlay declaring any other version (`overlay: 1.3.0`, `2.0.0`) is refused rather than applied with semantics it was not written for. Declare a supported revision, or wait for Apiome to support the newer one.
+- **Reference:** https://spec.openapis.org/overlay/
+- **Remediation:** Declare `overlay: 1.0.0`, `1.1.0` or `1.2.0` (whichever the overlay's features need), or keep the overlay out of Apiome until it supports the newer revision.
+- **False-positive guidance:** Not a false positive: the marker's major.minor selects the feature set, and Apiome reads 1.0, 1.1 and 1.2 only. The patch number is ignored.
+- **Fixture:** `catalog/overlay-version-unsupported`
 - **Scan modes:** `lint`
 
 

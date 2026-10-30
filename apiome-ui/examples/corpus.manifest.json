@@ -21875,6 +21875,98 @@
       "fileset_role": "root"
     },
     {
+      "path": "openapi/36-overlay-1-1-set/openapi.yaml",
+      "format": "openapi",
+      "adapter_key": "openapi",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "openapi-3.1",
+        "min_confidence": 0.99
+      },
+      "features": [
+        "overlay",
+        "overlay-base",
+        "parameters",
+        "servers"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Base Library Loans API for the GVM-4.1 Overlay 1.1 set; overlay.yaml applies 1.1 actions to it.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "openapi/36-overlay-1-1-set/overlay.yaml",
+      "format": "openapi",
+      "adapter_key": "openapi",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "openapi-3.1",
+        "min_confidence": 0
+      },
+      "features": [
+        "overlay",
+        "overlay-1.1",
+        "overlay-copy",
+        "overlay-update",
+        "overlay-remove"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Overlay 1.1 document: array concatenation (at an array target and inside an object merge), a primitive target, and a move built from update + copy + remove.",
+      "notes": "Fileset member: an Overlay document, not an API description. Importing it alone fails with INPUT_OVERLAY_BASE_MISSING; it imports only through the set root openapi.yaml.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
+      "path": "openapi/37-overlay-1-2-set/openapi.yaml",
+      "format": "openapi",
+      "adapter_key": "openapi",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "openapi-3.1",
+        "min_confidence": 0.99
+      },
+      "features": [
+        "overlay",
+        "overlay-base",
+        "self"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Base Museum Tickets API (with a $self) for the GVM-4.1 Overlay 1.2 set; overlay.yaml applies 1.2 actions to it.",
+      "rung": "multi-file",
+      "fileset_role": "root"
+    },
+    {
+      "path": "openapi/37-overlay-1-2-set/overlay.yaml",
+      "format": "openapi",
+      "adapter_key": "openapi",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "openapi-3.1",
+        "min_confidence": 0
+      },
+      "features": [
+        "overlay",
+        "overlay-1.2",
+        "overlay-reusable-actions",
+        "overlay-self",
+        "overlay-update",
+        "overlay-remove"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Overlay 1.2 document: reusable actions referenced with $ref, its own $self, and an extends resolved against $self to the base's $self.",
+      "notes": "Fileset member: an Overlay document, not an API description. Importing it alone fails with INPUT_OVERLAY_BASE_MISSING; it imports only through the set root openapi.yaml.",
+      "rung": "multi-file",
+      "fileset_role": "member"
+    },
+    {
       "path": "openapi/negative/01-syntactic-unclosed-flow-sequence.yaml",
       "format": "openapi",
       "adapter_key": "openapi",

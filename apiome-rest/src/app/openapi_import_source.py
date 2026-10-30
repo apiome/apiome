@@ -38,7 +38,7 @@ extras under ``swagger_1_2``.
 fileset whose members carry an ``overlay`` version marker resolves base + overlays
 through :func:`app.openapi_overlay.apply_overlays` before normalization, publishing
 per-value provenance on the canonical model's extras (rendered by the preview
-coverage ledger) and surfacing unapplied actions as ``intake.overlay-*`` lint
+coverage ledger) and surfacing unapplied actions as ``overlay`` pack lint
 findings. A *bare* overlay — uploaded without its base — is detected and rejected
 with the ``INPUT_OVERLAY_BASE_MISSING`` taxonomy code, whose remediation prompts
 for the base document instead of failing with a parse error.
@@ -122,7 +122,7 @@ class OpenApiImportSource(ImportSource, register=True):
         routed to this adapter explicitly they fail as ``FORMAT_VERSION_UNSUPPORTED``
         rather than being mis-read as 1.2.
 
-        An Overlay 1.0 document (``overlay: 1.x`` marker, IXH-7.7) is also claimed
+        An Overlay document (``overlay: 1.x`` marker, IXH-7.7; 1.0–1.2 since GVM-4.1) is also claimed
         — with no ``format`` pinned, since an overlay is not itself an importable
         API description — so a bare overlay routes here and gets the
         "provide its base" guidance from :meth:`parse` instead of falling through
@@ -302,7 +302,7 @@ class OpenApiImportSource(ImportSource, register=True):
         *,
         source_label: Optional[str] = None,
     ) -> Any:
-        """Parse a multi-document fileset: a base document plus Overlay 1.0 overlays.
+        """Parse a multi-document fileset: a base document plus Overlay 1.0 / 1.1 / 1.2 overlays.
 
         A set whose members carry the Swagger 1.2 marker takes the FMT-3.6 route
         instead: the *resource listing* is the root and every API declaration
@@ -389,7 +389,7 @@ class OpenApiImportSource(ImportSource, register=True):
         if not overlays:
             return base_document
 
-        application = apply_overlays(base_document, overlays)
+        application = apply_overlays(base_document, overlays, base_path=base_path)
         resolved = OverlayedOpenApiDocument(application.document)
         resolved.overlay_report = {
             **application.report(),
@@ -584,7 +584,7 @@ class OpenApiImportSource(ImportSource, register=True):
 
         Overlay findings (IXH-7.7) — actions whose target matched nothing, or that were
         structurally unusable — are merged into the report under the registered
-        ``intake.overlay-*`` rules on either path, so an overlay mistake is a visible,
+        ``overlay`` pack rules (GVM-4.1) on either path, so an overlay mistake is a visible,
         governable finding rather than a silently skipped modification.
         """
         raw = model.raw

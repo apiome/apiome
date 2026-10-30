@@ -1,0 +1,37 @@
+openapi: 3.1.0
+$self: https://specs.example.org/museum/openapi.yaml
+info:
+  title: Museum Tickets API
+  version: 3.1.0
+  description: Base description maintained by the visitor-services team.
+servers:
+  - url: http://localhost:8082
+    description: Local development
+paths:
+  /tickets:
+    get:
+      operationId: listTickets
+      summary: List ticket types
+      responses:
+        '200':
+          description: The ticket types.
+  /tickets/{id}:
+    get:
+      operationId: getTicket
+      summary: Get one ticket type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The ticket type.
+  /internal/sales:
+    get:
+      operationId: listSales
+      summary: Internal sales report
+      responses:
+        '200':
+          description: The sales report.

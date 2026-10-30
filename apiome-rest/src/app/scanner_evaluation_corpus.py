@@ -286,6 +286,14 @@ def run_fixture(data: Mapping[str, Any]) -> Tuple[Set[str], List[Dict[str, Any]]
         findings = list(report.report_dict().get("findings") or [])
         return _blocking_rule_ids(findings), findings
 
+    if kind == "catalog_overlay":
+        # A bare OpenAPI Overlay (GVM-4.1): the `overlay` pack's base-independent rules.
+        from .openapi_overlay import lint_bare_overlay, overlay_lint_findings
+
+        report = lint_bare_overlay(data.get("document") or {}, label=str(data.get("id") or "fixture"))
+        findings = [f.model_dump() for f in overlay_lint_findings(report.as_dict())]
+        return _blocking_rule_ids(findings), findings
+
     if kind == "catalog_graphql_fileset":
         # Federated GraphQL subgraph set (IXH-7.6): lint the composition dimension.
         from .fileset import IntakeFileset

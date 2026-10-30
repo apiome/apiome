@@ -1,6 +1,6 @@
 ---
 title: "Lint"
-description: "REST endpoints tagged lint: 11 operations."
+description: "REST endpoints tagged lint: 12 operations."
 sidebar_position: 44
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.421.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.423.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `lint` · 11 operations
+Tag: `lint` · 12 operations
 
 ## `POST /v1/lint/custom-rules/import` {#import-spectral-ruleset-document-v1-lint-custom-rules-import-post}
 
@@ -134,6 +134,42 @@ Operation id: `list_format_lint_capabilities_v1_lint_format_capabilities_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list format lint capabilities. | `application/json` [`FormatLintCapabilitiesResponse`](#schema-formatlintcapabilitiesresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/lint/overlay` {#lint-overlay-v1-lint-overlay-post}
+
+**Lint Overlay**
+
+Lint an OpenAPI Overlay on its own, without a base document (GVM-4.1).
+
+The version and structural rules run; `overlay.unmatched-target` and
+`overlay.extends-unresolved` are reported `skipped` (`no-base`) because only a base can decide
+them.
+
+Raises:
+    HTTPException: 413 when the document is over the size limit; 422 when it is not YAML or
+        JSON, or not a mapping.
+
+Operation id: `lint_overlay_v1_lint_overlay_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for lint overlay.
+
+- `application/json` — [`OverlayLintRequest`](#schema-overlaylintrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for lint overlay. | `application/json` [`OverlayLintResponse`](#schema-overlaylintresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/lint/rules` {#list-lint-rules-v1-lint-rules-get}
@@ -492,6 +528,26 @@ The full built-in lint-rule catalog (GOV-1.2, #4428), sorted by rule id.
 | `rules` | array of `LintRuleOut` | yes | Every registered built-in rule, sorted by ruleId (deterministic). |
 | `count` | integer | yes | Number of registered rules (== len(rules)). |
 | `docsPage` | string | yes | Repository-relative path of the rule reference page docsAnchor points into. |
+
+### `OverlayLintRequest` {#schema-overlaylintrequest}
+
+``POST /v1/lint/overlay``: the overlay to lint.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `document` | string | yes | The Overlay document, as YAML or JSON text. |
+| `filename` | string or null | no | Its file name, used to label the findings. |
+
+### `OverlayLintResponse` {#schema-overlaylintresponse}
+
+The lint of one bare overlay.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version` | string or null | no | The overlay's `overlay` marker, as written. |
+| `revision` | string or null | no | The supported revision it selects (`1.0`, `1.1`, `1.2`), or null. |
+| `findings` | array of `OverlayLintFindingOut` | no | Findings. |
+| `rules` | array of `OverlayLintRuleStatus` | no | Rules. |
 
 ### `SchematronImportRequest` {#schema-schematronimportrequest}
 

@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.559.0] - 2026-10-30
+
+### Added
+- **OpenAPI Overlay 1.1 and 1.2, and an `overlay` rule pack (GVM-4.1, #5876).** `app.openapi_overlay` applies each
+  overlay with the semantics of the revision its marker declares, from the declared table `OVERLAY_READ_VERSIONS`
+  (1.0, 1.1, 1.2; `major.minor`, patch ignored): 1.1 adds `copy` (exactly one source node, merged like `update`;
+  `remove` > `copy` > `update`), primitive targets, array concatenation (at an array target and inside an object
+  merge), refusal of incompatible merges before anything is written, and the all-objects/all-arrays/all-primitives
+  rule for multiple matches; 1.2 adds reusable actions (`components.actions` + `$ref` references) and `$self`, and
+  refuses an action with both `update` and `copy`. `extends` is checked against the fileset's base (relative path, or
+  the base's `$self`). A marker outside the table (`1.3.0`) is refused with `FORMAT_VERSION_UNSUPPORTED` naming the
+  supported revisions. Semantics, including the 1.0 primitive-target leniency, are recorded in `docs/overlay.md`.
+  The IXH-7.7 intake rules `intake.overlay-unmatched-target` / `intake.overlay-action-invalid` are promoted to the
+  registered `overlay` pack (`app.overlay_lint_rules`): `overlay.unmatched-target`, `overlay.action-invalid`,
+  `overlay.target-expression-invalid`, `overlay.extends-unresolved` (warnings) and `overlay.version-unsupported`
+  (error, with a CLX-4.3 transparency entry and the `catalog_overlay` scanner-evaluation fixture kind). Migration
+  V342 re-seeds the built-in style guide with them. New `POST /v1/lint/overlay` lints a bare overlay
+  (`lint_bare_overlay`): structural rules run, base-dependent rules are reported `skipped: no-base`. The overlay
+  report records `revisions` for overlays applied as 1.1/1.2 only, so fingerprints of earlier overlay imports are
+  unchanged. Corpus sets `openapi/36-overlay-1-1-set` and `37-overlay-1-2-set`; golden provenance in
+  `tests/golden/overlay/`. OpenAPI 1.423.0.
+
 ## [1.557.0] - 2026-10-30
 
 ### Fixed

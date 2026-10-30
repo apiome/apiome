@@ -75,6 +75,7 @@ from .linked_account_token_crypto import validate_linked_account_token_keys
 from .lint_routes import decisions_router as lint_decisions_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
+from .overlay_lint_routes import router as overlay_lint_router
 from .lint_workspace_routes import router as lint_workspace_router
 from .logging_config import configure_logging, get_logger
 from .mcp_badge_routes import router as mcp_badge_router
@@ -198,7 +199,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.421.0",
+    version="1.423.0",
 )
 
 
@@ -445,6 +446,7 @@ app.include_router(api_check_suite_router)
 app.include_router(notification_router)
 app.include_router(lint_router)
 app.include_router(lint_rules_router)
+app.include_router(overlay_lint_router)
 app.include_router(lint_decisions_router)
 app.include_router(lint_workspace_router)
 app.include_router(style_guide_router)
