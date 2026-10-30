@@ -30,6 +30,8 @@ import {
   type HiveEditorPalette,
 } from '../src/app/components/ui/code/monacoHiveTheme';
 import {
+  compositeOver,
+  contrastRatio,
   readGlobalsCss,
   readThemeBlocks,
   readTokenLayer,
@@ -37,6 +39,7 @@ import {
 } from './helpers/design-tokens';
 
 const css = readGlobalsCss();
+const WHITE = { r: 255, g: 255, b: 255 };
 const tokens = readTokenLayer(css);
 
 /** The light default, then every `html[data-theme]` block — the nine appearances. */
@@ -55,16 +58,17 @@ const APPEARANCES = [
 const PALETTE_TOKENS: Record<keyof HiveEditorPalette, string> = {
   background: '--bg-inset',
   foreground: '--fg',
-  lineNumber: '--fg-faint',
   muted: '--fg-muted',
-  subtle: '--fg-subtle',
   border: '--border-strong',
   surface: '--bg-surface',
   accent: '--accent',
   warn: '--warn',
-  ok: '--ok',
-  violet: '--violet',
   danger: '--danger',
+  keyInk: '--warn-fg',
+  stringInk: '--ok-fg',
+  literalInk: '--violet-fg',
+  nameInk: '--accent-fg',
+  invalidInk: '--danger-fg',
 };
 
 /** The six dark-based palettes, by the base Monaco has to take under each. */
@@ -194,17 +198,58 @@ describe('buildHiveMonacoTheme', () => {
     expect(theme.base).toBe(DARK_THEMES.has(id) ? 'vs-dark' : 'vs');
   });
 
-  it('maps the mockup’s five syntax roles onto their tokens', () => {
+  it('maps the mockup’s five syntax roles onto their inks (#6274)', () => {
     const theme = buildHiveMonacoTheme(LIGHT_FALLBACK_PALETTE);
     const foreground = (token: string) =>
       theme.rules.find((rule) => rule.token === token)?.foreground;
+    const ink = (key: keyof HiveEditorPalette) => toMonacoColor(LIGHT_FALLBACK_PALETTE[key]);
 
-    // `.c-k` honey, `.c-s` green, `.c-p` violet, `.c-c` subtle-and-italic — hive.css §16.
-    expect(foreground('type')).toBe(toMonacoColor(LIGHT_FALLBACK_PALETTE.warn));
-    expect(foreground('string')).toBe(toMonacoColor(LIGHT_FALLBACK_PALETTE.ok));
-    expect(foreground('number')).toBe(toMonacoColor(LIGHT_FALLBACK_PALETTE.violet));
-    expect(foreground('comment')).toBe(toMonacoColor(LIGHT_FALLBACK_PALETTE.subtle));
+    // `.c-k` honey, `.c-s` green, `.c-n` blue, `.c-p` violet — each in its `-fg` ink, not the
+    // mark hue — and `.c-c` muted-and-italic (hive.css §16).
+    for (const token of ['type', 'type.yaml', 'string.key.json', 'attribute.name']) {
+      expect({ token, colour: foreground(token) }).toEqual({ token, colour: ink('keyInk') });
+    }
+    for (const token of ['string', 'string.yaml', 'string.value.json']) {
+      expect({ token, colour: foreground(token) }).toEqual({ token, colour: ink('stringInk') });
+    }
+    for (const token of ['number', 'constant', 'keyword']) {
+      expect({ token, colour: foreground(token) }).toEqual({ token, colour: ink('literalInk') });
+    }
+    expect(foreground('tag')).toBe(ink('nameInk'));
+    expect(foreground('variable')).toBe(ink('nameInk'));
+    expect(foreground('invalid')).toBe(ink('invalidInk'));
+    expect(foreground('comment')).toBe(ink('muted'));
     expect(theme.rules.find((rule) => rule.token === 'comment')?.fontStyle).toBe('italic');
+  });
+
+  it('numbers the gutter in readable ink, the active line in full ink', () => {
+    const theme = buildHiveMonacoTheme(LIGHT_FALLBACK_PALETTE);
+    expect(theme.colors['editorLineNumber.foreground']).toBe(toMonacoColor(LIGHT_FALLBACK_PALETTE.muted));
+    expect(theme.colors['editorLineNumber.activeForeground']).toBe(
+      toMonacoColor(LIGHT_FALLBACK_PALETTE.foreground)
+    );
+  });
+
+  /**
+   * #6274: every colour Monaco paints as text — each syntax rule and both gutter numbers — must
+   * read on the well it sits in, in every appearance. 4.5:1 (SC 1.4.3), 7:1 under High
+   * contrast (its AAA promise), each with the token gate's 0.05 head-room.
+   */
+  it.each(APPEARANCES)('paints every text colour at the contrast its theme promises under %s', (id, block) => {
+    const theme = buildHiveMonacoTheme(paletteFor(block));
+    const surface = compositeOver(resolveThemeToken('--bg-surface', tokens, block), WHITE);
+    const well = compositeOver(resolveThemeToken('--bg-inset', tokens, block), surface);
+    const min = (id === 'high-contrast' ? 7 : 4.5) + 0.05;
+    const inks: Array<[string, string]> = [
+      ...theme.rules.flatMap((rule) => (rule.foreground ? [[`rule ${rule.token || '(default)'}`, rule.foreground] as [string, string]] : [])),
+      ['editorLineNumber.foreground', theme.colors['editorLineNumber.foreground']],
+      ['editorLineNumber.activeForeground', theme.colors['editorLineNumber.activeForeground']],
+    ];
+    const short = inks
+      .map(([what, hex]) => ({ what, ratio: contrastRatio(compositeOver(hex, well), well) }))
+      .filter(({ ratio }) => ratio < min)
+      .map(({ what, ratio }) => `${what} ${ratio.toFixed(2)} < ${min}`);
+    expect(short).toEqual([]);
   });
 
   it('paints the well, the cursor and the two marker hues from tokens', () => {

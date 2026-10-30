@@ -96,6 +96,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Confirming a new account no longer flashes *We could not sign you in automatically* before the **Let's set up your first workspace** screen
   - **Sign In** stays disabled while you are being signed in, instead of turning back on and inviting a second click; it comes back only if the attempt fails
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
+- Code editors:
+  - Code in Apiome's editors (the spec viewer under **Versions**, and others) is easier to read: keys, strings, numbers and line numbers now have enough contrast against the code background in every theme. Before, light-theme keys, strings and line numbers were too faint
 - Admin console:
   - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged
   - A disabled or deleted account can no longer sign in with its password

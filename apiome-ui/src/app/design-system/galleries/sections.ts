@@ -68,4 +68,9 @@ export const PATTERN_GALLERIES: readonly { href: string; label: string; descript
     label: 'Shortcut sheet',
     description: 'The generated shortcut sheet, with registrations you can toggle.',
   },
+  {
+    href: '/design-system/code-editor',
+    label: 'Code editor',
+    description: 'The Hive Monaco theme on YAML and JSON, as the accessibility gate measures it.',
+  },
 ];
