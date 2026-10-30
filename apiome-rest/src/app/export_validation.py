@@ -671,34 +671,47 @@ def _fhir_version(members: Dict[str, str]) -> str:
 async def _validate_typespec(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted TypeSpec ``.tsp`` document (MFX-15.1, #3893).
+    """Re-validate an emitted TypeSpec ``.tsp`` document (MFX-15.1, #3893; MFX-15.3, #3895).
 
     The bundled TypeSpec compiler — the one a multi-file TypeSpec import already runs (MFI-14.1) —
     compiles the document with ``@typespec/http`` and ``@typespec/openapi3``; each compile error is a
-    finding and rejects the export, warnings do not. Without the compiler the document is re-parsed
-    through the built-in TypeSpec reader the single-file import uses.
+    finding and rejects the export, warnings do not. The OpenAPI the compile emits must then import
+    through the OpenAPI import source (:mod:`app.typespec_roundtrip`), or the export is rejected too.
+    Without the compiler the document is re-parsed through the built-in TypeSpec reader the
+    single-file import uses.
     """
     from .import_source import ImportSourceError
-    from .typespec_compile import compile_typespec_set, parse_diagnostics
     from .typespec_emitter import validate_typespec_document
+    from .typespec_roundtrip import compile_emitted_typespec, compile_error_diagnostics, import_compiled_openapi
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The TypeSpec export wrote no file.")])
     root = emit_result.files[0].path
-    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
     try:
-        await asyncio.to_thread(compile_typespec_set, members, root)
+        document = await asyncio.to_thread(compile_emitted_typespec, emit_result)
     except ImportSourceError as exc:
         if exc.code == "ADAPTER_UNAVAILABLE":
             return await _run_text_validator(target, emit_result, validate_typespec_document)
-        detail = str(exc).split(": ", 1)[-1]
-        diagnostics = [d for part in detail.split("; ") for d in parse_diagnostics(part)]
         findings = [
-            ValidationFinding(message=d.message, file=d.file or root, line=d.line, column=d.column, keyword=d.code)
-            for d in diagnostics
-            if d.severity == "error"
+            ValidationFinding(
+                message=row["message"], file=row["file"], line=row["line"], column=row["column"], keyword=row["code"]
+            )
+            for row in compile_error_diagnostics(exc, root)
         ]
-        return _rejected(target, findings or [_finding_from_message(str(exc), file=root)])
+        return _rejected(target, findings)
+    try:
+        await asyncio.to_thread(import_compiled_openapi, document)
+    except ImportSourceError as exc:
+        return _rejected(
+            target,
+            [
+                ValidationFinding(
+                    message=f"The OpenAPI the TypeSpec compile emitted does not import: {exc}",
+                    file=root,
+                    keyword="typespec.openapi-import",
+                )
+            ],
+        )
     return _passed(target)
 
 

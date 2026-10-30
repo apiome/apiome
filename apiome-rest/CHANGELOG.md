@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.537.0] - 2026-10-30
+
+### Added
+- **TypeSpec validate + round-trip (MFX-15.3, #3895).** New `app.typespec_roundtrip`:
+  `round_trip_typespec(api, *, opts, emit_result)` compiles the TypeSpec export with the bundled `tsp`
+  (`@typespec/http` + `@typespec/openapi3`), imports the OpenAPI it emits through `OpenApiImportSource`, and diffs it
+  with a baseline — the source exported straight to OpenAPI 3.1 and imported the same way — so the diff is what the
+  TypeSpec hop changes. `TypeSpecRoundTripReport` carries `status` (`skipped` / `invalid` / `unparseable` / `lossy` /
+  `lossless`), `compile_errors`, the compiled `openapi`, `diff`, `predicted_losses`, `valid` and `diverges`.
+- **Export gate.** The `typespec` emitted-artifact validator now also rejects an export whose compiled OpenAPI does not
+  import (finding keyword `typespec.openapi-import`); compile errors keep their code, file, line and column. Shared
+  helpers: `compile_emitted_typespec`, `compile_error_diagnostics`, `import_compiled_openapi` (a malformed document is
+  `ImportSourceError` `INPUT_MALFORMED`, not an `AttributeError`).
+- **Round-trip fixture.** `tests/fixtures/typespec_roundtrip/pets.openapi.json` is `tsp` 0.65's output for the pets
+  export; tsp-free tests use it in place of the compiler, and a live test proves the compiler still emits it.
+
 ## [1.536.0] - 2026-10-30
 
 ### Added
