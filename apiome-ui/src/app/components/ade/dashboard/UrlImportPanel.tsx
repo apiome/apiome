@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Link2, Eye, EyeOff, CheckCircle2, AlertTriangle, FileCode, Globe } from 'lucide-react';
 import { fetchSpecificationFromUrl, validateImportUrl, UrlImportOptions, UrlImportResult } from '../../../utils/url-import';
+import type { UrlImportSource } from '../../../utils/url-import-record';
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
 import { ImportSourceTabBar, type ImportSourceTabId } from './ImportSourceTabBar';
 
@@ -17,7 +18,16 @@ export interface UrlImportPanelHandle {
 }
 
 interface UrlImportPanelProps {
-  onSpecificationFetched: (content: string, filename: string, metadata?: FileMetadataPreview) => void;
+  /**
+   * Called with the fetched document. `source` says where it came from, so a successful import can
+   * be recorded for auto-refresh (RAR-6.1).
+   */
+  onSpecificationFetched: (
+    content: string,
+    filename: string,
+    metadata?: FileMetadataPreview,
+    source?: UrlImportSource
+  ) => void;
   /** Switch import source (same step, different panel). */
   onSelectSource?: (source: ImportSourceTabId) => void;
   onFooterStateChange?: (state: UrlImportFooterState) => void;
@@ -98,7 +108,11 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
 
         setUrlTested(true);
 
-        onSpecificationFetched(result.content, result.filename || 'openapi-spec.yaml', metadata);
+        onSpecificationFetched(result.content, result.filename || 'openapi-spec.yaml', metadata, {
+          url: url.trim(),
+          authenticated: authType !== 'none',
+          contentType: result.contentType ?? null,
+        });
       }
     } catch (error) {
       setFetchResult({

@@ -1,7 +1,7 @@
 ---
 title: "Usage"
 description: "REST endpoints tagged usage: 1 operation."
-sidebar_position: 99
+sidebar_position: 100
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---

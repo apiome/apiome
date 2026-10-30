@@ -1,7 +1,7 @@
 ---
 title: "Version changelog"
 description: "REST endpoints tagged version-changelog: 2 operations."
-sidebar_position: 101
+sidebar_position: 102
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---

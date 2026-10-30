@@ -1,7 +1,7 @@
 ---
 title: "Version change report"
 description: "REST endpoints tagged version-change-report: 4 operations."
-sidebar_position: 100
+sidebar_position: 101
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---

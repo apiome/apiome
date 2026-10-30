@@ -103,6 +103,17 @@ jest.mock('@/app/utils/openapi-analyzer', () => {
   };
 });
 
+/** URL Import fetches through this; the URL-refresh test (RAR-6.1) scripts it. */
+const fetchSpecificationFromUrl = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+jest.mock('@/app/utils/url-import', () => {
+  const actual = jest.requireActual<typeof import('@/app/utils/url-import')>('@/app/utils/url-import');
+  return {
+    __esModule: true,
+    ...actual,
+    fetchSpecificationFromUrl: (...args: unknown[]) => fetchSpecificationFromUrl(...args),
+  };
+});
+
 /** The Analyze and Preview panels are covered by their own suites; here they are placeholders. */
 jest.mock('@/app/components/ade/dashboard/AnalysisPanel', () => ({
   __esModule: true,
@@ -960,5 +971,73 @@ describe('the browser fixtures', () => {
     );
     await screen.findByText('Failed');
     write('import-failed', failed.container.innerHTML);
+  });
+});
+
+describe('a URL import is recorded for auto-refresh (RAR-6.1)', () => {
+  async function importFromUrl(auth: 'None' | 'Bearer Token') {
+    fetchSpecificationFromUrl.mockResolvedValue({
+      success: true,
+      content: '{"openapi":"3.1.0","info":{"title":"Payments","version":"1"},"paths":{}}',
+      filename: 'payments.json',
+      contentType: 'application/json',
+    });
+    startImport.mockResolvedValue({ jobId: 'job-url' });
+    getImportStatus.mockResolvedValue({
+      state: 'completed',
+      percent: 100,
+      events: [],
+      result: { projectId: 'project-7', versionId: 'version-7' },
+    });
+    renderWizard();
+    await screen.findByRole('button', { name: /File Upload/ });
+    fireEvent.keyDown(window, { key: '2' });
+    await screen.findByRole('tab', { name: /URL Import/, selected: true });
+    fireEvent.change(screen.getByPlaceholderText('https://api.example.com/openapi.yaml'), {
+      target: { value: 'https://specs.example.com/payments.json' },
+    });
+    fireEvent.click(screen.getByLabelText(auth));
+    if (auth === 'Bearer Token') {
+      fireEvent.change(screen.getByPlaceholderText('Enter your bearer token'), { target: { value: 'secret' } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Test URL' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('analysis-panel');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByTestId('preview-panel');
+    fireEvent.click(screen.getByRole('button', { name: 'Select Refund' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Import →' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+  }
+
+  function recordCalls() {
+    return fetchMock.mock.calls.filter(([url]) => String(url) === '/api/url-imports');
+  }
+
+  it('records the URL, the project, the version and the options once the import lands', async () => {
+    await importFromUrl('None');
+    await waitFor(() => expect(recordCalls()).toHaveLength(1));
+    const body = JSON.parse(String((recordCalls()[0][1] as RequestInit).body));
+    expect(body).toEqual(
+      expect.objectContaining({
+        projectId: 'project-7',
+        versionId: 'version-7',
+        url: 'https://specs.example.com/payments.json',
+        sourceKind: 'openapi',
+        contentType: 'application/json',
+        authenticated: false,
+      })
+    );
+    expect(body.options).toEqual(expect.objectContaining({ selectedSchemas: ['Refund'] }));
+    expect(body.options).not.toHaveProperty('dryRun');
+  });
+
+  it('records a fetch with credentials as authenticated and never sends the credential', async () => {
+    await importFromUrl('Bearer Token');
+    await waitFor(() => expect(recordCalls()).toHaveLength(1));
+    const sent = String((recordCalls()[0][1] as RequestInit).body);
+    expect(JSON.parse(sent).authenticated).toBe(true);
+    expect(sent).not.toContain('secret');
   });
 });

@@ -32,6 +32,7 @@ from .catalog_connector_routes import router as catalog_connector_router
 from .catalog_agent_routes import router as catalog_agent_router
 from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_drift_routes import router as catalog_drift_router
+from .url_import_routes import router as url_import_router
 from .catalog_refresh_routes import router as catalog_refresh_router
 from .catalog_routes import router as catalog_router
 from .catalog_upload_routes import router as catalog_upload_router
@@ -382,6 +383,7 @@ app.include_router(catalog_entity_router)
 app.include_router(catalog_refresh_router)
 app.include_router(catalog_upload_router)
 app.include_router(catalog_drift_router)
+app.include_router(url_import_router)
 app.include_router(catalog_router)
 app.include_router(model_search_router)
 # Catalog connectors (CDG-1.1, #5952): `/v1/tenants/{t}/connectors…`.
@@ -596,6 +598,7 @@ app.include_router(two_factor_reset_member_router)
 _webhook_delivery_task: asyncio.Task | None = None
 _repository_file_scan_task: asyncio.Task | None = None
 _repository_refresh_task: asyncio.Task | None = None
+_url_import_refresh_task: asyncio.Task | None = None
 _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
 _catalog_refresh_task: asyncio.Task | None = None
@@ -738,6 +741,32 @@ async def startup_event():
                 raise
             except Exception:
                 log.exception("repository refresh sweep")
+
+    async def _url_import_refresh_sweep() -> None:
+        """Periodically re-check URL-sourced imports and refresh the changed ones (RAR-6.1).
+
+        Ticks on the refresh floor (``APIOME_REFRESH_MIN_INTERVAL``) like the repository sweep;
+        due-selection in ``url_import_store.list_due`` applies each URL's own cadence, and
+        ``APIOME_REFRESH_ENABLED`` halts it with the repository sweep.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.refresh_min_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+                from .url_import_refresh_sweep import process_url_import_refresh_sweep
+
+                thread_db = Database()
+                try:
+                    await process_url_import_refresh_sweep(thread_db)
+                finally:
+                    thread_db.close()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("url import refresh sweep")
 
     async def _repository_quality_sweep() -> None:
         """Periodically score newly discovered repository specs (REPO-2.8).
@@ -1131,6 +1160,8 @@ async def startup_event():
     _repository_file_scan_task = asyncio.create_task(_repository_file_scan_sweep())
     global _repository_refresh_task
     _repository_refresh_task = asyncio.create_task(_repository_refresh_sweep())
+    global _url_import_refresh_task
+    _url_import_refresh_task = asyncio.create_task(_url_import_refresh_sweep())
     global _repository_quality_task
     _repository_quality_task = asyncio.create_task(_repository_quality_sweep())
     global _mcp_discovery_task
@@ -1192,6 +1223,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _repository_refresh_task = None
+    global _url_import_refresh_task
+    if _url_import_refresh_task is not None:
+        _url_import_refresh_task.cancel()
+        try:
+            await _url_import_refresh_task
+        except asyncio.CancelledError:
+            pass
+        _url_import_refresh_task = None
     global _repository_quality_task
     if _repository_quality_task is not None:
         _repository_quality_task.cancel()

@@ -1,7 +1,7 @@
 ---
 title: "Workspace"
 description: "REST endpoints tagged workspace: 10 operations."
-sidebar_position: 106
+sidebar_position: 107
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---

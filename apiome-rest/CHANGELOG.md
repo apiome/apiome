@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bitbucket push, a force push or a truncated commit list (`ParsedWebhookEvent.changed_paths` is `None`). New
   `Database.list_repository_import_spec_paths`; workflow-audit action `repository.webhook.instant_refresh`; the accepted
   audit row gains `instantRefreshFiles`. The receipt body is unchanged. OpenAPI 1.419.0 (version only).
+- **Refresh URL-sourced imports (RAR-6.1, #3538).** A spec imported into a project from a URL now keeps following
+  it. New `apiome.url_import_specs` (apiome-db V340) records each URL lineage: the stored import spec (source kind,
+  descriptor, verbatim options), the `ETag` / `Last-Modified` and SHA-256 REST saw at import time, the version the
+  import produced and a checksum of its rendered OpenAPI. A sweep on the refresh floor (`app.url_import_refresh_sweep`)
+  sends a conditional GET (`If-None-Match` / `If-Modified-Since`, SSRF-guarded): 304 skips; a 200 goes through the
+  RAR-2.2 newer-than comparator on `Last-Modified` and the checksum (same content or an older `Last-Modified`
+  skips); a version edited in Apiome since its import holds the refresh (RAR-4.4); otherwise the stored spec is
+  replayed onto the project through the spec-import engine (`repository_auto_import`, RAR-4.1) as a new
+  date/time-labelled version, and the fetched validators become the anchors once that import completes. Failures
+  back off exponentially; `APIOME_REFRESH_ENABLED` stops it with the repository sweep. Imports fetched with
+  credentials are recorded as `authenticated` and never refreshed; no credential is stored. New routes:
+  `POST /v1/tenants/{tenant_slug}/url-imports` (`imports:create`; REST fetches the URL once for the anchors),
+  `GET …/url-imports` (`imports:view`, optional `projectId`), `PATCH …/url-imports/{id}` (`imports:edit`:
+  `autoRefreshEnabled`, `refreshIntervalSeconds`, `useDefaultInterval`). OpenAPI 1.419.0.
 
 ## [1.554.0] - 2026-10-30
 

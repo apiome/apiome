@@ -1,7 +1,7 @@
 ---
 title: "Version tags"
 description: "REST endpoints tagged version-tags: 4 operations."
-sidebar_position: 102
+sidebar_position: 103
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
