@@ -54,6 +54,10 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``odcs`` — :func:`app.odcs_schema.validate_odcs_document` (a re-parse through the ``odcs``
   adapter **plus** the published ODCS JSON Schema for the version the contract declares —
   the standard's own authority, vendored and run offline);
+* ``wsdl`` — :func:`app.wsdl_bundle_validation.validate_wsdl_bundle` (MFX-14.3): the WSDL + XSD
+  bundle is checked as it will be unpacked — every import packaged, the WS-I Basic Profile,
+  ``xmlschema`` 's WSDL 1.1 reader (WSDL schema, every XSD, every message / port type / binding
+  reference) and a re-import through the WSDL import source; pure Python;
 * ``sample-noop`` and any unregistered format — *not applicable* (the sample emitter is an
   internal no-op with no importable artifact).
 
@@ -1181,6 +1185,28 @@ async def _validate_postman(
     return await _run_text_validator(target, emit_result, validate_postman_collection)
 
 
+async def _validate_wsdl(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted WSDL + XSD bundle (MFX-14.3, #3891).
+
+    The whole bundle is one unit — the description imports its schema — so it is checked together
+    (:func:`app.wsdl_bundle_validation.validate_wsdl_bundle`). WS-I issues of a kind a WSDL source
+    already had are inherited from it and do not fail the export.
+    """
+    from .wsdl_bundle_validation import inherited_wsi_rules, validate_wsdl_bundle
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The WSDL export wrote no file.")])
+    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    problems = await asyncio.to_thread(validate_wsdl_bundle, members, inherited_rules=inherited_wsi_rules(api))
+    findings = [
+        ValidationFinding(message=problem.message, file=problem.file, path=problem.path, keyword=problem.rule)
+        for problem in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -1238,6 +1264,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     # MFX-25.1 (#4151)
     "thrift": _validate_thrift,
     "flatbuffers": _validate_flatbuffers,
+    # MFX-14.3 (#3891)
+    "wsdl": _validate_wsdl,
 }
 
 

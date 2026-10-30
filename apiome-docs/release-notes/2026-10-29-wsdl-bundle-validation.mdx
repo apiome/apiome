@@ -1,0 +1,19 @@
+---
+slug: wsdl-bundle-validation
+title: WSDL exports are checked before download
+description: WSDL bundles must be packaged, WS-I clean, valid and importable.
+authors: [apiome]
+---
+
+A **WSDL** export is now checked the way it arrives once you unzip it, and a bundle that fails a
+check is not delivered. [What is checked](/ship/export-a-spec#wsdl-and-xsd-from-any-source).
+
+{/* truncate */}
+
+- **Packaged.** Every schema and description the WSDL imports is inside the `.zip`.
+- **WS-I clean.** The WS-I Basic Profile checks pass.
+- **Valid.** The WSDL 1.1 schema accepts the description, every XSD type is legal, and every
+  message, part, port type, binding and port reference resolves.
+- **Re-imports.** The bundle imports into Apiome as a WSDL.
+- **Fixed.** A one-way operation's binding no longer lists an output, and an rpc-style operation's
+  SOAP body now names its namespace (WS-I R2717). Both made some exports of imported WSDL invalid.
