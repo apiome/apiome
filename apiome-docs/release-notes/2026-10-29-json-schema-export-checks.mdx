@@ -1,0 +1,18 @@
+---
+slug: json-schema-export-checks
+title: JSON Schema exports check every reference and re-import
+description: A JSON Schema export must pass its metaschema, resolve references and import again.
+authors: [apiome]
+---
+
+A **JSON Schema** export is now checked three ways before you download it.
+[How JSON Schema exports are checked](/ship/export-a-spec#json-schema-from-any-source).
+
+{/* truncate */}
+
+- **Metaschema.** Each document validates against its draft's metaschema (JTD documents against
+  RFC 8927).
+- **References.** Every `$ref` into the export must resolve, including the references between the
+  files of a `per-type` export. A dangling reference used to pass, because a metaschema cannot see it.
+- **Re-imports.** Each document must import again as a JSON Schema.
+- **Detail.** A failed check names the file, the JSON pointer and the rule.

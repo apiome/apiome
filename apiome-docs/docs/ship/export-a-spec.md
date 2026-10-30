@@ -751,8 +751,19 @@ Options:
 - **mode** — `json-schema` (default), or `jtd` for a [JSON Type Definition](#json-type-definition-jtd-mode)
   document instead.
 
-Every exported document validates against its draft's metaschema. An item imported from JSON Schema is
-re-exported exactly as it was imported unless you pick another draft, `per-type` or an **id_base**.
+Each export is checked before you download it:
+
+1. Every document validates against the metaschema of the draft it declares. A JTD document is
+   checked against the RFC 8927 rules instead.
+2. Every `$ref` into the export resolves: a `#/$defs/…` pointer must name a type in the document,
+   and a `per-type` file's reference must name another file of the export. A reference to a schema
+   published elsewhere (an absolute URL outside the export) is not checked.
+3. Every document imports again as a JSON Schema.
+
+If a check fails, the export fails and names the file, the JSON pointer and the rule
+(`jsonschema.metaschema`, `jsonschema.unresolved-ref`, `jsonschema.reimport`). An item imported from
+JSON Schema is re-exported exactly as it was imported unless you pick another draft, `per-type` or
+an **id_base**.
 Operations and channels are left out: JSON Schema describes data only.
 
 The fidelity report is computed for the options you pick, so changing **draft** in the export dialog
