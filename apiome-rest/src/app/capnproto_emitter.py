@@ -51,6 +51,7 @@ from .capnproto_identity import (
     synthesize_file_id,
 )
 from .capnproto_names import BUILTIN_TYPE_NAMES, NameScope, member_identifier, type_identifier
+from .constraint_text import constraint_comment
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -63,8 +64,9 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
-from .lossiness import LossinessKind
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import CAPNP_SCALAR_FOR_KIND, target_scalar
+from .writer_loss_rulepack import filed_writer_verdicts
 
 __all__ = ["CapnpEmitOptions", "CapnpEmitter", "CapnpFidelityRulePack"]
 
@@ -108,20 +110,64 @@ _CAPNP_FORMAT = "capnproto"
 
 
 class CapnpFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for Cap'n Proto export.
+    """Fidelity rules for Cap'n Proto export — MFX-30.2 (#4179), MFX-30.3 (#4180).
 
-    On top of the capability rules, a type, field or method whose name breaks the compiler's rules
-    (:mod:`app.capnproto_names`) is written under another name, which the report names as an
-    ``APPROX`` rename — a re-import then shows that name, so the change is never silent.
+    The pack builds the schema with the Cap'n Proto writer (default options) and files each loss the
+    writer records on the construct it concerns, beside the capability verdicts:
+
+    * **operations** — an interface method, ``APPROX``: how it is called (HTTP method, path, parameter
+      locations) is not kept (an operation of a ``.capnp`` source is its own method); its error responses
+      are a ``DROP``; an event operation and every channel are a ``DROP``;
+    * **constraints** — written as a ``#`` comment that nothing checks, ``APPROX``;
+    * **maps** — a struct with a list of key/value ``Entry`` structs, ``APPROX``;
+    * **ordinals and the file id** — an ``@N`` ordinal or ``@0x…`` file id the source does not give is
+      ``SYNTH``, as are placeholders kept for a removed member or a gap;
+    * a name that breaks the compiler's rules is an ``APPROX`` rename (info), so a re-import showing the
+      new name is never a surprise; single-member unions, inline payloads and untyped or unmapped values
+      are ``APPROX``.
     """
 
     target_label = "Cap'n Proto"
+
+    #: Writer loss subject → (verdict kind, severity).
+    _WRITER_LOSSES = {
+        "operation-as-method": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "errors-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "constraints-as-comment": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "constraints-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "map-as-entry-list": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "synthesized-ordinal": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "synthesized-file-id": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "retired-ordinal": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "ordinal-gap": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "single-member-union": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "inline-payload": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "untyped-value": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unmapped-type": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unsupported-type": (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+    }
+    #: Set by :meth:`evaluate`: construct key → the verdicts of its writer losses.
+    _filed: Dict[str, List[FidelityVerdict]] = {}
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Build the schema once (as it will be emitted), file its losses by construct, then walk the model."""
+        writer = _CapnpWriter(api, CapnpEmitOptions())
+        writer.render()
+        self._filed = filed_writer_verdicts(api, writer.losses.records(), self._WRITER_LOSSES)
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """What the writer synthesized for the schema itself (its file id)."""
+        return self._filed.get("", [])
 
     def event_verdict(self, event) -> FidelityVerdict:
         return FidelityVerdict.drop(
             message=f"{self.target_label} has no event/channel representation; event {event.key!r} is dropped",
             target_mapping="event → dropped",
         )
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        return [self.operation_verdict(operation), *self._filed.get(operation.key, [])]
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         verdict = super().operation_verdict(operation)
@@ -131,6 +177,9 @@ class CapnpFidelityRulePack(CapabilityRulePack):
         renamed = _rename_verdict(source, member_identifier(source, fallback="method"), "method")
         return renamed or verdict
 
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        return [self.type_verdict(type_), *self._filed.get(type_.key, [])]
+
     def type_verdict(self, type_: Type) -> FidelityVerdict:
         verdict = super().type_verdict(type_)
         if verdict.kind is not LossinessKind.OK:
@@ -138,9 +187,17 @@ class CapnpFidelityRulePack(CapabilityRulePack):
         return _rename_verdict(type_.name, type_identifier(type_.name), "type") or verdict
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        verdicts = super().field_verdicts(field)
+        verdicts = super().field_verdicts(field) + self._filed.get(field.key, [])
         renamed = _rename_verdict(field.name, member_identifier(field.name), "field")
         return [*verdicts, renamed] if renamed else verdicts
+
+    def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Reported from the writer, which says what it wrote (a comment, or nothing)."""
+        return None
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Reported from the writer, which knows the ordinals a ``.capnp`` source gives."""
+        return None
 
 
 def _rename_verdict(source: str, emitted: str, noun: str) -> Optional[FidelityVerdict]:
@@ -511,8 +568,36 @@ class _CapnpWriter:
             field, expr = slot.member
             if field is not None:
                 self._record_member(slot, field.key, "field")
+                lines.extend(self._constraints(field, pad))
             lines.append(f"{pad}{slot.name} @{slot.ordinal} :{expr};")
         return lines
+
+    def _constraints(self, field: CanonicalField, pad: str) -> List[str]:
+        """A field's constraints as a ``#`` comment line — or, with comments off, nothing (both recorded).
+
+        Cap'n Proto has no validation facets (MFX-30.3): a comment keeps them for the schema's readers,
+        and nothing checks them.
+        """
+        text = constraint_comment(field.constraints)
+        if text is None:
+            return []
+        if not self._options.include_comments:
+            self.losses.record(
+                LossKind.NA,
+                "constraints-dropped",
+                f"Cap'n Proto cannot enforce constraints and comments are off; the {text} of {field.key!r} "
+                "are not written.",
+                pointer=field.key,
+            )
+            return []
+        self.losses.record(
+            LossKind.INFERRED,
+            "constraints-as-comment",
+            f"Cap'n Proto cannot enforce constraints; those of {field.key!r} are written as a comment that "
+            f"nothing checks ({text}).",
+            pointer=field.key,
+        )
+        return [f"{pad}# {text}"]
 
     def _finish(self, allocator: OrdinalAllocator, scope_key: str, scope: NameScope) -> List[Slot]:
         """Close a scope: collect its new store rows and name (and report) its placeholders."""
@@ -583,6 +668,15 @@ class _CapnpWriter:
                 lines.append(f"  {slot.name} @{slot.ordinal} () -> ();")
                 continue
             self._record_member(slot, slot.member.key, "method")
+            if not self._capnp_source:
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "operation-as-method",
+                    f"Operation {slot.member.key!r} is written as the interface method {slot.name!r} "
+                    f"@{slot.ordinal}; how it is called (an HTTP method and path, where each parameter goes) "
+                    "is not kept.",
+                    pointer=slot.member.key,
+                )
             params = self._render_params(slot.member)
             results = self._render_results(slot.member)
             lines.append(f"  {slot.name} @{slot.ordinal} ({params}) -> ({results});")

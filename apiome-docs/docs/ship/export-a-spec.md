@@ -548,9 +548,25 @@ the item was imported from:
   Cap'n Proto cannot leave a gap or drop a field, so a field removed from the source stays in the
   schema as `obsolete<Name>`, keeping its number and its size. The fidelity report lists every number
   Apiome assigned as *synthesized*. A Cap'n Proto import keeps its own numbers and file id.
+- **Constraints.** Cap'n Proto has no validation rules, so a field's constraints are written as a
+  comment just above it (`# constraints: >= 1; <= 100`). Nothing checks them. With
+  **include_comments** off they are left out.
+
+The fidelity report lists, on each operation, type and field, what the schema changed:
+
+| In the source | In the report |
+| --- | --- |
+| An operation (not from a Cap'n Proto import) | Approximated (warning): an interface method; its HTTP method, path and parameter locations are not kept |
+| An operation's error responses | Dropped (warning): Cap'n Proto methods declare no errors |
+| An event operation, a channel | Dropped |
+| Constraints | Approximated (warning): a comment nothing checks. Dropped with comments off |
+| A map | Approximated (warning): a list of key/value entries |
+| A field, enum value or method with no Cap'n Proto number; the file id | Synthesized (note) |
+| A name that breaks Cap'n Proto's rules | Approximated (note), naming the new name |
 
 When the server has the Cap'n Proto compiler, every export is compiled before it is delivered. A
-schema that imports other `.capnp` files is not compiled on its own.
+schema that does not compile fails the export, and the check lists each compiler error with its file,
+line and column. A schema that imports other `.capnp` files is not compiled on its own.
 
 ### FlatBuffers from any source
 
@@ -575,6 +591,9 @@ out: a FlatBuffers schema describes data only.
   to `0`.
 - **Names.** Names use letters, digits and underscores and are not FlatBuffers keywords: `order-id`
   is written `order_id` and a field named `string` is `string_`. Each rename is in the fidelity report.
+- **Constraints.** FlatBuffers has no validation rules, so a field's constraints are written as a
+  comment just above it (`// constraints: max length 12; pattern ^[A-Z]+$`). Nothing checks them.
+  With **include_comments** off they are left out.
 
 **Field ids.** Every table field is written with its id, `(id: N)`, in id order — the id is what a
 reader matches a field by. Ids start at `0`, and a union field takes two (its hidden `<name>_type`
@@ -591,9 +610,24 @@ Options:
   refused.
 - **include_comments** — on by default; descriptions are written as `///` comments.
 
+The fidelity report lists, on each type and field, what the schema changed:
+
+| In the source | In the report |
+| --- | --- |
+| Operations, services and channels | Dropped (critical). An item that has any also gets a **types-only** warning counting them — export it to OpenAPI or AsyncAPI as well to keep them |
+| Constraints | Approximated (warning): a comment nothing checks. Dropped with comments off |
+| A map | Approximated (warning): a vector of `<Map>Entry` key/value tables |
+| A field with no FlatBuffers id | Synthesized (note), naming the id |
+| A wrapper table for a list of lists or a union member | Synthesized (note) |
+| An alias, a struct written as a table, a renamed name | Approximated (note) |
+| A default FlatBuffers cannot hold, a field whose type holds no value | Dropped |
+
+A FlatBuffers import keeps its own ids, so its report lists no synthesized id.
+
 When the server has the FlatBuffers compiler, every export is compiled with `flatc` before it is
-delivered; otherwise it is read back with Apiome's FlatBuffers importer. A schema that includes other
-`.fbs` files is not compiled on its own.
+delivered. A schema that does not compile fails the export, and the check lists each compiler error
+with its file, line and column. Without the compiler, the export is read back with Apiome's FlatBuffers
+importer. A schema that includes other `.fbs` files is not compiled on its own.
 
 ### COBOL copybook from any source
 

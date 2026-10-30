@@ -43,13 +43,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
     # --- azure-apim (1) ---
     ('azure-apim', 'azure-apim'):
         'changed root',
-    # --- capnproto (3) ---
-    ('arazzo', 'capnproto'):
-        'added operation Checkout.addItem; added operation Checkout.createCart; added operation Checkout.pay;',
-    ('flatbuffers', 'capnproto'):
-        'changed root; added type Color; added type Monster; added type Vec3; added type Weapon; removed type',
-    ('wadl', 'capnproto'):
-        'removed operation GET /books; removed operation GET /books/{bookId}; removed operation POST /books; ',
     # --- cddl (15) ---
     ('cobolcopybook', 'cddl'):
         'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',

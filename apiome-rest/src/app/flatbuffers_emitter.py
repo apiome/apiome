@@ -44,6 +44,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .constraint_text import constraint_comment
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -58,6 +59,8 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .flatbuffers_identity import FieldIdAllocator, compact_field_ids
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .writer_loss_rulepack import filed_writer_verdicts
 
 __all__ = ["FlatBuffersEmitOptions", "FlatBuffersEmitter", "FlatBuffersFidelityRulePack"]
 
@@ -108,15 +111,87 @@ _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 
 class FlatBuffersFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for FlatBuffers export (the full pack is MFX-30.3)."""
+    """Fidelity rules for FlatBuffers export — MFX-30.3 (#4180).
+
+    The pack builds the schema with the FlatBuffers writer (default options) and files each loss the
+    writer records on the type or field it concerns, so the report names exactly what the export does:
+
+    * **types-only** — every operation and channel is a critical ``DROP``, and a source that has any
+      carries the critical root advisory with counts (:func:`~app.fidelity_rulepack.types_only_advisory`);
+    * **constraints** — written as a ``//`` comment that nothing checks, ``APPROX``;
+    * **maps** — a vector of ``<Map>Entry`` key/value tables, ``APPROX``;
+    * **field ids** — an id the source does not give is ``SYNTH`` (a ``.fbs`` source keeps its own);
+      synthesized wrapper tables are ``SYNTH`` too;
+    * structs written as tables, renumbered or empty enums, inlined aliases, opaque or unmapped values and
+      respelled names (info) are ``APPROX``; a field of no value, a default FlatBuffers cannot hold and a
+      root type that is not a table are ``DROP``.
+    """
 
     target_label = "FlatBuffers"
 
+    #: Writer loss subject → (verdict kind, severity).
+    _WRITER_LOSSES = {
+        "constraints-as-comment": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "constraints-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "map-as-vector": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "map-key-as-string": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "synthesized-field-id": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "table-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "struct-as-table": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "empty-enum": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "enum-renumbered": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "alias-inlined": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "opaque-value": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unmapped-scalar": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "name-respelled": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "field-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "default-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "root-type-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+    }
+    #: Set by :meth:`evaluate`: construct key → the verdicts of its writer losses.
+    _filed: Dict[str, List[FidelityVerdict]] = {}
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Build the schema once (as it will be emitted), file its losses by construct, then walk the model."""
+        writer = _FlatBuffersWriter(api, FlatBuffersEmitOptions())
+        try:
+            writer.render()
+        except EmitPreconditionError:
+            pass  # refused at export too; the capability verdicts still describe the model
+        self._filed = filed_writer_verdicts(api, writer.losses.records(), self._WRITER_LOSSES)
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The types-only advisory, then what the writer changed at the schema level (namespace, root type)."""
+        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        return ([advisory] if advisory is not None else []) + self._filed.get("", [])
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        return super().type_verdicts(type_) + self._filed.get(type_.key, [])
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        return super().field_verdicts(field) + self._filed.get(field.key, [])
+
+    def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Reported from the writer, which says what it wrote (a comment, or nothing)."""
+        return None
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Reported from the writer, which knows the ids a ``.fbs`` source gives."""
+        return None
+
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
-            message=f"{self.target_label} is a data-schema format; "
-            f"operation {operation.key!r} has no representation and is dropped",
-            target_mapping="operation → dropped",
+            message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
+            f"the {operation.kind.value} operation is dropped",
+            target_mapping="operation → dropped (types-only export)",
+        )
+
+    def channel_verdict(self, channel) -> FidelityVerdict:
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; "
+            "the event channel is dropped",
+            target_mapping="channel → dropped (types-only export)",
         )
 
 
@@ -548,6 +623,7 @@ class _FlatBuffersWriter:
                 if f.default is not None:
                     self._default_dropped(f, f.default)
                 body += self._doc(f.description, "  ")
+                body += self._constraints(f, "  ")
                 body.append(f"  {written}: {target.expr};")
         else:
             body = self._table_fields(type_, resolved, names, table.key_field)
@@ -575,6 +651,9 @@ class _FlatBuffersWriter:
                 lines.append(f"  {placeholder}: ubyte (id: {slot.id}, deprecated);")
                 continue
             f, target, written = resolved[slot.key]
+            if source_ids.get(slot.key) is None:
+                self._loss("synthesized-field-id", f.key,
+                           f"The source gives {f.key!r} no FlatBuffers field id; it is written with id: {slot.id}.")
             attributes = [f"id: {slot.id}"]
             if not f.type.nullable and target.kind in ("string", "bytes", "vector", "table", "struct"):
                 attributes.append("required")
@@ -582,6 +661,7 @@ class _FlatBuffersWriter:
                 attributes.append("key")
             default = self._default(f, target)
             lines += self._doc(f.description, "  ")
+            lines += self._constraints(f, "  ")
             lines.append(f"  {written}: {target.expr}{default} ({', '.join(attributes)});")
         return lines
 
@@ -697,6 +777,23 @@ class _FlatBuffersWriter:
             return []
         return [f"{indent}/// {line.strip()}".rstrip() for line in text.strip().splitlines()]
 
+    def _constraints(self, f: CanonicalField, indent: str) -> List[str]:
+        """A field's constraints as a ``//`` comment line — or, with comments off, nothing (both recorded).
+
+        FlatBuffers has no validation facets: a comment keeps them for the schema's readers, and nothing
+        checks them.
+        """
+        text = constraint_comment(f.constraints)
+        if text is None:
+            return []
+        if not self._options.include_comments:
+            self._loss("constraints-dropped", f.key, f"FlatBuffers cannot enforce constraints and comments are off; "
+                       f"the {text} of {f.key!r} are not written.")
+            return []
+        self._loss("constraints-as-comment", f.key, f"FlatBuffers cannot enforce constraints; those of {f.key!r} "
+                   f"are written as a comment that nothing checks ({text}).")
+        return [f"{indent}// {text}"]
+
     def _renamed(self, source: Optional[str], written: str, key: str, what: str) -> None:
         if source and source != written:
             self._loss("name-respelled", key,
@@ -707,7 +804,7 @@ class _FlatBuffersWriter:
         if (subject, pointer, detail) in self._noted:
             return
         self._noted.add((subject, pointer, detail))
-        dropped = subject in ("field-dropped", "default-dropped", "root-type-dropped")
+        dropped = subject in ("field-dropped", "default-dropped", "root-type-dropped", "constraints-dropped")
         kind = LossKind.NA if dropped else LossKind.INFERRED
         self.losses.record(kind, subject, detail, pointer=pointer or None)
 

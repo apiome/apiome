@@ -1,0 +1,22 @@
+---
+slug: flatbuffers-capnproto-fidelity
+title: FlatBuffers and Cap'n Proto fidelity reports
+description: Both exports keep constraints as comments and report each change.
+authors: [apiome]
+---
+
+**FlatBuffers** and **Cap'n Proto** exports now say exactly what they change.
+[FlatBuffers](/ship/export-a-spec#flatbuffers-from-any-source) ·
+[Cap'n Proto](/ship/export-a-spec#capn-proto-from-any-source).
+
+{/* truncate */}
+
+- **Constraints are kept as comments.** A field's constraints (`>= 1`, `max length 12`, a pattern)
+  are written as a comment above it. The report says nothing checks them.
+- **Every change is in the report**, on the field, type or operation it concerns:
+  - maps written as key/value entries;
+  - FlatBuffers field ids, and Cap'n Proto ordinals and file ids, that Apiome assigned;
+  - Cap'n Proto interface methods that lose their HTTP method and path;
+  - operations FlatBuffers leaves out.
+- **Compile errors point at the line.** An export the compiler rejects fails with each error's file,
+  line and column.
