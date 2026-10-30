@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.552.0] - 2026-10-30
+
+### Added
+- **Postman → OpenAPI through the import SPI (MFI-32.7, #4409).** New `POST /v1/import/{tenant_slug}/postman/openapi`
+  (requires `imports:create`, stores nothing) reads a Postman Collection v2.0/v2.1 with the registered Postman import
+  adapter and returns `{source_kind, openapi, warnings}`: an OpenAPI 3.1 document emitted from the canonical model,
+  and one warning per declared limit. `base_url` replaces the servers; `info.version` defaults to `1.0.0`. The web
+  app's **Postman Collection** import card now calls it instead of converting in the browser.
+
+### Changed
+- **Postman collections normalize on the shared inferred-spec engine (MFI-32.7, #4409).** `PostmanNormalizer` hands
+  every request (and saved example response) to `infer_canonical_api` and post-processes with the MFI-32.5 collection
+  helpers, like Insomnia and Bruno: requests sharing a method and templated path become one operation with widened
+  schemas, headers become header parameters, folders tag operations, whole-variable query/header values become
+  parameter defaults, and types take the engine's names (`PostOrderRequest`, `GetOrderResponse200` …). The Postman
+  projection the emitter reads (`postman_folder_path`, `postman_headers`, `postman_auth`, `postman_body_*`,
+  `postman_sample`, document `postman_*` extras) is still written, so export and round trip keep working. Declared
+  limits (`postman.script`, `postman.auth_credential`, `postman.secret_variable`, `postman.body_mode`,
+  `postman.merged_request`) reach the coverage ledger. Corpus, roundtrip and MCP toolset goldens regenerated; 13
+  round-trip cells that used to fail now pass.
+
+### Fixed
+- **Postman `api.raw` scrubbing.** The stored collection text was JSON-encoded before the secret-scrub gate ran,
+  which escaped its quotes and hid `"key": "value"` credentials from the gate; it is now scrubbed as text.
+
 ## [1.551.0] - 2026-10-30
 
 ### Added

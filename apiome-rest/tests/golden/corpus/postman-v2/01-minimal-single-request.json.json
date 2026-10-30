@@ -4,9 +4,19 @@
     "channels": [],
     "description": null,
     "extras": {
+      "path_inferences": [],
+      "postman": {
+        "capability_limits": [],
+        "folders": [],
+        "requests": 1
+      },
       "postman_collection_version": "2.0",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-      "postman_variables": []
+      "postman_variables": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /ping": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -22,7 +32,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Ping",
         "name": "Ping",
         "operations": [
@@ -31,8 +43,27 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/ping"
+                ],
+                "template": "/ping"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Ping",
+              "source_location": "Ping"
             },
             "http_method": "GET",
             "http_path": "/ping",
@@ -63,15 +94,15 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:5d013d6b5facdb92e98ed0a9ff3f47c6e42ec3e53ea4cf720f9de771be2ef40c",
+  "fingerprint": "sha256:1a3091c2fdd57249bb333485e28a9739619490f0079bd6dfb6e2460bd3a66469",
   "lint": {
-    "findings": 2,
+    "findings": 3,
     "grade": "A",
-    "report_fingerprint": "d28b18c5f7d8949b9b969a83081e88f8e3f52d0d0e276a94473452697e9f72e5",
-    "score": 95,
+    "report_fingerprint": "079068c5637d1416d83126fec2372b04bb582eb0505976eae4e7761490421710",
+    "score": 94,
     "severity_counts": {
       "error": 0,
-      "info": 1,
+      "info": 2,
       "warning": 1
     }
   },

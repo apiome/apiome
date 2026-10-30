@@ -165,7 +165,12 @@ def test_a_v2_0_string_url_yields_the_query_and_path_parameters(
     [operation] = [op for service in model.services for op in service.operations]
 
     assert operation.http_path == "/orders/{orderId}"
-    assert {parameter.name: parameter.location for parameter in operation.parameters} == {
+    # MFI-32.7: the shared engine also models each request header as a header parameter.
+    assert {
+        parameter.name: parameter.location
+        for parameter in operation.parameters
+        if parameter.location is not ParameterLocation.HEADER
+    } == {
         "orderId": ParameterLocation.PATH,
         "status": ParameterLocation.QUERY,
         "limit": ParameterLocation.QUERY,

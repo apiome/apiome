@@ -66,6 +66,7 @@ from .catalog_migration_routes import router as catalog_migration_router
 from .graph_routes import router as graph_router
 from .identity_routes import router as identity_router
 from .import_sources_routes import router as import_sources_router
+from .postman_convert_routes import router as postman_convert_router
 from .jsonschema_generator import generate_class_jsonschema_spec, generate_jsonschema_spec
 from .license_routes import router as license_router
 from .linked_account_token_crypto import validate_linked_account_token_keys
@@ -195,7 +196,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.415.0",
+    version="1.416.0",
 )
 
 
@@ -527,6 +528,7 @@ app.include_router(schema_targets_router)
 # payloads the 5.1/5.3 surfaces validate, re-run them per revision, and track regressions.
 app.include_router(schema_suite_router)
 app.include_router(import_sources_router)
+app.include_router(postman_convert_router)
 # Format matrix (FMT-1.5, #5416): /v1/formats/matrix — one row per registered format, the single
 # machine-readable answer to "what do you support?". The same payload the generated
 # supported-formats page and `apiome formats` render, so the three cannot disagree.

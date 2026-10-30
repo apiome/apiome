@@ -21,10 +21,17 @@
       "description": "List orders, optionally filtered by status.",
       "inputSchema": {
         "properties": {
+          "accept": {
+            "type": "string"
+          },
           "status": {
             "type": "string"
           }
         },
+        "required": [
+          "status",
+          "accept"
+        ],
         "type": "object"
       },
       "name": "List_orders",
@@ -34,12 +41,16 @@
       "description": "Fetch a single order by id.",
       "inputSchema": {
         "properties": {
+          "accept": {
+            "type": "string"
+          },
           "orderId": {
             "type": "string"
           }
         },
         "required": [
-          "orderId"
+          "orderId",
+          "accept"
         ],
         "type": "object"
       },
@@ -50,6 +61,9 @@
       "description": "Place a new order.",
       "inputSchema": {
         "properties": {
+          "content-type": {
+            "type": "string"
+          },
           "customerId": {
             "type": "string"
           },
@@ -59,6 +73,7 @@
           }
         },
         "required": [
+          "content-type",
           "customerId",
           "items"
         ],

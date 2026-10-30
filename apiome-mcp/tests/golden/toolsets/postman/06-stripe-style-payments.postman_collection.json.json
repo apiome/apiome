@@ -25,6 +25,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "limit"
+        ],
         "type": "object"
       },
       "name": "List_customers",
@@ -47,21 +50,68 @@
       "operation": "GET /v1/customers/{id}"
     },
     {
-      "description": "Charge a customer's default payment method.\n\nReturns.",
+      "description": "Charge a customer's default payment method.\n\nReturns HTTP 200 application/json (PostChargeResponse200).",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type"
+        ],
         "type": "object"
       },
       "name": "Create_charge",
       "operation": "POST /v1/charges",
       "output": {
-        "schema": {}
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "amount": {
+              "type": "integer"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "object": {
+              "type": "string"
+            },
+            "paid": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency",
+            "id",
+            "object",
+            "paid",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "PostChargeResponse200",
+        "status": "200"
       }
     },
     {
       "description": "Create a customer object.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type"
+        ],
         "type": "object"
       },
       "name": "Create_customer",

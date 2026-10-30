@@ -15,7 +15,7 @@ Apiome worked out.
 
 | Label | Meaning | Example |
 | --- | --- | --- |
-| **Declared** | The source states it. This is the default and carries no badge. | A request in a Postman collection; an `interface` in a TypeScript module |
+| **Declared** | The source states it. This is the default and carries no badge. | A path in an OpenAPI document; an `interface` in a TypeScript module |
 | **Inferred** | Apiome deduced it from an example, a sample or code. | A schema read from an example response body; a path template generalized from sample URLs |
 | **Synthesized** | Apiome supplied it. The shape may come from the source, but the source never named it. | `Order_lines_item`, the name Apiome gives an anonymous object inside `Order.lines` |
 
@@ -33,7 +33,7 @@ it, such as *Schema inferred from the example request body of POST /orders.*
 | Insomnia exports | Everything is inferred from the saved requests in the export: path templates, parameters and body schemas. |
 | HAR captures | Everything is inferred from the captured traffic: path templates, parameters, and request and response schemas merged across samples. |
 | SoapUI / ReadyAPI projects | A REST interface is inferred from its saved requests and mock responses. A WSDL interface is declared by its WSDL; when the WSDL is not uploaded, its operations are declared from the project. |
-| Postman collections | Request and response schemas are inferred from example bodies. A raw body that is not JSON is synthesized as a string. Requests, paths and parameters are declared. |
+| Postman collections | Everything is inferred from the saved requests in the collection: path templates, parameters, and request and response schemas from example bodies. A raw body that is not JSON is synthesized as a string. See [Import a Postman collection](./postman-import.md). |
 | Envoy, Istio, Traefik, NGINX, HAProxy, Consul, Tyk Classic | Every route is inferred from the gateway configuration. A Tyk OAS document is declared. |
 | Kong, Gateway API | Routes are declared. A path recovered from a regex pattern is inferred. |
 | SHACL shapes, OWL / RDFS ontologies, JSON-LD contexts | Shapes, classes, properties and terms are declared. A type for an anonymous shape, a scoped context or a container map is synthesized. A class's individuals listed as an enum without `owl:oneOf` are inferred. |
@@ -59,7 +59,7 @@ Every other import, such as OpenAPI, AsyncAPI, protobuf or GraphQL, is declared 
 The **Provenance** filter appears only when the item has at least one inferred or synthesized
 entity.
 
-<Screenshot id="catalog-item-inference-provenance" alt="A Postman catalog item's Overview: the Provenance filter with All 5, Declared 3, Inferred 1 and Synthesized 1 and the inferred-share line, three declared operations, and the Order type marked Inferred and Order_lines_item marked Synthesized" />
+<Screenshot id="catalog-item-inference-provenance" alt="A Postman catalog item's Overview: the Provenance filter with All 5, Declared 0, Inferred 4 and Synthesized 1 and the inferred-share line, three operations marked Inferred, the PostOrderRequest type marked Inferred and PostOrderRequest_lines_item marked Synthesized" />
 
 The share counts every service, operation, parameter, message, type and channel of the item, so
 it can differ from the entity counts in the filter. A parameter or message of an inferred

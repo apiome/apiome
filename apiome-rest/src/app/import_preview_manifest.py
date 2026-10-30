@@ -142,6 +142,8 @@ from .bruno_normalizer import BRUNO_EXTRAS_KEY
 from .bruno_normalizer import PARTIAL_LIMITS as BRUNO_PARTIAL_LIMITS
 from .har_normalizer import HAR_EXTRAS_KEY
 from .insomnia_normalizer import INSOMNIA_EXTRAS_KEY
+from .postman_normalizer import PARTIAL_LIMITS as POSTMAN_PARTIAL_LIMITS
+from .postman_normalizer import POSTMAN_EXTRAS_KEY
 from .insomnia_normalizer import PARTIAL_LIMITS as INSOMNIA_PARTIAL_LIMITS
 from .har_normalizer import PARTIAL_LIMITS as HAR_PARTIAL_LIMITS
 from .hoppscotch_normalizer import HOPPSCOTCH_EXTRAS_KEY
@@ -331,6 +333,9 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # MFI-32.3: the Insomnia projection record (export formats, environments, folders, variable
         # names, declared limits). Our own bookkeeping — never a credential.
         INSOMNIA_EXTRAS_KEY,
+        # MFI-32.7: the Postman projection record (folders, request count, declared limits). Our
+        # own bookkeeping — never a credential.
+        POSTMAN_EXTRAS_KEY,
         # MFI-32.4: the Bruno projection record (version, environments, folders, variable names,
         # declared limits). Our own bookkeeping — never a credential.
         BRUNO_EXTRAS_KEY,
@@ -1307,6 +1312,7 @@ def _document_scope_rows(
     ledger.extend(_thunder_client_capability_rows(api))
     ledger.extend(_har_capability_rows(api))
     ledger.extend(_insomnia_capability_rows(api))
+    ledger.extend(_postman_capability_rows(api))
     ledger.extend(_bruno_capability_rows(api))
     ledger.extend(_soapui_capability_rows(api))
     ledger.extend(_device_model_capability_rows(api))
@@ -2249,6 +2255,24 @@ def _insomnia_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     """
     return _graded_limit_rows(
         api, format_key="insomnia", extras_key=INSOMNIA_EXTRAS_KEY, partial=INSOMNIA_PARTIAL_LIMITS
+    )
+
+
+def _postman_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the MFI-32.7 Postman declared limits as document-scoped ledger rows.
+
+    A withheld credential keeps its auth scheme, a secret variable its name, a non-raw body its
+    request, and requests merged into one operation are all kept, so those are
+    ``partially-mapped``; scripts are not modelled at all.
+
+    Args:
+        api: The normalized model.
+
+    Returns:
+        One ledger row per declared limit (see :func:`_graded_limit_rows`).
+    """
+    return _graded_limit_rows(
+        api, format_key="postman", extras_key=POSTMAN_EXTRAS_KEY, partial=POSTMAN_PARTIAL_LIMITS
     )
 
 

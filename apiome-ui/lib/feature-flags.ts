@@ -27,3 +27,20 @@
  *   gitlikePushPull, ...) and update consumers.
  */
 export const FEATURE_GITLIKE = false;
+
+/**
+ * --------------------------------------------------------------------
+ * FEATURE_LEGACY_POSTMAN_IMPORT  (MFI-32.7, #4409)
+ *   The retired in-browser Postman → OpenAPI converter
+ *   (`src/app/utils/postman-to-openapi.ts`).
+ *
+ *   When false (shipped): the **Postman Collection** import card sends the collection to
+ *   `POST /api/import/postman/openapi`, which runs the REST Postman import adapter — schemas
+ *   inferred from example bodies, credentials scrubbed, warnings for what it leaves out — and
+ *   continues into the Projects wizard with the OpenAPI it returns.
+ *
+ *   When true: the card converts in the browser again, as before MFI-32.7 (no schemas, no
+ *   scrubbing, no warnings). Kept only as a fallback; delete it with the legacy converter once
+ *   nothing needs it.
+ */
+export const FEATURE_LEGACY_POSTMAN_IMPORT = false;

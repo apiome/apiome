@@ -4,9 +4,19 @@
     "channels": [],
     "description": "Minimal Postman Collection v2.1 example: the smallest canonical collection, an info block plus a single GET request with a plain string URL.",
     "extras": {
+      "path_inferences": [],
+      "postman": {
+        "capability_limits": [],
+        "folders": [],
+        "requests": 1
+      },
       "postman_collection_version": "2.1",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "postman_variables": []
+      "postman_variables": [],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /ping": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -22,7 +32,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Ping",
         "name": "Ping",
         "operations": [
@@ -31,8 +43,27 @@
             "deprecated": false,
             "description": "Liveness probe.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "ping"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/ping"
+                ],
+                "template": "/ping"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Ping",
+              "source_location": "Ping"
             },
             "http_method": "GET",
             "http_path": "/ping",
@@ -63,15 +94,15 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:259477a205c9236702fffa8815f91ef423b96d22949fff0b54bf35aa46822c95",
+  "fingerprint": "sha256:81991768971147a29e5d813218cf42178ac04c2a13ed38164047d478d6aa20d0",
   "lint": {
-    "findings": 0,
+    "findings": 1,
     "grade": "A",
-    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
-    "score": 100,
+    "report_fingerprint": "d60674921834c3fa92c755b644ed0e505979b32220992a95808afe249e57473e",
+    "score": 99,
     "severity_counts": {
       "error": 0,
-      "info": 0,
+      "info": 1,
       "warning": 0
     }
   },

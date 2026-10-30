@@ -46,7 +46,8 @@ def test_normalizer_maps_rest_http_service():
     assert api.paradigm is ApiParadigm.REST
     assert api.protocol == "http"
     assert api.title == "Tasks API"
-    task = next(t for t in api.types if t.name == "Task")
+    # MFI-32.7: the shared inferred-spec engine names a request body's type after its operation.
+    task = next(t for t in api.types if t.name == "PostTaskRequest")
     assert task.kind is TypeKind.RECORD
     assert {field.name for field in task.fields} == {"title", "dueDate", "done"}
     service = api.services[0]

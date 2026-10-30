@@ -17,10 +17,14 @@
           },
           "status": {
             "type": "string"
+          },
+          "x-request-id": {
+            "type": "string"
           }
         },
         "required": [
           "sampleId",
+          "x-request-id",
           "status"
         ],
         "type": "object"
@@ -30,7 +34,14 @@
     },
     {
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type"
+        ],
         "type": "object"
       },
       "name": "GraphQL_body",
@@ -42,25 +53,21 @@
           "assay": {
             "type": "string"
           },
+          "content-type": {
+            "type": "string"
+          },
           "label": {
             "type": "string"
           }
         },
         "required": [
+          "content-type",
           "assay",
           "label"
         ],
         "type": "object"
       },
       "name": "Raw_JSON_body",
-      "operation": "POST /samples"
-    },
-    {
-      "inputSchema": {
-        "properties": {},
-        "type": "object"
-      },
-      "name": "URL-encoded_body",
       "operation": "POST /samples"
     },
     {

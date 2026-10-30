@@ -1,6 +1,6 @@
 ---
 title: "Import sources"
-description: "REST endpoints tagged import-sources: 4 operations."
+description: "REST endpoints tagged import-sources: 5 operations."
 sidebar_position: 38
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.415.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.416.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `import-sources` · 4 operations
+Tag: `import-sources` · 5 operations
 
 ## `POST /v1/import/detect` {#detect-import-format-v1-import-detect-post}
 
@@ -106,6 +106,35 @@ Operation id: `list_import_sources_v1_import_sources_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list import sources. | `application/json` [`ImportSourceListResponse`](#schema-importsourcelistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/import/{tenant_slug}/postman/openapi` {#postman-to-openapi-v1-import-tenant-slug-postman-openapi-post}
+
+**Convert a Postman collection to OpenAPI**
+
+Read a Postman Collection v2.0 or v2.1 with the Postman import adapter — schemas inferred from example bodies, credentials scrubbed — and return it as an OpenAPI 3.1 document, with a warning for each thing the conversion leaves out. Nothing is stored. Requires ``imports:create``.
+
+Operation id: `postman_to_openapi_v1_import__tenant_slug__postman_openapi_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for convert a postman collection to openapi.
+
+- `application/json` — [`PostmanToOpenApiRequest`](#schema-postmantoopenapirequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for convert a postman collection to openapi. | `application/json` [`PostmanToOpenApiResponse`](#schema-postmantoopenapiresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
@@ -204,3 +233,23 @@ The list of registered import sources, for source-card / CLI enumeration.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `sources` | array of `ImportSourceDescriptor` | no | Every registered adapter's descriptor, sorted by key. |
+
+### `PostmanToOpenApiRequest` {#schema-postmantoopenapirequest}
+
+A Postman collection to convert.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `document` | string | yes | The Postman Collection v2.0 or v2.1 JSON, as text. |
+| `filename` | string or null | no | The file name, for messages only. |
+| `base_url` | string or null | no | When given, the OpenAPI document's only server (replaces the collection's `baseUrl`). |
+
+### `PostmanToOpenApiResponse` {#schema-postmantoopenapiresponse}
+
+The OpenAPI document a collection converts to, with what the conversion could not keep.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `source_kind` | string | no | The import adapter that read the collection. |
+| `openapi` | object | yes | The OpenAPI 3.1 document. |
+| `warnings` | array of string | no | One sentence per declared limit (scripts, withheld credentials, merged requests …). |

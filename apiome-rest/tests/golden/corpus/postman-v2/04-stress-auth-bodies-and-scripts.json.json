@@ -5,8 +5,100 @@
     "description": "Every v2.0 body mode and the v2.0 auth shape, which differs from v2.1's array form.",
     "extras": {
       "inferred_auth_schemes": [
+        "basic",
         "bearer"
       ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "samples"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "sampleId"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "status"
+            }
+          ],
+          "method": "PATCH",
+          "sample_urls": [
+            "/samples/{sampleId}/status"
+          ],
+          "template": "/samples/{sampleId}/status"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "samples"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/samples",
+            "/samples"
+          ],
+          "template": "/samples"
+        }
+      ],
+      "postman": {
+        "capability_limits": [
+          {
+            "construct": "postman.script",
+            "count": 1,
+            "locations": [
+              "Grammar corners"
+            ],
+            "note": "Pre-request and test scripts are run by Postman; they are not modelled."
+          },
+          {
+            "construct": "postman.auth_credential",
+            "count": 2,
+            "locations": [
+              "Basic auth override",
+              "Grammar corners"
+            ],
+            "note": "The auth scheme (and an API key's name and placement) is kept; saved credentials are never read."
+          },
+          {
+            "construct": "postman.secret_variable",
+            "count": 1,
+            "locations": [
+              "accessToken"
+            ],
+            "note": "A secret variable (by its name, or a value the scrub gate flags) is listed by name; its value is withheld."
+          },
+          {
+            "construct": "postman.body_mode",
+            "count": 3,
+            "locations": [
+              "Form-data with a file",
+              "GraphQL body",
+              "URL-encoded body"
+            ],
+            "note": "Form-data, URL-encoded, GraphQL and file bodies are not read; only raw bodies give a request schema."
+          },
+          {
+            "construct": "postman.merged_request",
+            "count": 2,
+            "locations": [
+              "Raw JSON body",
+              "URL-encoded body"
+            ],
+            "note": "These requests share a method and path, so they are one operation whose schemas cover every request; the first request names it."
+          }
+        ],
+        "folders": [],
+        "requests": 6
+      },
       "postman_auth": {
         "parameters": [
           "token"
@@ -26,6 +118,14 @@
           "secret": true
         }
       ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /samples/legacy": 1,
+        "PATCH /samples/{sampleId}/status": 1,
+        "POST /graphql": 1,
+        "POST /samples": 2,
+        "POST /samples/upload": 1
+      },
       "security_schemes": {
         "basic": {
           "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
@@ -62,7 +162,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Grammar corners",
         "name": "Grammar corners",
         "operations": [
@@ -71,6 +173,25 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "samples"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "legacy"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/samples/legacy"
+                ],
+                "template": "/samples/legacy"
+              },
               "postman_auth": {
                 "parameters": [
                   "password",
@@ -80,9 +201,14 @@
               },
               "postman_folder_path": [],
               "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
               "security": [
                 "basic"
-              ]
+              ],
+              "source_files": [],
+              "source_label": "Basic auth override",
+              "source_location": "Basic auth override"
             },
             "http_method": "GET",
             "http_path": "/samples/legacy",
@@ -99,6 +225,30 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "samples"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "sampleId"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "status"
+                  }
+                ],
+                "method": "PATCH",
+                "sample_urls": [
+                  "/samples/{sampleId}/status"
+                ],
+                "template": "/samples/{sampleId}/status"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -111,7 +261,12 @@
                   "key": "X-Debug",
                   "value": "1"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Disabled request header and path variables",
+              "source_location": "Disabled request header and path variables"
             },
             "http_method": "PATCH",
             "http_path": "/samples/{sampleId}/status",
@@ -119,17 +274,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": null,
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{ \"status\": \"complete\" }",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Statu"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of PATCH /samples/{sampleId}/status."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "PATCH /samples/{sampleId}/status#request",
@@ -137,7 +291,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Statu",
+                  "name": "PatchStatuRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -154,7 +308,29 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "PATCH /samples/{sampleId}/status#header.x-request-id",
+                "location": "header",
+                "name": "x-request-id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "PATCH /samples/{sampleId}/status#path.sampleId",
                 "location": "path",
@@ -176,6 +352,20 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "graphql"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/graphql"
+                ],
+                "template": "/graphql"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -183,7 +373,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "GraphQL body",
+              "source_location": "GraphQL body"
             },
             "http_method": "POST",
             "http_path": "/graphql",
@@ -191,7 +386,28 @@
             "kind": "request_response",
             "messages": [],
             "name": "GraphQL body",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /graphql#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           },
@@ -200,6 +416,21 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "samples"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/samples",
+                  "/samples"
+                ],
+                "template": "/samples"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -207,7 +438,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 2,
+              "source_files": [],
+              "source_label": "Raw JSON body",
+              "source_location": "Raw JSON body"
             },
             "http_method": "POST",
             "http_path": "/samples",
@@ -215,17 +451,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": null,
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{ \"label\": \"sample-a\", \"assay\": \"pcr\" }",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Sample"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of POST /samples."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /samples#request",
@@ -233,7 +468,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Sample",
+                  "name": "PostSampleRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -243,31 +478,28 @@
               }
             ],
             "name": "Raw JSON body",
-            "parameters": [],
-            "streaming": "none",
-            "tags": []
-          },
-          {
-            "channel_ref": null,
-            "deprecated": false,
-            "description": null,
-            "extras": {
-              "postman_folder_path": [],
-              "postman_headers": [
-                {
-                  "disabled": false,
-                  "key": "Content-Type",
-                  "value": "application/x-www-form-urlencoded"
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "key": "POST /samples#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
                 }
-              ]
-            },
-            "http_method": "POST",
-            "http_path": "/samples",
-            "key": "POST /samples",
-            "kind": "request_response",
-            "messages": [],
-            "name": "URL-encoded body",
-            "parameters": [],
+              }
+            ],
             "streaming": "none",
             "tags": []
           },
@@ -276,8 +508,32 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "samples"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "upload"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/samples/upload"
+                ],
+                "template": "/samples/upload"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Form-data with a file",
+              "source_location": "Form-data with a file"
             },
             "http_method": "POST",
             "http_path": "/samples/upload",
@@ -301,8 +557,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of POST /samples."
+          "provenance": "inferred"
         },
         "fields": [
           {
@@ -312,7 +567,42 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Sample.assay",
+            "key": "PatchStatuRequest.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PatchStatuRequest",
+        "key_type": null,
+        "kind": "record",
+        "name": "PatchStatuRequest",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostSampleRequest.assay",
             "name": "assay",
             "type": {
               "extras": {},
@@ -328,7 +618,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Sample.label",
+            "key": "PostSampleRequest.label",
             "name": "label",
             "type": {
               "extras": {},
@@ -338,46 +628,10 @@
             }
           }
         ],
-        "key": "Sample",
+        "key": "PostSampleRequest",
         "key_type": null,
         "kind": "record",
-        "name": "Sample",
-        "namespace": null,
-        "union_members": [],
-        "value_type": null
-      },
-      {
-        "aliased": null,
-        "constraints": null,
-        "deprecated": false,
-        "description": null,
-        "enum_values": [],
-        "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of PATCH /samples/{sampleId}/status."
-        },
-        "fields": [
-          {
-            "constraints": null,
-            "default": null,
-            "deprecated": false,
-            "description": null,
-            "extras": {},
-            "field_number": null,
-            "key": "Statu.status",
-            "name": "status",
-            "type": {
-              "extras": {},
-              "item": null,
-              "name": "string",
-              "nullable": false
-            }
-          }
-        ],
-        "key": "Statu",
-        "key_type": null,
-        "kind": "record",
-        "name": "Statu",
+        "name": "PostSampleRequest",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -388,7 +642,7 @@
   "corpus_path": "postman-v2/04-stress-auth-bodies-and-scripts.json",
   "counts": {
     "channels": 0,
-    "operations": 6,
+    "operations": 5,
     "servers": 1,
     "services": 1,
     "types": 2
@@ -397,16 +651,16 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:8d99867c9915dccc93c678975b15d7556f97e32d41a6ed252a916fe6a4843396",
+  "fingerprint": "sha256:91a39bb0418b68a5e9474057c258aabaa7bd0349bba0d0c69bcd01b726a6fc16",
   "lint": {
-    "findings": 14,
+    "findings": 13,
     "grade": "D",
-    "report_fingerprint": "07d138cccf3b80ce2bd0b82ffdd01ccc6b89e32b233e4c1c7cb81ca90e873333",
+    "report_fingerprint": "ef64f67669415aa53c1a946d04198417fc2adfef120c9e029ca198b270b37e36",
     "score": 66,
     "severity_counts": {
       "error": 0,
       "info": 6,
-      "warning": 8
+      "warning": 7
     }
   },
   "snapshot_version": 1

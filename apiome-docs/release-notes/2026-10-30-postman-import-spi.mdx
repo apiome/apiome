@@ -1,0 +1,24 @@
+---
+slug: postman-import-spi
+title: Postman collections import on the shared collection engine
+description: Postman imports now infer schemas, merge requests and scrub credentials like Insomnia.
+authors: [apiome]
+---
+
+Postman Collection v2.0 and v2.1 imports now run on the same inference engine as the Insomnia, Bruno
+and HAR imports. [How it works](/bring-in/postman-import).
+
+{/* truncate */}
+
+- **Requests become operations the way other collections do.** Requests that share a method and path
+  are one operation whose schemas cover all of them; numeric and UUID path segments become path
+  parameters; folders group operations; headers become header parameters.
+- **Everything built from a collection is labelled inferred**, including its operations and
+  parameters, as for every other collection import.
+- **Credentials stay out.** Auth is kept as a scheme, values are scrubbed, and the stored copy of the
+  collection is scrubbed as text (it used to miss `"key": "value"` credentials).
+- **The Postman Collection card** converts through this importer instead of in the browser, so the
+  project it creates has schemas and the card lists what the conversion left out. The REST API offers
+  the same conversion: `POST /v1/import/{tenant}/postman/openapi`.
+- **Type names follow the shared engine** (`PostOrderRequest`, `GetOrderResponse200`), as for Insomnia
+  and Bruno.

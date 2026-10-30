@@ -717,8 +717,9 @@ describe('the browser fixtures', () => {
   });
 
   /**
-   * FMT-8.6 (#5467): the Overview of an item Apiome partly inferred — a Postman collection whose
-   * request and response schemas were read from example bodies. The docs page on inference
+   * FMT-8.6 (#5467): the Overview of an item Apiome inferred — a Postman collection, whose
+   * operations the shared engine inferred from its saved requests (MFI-32.7) and whose schemas were
+   * read from example bodies. The docs page on inference
    * provenance (`apiome-docs` screenshot `catalog-item-inference-provenance`) shows its badges and
    * the Provenance filter.
    */
@@ -742,7 +743,7 @@ describe('the browser fixtures', () => {
       summary: { services: 1, operations: 3, types: 2, channels: null },
       source: { ...ITEM.source, label: 'orders.postman_collection.json', uri: 'upload://orders.postman_collection.json' },
       conversion: null,
-      provenanceSummary: { declared: 7, inferred: 4, synthesized: 1, total: 12, inferredRatio: 0.3333 },
+      provenanceSummary: { declared: 0, inferred: 11, synthesized: 1, total: 12, inferredRatio: 0.9167 },
       parsed: [
         {
           title: 'Operations',
@@ -753,7 +754,7 @@ describe('the browser fixtures', () => {
               tag: 'POST',
               meta: '/orders',
               fields: [],
-              provenance: 'declared',
+              provenance: 'inferred',
               provenanceEvidence: null,
             },
             {
@@ -761,7 +762,7 @@ describe('the browser fixtures', () => {
               tag: 'GET',
               meta: '/orders/{orderId}',
               fields: [],
-              provenance: 'declared',
+              provenance: 'inferred',
               provenanceEvidence: null,
             },
             {
@@ -769,7 +770,7 @@ describe('the browser fixtures', () => {
               tag: 'GET',
               meta: '/orders',
               fields: [],
-              provenance: 'declared',
+              provenance: 'inferred',
               provenanceEvidence: null,
             },
           ],
@@ -779,7 +780,7 @@ describe('the browser fixtures', () => {
           subtitle: 'named types',
           entities: [
             {
-              name: 'Order',
+              name: 'PostOrderRequest',
               tag: 'OBJECT',
               meta: null,
               fields: [],
@@ -787,12 +788,12 @@ describe('the browser fixtures', () => {
               provenanceEvidence: 'Schema inferred from the example request body of POST /orders.',
             },
             {
-              name: 'Order_lines_item',
+              name: 'PostOrderRequest_lines_item',
               tag: 'OBJECT',
               meta: null,
               fields: [],
               provenance: 'synthesized',
-              provenanceEvidence: 'Named by Apiome after the place it is written: Order.lines.',
+              provenanceEvidence: 'Named by Apiome after the place it is written: PostOrderRequest.lines.',
             },
           ],
         },
@@ -803,7 +804,7 @@ describe('the browser fixtures', () => {
       expect(screen.getByRole('heading', { level: 1, name: /Orders API/ })).toBeInTheDocument(),
     );
     expect(screen.getByTestId('catalog-detail-provenance-filter')).toBeInTheDocument();
-    expect(screen.getAllByTestId('catalog-detail-parsed-provenance')).toHaveLength(2);
+    expect(screen.getAllByTestId('catalog-detail-parsed-provenance')).toHaveLength(5);
     write('overview-provenance', page().outerHTML);
   });
 

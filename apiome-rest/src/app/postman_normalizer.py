@@ -1,50 +1,69 @@
-"""Postman Collection → canonical model normalizer.
+"""Postman Collection → canonical model normalizer — on the shared inferred-spec engine (MFI-32.7).
 
 Maps a parsed :class:`~app.postman_parser.PostmanDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.REST`.
 
-One normalizer serves Collection v2.0 and v2.1 (FMT-3.6, #5431): the two minors'
-spelling differences are resolved by the parser, so everything here reads the same
-AST either way. The minor itself is published as ``postman_collection_version`` in
-the model's extras — the "with its version recorded" half of FMT-3.6 — and the
-collection's and each request's auth **scheme** (never its credentials) as
-``postman_auth``.
+**The engine does the inference (MFI-32.7, #4409).** Every request, and every saved example
+response, becomes an :class:`~app.inferred_spec.HttpObservation` handed to the shared engine
+(:mod:`app.inferred_spec`), which templates paths, unions query / header parameters and infers and
+widens body schemas — the same engine HAR, Insomnia, Bruno, Hoppscotch and ``.http`` files use, so
+none of that is forked here. Requests that share a method and a templated path become one operation
+whose schemas cover all their samples. What the engine has no slot for is layered on afterwards,
+with :mod:`app.client_collection` (MFI-32.5) where the facts are the same as the other collections':
 
-**What is inferred (FMT-8.6).** A collection declares its requests — methods, URLs, path and
-query parameters, headers, example responses — and every operation and parameter is declared.
-It declares no *schemas*: a request or response body is an example, so each named type and each
-message whose payload schema was read from an example body is stamped
-:data:`~app.inference_provenance.INFERRED`, with the request it came from as evidence. A raw
-body that is not JSON is typed as a string by Apiome and stamped
-:data:`~app.inference_provenance.SYNTHESIZED`.
+* **folders → operation groups:** each operation is tagged with its folder path;
+* **body content types:** the request message carries the body's media type;
+* **environment variables → parameter defaults:** a query or header parameter written as a whole
+  ``{{variable}}`` gets that variable's (non-secret) value as its default;
+* **the Postman projection** the :mod:`app.postman_emitter` writes back for a round trip —
+  ``postman_folder_path``, ``postman_headers``, ``postman_auth``, the request and response
+  ``postman_body_*`` records, each parameter's ``postman_sample`` and the document's
+  ``postman_schema_url`` / ``postman_variables`` / ``postman_collection_version`` /
+  ``postman_auth``;
+* **declared limits** (scripts, withheld credentials, secret variables, non-raw request bodies,
+  requests merged into one operation) in ``extras["postman"]["capability_limits"]``.
+
+One normalizer serves Collection v2.0 and v2.1 (FMT-3.6, #5431): the two minors' spelling
+differences are resolved by the parser. Every value kept passes the MFI-32.5 secret-scrub gate; the
+auth **scheme** is kept, never its credentials.
+
+**What is inferred (FMT-8.6).** A collection declares its requests but no *schemas*: every operation,
+parameter, message and type the engine builds is stamped
+:data:`~app.inference_provenance.INFERRED`. A raw request body that is not JSON is typed as a string
+by Apiome and stamped :data:`~app.inference_provenance.SYNTHESIZED`.
 """
 
 from __future__ import annotations
 
 import json
-import re
-from typing import Any, Dict, List, Optional, Set
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .canonical_model import (
-    ApiIdentity,
     ApiParadigm,
     CanonicalApi,
     Message,
     MessageRole,
     Operation,
-    OperationKind,
-    Parameter,
     ParameterLocation,
     Server,
-    Service,
-    StreamingMode,
-    TypeRef,
+)
+from .client_collection import (
+    MUSTACHE_REFERENCE_RE,
+    SECRET_NAME_RE,
+    annotate_operations,
+    apply_parameter_defaults,
+    declared_limit,
+    folder_paths,
+    scrub_value,
+    template_servers,
 )
 from .client_collection import safe_named_value as _safe_value
-from .client_collection import scrub_value, template_servers
 from .client_collection import variable_record as _variable_record
-from .inference_provenance import INFERRED, SYNTHESIZED, provenance_extras
+from .inference_provenance import SYNTHESIZED, provenance_extras
+from .inferred_spec import HttpObservation, infer_canonical_api
 from .normalizer import Keys, Normalizer, SchemaCoercer, normalize_ordering
 from .postman_parser import (
     PostmanAuth,
@@ -54,140 +73,22 @@ from .postman_parser import (
 )
 from .security_scheme_stubs import apply_security_scheme_stubs
 
-__all__ = ["PostmanNormalizer"]
+__all__ = ["PARTIAL_LIMITS", "POSTMAN_AUTH_SCHEMES", "POSTMAN_EXTRAS_KEY", "PostmanNormalizer"]
 
 _FORMAT_KEY = "postman"
+
+#: The root extras key holding the Postman projection record (declared limits, folders).
+POSTMAN_EXTRAS_KEY = "postman"
+
+#: Declared limits whose construct is modelled with a detail withheld (the coverage ledger grades
+#: them ``partially-mapped``); every other limit is a construct left out.
+PARTIAL_LIMITS = frozenset(
+    {"postman.auth_credential", "postman.secret_variable", "postman.merged_request", "postman.body_mode"}
+)
 
 #: FMT-8.6 evidence for a raw request body that is not JSON: Apiome types it as a string.
 _TEXT_BODY_EVIDENCE = "The raw body is not JSON, so Apiome typed it as a string."
 _REF_PREFIX = "#/components/schemas/"
-
-
-def _infer_schema_from_json(value: Any) -> Dict[str, Any]:
-    if value is None:
-        return {"type": "null"}
-    if isinstance(value, bool):
-        return {"type": "boolean"}
-    if isinstance(value, int) and not isinstance(value, bool):
-        return {"type": "integer"}
-    if isinstance(value, float):
-        return {"type": "number"}
-    if isinstance(value, str):
-        return {"type": "string"}
-    if isinstance(value, list):
-        if not value:
-            return {"type": "array", "items": {}}
-        return {"type": "array", "items": _infer_schema_from_json(value[0])}
-    if isinstance(value, dict):
-        properties = {
-            str(key): _infer_schema_from_json(item) for key, item in value.items()
-        }
-        return {
-            "type": "object",
-            "properties": properties,
-            "required": list(value.keys()),
-        }
-    return {"type": "string"}
-
-
-def _singularize_resource(path: str) -> Optional[str]:
-    segments = [
-        segment
-        for segment in path.strip("/").split("/")
-        if segment and not (segment.startswith("{") and segment.endswith("}"))
-    ]
-    if not segments:
-        return None
-    last = segments[-1]
-    if last.endswith("ies") and len(last) > 3:
-        return last[:-3].capitalize() + "y"
-    if last.endswith("s") and len(last) > 1:
-        return last[:-1].capitalize()
-    return last[:1].upper() + last[1:]
-
-
-def _type_name_for_body(path: str, operation_name: str) -> str:
-    resource = _singularize_resource(path)
-    if resource:
-        return resource
-    cleaned = re.sub(r"[^A-Za-z0-9]+", " ", operation_name).strip()
-    parts = [part for part in cleaned.split() if part]
-    if parts:
-        return parts[-1][:1].upper() + parts[-1][1:]
-    return "RequestBody"
-
-
-def _merge_object_schemas(
-    existing: Dict[str, Any],
-    incoming: Dict[str, Any],
-) -> Dict[str, Any]:
-    if existing.get("type") != "object" or incoming.get("type") != "object":
-        return incoming
-    properties = dict(existing.get("properties") or {})
-    properties.update(incoming.get("properties") or {})
-    required: Set[str] = set(existing.get("required") or [])
-    required.update(incoming.get("required") or [])
-    return {
-        "type": "object",
-        "properties": properties,
-        "required": sorted(required),
-    }
-
-
-def _body_evidence(operation: PostmanOperation, what: str) -> str:
-    """The FMT-8.6 evidence sentence for a schema read from one request's example body."""
-    path = postman_http_path(operation.request.url)
-    return f"Schema inferred from the example {what} body of {operation.request.method} {path}."
-
-
-def _collect_components(
-    document: PostmanDocument, evidence: Optional[Dict[str, str]] = None
-) -> Dict[str, Any]:
-    """Infer one named schema per resource from the collection's JSON request bodies.
-
-    Args:
-        document: The parsed collection.
-        evidence: When given, filled with type name → the evidence sentence of the first
-            request body the schema was inferred from (FMT-8.6).
-
-    Returns:
-        Type name → inferred JSON Schema (bodies naming the same resource are merged).
-    """
-    components: Dict[str, Any] = {}
-    for operation in document.operations:
-        body = operation.request.body
-        if body is None or body.mode != "raw" or not body.raw:
-            continue
-        raw = body.raw.strip()
-        if not raw.startswith("{"):
-            continue
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(payload, dict):
-            continue
-        schema = _infer_schema_from_json(payload)
-        path = postman_http_path(operation.request.url)
-        type_name = _type_name_for_body(path, operation.name)
-        if type_name in components:
-            components[type_name] = _merge_object_schemas(components[type_name], schema)
-        else:
-            components[type_name] = schema
-            if evidence is not None:
-                evidence[type_name] = _body_evidence(operation, "request")
-    return components
-
-
-def _scrubbed_raw(raw: Any) -> Any:
-    """The parsed collection with credentials removed, for ``api.raw`` (MFI-32.5).
-
-    The redaction marker carries no quote or escape character, so the scrubbed JSON still parses.
-    """
-    if raw is None:
-        return None
-    return json.loads(scrub_value(json.dumps(raw)))
-
 
 #: Postman auth ``type`` → the canonical scheme :mod:`app.canonical_security` reads (MFI-32.5).
 #: Request-signing schemes have no canonical scheme of their own: a generic ``authorization``.
@@ -201,9 +102,58 @@ POSTMAN_AUTH_SCHEMES: Dict[str, str] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Requests → observations
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _Request:
+    """One Postman request, as the shared :mod:`app.client_collection` helpers read it.
+
+    Satisfies :class:`~app.client_collection.ClientRequest` (``auth`` is always ``None``: Postman's
+    auth is recorded in its own ``postman_auth`` shape below) and
+    :class:`~app.client_collection.DefaultedRequest`.
+
+    Attributes:
+        method: The upper-cased HTTP method.
+        url: The URL handed to the engine (the request's templated path).
+        folder: The folder path the request sits in.
+        content_type: The request body's media type, when it has a body.
+        defaults: ``(location, name, value)`` for each parameter written as a whole variable whose
+            non-secret value the collection defines.
+        operation: The parsed request.
+        order: The request's position in the collection (the first match names the operation).
+    """
+
+    method: str
+    url: str
+    folder: Tuple[str, ...]
+    content_type: Optional[str]
+    defaults: Tuple[Tuple[str, str, str], ...]
+    operation: PostmanOperation
+    order: int
+    auth: None = None
+
+
 def _canonical_scheme(auth_type: str) -> str:
     """The canonical scheme for a Postman auth type (``authorization`` for signing schemes)."""
     return POSTMAN_AUTH_SCHEMES.get(str(auth_type or "").strip().lower(), "authorization")
+
+
+def _auth_extras(auth: Optional[PostmanAuth]) -> Optional[Dict[str, Any]]:
+    """Render an auth declaration for the extras bag — scheme and parameter names only.
+
+    Args:
+        auth: The parsed auth declaration, or ``None``.
+
+    Returns:
+        ``{"type": …, "parameters": [...]}``, or ``None`` when nothing was declared. Credential
+        *values* are deliberately absent: the parser never reads them.
+    """
+    if auth is None:
+        return None
+    return {"type": auth.type, "parameters": list(auth.parameters)}
 
 
 def _apikey_placements(source: PostmanDocument) -> Dict[str, Dict[str, Any]]:
@@ -215,264 +165,427 @@ def _apikey_placements(source: PostmanDocument) -> Dict[str, Dict[str, Any]]:
     return {}
 
 
-def _auth_extras(auth: Optional[PostmanAuth]) -> Optional[Dict[str, Any]]:
-    """Render an auth declaration for the extras bag — scheme and parameter names only.
+def _content_type(operation: PostmanOperation) -> Optional[str]:
+    """The request body's media type: its ``Content-Type`` header, else what the raw body looks like."""
+    request = operation.request
+    for header in request.headers:
+        if not header.disabled and header.key.strip().lower() == "content-type" and header.value:
+            return header.value.split(";", 1)[0].strip() or None
+    body = request.body
+    if body is None or not body.raw:
+        return None
+    if (body.language or "").lower() == "json" or body.raw.lstrip().startswith(("{", "[")):
+        return "application/json"
+    return "text/plain"
+
+
+def _whole_variable(value: Optional[str]) -> Optional[str]:
+    """The variable name when ``value`` is written entirely as ``{{name}}``, else ``None``."""
+    if not value or not MUSTACHE_REFERENCE_RE.match(value):
+        return None
+    return value.strip()[2:-2].strip() or None
+
+
+def _defaults(operation: PostmanOperation, variables: Mapping[str, Dict[str, Any]]) -> Tuple[Tuple[str, str, str], ...]:
+    """Parameter defaults from collection / environment variables — never a secret one."""
+    out: Set[Tuple[str, str, str]] = set()
+    pairs: List[Tuple[str, str, Optional[str]]] = [
+        ("query", query.name, query.value) for query in operation.request.url.query if not query.disabled
+    ] + [("header", header.key.lower(), header.value) for header in operation.request.headers if not header.disabled]
+    for location, name, value in pairs:
+        variable = _whole_variable(value)
+        record = variables.get(variable or "")
+        if record is None or record.get("secret") or SECRET_NAME_RE.search(name):
+            continue
+        resolved = record.get("value")
+        if isinstance(resolved, str) and resolved and not MUSTACHE_REFERENCE_RE.match(resolved):
+            out.add((location, name, scrub_value(resolved)))
+    return tuple(sorted(out))
+
+
+def _observations(
+    source: PostmanDocument, variables: Mapping[str, Dict[str, Any]]
+) -> Tuple[List[HttpObservation], List[_Request]]:
+    """Read every request (and each of its saved example responses) into engine observations.
+
+    A request with saved examples becomes one observation per example — so each example's status
+    and body reach the engine — and a request without any becomes one observation with no response.
+    Header and query values pass :func:`~app.client_collection.safe_named_value`; bodies pass the
+    secret-scrub gate.
 
     Args:
-        auth: The parsed auth declaration, or ``None``.
+        source: The parsed collection.
+        variables: Variable name → its :func:`~app.client_collection.variable_record`.
 
     Returns:
-        ``{"type": …, "parameters": [...]}``, or ``None`` when nothing was declared.
-        Credential *values* are deliberately absent: the parser never reads them,
-        so an imported collection cannot leak the token it was exported with.
+        The observations and the per-request facts the post-processing helpers read.
     """
-    if auth is None:
-        return None
-    return {"type": auth.type, "parameters": list(auth.parameters)}
+    observations: List[HttpObservation] = []
+    requests: List[_Request] = []
+    for order, endpoint in enumerate(source.operations):
+        request = endpoint.request
+        url = postman_http_path(request.url)
+        headers = tuple(
+            (header.key, _safe_value(header.key, header.value) or "")
+            for header in request.headers
+            if not header.disabled
+        )
+        query = tuple(
+            (param.name, _safe_value(param.name, param.value) or "")
+            for param in request.url.query
+            if not param.disabled
+        )
+        body = request.body
+        request_body = scrub_value(body.raw) if body is not None and body.mode == "raw" and body.raw else None
+        label = " / ".join((*endpoint.folder_path, endpoint.name))
 
+        def observe(status: Optional[int] = None, response_body: Optional[str] = None) -> None:
+            observations.append(
+                HttpObservation(
+                    method=request.method,
+                    url=url,
+                    headers=headers,
+                    query=query,
+                    request_body=request_body,
+                    response_status=status,
+                    response_body=response_body,
+                    source_location=label,
+                    source_label=endpoint.name,
+                )
+            )
 
-def _parameters(operation: PostmanOperation, *, op_key: str) -> List[Parameter]:
-    params: List[Parameter] = []
-    for segment in operation.request.url.path:
-        if segment.startswith(":"):
-            name = segment[1:]
-            location = ParameterLocation.PATH
-        elif segment.startswith("{") and segment.endswith("}"):
-            name = segment[1:-1]
-            location = ParameterLocation.PATH
+        if endpoint.responses:
+            for response in endpoint.responses:
+                raw = response.body.raw if response.body is not None else None
+                observe(response.code or 200, scrub_value(raw) if raw else None)
         else:
-            continue
-        params.append(
-            Parameter(
-                key=Keys.parameter(op_key, "path", name),
-                name=name,
-                location=location,
-                required=True,
-                type=TypeRef(name="string", nullable=False),
-                extras={"postman_style": "path"},
+            observe()
+        requests.append(
+            _Request(
+                method=request.method,
+                url=url,
+                folder=tuple(endpoint.folder_path),
+                content_type=_content_type(endpoint) if request_body is not None else None,
+                defaults=_defaults(endpoint, variables),
+                operation=endpoint,
+                order=order,
             )
         )
-    for variable in operation.request.url.variables:
-        if any(param.name == variable.key for param in params):
-            continue
-        params.append(
-            Parameter(
-                key=Keys.parameter(op_key, "path", variable.key),
-                name=variable.key,
-                location=ParameterLocation.PATH,
-                required=True,
-                type=TypeRef(name="string", nullable=False),
-                extras={"postman_style": "path", "postman_sample": _safe_value(variable.key, variable.value)},
-            )
-        )
-    for query in operation.request.url.query:
-        if query.disabled:
-            continue
-        params.append(
-            Parameter(
-                key=Keys.parameter(op_key, "query", query.name),
-                name=query.name,
-                location=ParameterLocation.QUERY,
-                required=False,
-                type=TypeRef(name="string", nullable=False),
-                extras={"postman_style": "query", "postman_sample": _safe_value(query.name, query.value)},
-            )
-        )
-    return params
+    return observations, requests
 
 
-def _request_message(
-    operation: PostmanOperation,
-    *,
-    op_key: str,
-    coercer: SchemaCoercer,
-    components: Dict[str, Any],
-) -> Optional[Message]:
+# ---------------------------------------------------------------------------
+# The Postman projection layered on the engine's operations
+# ---------------------------------------------------------------------------
+
+
+def _matched_requests(operation: Operation, index: Mapping[Tuple[str, str], List[_Request]]) -> List[_Request]:
+    """The requests an engine operation was built from, in collection order."""
+    evidence = operation.extras.get("inference_evidence") or {}
+    matched: Dict[int, _Request] = {}
+    for url in dict.fromkeys(evidence.get("sample_urls") or []):
+        for request in index.get((operation.http_method or "", url), []):
+            matched[request.order] = request
+    return [matched[order] for order in sorted(matched)]
+
+
+def _body_extras(operation: PostmanOperation) -> Dict[str, Any]:
+    """The ``postman_body_*`` record of a raw request body (what the emitter writes back)."""
     body = operation.request.body
-    if body is None or body.mode != "raw" or not body.raw:
-        return None
-    raw = body.raw.strip()
-    path = postman_http_path(operation.request.url)
-    type_name = _type_name_for_body(path, operation.name)
-    schema: Dict[str, Any]
-    if raw.startswith("{") or raw.startswith("["):
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError:
-            schema = {"type": "string"}
-            return Message(
-                key=Keys.request_message(op_key),
-                role=MessageRole.REQUEST,
-                payload=coercer.type_ref(schema, required=True),
-                required=True,
-                extras={
-                    "postman_body_mode": body.mode,
-                    "postman_body_raw": body.raw,
-                    "postman_body_language": body.language,
-                    "postman_body_schema": schema,
-                    **provenance_extras(SYNTHESIZED, _TEXT_BODY_EVIDENCE),
-                },
-            )
-        if isinstance(payload, dict) and type_name in components:
-            schema = {"$ref": f"{_REF_PREFIX}{type_name}"}
-        else:
-            schema = _infer_schema_from_json(payload)
-        payload_ref = coercer.type_ref(schema, required=True)
-        stamp = provenance_extras(INFERRED, _body_evidence(operation, "request"))
-    else:
-        schema = {"type": "string"}
-        payload_ref = coercer.type_ref(schema, required=True)
-        stamp = provenance_extras(SYNTHESIZED, _TEXT_BODY_EVIDENCE)
-    return Message(
-        key=Keys.request_message(op_key),
-        role=MessageRole.REQUEST,
-        payload=payload_ref,
-        required=True,
-        extras={
-            "postman_body_mode": body.mode,
-            "postman_body_raw": body.raw,
-            "postman_body_language": body.language,
-            "postman_body_schema": schema,
-            **stamp,
-        },
+    assert body is not None and body.raw  # callers check
+    return {
+        "postman_body_mode": body.mode,
+        "postman_body_raw": scrub_value(body.raw),
+        "postman_body_language": body.language,
+    }
+
+
+def _project_operation(operation: Operation, matched: Sequence[_Request], coercer: SchemaCoercer) -> None:
+    """Layer the Postman projection onto one engine operation (in place).
+
+    The first request it was built from names it and gives its description, folder, headers and
+    auth — what a round trip writes back for the one Postman request the operation becomes.
+
+    Args:
+        operation: The engine's operation.
+        matched: The requests it was built from (non-empty).
+        coercer: Builds the string payload of a non-JSON request body.
+    """
+    first = matched[0].operation
+    request = first.request
+    operation.name = first.name
+    if request.description:
+        operation.description = request.description
+    operation.extras["postman_folder_path"] = list(first.folder_path)
+    operation.extras["postman_headers"] = [
+        {"key": header.key, "value": _safe_value(header.key, header.value), "disabled": header.disabled}
+        for header in request.headers
+    ]
+    auth = _auth_extras(request.auth)
+    if auth is not None:
+        operation.extras["postman_auth"] = auth
+        operation.extras["security"] = [_canonical_scheme(auth["type"])]
+
+    query_samples = {param.name: param.value for param in request.url.query if not param.disabled}
+    # A path variable saved with no value has no sample (an exported one is written back empty).
+    path_samples = {variable.key: variable.value for variable in request.url.variables if variable.value}
+    for parameter in operation.parameters:
+        if parameter.location is ParameterLocation.QUERY:
+            parameter.extras["postman_style"] = "query"
+            if parameter.name in query_samples:
+                parameter.extras["postman_sample"] = _safe_value(parameter.name, query_samples[parameter.name])
+        elif parameter.location is ParameterLocation.PATH:
+            parameter.extras["postman_style"] = "path"
+            if parameter.name in path_samples:
+                parameter.extras["postman_sample"] = _safe_value(parameter.name, path_samples[parameter.name])
+
+    with_body = next(
+        (req.operation for req in matched if req.operation.request.body is not None
+         and req.operation.request.body.mode == "raw" and req.operation.request.body.raw),
+        None,
     )
+    request_message = next((m for m in operation.messages if m.role is MessageRole.REQUEST), None)
+    if with_body is not None:
+        if request_message is not None:
+            request_message.extras.update(_body_extras(with_body))
+        else:
+            # Not JSON, so the engine inferred nothing: Apiome types it as a string (FMT-8.6).
+            operation.messages.insert(
+                0,
+                Message(
+                    key=Keys.request_message(operation.key),
+                    role=MessageRole.REQUEST,
+                    payload=coercer.type_ref({"type": "string"}, required=True),
+                    required=True,
+                    content_types=[matched[0].content_type or "text/plain"],
+                    extras={**_body_extras(with_body), **provenance_extras(SYNTHESIZED, _TEXT_BODY_EVIDENCE)},
+                ),
+            )
+
+    examples: Dict[str, Any] = {}
+    for req in matched:
+        for response in req.operation.responses:
+            examples.setdefault(str(response.code or 200), response)
+    for message in operation.messages:
+        if message.role is not MessageRole.RESPONSE:
+            continue
+        example = examples.get(str(message.status_code or message.extras.get("http_status") or ""))
+        if example is None:
+            continue
+        message.name = example.name
+        if example.body is not None and example.body.raw:
+            message.extras["postman_body_raw"] = scrub_value(example.body.raw)
+
+
+# ---------------------------------------------------------------------------
+# Declared limits
+# ---------------------------------------------------------------------------
+
+
+def _items(document: Any) -> Iterable[Tuple[str, Mapping[str, Any]]]:
+    """Every request item of a collection's JSON, with its name (folders walked)."""
+    stack = list(document.get("item") or []) if isinstance(document, Mapping) else []
+    while stack:
+        entry = stack.pop(0)
+        if not isinstance(entry, Mapping):
+            continue
+        if isinstance(entry.get("request"), (Mapping, str)):
+            yield str(entry.get("name") or "Request"), entry
+        elif isinstance(entry.get("item"), list):
+            stack[0:0] = list(entry["item"])
+
+
+def _has_script(entry: Mapping[str, Any]) -> bool:
+    """Whether a collection, folder or request carries a pre-request or test script."""
+    for event in entry.get("event") or []:
+        script = event.get("script") if isinstance(event, Mapping) else None
+        lines = script.get("exec") if isinstance(script, Mapping) else None
+        if isinstance(lines, list) and any(isinstance(line, str) and line.strip() for line in lines):
+            return True
+        if isinstance(lines, str) and lines.strip():
+            return True
+    return False
+
+
+def _capability_limits(
+    source: PostmanDocument, variables: Sequence[Dict[str, Any]], merged: Sequence[List[str]]
+) -> List[Dict[str, Any]]:
+    """The constructs the import leaves out or withholds, for the coverage ledger.
+
+    Args:
+        source: The parsed collection.
+        variables: The collection's variable records.
+        merged: The request names of each operation built from more than one request.
+
+    Returns:
+        The declared-limit records.
+    """
+    limits: List[Dict[str, Any]] = []
+    try:
+        document = json.loads(source.raw) if isinstance(source.raw, str) else None
+    except json.JSONDecodeError:  # pragma: no cover - the parser already loaded it
+        document = None
+    scripted = [name for name, entry in _items(document) if _has_script(entry)]
+    if isinstance(document, Mapping) and _has_script(document):
+        scripted.insert(0, source.name)
+    if scripted:
+        limits.append(
+            declared_limit(
+                "postman.script",
+                scripted,
+                "Pre-request and test scripts are run by Postman; they are not modelled.",
+            )
+        )
+    authed = [endpoint.name for endpoint in source.operations if endpoint.request.auth is not None]
+    if source.auth is not None:
+        authed.insert(0, source.name)
+    if authed:
+        limits.append(
+            declared_limit(
+                "postman.auth_credential",
+                authed,
+                "The auth scheme (and an API key's name and placement) is kept; saved credentials are never read.",
+            )
+        )
+    secret = [record["key"] for record in variables if record.get("secret")]
+    if secret:
+        limits.append(
+            declared_limit(
+                "postman.secret_variable",
+                secret,
+                "A secret variable (by its name, or a value the scrub gate flags) is listed by name; "
+                "its value is withheld.",
+            )
+        )
+    other_bodies = [
+        endpoint.name
+        for endpoint in source.operations
+        if endpoint.request.body is not None and endpoint.request.body.mode not in (None, "raw")
+    ]
+    if other_bodies:
+        limits.append(
+            declared_limit(
+                "postman.body_mode",
+                other_bodies,
+                "Form-data, URL-encoded, GraphQL and file bodies are not read; only raw bodies give a request schema.",
+            )
+        )
+    for names in merged:
+        limits.append(
+            declared_limit(
+                "postman.merged_request",
+                names,
+                "These requests share a method and path, so they are one operation whose schemas cover every "
+                "request; the first request names it.",
+            )
+        )
+    return limits
+
+
+# ---------------------------------------------------------------------------
+# The normalizer
+# ---------------------------------------------------------------------------
+
+
+def _scrubbed_raw(raw: Any) -> Any:
+    """The parsed collection with credentials removed, for ``api.raw`` (MFI-32.5).
+
+    The redaction marker carries no quote or escape character, so the scrubbed JSON still parses.
+    The parser keeps the collection as its source *text*: that text is scrubbed as it is. Encoding it
+    as a JSON string first would escape every quote, and the gate's ``"key": "value"`` rules would
+    no longer see the credentials in it (MFI-32.7).
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        return scrub_value(raw)
+    return json.loads(scrub_value(json.dumps(raw)))
+
+
+def _servers(source: PostmanDocument) -> List[Server]:
+    """The collection's server: a literal ``baseUrl``, else a ``{baseUrl}`` variable to fill in."""
+    base = next((var for var in source.variables if var.key == "baseUrl"), None)
+    if base is None:
+        return []
+    if base.value and _safe_value(base.key, base.value) == base.value:
+        return [Server(url=base.value, description="From Postman collection variable")]
+    # MFI-32.5: a `baseUrl` with no value, or one carrying a credential, keeps only its name — as a
+    # server variable the user fills in.
+    return template_servers({"baseUrl": None}, describe=lambda name: f"Postman variable `{{{{{name}}}}}`.")
 
 
 class PostmanNormalizer(Normalizer, register=True):
-    """Normalize a parsed Postman collection into a :class:`CanonicalApi`."""
+    """Normalize a parsed Postman collection via the shared inferred-spec engine."""
 
     format = _FORMAT_KEY
     paradigm = ApiParadigm.REST
 
     def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        """Build the canonical model for a parsed Postman collection.
+
+        Args:
+            source: A :class:`~app.postman_parser.PostmanDocument`.
+            include_raw: Whether to keep the (scrubbed) collection on ``raw``.
+
+        Returns:
+            The canonical model: one REST service of inferred operations.
+
+        Raises:
+            ValueError: When ``source`` is not a parsed Postman document.
+        """
         if not isinstance(source, PostmanDocument):
             raise ValueError(
                 "Postman source must be a PostmanDocument (see app.postman_parser.parse_postman)"
             )
+        variable_records = [_variable_record(variable.key, variable.value) for variable in source.variables]
+        by_name = {record["key"]: record for record in variable_records}
+        observations, requests = _observations(source, by_name)
 
-        component_evidence: Dict[str, str] = {}
-        components = _collect_components(source, component_evidence)
-        coercer = SchemaCoercer(components=components, ref_prefix=_REF_PREFIX)
-        service_key = Keys.type(source.name, None)
-        operations: List[Operation] = []
-        for endpoint in source.operations:
-            path = postman_http_path(endpoint.request.url)
-            method = endpoint.request.method
-            op_key = Keys.operation_http(method, path)
-            request_message = _request_message(
-                endpoint,
-                op_key=op_key,
-                coercer=coercer,
-                components=components,
-            )
-            messages: List[Message] = []
-            if request_message is not None:
-                messages.append(request_message)
-            for response in endpoint.responses:
-                status = str(response.code or response.status or "200")
-                response_body = response.body
-                extras: Dict[str, Any] = {"http_status": status}
-                payload = None
-                if response_body is not None and response_body.raw:
-                    extras["postman_body_raw"] = response_body.raw
-                    if response_body.raw.strip().startswith("{"):
-                        try:
-                            payload_json = json.loads(response_body.raw)
-                            schema = _infer_schema_from_json(payload_json)
-                            payload = coercer.type_ref(schema, required=True)
-                            extras.update(
-                                provenance_extras(
-                                    INFERRED, _body_evidence(endpoint, f"{status} response")
-                                )
-                            )
-                        except json.JSONDecodeError:
-                            payload = None
-                messages.append(
-                    Message(
-                        key=Keys.response_message(op_key, status),
-                        role=MessageRole.RESPONSE,
-                        name=response.name,
-                        payload=payload,
-                        extras=extras,
-                    )
-                )
-            operation_extras: Dict[str, Any] = {
-                "postman_folder_path": list(endpoint.folder_path),
-                "postman_headers": [
-                    {"key": header.key, "value": _safe_value(header.key, header.value), "disabled": header.disabled}
-                    for header in endpoint.request.headers
-                ],
-            }
-            request_auth = _auth_extras(endpoint.request.auth)
-            if request_auth is not None:
-                operation_extras["postman_auth"] = request_auth
-                operation_extras["security"] = [_canonical_scheme(request_auth["type"])]
-            operations.append(
-                Operation(
-                    key=op_key,
-                    name=endpoint.name,
-                    kind=OperationKind.REQUEST_RESPONSE,
-                    streaming=StreamingMode.NONE,
-                    description=endpoint.request.description,
-                    http_method=method,
-                    http_path=path,
-                    parameters=_parameters(endpoint, op_key=op_key),
-                    messages=messages,
-                    extras=operation_extras,
-                )
-            )
+        api = infer_canonical_api(
+            observations, title=source.name, format_key=_FORMAT_KEY, include_raw=False
+        ).api
+        annotate_operations(api, requests, auth_extras_key="postman_resolved_auth")
+        apply_parameter_defaults(api, requests)
 
-        servers: List[Server] = []
-        base = next((var for var in source.variables if var.key == "baseUrl"), None)
-        if base is not None and base.value and _safe_value(base.key, base.value) == base.value:
-            servers.append(Server(url=base.value, description="From Postman collection variable"))
-        elif base is not None:
-            # MFI-32.5: a `baseUrl` with no value, or one carrying a credential, keeps only its name —
-            # as a server variable the user fills in.
-            servers = template_servers({"baseUrl": None}, describe=lambda name: f"Postman variable `{{{{{name}}}}}`.")
+        index: Dict[Tuple[str, str], List[_Request]] = defaultdict(list)
+        for request in requests:
+            index[(request.method, request.url)].append(request)
+        coercer = SchemaCoercer(components={}, ref_prefix=_REF_PREFIX)
+        merged: List[List[str]] = []
+        for operation in api.operations():
+            matched = _matched_requests(operation, index)
+            if not matched:
+                continue
+            _project_operation(operation, matched, coercer)
+            names = list(dict.fromkeys(req.operation.name for req in matched))
+            if len(names) > 1:
+                merged.append(names)
 
-        # Every type is a schema read from an example body (FMT-8.6): inferred, never declared.
-        types = [
-            type_.model_copy(
-                update={
-                    "extras": {
-                        **type_.extras,
-                        **provenance_extras(
-                            INFERRED,
-                            component_evidence.get(
-                                type_.name, "Schema inferred from an example body."
-                            ),
-                        ),
-                    }
-                }
-            )
-            for type_ in coercer.named_types_from_components()
-        ]
-        document_extras: Dict[str, Any] = {
-            "postman_schema_url": source.schema_url,
-            "postman_variables": [_variable_record(variable.key, variable.value) for variable in source.variables],
-        }
+        api.description = source.description
+        api.servers = _servers(source)
+        api.raw = {"postman": _scrubbed_raw(source.raw)} if include_raw else None
+        extras = api.extras
+        extras["postman_schema_url"] = source.schema_url
+        extras["postman_variables"] = variable_records
         if source.collection_version:
-            document_extras["postman_collection_version"] = source.collection_version
+            extras["postman_collection_version"] = source.collection_version
+        schemes = set(extras.get("inferred_auth_schemes") or [])
+        schemes.update(
+            scheme for operation in api.operations() for scheme in operation.extras.get("security") or []
+        )
         collection_auth = _auth_extras(source.auth)
         if collection_auth is not None:
-            document_extras["postman_auth"] = collection_auth
+            extras["postman_auth"] = collection_auth
             # The collection's auth applies to requests that inherit it, which the parser cannot tell
             # apart from an explicit `noauth`; so it is recorded as an observed scheme (a stub), not a
             # per-operation requirement.
-            document_extras["inferred_auth_schemes"] = [_canonical_scheme(collection_auth["type"])]
-        api = CanonicalApi(
-            paradigm=self.paradigm,
-            format=self.format,
-            protocol="http",
-            identity=ApiIdentity(name=source.name),
-            title=source.name,
-            description=source.description,
-            servers=servers,
-            services=[Service(key=service_key, name=source.name, operations=operations)],
-            types=types,
-            raw={"postman": _scrubbed_raw(source.raw)} if include_raw else None,
-            extras=document_extras,
-        )
+            schemes.add(_canonical_scheme(collection_auth["type"]))
+        if schemes:
+            extras["inferred_auth_schemes"] = sorted(schemes)
+        extras[POSTMAN_EXTRAS_KEY] = {
+            "folders": folder_paths(requests),
+            "requests": len(requests),
+            "capability_limits": _capability_limits(source, variable_records, merged),
+        }
         apply_security_scheme_stubs(api, placements=_apikey_placements(source))
         return normalize_ordering(api)
