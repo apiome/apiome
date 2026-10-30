@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.542.0"
+version = "1.543.0"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -66,6 +66,9 @@ dependencies = [
     # OData lint/validate (MFI-11.4): the OASIS CSDL XML schemas. Instances are parsed by
     # app.secure_xml first and validated with resource access blocked (app.odata_csdl_xsd).
     "xmlschema>=3.4",
+    # Thrift export validation (MFX-25.4): an independent Thrift parser that resolves every type, for
+    # structural spot-checks of the emitted IDL; it parses text only (no code is generated or run).
+    "thriftpy2>=0.7.1",
 ]
 
 [project.optional-dependencies]
