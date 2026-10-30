@@ -173,6 +173,15 @@ option to choose the form: `idl` (the default) writes `<Name>.smithy`, `json-ast
 JSON AST as `<Name>.json`, and `both` writes the two. They describe the same model, so load one of
 them, not both together.
 
+Each export is checked before you download it:
+
+1. The **Smithy CLI** validates each file when the server has it, with the same validators a
+   `smithy build` runs. An `ERROR` or `DANGER` event fails the export and names the validator, shape,
+   line and column (`Target.UnresolvedShape`). `WARNING` and `NOTE` events do not. Without the CLI,
+   Apiome's Smithy reader reads the model instead, and a parse error fails the export.
+2. The built model is then imported again. If it does not import, the export fails
+   (`smithy.reimport`).
+
 - **Shapes.** Objects become `structure`s, unions `union`s, enums `enum`s, maps `map`s, and named
   lists `list`s. A list with no name of its own gets a `<Element>List` shape. A named scalar or an
   alias of a scalar becomes a simple shape (`string AccountId`). An enum value that differs from its

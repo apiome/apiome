@@ -54,6 +54,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``odcs`` — :func:`app.odcs_schema.validate_odcs_document` (a re-parse through the ``odcs``
   adapter **plus** the published ODCS JSON Schema for the version the contract declares —
   the standard's own authority, vendored and run offline);
+* ``smithy`` — :func:`app.smithy_roundtrip.validate_emitted_smithy` (MFX-20.3): ``smithy validate``
+  (``ERROR`` / ``DANGER`` events fail, as they fail a ``smithy build``) when the toolchain has the CLI,
+  else the built-in reader; then the built model must import again;
 * ``wsdl`` — :func:`app.wsdl_bundle_validation.validate_wsdl_bundle` (MFX-14.3): the WSDL + XSD
   bundle is checked as it will be unpacked — every import packaged, the WS-I Basic Profile,
   ``xmlschema`` 's WSDL 1.1 reader (WSDL schema, every XSD, every message / port type / binding
@@ -1207,6 +1210,46 @@ async def _validate_postman(
     return await _run_text_validator(target, emit_result, validate_postman_collection)
 
 
+async def _validate_smithy(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Smithy model (MFX-20.3, #3916).
+
+    The Smithy CLI validates each emitted file (:func:`app.smithy_roundtrip.validate_emitted_smithy`):
+    every ``ERROR`` and ``DANGER`` event rejects the export, warnings and notes do not. Without the CLI
+    the built-in reader parses the model. The built model must then import again (``smithy.reimport``).
+    """
+    from .import_source import ImportSourceError
+    from .smithy_roundtrip import reimport_built_model, validate_emitted_smithy
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Smithy export wrote no file.")])
+    _validator, problems = await asyncio.to_thread(validate_emitted_smithy, emit_result)
+    if problems:
+        findings = [
+            ValidationFinding(
+                message=problem.get("message") or "The Smithy CLI reported a problem.",
+                file=problem.get("file"),
+                path=problem.get("shape"),
+                line=problem.get("line"),
+                column=problem.get("column"),
+                keyword=problem.get("id") or None,
+            )
+            for problem in problems
+        ]
+        return _rejected(target, findings)
+    try:
+        await asyncio.to_thread(reimport_built_model, emit_result)
+    except ImportSourceError as exc:
+        finding = ValidationFinding(
+            message=f"The Smithy model does not import: {exc}",
+            file=emit_result.files[0].path,
+            keyword="smithy.reimport",
+        )
+        return _rejected(target, [finding])
+    return _passed(target)
+
+
 async def _validate_wsdl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1288,6 +1331,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "flatbuffers": _validate_flatbuffers,
     # MFX-14.3 (#3891)
     "wsdl": _validate_wsdl,
+    # MFX-20.3 (#3916)
+    "smithy": _validate_smithy,
 }
 
 
