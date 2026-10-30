@@ -1,0 +1,17 @@
+---
+slug: postman-export-checks
+title: Postman exports list every schema violation and re-import
+description: A Postman export lists each v2.1 schema violation with its path, then re-imports.
+authors: [apiome]
+---
+
+A **Postman** export that breaks the Collection v2.1.0 schema now lists **every** violation with the
+JSON path where it is, and every export is imported again before you download it.
+[How Postman exports are checked](/ship/export-to-an-api-client#postman-options).
+
+{/* truncate */}
+
+- **Every violation.** Each schema violation is its own finding, with its path
+  (`/item/0/request/method`). Before, the first five were run together in one message.
+- **Re-imports.** The collection is imported again as an uploaded one would be, not only re-parsed.
+- **Round trip.** A collection imported from Postman exports and re-imports unchanged.
