@@ -1,0 +1,21 @@
+---
+slug: import-override-merge
+title: Override merge when importing a new version
+description: Keep the latest version, but let the spec's definitions win.
+authors: [apiome]
+---
+
+Importing a new version of an existing project can now use an override merge. Nothing in the
+latest version is removed, and wherever both define the same thing, the spec's definition wins.
+[How it works](/bring-in/import-wizard#import-a-new-version-of-an-existing-project).
+
+{/* truncate */}
+
+- **Choose it on the Changes step.** **Merge strategy** now offers **Replace with this import**,
+  **Additive merge** and **Override merge**.
+- **The spec wins where both define something.** A property takes the spec's whole definition
+  (`maxLength: 100` replaces a stored `maxLength: 50`). An operation on the same path and method,
+  a schema's description and a security scheme work the same way.
+- **Nothing is removed.** Properties, operations, schemas, paths and security schemes the spec leaves
+  out stay in the new version, and the spec's new ones are added.
+- **Done** adds a **Merge** row saying what was merged, added, updated and kept. A dry run shows it too.

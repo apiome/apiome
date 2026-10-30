@@ -157,7 +157,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [projectDelta, setProjectDelta] = useState<ProjectDeltaState>({ status: 'idle' });
   /** Bumped per comparison request (and on Back / reset) so a stale answer is ignored. */
   const deltaRequestRef = useRef(0);
-  /** The Changes step's merge strategy (#591): `replace` (default) or `additive`. */
+  /** The Changes step's merge strategy: `replace` (default), `additive` (#591) or `override` (#592). */
   const [mergeChoice, setMergeChoice] = useState<ImportMergeChoice>('replace');
   /** The mockup's *Recent import jobs* side-sheet (HIVE-6.4). */
   const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false);
@@ -644,7 +644,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         // by the time it commits, the importer picks the next free sub-version rather than failing.
         ...(versionPlan ? { onVersionConflict: 'create-version' as const } : {}),
         // #591: the Changes step's merge strategy; only offered there, so only sent when it was shown.
-        ...(showsChangesStep(projectDelta) && mergeChoice === 'additive' ? { mergeStrategy: 'additive' as const } : {}),
+        ...(showsChangesStep(projectDelta) && mergeChoice !== 'replace' ? { mergeStrategy: mergeChoice } : {}),
       }
     });
 

@@ -397,8 +397,27 @@ describe('ImportChangesPanel', () => {
     // Replacing removes what the spec drops, so there is no "kept" note.
     expect(screen.queryByTestId('import-changes-merge-kept')).not.toBeInTheDocument();
 
+    expect(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeOverride) })).not.toBeChecked();
+
     fireEvent.click(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeAdditive) }));
     expect(onMergeChoiceChange).toHaveBeenCalledWith('additive');
+    fireEvent.click(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeOverride) }));
+    expect(onMergeChoiceChange).toHaveBeenCalledWith('override');
+  });
+
+  it('says the removed items stay when override merge is chosen (#592)', () => {
+    render(
+      <ImportChangesPanel
+        state={{ status: 'ready', delta: DELTA }}
+        onRetry={jest.fn()}
+        mergeChoice="override"
+        onMergeChoiceChange={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('import-changes-merge-override')).toBeChecked();
+    expect(screen.getByTestId('import-changes-merge-kept')).toHaveTextContent(
+      'Nothing is removed with an override merge — the 1 item listed as Removed stays in the new version as it is in v2.4.0.',
+    );
   });
 
   it('says the removed items stay when additive merge is chosen (#591)', () => {
@@ -412,7 +431,7 @@ describe('ImportChangesPanel', () => {
     );
     expect(screen.getByTestId('import-changes-merge-additive')).toBeChecked();
     expect(screen.getByTestId('import-changes-merge-kept')).toHaveTextContent(
-      'Nothing is removed with an additive merge — the 1 item listed as Removed stays in the new version as they are in v2.4.0.',
+      'Nothing is removed with an additive merge — the 1 item listed as Removed stays in the new version as it is in v2.4.0.',
     );
   });
 
@@ -601,6 +620,20 @@ describe('the wizard with a Changes step', () => {
     await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
     expect(startImport).toHaveBeenCalledWith(
       expect.objectContaining({ options: expect.objectContaining({ mergeStrategy: 'additive' }) }),
+    );
+  });
+
+  it('imports with an override merge when it is chosen on Changes (#592)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+
+    fireEvent.click(screen.getByTestId('import-changes-merge-override'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    expect(startImport).toHaveBeenCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ mergeStrategy: 'override' }) }),
     );
   });
 

@@ -625,22 +625,27 @@ export const IMPORT_WIZARD_COPY = {
   changesBeforeLabel: 'Latest version',
   changesAfterLabel: 'Incoming specification',
   changesTruncated: 'Only the first changes are listed; the counts cover all of them.',
-  /** The Changes step's merge-strategy choice (#591). */
+  /** The Changes step's merge-strategy choice (#591 additive, #592 override). */
   changesMergeLegend: 'Merge strategy',
   changesMergeReplace: 'Replace with this import',
   changesMergeReplaceHint: 'The new version holds only what this specification defines.',
   changesMergeAdditive: 'Additive merge',
   changesMergeAdditiveHint:
     'Keeps everything in the latest version and adds the new schemas, properties, paths and operations from this specification.',
-  changesMergeRemovedKept: 'Nothing is removed with an additive merge',
+  changesMergeOverride: 'Override merge',
+  changesMergeOverrideHint:
+    'Keeps everything in the latest version, adds what is new, and takes this specification’s definition wherever both define the same property or operation.',
+  changesMergeRemovedKeptAdditive: 'Nothing is removed with an additive merge',
+  changesMergeRemovedKeptOverride: 'Nothing is removed with an override merge',
 } as const;
 
 /**
- * How the Changes step's import combines with the project's latest version (#591).
- * `replace` is the default: the new version holds only the import. `additive` keeps what exists
- * and adds what is new (the importer's `mergeStrategy: 'additive'`).
+ * How the Changes step's import combines with the project's latest version.
+ * `replace` is the default: the new version holds only the import. `additive` (#591) keeps what
+ * exists and adds what is new; `override` (#592) does the same but takes the spec's definition
+ * where both define something (the importer's `mergeStrategy`).
  */
-export type ImportMergeChoice = 'replace' | 'additive';
+export type ImportMergeChoice = 'replace' | 'additive' | 'override';
 
 /**
  * The Changes step's empty state title.

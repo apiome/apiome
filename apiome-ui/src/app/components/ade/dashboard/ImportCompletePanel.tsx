@@ -20,7 +20,7 @@ import {
 import { getImportStatus, rollbackCompletedImport } from '../../../../../lib/db/import-actions';
 import { buildDesignerEditorHref } from '../../../../../lib/external-links';
 import { buildImportErrorReport, getImportErrorReportFilename, type ImportErrorReport, type ImportStatusForReport } from '../../../../../lib/db/import-error-report';
-import { describeAdditiveMerge, type AdditiveMergeStats } from '../../../../../lib/import-additive-merge';
+import { describeImportMerge, type ImportMergeStats } from '../../../../../lib/import-merge';
 import { SchemaVersionScoringPanel } from './SchemaVersionScoringPanel';
 
 interface ImportCompletePanelProps {
@@ -54,8 +54,8 @@ interface RawImportSummary {
   incrementalMode?: boolean;
   /** Set when the requested version was taken and a sub-version was created instead (#590). */
   versionLabelAdjusted?: { requested: string; used: string };
-  /** Set when the import was merged additively into the latest version (#591). */
-  additiveMerge?: AdditiveMergeStats;
+  /** Set when the import was merged into the latest version (#591 additive, #592 override). */
+  importMerge?: ImportMergeStats;
   classes?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -87,8 +87,8 @@ interface ImportSummary {
   incrementalMode?: boolean;
   /** Set when the requested version was taken and a sub-version was created instead (#590). */
   versionLabelAdjusted?: { requested: string; used: string };
-  /** Set when the import was merged additively into the latest version (#591). */
-  additiveMerge?: AdditiveMergeStats;
+  /** Set when the import was merged into the latest version (#591 additive, #592 override). */
+  importMerge?: ImportMergeStats;
   schemas?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -137,7 +137,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             dryRun: rawSummary.dryRun === true,
             incrementalMode: rawSummary.incrementalMode === true,
             versionLabelAdjusted: rawSummary.versionLabelAdjusted,
-            additiveMerge: rawSummary.additiveMerge,
+            importMerge: rawSummary.importMerge,
             schemas: rawSummary.classes?.map((c) => ({
               name: c.name,
               status: c.status
@@ -420,11 +420,11 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
               </dd>
             </>
           )}
-          {summary?.additiveMerge && (
-            // #591: the import kept the latest version's content and added what was new.
+          {summary?.importMerge && (
+            // #591 / #592: the import was merged into the latest version's content.
             <>
               <dt>Merge</dt>
-              <dd data-testid="import-complete-additive-merge">{describeAdditiveMerge(summary.additiveMerge)}</dd>
+              <dd data-testid="import-complete-merge">{describeImportMerge(summary.importMerge)}</dd>
             </>
           )}
         </dl>
