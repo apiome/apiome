@@ -1,8 +1,8 @@
 ---
 title: Keep a catalog item fresh
-description: Re-check a catalog item against its live endpoint and hear about drift.
+description: Re-check a catalog item against its live endpoint, or re-upload an uploaded file.
 sidebar_position: 1.15
-tags: [catalog, refresh, graphql, grpc]
+tags: [catalog, refresh, graphql, grpc, upload]
 ---
 
 <Route path="/ade/dashboard/catalog/[id]" />
@@ -21,6 +21,9 @@ Live refresh works for two kinds of source:
 | **gRPC server reflection** | `host:port`, such as `grpc.example.com:443` | The server reflection service. Tick **Use TLS** for a TLS port |
 
 Refresh is **off** for every item until you set it up.
+
+An item you imported from an uploaded file has no endpoint to re-check. Apiome flags it when it
+may be stale and lets you re-upload the file instead. See [Uploaded files](#uploaded-files).
 
 ## Set up refresh
 
@@ -253,6 +256,71 @@ apiome catalog refresh-policy set --enabled
 The operator of a self-hosted deployment can also stop every check in every workspace with
 `APIOME_CATALOG_REFRESH_ENABLED=false`.
 
+## Uploaded files
+
+An item imported from an uploaded file has no live source, so Apiome can't tell when the file it
+came from changes. Instead, it flags the item once its newest version is old enough that it may be
+stale, and lets you re-upload the current copy. The re-upload uses the same import settings as the
+first upload.
+
+### See which uploads may be stale
+
+When an item's newest version came from a file upload at least 90 days ago, a banner above the tabs
+names the file and how long ago it was uploaded. The workspace can change the 90 days (see
+[Change the staleness age](#change-the-staleness-age)).
+
+<Screenshot id="catalog-item-stale-upload" alt="The stale upload banner on a catalog item: claims-837p-sample.edi was uploaded 151 days ago, with Re-upload… and Upload details" />
+
+**Click “Upload details”**, or **click the Provenance tab**, to see the **Uploaded file** card. It
+appears for every item whose newest version came from an upload, stale or not:
+
+| Row | What it shows |
+| --- | --- |
+| **Status** | **May be stale** once the upload is past the workspace's age, **Recent** before that |
+| **File** | The name of the uploaded file |
+| **Uploaded** | When, and how many days ago |
+| **May be stale after** | The workspace's age, in days |
+| **Re-upload uses** | The import settings the first upload used, which a re-upload repeats |
+
+<Screenshot id="catalog-item-upload" alt="The Uploaded file card on the Provenance tab: status May be stale, the file name, uploaded 151 days ago, may be stale after 90 days, and the two import settings a re-upload uses" />
+
+An item imported from a URL, pasted text, a repository or a connector has no **Uploaded file** card
+and is never flagged. Neither is an item whose newest version came from live refresh.
+
+### Re-upload a file
+
+You need `imports:create` and `projects:edit` (an **Editor** or **Owner**).
+
+1. **Open the catalog item.**
+2. **Click “Re-upload…”** on the banner, or on the **Uploaded file** card.
+3. In **File**, choose the current copy of the file. The dialog lists the import settings the
+   re-upload uses.
+4. **Click “Re-upload”.**
+
+<Screenshot id="catalog-item-reupload-dialog" alt="The Re-upload dialog: the file picker, and the two settings the first upload used, Apply naming convention Yes and Class names camelCase" />
+
+If the file matches the item's current version, nothing changes, and the card says so. If it
+differs, Apiome adds a version labelled with the date and time, such as `2026-10-30T12:00Z`, with a
+change report against the version before it. The new version counts as a fresh upload, so the
+banner goes away.
+
+A re-upload goes through the same checks as any upload. If your workspace's import quality policy
+blocks the file, the dialog shows why and nothing is added.
+
+A file uploaded before Apiome kept import settings is re-uploaded with the default settings. The
+card says **Default settings** in **Re-upload uses**.
+
+### Change the staleness age
+
+An administrator with `imports:edit` sets how many days old an upload must be before it may be
+stale, from 1 to 3650 (90 by default), with the REST API:
+
+```bash
+curl -X PUT "$APIOME_URL/v1/catalog/acme-corp/upload-policy" \
+  -H "Authorization: Bearer $APIOME_TOKEN" -H "Content-Type: application/json" \
+  -d '{"staleAfterDays": 30}'
+```
+
 ## With the CLI or the API
 
 The CLI has the same actions as the card. Pass the credential in a file (or `-` for standard
@@ -281,6 +349,11 @@ REST: `GET`, `PUT` and `DELETE /v1/catalog/{tenant}/{item}/refresh`,
 /v1/catalog/{tenant}/refresh-policy`. The setting's `keepVersions` (1–1000) sets
 [version retention](#version-retention). See the [Catalog refresh reference](../reference/rest/catalog-refresh.md).
 
+Uploaded files: `GET /v1/catalog/{tenant}/{item}/upload` (whether the item may be stale, and the
+settings a re-upload uses), `POST /v1/catalog/{tenant}/{item}/reupload` (body `{filename,
+documentBase64}`; answers `changed` with the new version, or `unchanged`), and `GET` and `PUT
+/v1/catalog/{tenant}/upload-policy`. See the [Catalog upload reference](../reference/rest/catalog-upload.md).
+
 Drift: `GET /v1/catalog/{tenant}/{item}/drift`, `POST
 /v1/catalog/{tenant}/{item}/drift/{event}/dismiss`, and `GET` and `PUT
 /v1/catalog/{tenant}/drift-notifications`. The catalog list and item carry the newest open drift as
@@ -289,4 +362,4 @@ Drift: `GET /v1/catalog/{tenant}/{item}/drift`, `POST
 ## Where next
 
 - [Catalog](./catalog.mdx) — the item page and its other tabs
-- [Roles](../workspace/roles.mdx) — who can set up refresh, dismiss drift and set drift alerts
+- [Roles](../workspace/roles.mdx) — who can set up refresh, re-upload a file, dismiss drift and set drift alerts

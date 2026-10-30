@@ -15,3 +15,8 @@ export * from './CatalogItemRefreshCard';
 export * from './catalogRefreshModel';
 export * from './CatalogDriftBanner';
 export * from './CatalogDriftPanel';
+export * from './catalogUploadModel';
+export * from './useCatalogItemUpload';
+export * from './CatalogStaleUploadBanner';
+export * from './CatalogItemUploadCard';
+export * from './CatalogReuploadDialog';

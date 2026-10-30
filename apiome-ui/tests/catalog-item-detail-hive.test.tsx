@@ -198,6 +198,36 @@ async function renderDetail(item: unknown = ITEM) {
   return view;
 }
 
+/** An X12 item uploaded 151 days ago, past the default 90-day threshold (RAR-6.2). */
+const STALE_UPLOAD = {
+  itemId: ITEM.id,
+  eligible: true,
+  stale: true,
+  staleAfterDays: 90,
+  uploadedAt: '2026-06-01T09:30:00Z',
+  ageDays: 151,
+  versionId: 'ver_5c0d21',
+  versionLabel: '1.0.0',
+  sourceLabel: 'claims-837p-sample.edi',
+  spec: {
+    specSchemaVersion: 1,
+    sourceKind: 'x12',
+    options: { apply_naming_convention: true, class_naming_convention: 'camelCase' },
+  },
+};
+
+/** Route the screen's reads as {@link mockReads} does, with the upload route answering `upload`. */
+function mockReadsWithUpload(item: unknown, upload: unknown) {
+  mockReads(item);
+  const reads = global.fetch as jest.Mock;
+  const base = reads.getMockImplementation()!;
+  reads.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input) === `/api/catalog/${encodeURIComponent(ITEM.id)}/upload`
+      ? ({ ok: true, status: 200, json: async () => upload } as Response)
+      : base(input, init),
+  );
+}
+
 // The full tab set includes Dependencies and Subjects, which RC6 holds back with the dependency
 // graph and the schema registry (lib/feature-release.ts): re-open them for these suites.
 const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
@@ -1002,6 +1032,29 @@ describe('the browser fixtures', () => {
     write('tab-versions-drift', page().outerHTML);
   });
 
+  /**
+   * RAR-6.2 (#3539): an X12 item uploaded 151 days ago — the stale banner above the panes, the
+   * Uploaded file card on Provenance and the re-upload dialog (docs screenshots
+   * `catalog-item-stale-upload`, `catalog-item-upload` and `catalog-item-reupload-dialog`). No
+   * conversion, so the banner is the page's one banner.
+   */
+  it('writes the stale upload banner, the Uploaded file card and the re-upload dialog (RAR-6.2)', async () => {
+    mockReadsWithUpload({ ...ITEM, conversion: null }, STALE_UPLOAD);
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    await screen.findByTestId('catalog-stale-upload-banner');
+    write('stale-upload-banner', page().outerHTML);
+
+    fireEvent.click(screen.getByTestId('catalog-detail-tab-provenance'));
+    await waitFor(() => expect(screen.getByTestId('catalog-detail-pane-provenance')).toBeVisible());
+    expect(screen.getByTestId('catalog-detail-upload-status')).toHaveTextContent('May be stale');
+    await screen.findByTestId('catalog-detail-refresh-facts');
+    write('provenance-upload', page().outerHTML);
+
+    fireEvent.click(screen.getByTestId('catalog-detail-upload-reupload'));
+    const dialog = await screen.findByTestId('catalog-reupload-dialog');
+    write('reupload-dialog', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
+  });
+
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
     await renderDetail({
       ...ITEM,
@@ -1075,5 +1128,44 @@ describe('the browser fixtures', () => {
       expect(screen.getByTestId('catalog-copybook-inspector')).toBeInTheDocument();
       write('inspector-copybook', (container.firstElementChild as HTMLElement).outerHTML);
     });
+  });
+});
+
+describe('the stale upload hint (RAR-6.2)', () => {
+  it('flags a stale upload above the panes and opens its details on Provenance', async () => {
+    mockReadsWithUpload(ITEM, STALE_UPLOAD);
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    const banner = await screen.findByTestId('catalog-stale-upload-banner');
+    expect(banner).toHaveTextContent('claims-837p-sample.edi was uploaded 151 days ago');
+    expect(within(banner).getByTestId('catalog-stale-upload-reupload')).toBeInTheDocument();
+
+    fireEvent.click(within(banner).getByTestId('catalog-stale-upload-details'));
+    await waitFor(() => expect(screen.getByTestId('catalog-detail-pane-provenance')).toBeVisible());
+    expect(screen.getByTestId('catalog-detail-upload-status')).toHaveTextContent('May be stale');
+    expect(screen.getByTestId('catalog-detail-upload-settings')).toHaveTextContent('Class names: camelCase');
+  });
+
+  it('opens the re-upload dialog from the banner', async () => {
+    mockReadsWithUpload(ITEM, STALE_UPLOAD);
+    render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    fireEvent.click(await screen.findByTestId('catalog-stale-upload-reupload'));
+    expect(await screen.findByTestId('catalog-reupload-dialog')).toHaveTextContent('Re-upload Claims 837P');
+  });
+
+  it('shows no hint for a recent upload or an item that is not an upload', async () => {
+    const quiet = [
+      { ...STALE_UPLOAD, stale: false, ageDays: 3 },
+      { ...STALE_UPLOAD, eligible: false, stale: false },
+    ];
+    for (const upload of quiet) {
+      mockReadsWithUpload(ITEM, upload);
+      const view = render(<CatalogItemDetailClient itemId={ITEM.id} />);
+      await screen.findByRole('heading', { level: 1, name: /Claims 837P/ });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(screen.queryByTestId('catalog-stale-upload-banner')).not.toBeInTheDocument();
+      view.unmount();
+    }
   });
 });

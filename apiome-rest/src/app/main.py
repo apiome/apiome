@@ -34,6 +34,7 @@ from .catalog_entity_routes import router as catalog_entity_router
 from .catalog_drift_routes import router as catalog_drift_router
 from .catalog_refresh_routes import router as catalog_refresh_router
 from .catalog_routes import router as catalog_router
+from .catalog_upload_routes import router as catalog_upload_router
 from .model_search_routes import router as model_search_router
 from .change_report_routes import router as change_report_router
 from .change_report_template_routes import router as change_report_template_router
@@ -196,7 +197,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.416.0",
+    version="1.418.0",
 )
 
 
@@ -376,9 +377,10 @@ app.include_router(sdk_regen_router)
 # The unified entity list (CDG-5.1, #5979) shares `/v1/catalog` and goes first, so
 # `/{tenant}/entities` is not read as `/{tenant}/{item_id}`.
 app.include_router(catalog_entity_router)
-# Before catalog_router: its GET /{tenant_slug}/{item_id} would otherwise capture /refresh-policy
-# and /drift-notifications.
+# Before catalog_router: its GET /{tenant_slug}/{item_id} would otherwise capture /refresh-policy,
+# /upload-policy and /drift-notifications.
 app.include_router(catalog_refresh_router)
+app.include_router(catalog_upload_router)
 app.include_router(catalog_drift_router)
 app.include_router(catalog_router)
 app.include_router(model_search_router)

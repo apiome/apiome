@@ -73,6 +73,7 @@ from .analysis_telemetry import analysis_telemetry
 from .arazzo_workflow_persistence import ARAZZO_WORKFLOW_FORMATS
 from .archive_intake import ArchiveIntakeError, is_archive_payload, unpack_archive
 from .canonical_model import CanonicalApi
+from .catalog_upload_reconcile import is_upload_revision, upload_spec_metadata
 from .config import settings
 from .fileset import IntakeFileset
 from .import_ingestion import IngestionError, parse_document
@@ -1400,6 +1401,12 @@ def persist_adapter_import(
     migration_source = payload.get("migration_source")
     if isinstance(migration_source, dict):
         format_metadata.update(migration_source)
+    # RAR-6.2: an upload has no source to go back to, so it records the import spec it ran with —
+    # a re-upload of the file replays these options instead of the importer's defaults.
+    if is_upload_revision(format_metadata):
+        import_spec = upload_spec_metadata(metadata.get("source_kind"), options)
+        if import_spec is not None:
+            format_metadata["importSpec"] = import_spec
     db.set_version_source_format(
         version_record_id,
         tenant_id,
