@@ -2139,6 +2139,22 @@
     },
     {
       "corpus_path": "a2a/02-typical-travel-concierge.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "a2a",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "a2a/02-typical-travel-concierge.json",
       "diff_count": 13,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -4393,6 +4409,22 @@
           "key": "http://example.com/service.webSearchResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "acp/02-typical-research-agent.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "acp",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "acp/02-typical-research-agent.json",
@@ -6770,6 +6802,22 @@
           "key": "http://example.com/service.northwind-checkoutResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "agents-manifest",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "agents-manifest/02-typical-northwind-agents.json",
@@ -9483,6 +9531,22 @@
     {
       "corpus_path": "api-blueprint/01-simple-api.apib",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "api-blueprint",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "api-blueprint/01-simple-api.apib",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -11546,6 +11610,22 @@
     {
       "corpus_path": "apigee/02-typical-proxy-bundle.zip",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "apigee",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -13464,6 +13544,22 @@
     },
     {
       "corpus_path": "arazzo-1.1/02-typical-checkout-flow.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "arazzo",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "arazzo-1.1/02-typical-checkout-flow.yaml",
       "diff_count": 7,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -14838,6 +14934,22 @@
           "key": "http://example.com/service.Schema"
         }
       ]
+    },
+    {
+      "corpus_path": "arrow/02-typical-orders-schema.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "arrow",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "arrow/02-typical-orders-schema.json",
@@ -17373,6 +17485,22 @@
     {
       "corpus_path": "asn1/01-person.asn1",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "asn1",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "asn1/01-person.asn1",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 1,
@@ -18661,6 +18789,22 @@
           "key": "http://example.com/service.default"
         }
       ]
+    },
+    {
+      "corpus_path": "asyncapi/01-user-events-2.6.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "asyncapi",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "asyncapi/01-user-events-2.6.yaml",
@@ -20383,6 +20527,22 @@
           "key": "com.example.user.Status"
         }
       ]
+    },
+    {
+      "corpus_path": "avro/01-user-record.avsc",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "avro",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "avro/01-user-record.avsc",
@@ -23443,6 +23603,22 @@
           "key": "com.example.orders.placeOrderResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "avro-idl/02-typical-orders-protocol.avdl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "avro-idl",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "avro-idl/02-typical-orders-protocol.avdl",
@@ -26859,6 +27035,22 @@
     {
       "corpus_path": "aws-apigateway/02-typical-rest-api-export.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "aws-apigateway",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "aws-apigateway/02-typical-rest-api-export.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -28596,6 +28788,22 @@
           "key": "http://example.com/service.list-ordersStatus401Fault"
         }
       ]
+    },
+    {
+      "corpus_path": "azure-apim/02-typical-arm-api.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "azure-apim",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "azure-apim/02-typical-arm-api.json",
@@ -30539,6 +30747,22 @@
           "key": "http://example.com/service.postV2OrdersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "bruno/02-typical-create-order.bru",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "bruno",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "bruno/02-typical-create-order.bru",
@@ -33653,6 +33877,22 @@
     },
     {
       "corpus_path": "capnproto/01-address-book.capnp",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "capnproto",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "capnproto/01-address-book.capnp",
       "diff_count": 11,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -36386,6 +36626,22 @@
     {
       "corpus_path": "cddl/02-typical-order.cddl",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "cddl",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cddl/02-typical-order.cddl",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 2,
@@ -37789,6 +38045,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'CUSTSET.CUSTMAP' (observed: overclaim: OK 'CUSTSET.CUSTMAP')",
       "source_format": "cics-bms",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cics-bms/02-typical-enquiry-map.bms",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "cics-bms",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -39303,6 +39575,22 @@
     {
       "corpus_path": "cloudevents/01-order-created.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "cloudevents",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cloudevents/01-order-created.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -40599,6 +40887,22 @@
       "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
       "source_format": "cobolcopybook",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cobol-copybook/01-customer-record.cpy",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "cobolcopybook",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -44728,6 +45032,22 @@
     },
     {
       "corpus_path": "connectrpc/02-tasks-service.proto",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "connectrpc",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "connectrpc/02-tasks-service.proto",
       "diff_count": 15,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -46411,6 +46731,22 @@
           "key": "http://example.com/service.anyV2OrdersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "consul/02-typical-service-with-checks.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "consul",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "consul/02-typical-service-with-checks.json",
@@ -49516,6 +49852,22 @@
     },
     {
       "corpus_path": "corba-idl/01-bank.idl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "corbaidl",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "corba-idl/01-bank.idl",
       "diff_count": 12,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -52141,6 +52493,22 @@
     {
       "corpus_path": "cue/02-typical-order-schema.cue",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "cue",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "cue/02-typical-order-schema.cue",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 9,
@@ -53899,6 +54267,22 @@
           "key": "orders"
         }
       ]
+    },
+    {
+      "corpus_path": "dbt/02-typical-schema.yml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "dbt",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "dbt/02-typical-schema.yml",
@@ -56770,6 +57154,22 @@
           "key": "http://example.com/service.OrderLine"
         }
       ]
+    },
+    {
+      "corpus_path": "dhall/02-typical-order-schema.dhall",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "dhall",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "dhall/02-typical-order-schema.dhall",
@@ -61133,6 +61533,22 @@
     {
       "corpus_path": "dicom/02-typical-ct-instance-json.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "dicom",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "dicom/02-typical-ct-instance-json.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 3,
@@ -65365,6 +65781,22 @@
     {
       "corpus_path": "discovery/01-bookstore-api.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "discovery",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "discovery/01-bookstore-api.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 1,
@@ -67941,6 +68373,22 @@
           "key": "name"
         }
       ]
+    },
+    {
+      "corpus_path": "dtd/02-typical-catalogue.dtd",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "dtd",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "dtd/02-typical-catalogue.dtd",
@@ -72077,6 +72525,22 @@
     {
       "corpus_path": "edifact/02-typical-invoic-d96a.edi",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "edifact",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "edifact/02-typical-invoic-d96a.edi",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -73872,6 +74336,22 @@
       "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'X12-850.PO1', OK 'X12-850.TransactionSet850')",
       "source_format": "edix12",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "edi-x12/01-850-purchase-order.edi",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "edix12",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -75958,6 +76438,22 @@
           "key": "http://example.com/service.anyV2ProductsResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "envoy-xds",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "envoy-xds/02-typical-bootstrap.yaml",
@@ -78514,6 +79010,22 @@
     {
       "corpus_path": "fhir/01-patient.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "fhir",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "fhir/01-patient.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -79919,6 +80431,22 @@
       "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'FIX.4.4.Message8')",
       "source_format": "fix",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "fix/02-executionreport.fix",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "fix",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -82953,6 +83481,22 @@
     {
       "corpus_path": "fix-orchestra/02-typical-order-repository.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "fix-orchestra",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "fix-orchestra/02-typical-order-repository.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 2,
@@ -85305,6 +85849,22 @@
     {
       "corpus_path": "flatbuffers/01-monster.fbs",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "flatbuffers",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "flatbuffers/01-monster.fbs",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -87297,6 +87857,22 @@
           "key": "http://example.com/service.postUsersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "gateway-api/02-typical-hostnames-methods.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "gateway-api",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "gateway-api/02-typical-hostnames-methods.yaml",
@@ -90000,6 +90576,22 @@
     },
     {
       "corpus_path": "graphql/02-scalar-types.graphql",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "graphql",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "graphql/02-scalar-types.graphql",
       "diff_count": 10,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -92395,6 +92987,22 @@
           "key": "http://example.com/service.anyV2ProductsResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "haproxy/02-typical-path-acls.cfg",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "haproxy",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "haproxy/02-typical-path-acls.cfg",
@@ -96745,6 +97353,22 @@
     {
       "corpus_path": "har/02-typical-devtools-crud.har",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "har",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "har/02-typical-devtools-crud.har",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -98501,6 +99125,22 @@
       "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'ADT-A01.MSH', OK 'ADT-A01.MessageADTA01')",
       "source_format": "hl7v2",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hl7v2/01-adt-a01.hl7",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "hl7v2",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -109970,6 +110610,22 @@
     {
       "corpus_path": "hl7v3/02-typical-ccd.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "hl7v3",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hl7v3/02-typical-ccd.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 2,
@@ -112934,6 +113590,22 @@
     {
       "corpus_path": "hoppscotch/02-typical-orders-collection.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "hoppscotch",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "hoppscotch/02-typical-orders-collection.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -114970,6 +115642,22 @@
           "key": "http://example.com/service.postUsersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "http-file/02-typical-vars-auth.http",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "http-file",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "http-file/02-typical-vars-auth.http",
@@ -118737,6 +119425,22 @@
     {
       "corpus_path": "idoc/02-typical-xml-orders05.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "idoc",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "idoc/02-typical-xml-orders05.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -120745,6 +121449,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER' (observed: overclaim: OK 'ims.CUSTDB.ADDRESS', OK 'ims.CUSTDB.CUSTOMER', OK 'ims.CUSTDB.ORDER')",
       "source_format": "ims",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ims/02-typical-hdam-dbd.dbd",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "ims",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -123623,6 +124343,22 @@
           "key": "http://example.com/service.postV1UsersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "insomnia/02-typical-v5-users-collection.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "insomnia",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "insomnia/02-typical-v5-users-collection.yaml",
@@ -130350,6 +131086,22 @@
     {
       "corpus_path": "iso20022/01-pain.001-credit-transfer.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "iso20022",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "iso20022/01-pain.001-credit-transfer.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -135566,6 +136318,22 @@
     {
       "corpus_path": "iso8583/01-authorization-0100.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "iso8583",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "iso8583/01-authorization-0100.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -138084,6 +138852,22 @@
     {
       "corpus_path": "istio/02-typical-virtualservice.yaml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "istio",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "istio/02-typical-virtualservice.yaml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -139432,6 +140216,22 @@
           "key": "http://example.com/service.Product"
         }
       ]
+    },
+    {
+      "corpus_path": "json-schema/02-product-types.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "json-schema",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "json-schema/02-product-types.json",
@@ -141345,6 +142145,22 @@
           "key": "http://example.com/service.TypicalContext"
         }
       ]
+    },
+    {
+      "corpus_path": "jsonld/02-typical-context.jsonld",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "jsonld",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "jsonld/02-typical-context.jsonld",
@@ -143330,6 +144146,22 @@
     {
       "corpus_path": "jtd/01-user.jtd.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "jtd",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "jtd/01-user.jtd.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -144994,6 +145826,22 @@
     {
       "corpus_path": "k8s-crd/02-typical-cronwidget.yaml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "k8s-crd",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "k8s-crd/02-typical-cronwidget.yaml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -146341,6 +147189,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'com.example.orders.Order' (observed: overclaim: OK 'com.example.orders.Order')",
       "source_format": "kafka-connect",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "kafka-connect/02-typical-order-schema.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "kafka-connect",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -148763,6 +149627,22 @@
     {
       "corpus_path": "kong/02-typical-single-service-auth.yaml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "kong",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "kong/02-typical-single-service-auth.yaml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -151062,6 +151942,22 @@
     },
     {
       "corpus_path": "llm-tools/02-typical-anthropic.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "llm-tools",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "llm-tools/02-typical-anthropic.json",
       "diff_count": 8,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -152933,6 +153829,22 @@
           "key": "urn:oma:lwm2m:ext:3303.Temperature"
         }
       ]
+    },
+    {
+      "corpus_path": "lwm2m/02-typical-ipso-temperature.xml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "lwm2m",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "lwm2m/02-typical-ipso-temperature.xml",
@@ -156883,6 +157795,22 @@
           "key": "http://example.com/service.ToggleResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "matter/02-typical-onoff-cluster.xml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "matter",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "matter/02-typical-onoff-cluster.xml",
@@ -160879,6 +161807,22 @@
     },
     {
       "corpus_path": "mcp/02-typical-tickets-server.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "mcp",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "mcp/02-typical-tickets-server.json",
       "diff_count": 15,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -164260,6 +165204,22 @@
     {
       "corpus_path": "nacha/02-typical-ppd-batch.ach",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "nacha",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "nacha/02-typical-ppd-batch.ach",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -165712,6 +166672,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'natural.CUSTOMER-FILE' (observed: overclaim: OK 'natural.CUSTOMER-FILE')",
       "source_format": "natural-ddm",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "natural-ddm/02-typical-customer-ddm.ddm",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "natural-ddm",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -176276,6 +177252,22 @@
     {
       "corpus_path": "ncpdp/02-typical-newrx.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "ncpdp",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "ncpdp/02-typical-newrx.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -179371,6 +180363,22 @@
           "key": "http://example.com/service.anyV2ProductsResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "nginx/02-typical-reverse-proxy.conf",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "nginx",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "nginx/02-typical-reverse-proxy.conf",
@@ -182521,6 +183529,22 @@
           "key": "Example.Orders.listOrdersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "odata/02-orders.edmx",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "odata",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "odata/02-orders.edmx",
@@ -187602,6 +188626,22 @@
     {
       "corpus_path": "odata-v2/02-typical-v2-orders.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "odata-v2",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "odata-v2/02-typical-v2-orders.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -189017,6 +190057,22 @@
           "key": "orders"
         }
       ]
+    },
+    {
+      "corpus_path": "odcs/02-typical-orders-contract.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "odcs",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "odcs/02-typical-orders-contract.yaml",
@@ -191905,6 +192961,22 @@
     },
     {
       "corpus_path": "onc-rpc/01-key-value-store.x",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "oncrpc",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "onc-rpc/01-key-value-store.x",
       "diff_count": 11,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -194522,6 +195594,22 @@
     },
     {
       "corpus_path": "opcua-nodeset/02-typical-machine-type.xml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "opcua-nodeset",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "opcua-nodeset/02-typical-machine-type.xml",
       "diff_count": 8,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -196023,6 +197111,22 @@
           "key": "http://example.com/service.UserProfile"
         }
       ]
+    },
+    {
+      "corpus_path": "openapi/07-nullable-types.yaml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "openapi",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "openapi/07-nullable-types.yaml",
@@ -198179,6 +199283,22 @@
           "key": "http://example.com/service.transferResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "openrpc/01-wallet-api.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "openrpc",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "openrpc/01-wallet-api.json",
@@ -201460,6 +202580,22 @@
     {
       "corpus_path": "owl/02-typical-classes-and-properties.ttl",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "owl",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "owl/02-typical-classes-and-properties.ttl",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -204399,6 +205535,22 @@
     {
       "corpus_path": "pkl/02-typical-order-schema.pkl",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "pkl",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "pkl/02-typical-order-schema.pkl",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 8,
@@ -206366,6 +207518,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
       "source_format": "pli",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "pli/02-typical-customer-record.pli",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "pli",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -208819,6 +209987,22 @@
           "key": "http://example.com/service.listTasksResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "postman/01-tasks-collection.postman_collection.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "postman",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "postman/01-tasks-collection.postman_collection.json",
@@ -211526,6 +212710,22 @@
           "key": "http://example.com/service.placeOrderResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "postman-v2/02-typical-crud-collection.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "postman-v2",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "postman-v2/02-typical-crud-collection.json",
@@ -215371,6 +216571,22 @@
     },
     {
       "corpus_path": "protobuf/02-grpc-service.proto",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "protobuf",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "protobuf/02-grpc-service.proto",
       "diff_count": 14,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -218494,6 +219710,22 @@
     },
     {
       "corpus_path": "protobuf-editions/02-typical-orders-edition-2023.proto",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "protobuf-editions",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "protobuf-editions/02-typical-orders-edition-2023.proto",
       "diff_count": 10,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -221113,6 +222345,22 @@
           "key": "http://example.com/service.OrderLine"
         }
       ]
+    },
+    {
+      "corpus_path": "pydantic/02-typical-order-models.py",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "pydantic",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "pydantic/02-typical-order-models.py",
@@ -223816,6 +225064,22 @@
     {
       "corpus_path": "raml/01-simple-api.raml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "raml",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "raml/01-simple-api.raml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -225700,6 +226964,22 @@
     {
       "corpus_path": "relaxng/02-typical-catalogue.rng",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "relaxng",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "relaxng/02-typical-catalogue.rng",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 2,
@@ -227381,6 +228661,22 @@
           "key": "http://example.com/service.TypicalSensorMessage"
         }
       ]
+    },
+    {
+      "corpus_path": "ros2/02-typical-sensor-message.msg",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "ros2",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "ros2/02-typical-sensor-message.msg",
@@ -235810,6 +237106,22 @@
     {
       "corpus_path": "sepa/02-typical-pain001-batch.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "sepa",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "sepa/02-typical-pain001-batch.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -237765,6 +239077,22 @@
           "key": "http://example.com/service.PersonShape"
         }
       ]
+    },
+    {
+      "corpus_path": "shacl/02-typical-person-shapes.ttl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "shacl",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "shacl/02-typical-person-shapes.ttl",
@@ -241281,6 +242609,22 @@
     },
     {
       "corpus_path": "smithy/01-weather-service.smithy",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "smithy",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "smithy/01-weather-service.smithy",
       "diff_count": 12,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -244079,6 +245423,22 @@
     {
       "corpus_path": "soapui/02-typical-rest-project.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "soapui",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "soapui/02-typical-rest-project.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -245790,6 +247150,22 @@
           "key": "spBv1.0.NBIRTH"
         }
       ]
+    },
+    {
+      "corpus_path": "sparkplug/02-typical-nbirth.bin",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "sparkplug",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "sparkplug/02-typical-nbirth.bin",
@@ -248624,6 +250000,22 @@
           "key": "http://example.com/service.order_line"
         }
       ]
+    },
+    {
+      "corpus_path": "sql-ddl/02-typical-postgres.sql",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "sql-ddl",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "sql-ddl/02-typical-postgres.sql",
@@ -253933,6 +255325,22 @@
     {
       "corpus_path": "swagger/01-swagger-2-petstore.yaml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "swagger",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swagger/01-swagger-2-petstore.yaml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 23,
@@ -257536,6 +258944,22 @@
           "key": "http://example.com/service.placeOrderStatus422Fault"
         }
       ]
+    },
+    {
+      "corpus_path": "swagger-1.2/02-typical-orders-declaration.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "swagger-1.2",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "swagger-1.2/02-typical-orders-declaration.json",
@@ -263192,6 +264616,22 @@
     {
       "corpus_path": "swift-mt/02-typical-mt103.txt",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "swift-mt",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "swift-mt/02-typical-mt103.txt",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -266304,6 +267744,22 @@
     },
     {
       "corpus_path": "thrift/01-user-service.thrift",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "thrift",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "thrift/01-user-service.thrift",
       "diff_count": 11,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -269056,6 +270512,22 @@
     {
       "corpus_path": "thunder-client/02-typical-orders-collection.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "thunder-client",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "thunder-client/02-typical-orders-collection.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -270735,6 +272207,22 @@
       "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
       "source_format": "tradacoms",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "tradacoms/02-typical-order-file.edi",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "tradacoms",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -273028,6 +274516,22 @@
           "key": "http://example.com/service.anyV2ProductsResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "traefik/02-typical-dynamic.yml",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "traefik",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "traefik/02-typical-dynamic.yml",
@@ -278543,6 +280047,22 @@
     },
     {
       "corpus_path": "trpc/02-typical-order-router.ts",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "trpc",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "trpc/02-typical-order-router.ts",
       "diff_count": 18,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -281062,6 +282582,22 @@
           "key": "http://example.com/service.postV2OrdersOrdersResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "tyk/02-typical-classic-with-paths.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "tyk",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "tyk/02-typical-classic-with-paths.json",
@@ -284317,6 +285853,22 @@
     {
       "corpus_path": "typescript-types/02-typical-order-model.ts",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "typescript-types",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "typescript-types/02-typical-order-model.ts",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -287418,6 +288970,22 @@
     {
       "corpus_path": "typespec/01-pets-api.tsp",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "typespec",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "typespec/01-pets-api.tsp",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -288781,6 +290349,22 @@
       "reason": "unexplained: changed root ''; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS' (observed: overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
       "source_format": "vsam-idcams",
       "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "vsam-idcams/02-typical-ksds.idcams",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "vsam-idcams",
+      "status": "unsupported",
       "unexplained": []
     },
     {
@@ -291137,6 +292721,22 @@
           "key": "http://example.com/bookstore.listBooksResponse"
         }
       ]
+    },
+    {
+      "corpus_path": "wadl/01-bookstore.wadl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "wadl",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "wadl/01-bookstore.wadl",
@@ -293897,6 +295497,22 @@
           "key": "examples:calculator.request"
         }
       ]
+    },
+    {
+      "corpus_path": "wit/02-typical-calculator.wit",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "wit",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "wit/02-typical-calculator.wit",
@@ -298664,6 +300280,22 @@
     },
     {
       "corpus_path": "wsdl/02-order-service.wsdl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "wsdl",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wsdl/02-order-service.wsdl",
       "diff_count": 16,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -302850,6 +304482,22 @@
     },
     {
       "corpus_path": "wsdl2/02-typical-orders.wsdl",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "wsdl2",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "wsdl2/02-typical-orders.wsdl",
       "diff_count": 14,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
@@ -304804,6 +306452,22 @@
     {
       "corpus_path": "xml-rpc/01-method-call.xml",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "xmlrpc",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "xml-rpc/01-method-call.xml",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -306644,6 +308308,22 @@
           "key": "http://example.com/service.OrderShipped"
         }
       ]
+    },
+    {
+      "corpus_path": "xregistry/02-typical-order-events.json",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "xregistry",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "xregistry/02-typical-order-events.json",
@@ -309023,6 +310703,22 @@
           "key": "http://example.com/po.Status"
         }
       ]
+    },
+    {
+      "corpus_path": "xsd/01-purchase-order.xsd",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "xsd",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "xsd/01-purchase-order.xsd",
@@ -311548,6 +313244,22 @@
           "key": "http://example.com/service.OrderLine"
         }
       ]
+    },
+    {
+      "corpus_path": "zod/02-typical-order-schemas.ts",
+      "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "zod",
+      "status": "unsupported",
+      "unexplained": []
     },
     {
       "corpus_path": "zod/02-typical-order-schemas.ts",
@@ -314782,6 +316494,22 @@
     {
       "corpus_path": "zos-connect/01-api-requester.json",
       "diff_count": 0,
+      "emit_format": "x12-guide",
+      "emit_key": "x12-guide",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "No import adapter can re-import emit format 'x12-guide' (emit key 'x12-guide').",
+      "source_format": "zosconnect",
+      "status": "unsupported",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "zos-connect/01-api-requester.json",
+      "diff_count": 0,
       "emit_format": "xmlrpc",
       "emit_key": "xmlrpc",
       "loss_approx": 0,
@@ -314924,6 +316652,7 @@
     "wadl",
     "wit",
     "wsdl",
+    "x12-guide",
     "xmlrpc",
     "xsd",
     "zosconnect"

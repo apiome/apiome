@@ -790,6 +790,7 @@ def load_builtin_emitters() -> None:
     from . import wadl_emitter as _wadl  # noqa: F401
     from . import wit_emitter as _wit_emitter  # noqa: F401
     from . import wsdl_emitter as _wsdl  # noqa: F401
+    from . import x12_guide_emitter as _x12_guide  # noqa: F401
     from . import xmlrpc_emitter as _xmlrpc  # noqa: F401
     from . import xsd_emitter as _xsd  # noqa: F401
     from . import zosconnect_emitter as _zosconnect  # noqa: F401

@@ -99,6 +99,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "wadl",
     "wit",
     "wsdl",
+    "x12-guide",
     "xmlrpc",
     "xsd",
     "zosconnect",

@@ -4785,7 +4785,9 @@
       "reason": "internal machinery, not a format a user can import"
     }
   ],
-  "export_only_destinations": [],
+  "export_only_destinations": [
+    "x12-guide"
+  ],
   "pending_corpus_directories": [
     "schematron"
   ]
