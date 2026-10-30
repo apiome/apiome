@@ -10,8 +10,8 @@
  *   still shows its badge (by default safe drift only badges).
  * - **Delivery** — right away, or one daily digest; with the digest, breaking drift can still go
  *   out right away.
- * - **Email** — an opt-in that is stored for a later email channel; nothing is emailed yet, and the
- *   dialog says so.
+ * - **Email** — the item's owner team is also emailed each alert (or one email per digest) when the
+ *   installation has a mailer (#6384); the hint says so.
  *
  * Announcements go to the workspace's webhooks and to the item's owner team (their inbox and chat
  * channel). A version made with **Check now** is never announced. Saving needs `imports:edit`.
@@ -174,7 +174,7 @@ export function CatalogDriftAlertsDialog({ open, onOpenChange }: CatalogDriftAle
                 data-testid="catalog-drift-alerts-email"
               />
               Email me about drift too
-              <span className="cat-drift-alerts__hint">Saved for later: drift email is not sent yet.</span>
+              <span className="cat-drift-alerts__hint">Emails the item’s owner team when email is set up.</span>
             </label>
 
             <div className="cat-drift-alerts__summary" data-testid="catalog-drift-alerts-summary">

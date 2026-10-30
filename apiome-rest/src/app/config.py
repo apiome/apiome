@@ -827,6 +827,20 @@ class Settings(BaseSettings):
         description="Public base URL of apiome-ui, for the `apiome login` approve page.",
     )
 
+    # Outgoing email (#6384): the same SendGrid sender apiome-ui's auth layer uses. With either
+    # unset the mailer (app.mailer) is a no-op, so notification families that email simply skip
+    # that channel. The key is never logged.
+    sendgrid_api_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("SENDGRID_API_KEY", "sendgrid_api_key"),
+        description="SendGrid API key REST sends notification email with.",
+    )
+    email_from: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("EMAIL_FROM", "email_from"),
+        description="Sender address, e.g. `Apiome <no-reply@apiome.example>`.",
+    )
+
     # Dry-run mock preview (#5528, MSC-1.2). The mock *engine* lives in apiome-mock, which depends
     # on this package — so REST cannot import it, and a preview that rendered here would be a
     # second implementation of the serving sequence, free to disagree with what the mock actually

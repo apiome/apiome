@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.416.0
+  version: 1.417.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -85028,8 +85028,9 @@ components:
         emailEnabled:
           type: boolean
           title: Emailenabled
-          description: Opt in to drift email. Stored for a later email channel; no
-            email is sent yet.
+          description: 'Also email drift to the item''s owner team: each alert right away, or
+            one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY /
+            EMAIL_FROM).'
           default: false
           example: false
       additionalProperties: false
@@ -85075,8 +85076,9 @@ components:
         emailEnabled:
           type: boolean
           title: Emailenabled
-          description: Opt in to drift email. Stored for a later email channel; no
-            email is sent yet.
+          description: 'Also email drift to the item''s owner team: each alert right away, or
+            one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY /
+            EMAIL_FROM).'
           default: false
           example: false
         configured:

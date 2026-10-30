@@ -18,7 +18,7 @@ _SETTING_LABELS = (
     ("Notify safe", "notifySafe"),
     ("Delivery", "delivery"),
     ("Breaking skips digest", "breakingImmediate"),
-    ("Email opt-in (not sent yet)", "emailEnabled"),
+    ("Email owner team", "emailEnabled"),
 )
 
 

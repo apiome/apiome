@@ -101,6 +101,10 @@ services:
       APIOME_MOCK_PUBLIC_BASE_URL: ${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
       # `apiome login` (#5501): where people open /cli/login to approve a CLI sign-in.
       APIOME_UI_PUBLIC_URL: ${APIOME_UI_PUBLIC_URL:-http://localhost:3000}
+      # Notification email (#6384, catalog drift email): the same SendGrid sender as apiome-ui.
+      # Optional pass-throughs (empty ⇒ unset ⇒ nothing is emailed; every other channel still works).
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       # ── Dry-run mock preview (#5528, MSC-1.2) ───────────────────────────────────────────────
       # POST …/mock/preview renders a synthetic request through apiome-mock's *own* serving path
       # rather than re-implementing it here, so REST needs the mock service's INTERNAL address

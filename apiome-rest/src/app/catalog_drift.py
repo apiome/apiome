@@ -88,7 +88,7 @@ class DriftSettings:
         notify_safe: Announce safe drift (off: safe drift only badges).
         delivery: ``immediate`` or ``daily_digest``.
         breaking_immediate: In digest mode, still send breaking drift right away.
-        email_enabled: Stored opt-in for an email channel; nothing is emailed yet.
+        email_enabled: Also email the owner team (#6384, :mod:`app.catalog_drift_email`).
     """
 
     notify_breaking: bool = True

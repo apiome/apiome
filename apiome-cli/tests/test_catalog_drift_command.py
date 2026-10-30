@@ -102,7 +102,7 @@ def test_alerts_body_rejects_an_unknown_delivery():
 def test_alerts_rows_say_defaults_and_email_is_not_sent():
     rows = {row["field"]: row["value"] for row in alerts_rows(_settings())}
     assert rows["Notify breaking"] == "yes" and rows["Notify safe"] == "no"
-    assert rows["Email opt-in (not sent yet)"] == "no"
+    assert rows["Email owner team"] == "no"
     assert rows["Source"] == "defaults (never saved)"
 
 
