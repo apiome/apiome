@@ -31,6 +31,13 @@ const mockClient = {
   }),
   release: jest.fn(),
 };
+/**
+ * #595: when set, both sides define an `Account` schema whose `status` property is an enum — the
+ * stored values on the latest version, the spec's in the import.
+ */
+const mockEnumState: { stored: string[] | null; spec: string[] | null } = { stored: null, spec: null };
+/** Every class-property row the importer inserted. */
+const mockAddedRows: Array<{ name: string; data: unknown }> = [];
 const ok = (body: Record<string, unknown>) => Promise.resolve(JSON.stringify({ success: true, ...body }));
 
 /** The latest version's classes as stored: Pet (id, name) and Owner (id). */
@@ -58,9 +65,26 @@ jest.mock('../lib/db/import-transaction', () => ({
   createVersionTx: (...args: unknown[]) => mockCreateVersionTx(...args),
   createPropertiesBatchTx: (_c: unknown, rows: unknown[]) => ok({ inserted: rows.length, failed: [] }),
   createClassTx: (...args: unknown[]) => mockCreateClassTx(...args),
-  addPropertiesToClassBatchTx: (_c: unknown, rows: unknown[]) => ok({ inserted: rows.length, failed: [] }),
+  addPropertiesToClassBatchTx: (_c: unknown, rows: Array<{ name: string; data: unknown }>) => {
+    mockAddedRows.push(...rows);
+    return ok({ inserted: rows.length, failed: [] });
+  },
   getClassesWithPropertiesAndTagsTx: async (_c: unknown, versionId: string) =>
-    JSON.stringify(versionId === PARENT ? PARENT_CLASSES : []),
+    JSON.stringify(
+      versionId !== PARENT
+        ? []
+        : mockEnumState.stored
+          ? [
+              ...PARENT_CLASSES,
+              {
+                id: 'c-account',
+                name: 'Account',
+                schema: { type: 'object' },
+                properties: [{ id: 'p9', name: 'status', data: { type: 'string', enum: mockEnumState.stored } }],
+              },
+            ]
+          : PARENT_CLASSES,
+    ),
   getLatestVersionUuidForProjectTx: (...args: unknown[]) => mockLatestVersion(...args),
   getProjectIdBySlugTx: async () => 'proj-shop',
   getVersionUuidForCatalogVersionLineTx: async () => null,
@@ -101,6 +125,16 @@ jest.mock('../lib/importers', () => ({
           ],
         },
         { name: 'Tag', description: null, schema: { type: 'object' }, properties: [{ name: 'label', data: { type: 'string' } }] },
+        ...(mockEnumState.spec
+          ? [
+              {
+                name: 'Account',
+                description: null,
+                schema: { type: 'object' },
+                properties: [{ name: 'status', data: { type: 'string', enum: mockEnumState.spec }, description: null }],
+              },
+            ]
+          : []),
       ],
       warnings: [],
     }),
@@ -155,6 +189,21 @@ function input(options: Record<string, unknown> = {}, extra: Record<string, unkn
   };
 }
 
+/**
+ * Give both sides an `Account.status` enum (#595).
+ *
+ * @param enums - The stored and the spec's values.
+ */
+function mockEnums(enums: { stored: string[]; spec: string[] }): void {
+  mockEnumState.stored = enums.stored;
+  mockEnumState.spec = enums.spec;
+}
+
+/** The definition the importer wrote for `Account.status`. */
+function statusPropertyData(): unknown {
+  return mockAddedRows.find((r) => r.name === 'status')?.data;
+}
+
 /** Names of the classes the importer created, in order. */
 function writtenClassNames(): string[] {
   return mockCreateClassTx.mock.calls.map((c) => c[2] as string);
@@ -162,6 +211,9 @@ function writtenClassNames(): string[] {
 
 describe('importer: merge strategies (#591, #592)', () => {
   beforeEach(() => {
+    mockEnumState.stored = null;
+    mockEnumState.spec = null;
+    mockAddedRows.length = 0;
     mockCreateVersionTx.mockReset();
     mockCreateVersionTx.mockImplementation(() => ok({ version: { id: NEW } }));
     mockCreateClassTx.mockReset();
@@ -221,6 +273,8 @@ describe('importer: merge strategies (#591, #592)', () => {
       pathsCarried: 1,
       operationsAdded: 1,
       operationsUpdated: 0,
+      arrayStrategy: 'replace',
+      arraysCombined: 0,
     });
     expect(status.events.some((e) => e.code === 'IMPORT_MERGE')).toBe(true);
     // Carried classes are expected in the new version, not reported as extras.
@@ -312,8 +366,40 @@ describe('importer: merge strategies (#591, #592)', () => {
       pathsCarried: 1,
       operationsAdded: 1,
       operationsUpdated: 1,
+      arrayStrategy: 'replace',
+      arraysCombined: 0,
     });
     expect(status.events.find((e) => e.code === 'IMPORT_MERGE')?.message).toMatch(/^Override merge:/);
+  });
+
+  test('arrays both sides define are combined by arrayMergeStrategy (#595)', async () => {
+    mockEnums({ stored: ['active', 'inactive'], spec: ['active', 'archived'] });
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(input({ mergeStrategy: 'additive', arrayMergeStrategy: 'deduplicate' }));
+    const status = await waitForJobEnd(getImportStatus, jobId);
+
+    expect(status.state).toBe('completed');
+    expect(statusPropertyData()).toEqual({ type: 'string', enum: ['active', 'inactive', 'archived'] });
+    expect(status.summary.importMerge).toEqual(
+      expect.objectContaining({ strategy: 'additive', arrayStrategy: 'deduplicate', arraysCombined: 1 }),
+    );
+  });
+
+  test('without arrayMergeStrategy the winning side\'s array is kept (#595)', async () => {
+    mockEnums({ stored: ['active', 'inactive'], spec: ['active', 'archived'] });
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(input({ mergeStrategy: 'override' }));
+    await waitForJobEnd(getImportStatus, jobId);
+    expect(statusPropertyData()).toEqual({ type: 'string', enum: ['active', 'archived'] });
+  });
+
+  test('arrayMergeStrategy alone does nothing — it applies only under a merge (#595)', async () => {
+    mockEnums({ stored: ['active', 'inactive'], spec: ['active', 'archived'] });
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(input({ arrayMergeStrategy: 'append' }));
+    const status = await waitForJobEnd(getImportStatus, jobId);
+    expect(status.summary.importMerge).toBeUndefined();
+    expect(statusPropertyData()).toEqual({ type: 'string', enum: ['active', 'archived'] });
   });
 
   test('override is ignored with a warning when there is no latest version (#592)', async () => {

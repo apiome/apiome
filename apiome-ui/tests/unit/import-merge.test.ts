@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, test } from '@jest/globals';
-import { describeImportMerge, planMergeClasses, planMergePaths } from '../../lib/import-merge';
+import { combineArray, describeImportMerge, planMergeClasses, planMergePaths } from '../../lib/import-merge';
 import type { NormalizedClass } from '../../lib/importers';
 import type { ParsedOperation, ParsedPath } from '../../src/app/utils/openapi-import';
 
@@ -236,7 +236,7 @@ describe('planMergePaths: override (#592)', () => {
 });
 
 describe('describeImportMerge', () => {
-  const stats = { propertiesUpdated: 0, operationsUpdated: 0 };
+  const stats = { propertiesUpdated: 0, operationsUpdated: 0, arrayStrategy: 'replace' as const, arraysCombined: 0 };
 
   test('additive: merged schemas, added properties and what was kept', () => {
     expect(
@@ -261,7 +261,119 @@ describe('describeImportMerge', () => {
         pathsCarried: 3,
         operationsAdded: 0,
         operationsUpdated: 1,
+        arrayStrategy: 'replace',
+        arraysCombined: 0,
       }),
     ).toBe('Override — 2 schemas merged (1 property added, 2 updated), 1 operation updated; 0 schemas and 3 paths kept from the latest version');
+  });
+});
+
+describe('combineArray (#595)', () => {
+  test('replace keeps the winner, append adds the other side, deduplicate drops repeats', () => {
+    expect(combineArray(['a', 'b'], ['b', 'c'], 'replace')).toEqual(['a', 'b']);
+    expect(combineArray(['a', 'b'], ['b', 'c'], 'append')).toEqual(['a', 'b', 'b', 'c']);
+    expect(combineArray(['a', 'b'], ['b', 'c'], 'deduplicate')).toEqual(['a', 'b', 'c']);
+  });
+
+  test('deduplicate compares objects canonically (key order does not matter)', () => {
+    expect(combineArray([{ a: 1, b: 2 }], [{ b: 2, a: 1 }, { a: 3 }], 'deduplicate')).toEqual([{ a: 1, b: 2 }, { a: 3 }]);
+  });
+
+  test('deduplicate also drops repeats within one side', () => {
+    expect(combineArray([1, 1], [], 'deduplicate')).toEqual([1]);
+  });
+});
+
+describe('planMergeClasses: arrays (#595)', () => {
+  const stored = () => cls('Account', { status: { type: 'string', enum: ['active', 'inactive'] } });
+  const spec = () => cls('Account', { status: { type: 'string', enum: ['active', 'archived'] } });
+  const statusEnum = (c: NormalizedClass) => (c.properties[0].data as { enum: string[] }).enum;
+
+  test('replace (the default) keeps the winner: stored under additive, the spec under override', () => {
+    expect(statusEnum(planMergeClasses([stored()], [spec()], 'additive').classes[0])).toEqual(['active', 'inactive']);
+    expect(statusEnum(planMergeClasses([stored()], [spec()], 'override').classes[0])).toEqual(['active', 'archived']);
+    expect(planMergeClasses([stored()], [spec()], 'additive', 'replace').arraysCombined).toBe(0);
+  });
+
+  test('append puts the winner first, repeats kept', () => {
+    const additive = planMergeClasses([stored()], [spec()], 'additive', 'append');
+    expect(statusEnum(additive.classes[0])).toEqual(['active', 'inactive', 'active', 'archived']);
+    expect(additive.arraysCombined).toBe(1);
+    const override = planMergeClasses([stored()], [spec()], 'override', 'append');
+    expect(statusEnum(override.classes[0])).toEqual(['active', 'archived', 'active', 'inactive']);
+  });
+
+  test('deduplicate combines without repeats', () => {
+    expect(statusEnum(planMergeClasses([stored()], [spec()], 'additive', 'deduplicate').classes[0])).toEqual([
+      'active',
+      'inactive',
+      'archived',
+    ]);
+    expect(statusEnum(planMergeClasses([stored()], [spec()], 'override', 'deduplicate').classes[0])).toEqual([
+      'active',
+      'archived',
+      'inactive',
+    ]);
+  });
+
+  test('nested arrays (items.enum) are combined; non-array values stay the winner\'s', () => {
+    const s1 = cls('Pet', { tags: { type: 'array', maxItems: 5, items: { type: 'string', enum: ['a'] } } });
+    const s2 = cls('Pet', { tags: { type: 'array', maxItems: 9, items: { type: 'string', enum: ['b'] } } });
+    const plan = planMergeClasses([s1], [s2], 'additive', 'deduplicate');
+    expect(plan.classes[0].properties[0].data).toEqual({ type: 'array', maxItems: 5, items: { type: 'string', enum: ['a', 'b'] } });
+  });
+
+  test('arrays only one side has are left as the winner has them', () => {
+    const s1 = cls('Pet', { kind: { type: 'string', enum: ['cat'] } });
+    const s2 = cls('Pet', { kind: { type: 'string' } });
+    const plan = planMergeClasses([s1], [s2], 'override', 'append');
+    expect(plan.classes[0].properties[0].data).toEqual({ type: 'string' });
+    expect(plan.arraysCombined).toBe(0);
+  });
+
+  test("the schema's required list is combined too", () => {
+    const s1: NormalizedClass = { ...cls('Pet', {}), schema: { type: 'object', required: ['id'] } };
+    const s2: NormalizedClass = { ...cls('Pet', {}), schema: { type: 'object', required: ['id', 'name'] } };
+    const plan = planMergeClasses([s1], [s2], 'additive', 'deduplicate');
+    expect(plan.classes[0].schema).toEqual({ type: 'object', required: ['id', 'name'] });
+    expect(plan.arraysCombined).toBe(1);
+  });
+
+  test('nested properties combine their arrays as well', () => {
+    const nested = (values: string[]): NormalizedClass => ({
+      name: 'Order',
+      schema: { type: 'object' },
+      properties: [
+        { name: 'address', data: { type: 'object' }, children: [{ name: 'country', data: { type: 'string', enum: values } }] },
+      ],
+    });
+    const plan = planMergeClasses([nested(['NL'])], [nested(['US'])], 'additive', 'append');
+    expect(plan.classes[0].properties[0].children?.[0].data).toEqual({ type: 'string', enum: ['NL', 'US'] });
+  });
+});
+
+describe('describeImportMerge: arrays (#595)', () => {
+  const base = {
+    strategy: 'additive' as const,
+    schemasMerged: 1,
+    propertiesAdded: 0,
+    propertiesUpdated: 0,
+    schemasCarried: 0,
+    pathsCarried: 0,
+    operationsAdded: 0,
+    operationsUpdated: 0,
+  };
+
+  test('names how many arrays were appended or deduplicated', () => {
+    expect(describeImportMerge({ ...base, arrayStrategy: 'append', arraysCombined: 3 })).toBe(
+      'Additive — 1 schema merged (0 properties added), 3 arrays appended; 0 schemas and 0 paths kept from the latest version',
+    );
+    expect(describeImportMerge({ ...base, arrayStrategy: 'deduplicate', arraysCombined: 1 })).toBe(
+      'Additive — 1 schema merged (0 properties added), 1 array deduplicated; 0 schemas and 0 paths kept from the latest version',
+    );
+  });
+
+  test('says nothing about arrays when none changed', () => {
+    expect(describeImportMerge({ ...base, arrayStrategy: 'append', arraysCombined: 0 })).not.toMatch(/array/);
   });
 });

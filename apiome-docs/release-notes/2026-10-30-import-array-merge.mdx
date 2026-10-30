@@ -1,0 +1,23 @@
+---
+slug: import-array-merge
+title: Array merge when importing a new version
+description: Append or deduplicate enum values and required lists when merging an import.
+authors: [apiome]
+---
+
+When an import merges into an existing project, you can now choose what happens to lists that both
+sides define, such as `enum` values and `required` lists.
+[How it works](/bring-in/import-wizard#import-a-new-version-of-an-existing-project).
+
+{/* truncate */}
+
+- **Choose it on the Changes step.** With **Additive merge** or **Override merge** selected,
+  **Arrays** offers **Replace**, **Append** and **Deduplicate**.
+- **Replace** (the default) keeps the list of the side the merge favours: the latest version's
+  under Additive, the spec's under Override. Nothing changes from before.
+- **Append** adds the other side's items after it, repeats kept. **Deduplicate** does the same
+  without repeats: stored `[active, inactive]` and spec `[active, archived]` give
+  `[active, inactive, archived]`.
+- It covers lists on properties and schemas, nested ones (`items.enum`) included. Lists on
+  operations aren't combined.
+- **Done** says how many lists were appended or deduplicated.

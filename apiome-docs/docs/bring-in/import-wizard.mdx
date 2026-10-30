@@ -140,7 +140,21 @@ again gives the next free one too. Nothing existing changes. To use a different 
 Pick **Additive merge** when the project holds edits you want to keep, and **Override merge** when
 the spec is the source of truth for what it defines but doesn't define everything.
 
-<Screenshot id="import-wizard-changes-additive" alt="The Changes step with Merge strategy set to Additive merge and a note that the item listed as Removed stays in the new version" caption="With Additive merge, the item listed as Removed stays in the new version." />
+**Arrays.** With either merge selected, **Arrays** decides what happens to a list that both the
+latest version and the spec define on the same property or schema: `enum` values, a schema's
+`required` list, `examples`, nested lists such as `items.enum`. The merge decides whose list comes
+first (the latest version's under **Additive merge**, the spec's under **Override merge**):
+
+| Arrays | Stored `[active, inactive]`, spec `[active, archived]`, with **Additive merge** |
+| --- | --- |
+| **Replace** (the default) | `[active, inactive]`: only the list that comes first |
+| **Append** | `[active, inactive, active, archived]`: both lists, repeats kept |
+| **Deduplicate** | `[active, inactive, archived]`: both lists, without repeats |
+
+A list only one side defines is left as the merge has it. Lists on operations (tags, parameters)
+are not combined. **Done** says how many lists were appended or deduplicated.
+
+<Screenshot id="import-wizard-changes-additive" alt="The Changes step with Merge strategy set to Additive merge, the Arrays choice under it set to Replace, and a note that the item listed as Removed stays in the new version" caption="With Additive merge, the item listed as Removed stays in the new version, and Arrays appears." />
 
 With either merge selected, a note says that the items listed as **Removed** stay in the new
 version. **Done** adds a **Merge** row, for example *Additive — 2 schemas merged (3 properties
