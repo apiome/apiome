@@ -69,6 +69,8 @@ ARG DHALL_VERSION=1.42.2
 ARG CAPNP_VERSION=1.0.1
 # Apache Thrift compiler (MFX-25.1, #4151) — optional: it compiles an emitted .thrift IDL.
 ARG THRIFT_VERSION=0.21.0
+# FlatBuffers compiler (MFX-30.1, #4178) — optional: it compiles an emitted .fbs schema.
+ARG FLATC_VERSION=25.12.19
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -345,6 +347,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends flex bison && r
     && printf 'struct Smoke {\n  1: required string id,\n}\n' > /tmp/smoke.thrift \
     && ${TOOLS_PREFIX}/bin/thrift -o /tmp --gen json /tmp/smoke.thrift \
     && rm -rf /tmp/smoke.thrift /tmp/gen-json
+
+# flatc — FlatBuffers compiler (MFX-30.1). Official release binaries are x86_64 only, so build just the
+# `flatc` target from the pinned source tag (no flatlib, flathash or tests) for every TARGETARCH.
+RUN curl -fsSL "https://github.com/google/flatbuffers/archive/refs/tags/v${FLATC_VERSION}.tar.gz" \
+       | tar -xz -C /tmp \
+    && cmake -S /tmp/flatbuffers-${FLATC_VERSION} -B /tmp/flatc-build -DCMAKE_BUILD_TYPE=Release \
+         -DFLATBUFFERS_BUILD_TESTS=OFF -DFLATBUFFERS_BUILD_FLATLIB=OFF -DFLATBUFFERS_BUILD_FLATHASH=OFF \
+         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
+    && cmake --build /tmp/flatc-build --target flatc -j "$(nproc)" \
+    && cp /tmp/flatc-build/flatc ${TOOLS_PREFIX}/bin/flatc \
+    && chmod +x ${TOOLS_PREFIX}/bin/flatc \
+    && rm -rf /tmp/flatbuffers-${FLATC_VERSION} /tmp/flatc-build \
+    && printf 'table Smoke {\n  id: string (id: 0);\n}\nroot_type Smoke;\n' > /tmp/smoke.fbs \
+    && ${TOOLS_PREFIX}/bin/flatc --binary --schema -o /tmp /tmp/smoke.fbs \
+    && rm -f /tmp/smoke.fbs /tmp/smoke.bfbs
 
 # ── Stage 2: runtime — Python REST API + a Node runtime to execute the TS import worker ──
 FROM python:3.12-slim

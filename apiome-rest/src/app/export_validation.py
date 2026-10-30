@@ -1125,6 +1125,36 @@ async def _validate_thrift(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_flatbuffers(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted ``.fbs`` schema (MFX-30.1, #4178).
+
+    The FlatBuffers compiler (``flatc --binary --schema``) compiles the file when the toolchain has it; a
+    schema that includes others (a ``.fbs`` source's ``include "…"``) cannot be compiled alone, so it —
+    and any export without the compiler — is re-parsed through the FlatBuffers reader instead.
+    """
+    from .flatbuffers_compile import FlatcCompileError, compile_fbs_schema, flatc_available
+    from .flatbuffers_parser import parse_flatbuffers
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The FlatBuffers export wrote no file.")])
+    includes = api.extras.get("fbs_includes") if api.format == "flatbuffers" else None
+    if not flatc_available() or includes:
+        return await _run_text_validator(target, emit_result, parse_flatbuffers)
+    findings: List[ValidationFinding] = []
+    for emitted in emit_result.files:
+        try:
+            await compile_fbs_schema(emitted.path, str(emitted.content))
+        except FlatcCompileError as exc:
+            if exc.unavailable:
+                return await _run_text_validator(target, emit_result, parse_flatbuffers)
+            findings.extend(
+                _finding_from_message(line, file=emitted.path) for line in (exc.diagnostics or [str(exc)])
+            )
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_openrpc(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1207,6 +1237,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "openrpc": _validate_openrpc,
     # MFX-25.1 (#4151)
     "thrift": _validate_thrift,
+    "flatbuffers": _validate_flatbuffers,
 }
 
 

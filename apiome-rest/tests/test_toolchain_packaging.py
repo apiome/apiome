@@ -56,6 +56,7 @@ _EXPECTED_KEYS = {
     "openapi-changes",
     "capnp",
     "thrift",
+    "flatc",
 }
 
 _AUTH = {

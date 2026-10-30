@@ -464,6 +464,49 @@ the item was imported from:
 When the server has the Cap'n Proto compiler, every export is compiled before it is delivered. A
 schema that imports other `.capnp` files is not compiled on its own.
 
+### FlatBuffers from any source
+
+Exporting to **FlatBuffers** writes one `<Name>.fbs` schema that compiles with `flatc`, whatever the
+item was imported from — for games, embedded devices and robotics. Operations and channels are left
+out: a FlatBuffers schema describes data only.
+
+- **Types.** An object becomes a `table`, an enumeration an `enum`, a `oneOf` (or another union) a
+  `union`, and a list a vector `[T]`. An object imported from a FlatBuffers `struct` stays a `struct`
+  when all its fields fit one (numbers, enums and other structs). An enum gets the smallest integer type
+  its values fit (`enum Status : byte`) and lists them in ascending order.
+- **Scalars.** Sized integers keep their width (`int32` is `int`, `uint8` is `ubyte`), an unsized
+  `integer` is `long`, `number` is `double`, text and timestamps are `string`, and bytes are `[ubyte]`.
+  FlatBuffers has no typedef, so an alias is written as the type it stands for.
+- **What FlatBuffers cannot hold directly** gets a small table of its own, listed in the fidelity
+  report: a map becomes a vector of `<Map>Entry` tables with a `key` (marked `(key)`, so a reader can
+  look entries up) and a `value`; a list of lists becomes a vector of `<Name>Item` tables; a union
+  member that is not a table (a `string`, say) is wrapped in `<Union><Member>`.
+- **Required and defaults.** A required text, bytes, list or object field is marked `(required)`. A
+  number, boolean or enum default is written as `= value`; an enum field with no default gets the
+  enum's first value when `0` is not one of its values, because FlatBuffers would otherwise default it
+  to `0`.
+- **Names.** Names use letters, digits and underscores and are not FlatBuffers keywords: `order-id`
+  is written `order_id` and a field named `string` is `string_`. Each rename is in the fidelity report.
+
+**Field ids.** Every table field is written with its id, `(id: N)`, in id order — the id is what a
+reader matches a field by. Ids start at `0`, and a union field takes two (its hidden `<name>_type`
+field and its value). Apiome remembers the ids it assigned for the item, so every later export writes
+the same ids and an unchanged item exports byte for byte the same. A field added since gets the next
+free id. A field removed from the source keeps its id as a `(deprecated)` placeholder, so readers built
+from the earlier schema still read the other fields correctly. A FlatBuffers import keeps its own ids
+and deprecated slots.
+
+Options:
+
+- **root_type** — the table a buffer starts with, by type name (`Order`) or key. By default it is the
+  imported schema's `root_type`, and none for other sources. Naming a type that is not a table is
+  refused.
+- **include_comments** — on by default; descriptions are written as `///` comments.
+
+When the server has the FlatBuffers compiler, every export is compiled with `flatc` before it is
+delivered; otherwise it is read back with Apiome's FlatBuffers importer. A schema that includes other
+`.fbs` files is not compiled on its own.
+
 ### WSDL and XSD from any source
 
 Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the

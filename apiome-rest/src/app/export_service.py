@@ -36,11 +36,13 @@ from .emitter import (
 )
 from .field_identity_store import (
     CAPNP_TARGET,
+    FLATBUFFERS_TARGET,
     PROTO3_TARGET,
     THRIFT_TARGET,
     load_persisted_field_numbers,
     persist_field_number_assignments,
 )
+from .flatbuffers_emitter import FlatBuffersEmitter
 from .proto_emitter import ProtoEmitter
 from .thrift_emitter import ThriftEmitter
 
@@ -85,7 +87,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
     Returns:
         :data:`~app.field_identity_store.PROTO3_TARGET` for Protobuf,
         :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift,
-        :data:`~app.field_identity_store.CAPNP_TARGET` for Cap'n Proto, ``None`` for every other
+        :data:`~app.field_identity_store.CAPNP_TARGET` for Cap'n Proto,
+        :data:`~app.field_identity_store.FLATBUFFERS_TARGET` for FlatBuffers, ``None`` for every other
         target.
     """
     if issubclass(emitter_cls, ProtoEmitter):
@@ -94,6 +97,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
         return THRIFT_TARGET
     if issubclass(emitter_cls, CapnpEmitter):
         return CAPNP_TARGET
+    if issubclass(emitter_cls, FlatBuffersEmitter):
+        return FLATBUFFERS_TARGET
     return None
 
 
