@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 34 |
-| lossy | 3645 |
+| ok | 35 |
+| lossy | 3644 |
 | refused | 1823 |
 | silent-loss | 222 |
 | crash | 0 |
@@ -33,7 +33,7 @@ Every corpus source family exported to every production target through the catal
 | cddl | L | R | L | L | L | L | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | cics-bms | L | R | L | L | L | L | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | cloudevents | L | R | L | L | ok | L | R | R | L | L | ok | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
-| cobolcopybook | L | R | L | L | L | L | R | R | L | S | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | S | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
+| cobolcopybook | L | R | L | L | L | L | R | R | L | S | L | ok | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | S | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | R | L | R |
 | connectrpc | L | R | L | L | L | L | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | S | R | R | L | L | L | L | S | L | R |
 | consul | L | L | L | L | L | R | L | L | L | L | L | R | S | L | R | L | L | R | L | L | L | R | L | L | R | R | R | L | L | L | L | R | L | L | L | R | L | S | L | L | S | L | L | L | L | L | R | L | L | L | R | L | R |
 | corbaidl | L | R | L | L | L | L | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | R | L | L | L | S | R | R | L | L | L | L | S | L | R |

@@ -1,0 +1,19 @@
+---
+slug: cobol-copybook-fidelity-report
+title: The COBOL copybook report lists everything the layout invented
+description: Copybook fidelity report names every synthesized length, counter and renamed field.
+authors: [apiome]
+---
+
+The fidelity report of a **COBOL Copybook** export now lists, field by field, everything the
+fixed-width layout had to invent or change — so you can see what to agree with mainframe teams before
+they `COPY` it. [What the report lists](/ship/export-a-spec#cobol-copybook-from-any-source).
+
+{/* truncate */}
+
+- **Synthesized:** default text lengths, the `-COUNT` field of each variable-size list, and every name
+  changed to COBOL's rules — each with the field it came from.
+- **Approximated:** unions written as `REDEFINES`, optional fields (a record has no null), and patterns
+  and formats, now written as comment lines above the item.
+- **Types-only warning:** exporting an item with operations or channels raises a critical warning that
+  counts what is left out.
