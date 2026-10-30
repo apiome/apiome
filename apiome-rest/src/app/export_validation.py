@@ -57,6 +57,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``smithy`` — :func:`app.smithy_roundtrip.validate_emitted_smithy` (MFX-20.3): ``smithy validate``
   (``ERROR`` / ``DANGER`` events fail, as they fail a ``smithy build``) when the toolchain has the CLI,
   else the built-in reader; then the built model must import again;
+* ``xsd`` — :func:`app.xsd_roundtrip.check_emitted_xsd` (MFX-22.5): safe XML, every ``xs:import``
+  packaged, the schema built by ``xmlschema`` (an XSD 1.0 export under the 1.0 *and* 1.1 processors, a
+  1.1 export under 1.1), then a re-import through the XSD import source; pure Python;
 * ``wsdl`` — :func:`app.wsdl_bundle_validation.validate_wsdl_bundle` (MFX-14.3): the WSDL + XSD
   bundle is checked as it will be unpacked — every import packaged, the WS-I Basic Profile,
   ``xmlschema`` 's WSDL 1.1 reader (WSDL schema, every XSD, every message / port type / binding
@@ -1274,6 +1277,38 @@ async def _validate_smithy(
     return _passed(target)
 
 
+async def _validate_xsd(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted XSD export (MFX-22.5, #4136).
+
+    The documents are checked together, as they will be unpacked (:func:`app.xsd_roundtrip.check_emitted_xsd`):
+    safe XML, every ``xs:import`` packaged, and the schema built by ``xmlschema`` under each processor
+    the export must satisfy. The export must then import again (``xsd.reimport``).
+    """
+    from .import_source import ImportSourceError
+    from .xsd_roundtrip import check_emitted_xsd, reimport_xsd
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The XSD export wrote no file.")])
+
+    def _run() -> List[ValidationFinding]:
+        problems = check_emitted_xsd(emit_result)
+        if not problems:
+            try:
+                reimport_xsd(emit_result)
+            except ImportSourceError as exc:
+                problems.append({"rule": "xsd.reimport", "message": f"The XSD export does not import: {exc}",
+                                 "file": emit_result.files[0].path, "path": None})
+        return [
+            ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+            for p in problems
+        ]
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_wsdl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1357,6 +1392,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "wsdl": _validate_wsdl,
     # MFX-20.3 (#3916)
     "smithy": _validate_smithy,
+    # MFX-22.5 (#4136)
+    "xsd": _validate_xsd,
 }
 
 

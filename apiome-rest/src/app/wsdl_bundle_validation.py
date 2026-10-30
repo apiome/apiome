@@ -55,7 +55,14 @@ from .wsdl_versions import VERSION_1_1, VERSION_2_0, WSDL_1_1_NAMESPACE, WSDL_2_
 from .wsdl_wsi import check_wsi
 from .zip_bundle import safe_bundle_path
 
-__all__ = ["WsdlBundleProblem", "inherited_wsi_rules", "validate_wsdl_bundle"]
+__all__ = [
+    "WsdlBundleProblem",
+    "bundle_reference_problems",
+    "inherited_wsi_rules",
+    "reader_file",
+    "reader_message",
+    "validate_wsdl_bundle",
+]
 
 _XSD_NS = "http://www.w3.org/2001/XMLSchema"
 _SOAP11_NS = "http://schemas.xmlsoap.org/wsdl/soap/"
@@ -157,7 +164,7 @@ def validate_wsdl_bundle(
             )
         )
     for path, root in roots.items():
-        problems.extend(_reference_problems(path, root, files))
+        problems.extend(bundle_reference_problems(path, root, files))
     if problems:
         return problems
 
@@ -173,12 +180,24 @@ def validate_wsdl_bundle(
     return problems
 
 
-def _reference_problems(path: str, root: ET.Element, files: Mapping[str, str]) -> List[WsdlBundleProblem]:
+def bundle_reference_problems(
+    path: str, root: ET.Element, files: Mapping[str, str], *, rule: str = "wsdl.bundle-reference"
+) -> List[WsdlBundleProblem]:
     """The imports and includes in ``path`` that do not resolve to another member of the bundle.
 
     A location resolves relative to the directory of the member that declares it, the way a SOAP
     toolkit reads the unpacked zip. An ``xs:import`` with no ``schemaLocation`` names a namespace,
-    not a file, and is left to the WS-I and structure checks.
+    not a file, and is left to the WS-I and structure checks. Shared with the standalone XSD export
+    check (:mod:`app.xsd_roundtrip`, MFX-22.5), which passes its own ``rule``.
+
+    Args:
+        path: The member's bundle path.
+        root: Its parsed root element.
+        files: Every member, path → text.
+        rule: The rule the problems are reported under.
+
+    Returns:
+        One problem per unresolved reference.
     """
     problems: List[WsdlBundleProblem] = []
     base = posixpath.dirname(path)
@@ -191,7 +210,7 @@ def _reference_problems(path: str, root: ET.Element, files: Mapping[str, str]) -
             if resolved is None or resolved not in files:
                 problems.append(
                     WsdlBundleProblem(
-                        "wsdl.bundle-reference",
+                        rule,
                         f"{local_name} {attribute}={location!r} does not name a file in the bundle; "
                         "every imported description and schema must be packaged with it.",
                         file=path,
@@ -238,8 +257,8 @@ def _structure_problems(root_path: str, root: ET.Element, files: Mapping[str, st
         try:
             reader(str(Path(folder, root_path)), allow="sandbox")
         except Exception as exc:  # noqa: BLE001 — any reader failure means "not a valid description"
-            file = _reader_file(exc, folder, root_path)
-            return [WsdlBundleProblem("wsdl.structure", _reader_message(exc, folder), file=file)]
+            file = reader_file(exc, folder, root_path)
+            return [WsdlBundleProblem("wsdl.structure", reader_message(exc, folder), file=file)]
     return []
 
 
@@ -251,7 +270,7 @@ def _mixes_bindings(root: ET.Element) -> bool:
     return False
 
 
-def _reader_message(exc: Exception, folder: str) -> str:
+def reader_message(exc: Exception, folder: str) -> str:
     """The reader's error as one line: its reason (or first line), without the temporary folder."""
     message = str(getattr(exc, "message", "") or "") or str(exc).strip().splitlines()[0]
     reason = getattr(exc, "reason", None)
@@ -259,9 +278,12 @@ def _reader_message(exc: Exception, folder: str) -> str:
     return text.replace(Path(folder).as_uri() + "/", "").replace(folder + "/", "")
 
 
-def _reader_file(exc: Exception, folder: str, root_path: str) -> str:
-    """The bundle member the reader's error is in (the schema URL it names), else the description."""
-    url = getattr(exc, "url", None) or ""
+def reader_file(exc: Exception, folder: str, root_path: str) -> str:
+    """The bundle member the reader's error is in (the schema URL it names), else the root document.
+
+    ``xmlschema`` names the failing schema document in ``schema_url`` (a parse error) or ``url``.
+    """
+    url = getattr(exc, "schema_url", None) or getattr(exc, "url", None) or ""
     prefix = Path(folder).as_uri() + "/"
     return url[len(prefix):] if isinstance(url, str) and url.startswith(prefix) else root_path
 

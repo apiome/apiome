@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.542.0] - 2026-10-30
+
+### Added
+- **XSD validate + round-trip (MFX-22.5, #4136).** The `xsd` target now has an emitted-artifact validator (it was
+  *not applicable* before). New `app.xsd_roundtrip`:
+  - `check_emitted_xsd(emit_result)` — safe XML (`xsd.xml`), every `xs:import` / `xs:include` / `xs:redefine`
+    packaged relative to its document (`xsd.bundle-reference`, via the shared
+    `wsdl_bundle_validation.bundle_reference_problems`), then the export unpacked into a sandboxed temp folder and
+    built by `xmlschema`: an XSD 1.0 export under `XMLSchema10` **and** `XMLSchema11`, a 1.1 export
+    (`vc:minVersion="1.1"`) under `XMLSchema11` (`xsd.schema-1.0` / `xsd.schema-1.1`, naming the failing document).
+  - `reimport_xsd(emit_result)` through `XsdImportSource` (a fileset for multi-namespace exports).
+  - `round_trip_xsd(api, *, opts, emit_result)` — canonical diff + `reconcile` with the fidelity report for the
+    export's options. A **WSDL** source is round-tripped through the WSDL import path: the item's WSDL bundle with its
+    `.xsd` replaced by this export, imported by `WsdlImportSource` (`import_path: "wsdl"`).
+- **Export gate.** `export_validation._validate_xsd` (keyword = rule; `xsd.reimport` when it does not import).
+
+### Changed
+- `wsdl_bundle_validation`: `bundle_reference_problems` (with a `rule` parameter), `reader_message` and `reader_file`
+  are public; `reader_file` now reads `xmlschema`'s `schema_url`, so a WSDL structure finding names the `.xsd` it is
+  in.
+
 ## [1.541.0] - 2026-10-30
 
 ### Added

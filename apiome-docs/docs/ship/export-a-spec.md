@@ -838,6 +838,19 @@ the same name, so a document can start with it.
 An item imported from XSD is written back with its own global elements, attributes, occurrences and
 enumeration values.
 
+Each export is checked before you download it, the way it arrives once you unzip it:
+
+1. Every `.xsd` is safe, well-formed XML, and every `xs:import` and `xs:include` names a file inside
+   the export. A link to a web address or outside the folder fails.
+2. The schema is built by an XML Schema processor. An XSD 1.0 export must build under **both** the
+   1.0 and the 1.1 processor; an XSD 1.1 export under the 1.1 processor. An unknown type, a broken
+   facet or an XSD 1.1 construct in a 1.0 schema fails the export.
+3. The export imports again as an XSD.
+
+A failed check names the file and the rule (`xsd.bundle-reference`, `xsd.schema-1.0`,
+`xsd.schema-1.1`, `xsd.reimport`). An item imported from WSDL is also checked through the WSDL
+import: its XSD export, put in place of the WSDL's own schema, imports back unchanged.
+
 The fidelity report lists, construct by construct, what XML Schema cannot say the way the source does:
 
 | In the source | In the XSD export |

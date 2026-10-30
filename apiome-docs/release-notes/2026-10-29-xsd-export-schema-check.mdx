@@ -1,0 +1,18 @@
+---
+slug: xsd-export-schema-check
+title: XSD exports are built by a schema processor before download
+description: An XSD export must build under XSD 1.0 and 1.1 processors, then import.
+authors: [apiome]
+---
+
+An **XSD** export is now built by an XML Schema processor, the way it arrives once you unzip it,
+before you download it. [How XSD exports are checked](/ship/export-a-spec#xsd-xml-schema-on-its-own).
+
+{/* truncate */}
+
+- **Packaged.** Every `xs:import` and `xs:include` names a file inside the export.
+- **1.0 and 1.1.** An XSD 1.0 export must build under both the 1.0 and the 1.1 processor; an XSD 1.1
+  export under 1.1. An unknown type, a broken facet or a 1.1 construct in a 1.0 schema fails it.
+- **Re-imports.** The export imports again as an XSD; an item imported from WSDL also round-trips
+  through the WSDL import.
+- **Detail.** A failed check names the file and the rule.

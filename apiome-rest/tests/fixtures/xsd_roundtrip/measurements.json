@@ -1,0 +1,612 @@
+{
+  "01-purchase-order.xsd": {
+    "status": "lossless",
+    "import_path": "xsd",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "02-minimal-note.xsd": {
+    "status": "lossless",
+    "import_path": "xsd",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "03-library-extension.xsd": {
+    "status": "lossless",
+    "import_path": "xsd",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "04-kitchen-sink.xsd": {
+    "status": "lossy",
+    "import_path": "xsd",
+    "diff": [
+      [
+        "type",
+        "http://example.com/shipping.ParcelRef",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/shipping.RouteCodes",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/shipping.WeightKg",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "http://example.com/shipping.ParcelRef",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/shipping.RouteCodes",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/shipping.WeightKg",
+        "changed"
+      ]
+    ],
+    "overclaims": [
+      "http://example.com/shipping.ParcelRef",
+      "http://example.com/shipping.RouteCodes",
+      "http://example.com/shipping.WeightKg"
+    ]
+  },
+  "05-ubl-invoice-shape.xsd": {
+    "status": "lossless",
+    "import_path": "xsd",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "06-employee-directory.xsd": {
+    "status": "lossless",
+    "import_path": "xsd",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "01-calculator.wsdl": {
+    "status": "lossless",
+    "import_path": "wsdl",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "02-order-service.wsdl": {
+    "status": "lossless",
+    "import_path": "wsdl",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "03-shared-types-import.wsdl": {
+    "status": "lossless",
+    "import_path": "wsdl",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "04-kitchen-sink.wsdl": {
+    "status": "lossy",
+    "import_path": "wsdl",
+    "diff": [
+      [
+        "operation",
+        "http://example.com/telemetry.IngestionPort.GetSensorStatus",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusInput",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusInputMessage",
+        "added"
+      ],
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusOutput",
+        "changed"
+      ],
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusOutputMessage",
+        "added"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusInputMessage",
+        "added"
+      ],
+      [
+        "type",
+        "http://example.com/telemetry.GetSensorStatusOutputMessage",
+        "added"
+      ]
+    ],
+    "overclaims": [
+      "http://example.com/telemetry.GetSensorStatusInput",
+      "http://example.com/telemetry.GetSensorStatusOutput"
+    ]
+  },
+  "05-global-weather.wsdl": {
+    "status": "lossless",
+    "import_path": "wsdl",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "06-bank-transfer.wsdl": {
+    "status": "lossless",
+    "import_path": "wsdl",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "30-openapi-3.0-petstore.yaml": {
+    "status": "lossy",
+    "import_path": "xsd",
+    "diff": [
+      [
+        "operation",
+        "DELETE /pets/{petId}",
+        "removed"
+      ],
+      [
+        "operation",
+        "GET /pets",
+        "removed"
+      ],
+      [
+        "operation",
+        "GET /pets/{petId}",
+        "removed"
+      ],
+      [
+        "operation",
+        "POST /pets",
+        "removed"
+      ],
+      [
+        "operation",
+        "PUT /pets/{petId}",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "Pet",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "default",
+        "removed"
+      ]
+    ],
+    "overclaims": [
+      "Category",
+      "Pet"
+    ]
+  },
+  "22-advanced-oneof-polymorphism.yaml": {
+    "status": "lossy",
+    "import_path": "xsd",
+    "diff": [
+      [
+        "operation",
+        "POST /notifications",
+        "removed"
+      ],
+      [
+        "operation",
+        "POST /payments",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Address",
+        "changed"
+      ],
+      [
+        "type",
+        "Attachment",
+        "changed"
+      ],
+      [
+        "type",
+        "AudioDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "BankTransferPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CreditCardPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CryptocurrencyPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "Document",
+        "changed"
+      ],
+      [
+        "type",
+        "EmailNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "ImageDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "Notification",
+        "changed"
+      ],
+      [
+        "type",
+        "PayPalPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "Payment",
+        "changed"
+      ],
+      [
+        "type",
+        "PushNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "RetryPolicy",
+        "changed"
+      ],
+      [
+        "type",
+        "SMSNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "TextDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "VideoDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "WebhookNotification",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "default",
+        "removed"
+      ]
+    ],
+    "overclaims": [
+      "Address",
+      "Attachment",
+      "AudioDocument",
+      "BankTransferPayment",
+      "CreditCardPayment",
+      "CryptocurrencyPayment",
+      "Document",
+      "EmailNotification",
+      "ImageDocument",
+      "Notification",
+      "PayPalPayment",
+      "Payment",
+      "PushNotification",
+      "RetryPolicy",
+      "SMSNotification",
+      "TextDocument",
+      "VideoDocument",
+      "WebhookNotification"
+    ]
+  },
+  "02-grpc-service.proto": {
+    "status": "lossy",
+    "import_path": "xsd",
+    "diff": [
+      [
+        "operation",
+        "example.catalog.v1.ProductService.CreateProduct",
+        "removed"
+      ],
+      [
+        "operation",
+        "example.catalog.v1.ProductService.GetProduct",
+        "removed"
+      ],
+      [
+        "operation",
+        "example.catalog.v1.ProductService.ListProducts",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "example.catalog.v1.ProductService",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.AttributesEntry",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1.CreateProductRequest",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Dimensions",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.GetProductRequest",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsRequest",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsResponse",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product",
+        "changed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product.AttributesEntry",
+        "removed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "example.catalog.v1.ProductService",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.AttributesEntry",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product.AttributesEntry",
+        "removed"
+      ]
+    ],
+    "overclaims": [
+      "example.catalog.v1.CreateProductRequest",
+      "example.catalog.v1.Dimensions",
+      "example.catalog.v1.GetProductRequest",
+      "example.catalog.v1.ListProductsRequest",
+      "example.catalog.v1.ListProductsResponse",
+      "example.catalog.v1.Product"
+    ]
+  },
+  "10-comprehensive-ecommerce.json": {
+    "status": "lossy",
+    "import_path": "xsd",
+    "diff": [
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "type",
+        "Address",
+        "changed"
+      ],
+      [
+        "type",
+        "BaseEntity",
+        "changed"
+      ],
+      [
+        "type",
+        "Cart",
+        "changed"
+      ],
+      [
+        "type",
+        "CartItem",
+        "changed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "Customer",
+        "changed"
+      ],
+      [
+        "type",
+        "Discount",
+        "changed"
+      ],
+      [
+        "type",
+        "E-Commerce Platform",
+        "removed"
+      ],
+      [
+        "type",
+        "ECommercePlatform",
+        "added"
+      ],
+      [
+        "type",
+        "Image",
+        "changed"
+      ],
+      [
+        "type",
+        "Money",
+        "changed"
+      ],
+      [
+        "type",
+        "Order",
+        "changed"
+      ],
+      [
+        "type",
+        "OrderLine",
+        "changed"
+      ],
+      [
+        "type",
+        "Product",
+        "changed"
+      ],
+      [
+        "type",
+        "ProductVariant",
+        "changed"
+      ],
+      [
+        "type",
+        "Timestamp",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "Cart",
+        "changed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "Customer",
+        "changed"
+      ],
+      [
+        "type",
+        "E-Commerce Platform",
+        "removed"
+      ],
+      [
+        "type",
+        "ECommercePlatform",
+        "added"
+      ],
+      [
+        "type",
+        "Money",
+        "changed"
+      ],
+      [
+        "type",
+        "Order",
+        "changed"
+      ],
+      [
+        "type",
+        "Product",
+        "changed"
+      ]
+    ],
+    "overclaims": [
+      "Address",
+      "BaseEntity",
+      "Cart",
+      "CartItem",
+      "Category",
+      "Customer",
+      "Discount",
+      "Image",
+      "Money",
+      "Order",
+      "OrderLine",
+      "Product",
+      "ProductVariant",
+      "Timestamp"
+    ]
+  }
+}
