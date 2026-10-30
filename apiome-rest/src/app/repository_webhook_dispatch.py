@@ -166,20 +166,26 @@ class WebhookIngestResult:
         reason: Stable code explaining the outcome, or ``None`` for a plain success.
         jobs_enqueued: Scan jobs actually queued (0 or 1 today).
         repository_id: The repository the delivery drove, when it resolved to one.
+        tenant_id: The repository's tenant, when the delivery resolved to one.
         branch: The branch the delivery was about, when parsed.
         poll_due: True when the repository was made due for the refresh sweep.
         binding_candidates: Sync candidates raised on drafts bound to the moved ref (GNC-2.1).
         checks_seeded: Pending provider checks announced on the moved ref's commit (GNC-2.2).
+        instant_refresh_paths: Tracked files the push changed, to refresh right away (RAR-6.3);
+            empty when the push changed none, its file list is unknown, or the repository is
+            not pollable — the cadence sweep then covers it.
     """
 
     outcome: str
     reason: Optional[str] = None
     jobs_enqueued: int = 0
     repository_id: Optional[str] = None
+    tenant_id: Optional[str] = None
     branch: Optional[str] = None
     poll_due: bool = False
     binding_candidates: int = 0
     checks_seeded: int = 0
+    instant_refresh_paths: Tuple[str, ...] = ()
 
 
 def _first_header(headers: Mapping[str, Any], names: Tuple[str, ...]) -> Optional[str]:
@@ -537,13 +543,32 @@ def _dispatch_push(
             branch=event.branch,
         )
 
+    # RAR-6.3: when the delivery lists the files it changed, the tracked ones are refreshed right
+    # away (the routes layer runs it after answering). Only a pollable repository qualifies —
+    # poll_due is False when the tenant opted it out or it is auto-paused — and the repository
+    # stays due either way, so the sweep is the fallback.
+    instant_paths: Tuple[str, ...] = ()
+    if poll_due:
+        try:
+            from .repository_webhook_refresh import tracked_changed_paths
+
+            instant_paths = (
+                tracked_changed_paths(db, repository_id, event.branch, event.changed_paths) or ()
+            )
+        except Exception:
+            _logger.exception(
+                "repository webhook tracked-path lookup failed repository_id=%s", repository_id
+            )
+
     return WebhookIngestResult(
         outcome=OUTCOME_ENQUEUED,
         reason=(REASON_SCAN_IN_FLIGHT if job_id is None else None),
         jobs_enqueued=(1 if job_id else 0),
         repository_id=repository_id,
         branch=event.branch,
+        tenant_id=tenant_id,
         poll_due=poll_due,
+        instant_refresh_paths=instant_paths,
     )
 
 
@@ -832,6 +857,8 @@ def ingest_webhook_delivery(
                 "bindingCandidates": result.binding_candidates,
                 # Pending provider checks announced on the moved ref's commit (GNC-2.2, #4738).
                 "checksSeeded": result.checks_seeded,
+                # Tracked files the push changed, refreshed right away after the reply (RAR-6.3).
+                "instantRefreshFiles": len(result.instant_refresh_paths),
                 # Which of the subscription's two secrets verified this delivery (REPO-4.7).
                 # `previous` means the provider is still signing with the outgoing secret and
                 # this delivery only worked because the grace window is open — the audit trail

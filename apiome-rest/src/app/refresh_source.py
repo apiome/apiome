@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple, Union, runtime_checkable
+from typing import AbstractSet, Any, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple, Union, runtime_checkable
 
 from .repository_refresh_comparator import RefreshDecision, evaluate_refresh
 
@@ -249,7 +249,8 @@ class GitBranchRefreshSource:
         repo_row: The repository row (from ``get_tenant_repository``).
         branch: The branch to rescan and evaluate.
         path_filter: When set, only the file at this repository-relative path is a candidate
-            (per-file "Refresh Now").
+            (per-file "Refresh Now"), or — given a set of paths — only those files (the files a
+            push changed, RAR-6.3).
     """
 
     def __init__(
@@ -258,12 +259,14 @@ class GitBranchRefreshSource:
         repo_row: Mapping[str, Any],
         branch: str,
         *,
-        path_filter: Optional[str] = None,
+        path_filter: Optional[Union[str, AbstractSet[str]]] = None,
     ) -> None:
         self._db = db
         self._repo_row = repo_row
         self._branch = branch
-        self._path_filter = path_filter
+        self._path_filter: Optional[AbstractSet[str]] = (
+            None if path_filter is None else {path_filter} if isinstance(path_filter, str) else frozenset(path_filter)
+        )
         self.repository_id = str(repo_row["id"])
         self.tenant_id = str(repo_row["tenant_id"])
 
@@ -284,7 +287,7 @@ class GitBranchRefreshSource:
         candidates: List[RefreshCandidate] = []
         for row in self._db.list_repository_refresh_candidates(self.repository_id, self._branch):
             path = str(row.get("path"))
-            if self._path_filter is not None and path != self._path_filter:
+            if self._path_filter is not None and path not in self._path_filter:
                 continue
             candidates.append(
                 RefreshCandidate(

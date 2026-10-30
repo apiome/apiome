@@ -229,6 +229,27 @@ audit log as `repository.pr_back_opened`, and every update as `repository.pr_bac
 
 <Screenshot id="repositories-catalog" alt="Discovered specs: specs found across repositories with format, project and status" />
 
+## Refresh on push
+
+A repository refreshes its imported specs on its **Scan cadence**. When the repository also sends
+Apiome its push webhooks (GitHub, GitLab or Bitbucket, delivered to
+`POST /v1/repositories/webhook/{provider}`), a push refreshes sooner:
+
+- **GitHub and GitLab.** A push lists the files it changed. If it changed a file you imported a
+  spec from, on the branch you imported it from, Apiome refreshes **that file** within seconds of
+  the push, with the import settings you first used. Other files are not touched.
+- **Bitbucket**, a force push, or a push too large for the provider to list every file: Apiome
+  can't tell which files changed, so the repository refreshes on the next scheduled check, usually
+  within a minute.
+
+A push refresh follows the same rules as a scheduled one. A file is re-imported only when it is
+newer than what you last imported, and a version you edited by hand is held for review (see
+**Settings**). The refresh counts against your [quota](#quota--rate-limits). A push does nothing
+while **Auto-refresh** is off or the repository is paused after repeated failures.
+
+If a push refresh can't run, for example because your quota is used up, the repository still
+refreshes on its next scheduled check. Without webhooks, **Scan cadence** works as before.
+
 ## Quota & rate limits
 
 <Route path="/ade/dashboard/repositories/telemetry" />
