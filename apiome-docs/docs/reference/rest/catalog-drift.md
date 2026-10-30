@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.416.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.417.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-drift` · 4 operations
 
@@ -170,7 +170,7 @@ The tenant's drift alert settings.
 | `notifySafe` | boolean | no | Announce safe drift. Off: safe drift only shows a badge. |
 | `delivery` | enum `"immediate"`, `"daily_digest"` | no | immediate: one webhook per drift; daily_digest: one webhook a day listing it all. |
 | `breakingImmediate` | boolean | no | With daily_digest, still send breaking drift right away. |
-| `emailEnabled` | boolean | no | Opt in to drift email. Stored for a later email channel; no email is sent yet. |
+| `emailEnabled` | boolean | no | Also email drift to the item's owner team: each alert right away, or one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY / EMAIL_FROM). |
 
 ### `CatalogDriftSettingsOut` {#schema-catalogdriftsettingsout}
 
@@ -183,7 +183,7 @@ The settings plus when they last changed and when the last digest went out.
 | `notifySafe` | boolean | no | Announce safe drift. Off: safe drift only shows a badge. |
 | `delivery` | enum `"immediate"`, `"daily_digest"` | no | immediate: one webhook per drift; daily_digest: one webhook a day listing it all. |
 | `breakingImmediate` | boolean | no | With daily_digest, still send breaking drift right away. |
-| `emailEnabled` | boolean | no | Opt in to drift email. Stored for a later email channel; no email is sent yet. |
+| `emailEnabled` | boolean | no | Also email drift to the item's owner team: each alert right away, or one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY / EMAIL_FROM). |
 | `configured` | boolean | yes | False when the tenant uses the defaults. |
 | `updatedAt` | string or null | no | Updated At. |
 | `lastDigestAt` | string or null | no | Last Digest At. |

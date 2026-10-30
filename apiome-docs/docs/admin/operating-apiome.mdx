@@ -115,6 +115,22 @@ Provider sign-up and **Resend email** never show it. Refusals are listed under
 [Recent blocked sign-ups](./auth-providers.mdx#abuse-protection); they reach it only when
 `INTERNAL_SERVICE_TOKEN` is set on apiome-ui and apiome-rest, like every sign-in event.
 
+### Email for notifications
+
+The REST API emails some notifications — today, catalog
+[drift email](../bring-in/catalog-refresh.mdx#drift-email). It sends with SendGrid, like email
+sign-up in the web app. Set both in `apiome-rest/.env` (or the `rest` service's environment) and
+restart apiome-rest:
+
+| Variable | What it is |
+| --- | --- |
+| `SENDGRID_API_KEY` | The SendGrid key Apiome sends email with — the same key as apiome-ui's |
+| `EMAIL_FROM` | The sender address, for example `Apiome <no-reply@apiome.example>` |
+| `APIOME_UI_PUBLIC_URL` | The public address of the web app, which the links in an email point at |
+
+With either of the first two missing, nothing is emailed and nothing fails: the other channels of a
+notification still go out. A refused or failed send is logged by apiome-rest without the message.
+
 ### Largest spec the import wizard accepts
 
 The **Import** wizard on **Projects** and **Versions** sends the whole parsed spec to apiome-ui in

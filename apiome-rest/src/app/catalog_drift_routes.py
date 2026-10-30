@@ -69,7 +69,10 @@ class CatalogDriftSettings(BaseModel):
     email_enabled: bool = Field(
         default=False,
         alias="emailEnabled",
-        description="Opt in to drift email. Stored for a later email channel; no email is sent yet.",
+        description=(
+            "Also email drift to the item's owner team: each alert right away, or one email per "
+            "digest. A no-op when the server has no mailer (SENDGRID_API_KEY / EMAIL_FROM)."
+        ),
     )
 
 

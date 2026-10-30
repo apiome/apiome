@@ -166,7 +166,7 @@ changes stay on **What changed**. You need `projects:edit` (an **Editor** or **O
 
 ## Drift alerts
 
-A scheduled check that finds drift tells two places:
+A scheduled check that finds drift tells two places, and a third when email is on:
 
 - **The workspace's webhooks.** Every active push-webhook subscription gets a
   `catalog.drift.detected` event: the item, both versions, the grade, the counts and the top five
@@ -175,6 +175,8 @@ A scheduled check that finds drift tells two places:
 - **The item's owner team.** Each member gets a notification in their inbox, and the team's chat
   channel gets a post. An item with no confirmed owner lands in the **Unowned findings** report
   instead.
+- **The owner team's email**, when **Email me about drift too** is ticked — see
+  [Drift email](#drift-email).
 
 A version added with **“Check now”** is never announced: you are looking at the result.
 
@@ -197,7 +199,20 @@ The daily digest is one `catalog.drift.digest` webhook a day listing every drift
 one, with totals by grade. Each item's worst drift is also sent to its owner team. Drift that is not
 announced still shows its badge.
 
-**Email me about drift too** is saved for later: drift email is not sent yet.
+### Drift email
+
+Tick **Email me about drift too** in **Drift alerts** and **click “Save”** to email drift as well.
+The email goes to each member of the item's confirmed owner team — the same people who get the
+inbox notification — at the address on their Apiome account:
+
+- With **Right away**, each announced drift is one email: the item, the grade, the two versions,
+  the counts, the top five findings and a **See what changed** link.
+- With **Daily digest**, each member gets one email per digest, listing the drift of the items their
+  team owns. Breaking drift sent right away is emailed right away.
+
+Nobody is emailed about an item with no confirmed owner, or about a version added with **Check
+now**. Email needs a mail sender on the server; without one nothing is emailed and the other
+alerts go out as usual — see [Email for notifications](../admin/operating-apiome.mdx#email-for-notifications).
 
 ## Version retention
 

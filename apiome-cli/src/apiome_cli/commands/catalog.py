@@ -395,7 +395,7 @@ def set_alerts(
         help="With daily_digest: send breaking drift right away, or hold it for the digest too.",
     ),
     email: bool | None = typer.Option(
-        None, "--email/--no-email", help="Opt in to drift email (stored; email is not sent yet)."
+        None, "--email/--no-email", help="Also email drift to the item's owner team (needs a mailer on the server)."
     ),
     output_format: str = _format_option(),
 ) -> None:

@@ -218,3 +218,51 @@ def test_a_failed_tenant_listing_sends_nothing(rec, monkeypatch):
         catalog_drift_store, "tenants_due_for_digest", lambda db, **kw: (_ for _ in ()).throw(RuntimeError("down"))
     )
     assert service.send_due_digests(None) == 0
+
+
+# --- email (#6384) --------------------------------------------------------------------------
+
+
+@pytest.fixture
+def emails(monkeypatch) -> Dict[str, List[Dict[str, Any]]]:
+    """Records the drift email calls the service makes."""
+    calls: Dict[str, List[Dict[str, Any]]] = {"event": [], "digest": []}
+    monkeypatch.setattr("app.catalog_drift_email.email_event", lambda db, **kw: calls["event"].append(kw) or 1)
+    monkeypatch.setattr("app.catalog_drift_email.email_digest", lambda db, **kw: calls["digest"].append(kw) or 1)
+    return calls
+
+
+def test_with_email_on_an_announced_event_is_emailed_too(rec, emails):
+    rec.settings_row = {"email_enabled": True}
+    _record(_V1, _V2)
+    [call] = emails["event"]
+    assert (call["tenant_id"], call["item_id"], call["actor_id"]) == (_TENANT, _ITEM["id"], "u-saver")
+    assert call["payload"]["severity"] == "breaking" and call["payload"]["eventId"] == "e-1"
+
+
+def test_with_email_off_nothing_is_emailed(rec, emails):
+    _record(_V1, _V2)
+    assert len(rec.webhooks) == 1 and emails["event"] == []
+
+
+def test_email_follows_the_announcement_not_the_badge(rec, emails):
+    rec.settings_row = {"email_enabled": True, "delivery": "daily_digest", "notify_safe": True}
+    _record(_V1, _V3)  # held for the digest
+    _record(_V1, _V2, trigger="manual")  # never announced
+    assert emails["event"] == []
+
+
+def test_with_email_on_a_digest_emails_every_waiting_event(rec, emails):
+    rec.settings_row = {"email_enabled": True}
+    rec.pending[_TENANT] = [_pending("e-1", "a", "safe"), _pending("e-2", "a", "dangerous")]
+    assert service.send_due_digests(None, now=_NOW) == 1
+    [call] = emails["digest"]
+    assert call["tenant_id"] == _TENANT
+    assert [p["eventId"] for p in call["payloads"]] == ["e-1", "e-2"]
+    assert rec.digested == [(_TENANT, ["e-1", "e-2"])]
+
+
+def test_with_email_off_a_digest_is_not_emailed(rec, emails):
+    rec.pending[_TENANT] = [_pending("e-1", "a", "safe")]
+    assert service.send_due_digests(None, now=_NOW) == 1
+    assert emails["digest"] == []

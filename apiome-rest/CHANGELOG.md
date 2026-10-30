@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.553.0] - 2026-10-30
+
+### Added
+- **Catalog drift email (MFI-31.3a, #6384).** With the tenant's `emailEnabled` drift setting on and a mailer
+  configured, drift is emailed to the item's confirmed owner team members (owner routing's recipients, minus the
+  refresh's actor; enabled, undeleted accounts with an address) beside the webhook: one email per announced event for
+  `immediate` delivery, and one email per recipient per daily digest listing only the items their team owns. An
+  unowned item and a **Check now** version are never emailed. New `app.mailer` (SendGrid v3, configured like
+  apiome-ui: `SENDGRID_API_KEY` / `EMAIL_FROM`; a no-op when either is unset; never raises, never logs the key or a
+  body) and `app.catalog_drift_email`. Links use `APIOME_UI_PUBLIC_URL`. `docker-compose.yml` passes both variables
+  through to `rest`.
+
+### Changed
+- `CatalogDriftSettings.emailEnabled` no longer says email is not sent. OpenAPI 1.417.0.
+
 ## [1.552.0] - 2026-10-30
 
 ### Added

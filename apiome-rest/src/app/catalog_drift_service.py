@@ -21,7 +21,9 @@ problem never fails the refresh check or the sweep that produced the drift:
   ``owner_breaking_change`` finding: an inbox row per member of the item's confirmed owner team and
   a post to the team's chat channel, or the Unowned findings report when the item has no owner.
 
-Email is not sent yet: the tenant's opt-in is stored for a later email channel.
+When the tenant turned on email (``email_enabled``) the same owner team members are emailed too
+(#6384, :mod:`app.catalog_drift_email`): per event right away, one email per digest otherwise. With
+no mailer configured that channel is a no-op.
 """
 
 from __future__ import annotations
@@ -101,16 +103,28 @@ def record_refresh_drift(
         _logger.warning("catalog drift: could not record drift for item %s", item.get("id"), exc_info=True)
         return None
     if event and event.get("notification") == NOTIFICATION_SENT:
-        announce_event(db, event, item, actor_id=actor_id)
+        announce_event(db, event, item, actor_id=actor_id, email=settings.email_enabled)
     return event
 
 
 def announce_event(
-    db: Any, event: Mapping[str, Any], item: Mapping[str, Any], *, actor_id: Optional[str] = None
+    db: Any,
+    event: Mapping[str, Any],
+    item: Mapping[str, Any],
+    *,
+    actor_id: Optional[str] = None,
+    email: bool = False,
 ) -> None:
     """Send one ``catalog.drift.detected`` webhook and route the drift to the item's owners.
 
     Never raises.
+
+    Args:
+        db: Database handle.
+        event: The stored event row.
+        item: The catalog item (``id``, ``name``, ``slug``).
+        actor_id: Who the refresh acted as; never told as an owner.
+        email: The tenant's email opt-in; when on, the owner team is emailed too.
     """
     from .push_webhook_fanout import enqueue_event
 
@@ -122,6 +136,10 @@ def announce_event(
         _logger.warning("catalog drift: could not enqueue event %s", event.get("id"), exc_info=True)
         return
     _route_to_owner(db, tenant_id=tenant_id, item=item, payload=payload, actor_id=actor_id)
+    if email:
+        from .catalog_drift_email import email_event
+
+        email_event(db, tenant_id=tenant_id, item_id=str(item["id"]), payload=payload, actor_id=actor_id)
 
 
 def _route_to_owner(
@@ -165,7 +183,8 @@ def send_due_digests(db: Any, *, now: Any = None, interval_seconds: int = DIGEST
     """Send the daily digest to every tenant that is due one.
 
     Per tenant: one ``catalog.drift.digest`` webhook listing every waiting event, then each item's
-    worst waiting event routed to its owners, then the events marked ``digested``. Never raises.
+    worst waiting event routed to its owners, then (with the tenant's email opt-in on) one email per
+    owner team member listing their items' events, then the events marked ``digested``. Never raises.
 
     Args:
         db: Database handle.
@@ -196,13 +215,28 @@ def send_due_digests(db: Any, *, now: Any = None, interval_seconds: int = DIGEST
                 db, tenant_id=tenant_id, event_type=EVENT_DIGEST, payload=payload, log_label="catalog drift digest"
             )
             for event in _worst_per_item(events):
-                item = {"id": event["project_id"], "name": event.get("item_name"), "slug": event.get("item_slug")}
-                _route_to_owner(db, tenant_id=tenant_id, item=item, payload=drift_payload(event, item), actor_id=None)
+                _route_to_owner(
+                    db, tenant_id=tenant_id, item=_item_of(event), payload=_payload_of(event), actor_id=None
+                )
+            if settings_from_row(store.get_settings_row(db, tenant_id)).email_enabled:
+                from .catalog_drift_email import email_digest
+
+                email_digest(db, tenant_id=tenant_id, payloads=[_payload_of(event) for event in events])
             store.mark_digested(db, tenant_id, [str(event["id"]) for event in events])
             sent += 1
         except Exception:  # noqa: BLE001 - one tenant's failure never stops the others
             _logger.warning("catalog drift: digest failed for tenant %s", tenant_id, exc_info=True)
     return sent
+
+
+def _item_of(event: Mapping[str, Any]) -> Dict[str, Any]:
+    """The catalog item of a digest row (joined with ``item_name`` / ``item_slug``)."""
+    return {"id": event["project_id"], "name": event.get("item_name"), "slug": event.get("item_slug")}
+
+
+def _payload_of(event: Mapping[str, Any]) -> Dict[str, Any]:
+    """The ``catalog.drift.detected``-shaped payload of a digest row."""
+    return drift_payload(event, _item_of(event))
 
 
 def _worst_per_item(events: List[Mapping[str, Any]]) -> List[Mapping[str, Any]]:

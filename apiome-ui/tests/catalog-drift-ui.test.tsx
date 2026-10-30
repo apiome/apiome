@@ -5,7 +5,7 @@
  * Pins: the chip names the severity and links to the drift; the banner opens the drift and its
  * Dismiss posts (and is absent for a viewer); the panel is lazy, shows the classified changes worst
  * first, ticks the two versions for the diff on a drift link, and draws nothing without drift; the
- * dialog loads the settings, says email is not sent yet, shows the digest-only option only in
+ * dialog loads the settings, says who is emailed, shows the digest-only option only in
  * digest mode, and saves. Plus axe on each.
  */
 
@@ -219,7 +219,7 @@ describe('CatalogDriftPanel', () => {
 describe('CatalogDriftAlertsDialog', () => {
   const URL = '/api/catalog/drift-notifications';
 
-  it('loads, explains email is not sent yet, and saves', async () => {
+  it('loads, explains who is emailed, and saves', async () => {
     const calls = mockFetch({
       [`GET ${URL}`]: () => ({ body: { ...DEFAULT_DRIFT_SETTINGS, configured: false } }),
       [`PUT ${URL}`]: (init) => ({ body: { ...JSON.parse(String(init?.body)), configured: true } }),
@@ -229,7 +229,7 @@ describe('CatalogDriftAlertsDialog', () => {
     expect(await screen.findByTestId('catalog-drift-alerts-summary')).toHaveTextContent(
       'Breaking and dangerous drift is announced right away; safe drift only shows a badge.',
     );
-    expect(screen.getByTestId('catalog-drift-alerts-dialog')).toHaveTextContent('drift email is not sent yet');
+    expect(screen.getByTestId('catalog-drift-alerts-dialog')).toHaveTextContent("Emails the item’s owner team when email is set up.");
     expect(screen.queryByTestId('catalog-drift-alerts-breaking-immediate')).toBeNull();
     expect(await axe(screen.getByTestId('catalog-drift-alerts-dialog'), AXE_OPTIONS)).toHaveNoViolations();
 

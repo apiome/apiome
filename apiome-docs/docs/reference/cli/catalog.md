@@ -105,7 +105,7 @@ apiome catalog drift-alerts set [OPTIONS]
 | `--safe` / `--no-safe` | flag | `--no-safe` |  | Announce safe drift (off: badge only). |
 | `--delivery` | text |  |  | How to send: immediate, daily_digest (one webhook a day listing it all). |
 | `--breaking-immediate` / `--breaking-in-digest` | flag | `--breaking-in-digest` |  | With daily_digest: send breaking drift right away, or hold it for the digest too. |
-| `--email` / `--no-email` | flag | `--no-email` |  | Opt in to drift email (stored; email is not sent yet). |
+| `--email` / `--no-email` | flag | `--no-email` |  | Also email drift to the item's owner team (needs a mailer on the server). |
 | `--format` | text | `table` |  | Output: table (default) or json (the API response). |
 
 ## apiome catalog drift-alerts show {#catalog-drift-alerts-show}

@@ -1,0 +1,22 @@
+---
+slug: catalog-drift-email
+title: Catalog drift is emailed to the owner team
+description: Email me about drift too now emails the item's owner team.
+authors: [apiome]
+---
+
+**Email me about drift too** in **Drift alerts** now sends email: drift a scheduled live refresh
+finds reaches the item's owner team by email as well as by webhook, inbox and chat.
+[How it works](/bring-in/catalog-refresh#drift-email).
+
+{/* truncate */}
+
+- **Who is emailed.** Each member of the item's confirmed owner team, at the address on their
+  account — the people who get the inbox notification. Nobody is emailed about an item with no
+  owner, or about a version added with **Check now**.
+- **When.** With **Right away**, one email per drift, with the grade, the two versions, the top
+  findings and a **See what changed** link. With **Daily digest**, one email per member per digest,
+  listing only their team's items.
+- **For operators.** The REST API sends with SendGrid, like email sign-up: set `SENDGRID_API_KEY`
+  and `EMAIL_FROM` for apiome-rest ([Email for notifications](/admin/operating-apiome#email-for-notifications)).
+  Without them nothing is emailed and nothing fails.
