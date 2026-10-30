@@ -1683,7 +1683,9 @@ async def verify_export(
             detail=f"Target {request.target!r} produced no document for this source.",
         )
 
-    validation = await validate_emitted_artifact(dispatch.target, dispatch.emit, api=source.api)
+    validation = await validate_emitted_artifact(
+        dispatch.target, dispatch.emit, api=source.api, options=request.options
+    )
     validation_report = build_validation_report(validation)
     verdict = _verify_verdict(validation_report, dispatch.fidelity.summary.tier)
     files, truncated = _inline_verify_files(

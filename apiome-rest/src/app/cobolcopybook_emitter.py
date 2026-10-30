@@ -42,6 +42,8 @@ __all__ = [
     "CobolCopybookEmitOptions",
     "CobolCopybookEmitter",
     "CobolCopybookFidelityRulePack",
+    "copybook_emit_options",
+    "copybook_emit_plan",
     "validate_cobolcopybook_document",
 ]
 
@@ -328,9 +330,11 @@ class _CobolCopybookWriter:
         self._tree = api.extras.get("cobolcopybook_tree")
         self.output_path = _output_path(api)
 
-    def render(self) -> str:
-        """The copybook text: an optional header, then each ``01`` record."""
-        trees = [self._tree] if isinstance(self._tree, dict) else plan_copybook(
+    def trees(self) -> List[Dict[str, Any]]:
+        """The emit plan: the import-time tree of a copybook item, else one planned tree per ``01`` record."""
+        if isinstance(self._tree, dict):
+            return [self._tree]
+        return plan_copybook(
             self._api,
             CopybookPlanOptions(
                 numeric_usage=self._options.numeric_usage,
@@ -340,6 +344,10 @@ class _CobolCopybookWriter:
             ),
             self.losses,
         )
+
+    def render(self) -> str:
+        """The copybook text: an optional header, then each ``01`` record."""
+        trees = self.trees()
         if not trees:
             raise EmitPreconditionError(
                 "COBOL copybook export lays out record types, and this model has none (only enums, scalars or "
@@ -451,6 +459,37 @@ def _output_path(api: CanonicalApi) -> str:
     base = str(root) if isinstance(root, str) and root else api.identity.name or "record"
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "-", base).strip("-") or "record"
     return f"{safe}.cpy"
+
+
+def copybook_emit_options(options: Optional[Mapping[str, Any]] = None) -> CobolCopybookEmitOptions:
+    """The emitter's options from an export request's raw ``options`` (the defaults when they do not validate).
+
+    Args:
+        options: The per-target options the export ran with; ``None`` or empty for the defaults.
+
+    Returns:
+        The validated :class:`CobolCopybookEmitOptions`.
+    """
+    try:
+        return CobolCopybookEmitOptions.model_validate(dict(options or {}))
+    except ValidationError:
+        return CobolCopybookEmitOptions()
+
+
+def copybook_emit_plan(api: CanonicalApi, options: CobolCopybookEmitOptions) -> List[Dict[str, Any]]:
+    """The record layouts the emitter writes for ``api`` — MFX-23.4 (#4142).
+
+    The same trees :meth:`CobolCopybookEmitter.emit` renders, so the cb2xml validation
+    (:mod:`app.cobolcopybook_cb2xml`) can check that a copybook parses to exactly the layout planned.
+
+    Args:
+        api: The canonical model the copybook was emitted from.
+        options: The options it was emitted with.
+
+    Returns:
+        One tree per ``01`` record, in the shape of :func:`app.cobolcopybook_parser.field_template`.
+    """
+    return _CobolCopybookWriter(api, options).trees()
 
 
 def validate_cobolcopybook_document(content: str) -> None:

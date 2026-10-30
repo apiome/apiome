@@ -2361,7 +2361,9 @@ async def _drive_export_job_inner(job_id: str) -> None:
         # Feed the emitted output back through its matching MFI import parser: a buggy emitter
         # that produced illegal output is caught here and fails the job before delivery. A
         # format whose parser needs an unavailable toolchain is reported skipped (not failed).
-        validation = await validate_emitted_artifact(target_format, emit_result, api=source.api)
+        validation = await validate_emitted_artifact(
+            target_format, emit_result, api=source.api, options=request.options
+        )
         validation_report = build_validation_report(validation)
 
         # --- Stage 4b: the delivery gate (IXH-2.5) ----------------------------------
@@ -2771,7 +2773,7 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
                 return
 
             validation = await validate_emitted_artifact(
-                target_format, emit_result, api=source.api
+                target_format, emit_result, api=source.api, options=item.spec.options
             )
             validation_report = build_validation_report(validation)
             delivery = await _gate_delivery(

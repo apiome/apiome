@@ -1,0 +1,18 @@
+---
+slug: cobol-copybook-cb2xml-check
+title: COBOL copybook exports checked with cb2xml
+description: cb2xml parses every copybook export and checks its layout matches the plan.
+authors: [apiome]
+---
+
+A **COBOL copybook** export is now checked with cb2xml, an independent COBOL copybook parser.
+[How copybook exports are checked](/ship/export-a-spec#cobol-copybook-from-any-source).
+
+{/* truncate */}
+
+- **It must parse.** An export cb2xml cannot parse fails, with cb2xml's error message (and the line
+  and column of a fixed-format copybook).
+- **It must parse to the planned layout.** Every record and item cb2xml reads — level, name, `PIC`,
+  usage, `OCCURS` and `DEPENDING ON`, `REDEFINES`, `88` values — must match the layout Apiome planned
+  with the export's options. Each difference is listed at the item's path.
+- **Without cb2xml**, the export is read back by Apiome's copybook reader, as before.
