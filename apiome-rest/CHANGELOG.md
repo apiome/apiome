@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.544.0] - 2026-10-30
+
+### Added
+- **Collection validate + round-trip (MFX-31.4, #4292).** New `app.postman_roundtrip`:
+  - `collection_flavor(path, text)` — the MFX-5.1 alternate-validator seam: each emitted file is checked for what it
+    is (`postman` / `insomnia` / `bruno`), so the MFX-31.3 Insomnia / Bruno modes are validated by their import
+    adapters (`InsomniaImportSource`, `BrunoImportSource`) without new gate code.
+  - `postman_schema_problems(path, text)` — the vendored Postman Collection v2.1.0 JSON Schema; **one problem per
+    violation** with its JSON path (`postman.schema`, first 20 then a count; `postman.json` for non-JSON).
+  - `check_emitted_collection(emit_result)` — flavor (`collection.unknown-file`, `collection.mixed-flavors`), the
+    schema for Postman files, then a full re-import (parse + normalize) through the flavor's adapter
+    (`postman.reimport` / `insomnia.reimport` / `bruno.reimport`; a Bruno folder is read as one fileset).
+  - `round_trip_collection(api, *, opts, emit_result)` — canonical diff + `reconcile` with the fidelity report for
+    the export's options; `status` `invalid` / `unparseable` / `lossy` / `lossless`.
+- **Round-trip fixture.** `tests/fixtures/postman_roundtrip/measurements.json` (`APIOME_REGEN_POSTMAN_ROUNDTRIP=1`).
+
+### Changed
+- **Export gate.** `postman` findings are now one per schema violation with `path` and `keyword` (they were one
+  joined message), and the collection must import again, not only re-parse.
+
 ## [1.543.0] - 2026-10-30
 
 ### Added

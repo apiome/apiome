@@ -1,0 +1,375 @@
+{
+  "30-openapi-3.0-petstore.yaml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "DELETE /pets/{petId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /pets",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /pets/{petId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /pets",
+        "changed"
+      ],
+      [
+        "operation",
+        "PUT /pets/{petId}",
+        "changed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "Sample Pet Store API (OpenAPI 3.0)",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Category",
+        "removed"
+      ],
+      [
+        "type",
+        "Pet",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "Sample Pet Store API (OpenAPI 3.0)",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ]
+    ],
+    "overclaims": []
+  },
+  "31-paths-comprehensive.yaml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "DELETE /api/items/{itemId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /api/items",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /api/items/{itemId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /api/search",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /api/items",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /api/session",
+        "changed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "Paths Comprehensive Example",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "service",
+        "items",
+        "removed"
+      ],
+      [
+        "type",
+        "Item",
+        "changed"
+      ],
+      [
+        "type",
+        "Session",
+        "added"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "Paths Comprehensive Example",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "service",
+        "items",
+        "removed"
+      ],
+      [
+        "type",
+        "Session",
+        "added"
+      ]
+    ],
+    "overclaims": []
+  },
+  "22-advanced-oneof-polymorphism.yaml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "POST /notifications",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /payments",
+        "changed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "Advanced Composition - oneOf Polymorphism Example",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Address",
+        "removed"
+      ],
+      [
+        "type",
+        "Attachment",
+        "removed"
+      ],
+      [
+        "type",
+        "AudioDocument",
+        "removed"
+      ],
+      [
+        "type",
+        "BankTransferPayment",
+        "removed"
+      ],
+      [
+        "type",
+        "CreditCardPayment",
+        "removed"
+      ],
+      [
+        "type",
+        "CryptocurrencyPayment",
+        "removed"
+      ],
+      [
+        "type",
+        "Document",
+        "removed"
+      ],
+      [
+        "type",
+        "EmailNotification",
+        "removed"
+      ],
+      [
+        "type",
+        "ImageDocument",
+        "removed"
+      ],
+      [
+        "type",
+        "Notification",
+        "changed"
+      ],
+      [
+        "type",
+        "PayPalPayment",
+        "removed"
+      ],
+      [
+        "type",
+        "Payment",
+        "changed"
+      ],
+      [
+        "type",
+        "PushNotification",
+        "removed"
+      ],
+      [
+        "type",
+        "RetryPolicy",
+        "removed"
+      ],
+      [
+        "type",
+        "SMSNotification",
+        "removed"
+      ],
+      [
+        "type",
+        "TextDocument",
+        "removed"
+      ],
+      [
+        "type",
+        "VideoDocument",
+        "removed"
+      ],
+      [
+        "type",
+        "WebhookNotification",
+        "removed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "Advanced Composition - oneOf Polymorphism Example",
+        "added"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ]
+    ],
+    "overclaims": []
+  },
+  "03-orders-service.raml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "DELETE /orders/{orderId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /orders",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /orders/{orderId}",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /orders",
+        "changed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "type",
+        "NewOrder",
+        "removed"
+      ],
+      [
+        "type",
+        "Order",
+        "changed"
+      ],
+      [
+        "type",
+        "OrderItem",
+        "removed"
+      ]
+    ],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "01-simple-api.apib": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "GET /tasks",
+        "changed"
+      ],
+      [
+        "operation",
+        "GET /tasks/{id}",
+        "changed"
+      ],
+      [
+        "operation",
+        "POST /tasks",
+        "changed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "type",
+        "NewTask",
+        "removed"
+      ],
+      [
+        "type",
+        "Task",
+        "changed"
+      ]
+    ],
+    "unexplained": [],
+    "overclaims": []
+  }
+}

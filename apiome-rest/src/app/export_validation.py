@@ -46,8 +46,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``thrift`` — the Apache Thrift compiler (``thrift --gen json``,
   :func:`app.thrift_compile.compile_thrift_idl`) when the toolchain has it, else a re-parse through
   :func:`app.thrift_parser.parse_thrift`;
-* ``postman`` — :func:`app.postman_emitter.validate_postman_collection` (the published Postman
-  Collection v2.1.0 JSON Schema, vendored, then a re-parse through the Postman reader);
+* ``postman`` — :func:`app.postman_roundtrip.check_emitted_collection` (MFX-31.4): a Postman file
+  against the published Postman Collection v2.1.0 JSON Schema (vendored; one finding per violation),
+  an Insomnia / Bruno file (MFX-31.3 modes) by its import adapter, then a re-import;
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
   and :func:`app.thunder_client_emitter.validate_thunder_client_export` (the emitted collection
   and environment re-parsed together as one upload through the client's import adapter, FMT-10.4);
@@ -1230,14 +1231,23 @@ async def _validate_openrpc(
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted Postman collection (MFX-31.1, #4289).
+    """Re-validate an emitted collection (MFX-31.1, #4289; MFX-31.4, #4292).
 
-    The published Postman Collection v2.1.0 JSON Schema (vendored, offline) and then a re-parse
-    through the Postman reader the import uses (:func:`app.postman_emitter.validate_postman_collection`).
+    The check follows what each file is (:func:`app.postman_roundtrip.check_emitted_collection`): a Postman
+    collection is validated against the published v2.1.0 JSON Schema (vendored, offline; one finding per
+    violation, with its JSON path), an Insomnia or Bruno one (MFX-31.3 output modes) by the import adapter
+    for its format; then the export must import again. Findings carry the rule as ``keyword``.
     """
-    from .postman_emitter import validate_postman_collection
+    from .postman_roundtrip import check_emitted_collection
 
-    return await _run_text_validator(target, emit_result, validate_postman_collection)
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The collection export wrote no file.")])
+    _flavor, problems = await asyncio.to_thread(check_emitted_collection, emit_result)
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_smithy(

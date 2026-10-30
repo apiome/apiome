@@ -73,11 +73,17 @@ What a Postman collection carries beyond the other clients:
 - **The API's description and version**, in the collection's info.
 - **Every server**, as a collection variable.
 
-Each Postman export is checked against the published
-[Postman Collection v2.1.0 schema](https://schema.postman.com/collection/json/v2.1.0/draft-07/collection.json)
-and read back by Apiome's Postman importer before you download it. A collection imported from Postman
-is written back as it was read: its folders, headers, bodies, saved responses, variables and auth. A
-Collection v2.0 one is written as v2.1.
+Each Postman export is checked before you download it:
+
+1. It is validated against the published
+   [Postman Collection v2.1.0 schema](https://schema.postman.com/collection/json/v2.1.0/draft-07/collection.json).
+   Each violation is listed on its own, with the JSON path where it is (`/item/0/request/method`).
+2. It is imported again by Apiome's Postman importer, as an uploaded collection would be.
+
+If either check fails, the export fails and names the file, the path and the rule (`postman.schema`,
+`postman.reimport`). A collection imported from Postman is written back as it was read — its folders,
+headers, bodies, saved responses, variables and auth — and re-imports unchanged. A Collection v2.0 one
+is written as v2.1.
 
 ## What you get
 
