@@ -354,7 +354,9 @@ async def test_emitted_output_validation() -> None:
     _schema(doc)["Pet"]["id"]["$Type"] = 42
     broken = result.model_copy(update={"files": [result.files[0].model_copy(update={"content": json.dumps(doc)})]})
     verdict = await validate_emitted_artifact("odata", broken, api=api)
-    assert verdict.failed and "OASIS schema" in verdict.findings[0].message
+    assert verdict.failed and verdict.findings[0].keyword == "odata.csdl-schema"
+    # The import's resolution cannot finish on a non-string `$Type`; the schema finding still names the spot.
+    assert verdict.findings[0].path == "/Pet.Store/Pet/id/$Type"
 
 
 # ===========================================================================
@@ -390,7 +392,10 @@ def test_odata_corpus_round_trips(path: Path) -> None:
         diff = canonical_diff(api, reimport_emitted(ODataImportSource(), result, multi_file=False)).entries
         synthesized = {loss.pointer for loss in result.losses if loss.subject == "key-synthesized"}
         # A derived entity's key lives on its base type, which a v4 import does not keep: it gets a synthesized key.
-        assert {(e.change.value, e.key) for e in diff} == {("changed", key) for key in synthesized}, output
+        # A property typed with a type the import did not keep (a TypeDefinition) is written from its canonical
+        # type, so its type changes too (MFX-16.3: every re-emitted name must resolve).
+        undeclared = {loss.pointer for loss in result.losses if loss.subject == "stored-type-undeclared"}
+        assert {(e.change.value, e.key) for e in diff} == {("changed", key) for key in synthesized | undeclared}, output
 
 
 _OTHER_CORPUS = [

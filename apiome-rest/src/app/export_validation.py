@@ -618,16 +618,23 @@ async def _validate_corbaidl(
 async def _validate_odata(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted OData EDMX / CSDL document by re-parsing it."""
-    from .odata_emitter import validate_odata_document
+    """Re-validate emitted OData metadata (MFX-16.1, #3897; MFX-16.3, #3899).
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
-        try:
-            validate_odata_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    Each document goes through the checks an OData import runs (:func:`app.odata_roundtrip.check_emitted_odata`):
+    the OASIS CSDL JSON schema or EDMX / EDM XML schemas, reference and key resolution, and a re-import; with
+    ``output: both`` the two documents must describe the same model. One finding per violation, with its JSON
+    pointer and the rule as ``keyword``.
+    """
+    from .odata_roundtrip import check_emitted_odata
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The OData export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_odata, emit_result)
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_fhir(

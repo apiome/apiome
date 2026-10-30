@@ -1,0 +1,21 @@
+---
+slug: odata-export-checks
+title: OData exports check every reference and key
+description: An OData export must pass the OASIS schema, resolve every reference and re-import.
+authors: [apiome]
+---
+
+An **OData** export now runs the same checks an OData import does before you download it.
+[How OData exports are checked](/ship/export-a-spec#odata-csdl-from-any-source).
+
+{/* truncate */}
+
+- **Every violation.** Each OASIS CSDL JSON or EDMX / EDM XML schema violation is its own finding with
+  its JSON pointer.
+- **References and keys.** Every `$Type`, entity set and navigation target must name a declared element,
+  and every `$Key` property must exist.
+- **Both outputs agree.** With `both`, the JSON and XML documents must describe the same model.
+- **Fixed.** An item imported from a multi-schema OData document now exports with every reference
+  re-qualified into the one namespace it is written in, and a property whose type definition the
+  import did not keep is written from its own type and reported. Before, both left names that resolved
+  to nothing.

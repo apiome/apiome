@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.546.0] - 2026-10-30
+
+### Added
+- **OData validate + round-trip (MFX-16.3, #3899).** New `app.odata_roundtrip`:
+  - `check_emitted_odata(emit_result)` — each document is parsed by `ODataImportSource`, which runs the import's own
+    checks (`app.odata_validation`, MFI-11.1 / 11.4); `document_problems` turns what they recorded into one problem per
+    finding with its JSON pointer: `odata.csdl-schema` (OASIS CSDL JSON schema), `odata.csdl-xml-schema` (EDMX / EDM
+    XSDs), `odata.unresolved-reference` / `odata.key` (reference and key resolution), plus counts of unlisted findings.
+    Then a re-import (`odata.reimport`), and with `output: both` the two documents must normalize to the same model
+    (`odata.outputs-disagree`). Malformed metadata that trips the import's resolution step still reports its schema
+    findings (`odata.parse` otherwise).
+  - `round_trip_odata(api, *, opts, emit_result)` — canonical diff (CSDL JSON document first) + `reconcile` with the
+    fidelity report for the export's options.
+- **Export gate.** `odata` findings are one per violation with `path` and `keyword` (they were one joined message), and
+  resolution issues now fail the export.
+
+### Fixed
+- **OData emitter: stored type names resolve.** An OData source's own `$Type` / navigation names are re-qualified into
+  the one namespace the export writes (`Example.Sales.InvoiceLine` → `Example.Core.InvoiceLine`,
+  `04-inheritance-two-schemas`). A name the item does not declare (a TypeDefinition the import did not keep,
+  `05-stress-service-surface`) falls back to the canonical type and is reported (`stored-type-undeclared`, filed on
+  the owning type so the fidelity report predicts it); an undeclared navigation target is dropped and reported
+  (`navigation-target-undeclared`). Both documents were schema-valid but did not resolve.
+
 ## [1.545.1] - 2026-10-30
 
 ### Documentation
