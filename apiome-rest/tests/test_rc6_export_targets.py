@@ -109,7 +109,6 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
 #: imported in that format can be exported to them (``Emitter.source_unsupported_reason``). Each
 #: maps to the format it is imported from and a corpus fixture of it.
 SOURCE_BOUND: Dict[str, tuple[str, str]] = {
-    "cobolcopybook": ("cobolcopybook", "cobol-copybook/01-customer-record.cpy"),
     "edix12": ("edix12", "edi-x12/01-850-purchase-order.edi"),
     "fix": ("fix", "fix/01-newordersingle.fix"),
     "hl7v2": ("hl7v2", "hl7v2/01-adt-a01.hl7"),

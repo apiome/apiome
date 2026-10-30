@@ -1,0 +1,21 @@
+---
+slug: cobol-copybook-export
+title: Export any item as a COBOL copybook
+description: COBOL copybook export now lays out records for any source, not only copybooks.
+authors: [apiome]
+---
+
+**COBOL Copybook** export now works for every item, not only items imported from a copybook: Apiome lays
+out its types as `01` record layouts that mainframe programs (z/OS Connect, CICS, IMS) can `COPY`.
+[How types become records](/ship/export-a-spec#cobol-copybook-from-any-source).
+
+{/* truncate */}
+
+- **Records.** Nested objects become group items; lists become `OCCURS` tables, with a `-COUNT` field
+  for lists that vary in size; unions share storage with `REDEFINES`.
+- **Pictures.** Text is `PIC X(n)`, integers `S9(n) COMP`, decimals packed `COMP-3`, booleans a
+  one-character flag with condition names.
+- **Names.** COBOL data names, at most 30 characters and unique in the copybook — the same item always
+  gets the same names.
+- **Options.** Choose `COMP` or `DISPLAY` numbers, the default text length and table size, the decimal
+  scale, and fixed or free format.

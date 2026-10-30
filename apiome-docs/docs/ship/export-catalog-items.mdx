@@ -133,7 +133,7 @@ Each of the 53 targets, measured against four small sources: **From a REST API**
 | Cap'n Proto | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | CDDL | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | CloudEvents | Events | `lossy` | `lossy` | `lossless` | `lossy` |
-| COBOL Copybook | Data schema | not offered | not offered | not offered | not offered |
+| COBOL Copybook | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | Connect RPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | CORBA IDL | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | EDI X12 | Data schema | not offered | not offered | not offered | not offered |
@@ -180,7 +180,6 @@ Why a target is not offered for a source:
 - **Apigee API proxy** — Apigee API proxy export needs at least one HTTP operation (a method and a path); this source has none.
 - **AWS API Gateway** — AWS API Gateway export needs at least one HTTP operation (a method and a path); this source has none.
 - **Azure API Management** — Azure API Management export needs at least one HTTP operation (a method and a path); this source has none.
-- **COBOL Copybook** — Only a source imported as COBOL Copybook can be exported to COBOL Copybook.
 - **EDI X12** — Only a source imported as EDI X12 can be exported to EDI X12.
 - **Envoy xDS RouteConfiguration** — Envoy xDS RouteConfiguration export needs at least one HTTP operation (a method and a path); this source has none.
 - **FIX** — Only a source imported as FIX can be exported to FIX.

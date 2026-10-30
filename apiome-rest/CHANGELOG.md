@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.532.0] - 2026-10-29
+
+### Changed
+- **COBOL copybook emitter (MFX-23.1, #4139).** The `cobolcopybook` export now writes a copybook for **any** source
+  (it was source-bound: only a copybook import could be exported). A copybook item is still re-emitted from its own
+  layout; any other model is laid out by the new `app.cobolcopybook_plan` (shared with the PL/I mode, MFX-23.3):
+  - one `01` record per top-level record type, nested objects inlined as group items, levels `05`/`10`/…
+    (a smaller step past 9 levels), recursion cut (recorded), a model with no record refused (422);
+  - deterministic, collision-safe COBOL data names (upper case, hyphens, ≤ 30 characters, reserved words get
+    `-X`, copybook-wide unique with `-2`, `-3` …);
+  - `PIC X(n)` (maxLength / ISO date, time, timestamp, UUID layouts / default length), `S9(4)` / `S9(9)` /
+    `S9(18)` `COMP`, decimals `S9(p)V9(s) COMP-3` (scale from `multipleOf`), floats `COMP-1` / `COMP-2`, booleans
+    as `PIC X` with `88` TRUE / FALSE, enums with one `88` per value, lists as fixed `OCCURS n TIMES` or
+    `OCCURS … DEPENDING ON` a synthesized `<NAME>-COUNT`, unions as `REDEFINES` (largest first); maps dropped;
+  - options `numeric_usage` (`comp` | `display`), `default_string_length`, `default_occurs`, `decimal_scale` and
+    `fixed_format` (free format when false). Every synthesis is recorded as an emit loss; the root of the report
+    notes a document of another format (the full pack is MFX-23.2).
+- Rendering fixes: a fixed table is written `OCCURS n TIMES` (was `OCCURS n TO n TIMES`, legal only with
+  DEPENDING ON); numeric `88` values are unquoted and a quote in a text value is doubled; deeply nested entries
+  stay within column 72.
+- **Copybook parser:** the PICTURE string is the one token after `PIC` (it used to run to the end of the entry,
+  swallowing a following `OCCURS` clause), and USAGE is read anywhere in the entry, including a `COMP-1` / `COMP-2`
+  item with no PICTURE (imported as `float` / `double`). Every corpus example parses unchanged.
+- Goldens: the `cobolcopybook` cells of both matrices — 91 refused cells now export (`lossy`), silent loss
+  unchanged; the 107 `→ cobolcopybook` round-trip xfail reasons now name the actual difference.
+
 ## [1.531.0] - 2026-10-29
 
 ### Changed
