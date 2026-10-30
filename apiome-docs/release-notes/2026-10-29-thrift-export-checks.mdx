@@ -1,0 +1,19 @@
+---
+slug: thrift-export-checks
+title: Thrift exports are compiled and read by a second parser
+description: A Thrift export must compile, agree with a second parser and import again.
+authors: [apiome]
+---
+
+A **Thrift** export is now checked three ways before you download it.
+[How Thrift exports are checked](/ship/export-a-spec#thrift-from-any-source).
+
+{/* truncate */}
+
+- **Compiles.** The Thrift compiler compiles it when the server has the compiler; a compile error
+  fails the export with the compiler's own message and line.
+- **Second parser.** thriftpy2 reads it too, and must agree with Apiome's Thrift importer on every
+  type, field id and method, with or without the compiler.
+- **Re-imports.** The export imports again as Thrift.
+- **Fixed.** An enum is now declared before the structs whose defaults use its values
+  (`Severity severity = Severity.INFO`), which some Thrift parsers rejected.

@@ -1154,30 +1154,33 @@ async def _validate_thunder_client(
 async def _validate_thrift(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted Thrift IDL (MFX-25.1, #4151).
+    """Re-validate an emitted Thrift IDL (MFX-25.1, #4151; MFX-25.4, #4154).
 
-    The Apache Thrift compiler (``thrift --gen json``) compiles the file when the toolchain has it;
-    a file that includes others (a multi-file Thrift source) cannot be compiled alone, so it —
-    and any export without the compiler — is re-parsed through the Thrift reader instead.
+    The Apache Thrift compiler (``thrift --gen json``) compiles each file when the toolchain has it (an
+    export with an ``include`` is not compiled: the compiler is given one file at a time). With or without
+    it, thriftpy2 parses each file and must agree with the Thrift reader on what it declares, and the
+    export must import again (:mod:`app.thrift_roundtrip`). Findings carry the rule as ``keyword``
+    (``thrift.compile``, ``thrift.thriftpy2-parse``, ``thrift.parser-disagreement``, ``thrift.reimport``).
     """
-    from .thrift_compile import ThriftCompileError, compile_thrift_idl, thrift_available
-    from .thrift_parser import parse_thrift
+    from .import_source import ImportSourceError
+    from .thrift_roundtrip import compile_problems, reimport_thrift, spot_check_thrift
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The Thrift export wrote no file.")])
-    includes = api.extras.get("thrift_includes") if api.format == "thrift" else None
-    if not thrift_available() or includes:
-        return await _run_text_validator(target, emit_result, parse_thrift)
-    findings: List[ValidationFinding] = []
-    for emitted in emit_result.files:
-        try:
-            await compile_thrift_idl(emitted.path, str(emitted.content))
-        except ThriftCompileError as exc:
-            if exc.unavailable:
-                return await _run_text_validator(target, emit_result, parse_thrift)
-            findings.extend(
-                _finding_from_message(line, file=emitted.path) for line in (exc.diagnostics or [str(exc)])
-            )
+    _compiler, problems = await compile_problems(emit_result)
+    files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+
+    def _run() -> None:
+        problems.extend(spot_check_thrift(files))
+        if not problems:
+            try:
+                reimport_thrift(emit_result)
+            except ImportSourceError as exc:
+                problems.append({"rule": "thrift.reimport", "message": f"The Thrift export does not import: {exc}",
+                                 "file": emit_result.files[0].path})
+
+    await asyncio.to_thread(_run)
+    findings = [ValidationFinding(message=p["message"], file=p.get("file"), keyword=p["rule"]) for p in problems]
     return _passed(target) if not findings else _rejected(target, findings)
 
 

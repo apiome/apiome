@@ -109,8 +109,19 @@ Thrift import, keeps them.
 ### Thrift from any source
 
 Exporting to **Apache Thrift** writes one `<Name>.thrift` file that the Thrift compiler accepts.
-Each export is compiled with `thrift` before you download it, when the server has the Thrift
-compiler, and read back with Apiome's Thrift importer otherwise.
+Each export is checked before you download it:
+
+1. The **Thrift compiler** (`thrift`) compiles it when the server has the compiler. A compile error
+   fails the export and quotes the compiler's message and line. An export that `include`s another
+   file is not compiled, because the compiler is given one file at a time.
+2. **thriftpy2**, a second Thrift parser, reads it too, and must agree with Apiome's Thrift importer on
+   every enum, struct, union, exception, field id and service method. This check runs with or
+   without the compiler.
+3. The export imports again as Thrift.
+
+A failed check names the file and the rule (`thrift.compile`, `thrift.thriftpy2-parse`,
+`thrift.parser-disagreement`, `thrift.reimport`). An item imported from Thrift exports and re-imports
+unchanged.
 
 - **Types.** Objects become `struct`s, enums `enum`s, and unions `union`s. A union that only lists
   its member types gets one optional field per member. Aliases and named scalars become `typedef`s,

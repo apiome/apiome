@@ -350,7 +350,10 @@ class _ThriftWriter:
         if self._source_typedefs:
             lines.append("")
 
-        for type_ in self._api.types:
+        # Enums first: a field default may name an enum value (`Severity.INFO`), and Thrift parsers
+        # resolve a constant only once its enum is declared (MFX-25.4). Enums reference nothing.
+        enums_first = sorted(self._api.types, key=lambda t: not self._is_enum(t))
+        for type_ in enums_first:
             if type_.extras.get("thrift_map"):
                 continue
             rendered = self._render_type(type_)
@@ -420,6 +423,11 @@ class _ThriftWriter:
             return ref.name
         target = self._types_by_name.get(ref.name)
         return target.key if target is not None else None
+
+    @staticmethod
+    def _is_enum(type_: Type) -> bool:
+        """Whether ``type_`` is written as a Thrift ``enum``."""
+        return type_.kind is TypeKind.ENUM or type_.extras.get("thrift_kind") == "enum"
 
     def _render_type(self, type_: Type) -> List[str]:
         thrift_kind = type_.extras.get("thrift_kind")

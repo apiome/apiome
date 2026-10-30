@@ -38,3 +38,5 @@ pydicom>=3.0.0
 rdflib>=7.0.0
 # OData lint/validate (MFI-11.4): OASIS CSDL XML schema validation.
 xmlschema>=3.4
+# Thrift export validation (MFX-25.4): structural spot-checks with an independent Thrift parser.
+thriftpy2>=0.7.1

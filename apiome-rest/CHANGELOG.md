@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.543.0] - 2026-10-30
+
+### Added
+- **Thrift validate + round-trip (MFX-25.4, #4154).** New `app.thrift_roundtrip`:
+  - `compile_problems(emit_result)` — the Apache Thrift compiler (`compile_thrift_idl`) on each file; every compiler
+    error line is a `thrift.compile` problem. Reports `thrift` / `unavailable` / `includes` (an export with an
+    `include` is not compiled: the compiler is given one file at a time).
+  - `spot_check_thrift(files)` — **thriftpy2** (new dependency, `thriftpy2>=0.7.1`) parses each file from a private
+    temp folder (`enable_cache=False`; includes resolve only inside the export, and a file whose include names
+    anything else is skipped) and its AST must agree with `parse_thrift` on enums and members, struct / union /
+    exception kinds with field ids and names, and services offering every method (`thrift.thriftpy2-parse`,
+    `thrift.parser-disagreement`).
+  - `reimport_thrift(emit_result)` and async `round_trip_thrift(api, *, opts, emit_result)` — canonical diff +
+    `reconcile` with the fidelity report; `status` `invalid` / `unparseable` / `lossy` / `lossless`.
+- **Export gate.** `thrift` now always runs the thriftpy2 spot-check and the re-import (keyword = rule), compiler or
+  not.
+- **Round-trip fixture.** `tests/fixtures/thrift_roundtrip/measurements.json` (`APIOME_REGEN_THRIFT_ROUNDTRIP=1`).
+
+### Fixed
+- **Thrift emitter declaration order.** Enums are written before every other type, so a field default naming an enum
+  value (`Severity severity = Severity.INFO`) never precedes its enum (thriftpy2 rejected `04-telemetry-stress`).
+
 ## [1.542.0] - 2026-10-30
 
 ### Added
