@@ -1,9 +1,10 @@
 import { createClass, addPropertyToClass, updateClass, getClassesForVersion, getClassWithPropertiesAndTags, deleteClassPropertiesForClass } from './helper';
-import { getImporter, NormalizedClass, type NormalizedProperty } from '../importers';
+import { getImporter, NormalizedClass } from '../importers';
 import { cookies } from 'next/headers';
 import { mergeClasses, type MergeStrategy, type ArrayMergeStrategy } from '../../src/app/utils/schema-merge';
 import { extractPaths, extractSecuritySchemes } from '../../src/app/utils/openapi-import';
 import { importOpenAPIPathsAndSecurity } from './import-openapi-paths-security';
+import { dbClassToNormalized } from './db-class-normalize';
 
 export interface ImportClassesInput {
   versionId: string;
@@ -81,35 +82,6 @@ export interface ImportClassesResult {
   skipped?: ImportSkippedClass[];
   /** Normalization warnings (e.g. reserved name detection #756). */
   warnings?: string[];
-}
-
-/** Convert DB class (from getClassWithPropertiesAndTags) to NormalizedClass for merge (#588). */
-function dbClassToNormalized(raw: any): NormalizedClass {
-  const schema = typeof raw.schema === 'string' ? JSON.parse(raw.schema) : raw.schema;
-  const props = raw.properties || [];
-  const byParent = new Map<string | null, any[]>();
-  byParent.set(null, []);
-  for (const p of props) {
-    const key = p.parent_id ?? null;
-    if (!byParent.has(key)) byParent.set(key, []);
-    byParent.get(key)!.push(p);
-  }
-  function buildChildren(parentId: string | null): NormalizedProperty[] {
-    const list = byParent.get(parentId) || [];
-    return list.map((p: any) => ({
-      name: p.name,
-      data: p.data || {},
-      description: p.description ?? undefined,
-      children: byParent.has(p.id) && byParent.get(p.id)!.length > 0 ? buildChildren(p.id) : undefined,
-    }));
-  }
-  const rootChildren = buildChildren(null);
-  return {
-    name: raw.name,
-    description: raw.description ?? undefined,
-    schema: schema || { type: 'object' },
-    properties: rootChildren,
-  };
 }
 
 // Stable JSON stringify that sorts object keys to ensure consistent signatures

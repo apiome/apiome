@@ -117,12 +117,33 @@ again gives the next free one too. Nothing existing changes. To use a different 
 **click “← Back”** and change **Version** on Preview. When an import was added as a sub-version, the
 **Done** step lists it under **Version** with the number that was taken.
 
+**Merge strategy.** Under the summary bar, **Merge strategy** decides what the new version holds:
+
+- **Replace with this import** (the default) — the new version holds only what the spec defines.
+  Anything listed as **Removed** is not in it.
+- **Additive merge** — the new version keeps everything in the latest version and adds what the spec
+  newly defines. Nothing is removed and nothing existing is overwritten:
+  - A schema both have keeps its properties and their definitions; properties only the spec has are
+    added, nested ones too.
+  - A path both have keeps its operations; methods only the spec has (a new `POST`, say) are added.
+  - Schemas, paths and security schemes only the latest version has are kept as they are, and the
+    spec's new ones are added.
+
+<Screenshot id="import-wizard-changes-additive" alt="The Changes step with Merge strategy set to Additive merge and a note that the item listed as Removed stays in the new version" caption="With Additive merge, the item listed as Removed stays in the new version." />
+
+With **Additive merge** selected, a note says that the items listed as **Removed** stay in the new
+version. **Done** adds a **Merge** row, for example *Additive — 2 schemas merged (3 properties
+added); 4 schemas and 5 paths kept from the latest version*. A **Dry run (preview only)** shows the
+same row without saving anything.
+
 If nothing changed, the step says **No changes from v2.4.0** (with your version); importing still
 records a new version. If the comparison cannot be computed, **“Try again”** asks again, and
 **“Continue to import”** still works. The step appears for a **Dry run (preview only)** import too.
 
 To try it, import `apiome-ui/examples/openapi/30-openapi-3.0-petstore.yaml`, then edit a copy (remove
-an operation, add a path) and import it again with the same **Slug** and a new **Version**.
+an operation, add a path) and import it again with the same **Slug** and a new **Version**. Import the
+copy once with each **Merge strategy** to compare: with **Additive merge**, the removed operation is
+still in the new version.
 
 ### File Upload
 

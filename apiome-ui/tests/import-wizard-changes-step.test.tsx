@@ -376,6 +376,70 @@ describe('ImportChangesPanel', () => {
     expect(onRetry).toHaveBeenCalled();
   });
 
+  it('offers the merge strategy only when the dialog handles it, defaulting to replace (#591)', () => {
+    const { unmount } = render(<ImportChangesPanel state={{ status: 'ready', delta: DELTA }} onRetry={jest.fn()} />);
+    expect(screen.queryByTestId('import-changes-merge')).not.toBeInTheDocument();
+    unmount();
+
+    const onMergeChoiceChange = jest.fn();
+    render(
+      <ImportChangesPanel
+        state={{ status: 'ready', delta: DELTA }}
+        onRetry={jest.fn()}
+        mergeChoice="replace"
+        onMergeChoiceChange={onMergeChoiceChange}
+      />,
+    );
+    const group = within(screen.getByTestId('import-changes-merge'));
+    expect(screen.getByRole('group', { name: IMPORT_WIZARD_COPY.changesMergeLegend })).toBeInTheDocument();
+    expect(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeReplace) })).toBeChecked();
+    expect(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeAdditive) })).not.toBeChecked();
+    // Replacing removes what the spec drops, so there is no "kept" note.
+    expect(screen.queryByTestId('import-changes-merge-kept')).not.toBeInTheDocument();
+
+    fireEvent.click(group.getByRole('radio', { name: new RegExp(IMPORT_WIZARD_COPY.changesMergeAdditive) }));
+    expect(onMergeChoiceChange).toHaveBeenCalledWith('additive');
+  });
+
+  it('says the removed items stay when additive merge is chosen (#591)', () => {
+    render(
+      <ImportChangesPanel
+        state={{ status: 'ready', delta: DELTA }}
+        onRetry={jest.fn()}
+        mergeChoice="additive"
+        onMergeChoiceChange={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('import-changes-merge-additive')).toBeChecked();
+    expect(screen.getByTestId('import-changes-merge-kept')).toHaveTextContent(
+      'Nothing is removed with an additive merge — the 1 item listed as Removed stays in the new version as they are in v2.4.0.',
+    );
+  });
+
+  it('draws no kept note for an additive merge with nothing removed (#591)', () => {
+    render(
+      <ImportChangesPanel
+        state={{ status: 'ready', delta: NO_CHANGES }}
+        onRetry={jest.fn()}
+        mergeChoice="additive"
+        onMergeChoiceChange={jest.fn()}
+      />,
+    );
+    expect(screen.queryByTestId('import-changes-merge-kept')).not.toBeInTheDocument();
+  });
+
+  it('still offers the merge strategy when the comparison failed (#591)', () => {
+    render(
+      <ImportChangesPanel
+        state={{ status: 'error', message: 'x' }}
+        onRetry={jest.fn()}
+        mergeChoice="replace"
+        onMergeChoiceChange={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('import-changes-merge')).toBeInTheDocument();
+  });
+
   it('draws nothing for a skipped step', () => {
     const { container } = render(<ImportChangesPanel state={{ status: 'skip' }} onRetry={jest.fn()} />);
     expect(container).toBeEmptyDOMElement();
@@ -387,7 +451,9 @@ describe('ImportChangesPanel', () => {
       { status: 'ready', delta: NO_CHANGES },
       { status: 'error', message: 'x' },
     ] as const) {
-      const { container, unmount } = render(<ImportChangesPanel state={state} onRetry={jest.fn()} />);
+      const { container, unmount } = render(
+        <ImportChangesPanel state={state} onRetry={jest.fn()} mergeChoice="additive" onMergeChoiceChange={jest.fn()} />,
+      );
       expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
       unmount();
     }
@@ -523,6 +589,46 @@ describe('the wizard with a Changes step', () => {
     expect(input.options.onVersionConflict).toBeUndefined();
   });
 
+  it('imports with an additive merge when it is chosen on Changes (#591)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+
+    fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    expect(await screen.findByTestId('import-changes-merge-kept')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    expect(startImport).toHaveBeenCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ mergeStrategy: 'additive' }) }),
+    );
+  });
+
+  it('asks for no merge by default (#591)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    expect(screen.getByTestId('import-changes-merge-replace')).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    const input = startImport.mock.calls[0][0] as { options: Record<string, unknown> };
+    expect(input.options.mergeStrategy).toBeUndefined();
+  });
+
+  it('goes back to replace when Preview is left and Changes is reached again (#591)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    fireEvent.click(screen.getByRole('button', { name: '← Back' }));
+    await screen.findByTestId('preview-panel');
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    expect(screen.getByTestId('import-changes-merge-replace')).toBeChecked();
+  });
+
   it('goes straight to Import for a first-time import', async () => {
     stubFetch(() => jsonResponse({ success: true, delta: null }));
     await reachPreview();
@@ -577,6 +683,18 @@ describe('the wizard with a Changes step', () => {
 describe('the browser fixture', () => {
   const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-import-wizard');
 
+  /**
+   * The wizard's markup, with each checked radio's `checked` property written to its attribute —
+   * React sets the property only, so a static fixture would otherwise show no choice selected.
+   */
+  function dumpWizard(): string {
+    for (const radio of Array.from(document.querySelectorAll<HTMLInputElement>('.imp-wizard input[type="radio"]'))) {
+      if (radio.checked) radio.setAttribute('checked', '');
+      else radio.removeAttribute('checked');
+    }
+    return (document.querySelector('.imp-wizard') as HTMLElement).outerHTML;
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     analyzeSpecification.mockResolvedValue(GOOD_ANALYSIS);
@@ -588,10 +706,26 @@ describe('the browser fixture', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
     await screen.findByTestId('import-changes');
 
-    const html = (document.querySelector('.imp-wizard') as HTMLElement).outerHTML;
+    const html = dumpWizard();
     expect(html).toContain('imp-changes__summary');
+    expect(html).toContain('imp-changes__merge');
     if (process.env.IMPORT_WIZARD_FIXTURE_DUMP !== '1') return;
     fs.mkdirSync(OUT, { recursive: true });
     fs.writeFileSync(path.join(OUT, 'changes.html'), html);
+  });
+
+  it('renders the Changes step with an additive merge chosen (#591; docs screenshot `import-wizard-changes-additive`)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    await screen.findByTestId('import-changes-merge-kept');
+
+    const html = dumpWizard();
+    expect(html).toContain('import-changes-merge-kept');
+    if (process.env.IMPORT_WIZARD_FIXTURE_DUMP !== '1') return;
+    fs.mkdirSync(OUT, { recursive: true });
+    fs.writeFileSync(path.join(OUT, 'changes-additive.html'), html);
   });
 });

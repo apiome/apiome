@@ -1,0 +1,20 @@
+---
+slug: import-additive-merge
+title: Additive merge when importing a new version
+description: Keep everything in the latest version and add only what the spec adds.
+authors: [apiome]
+---
+
+Importing a new version of an existing project can now merge additively. The new version keeps
+everything in the latest version and adds what the spec newly defines.
+[How it works](/bring-in/import-wizard#import-a-new-version-of-an-existing-project).
+
+{/* truncate */}
+
+- **Choose it on the Changes step.** **Merge strategy** is **Replace with this import** (as before) or
+  **Additive merge**.
+- **Nothing existing changes.** A schema keeps its properties and their definitions, and gains the
+  spec's new ones (nested properties too). A path keeps its operations and gains new methods.
+- **Nothing is removed.** Schemas, paths and security schemes the spec leaves out stay in the new
+  version, and the Changes step says that the items listed as **Removed** stay.
+- **Done** adds a **Merge** row saying what was merged, added and kept. A dry run shows it too.

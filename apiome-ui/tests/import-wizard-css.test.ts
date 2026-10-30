@@ -129,6 +129,10 @@ const IMPORT_PRELUDES = [
   '.imp-changes__label',
   '.imp-changes__values, .imp-changes__note',
   '.imp-changes__note',
+  // The merge-strategy choice (#591).
+  '.imp-changes__merge',
+  '.imp-changes__merge-legend',
+  '.imp-changes__merge-hint',
   '.imp-log',
   '.imp-log__line',
   '.imp-log__line[data-level="error"]',

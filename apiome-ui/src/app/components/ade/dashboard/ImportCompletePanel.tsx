@@ -20,6 +20,7 @@ import {
 import { getImportStatus, rollbackCompletedImport } from '../../../../../lib/db/import-actions';
 import { buildDesignerEditorHref } from '../../../../../lib/external-links';
 import { buildImportErrorReport, getImportErrorReportFilename, type ImportErrorReport, type ImportStatusForReport } from '../../../../../lib/db/import-error-report';
+import { describeAdditiveMerge, type AdditiveMergeStats } from '../../../../../lib/import-additive-merge';
 import { SchemaVersionScoringPanel } from './SchemaVersionScoringPanel';
 
 interface ImportCompletePanelProps {
@@ -53,6 +54,8 @@ interface RawImportSummary {
   incrementalMode?: boolean;
   /** Set when the requested version was taken and a sub-version was created instead (#590). */
   versionLabelAdjusted?: { requested: string; used: string };
+  /** Set when the import was merged additively into the latest version (#591). */
+  additiveMerge?: AdditiveMergeStats;
   classes?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -84,6 +87,8 @@ interface ImportSummary {
   incrementalMode?: boolean;
   /** Set when the requested version was taken and a sub-version was created instead (#590). */
   versionLabelAdjusted?: { requested: string; used: string };
+  /** Set when the import was merged additively into the latest version (#591). */
+  additiveMerge?: AdditiveMergeStats;
   schemas?: Array<{
     name: string;
     status: 'success' | 'warning' | 'failed';
@@ -132,6 +137,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             dryRun: rawSummary.dryRun === true,
             incrementalMode: rawSummary.incrementalMode === true,
             versionLabelAdjusted: rawSummary.versionLabelAdjusted,
+            additiveMerge: rawSummary.additiveMerge,
             schemas: rawSummary.classes?.map((c) => ({
               name: c.name,
               status: c.status
@@ -412,6 +418,13 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
               <dd data-testid="import-complete-version-adjusted">
                 {summary.versionLabelAdjusted.used} ({summary.versionLabelAdjusted.requested} was taken)
               </dd>
+            </>
+          )}
+          {summary?.additiveMerge && (
+            // #591: the import kept the latest version's content and added what was new.
+            <>
+              <dt>Merge</dt>
+              <dd data-testid="import-complete-additive-merge">{describeAdditiveMerge(summary.additiveMerge)}</dd>
             </>
           )}
         </dl>

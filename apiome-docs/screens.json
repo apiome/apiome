@@ -538,6 +538,16 @@
       ]
     },
     {
+      "id": "import-wizard-changes-additive",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "[data-testid=\"import-changes-merge-kept\"]",
+      "data": "fixture:hive-import-wizard/changes-additive.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/import/ImportChangesPanel.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/ImportDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-import-dry-run",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"catalog-import-dry-run\"]",
