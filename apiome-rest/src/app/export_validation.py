@@ -645,22 +645,34 @@ async def _validate_fhir(
     The official HL7 FHIR validator (toolchain tool ``fhir-validator``) checks every emitted file against FHIR
     R4 or R5 — the version the export declares — when the toolchain has it; each ``error`` / ``fatal`` issue is
     a finding and rejects the export. Without it, Apiome's structural FHIR rules and a re-parse through the
-    FHIR reader check each file (:func:`app.fhir_emitter.validate_fhir_document`).
+    FHIR reader check each file, one finding per issue (:func:`app.fhir_validation.structural_problems`,
+    MFX-26.4, #4160).
     """
-    from .fhir_emitter import validate_fhir_document
-    from .fhir_validation import fhir_validator_available, validate_with_fhir_validator
+    from .fhir_validation import fhir_validator_available, structural_problems, validate_with_fhir_validator
     from .import_source import ImportSourceError
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The FHIR export wrote no file.")])
+
+    async def _structural() -> EmittedArtifactValidation:
+        def _run() -> List[ValidationFinding]:
+            return [
+                ValidationFinding(message=p["message"], file=p["file"], path=p["path"], keyword=p["rule"])
+                for emitted in emit_result.files
+                for p in structural_problems(emitted.path, str(emitted.content))
+            ]
+
+        findings = await asyncio.to_thread(_run)
+        return _passed(target) if not findings else _rejected(target, findings)
+
     if not fhir_validator_available():
-        return await _run_text_validator(target, emit_result, validate_fhir_document)
+        return await _structural()
     members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
     try:
         issues = await asyncio.to_thread(validate_with_fhir_validator, members, _fhir_version(members))
     except ImportSourceError as exc:
         if exc.code == "ADAPTER_UNAVAILABLE":
-            return await _run_text_validator(target, emit_result, validate_fhir_document)
+            return await _structural()
         return _rejected(target, [_finding_from_message(str(exc), file=emit_result.files[0].path)])
     findings = [ValidationFinding(message=issue.message, file=issue.file, path=issue.location, keyword=issue.code)
                 for issue in issues]

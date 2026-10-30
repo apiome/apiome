@@ -1,0 +1,17 @@
+---
+slug: fhir-export-validation-detail
+title: FHIR export checks list every issue
+description: A failed FHIR export check lists each issue with its resource path.
+authors: [apiome]
+---
+
+When a **FHIR** export fails its check, every issue is now listed on its own.
+[How FHIR exports are checked](/ship/export-a-spec#fhir-structuredefinition-from-any-source).
+
+{/* truncate */}
+
+- **Official validator.** Each `error` or `fatal` issue of the HL7 FHIR validator fails the export
+  with the validator's message, resource path and code; R4 and R5 exports are validated against
+  their own version.
+- **Without the validator.** Apiome's structural FHIR rules now list each broken rule with its
+  resource path. Before, the first five were run together in one message.

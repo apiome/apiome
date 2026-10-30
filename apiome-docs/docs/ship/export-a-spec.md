@@ -336,8 +336,16 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 Exporting to **FHIR** writes each cataloged type as a FHIR **StructureDefinition logical model**
 (`kind: logical`), with a **CodeSystem** and **ValueSet** for each enum, in one `collection` Bundle.
 Set **fhir_version** to `R4` (4.0.1, the default) or `R5` (5.0.0). Set **packaging** to `per-type` for
-one JSON file per resource. Each export is checked by the official HL7 FHIR validator against the
-version it declares, or by Apiome's structural FHIR rules where the server has no validator.
+one JSON file per resource.
+
+Each export is checked before you download it:
+
+- **With the official HL7 FHIR validator**, when the server has it. Every file is validated against the
+  version the export declares (R4 `4.0.1` or R5 `5.0.0`), offline (no terminology server). Each
+  `error` or `fatal` issue fails the export and is listed with the validator's own message, the
+  resource path and its code (`invariant`, `structure`, `code-invalid`). Warnings do not fail it.
+- **Without it**, Apiome's structural FHIR rules check each file and list each broken rule on its own
+  with its resource path (`fhir.structure`), then the FHIR reader reads it back (`fhir.reimport`).
 
 **Where to find it.** In **Export studio**, the **FHIR** and **HL7 v2** cards are under
 **Healthcare** on the **Target** step. From the CLI, run
