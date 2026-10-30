@@ -928,40 +928,47 @@ async def _validate_wit(
 async def _validate_raml(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted RAML 1.0 document (MFX-17.1, #3901).
+    """Re-validate an emitted RAML 1.0 document (MFX-17.1, #3901; MFX-17.3, #3903).
 
     AMF — the RAML authority the import already runs (MFI-15.3) — validates the document against
     its RAML 1.0 profile when the toolchain has it; a ``Violation`` rejects the export, warnings do
-    not. Without AMF the document is re-parsed through the RAML reader the import falls back to.
+    not. Without AMF the RAML reader parses it instead. The document must then import again
+    (``raml.reimport``) — see :mod:`app.raml_roundtrip`.
     """
     from .import_source import ImportSourceError
-    from .raml_amf import amf_available, validate_raml_set_with_amf
-    from .raml_parser import parse_raml
+    from .raml_roundtrip import reimport_with_reader, validate_emitted_raml
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The RAML export wrote no file.")])
-    if not amf_available():
-        return await _run_text_validator(target, emit_result, parse_raml)
-    members = {emitted.path: str(emitted.content) for emitted in emit_result.files}
     root = emit_result.files[0].path
     try:
-        results = await asyncio.to_thread(validate_raml_set_with_amf, members, root)
+        _validator, violations = await asyncio.to_thread(validate_emitted_raml, emit_result)
     except ImportSourceError as exc:
-        if exc.code == "ADAPTER_UNAVAILABLE":
-            return await _run_text_validator(target, emit_result, parse_raml)
         return _rejected(target, [_finding_from_message(str(exc), file=root)])
-    findings = [
-        ValidationFinding(
-            message=result.get("message") or "AMF reported a RAML 1.0 violation.",
-            file=result.get("file") or root,
-            line=result.get("line"),
-            column=result.get("column"),
-            keyword=result.get("constraint") or None,
+    if violations:
+        findings = [
+            ValidationFinding(
+                message=violation.get("message") or "AMF reported a RAML 1.0 violation.",
+                file=violation.get("file") or root,
+                line=violation.get("line"),
+                column=violation.get("column"),
+                keyword=violation.get("constraint") or None,
+            )
+            for violation in violations
+        ]
+        return _rejected(target, findings)
+    try:
+        await asyncio.to_thread(reimport_with_reader, emit_result)
+    except ImportSourceError as exc:
+        return _rejected(
+            target,
+            [
+                ValidationFinding(
+                    message=f"The RAML document does not import: {exc}", file=root, keyword="raml.reimport"
+                )
+            ],
         )
-        for result in results
-        if result.get("severity") == "Violation"
-    ]
-    return _passed(target) if not findings else _rejected(target, findings)
+    return _passed(target)
 
 
 async def _validate_apiblueprint(
