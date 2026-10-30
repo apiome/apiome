@@ -33,6 +33,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
 | `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`); its RAML 1.0 validation also checks a RAML export (MFX-17.3, `app.raml_roundtrip`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
 | `fhir-validator` | HL7 FHIR validator (`validator_cli`): validates a FHIR export — logical-model StructureDefinitions, ValueSets, CodeSystems, the CapabilityStatement — against FHIR R4 (`4.0.1`) or R5 (`5.0.0`), terminology offline (`-tx n/a`) (MFX-26.1, `app.fhir_validation`). Optional: without it, the export is checked by Apiome's built-in structural FHIR rules | `6.10.4` | jvm | GitHub release jar + `java -jar` wrapper; R4/R5 core packages cached at build time under `share/fhir` |
+| `cb2xml` | cb2xml: parses a COBOL copybook into an XML layout (`level`, `name`, `picture`, `usage`, `occurs`, `redefines`, `88` conditions); checks a COBOL copybook export parses to the emit plan (MFX-23.4, `app.cobolcopybook_cb2xml`). Optional: without it, the export is re-parsed by the copybook reader | `1.01.08` | jvm | GitHub release jar + `java -cp … net.sf.cb2xml.Cb2Xml` wrapper |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
@@ -81,6 +82,7 @@ plus the JRE the AMF wrapper needs — smithy ships its own runtime, so no extra
 | `smithy` CLI (self-contained runtime) | ~80 MB |
 | `amf` assembly jar | ~60 MB |
 | `fhir-validator` jar + R4 / R5 core package cache | ~300 MB |
+| `cb2xml` jar | ~1 MB |
 | `tsp` + `asyncapi` + `@asyncapi/parser` + `@asyncapi/diff` + `@graphql-inspector/core` + spectral + redocly (node_modules) | ~180 MB |
 | `buf` | ~30 MB |
 | `vacuum` | ~25 MB |
@@ -180,6 +182,7 @@ that format uses. A missing tool never fails an export; each validator falls bac
 | `flatbuffers` | `flatc` | `app.flatbuffers_compile.compile_fbs_schema` | MFX-30.1 | built-in FlatBuffers reader |
 | `corbaidl` | `omniidl` (CORBA) / `idlc` (DDS) | `app.omg_idl_compile.compile_omg_idl` | MFX-28.3 | built-in OMG IDL reader |
 | `fhir` | `fhir-validator` | `app.fhir_validation.validate_with_fhir_validator` | MFX-26.1 | structural FHIR rules |
+| `cobolcopybook` | `cb2xml` | `app.cobolcopybook_cb2xml.check_with_cb2xml` (layout vs. the emit plan) | MFX-23.4 | built-in copybook reader |
 | `asyncapi-3` | `asyncapi-parser` | `app.asyncapi_roundtrip.round_trip_asyncapi` | MFX-11.4 | *skipped* (not re-validated) |
 
 A validator that uses a best-effort import helper (`run_drafter`, `validate_smithy_members`) calls it

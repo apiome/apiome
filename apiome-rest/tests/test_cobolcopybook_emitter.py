@@ -9,16 +9,12 @@ Covers, in order:
 * COBOL data names: the mangling rules, the 30-character limit, collisions, determinism;
 * the output reading back through the copybook importer and layout analysis, every corpus source
   laid out (or refused with a reason), and copybook items re-emitted unchanged;
-* ``cb2xml`` parsing the output (skipped unless ``APIOME_CB2XML_JAR`` names a cb2xml jar and ``java`` is
-  installed — the toolchain wiring is MFX-23.4).
+* cb2xml parsing the output to the emit plan is ``test_cobolcopybook_cb2xml.py`` (MFX-23.4).
 """
 
 from __future__ import annotations
 
-import os
 import re
-import shutil
-import subprocess
 from pathlib import Path
 from typing import List
 
@@ -43,11 +39,6 @@ from app.emitter import EmitPreconditionError
 from app.import_source import canonical_diff, get_import_source
 
 _EXAMPLES = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples" / "cobol-copybook"
-_CB2XML = os.environ.get("APIOME_CB2XML_JAR")
-_needs_cb2xml = pytest.mark.skipif(
-    not (_CB2XML and Path(_CB2XML).is_file() and shutil.which("java")),
-    reason="cb2xml is not installed here (set APIOME_CB2XML_JAR and install java)",
-)
 
 
 # ===========================================================================
@@ -397,30 +388,6 @@ def test_the_report_notes_a_document_of_another_format() -> None:
     assert any(i.target_mapping == "document → COBOL copybook" and i.construct_key == "" for i in report.items)
     own = compute_lossiness_for_emitter(_copybook_item(_EXAMPLES / "01-customer-record.cpy"), CobolCopybookEmitter)
     assert not any(i.target_mapping == "document → COBOL copybook" for i in own.items)
-
-
-# ===========================================================================
-# cb2xml
-# ===========================================================================
-
-
-@_needs_cb2xml
-@pytest.mark.parametrize("fixed_format", [True, False])
-def test_cb2xml_parses_a_nested_typed_copybook(tmp_path: Path, fixed_format: bool) -> None:
-    path = tmp_path / "Shop.cpy"
-    path.write_text(_text(_shop(), fixed_format=fixed_format))
-    args = ["java", "-jar", _CB2XML, "-cobol", str(path)]
-    if not fixed_format:
-        args += ["-font", "cp037", "-free"]
-    run = subprocess.run(args, capture_output=True, text=True, timeout=120, check=False)
-    assert run.returncode == 0, run.stderr
-    assert 'name="PURCHASE"' in run.stdout and 'name="LINES-X"' in run.stdout
-    assert 'depending-on="LINES-X-COUNT"' in run.stdout
-
-
-# ===========================================================================
-# Parser: PICTURE and USAGE wherever they stand (MFX-23.1)
-# ===========================================================================
 
 
 @pytest.mark.parametrize(("clauses", "picture", "usage"), [

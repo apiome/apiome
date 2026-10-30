@@ -529,7 +529,9 @@ async def _run_item(
                 "files": [f.path for f in emit_result.files]}),
     )
 
-    validation = await engine.validate_emitted_artifact(run.target, emit_result, api=source.api)
+    validation = await engine.validate_emitted_artifact(
+        run.target, emit_result, api=source.api, options=run.spec.options
+    )
     validation_report = build_validation_report(validation)
     if "lint" not in lint_cache:
         # The source lint depends only on the version, so it runs once per version.

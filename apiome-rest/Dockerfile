@@ -46,6 +46,8 @@ ARG SMITHY_VERSION=1.53.0
 ARG DRAFTER_VERSION=4.0.0
 ARG AMF_VERSION=5.7.1
 ARG FHIR_VALIDATOR_VERSION=6.10.4
+# cb2xml (MFX-23.4, #4142) — optional: it parses an emitted COBOL copybook.
+ARG CB2XML_VERSION=1.01.08
 ARG ASYNCAPI_VERSION=2.16.0
 # NOTE: @asyncapi/parser, typescript, zod and @trpc/server are deliberately absent from this list.
 # They are HARD dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463; FMT-8.3, #5464) and
@@ -212,6 +214,19 @@ RUN mkdir -p ${TOOLS_PREFIX}/share/fhir \
     && ls ${TOOLS_PREFIX}/share/fhir/.fhir/packages | grep -q '^hl7.fhir.r5.core#5.0.0$' \
     && rm /tmp/fhir-warmup.json \
     && chmod -R a+rwX ${TOOLS_PREFIX}/share/fhir
+
+# cb2xml (MFX-23.4, #4142) — the bmTas/cb2xml release jar, invoked through a `cb2xml` wrapper. The jar
+# has no Main-Class, so the wrapper names the command-line class (net.sf.cb2xml.Cb2Xml). It checks an
+# emitted COBOL copybook (app.cobolcopybook_cb2xml); the smoke test parses a one-record copybook.
+RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSION}/cb2xml.jar" \
+      -o ${TOOLS_PREFIX}/lib/cb2xml.jar \
+    && printf '#!/bin/sh\nexec java -cp %s/lib/cb2xml.jar net.sf.cb2xml.Cb2Xml "$@"\n' "${TOOLS_PREFIX}" \
+      > ${TOOLS_PREFIX}/bin/cb2xml \
+    && chmod +x ${TOOLS_PREFIX}/bin/cb2xml \
+    && printf '       01  SMOKE.\n           05  SMOKE-ID PIC X(4).\n' > /tmp/smoke.cpy \
+    && ${TOOLS_PREFIX}/bin/cb2xml -cobol /tmp/smoke.cpy -xml /tmp/smoke.xml \
+    && grep -q 'name="SMOKE-ID"' /tmp/smoke.xml \
+    && rm /tmp/smoke.cpy /tmp/smoke.xml
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently

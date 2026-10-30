@@ -91,6 +91,7 @@ way the last column says.
 | FlatBuffers | `flatc` | Read back by Apiome's FlatBuffers reader |
 | CORBA IDL | `omniidl` (`corba` profile) or `idlc` (`dds` profile) | Read back by Apiome's CORBA IDL reader |
 | FHIR | The HL7 FHIR validator | Checked by Apiome's structural FHIR rules |
+| COBOL copybook | cb2xml parses the copybook, and the layout it reads must match the one Apiome planned | Read back by Apiome's copybook reader |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 
 The sections below say what each check rejects.
@@ -657,6 +658,21 @@ the source — everything the layout had to invent or change, computed for the o
 | A document of another format | Approximated (note): it reads back as a copybook item |
 
 An item imported from a copybook is written back as it was, so its report lists nothing invented.
+
+**Checked with cb2xml.** When the server has cb2xml, it parses every copybook export, the same way a
+mainframe toolchain would read it. The export fails when:
+
+- **cb2xml cannot parse it.** The check shows cb2xml's error message, and for a fixed-format copybook
+  the line and column.
+- **cb2xml reads a different layout.** The records and items, in order, must match the layout Apiome
+  planned with your options: each item's level, name, `PIC`, usage, `OCCURS` (and `DEPENDING ON`),
+  `REDEFINES` and `88` values. Each difference is listed at the item's path, such as
+  `PURCHASE.LINES-X`. Spellings COBOL treats as the same pass: `X(3)` and `XXX`, `COMP` and `BINARY`,
+  `COMP-3` and `PACKED-DECIMAL`.
+
+cb2xml reads fixed format only, so a free-format export is laid out in columns 8–72 for the check;
+an error in it then has no line number. Without cb2xml, the export is read back by Apiome's copybook
+reader.
 
 ### X12 implementation guide from any source
 

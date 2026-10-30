@@ -39,6 +39,7 @@ _EXPECTED_KEYS = {
     "drafter",
     "amf",
     "fhir-validator",
+    "cb2xml",
     "asyncapi",
     "asyncapi-parser",
     "typescript-types-extractor",

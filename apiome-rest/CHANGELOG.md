@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.549.0] - 2026-10-30
+
+### Added
+- **COBOL copybook export validated by cb2xml (MFX-23.4, #4142).** New `app.cobolcopybook_cb2xml`:
+  `run_cb2xml(text)` parses a copybook with cb2xml through the toolchain runner (its `*** fatal parse error ***`
+  comes on stderr with exit code 0, so the error text decides; SableCC's `[line,column]` is kept);
+  `parse_cb2xml_layout(xml)` reads its `<item>` / `<condition>` tree; `layout_differences(plan, read)` compares it
+  with the emit plan item by item (level, name, PICTURE, USAGE, OCCURS / DEPENDING ON, REDEFINES, 88 values; COBOL's
+  equivalent spellings agree); `check_with_cb2xml(path, text, plan, fixed_format=…)` returns `cb2xml.parse` /
+  `cb2xml.layout` problems. A free-format copybook is laid out in fixed format for cb2xml's reader
+  (`fixed_format_text`).
+- **New optional bundled tool** `cb2xml` 1.01.08 (`APIOME_CB2XML_BIN`, JVM), installed in the runtime image as a
+  `java -cp cb2xml.jar net.sf.cb2xml.Cb2Xml` wrapper with a build-time smoke check.
+- `cobolcopybook_emitter.copybook_emit_plan(api, options)` / `copybook_emit_options(options)`: the trees the emitter
+  renders, for the check.
+
+### Changed
+- **Export gate.** `validate_emitted_artifact` takes the export's per-target `options` (the export job, multi-target
+  and batch jobs and `POST /verify` pass them). `cobolcopybook` re-parses with the copybook reader and, when cb2xml is
+  available, rejects with cb2xml's error or each layout difference from the plan built with those options; without
+  cb2xml (or when it goes missing mid-run) the re-parse alone checks it.
+
 ## [1.548.0] - 2026-10-30
 
 ### Added

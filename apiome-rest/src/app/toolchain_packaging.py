@@ -19,7 +19,7 @@ What lives here:
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
   ``zod-schema-extractor``, ``cue``, ``pkl``, ``dhall``, ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``, ``capnp``, ``flatc``.
+  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -198,6 +198,20 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         env_override_key="APIOME_FHIR_VALIDATOR_BIN",
         # The FHIR export seam (MFX-26.1, app.fhir_validation) reads the OperationOutcome the validator
         # writes with `-output`; its stdout is a progress log, never JSON.
+        parses_json=False,
+        runtime="jvm",
+    ),
+    BundledTool(
+        key="cb2xml",
+        executable="cb2xml",
+        version="1.01.08",
+        description="cb2xml (bmTas/cb2xml, JVM): parses a COBOL copybook into an XML layout; checks an emitted "
+        "copybook (MFX-23.4). Optional: without it the export is re-parsed by the copybook reader.",
+        env_override_key="APIOME_CB2XML_BIN",
+        # The copybook export seam (MFX-23.4, app.cobolcopybook_cb2xml) reads the XML cb2xml writes with
+        # `-xml`; a syntax error is reported on stderr with exit code 0. `-h` prints its usage.
+        version_probe_args=("-h",),
+        default_timeout_seconds=120.0,
         parses_json=False,
         runtime="jvm",
     ),

@@ -65,6 +65,9 @@ check. This module is the thin dispatcher that picks the matching validator per 
   bundle is checked as it will be unpacked — every import packaged, the WS-I Basic Profile,
   ``xmlschema`` 's WSDL 1.1 reader (WSDL schema, every XSD, every message / port type / binding
   reference) and a re-import through the WSDL import source; pure Python;
+* ``cobolcopybook`` — :func:`app.cobolcopybook_cb2xml.check_with_cb2xml` (MFX-23.4): cb2xml parses the
+  copybook when the toolchain has it, and the layout it reads must match the emit plan (the trees the
+  emitter rendered with the export's options); the copybook reader always re-parses it too;
 * ``sample-noop`` and any unregistered format — *not applicable* (the sample emitter is an
   internal no-op with no importable artifact).
 
@@ -84,7 +87,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -539,6 +542,7 @@ async def _validate_capnproto(
 # importer. A format absent here has no importable artifact (the sample no-op) and is reported
 # not-applicable. Keyed by the resolved emitter format so it tracks the emitter registry.
 _Validator = Callable[[str, EmitResult, CanonicalApi], Awaitable[EmittedArtifactValidation]]
+_OptionValidator = Callable[[str, EmitResult, CanonicalApi, Mapping[str, Any]], Awaitable[EmittedArtifactValidation]]
 
 async def _validate_asn1(
     target: str, emit_result: EmitResult, api: CanonicalApi
@@ -808,10 +812,18 @@ async def _validate_iso8583(
 
 
 async def _validate_cobolcopybook(
-    target: str, emit_result: EmitResult, api: CanonicalApi
+    target: str, emit_result: EmitResult, api: CanonicalApi, options: Mapping[str, Any]
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted COBOL copybook by re-parsing it."""
-    from .cobolcopybook_emitter import validate_cobolcopybook_document
+    """Re-validate an emitted COBOL copybook (MFX-23.4, #4142).
+
+    Every file is re-parsed by Apiome's copybook reader. When the toolchain has ``cb2xml``, it parses each
+    file too (:func:`app.cobolcopybook_cb2xml.check_with_cb2xml`): its syntax error is a ``cb2xml.parse``
+    finding with cb2xml's message, and each way the layout it read differs from the emit plan — the trees
+    the emitter rendered with the export's ``options`` — is a ``cb2xml.layout`` finding at the item's
+    path. Without cb2xml (or when it goes missing mid-run), the re-parse alone checks the export.
+    """
+    from .cobolcopybook_cb2xml import Cb2xmlError, cb2xml_available, check_with_cb2xml
+    from .cobolcopybook_emitter import copybook_emit_options, copybook_emit_plan, validate_cobolcopybook_document
 
     errors: List[str] = []
     for emitted in emit_result.files:
@@ -819,7 +831,24 @@ async def _validate_cobolcopybook(
             validate_cobolcopybook_document(str(emitted.content))
         except Exception as exc:
             errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    findings = [_finding_from_message(err) for err in errors]
+    if emit_result.files and cb2xml_available():
+        emit_options = copybook_emit_options(options)
+        plan = await asyncio.to_thread(copybook_emit_plan, api, emit_options)
+        try:
+            for emitted in emit_result.files:
+                problems = await asyncio.to_thread(
+                    check_with_cb2xml, emitted.path, str(emitted.content), plan,
+                    fixed_format=emit_options.fixed_format,
+                )
+                findings.extend(
+                    ValidationFinding(message=p.message, file=p.file, path=p.path, line=p.line, column=p.column,
+                                      keyword=p.rule)
+                    for p in problems
+                )
+        except Cb2xmlError:
+            pass  # cb2xml went missing mid-run: the re-parse above is the check.
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_fix(
@@ -1412,7 +1441,6 @@ _VALIDATORS: Dict[str, _Validator] = {
     "hl7v2": _validate_hl7v2,
     "iso20022": _validate_iso20022,
     "iso8583": _validate_iso8583,
-    "cobolcopybook": _validate_cobolcopybook,
     "fix": _validate_fix,
     "zosconnect": _validate_zosconnect,
     "json-schema": _validate_jsonschema,
@@ -1459,11 +1487,20 @@ _VALIDATORS: Dict[str, _Validator] = {
 }
 
 
+#: Validators that also need the export's per-target options: they check the artifact against what the
+#: emitter planned with those options (MFX-23.4: the COBOL copybook's layout).
+_OPTION_VALIDATORS: Dict[str, _OptionValidator] = {
+    # MFX-23.4 (#4142)
+    "cobolcopybook": _validate_cobolcopybook,
+}
+
+
 async def validate_emitted_artifact(
     target_format: str,
     emit_result: EmitResult,
     *,
     api: CanonicalApi,
+    options: Optional[Mapping[str, Any]] = None,
 ) -> EmittedArtifactValidation:
     """Re-validate an emitted artifact through its matching MFI import parser (MFX-5.1).
 
@@ -1478,11 +1515,16 @@ async def validate_emitted_artifact(
         emit_result: The emitter's output bundle to re-validate.
         api: The source canonical model the artifact was emitted from — the round-trip
             validators re-import the artifact and reuse ``api`` as the diff baseline.
+        options: The per-target emit options the artifact was emitted with (``None`` → the target
+            defaults); a validator that checks the artifact against the emit plan replans with them.
 
     Returns:
         The :class:`EmittedArtifactValidation` verdict. A caller gates delivery on
         :attr:`EmittedArtifactValidation.failed` (a validator ran and rejected the artifact).
     """
+    option_validator = _OPTION_VALIDATORS.get(target_format)
+    if option_validator is not None:
+        return await option_validator(target_format, emit_result, api, options or {})
     validator = _VALIDATORS.get(target_format)
     if validator is None:
         return _not_applicable(
