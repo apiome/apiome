@@ -2,7 +2,11 @@
  * Unit tests for property conflict detection (#583): incompatible property
  * definitions across schemas in an OpenAPI document.
  */
-import { detectPropertyConflicts } from '../../src/app/utils/property-conflict-detection';
+import {
+  detectPropertyConflicts,
+  findPropertyConflicts,
+  summarizePropertyDefinition,
+} from '../../src/app/utils/property-conflict-detection';
 
 describe('detectPropertyConflicts (#583)', () => {
   test('returns empty when no document', () => {
@@ -218,7 +222,8 @@ describe('detectPropertyConflicts (#583)', () => {
     expect(c.detail).toBeDefined();
     expect(typeof c.detail).toBe('string');
     expect(c.impactIfResolved).toBeDefined();
-    expect(c.impactIfResolved).toContain('chosen');
+    // What the import does: each definition becomes its own library property (#583).
+    expect(c.impactIfResolved).toContain('its own property in the project library');
   });
 
   test('same type and format with different description still produces one definition per description', () => {
@@ -399,5 +404,71 @@ describe('detectPropertyConflicts (#583)', () => {
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0].message).toContain('"status"');
     expect(conflicts[0].detail).toMatch(/enum/);
+  });
+});
+
+describe('findPropertyConflicts (#583)', () => {
+  const doc = {
+    components: {
+      schemas: {
+        Customer: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            status: { type: 'string', enum: ['active', 'inactive'] },
+            name: { type: 'string' },
+          },
+        },
+        Transaction: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', format: 'int64' },
+            status: { type: 'string', enum: ['pending', 'completed'] },
+            name: { type: 'string' },
+          },
+        },
+        Invoice: {
+          type: 'object',
+          properties: { status: { enum: ['active', 'inactive'], type: 'string' } },
+        },
+      },
+    },
+  };
+
+  test('lists each conflicting property with every definition and the schemas that use it', () => {
+    const conflicts = findPropertyConflicts({ document: doc, schemaNames: ['Customer', 'Transaction', 'Invoice'] });
+    expect(conflicts.map((c) => c.property)).toEqual(['id', 'status']);
+    const status = conflicts.find((c) => c.property === 'status')!;
+    // Invoice spells the same enum with its keys in another order: the same definition.
+    expect(status.definitions).toEqual([
+      { schemas: ['Customer', 'Invoice'], summary: '{"enum":["active","inactive"],"type":"string"}' },
+      { schemas: ['Transaction'], summary: '{"enum":["pending","completed"],"type":"string"}' },
+    ]);
+  });
+
+  test('a property defined one way everywhere is not a conflict', () => {
+    const conflicts = findPropertyConflicts({ document: doc, schemaNames: ['Customer', 'Transaction'] });
+    expect(conflicts.some((c) => c.property === 'name')).toBe(false);
+  });
+
+  test('agrees with detectPropertyConflicts', () => {
+    const input = { document: doc, schemaNames: ['Customer', 'Transaction', 'Invoice'] };
+    expect(detectPropertyConflicts(input).map((c) => c.message)).toEqual(
+      findPropertyConflicts(input).map((c) => `Property "${c.property}" has incompatible definitions across schemas.`)
+    );
+  });
+});
+
+describe('summarizePropertyDefinition (#583)', () => {
+  test('sorts keys and drops $id, $schema and x- fields', () => {
+    expect(summarizePropertyDefinition({ type: 'string', $id: 'x', 'x-internal': true, format: 'uuid' })).toBe(
+      '{"format":"uuid","type":"string"}'
+    );
+  });
+
+  test('cuts a long definition with an ellipsis', () => {
+    const summary = summarizePropertyDefinition({ type: 'string', enum: Array.from({ length: 40 }, (_, i) => `v${i}`) });
+    expect(summary).toHaveLength(120);
+    expect(summary.endsWith('…')).toBe(true);
   });
 });

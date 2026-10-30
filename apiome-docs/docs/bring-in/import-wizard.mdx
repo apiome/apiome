@@ -60,6 +60,18 @@ If the import fails, nothing is saved; the failures are listed with **“Retry i
 
 **Recent import jobs** in the wizard's header lists earlier jobs.
 
+### Properties defined differently
+
+When the schemas you tick use the same property name with different definitions, the **Preview**
+step warns before you import. For example, `status` is an enum of `active` and `inactive` in
+**Customer** but `pending` and `completed` in **Transaction**. The warning lists each property, every
+definition it has and the schemas that use each one.
+
+The import still runs. Each definition becomes its own property in the project's property library
+(`status`, then `status_1`), and every schema keeps its own definition. To end up with one shared
+property instead, make the definitions match in the spec and import again. The warning follows your
+selection: unticking the schemas on one side clears it.
+
 ### Import a new version of an existing project
 
 When the **Slug** on Preview matches a project you already have, the import adds a new version to
