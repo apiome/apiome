@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Schemas that other schemas use — on the **Preview** step, ticking a schema also ticks every schema it references (`$ref`), and a schema that a ticked schema references can't be unticked: its row says **Required by …** until you untick the schema that uses it. An import can no longer leave a reference pointing at a schema it skipped
   - Changes step — importing a spec whose slug matches an existing project now stops at **Changes** before **Import**: added, changed, removed and breaking counts against the project's latest version, a filterable list of every changed path, operation, schema and property (breaking first), and a **Side-by-side spec** tab with the latest version on the left and the incoming spec on the right. Breaking changes are a warning, never a block — **Continue to import** is always available, for a dry run too
   - Catalog dry run — **Import to catalog** has a **Dry run** button on the **Options** step: it shows the detected format, where the import would land and why, the catalog item's name and slug, its contents, quality score and fingerprint, and saves nothing. **Continue** still goes on to **Quality** and **Import**
 - Catalog:

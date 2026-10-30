@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Package, Search, Check, ChevronRight, ChevronDown, ArrowUpAZ, ArrowDownAZ, LayoutGrid, Network, FolderTree } from 'lucide-react';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import { AnalysisResult } from '../../../utils/openapi-analyzer';
-import { buildSchemaTree, buildRelationshipDiagramEdges, extractSchemaReferences, getSchemaType, getSchemaTags, type SchemaTreeNode, type SchemaDisplayType } from '../../../utils/schema-tree-utils';
+import { buildSchemaTree, buildRelationshipDiagramEdges, extractSchemaReferences, getSchemaType, getSchemaTags, selectedReferrers, toggleSchemaSelection, type SchemaTreeNode, type SchemaDisplayType } from '../../../utils/schema-tree-utils';
 import { getSmartClassName } from '../../../../../lib/schema-context-naming';
 import { collectExternalTypeKeysFromDocument } from '../../../../../lib/importers/openapi';
 import { extractDirectProperties } from '../../../utils/openapi-import';
@@ -345,6 +345,61 @@ function ExpandablePropertyRow({
   );
 }
 
+/**
+ * A list of names for a sentence: `A`, `A and B`, `A, B and C`.
+ *
+ * @param names The names.
+ * @returns The phrase.
+ */
+function nameList(names: string[]): string {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/**
+ * The import checkbox of one schema (#579).
+ *
+ * A schema that another selected schema references is locked: it must be imported with its
+ * referrer, so the checkbox is disabled and says which schemas require it.
+ *
+ * @param props.name The schema.
+ * @param props.checked Whether it is selected.
+ * @param props.requiredBy The selected schemas that reference it; non-empty locks the checkbox.
+ * @param props.onToggle Called when the reader toggles it.
+ * @param props.className Size and spacing classes.
+ */
+function SchemaSelectCheckbox({
+  name,
+  checked,
+  requiredBy,
+  onToggle,
+  className,
+}: {
+  name: string;
+  checked: boolean;
+  requiredBy: string[];
+  onToggle: (name: string) => void;
+  className?: string;
+}) {
+  const locked = checked && requiredBy.length > 0;
+  return (
+    <Checkbox.Root
+      checked={checked}
+      disabled={locked}
+      onCheckedChange={() => onToggle(name)}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Import ${name}`}
+      title={locked ? `Required by ${nameList(requiredBy)}` : undefined}
+      data-testid={`schema-select-${name}`}
+      className={`rounded border-2 border-border-strong bg-surface data-[state=checked]:bg-accent data-[state=checked]:border-accent flex items-center justify-center flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${className ?? ''}`}
+    >
+      <Checkbox.Indicator>
+        <Check className="w-4 h-4 text-fg-on-accent" />
+      </Checkbox.Indicator>
+    </Checkbox.Root>
+  );
+}
+
 // Single tree node for hierarchical schema view
 function SchemaTreeItem({
   node,
@@ -356,6 +411,7 @@ function SchemaTreeItem({
   onToggleSchema,
   onSelectSchema,
   selectedSchemaName,
+  getRequiredBy,
 }: {
   node: SchemaTreeNode;
   depth: number;
@@ -363,6 +419,8 @@ function SchemaTreeItem({
   expandedSchemaNames: string[];
   onToggleExpand: (name: string) => void;
   getSchemaInfo: (name: string) => SchemaInfo | undefined;
+  /** The selected schemas that reference a schema (#579). */
+  getRequiredBy: (name: string) => string[];
   onToggleSchema: (name: string) => void;
   onSelectSchema: (name: string | null) => void;
   selectedSchemaName: string | null;
@@ -405,16 +463,13 @@ function SchemaTreeItem({
             <span className="w-4 inline-block" aria-hidden />
           )}
         </div>
-        <Checkbox.Root
+        <SchemaSelectCheckbox
+          name={node.name}
           checked={schemaInfo?.selected ?? false}
-          onCheckedChange={() => onToggleSchema(node.name)}
-          onClick={(e) => e.stopPropagation()}
-          className="w-5 h-5 rounded border-2 border-border-strong bg-surface data-[state=checked]:bg-accent data-[state=checked]:border-accent flex items-center justify-center flex-shrink-0"
-        >
-          <Checkbox.Indicator>
-            <Check className="w-4 h-4 text-fg-on-accent" />
-          </Checkbox.Indicator>
-        </Checkbox.Root>
+          requiredBy={getRequiredBy(node.name)}
+          onToggle={onToggleSchema}
+          className="w-5 h-5"
+        />
         <Package className="h-4 w-4 text-accent flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="font-medium text-fg truncate text-sm">
@@ -437,6 +492,7 @@ function SchemaTreeItem({
                 expandedSchemaNames={expandedSchemaNames}
                 onToggleExpand={onToggleExpand}
                 getSchemaInfo={getSchemaInfo}
+                getRequiredBy={getRequiredBy}
                 onToggleSchema={onToggleSchema}
                 onSelectSchema={onSelectSchema}
                 selectedSchemaName={selectedSchemaName}
@@ -528,6 +584,20 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
     });
 
   const selectedCount = schemas.filter(s => s.selected).length;
+
+  /** The document's schemas by name, which `$ref`s resolve against (#579). */
+  const schemaObject: Record<string, unknown> = useMemo(
+    () => analysis.document?.components?.schemas || analysis.document?.definitions || {},
+    [analysis.document]
+  );
+  /** Each selected schema → the selected schemas that reference it, which lock it (#579). */
+  const requiredByMap = useMemo(() => {
+    const selectedNames = schemas.filter((s) => s.selected).map((s) => s.name);
+    return new Map(selectedNames.map((name) => [name, selectedReferrers(name, selectedNames, schemaObject)]));
+  }, [schemas, schemaObject]);
+  const getRequiredBy = (name: string): string[] => requiredByMap.get(name) ?? [];
+  /** What the last toggle did beyond the click itself (auto-selected, or refused), announced politely. */
+  const [selectionNote, setSelectionNote] = useState<string | null>(null);
 
   const schemaObj = analysis.document?.components?.schemas || analysis.document?.definitions || {};
 
@@ -673,12 +743,14 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
     const newSchemas = schemas.map(s => ({ ...s, selected: true }));
     setSchemas(newSchemas);
     updateSelectedSchemas(newSchemas);
+    setSelectionNote(null);
   };
 
   const handleSelectNone = () => {
     const newSchemas = schemas.map(s => ({ ...s, selected: s.required }));
     setSchemas(newSchemas);
     updateSelectedSchemas(newSchemas);
+    setSelectionNote(null);
   };
 
   const handlePropertyExpand = (expandKey: string, open: boolean) => {
@@ -690,12 +762,26 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
     });
   };
 
+  /**
+   * Toggle one schema, keeping every `$ref` of the selection resolvable (#579): selecting a schema
+   * selects what it references, and a schema a selected schema references cannot be deselected.
+   */
   const handleToggleSchema = (name: string) => {
-    const newSchemas = schemas.map(s =>
-      s.name === name ? { ...s, selected: !s.selected } : s
-    );
+    const selectedNames = schemas.filter((s) => s.selected).map((s) => s.name);
+    const result = toggleSchemaSelection(name, selectedNames, schemaObject);
+    if (result.blockedBy.length > 0) {
+      setSelectionNote(`${name} stays selected: ${nameList(result.blockedBy)} ${result.blockedBy.length === 1 ? 'references' : 'reference'} it.`);
+      return;
+    }
+    const next = new Set(result.selected);
+    const newSchemas = schemas.map((s) => ({ ...s, selected: next.has(s.name) }));
     setSchemas(newSchemas);
     updateSelectedSchemas(newSchemas);
+    setSelectionNote(
+      result.autoSelected.length > 0
+        ? `Also selected ${nameList(result.autoSelected)}: ${name} references ${result.autoSelected.length === 1 ? 'it' : 'them'}.`
+        : null
+    );
   };
 
   const updateSelectedSchemas = (schemaList: SchemaInfo[]) => {
@@ -858,6 +944,9 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
               <span className="text-sm text-fg-muted">
                 {selectedCount} of {schemas.length} selected
               </span>
+              <span role="status" aria-live="polite" className="text-sm text-fg-muted" data-testid="schema-selection-note">
+                {selectionNote}
+              </span>
             </div>
           )}
 
@@ -1006,18 +1095,20 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   className="imp-schema-row"
                   onClick={() => setSelectedSchemaName(schema.name)}
                 >
-                  <Checkbox.Root
+                  <SchemaSelectCheckbox
+                    name={schema.name}
                     checked={schema.selected}
-                    onCheckedChange={() => handleToggleSchema(schema.name)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-5 h-5 rounded border-2 border-border-strong bg-surface data-[state=checked]:bg-accent data-[state=checked]:border-accent flex items-center justify-center"
-                  >
-                    <Checkbox.Indicator>
-                      <Check className="w-4 h-4 text-fg-on-accent" />
-                    </Checkbox.Indicator>
-                  </Checkbox.Root>
+                    requiredBy={getRequiredBy(schema.name)}
+                    onToggle={handleToggleSchema}
+                    className="w-5 h-5"
+                  />
                   <Package className="h-5 w-5 text-accent flex-shrink-0" />
                   <span className="min-w-0 flex-1 truncate font-medium">{schema.name}</span>
+                  {schema.selected && getRequiredBy(schema.name).length > 0 && (
+                    <span className="imp-schema-row__meta" data-testid={`schema-required-by-${schema.name}`}>
+                      Required by {nameList(getRequiredBy(schema.name))}
+                    </span>
+                  )}
                   <span className="imp-schema-row__meta">{schema.properties} properties</span>
                   {selectedSchemaName === schema.name && (
                     <ChevronRight className="h-4 w-4 shrink-0 text-accent" aria-hidden />
@@ -1034,6 +1125,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   expandedSchemaNames={expandedSchemaNames}
                   onToggleExpand={toggleExpanded}
                   getSchemaInfo={getSchemaInfo}
+                  getRequiredBy={getRequiredBy}
                   onToggleSchema={handleToggleSchema}
                   onSelectSchema={setSelectedSchemaName}
                   selectedSchemaName={selectedSchemaName}

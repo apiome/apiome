@@ -1,0 +1,17 @@
+---
+slug: import-required-schemas
+title: Imports keep the schemas they reference
+description: Ticking a schema to import also ticks the schemas it uses.
+authors: [apiome]
+---
+
+The import wizard's **Preview** step now keeps every reference resolvable.
+[How it works](/bring-in/import-wizard#schemas-that-other-schemas-use).
+
+{/* truncate */}
+
+- **Ticking a schema also ticks every schema it references**, and the schemas those reference. A
+  line next to **Select None** says what was added.
+- **A schema that a ticked schema references can't be unticked.** Its checkbox is greyed out and
+  the row says **Required by …** until you untick the schema that uses it.
+- **Select All** and **Select None** work as before.
