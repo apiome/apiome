@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.535.0] - 2026-10-30
+
+### Added
+- **EDI fidelity pack (MFX-24.3, #4147).** `X12GuideFidelityRulePack` lays the guide out for the report's options
+  (opt-in `apply_options`) and files every writer loss on its construct:
+  - **critical** `DROP` — unions and maps (a segment holds flat values), recursion, values beyond 99 elements, and
+    operations / channels with the types-only advisory; these make the conversion **severe** (confirmation required);
+  - `SYNTH` — default element lengths (warn), codes synthesized for enum values that are not valid ID codes (warn),
+    segment IDs made from names, marker elements;
+  - `APPROX` — lists of lists flattened, rules kept as guide notes (warn), decimals of unknown scale as `R` (warn),
+    implied-decimal `Nn`, floats as `R`, timestamps split into DT + TM, unmapped scalars;
+  - value-less fields are an info `DROP`; the base field-number verdict no longer fires (elements are positional).
+- **Guide notes and codes** (`app.edi_guide`): `pattern`, `format`, numeric bounds, a non-scale `multipleOf` and
+  allowed-value sets become element `notes` (JSON, a CSV `notes` column, a Markdown *Notes* column). Enum values that
+  are not upper-case letters and digits within the new `max_code_length` option (default 3) get synthesized codes,
+  mapped back in `codeValues` (shown as `ONH (ON-HOLD)`). The validator checks both.
+- **Transcoding guard per-construct detail (MFX-3.3 extension):** `TranscodeGuard.critical_details` lists every
+  critical construct other than the operations / channels already counted (construct key, kind, message, mapping),
+  and `reasons` names up to 10 of them — so a severe conversion says which union or map it loses. New schema
+  `GuardConstruct` (preview, dispatch and export-job responses).
+
 ## [1.534.0] - 2026-10-29
 
 ### Added

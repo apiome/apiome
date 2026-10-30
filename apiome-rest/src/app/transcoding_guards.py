@@ -51,6 +51,7 @@ from .fidelity_engine import compute_lossiness_for_emitter
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = [
+    "GuardConstruct",
     "TranscodeVerdict",
     "TranscodeGuard",
     "TranscodeGuardError",
@@ -72,6 +73,21 @@ class TranscodeVerdict(str, Enum):
     LOSSY = "lossy"  # some loss, but the operational surface survives (advisory covers it)
     NEAR_EMPTY = "near-empty"  # a types-only target: only schemas export, operations dropped
     SEVERE = "severe"  # essence unrepresentable or a critical loss — requires confirmation
+
+
+class GuardConstruct(BaseModel):
+    """One construct a guard names: a critical loss of the fidelity report (MFX-24.3, #4147).
+
+    The per-construct *why* behind :attr:`TranscodeGuard.critical_constructs` — so a severe conversion
+    says which union, map or value is lost, not just how many.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    construct_key: str = Field(description="The canonical key of the construct (its source path).")
+    kind: LossinessKind = Field(description="What happens to it (drop / approx / synth).")
+    message: str = Field(description="The fidelity report's explanation, ready to display.")
+    target_mapping: Optional[str] = Field(default=None, description="How it lands in the target, if it does.")
 
 
 class TranscodeGuard(BaseModel):
@@ -134,6 +150,11 @@ class TranscodeGuard(BaseModel):
         default_factory=list,
         description="The structured *why*: one line per contributing factor, drawn from the "
         "paradigm mismatch and the fidelity report.",
+    )
+    critical_details: List[GuardConstruct] = Field(
+        default_factory=list,
+        description="Each critical construct other than the operations and channels counted above, with the "
+        "report's explanation — the per-construct detail of a severe conversion (MFX-24.3).",
     )
 
 
@@ -286,6 +307,11 @@ def classify_transcode(
             f"{_plural(critical_constructs, 'construct')} would be dropped or reinterpreted at "
             "critical severity, so the result may not behave equivalently."
         )
+    critical_details = _critical_details(api, report)
+    for detail in critical_details[:_MAX_DETAIL_REASONS]:
+        reasons.append(f"{detail.construct_key}: {detail.message}")
+    if len(critical_details) > _MAX_DETAIL_REASONS:
+        reasons.append(f"… and {_plural(len(critical_details) - _MAX_DETAIL_REASONS, 'more critical construct')}.")
 
     # --- Band selection (precedence: clean → near-empty → severe → lossy) ------------------
     if report.is_lossless:
@@ -349,7 +375,31 @@ def classify_transcode(
         headline=headline,
         message=message,
         reasons=reasons,
+        critical_details=critical_details,
     )
+
+
+#: How many critical constructs a guard names in :attr:`TranscodeGuard.reasons` (all are in ``critical_details``).
+_MAX_DETAIL_REASONS = 10
+
+
+def _critical_details(api: CanonicalApi, report: LossinessReport) -> List[GuardConstruct]:
+    """The report's critical, non-OK items — except operations, channels and the types-only advisory.
+
+    Those three are already counted in :attr:`TranscodeGuard.dropped_operations` / ``dropped_events``
+    and the near-empty copy; what remains is what makes a conversion severe beyond its paradigm (a
+    union, a map, a value with no place in the target), listed in the report's order.
+    """
+    surface = {op.key for op in api.operations()} | {channel.key for channel in api.channels}
+    details: List[GuardConstruct] = []
+    for item in report.items:
+        if item.severity is not LossinessSeverity.CRITICAL or item.kind is LossinessKind.OK:
+            continue
+        if item.construct_key in surface or item.target_mapping == "types-only":
+            continue
+        details.append(GuardConstruct(construct_key=item.construct_key, kind=item.kind, message=item.message,
+                                      target_mapping=item.target_mapping))
+    return details
 
 
 def enforce_transcode_guard(

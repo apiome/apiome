@@ -29,11 +29,11 @@ import csv
 import io
 import json
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationError, field_validator
 
-from .canonical_model import ApiParadigm, CanonicalApi
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Type
 from .edi_guide import GuideElement, GuideLoop, GuideOptions, GuideSegment, SegmentUse, plan_guide
 from .emitter import (
     CapabilityProfile,
@@ -48,7 +48,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
-from .lossiness import LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = [
     "X12_ELEMENT_TYPES",
@@ -68,13 +68,74 @@ _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 
 class X12GuideFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for the X12 implementation guide (the full pack is MFX-24.3).
+    """Fidelity rules for the X12 implementation guide — MFX-24.1 (#4145), MFX-24.3 (#4147).
 
-    Types-only: every operation and channel is dropped, with the critical types-only advisory, and a
-    document of another format is noted on the root.
+    X12 is the most structurally constrained target: a transaction set is flat segments in loops. The pack
+    lays the guide out for the report's options (:meth:`apply_options`) and files each thing the layout
+    invented, degraded or dropped on the construct it came from:
+
+    * **critical** ``DROP`` — operations and channels (with the types-only advisory), a union or a map (a
+      segment holds flat values), a record that contains itself, values beyond a segment's 99 elements:
+      these make the conversion **severe**, so the MFX-3.3 guard asks for confirmation and names each one;
+    * ``SYNTH`` — a default element length (warn), a segment ID made from a name, a marker element, a code
+      synthesized for an enum value that does not fit an ID code (warn);
+    * ``APPROX`` — a list of lists flattened into one loop, rules kept only as guide notes, a decimal of
+      unknown scale written as a real, a decimal with implied places, a float as a real, a timestamp split
+      into date and time, a scalar with no element type;
+    * a field whose type holds no value is an info ``DROP``.
     """
 
     target_label = "X12 implementation guide"
+
+    #: Writer loss subject → (verdict kind, severity).
+    _WRITER_LOSSES = {
+        "union-dropped": (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        "map-dropped": (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        "recursion-cut": (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        "elements-truncated": (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        "field-dropped": (LossinessKind.DROP, LossinessSeverity.INFO),
+        "length-synthesized": (LossinessKind.SYNTH, LossinessSeverity.WARN),
+        "code-renamed": (LossinessKind.SYNTH, LossinessSeverity.WARN),
+        "segment-id-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "element-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "list-flattened": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "constraint-as-note": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "decimal-as-real": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unmapped-scalar": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "decimal-implied": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "float-as-real": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "timestamp-split": (LossinessKind.APPROX, LossinessSeverity.INFO),
+    }
+    #: Set by :meth:`evaluate`.
+    _filed: Dict[str, List[FidelityVerdict]] = {}
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for these emit options (invalid options fall back to the defaults)."""
+        try:
+            self._options = X12GuideEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = X12GuideEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Lay the guide out once (as it will be emitted), file its losses by construct, then walk the model."""
+        writer = _X12GuideWriter(api, getattr(self, "_options", None) or X12GuideEmitOptions())
+        try:
+            writer.guide()
+        except EmitPreconditionError:
+            pass  # a model with no record is refused at export; there is no layout to report
+        constructs = {""} | {t.key for t in api.types} | {f.key for t in api.types for f in t.fields}
+        self._filed = {}
+        seen = set()
+        for loss in writer.losses.records():
+            rule = self._WRITER_LOSSES.get(loss.subject)
+            if rule is None or (loss.subject, loss.detail) in seen:
+                continue
+            seen.add((loss.subject, loss.detail))
+            kind, severity = rule
+            self._filed.setdefault(_owning_construct(loss.pointer or "", constructs), []).append(
+                FidelityVerdict(kind=kind, severity=severity, message=loss.detail, target_mapping=loss.subject)
+            )
+        return super().evaluate(api)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         verdicts: List[FidelityVerdict] = []
@@ -87,7 +148,26 @@ class X12GuideFidelityRulePack(CapabilityRulePack):
             severity=LossinessSeverity.INFO,
             target_mapping="types → X12 transaction set",
         ))
-        return verdicts
+        return verdicts + self._filed.get("", [])
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        return super().type_verdicts(type_) + self._filed.get(type_.key, [])
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        return super().field_verdicts(field) + self._filed.get(field.key, [])
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """A union type itself is not written; the fields that use it carry the critical drop."""
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} has no union: a segment holds flat values, so {type_.key!r} is not "
+            "written (each field of this type is dropped)",
+            severity=LossinessSeverity.WARN,
+            target_mapping="union → dropped",
+        )
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """An element is identified by its position in its segment, which the guide keeps."""
+        return None
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -101,6 +181,14 @@ class X12GuideFidelityRulePack(CapabilityRulePack):
             message=f"{self.target_label} is types-only — {_TYPES_ONLY_DROP_MESSAGE}; the event channel is dropped",
             target_mapping="channel → dropped (types-only export)",
         )
+
+
+def _owning_construct(pointer: str, constructs: set) -> str:
+    """The construct a writer loss belongs to: its own key, else the longest key it extends, else the root."""
+    if pointer in constructs:
+        return pointer
+    owners = [key for key in constructs if key and pointer.startswith(f"{key}.")]
+    return max(owners, key=len) if owners else ""
 
 
 class X12GuideEmitOptions(EmitOptions):
@@ -119,6 +207,11 @@ class X12GuideEmitOptions(EmitOptions):
     default_element_length: int = Field(
         default=80, ge=1, le=9999,
         description="Maximum length of a text element with no maxLength.",
+    )
+    max_code_length: int = Field(
+        default=3, ge=1, le=30,
+        description="The longest code an enum value may be used as directly; a longer value (or one that is not "
+        "upper-case letters and digits) gets a synthesized code.",
     )
 
     @field_validator("transaction_set")
@@ -198,7 +291,8 @@ class _X12GuideWriter:
     def guide(self) -> Dict[str, Any]:
         """The guide as a JSON-ready document."""
         plan = plan_guide(self._api, GuideOptions(default_length=self._options.default_element_length,
-                                                  reserved_ids=_ENVELOPE_IDS), self.losses)
+                                                  reserved_ids=_ENVELOPE_IDS,
+                                                  max_code_length=self._options.max_code_length), self.losses)
         if not plan.structure:
             raise EmitPreconditionError(
                 "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or "
@@ -284,6 +378,10 @@ def _element_json(element: GuideElement) -> Dict[str, Any]:
                            "minLength": element.min_length, "maxLength": element.max_length, "usage": element.usage}
     if element.codes:
         out["codes"] = element.codes
+    if element.code_values:
+        out["codeValues"] = element.code_values
+    if element.notes:
+        out["notes"] = element.notes
     if element.source:
         out["source"] = element.source
     return out
@@ -314,7 +412,7 @@ def _se_segment() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 _CSV_COLUMNS = ["segment", "segment_name", "ref", "element", "type", "min_length", "max_length", "usage", "codes",
-                "source"]
+                "notes", "source"]
 
 
 def _csv(guide: Dict[str, Any]) -> str:
@@ -326,8 +424,15 @@ def _csv(guide: Dict[str, Any]) -> str:
         for element in segment["elements"]:
             writer.writerow([segment["id"], segment["name"], element["ref"], element["name"], element["type"],
                              element["minLength"], element["maxLength"], element["usage"],
-                             "|".join(element.get("codes") or []), element.get("source", "")])
+                             "|".join(_code_labels(element)), "; ".join(element.get("notes") or []),
+                             element.get("source", "")])
     return buffer.getvalue()
+
+
+def _code_labels(element: Dict[str, Any]) -> List[str]:
+    """Each code, with the source value a synthesized one stands for (``ONH (ON-HOLD)``)."""
+    values = element.get("codeValues") or {}
+    return [f"{code} ({values[code]})" if code in values else code for code in element.get("codes") or []]
 
 
 def _cell(value: Any) -> str:
@@ -363,11 +468,14 @@ def _markdown(guide: Dict[str, Any]) -> str:
     lines += ["", "## Segments", ""]
     for segment in guide["segments"]:
         lines += [f"### {segment['id']} — {_cell(segment['name'])}", "",
-                  "| Ref | Element | Type | Min/Max | Usage | Codes |", "| --- | --- | --- | --- | --- | --- |"]
+                  "| Ref | Element | Type | Min/Max | Usage | Codes | Notes |",
+                  "| --- | --- | --- | --- | --- | --- | --- |"]
         for element in segment["elements"]:
-            codes = ", ".join(element.get("codes") or []) or "—"
+            codes = ", ".join(_code_labels(element)) or "—"
+            notes = "; ".join(element.get("notes") or []) or "—"
             lines.append(f"| {element['ref']} | {_cell(element['name'])} | {element['type']} | "
-                         f"{element['minLength']}/{element['maxLength']} | {element['usage']} | {_cell(codes)} |")
+                         f"{element['minLength']}/{element['maxLength']} | {element['usage']} | {_cell(codes)} | "
+                         f"{_cell(notes)} |")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -438,6 +546,12 @@ def _check_element(seg_id: str, position: int, element: Dict[str, Any]) -> None:
                 raise ValueError(f"{ref}: code {code!r} is not {low}-{high} characters")
     elif codes:
         raise ValueError(f"{ref}: only an ID element has codes")
+    unknown = set(element.get("codeValues") or {}) - set(codes or [])
+    if unknown:
+        raise ValueError(f"{ref}: codeValues names codes the element does not have: {sorted(unknown)}")
+    notes = element.get("notes")
+    if notes is not None and not (isinstance(notes, list) and all(isinstance(n, str) and n for n in notes)):
+        raise ValueError(f"{ref}: notes must be a list of text")
 
 
 def _check_nodes(nodes: List[Dict[str, Any]], defined: Dict[str, Dict[str, Any]]) -> None:

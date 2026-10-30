@@ -372,3 +372,168 @@ def test_every_corpus_source_gives_a_valid_guide_or_a_refusal() -> None:
         except Exception as exc:  # noqa: BLE001 - collect every failure
             failures.append(f"{family}: {exc}")
     assert not failures, "\n".join(failures)
+
+
+# ===========================================================================
+# EDI fidelity pack — MFX-24.3 (#4147)
+# ===========================================================================
+
+
+def _report(api: CanonicalApi, **options):
+    from app.fidelity_engine import compute_lossiness_for_emitter
+
+    return compute_lossiness_for_emitter(api, X12GuideEmitter, options=options or None)
+
+
+def _items(report, key: str, mapping: str):
+    return [i for i in report.items if i.construct_key == key and i.target_mapping == mapping]
+
+
+def _lossy() -> CanonicalApi:
+    """A model touching every rule: free text, a union, a map, nesting, codes, decimals, constraints."""
+    o = "Order"
+    return _api(
+        _record(o,
+                _field(o, "note", TypeRef(name="string")),
+                _field(o, "sku", TypeRef(name="string", nullable=False),
+                       constraints=Constraints(max_length=12, pattern="^[A-Z]{3}-[0-9]+$")),
+                _field(o, "email", TypeRef(name="string"), constraints=Constraints(max_length=60, format="email")),
+                _field(o, "qty", TypeRef(name="i32"), constraints=Constraints(minimum=1, maximum=999)),
+                _field(o, "price", TypeRef(name="decimal"), constraints=Constraints(multiple_of=0.01)),
+                _field(o, "rate", TypeRef(name="decimal")),
+                _field(o, "weight", TypeRef(name="double")),
+                _field(o, "state", TypeRef(name="State")),
+                _field(o, "payment", TypeRef(name="Payment")),
+                _field(o, "attrs", TypeRef(name="Attrs")),
+                _field(o, "grid", TypeRef(item=TypeRef(item=TypeRef(name="i32")))),
+                _field(o, "parent", TypeRef(name="Order"))),
+        Type(key="State", name="State", kind=TypeKind.ENUM, enum_values=[
+            EnumValue(key="State.open", name="open", value="OP"),
+            EnumValue(key="State.held", name="held", value="ON-HOLD"),
+            EnumValue(key="State.closed", name="closed", value="closed")]),
+        _record("Card", _field("Card", "number", TypeRef(name="string"), constraints=Constraints(max_length=19))),
+        Type(key="Payment", name="Payment", kind=TypeKind.UNION, union_members=["Card"]),
+        Type(key="Attrs", name="Attrs", kind=TypeKind.MAP, value_type=TypeRef(name="string")),
+    )
+
+
+def test_each_rule_is_reported_on_its_construct() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_lossy())
+    expected = {
+        ("Order.payment", "union-dropped"): (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        ("Order.attrs", "map-dropped"): (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        ("Order.parent", "recursion-cut"): (LossinessKind.DROP, LossinessSeverity.CRITICAL),
+        ("Order.note", "length-synthesized"): (LossinessKind.SYNTH, LossinessSeverity.WARN),
+        ("Order.state", "code-renamed"): (LossinessKind.SYNTH, LossinessSeverity.WARN),
+        ("Order", "segment-id-synthesized"): (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        ("Order.grid", "list-flattened"): (LossinessKind.APPROX, LossinessSeverity.WARN),
+        ("Order.sku", "constraint-as-note"): (LossinessKind.APPROX, LossinessSeverity.WARN),
+        ("Order.rate", "decimal-as-real"): (LossinessKind.APPROX, LossinessSeverity.WARN),
+        ("Order.price", "decimal-implied"): (LossinessKind.APPROX, LossinessSeverity.INFO),
+        ("Order.weight", "float-as-real"): (LossinessKind.APPROX, LossinessSeverity.INFO),
+    }
+    for (key, mapping), (kind, severity) in expected.items():
+        (item,) = _items(report, key, mapping)
+        assert (item.kind, item.severity) == (kind, severity), (key, mapping)
+    assert not [i for i in report.items if i.target_mapping and "field number" in i.target_mapping]
+
+
+def test_constraints_become_guide_notes() -> None:
+    result = _emit(_lossy())
+    guide = json.loads(result.files[0].content)
+    order = {e["name"]: e for e in _segment_of(guide, "Order")["elements"]}
+    assert order["sku"]["notes"] == ["pattern: ^[A-Z]{3}-[0-9]+$"]
+    assert order["email"]["notes"] == ["format: email"]
+    assert order["qty"]["notes"] == ["minimum: 1", "maximum: 999"]
+    assert "notes" not in order["price"]  # multipleOf 0.01 is the N2 scale, not a note
+    md = result.files[2].content
+    assert "| pattern: ^[A-Z]{3}-[0-9]+$ |" in md
+    rows = list(csv.DictReader(io.StringIO(result.files[1].content)))
+    assert next(r for r in rows if r["element"] == "qty")["notes"] == "minimum: 1; maximum: 999"
+    validate_x12_guide(guide)
+
+
+def test_codes_that_do_not_fit_are_renamed_and_mapped_back() -> None:
+    guide = _guide(_lossy())
+    state = next(e for e in _segment_of(guide, "Order")["elements"] if e["name"] == "state")
+    assert state["codes"] == ["OP", "ONH", "CLO"]
+    assert state["codeValues"] == {"ONH": "ON-HOLD", "CLO": "closed"}
+    assert "ONH (ON-HOLD)" in _emit(_lossy()).files[2].content
+    wide = _guide(_lossy(), max_code_length=7)
+    state = next(e for e in _segment_of(wide, "Order")["elements"] if e["name"] == "state")
+    assert state["codes"] == ["OP", "ONHOLD", "CLOSED"]
+
+
+def test_synthesized_codes_stay_unique() -> None:
+    from app.edi_guide import _codes_for
+
+    assert _codes_for(["a-1", "A1", "a 1"], 3) == (["A11", "A1", "A12"], {"A11": "a-1", "A12": "a 1"})
+    assert _codes_for(["", "XY"], 2) == (["C", "XY"], {"C": ""})
+
+
+def test_a_severe_conversion_names_each_critical_construct_in_the_guard() -> None:
+    from app.transcoding_guards import (
+        TranscodeGuardError,
+        TranscodeVerdict,
+        classify_transcode,
+        enforce_transcode_guard,
+    )
+
+    api = _lossy()
+    guard = classify_transcode(api, X12GuideEmitter(), report=_report(api))
+    assert guard.verdict is TranscodeVerdict.SEVERE and guard.requires_confirmation
+    named = {d.construct_key: d.target_mapping for d in guard.critical_details}
+    assert named == {"Order.payment": "union-dropped", "Order.attrs": "map-dropped",
+                     "Order.parent": "recursion-cut"}
+    assert any(r.startswith("Order.payment: 'Order.payment' is a union") for r in guard.reasons)
+    with pytest.raises(TranscodeGuardError):
+        enforce_transcode_guard(guard, confirmed=False)
+
+
+def test_a_clean_layout_is_not_severe() -> None:
+    from app.transcoding_guards import TranscodeVerdict, classify_transcode
+
+    api = _orders()
+    guard = classify_transcode(api, X12GuideEmitter(), report=_report(api))
+    assert guard.verdict is TranscodeVerdict.LOSSY and guard.critical_details == []
+
+
+def test_operations_keep_the_near_empty_warning_and_still_name_critical_constructs() -> None:
+    from app.canonical_model import Operation, OperationKind, Service
+    from app.transcoding_guards import TranscodeVerdict, classify_transcode
+
+    api = _lossy()
+    api.services.append(Service(key="S", name="S", operations=[
+        Operation(key="S.get", name="get", kind=OperationKind.REQUEST_RESPONSE)]))
+    guard = classify_transcode(api, X12GuideEmitter(), report=_report(api))
+    assert guard.verdict is TranscodeVerdict.NEAR_EMPTY and guard.dropped_operations == 1
+    assert "S.get" not in {d.construct_key for d in guard.critical_details}
+    assert "Order.payment" in {d.construct_key for d in guard.critical_details}
+
+
+def test_the_report_follows_the_options() -> None:
+    (item,) = _items(_report(_lossy(), default_element_length=40), "Order.note", "length-synthesized")
+    assert "40 characters" in item.message
+    (renamed,) = _items(_report(_lossy(), max_code_length=7), "Order.state", "code-renamed")
+    assert "'ON-HOLD' → ONHOLD" in renamed.message  # still renamed: a code is upper-case letters and digits
+
+
+def test_an_x12_item_reports_no_critical_loss() -> None:
+    from app.lossiness import LossinessSeverity
+
+    report = _report(_x12_item("01-850-purchase-order.edi"))
+    assert not [i for i in report.items if i.severity is LossinessSeverity.CRITICAL]
+
+
+def test_the_validator_checks_notes_and_code_values() -> None:
+    guide = _guide(_lossy())
+    state = next(e for e in _segment_of(guide, "Order")["elements"] if e["name"] == "state")
+    state["codeValues"]["ZZZ"] = "x"
+    with pytest.raises(ValueError, match="codeValues"):
+        validate_x12_guide(guide)
+    guide = _guide(_lossy())
+    next(e for e in _segment_of(guide, "Order")["elements"] if e["name"] == "sku")["notes"] = [""]
+    with pytest.raises(ValueError, match="notes"):
+        validate_x12_guide(guide)
