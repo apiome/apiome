@@ -230,6 +230,73 @@ export function isReferencedBySelectedSchemas(
   return false;
 }
 
+/**
+ * The selected schemas that reference `schemaName` directly (#579).
+ *
+ * A schema in this list needs `schemaName` in the same import, so `schemaName` cannot be
+ * deselected while any of them stays selected. Direct references are enough: a selection kept by
+ * {@link toggleSchemaSelection} always holds every schema its members reference, so a transitive
+ * referrer is always reached through a direct one.
+ *
+ * @param schemaName The schema a reader wants to deselect.
+ * @param selectedNames The schemas currently selected.
+ * @param schemaObj The document's schemas by name (`components.schemas` / `definitions`).
+ * @returns The selected referrers, in selection order; empty when nothing needs it.
+ */
+export function selectedReferrers(
+  schemaName: string,
+  selectedNames: Iterable<string>,
+  schemaObj: Record<string, unknown>
+): string[] {
+  const referrers: string[] = [];
+  for (const name of selectedNames) {
+    if (name === schemaName) continue;
+    if (extractSchemaReferences(schemaObj[name] ?? {}).includes(schemaName)) referrers.push(name);
+  }
+  return referrers;
+}
+
+/** The outcome of {@link toggleSchemaSelection}. */
+export interface SchemaToggleResult {
+  /** The selection after the toggle (unchanged when the toggle was blocked). */
+  selected: string[];
+  /** Schemas selected only because the toggled schema references them (directly or not). */
+  autoSelected: string[];
+  /** When a deselect was refused: the selected schemas that reference the toggled one. */
+  blockedBy: string[];
+}
+
+/**
+ * Toggle one schema in an import selection, keeping every reference resolvable (#579).
+ *
+ * - **Selecting** a schema also selects every schema it references, transitively, that the
+ *   document defines ({@link getTransitiveDependencies}); those are returned in `autoSelected`.
+ * - **Deselecting** a schema that another selected schema references is refused: the selection is
+ *   returned unchanged and `blockedBy` names the referrers ({@link selectedReferrers}).
+ * - Deselecting any other schema removes it.
+ *
+ * @param schemaName The schema the reader toggled.
+ * @param selectedNames The current selection.
+ * @param schemaObj The document's schemas by name.
+ * @returns The new selection, what was added for it, and what blocked a deselect.
+ */
+export function toggleSchemaSelection(
+  schemaName: string,
+  selectedNames: readonly string[],
+  schemaObj: Record<string, unknown>
+): SchemaToggleResult {
+  const current = new Set(selectedNames);
+  if (current.has(schemaName)) {
+    const blockedBy = selectedReferrers(schemaName, selectedNames, schemaObj);
+    if (blockedBy.length > 0) return { selected: [...selectedNames], autoSelected: [], blockedBy };
+    return { selected: selectedNames.filter((name) => name !== schemaName), autoSelected: [], blockedBy: [] };
+  }
+  const autoSelected = getTransitiveDependencies(schemaName, schemaObj).filter(
+    (name) => name !== schemaName && !current.has(name)
+  );
+  return { selected: [...selectedNames, schemaName, ...autoSelected], autoSelected, blockedBy: [] };
+}
+
 /** Schema type for filtering (#580). Composition takes precedence over JSON Schema type. */
 export type SchemaDisplayType =
   | 'object'

@@ -12,6 +12,8 @@ import {
   buildSchemaTree,
   getTransitiveDependencies,
   isReferencedBySelectedSchemas,
+  selectedReferrers,
+  toggleSchemaSelection,
   getSchemaType,
   getSchemaTags,
   type SchemaTreeNode,
@@ -765,5 +767,91 @@ describe('getSchemaTags (#580)', () => {
   test('ignores empty or non-string tag values', () => {
     expect(getSchemaTags({ 'x-tags': ['', '  ', 'valid', 1, null] } as any)).toEqual(['valid']);
     expect(getSchemaTags({ 'x-tag': '' })).toEqual([]);
+  });
+});
+
+describe('selectedReferrers (#579)', () => {
+  const schemaObj = {
+    Order: { type: 'object', properties: { customer: { $ref: '#/components/schemas/Customer' } } },
+    Invoice: { type: 'object', properties: { billTo: { $ref: '#/components/schemas/Customer' } } },
+    Customer: { type: 'object', properties: { address: { $ref: '#/components/schemas/Address' } } },
+    Address: { type: 'object', properties: { city: { type: 'string' } } },
+  };
+
+  test('names every selected schema that references it directly', () => {
+    expect(selectedReferrers('Customer', ['Order', 'Invoice', 'Customer', 'Address'], schemaObj)).toEqual([
+      'Order',
+      'Invoice',
+    ]);
+    expect(selectedReferrers('Address', ['Order', 'Customer', 'Address'], schemaObj)).toEqual(['Customer']);
+  });
+
+  test('ignores unselected referrers and the schema itself', () => {
+    expect(selectedReferrers('Customer', ['Customer', 'Address'], schemaObj)).toEqual([]);
+    expect(selectedReferrers('Order', ['Order', 'Customer'], schemaObj)).toEqual([]);
+  });
+});
+
+describe('toggleSchemaSelection (#579)', () => {
+  const schemaObj = {
+    Order: {
+      type: 'object',
+      properties: {
+        customer: { $ref: '#/components/schemas/Customer' },
+        lines: { type: 'array', items: { $ref: '#/components/schemas/LineItem' } },
+      },
+    },
+    Customer: { type: 'object', properties: { address: { $ref: '#/components/schemas/Address' } } },
+    Address: { type: 'object', properties: { city: { type: 'string' } } },
+    LineItem: { type: 'object', properties: { qty: { type: 'integer' } } },
+    Note: { type: 'object', properties: { text: { type: 'string' }, ext: { $ref: 'other.yaml#/Thing' } } },
+  };
+
+  test('selecting a schema selects everything it references, transitively', () => {
+    const result = toggleSchemaSelection('Order', [], schemaObj);
+    expect(new Set(result.selected)).toEqual(new Set(['Order', 'Customer', 'Address', 'LineItem']));
+    expect(new Set(result.autoSelected)).toEqual(new Set(['Customer', 'Address', 'LineItem']));
+    expect(result.blockedBy).toEqual([]);
+  });
+
+  test('only reports dependencies that were not already selected', () => {
+    const result = toggleSchemaSelection('Order', ['Customer', 'Address'], schemaObj);
+    expect(result.autoSelected).toEqual(['LineItem']);
+    expect(new Set(result.selected)).toEqual(new Set(['Order', 'Customer', 'Address', 'LineItem']));
+  });
+
+  test('a reference the document does not define is not selected', () => {
+    expect(toggleSchemaSelection('Note', [], schemaObj)).toEqual({ selected: ['Note'], autoSelected: [], blockedBy: [] });
+  });
+
+  test('a schema a selected schema references cannot be deselected', () => {
+    const selected = ['Order', 'Customer', 'Address', 'LineItem'];
+    const result = toggleSchemaSelection('Customer', selected, schemaObj);
+    expect(result).toEqual({ selected, autoSelected: [], blockedBy: ['Order'] });
+    expect(toggleSchemaSelection('Address', selected, schemaObj).blockedBy).toEqual(['Customer']);
+  });
+
+  test('a schema nothing selected references is deselected', () => {
+    const result = toggleSchemaSelection('Order', ['Order', 'Customer', 'Address', 'LineItem'], schemaObj);
+    expect(result).toEqual({ selected: ['Customer', 'Address', 'LineItem'], autoSelected: [], blockedBy: [] });
+    // With its referrer gone, Customer can go too.
+    expect(toggleSchemaSelection('Customer', result.selected, schemaObj).selected).toEqual(['Address', 'LineItem']);
+  });
+
+  test('a self-reference never blocks deselecting the schema', () => {
+    const tree = { Node: { type: 'object', properties: { child: { $ref: '#/components/schemas/Node' } } } };
+    expect(toggleSchemaSelection('Node', [], tree).selected).toEqual(['Node']);
+    expect(toggleSchemaSelection('Node', ['Node'], tree)).toEqual({ selected: [], autoSelected: [], blockedBy: [] });
+  });
+
+  test('a reference cycle selects every member once', () => {
+    const cycle = {
+      A: { properties: { b: { $ref: '#/definitions/B' } } },
+      B: { properties: { a: { $ref: '#/definitions/A' } } },
+    };
+    const result = toggleSchemaSelection('A', [], cycle);
+    expect(result.selected).toEqual(['A', 'B']);
+    // Each locks the other while both are selected.
+    expect(toggleSchemaSelection('A', result.selected, cycle).blockedBy).toEqual(['B']);
   });
 });
