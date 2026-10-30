@@ -5,6 +5,14 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.557.0] - 2026-10-30
+
+### Fixed
+- **FHIR lint findings were dropped (MFI-20.1, #3985).** The eight `fhir.*` rules shipped in 1.556.0 were missing from
+  the built-in "Apiome Recommended" style guide, which discards findings of unseeded rules. Migration V341 re-seeds
+  every tenant with them. The two blocking rules (`fhir.profile-url`, `fhir.profile-base`) gain transparency entries
+  and scanner-evaluation fixtures, and the lint-rules reference lists all eight. OpenAPI 1.421.0 (version only).
+
 ## [1.556.0] - 2026-10-30
 
 ### Added
@@ -19,8 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   their fingerprint. **Live discovery:** `FhirImportSource.discover(base_url)` reads `<base>/metadata` over the
   SSRF-guarded live-fetch client, and `fhir` is a catalog **Live refresh** adapter (`CatalogRefreshUpdate.adapter`).
   **Lint:** new `fhir` rule pack (`app.fhir_lint`) — `fhir.profile-status`, `-url`, `-version`, `-base`,
-  `fhir.element-short`, `fhir.capability-version`, `-profile`, `-search` — seeded into the built-in style guide by
-  migration V341, with transparency entries and scanner-evaluation fixtures for the two blocking rules. Declared read versions: R4, R5, R6
+  `fhir.element-short`, `fhir.capability-version`, `-profile`, `-search`. Declared read versions: R4, R5, R6
   (partial; ballot). Fixtures `fhir/07`–`10` (an R5 server, an R6-ballot server, one profile in R4 and R5). OpenAPI
   1.420.0 (field descriptions only).
 
