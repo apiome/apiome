@@ -57,6 +57,7 @@ import { fetchProjectDelta, type ProjectDeltaState } from '../../../utils/import
 import { planImportVersion } from '../../../utils/import-version-label';
 import { generateSlug } from '../../../utils/slug';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '../../../utils/project-quality-score-history';
+import { buildUrlImportRecord, recordUrlImport, type UrlImportSource } from '../../../utils/url-import-record';
 import {
   FileIntakePanel,
   ImportChangesPanel,
@@ -142,6 +143,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [urlContent, setUrlContent] = useState<string | null>(null);
   const [urlFilename, setUrlFilename] = useState<string | null>(null);
   const [urlMetadata, setUrlMetadata] = useState<FileMetadataPreview | null>(null);
+  /** Where a URL Import document came from; recorded for auto-refresh after the import (RAR-6.1). */
+  const [urlSource, setUrlSource] = useState<UrlImportSource | null>(null);
+  /** The importer kind and options a URL import used, captured when it starts. */
+  const urlRecordRef = useRef<{ jobId: string; sourceKind: string; options: Record<string, unknown> } | null>(null);
   const [clipboardContent, setClipboardContent] = useState<string | null>(null);
   const [clipboardFilename, setClipboardFilename] = useState<string | null>(null);
   const [gitContent, setGitContent] = useState<string | null>(null);
@@ -217,6 +222,25 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       cancelled = true;
     };
   }, [importComplete, importSucceeded, jobId, analysisResult]);
+
+  // RAR-6.1: a successful URL import is recorded so REST re-checks the URL on its refresh cadence.
+  // Best-effort and once per job; a dry run is never recorded (urlRecordRef is null for one).
+  useEffect(() => {
+    const pending = urlRecordRef.current;
+    if (!importComplete || !importSucceeded || !jobId || !pending || pending.jobId !== jobId) return;
+    urlRecordRef.current = null;
+    const source = urlSource;
+    void (async () => {
+      try {
+        const status = await getImportStatus(jobId);
+        const result = (status as { result?: { projectId?: string; versionId?: string } }).result;
+        const body = buildUrlImportRecord(source, result, pending.sourceKind, pending.options);
+        if (body) await recordUrlImport(body);
+      } catch {
+        // The import succeeded; only its auto-refresh is missing.
+      }
+    })();
+  }, [importComplete, importSucceeded, jobId, urlSource]);
 
   // When opened with spec from AI Design Chat (Projects dashboard), run analysis immediately
   useEffect(() => {
@@ -331,6 +355,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       setUrlContent(null);
       setUrlFilename(null);
       setUrlMetadata(null);
+      setUrlSource(null);
       setClipboardContent(null);
       setClipboardFilename(null);
       setGitContent(null);
@@ -363,6 +388,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setUrlContent(null);
     setUrlFilename(null);
     setUrlMetadata(null);
+    setUrlSource(null);
     setClipboardContent(null);
     setClipboardFilename(null);
     setGitContent(null);
@@ -455,10 +481,16 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
   };
 
-  const handleUrlSpecificationFetched = (content: string, filename: string, metadata?: FileMetadataPreview) => {
+  const handleUrlSpecificationFetched = (
+    content: string,
+    filename: string,
+    metadata?: FileMetadataPreview,
+    source?: UrlImportSource
+  ) => {
     setUrlContent(content);
     setUrlFilename(filename);
     setUrlMetadata(metadata || null);
+    setUrlSource(source ?? null);
     // Don't auto-analyze - user needs to click "Continue"
   };
 
@@ -618,6 +650,31 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
     const document = analysisResult.document;
     const sourceKind = analysisResult.format === 'arazzo' ? 'arazzo' : 'openapi';
+    const jobOptions = {
+      selectedSchemas: importOptions.selectedSchemas,
+      applyNamingConvention: importOptions.applyNamingConvention ?? true,
+      classNamingConvention: importOptions.classNamingConvention ?? 'PascalCase',
+      propertyNamingConvention: importOptions.propertyNamingConvention ?? 'camelCase',
+      classNameMap: importOptions.classNameMap,
+      classPrefix: (importOptions.classPrefix ?? '').trim() || undefined,
+      classSuffix: (importOptions.classSuffix ?? '').trim() || undefined,
+      typeMapping: importOptions.typeMapping,
+      defaultValues: importOptions.defaultValues,
+      requiredOverrides: importOptions.requiredOverrides,
+      descriptionOverrides: importOptions.descriptionOverrides,
+      generateExamples: importOptions.generateExamples ?? false,
+      dryRun: importOptions.dryRun ?? false,
+      incrementalMode: importOptions.incrementalMode ?? false,
+      // #590: an import the Changes step showed lands in an existing project; if its label is taken
+      // by the time it commits, the importer picks the next free sub-version rather than failing.
+      ...(versionPlan ? { onVersionConflict: 'create-version' as const } : {}),
+      // #591: the Changes step's merge strategy; only offered there, so only sent when it was shown.
+      ...(showsChangesStep(projectDelta) && mergeChoice !== 'replace' ? { mergeStrategy: mergeChoice } : {}),
+      // #595: how that merge combines arrays; only under a merge, and only when not the default.
+      ...(showsChangesStep(projectDelta) && mergeChoice !== 'replace' && arrayChoice !== 'replace'
+        ? { arrayMergeStrategy: arrayChoice }
+        : {}),
+    };
     const job = await startImport({
       tenantId,
       userId,
@@ -632,33 +689,13 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         versionId: versionPlan?.label ?? requestedVersionLabel(),
         description: 'Imported from OpenAPI specification'
       },
-      options: {
-        selectedSchemas: importOptions.selectedSchemas,
-        applyNamingConvention: importOptions.applyNamingConvention ?? true,
-        classNamingConvention: importOptions.classNamingConvention ?? 'PascalCase',
-        propertyNamingConvention: importOptions.propertyNamingConvention ?? 'camelCase',
-        classNameMap: importOptions.classNameMap,
-        classPrefix: (importOptions.classPrefix ?? '').trim() || undefined,
-        classSuffix: (importOptions.classSuffix ?? '').trim() || undefined,
-        typeMapping: importOptions.typeMapping,
-        defaultValues: importOptions.defaultValues,
-        requiredOverrides: importOptions.requiredOverrides,
-        descriptionOverrides: importOptions.descriptionOverrides,
-        generateExamples: importOptions.generateExamples ?? false,
-        dryRun: importOptions.dryRun ?? false,
-        incrementalMode: importOptions.incrementalMode ?? false,
-        // #590: an import the Changes step showed lands in an existing project; if its label is taken
-        // by the time it commits, the importer picks the next free sub-version rather than failing.
-        ...(versionPlan ? { onVersionConflict: 'create-version' as const } : {}),
-        // #591: the Changes step's merge strategy; only offered there, so only sent when it was shown.
-        ...(showsChangesStep(projectDelta) && mergeChoice !== 'replace' ? { mergeStrategy: mergeChoice } : {}),
-        // #595: how that merge combines arrays; only under a merge, and only when not the default.
-        ...(showsChangesStep(projectDelta) && mergeChoice !== 'replace' && arrayChoice !== 'replace'
-          ? { arrayMergeStrategy: arrayChoice }
-          : {}),
-      }
+      options: jobOptions
     });
 
+    urlRecordRef.current =
+      selectedSource === 'url' && !importOptions.dryRun
+        ? { jobId: job.jobId, sourceKind, options: { ...jobOptions } }
+        : null;
     setJobId(job.jobId);
     setCurrentStep('import');
   };

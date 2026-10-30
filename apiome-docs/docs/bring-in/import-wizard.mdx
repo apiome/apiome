@@ -191,6 +191,35 @@ the copy's definition.
 Only `http` and `https` URLs work. The fetch runs in your browser, so the server must allow it
 (CORS) — if it does not, download the file and use **File Upload**.
 
+#### Keep a URL import up to date
+
+A project imported from a URL keeps following that URL. Every five minutes by default, Apiome asks
+the URL whether the document changed, and adds a version when it did:
+
+- **Nothing changed** — the server answers *not modified* to the `ETag` and `Last-Modified` it sent
+  at import time, or sends the same document again. Nothing happens.
+- **The document changed** — Apiome imports it into the same project with the options you chose on
+  the **Preview** step (selected schemas, naming, prefixes and the rest). The new version is
+  labelled with the date and time, for example `2026-10-30T14:03Z`.
+- **The document is older** — a `Last-Modified` earlier than the imported one never replaces it.
+- **You edited the version in Apiome** — the refresh is held so your edits are not overwritten. To
+  follow the URL again, import it again.
+
+Some URL imports are never refreshed:
+
+- **Protected URLs.** A URL imported with **Bearer Token**, **API Key** or **Basic Auth** is not
+  refreshed, because Apiome never stores those credentials.
+- **Dry runs.** A dry run saves nothing, so there is nothing to refresh.
+
+Apiome checks from its server, not your browser, so the URL must be reachable from there. Addresses
+on a private network are refused, as for every URL Apiome fetches. A check that fails is retried
+later, waiting longer after each failure.
+
+To turn refresh off for one URL, or to change how often it is checked, use the
+[REST API](#with-the-cli-or-the-api) (`PATCH …/url-imports/{id}`). An operator can stop every
+refresh — URL imports and repositories — with `APIOME_REFRESH_ENABLED=false`, and change the
+default cadence with `APIOME_REFRESH_DEFAULT_INTERVAL` (seconds).
+
 ### Clipboard Paste
 
 1. **Click “Clipboard Paste”**, then **“Paste from Clipboard”** — or paste into **Specification
@@ -284,6 +313,11 @@ The dry run is the import pre-flight. From the CLI, `apiome import preflight` gi
   `POST …/imports/{job}/commit|rollback`, `POST /v1/import/detect`, and
   `POST /v1/tenants/{tenant}/import/project-delta` (the Changes step's comparison) — see [Import a
   specification](./import-a-spec.md) and the [API reference](../reference/api-reference.md).
+- URL imports: `GET /v1/tenants/{tenant}/url-imports` lists them with when each was last checked
+  and refreshed, `PATCH …/url-imports/{id}` turns refresh on or off
+  (`{"autoRefreshEnabled": false}`) or sets its cadence (`{"refreshIntervalSeconds": 3600}`), and
+  `POST …/url-imports` is what the wizard calls after a URL import — see
+  [URL imports](../reference/rest/url-imports.md).
 
 ## Where next
 

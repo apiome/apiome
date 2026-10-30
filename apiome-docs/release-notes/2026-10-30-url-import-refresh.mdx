@@ -1,0 +1,23 @@
+---
+slug: url-import-refresh
+title: URL imports stay up to date
+description: Projects imported from a URL refresh when the document behind it changes.
+authors: [apiome]
+---
+
+A project imported with **URL Import** now keeps following its URL: when the document changes,
+Apiome imports the new one into the same project.
+[How it works](/bring-in/import-wizard#keep-a-url-import-up-to-date).
+
+{/* truncate */}
+
+- **Cheap to check.** Every five minutes by default, Apiome asks the URL with the `ETag` and
+  `Last-Modified` it answered at import time. *Not modified*, or the same document, changes nothing.
+- **Your options, replayed.** A changed document is imported with the options chosen on the
+  **Preview** step, as a new version labelled with the date and time.
+- **Safe.** An older `Last-Modified` never replaces a newer import, and a version you edited in
+  Apiome is held rather than overwritten.
+- **Public URLs only.** A URL imported with **Bearer Token**, **API Key** or **Basic Auth** is not
+  refreshed: Apiome never stores those credentials.
+- **REST.** `GET /v1/tenants/{tenant}/url-imports` lists URL imports and their last check;
+  `PATCH …/url-imports/{id}` turns refresh off or sets its cadence.
