@@ -27,11 +27,11 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 
 | Key | Tool | Pinned | Runtime | Installed by |
 |-----|------|--------|---------|--------------|
-| `buf` | Protobuf/gRPC build·lint·breaking | `1.72.0` — floor for Protobuf Edition 2024 (FMT-3.7) | native | GitHub release binary |
+| `buf` | Protobuf/gRPC build·lint·breaking; `buf build` also compiles an emitted `.proto` bundle for export validation (MFX-12.4, `app.proto_descriptor`) | `1.72.0` — floor for Protobuf Edition 2024 (FMT-3.7) | native | GitHub release binary |
 | `tsp` | TypeSpec compiler (`@typespec/compiler`) with `@typespec/http`, `rest`, `openapi3` and `versioning` at the same version. `tsp compile` turns a multi-file TypeSpec set into OpenAPI for the `typespec` adapter (MFI-14.1, `app.typespec_compile`) and backs convert-to-OpenAPI; the staged project links the libraries in as `node_modules` (found beside the wrapper, or from `APIOME_TSP_NODE_MODULES`). Optional: without it, a single `.tsp` still imports and a multi-file set is `ADAPTER_UNAVAILABLE` | `0.65.0` | node | npm into tools prefix + wrapper |
-| `smithy` | Smithy IDL build·validate; `smithy ast` assembles a multi-file model into one JSON AST for the `smithy` adapter (MFI-17.1, `app.smithy_ast`), and `smithy validate` with the `smithy-linters` validators feeds the `smithy` lint pack (MFI-17.3). Optional: without it, a single `.smithy` file still imports (with no Smithy lint events) and a set of several model files is `ADAPTER_UNAVAILABLE` | `1.53.0` | jvm | GitHub CLI zip (bundles its own runtime) + `smithy-linters`/`smithy-model`/`smithy-utils` jars in an offline Maven folder (`lib/smithy-m2`, `APIOME_SMITHY_LINTERS_REPO`) |
+| `smithy` | Smithy IDL build·validate; `smithy ast` assembles a multi-file model into one JSON AST for the `smithy` adapter (MFI-17.1, `app.smithy_ast`), and `smithy validate` with the `smithy-linters` validators feeds the `smithy` lint pack (MFI-17.3). Both also validate and build a Smithy export (MFX-20.3, `app.smithy_roundtrip`). Optional: without it, a single `.smithy` file still imports (with no Smithy lint events) and a set of several model files is `ADAPTER_UNAVAILABLE` | `1.53.0` | jvm | GitHub CLI zip (bundles its own runtime) + `smithy-linters`/`smithy-model`/`smithy-utils` jars in an offline Maven folder (`lib/smithy-m2`, `APIOME_SMITHY_LINTERS_REPO`) |
 | `drafter` | API Blueprint → JSON | `4.0.0` | native | built from source (pinned tag) |
-| `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
+| `amf` | AML Modeling Framework: RAML parse·resolve (`!include`, `uses`) → JSON-LD model for the `raml` adapter (MFI-15.1, `app.raml_amf`); its RAML 1.0 validation also checks a RAML export (MFX-17.3, `app.raml_roundtrip`). Optional: without it, self-contained RAML still imports and a set that includes or uses files is `ADAPTER_UNAVAILABLE` | `5.7.1` | jvm | MuleSoft Nexus assembly jar + `java -jar` wrapper |
 | `fhir-validator` | HL7 FHIR validator (`validator_cli`): validates a FHIR export — logical-model StructureDefinitions, ValueSets, CodeSystems, the CapabilityStatement — against FHIR R4 (`4.0.1`) or R5 (`5.0.0`), terminology offline (`-tx n/a`) (MFX-26.1, `app.fhir_validation`). Optional: without it, the export is checked by Apiome's built-in structural FHIR rules | `6.10.4` | jvm | GitHub release jar + `java -jar` wrapper; R4/R5 core packages cached at build time under `share/fhir` |
 | `asyncapi` | AsyncAPI validate·convert·diff (`@asyncapi/cli`) | `2.16.0` | node | npm into tools prefix + wrapper |
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
@@ -157,6 +157,31 @@ network access.
 `tests/test_toolchain_selfcheck.py` asserts all three: the manifest exists, its pins are exact
 (no ranges), each matches the `BundledTool.version`, and the Dockerfile installs from the
 manifest instead of re-pinning the package itself.
+
+## Export validation reuses the runner (MFX-8.3)
+
+Emitters never shell out to *write* an artifact — every emitter renders its format in Python — so
+none declares `Emitter.required_tools` (which would mark the target unavailable without the tool).
+The tools come in at **validation**: the export gate (`app.export_validation`, MFX-5.1) re-checks an
+emitted artifact with the same bundled tool, through the same runner and sandbox, that the import of
+that format uses. A missing tool never fails an export; each validator falls back as listed.
+
+| Target | Tool | Seam | Ticket | Without the tool |
+|--------|------|------|--------|------------------|
+| `protobuf` | `buf` | `app.proto_descriptor.compile_proto_descriptor_set` | MFX-12.4 | *skipped* (not re-validated) |
+| `typespec` | `tsp` | `app.typespec_roundtrip.compile_emitted_typespec` | MFX-15.1 / 15.3 | built-in TypeSpec reader |
+| `smithy` | `smithy` | `app.smithy_roundtrip.validate_emitted_smithy` / `reimport_built_model` | MFX-20.3 | built-in Smithy reader |
+| `raml` | `amf` | `app.raml_roundtrip.validate_emitted_raml` | MFX-17.1 / 17.3 | built-in RAML reader |
+| `apiblueprint` | `drafter` | `app.apiblueprint_roundtrip.validate_emitted_apiblueprint` | MFX-18.1 / 18.3 | built-in API Blueprint reader |
+| `thrift` | `thrift` | `app.thrift_roundtrip.compile_problems` | MFX-25.1 / 25.4 | thriftpy2 + built-in Thrift reader |
+| `capnproto` | `capnp` | `app.capnproto_compile.compile_capnp_schema` | MFX-30.2 | *skipped* (not re-validated) |
+| `flatbuffers` | `flatc` | `app.flatbuffers_compile.compile_fbs_schema` | MFX-30.1 | built-in FlatBuffers reader |
+| `fhir` | `fhir-validator` | `app.fhir_validation.validate_with_fhir_validator` | MFX-26.1 | structural FHIR rules |
+| `asyncapi-3` | `asyncapi-parser` | `app.asyncapi_roundtrip.round_trip_asyncapi` | MFX-11.4 | *skipped* (not re-validated) |
+
+A validator that uses a best-effort import helper (`run_drafter`, `validate_smithy_members`) calls it
+with `strict=True`, so a tool that is installed but gives no answer is a finding rather than a silent
+pass.
 
 ## Optional / lazy — the "format unavailable" path
 

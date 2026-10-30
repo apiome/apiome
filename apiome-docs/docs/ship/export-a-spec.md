@@ -72,6 +72,28 @@ the missing tool named on the card. It is never offered and then left to fail: a
 refused with `422` and the same reason before anything runs. `apiome export targets` shows the reason
 in its **Why not** column, and `apiome export <format>` stops with it (exit 2) before starting a job.
 
+### Exports checked with the format's own tool
+
+Some exports are checked with the tool that format's community uses, the same tool Apiome runs when
+it imports that format. These tools only **check** an export; none is needed to **write** one, so the
+format is offered whether or not the server has its tool. Without it, the export is still checked the
+way the last column says.
+
+| Export | Checked with | Without the tool |
+| --- | --- | --- |
+| Protobuf (gRPC) | `buf build` compiles every `.proto` | Not compiled; the export says it was not re-validated |
+| TypeSpec | `tsp compile` to OpenAPI, and that OpenAPI must import | Read back by Apiome's TypeSpec reader |
+| Smithy | `smithy validate` on each file, then `smithy ast` builds the model to import | Read back by Apiome's Smithy reader |
+| RAML | AMF's RAML 1.0 validation | Read back by Apiome's RAML reader |
+| API Blueprint | drafter, with no errors and no warnings | Read back by Apiome's API Blueprint reader |
+| Thrift | The Thrift compiler, plus thriftpy2 | Checked by thriftpy2 and Apiome's Thrift reader |
+| Cap'n Proto | `capnp compile` | Not compiled; the export says it was not re-validated |
+| FlatBuffers | `flatc` | Read back by Apiome's FlatBuffers reader |
+| FHIR | The HL7 FHIR validator | Checked by Apiome's structural FHIR rules |
+| AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
+
+The sections below say what each check rejects.
+
 ### When an item has nothing to export from
 
 Exports are built from the source file captured when the item was imported. If that file was not
