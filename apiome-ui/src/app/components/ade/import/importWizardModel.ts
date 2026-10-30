@@ -635,6 +635,16 @@ export const IMPORT_WIZARD_COPY = {
   changesMergeOverride: 'Override merge',
   changesMergeOverrideHint:
     'Keeps everything in the latest version, adds what is new, and takes this specification’s definition wherever both define the same property or operation.',
+  /** The Arrays choice under a merge (#595). */
+  changesArraysLegend: 'Arrays',
+  changesArraysReplace: 'Replace',
+  changesArraysReplaceHintAdditive: 'Keep the latest version’s list where both define one.',
+  changesArraysReplaceHintOverride: 'Take this specification’s list where both define one.',
+  changesArraysAppend: 'Append',
+  changesArraysAppendHintAdditive: 'The latest version’s list, then this specification’s items; repeats are kept.',
+  changesArraysAppendHintOverride: 'This specification’s list, then the latest version’s items; repeats are kept.',
+  changesArraysDeduplicate: 'Deduplicate',
+  changesArraysDeduplicateHint: 'Both lists combined, without repeats.',
   changesMergeRemovedKeptAdditive: 'Nothing is removed with an additive merge',
   changesMergeRemovedKeptOverride: 'Nothing is removed with an override merge',
 } as const;
@@ -646,6 +656,13 @@ export const IMPORT_WIZARD_COPY = {
  * where both define something (the importer's `mergeStrategy`).
  */
 export type ImportMergeChoice = 'replace' | 'additive' | 'override';
+
+/**
+ * How a merge combines an array both sides define (#595), the importer's `arrayMergeStrategy`.
+ * `replace` (default) keeps the merge's winning side's list; `append` adds the other side's items
+ * after it; `deduplicate` does the same without repeats.
+ */
+export type ImportArrayChoice = 'replace' | 'append' | 'deduplicate';
 
 /**
  * The Changes step's empty state title.

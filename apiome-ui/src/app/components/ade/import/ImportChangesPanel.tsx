@@ -19,7 +19,8 @@
  *  - a **Merge strategy** choice: **Replace with this import** (the default), **Additive merge**
  *    (#591), which keeps everything in the latest version and adds what the spec newly defines, or
  *    **Override merge** (#592), which does the same but takes the spec's definitions where both
- *    define something.
+ *    define something; under a merge, an **Arrays** choice (#595) — Replace, Append or Deduplicate
+ *    — for arrays both sides define.
  *
  * A view only: the dialog owns the request and the {@link ProjectDeltaState}.
  */
@@ -51,7 +52,7 @@ import {
   type ProjectDeltaState,
 } from '../../../utils/import-project-delta';
 import type { ImportVersionPlan } from '../../../utils/import-version-label';
-import { IMPORT_WIZARD_COPY, noChangesTitle, type ImportMergeChoice } from './importWizardModel';
+import { IMPORT_WIZARD_COPY, noChangesTitle, type ImportArrayChoice, type ImportMergeChoice } from './importWizardModel';
 
 /** Badge tone for each grade; an ungraded change shows no badge. */
 const SEVERITY_VARIANT: Readonly<Record<ProjectDeltaSeverity, 'danger' | 'warn' | 'ok'>> = {
@@ -73,32 +74,55 @@ export interface ImportChangesPanelProps {
   mergeChoice?: ImportMergeChoice;
   /** Called when the reader picks a merge strategy (#591). */
   onMergeChoiceChange?: (choice: ImportMergeChoice) => void;
+  /** How a merge combines arrays (#595); shown under a merge when a change handler is given. */
+  arrayChoice?: ImportArrayChoice;
+  /** Called when the reader picks an array strategy (#595). */
+  onArrayChoiceChange?: (choice: ImportArrayChoice) => void;
+}
+
+/** One radio of a {@link ChoiceFieldset}. */
+interface ChoiceOption<T extends string> {
+  value: T;
+  label: string;
+  hint: string;
 }
 
 /**
- * The merge-strategy choice: replace (default), additive (#591) or override (#592), each with a
- * one-line hint.
+ * A bordered one-of-many choice with a legend and a hint under each option.
  *
- * @param props.value The chosen strategy.
- * @param props.onChange Called with the new strategy.
- * @returns A fieldset with one radio per strategy.
+ * @param props.legend The fieldset's legend.
+ * @param props.name The radios' `name`; also the prefix of each radio's test id (`<testId>-<value>`).
+ * @param props.testId The fieldset's test id.
+ * @param props.value The chosen value.
+ * @param props.options The options, in order.
+ * @param props.onChange Called with the chosen value.
+ * @returns The fieldset.
  */
-function MergeChoice({ value, onChange }: { value: ImportMergeChoice; onChange: (choice: ImportMergeChoice) => void }) {
-  const options: Array<{ value: ImportMergeChoice; label: string; hint: string }> = [
-    { value: 'replace', label: IMPORT_WIZARD_COPY.changesMergeReplace, hint: IMPORT_WIZARD_COPY.changesMergeReplaceHint },
-    { value: 'additive', label: IMPORT_WIZARD_COPY.changesMergeAdditive, hint: IMPORT_WIZARD_COPY.changesMergeAdditiveHint },
-    { value: 'override', label: IMPORT_WIZARD_COPY.changesMergeOverride, hint: IMPORT_WIZARD_COPY.changesMergeOverrideHint },
-  ];
+function ChoiceFieldset<T extends string>({
+  legend,
+  name,
+  testId,
+  value,
+  options,
+  onChange,
+}: {
+  legend: string;
+  name: string;
+  testId: string;
+  value: T;
+  options: ReadonlyArray<ChoiceOption<T>>;
+  onChange: (value: T) => void;
+}) {
   return (
-    <fieldset className="imp-changes__merge" data-testid="import-changes-merge">
-      <legend className="imp-changes__merge-legend">{IMPORT_WIZARD_COPY.changesMergeLegend}</legend>
-      <RadioGroup value={value} onValueChange={(v) => onChange(v as ImportMergeChoice)}>
+    <fieldset className="imp-changes__merge" data-testid={testId}>
+      <legend className="imp-changes__merge-legend">{legend}</legend>
+      <RadioGroup value={value} onValueChange={(v) => onChange(v as T)}>
         {options.map((o) => (
           <RadioGroupItem
             key={o.value}
             value={o.value}
-            name="import-merge-strategy"
-            data-testid={`import-changes-merge-${o.value}`}
+            name={name}
+            data-testid={`${testId}-${o.value}`}
             label={
               <span>
                 {o.label}
@@ -109,6 +133,72 @@ function MergeChoice({ value, onChange }: { value: ImportMergeChoice; onChange: 
         ))}
       </RadioGroup>
     </fieldset>
+  );
+}
+
+/** Props of {@link MergeChoices}. */
+interface MergeChoicesProps {
+  mergeChoice: ImportMergeChoice;
+  onMergeChoiceChange: (choice: ImportMergeChoice) => void;
+  arrayChoice: ImportArrayChoice;
+  onArrayChoiceChange?: (choice: ImportArrayChoice) => void;
+}
+
+/**
+ * The merge-strategy choice — replace (default), additive (#591) or override (#592) — and, under a
+ * merge, how arrays both sides define are combined (#595). The Arrays hints name the side the merge
+ * favours.
+ *
+ * @param props See {@link MergeChoicesProps}.
+ * @returns The fieldset(s).
+ */
+function MergeChoices({ mergeChoice, onMergeChoiceChange, arrayChoice, onArrayChoiceChange }: MergeChoicesProps) {
+  const override = mergeChoice === 'override';
+  return (
+    <>
+      <ChoiceFieldset<ImportMergeChoice>
+        legend={IMPORT_WIZARD_COPY.changesMergeLegend}
+        name="import-merge-strategy"
+        testId="import-changes-merge"
+        value={mergeChoice}
+        onChange={onMergeChoiceChange}
+        options={[
+          { value: 'replace', label: IMPORT_WIZARD_COPY.changesMergeReplace, hint: IMPORT_WIZARD_COPY.changesMergeReplaceHint },
+          { value: 'additive', label: IMPORT_WIZARD_COPY.changesMergeAdditive, hint: IMPORT_WIZARD_COPY.changesMergeAdditiveHint },
+          { value: 'override', label: IMPORT_WIZARD_COPY.changesMergeOverride, hint: IMPORT_WIZARD_COPY.changesMergeOverrideHint },
+        ]}
+      />
+      {mergeChoice !== 'replace' && onArrayChoiceChange ? (
+        <ChoiceFieldset<ImportArrayChoice>
+          legend={IMPORT_WIZARD_COPY.changesArraysLegend}
+          name="import-array-strategy"
+          testId="import-changes-arrays"
+          value={arrayChoice}
+          onChange={onArrayChoiceChange}
+          options={[
+            {
+              value: 'replace',
+              label: IMPORT_WIZARD_COPY.changesArraysReplace,
+              hint: override
+                ? IMPORT_WIZARD_COPY.changesArraysReplaceHintOverride
+                : IMPORT_WIZARD_COPY.changesArraysReplaceHintAdditive,
+            },
+            {
+              value: 'append',
+              label: IMPORT_WIZARD_COPY.changesArraysAppend,
+              hint: override
+                ? IMPORT_WIZARD_COPY.changesArraysAppendHintOverride
+                : IMPORT_WIZARD_COPY.changesArraysAppendHintAdditive,
+            },
+            {
+              value: 'deduplicate',
+              label: IMPORT_WIZARD_COPY.changesArraysDeduplicate,
+              hint: IMPORT_WIZARD_COPY.changesArraysDeduplicateHint,
+            },
+          ]}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -129,12 +219,16 @@ function ChangesView({
   versionPlan,
   mergeChoice = 'replace',
   onMergeChoiceChange,
+  arrayChoice = 'replace',
+  onArrayChoiceChange,
 }: {
   delta: ProjectDelta;
   pageSize: number;
   versionPlan?: ImportVersionPlan | null;
   mergeChoice?: ImportMergeChoice;
   onMergeChoiceChange?: (choice: ImportMergeChoice) => void;
+  arrayChoice?: ImportArrayChoice;
+  onArrayChoiceChange?: (choice: ImportArrayChoice) => void;
 }) {
   const [tab, setTab] = useState('summary');
   const [filter, setFilter] = useState<ProjectDeltaFilter>('all');
@@ -179,7 +273,14 @@ function ChangesView({
         </Alert>
       ) : null}
 
-      {onMergeChoiceChange ? <MergeChoice value={mergeChoice} onChange={onMergeChoiceChange} /> : null}
+      {onMergeChoiceChange ? (
+        <MergeChoices
+          mergeChoice={mergeChoice}
+          onMergeChoiceChange={onMergeChoiceChange}
+          arrayChoice={arrayChoice}
+          onArrayChoiceChange={onArrayChoiceChange}
+        />
+      ) : null}
 
       {mergeChoice !== 'replace' && counts.removed > 0 ? (
         // #591 / #592: a merge keeps what the latest version has, so "removed" rows stay.
@@ -321,6 +422,8 @@ export function ImportChangesPanel({
   versionPlan,
   mergeChoice,
   onMergeChoiceChange,
+  arrayChoice,
+  onArrayChoiceChange,
 }: ImportChangesPanelProps) {
   if (state.status === 'checking') {
     return <LoadingState message="Comparing with the latest version…" />;
@@ -334,7 +437,14 @@ export function ImportChangesPanel({
           onRetry={onRetry}
           data-testid="import-changes-error"
         />
-        {onMergeChoiceChange ? <MergeChoice value={mergeChoice ?? 'replace'} onChange={onMergeChoiceChange} /> : null}
+        {onMergeChoiceChange ? (
+          <MergeChoices
+            mergeChoice={mergeChoice ?? 'replace'}
+            onMergeChoiceChange={onMergeChoiceChange}
+            arrayChoice={arrayChoice ?? 'replace'}
+            onArrayChoiceChange={onArrayChoiceChange}
+          />
+        ) : null}
       </div>
     );
   }
@@ -346,6 +456,8 @@ export function ImportChangesPanel({
         versionPlan={versionPlan}
         mergeChoice={mergeChoice}
         onMergeChoiceChange={onMergeChoiceChange}
+        arrayChoice={arrayChoice}
+        onArrayChoiceChange={onArrayChoiceChange}
       />
     );
   }

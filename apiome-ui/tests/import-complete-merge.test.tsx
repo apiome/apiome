@@ -51,6 +51,8 @@ describe('import Done: merge (#591, #592)', () => {
           pathsCarried: 5,
           operationsAdded: 1,
           operationsUpdated: 0,
+          arrayStrategy: 'replace',
+          arraysCombined: 0,
         },
       }),
     );
@@ -75,13 +77,15 @@ describe('import Done: merge (#591, #592)', () => {
           pathsCarried: 0,
           operationsAdded: 0,
           operationsUpdated: 1,
+          arrayStrategy: 'deduplicate',
+          arraysCombined: 2,
         },
       }),
     );
     render(<ImportCompletePanel jobId="job-3" />);
     await waitFor(() =>
       expect(screen.getByTestId('import-complete-merge')).toHaveTextContent(
-        'Override — 1 schema merged (0 properties added, 2 updated), 1 operation updated; 1 schema and 0 paths kept from the latest version',
+        'Override — 1 schema merged (0 properties added, 2 updated), 1 operation updated, 2 arrays deduplicated; 1 schema and 0 paths kept from the latest version',
       ),
     );
   });

@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Array merge — with **Additive merge** or **Override merge** selected on the **Changes** step, **Arrays** decides what happens to a list both sides define (`enum`, `required`, `examples` …): **Replace** keeps the merge's list, **Append** adds the other side's items, **Deduplicate** does the same without repeats. **Done** says how many lists were combined
   - Override merge — the **Changes** step's **Merge strategy** also offers **Override merge**: like additive, nothing in the latest version is removed, but wherever both define the same property, operation or security scheme, the spec's definition wins. **Done** says what was merged, added, updated and kept
   - Additive merge — when an import adds a new version to an existing project, the **Changes** step's **Merge strategy** can keep everything in the latest version and add only what the spec newly defines (schemas, properties, paths, operations). Nothing is removed or overwritten, and **Done** says what was merged and kept
   - Version already taken — importing into an existing project at a **Version** it already has no longer fails: the import is added as the next free sub-version (`2.5.0b`, `2.5.0c` …). The **Changes** step says which one, and **Done** lists it

@@ -447,16 +447,48 @@ describe('ImportChangesPanel', () => {
     expect(screen.queryByTestId('import-changes-merge-kept')).not.toBeInTheDocument();
   });
 
+  it('offers Arrays only under a merge, with hints naming the winning side (#595)', () => {
+    const onArrayChoiceChange = jest.fn();
+    const panel = (mergeChoice: 'replace' | 'additive' | 'override') => (
+      <ImportChangesPanel
+        state={{ status: 'ready', delta: DELTA }}
+        onRetry={jest.fn()}
+        mergeChoice={mergeChoice}
+        onMergeChoiceChange={jest.fn()}
+        arrayChoice="replace"
+        onArrayChoiceChange={onArrayChoiceChange}
+      />
+    );
+    const { rerender } = render(panel('replace'));
+    expect(screen.queryByTestId('import-changes-arrays')).not.toBeInTheDocument();
+
+    rerender(panel('additive'));
+    const arrays = within(screen.getByTestId('import-changes-arrays'));
+    expect(screen.getByRole('group', { name: IMPORT_WIZARD_COPY.changesArraysLegend })).toBeInTheDocument();
+    expect(screen.getByTestId('import-changes-arrays-replace')).toBeChecked();
+    expect(arrays.getByText(IMPORT_WIZARD_COPY.changesArraysReplaceHintAdditive)).toBeInTheDocument();
+    expect(arrays.getByText(IMPORT_WIZARD_COPY.changesArraysAppendHintAdditive)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('import-changes-arrays-deduplicate'));
+    expect(onArrayChoiceChange).toHaveBeenCalledWith('deduplicate');
+
+    rerender(panel('override'));
+    expect(within(screen.getByTestId('import-changes-arrays')).getByText(IMPORT_WIZARD_COPY.changesArraysReplaceHintOverride)).toBeInTheDocument();
+  });
+
   it('still offers the merge strategy when the comparison failed (#591)', () => {
     render(
       <ImportChangesPanel
         state={{ status: 'error', message: 'x' }}
         onRetry={jest.fn()}
-        mergeChoice="replace"
+        mergeChoice="additive"
         onMergeChoiceChange={jest.fn()}
+        arrayChoice="append"
+        onArrayChoiceChange={jest.fn()}
       />,
     );
     expect(screen.getByTestId('import-changes-merge')).toBeInTheDocument();
+    // #595: the Arrays choice follows a merge on the error state too.
+    expect(screen.getByTestId('import-changes-arrays-append')).toBeChecked();
   });
 
   it('draws nothing for a skipped step', () => {
@@ -471,7 +503,14 @@ describe('ImportChangesPanel', () => {
       { status: 'error', message: 'x' },
     ] as const) {
       const { container, unmount } = render(
-        <ImportChangesPanel state={state} onRetry={jest.fn()} mergeChoice="additive" onMergeChoiceChange={jest.fn()} />,
+        <ImportChangesPanel
+          state={state}
+          onRetry={jest.fn()}
+          mergeChoice="additive"
+          onMergeChoiceChange={jest.fn()}
+          arrayChoice="deduplicate"
+          onArrayChoiceChange={jest.fn()}
+        />,
       );
       expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
       unmount();
@@ -637,6 +676,39 @@ describe('the wizard with a Changes step', () => {
     );
   });
 
+  it('sends the Arrays choice with the merge (#595)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+
+    expect(screen.queryByTestId('import-changes-arrays')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    fireEvent.click(await screen.findByTestId('import-changes-arrays-deduplicate'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    expect(startImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ mergeStrategy: 'additive', arrayMergeStrategy: 'deduplicate' }),
+      }),
+    );
+  });
+
+  it('sends no Arrays choice once the merge is switched back to replace (#595)', async () => {
+    stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
+    await reachPreview();
+    fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
+    await screen.findByTestId('import-changes');
+    fireEvent.click(screen.getByTestId('import-changes-merge-override'));
+    fireEvent.click(await screen.findByTestId('import-changes-arrays-append'));
+    fireEvent.click(screen.getByTestId('import-changes-merge-replace'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to import' }));
+    await waitFor(() => expect(startImport).toHaveBeenCalledTimes(1));
+    const input = startImport.mock.calls[0][0] as { options: Record<string, unknown> };
+    expect(input.options.mergeStrategy).toBeUndefined();
+    expect(input.options.arrayMergeStrategy).toBeUndefined();
+  });
+
   it('asks for no merge by default (#591)', async () => {
     stubFetch(() => jsonResponse({ success: true, delta: DELTA }));
     await reachPreview();
@@ -655,11 +727,15 @@ describe('the wizard with a Changes step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
     await screen.findByTestId('import-changes');
     fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    fireEvent.click(await screen.findByTestId('import-changes-arrays-append'));
     fireEvent.click(screen.getByRole('button', { name: '← Back' }));
     await screen.findByTestId('preview-panel');
     fireEvent.click(screen.getByRole('button', { name: 'Import →' }));
     await screen.findByTestId('import-changes');
     expect(screen.getByTestId('import-changes-merge-replace')).toBeChecked();
+    // #595: the Arrays choice resets with it.
+    fireEvent.click(screen.getByTestId('import-changes-merge-additive'));
+    expect(await screen.findByTestId('import-changes-arrays-replace')).toBeChecked();
   });
 
   it('goes straight to Import for a first-time import', async () => {

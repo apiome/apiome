@@ -58,6 +58,7 @@ import { mergeOpenApiDocumentIntoCatalogTargets } from '../rest-spec-import-merg
 import {
   planMergeClasses,
   planMergePaths,
+  type ArrayMergeStrategy,
   type ImportMergeStats,
   type ImportMergeStrategy,
 } from '../import-merge';
@@ -166,6 +167,12 @@ export interface ImportJobInput {
      * a registered-repository import, whose federation decides what is carried.
      */
     mergeStrategy?: ImportMergeStrategy;
+    /**
+     * How a merge combines an array both sides define on a property or schema (#595): `replace`
+     * (default) keeps the winning side's, `append` adds the other side's items after it,
+     * `deduplicate` does the same without repeats. Applies only with a `mergeStrategy`.
+     */
+    arrayMergeStrategy?: ArrayMergeStrategy;
   };
   /** When set, project creation is skipped and a new version is imported into this catalog project. */
   existingProjectId?: string;
@@ -397,7 +404,8 @@ async function prepareImportMerge(
   const parentClasses = (JSON.parse(await getClassesWithPropertiesAndTagsTx(client, parentVersionId)) as unknown[]).map(
     dbClassToNormalized,
   );
-  const classPlan = planMergeClasses(parentClasses, norm.classes, strategy);
+  const arrays: ArrayMergeStrategy = input.options.arrayMergeStrategy ?? 'replace';
+  const classPlan = planMergeClasses(parentClasses, norm.classes, strategy, arrays);
   norm.classes = classPlan.classes;
   job.normalizedClasses = classPlan.classes;
 
@@ -431,6 +439,8 @@ async function prepareImportMerge(
     pathsCarried: pathPlan.pathsCarried,
     operationsAdded: pathPlan.operationsAdded,
     operationsUpdated: pathPlan.operationsUpdated,
+    arrayStrategy: arrays,
+    arraysCombined: classPlan.arraysCombined,
   };
   if (job.summary) job.summary.importMerge = stats;
   emit(
@@ -440,7 +450,7 @@ async function prepareImportMerge(
     `${name}: ${stats.schemasMerged} schema(s) merged (${stats.propertiesAdded} property(ies) added, ` +
       `${stats.propertiesUpdated} updated), ${stats.schemasCarried} schema(s) and ${stats.pathsCarried} path(s) ` +
       `kept from the latest version, ${stats.operationsAdded} operation(s) added and ${stats.operationsUpdated} ` +
-      'updated on existing paths.',
+      `updated on existing paths; arrays: ${arrays} (${stats.arraysCombined} combined).`,
     { ...stats },
   );
 }
