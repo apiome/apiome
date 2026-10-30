@@ -1,12 +1,13 @@
 /**
- * Additive merge in the importer (#591).
+ * Merge strategies in the importer: additive (#591) and override (#592).
  *
  * With `options.mergeStrategy: 'additive'`, an import into an existing project keeps everything the
  * latest version has and adds what the spec newly defines: a same-named class keeps its properties
  * and gains the new ones, classes and paths only the latest version has are copied forward, a path
  * both sides have gains only new operations, and the latest version's security schemes are not
- * replaced. Without the option, for a first import, or for a registered-repository import, nothing
- * is merged.
+ * replaced. With `override`, the same is carried and added, but the spec's definition wins where both
+ * define a property, an operation or a security scheme. Without the option, for a first import, or
+ * for a registered-repository import, nothing is merged.
  */
 
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
@@ -126,7 +127,7 @@ const DOCUMENT = {
 /** The parts of a job status these tests read. */
 interface JobStatus {
   state: string;
-  summary: { additiveMerge?: Record<string, number>; classesCreated: number };
+  summary: { importMerge?: Record<string, unknown>; classesCreated: number };
   events: Array<{ code?: string; message?: string }>;
 }
 
@@ -159,7 +160,7 @@ function writtenClassNames(): string[] {
   return mockCreateClassTx.mock.calls.map((c) => c[2] as string);
 }
 
-describe('importer: additive merge (#591)', () => {
+describe('importer: merge strategies (#591, #592)', () => {
   beforeEach(() => {
     mockCreateVersionTx.mockReset();
     mockCreateVersionTx.mockImplementation(() => ok({ version: { id: NEW } }));
@@ -211,14 +212,17 @@ describe('importer: additive merge (#591)', () => {
     // The stored `apiKey` scheme is kept: only the spec's new `bearer` scheme is written.
     expect(schemes.map((s) => s.scheme_name)).toEqual(['bearer']);
 
-    expect(status.summary.additiveMerge).toEqual({
+    expect(status.summary.importMerge).toEqual({
+      strategy: 'additive',
       schemasMerged: 1,
       propertiesAdded: 1,
+      propertiesUpdated: 0,
       schemasCarried: 1,
       pathsCarried: 1,
       operationsAdded: 1,
+      operationsUpdated: 0,
     });
-    expect(status.events.some((e) => e.code === 'ADDITIVE_MERGE')).toBe(true);
+    expect(status.events.some((e) => e.code === 'IMPORT_MERGE')).toBe(true);
     // Carried classes are expected in the new version, not reported as extras.
     expect(status.events.some((e) => e.code === 'VERIFY_EXTRA_CLASS')).toBe(false);
   });
@@ -229,7 +233,7 @@ describe('importer: additive merge (#591)', () => {
     const status = await waitForJobEnd(getImportStatus, jobId);
     expect(status.state).toBe('pending-approval');
     expect(mockCopyClassesTx).toHaveBeenCalledWith(mockClient, PARENT, NEW, ['Owner']);
-    expect(status.summary.additiveMerge?.schemasCarried).toBe(1);
+    expect(status.summary.importMerge?.schemasCarried).toBe(1);
   });
 
   test('a dry run reports the merge without writing', async () => {
@@ -237,7 +241,7 @@ describe('importer: additive merge (#591)', () => {
     const { jobId } = await startImport(input({ mergeStrategy: 'additive', dryRun: true }));
     const status = await waitForJobEnd(getImportStatus, jobId);
     expect(status.state).toBe('completed');
-    expect(status.summary.additiveMerge?.schemasMerged).toBe(1);
+    expect(status.summary.importMerge?.schemasMerged).toBe(1);
     expect(mockCreateClassTx).not.toHaveBeenCalled();
     expect(mockCopyClassesTx).not.toHaveBeenCalled();
   });
@@ -246,7 +250,7 @@ describe('importer: additive merge (#591)', () => {
     const { startImport, getImportStatus } = await import('../lib/db/import-helper');
     const { jobId } = await startImport(input());
     const status = await waitForJobEnd(getImportStatus, jobId);
-    expect(status.summary.additiveMerge).toBeUndefined();
+    expect(status.summary.importMerge).toBeUndefined();
     expect(mockCopyClassesTx).not.toHaveBeenCalled();
     expect(mockLoadCarriedPaths).not.toHaveBeenCalled();
     expect(mockCreateClassTx.mock.calls[0][3]).toBe('Spec pet');
@@ -259,8 +263,8 @@ describe('importer: additive merge (#591)', () => {
     const { startImport, getImportStatus } = await import('../lib/db/import-helper');
     const { jobId } = await startImport(input({ mergeStrategy: 'additive' }));
     const status = await waitForJobEnd(getImportStatus, jobId);
-    expect(status.summary.additiveMerge).toBeUndefined();
-    expect(status.events.some((e) => e.code === 'ADDITIVE_MERGE_IGNORED')).toBe(true);
+    expect(status.summary.importMerge).toBeUndefined();
+    expect(status.events.some((e) => e.code === 'IMPORT_MERGE_IGNORED')).toBe(true);
     expect(mockCopyClassesTx).not.toHaveBeenCalled();
   });
 
@@ -270,7 +274,54 @@ describe('importer: additive merge (#591)', () => {
       input({ mergeStrategy: 'additive' }, { repositorySource: { repositoryId: 'repo-1', branch: 'main', path: 'api.yaml' } }),
     );
     const status = await waitForJobEnd(getImportStatus, jobId);
-    expect(status.summary.additiveMerge).toBeUndefined();
-    expect(status.events.find((e) => e.code === 'ADDITIVE_MERGE_IGNORED')?.message).toMatch(/repository/);
+    expect(status.summary.importMerge).toBeUndefined();
+    expect(status.events.find((e) => e.code === 'IMPORT_MERGE_IGNORED')?.message).toMatch(/repository/);
+  });
+
+  test('override: the spec wins where both define something; the rest is kept (#592)', async () => {
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(input({ mergeStrategy: 'override' }));
+    const status = await waitForJobEnd(getImportStatus, jobId);
+
+    expect(status.state).toBe('completed');
+    expect(writtenClassNames()).toEqual(['Pet', 'Tag']);
+    // Pet takes the spec's description.
+    expect(mockCreateClassTx.mock.calls[0][3]).toBe('Spec pet');
+    expect(mockCopyClassesTx).toHaveBeenCalledWith(mockClient, PARENT, NEW, ['Owner']);
+
+    const [, paths, schemes] = mockImportPaths.mock.calls[0] as [
+      string,
+      Array<{ path: string; operations: Array<{ method: string; summary?: string }> }>,
+      Array<{ scheme_name: string }>,
+    ];
+    expect(paths.map((p) => p.path)).toEqual(['/pets', '/owners', '/tags']);
+    // The spec's GET replaces the stored one (no "stored" summary); POST is added.
+    expect(paths[0].operations.map((o) => [o.method, o.summary])).toEqual([
+      ['GET', undefined],
+      ['POST', undefined],
+    ]);
+    // The spec's same-named `apiKey` scheme is written too, so it replaces the stored one.
+    expect(schemes.map((s) => s.scheme_name)).toEqual(['apiKey', 'bearer']);
+
+    expect(status.summary.importMerge).toEqual({
+      strategy: 'override',
+      schemasMerged: 1,
+      propertiesAdded: 1,
+      propertiesUpdated: 1,
+      schemasCarried: 1,
+      pathsCarried: 1,
+      operationsAdded: 1,
+      operationsUpdated: 1,
+    });
+    expect(status.events.find((e) => e.code === 'IMPORT_MERGE')?.message).toMatch(/^Override merge:/);
+  });
+
+  test('override is ignored with a warning when there is no latest version (#592)', async () => {
+    mockLatestVersion.mockResolvedValue(null);
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(input({ mergeStrategy: 'override' }));
+    const status = await waitForJobEnd(getImportStatus, jobId);
+    expect(status.summary.importMerge).toBeUndefined();
+    expect(status.events.find((e) => e.code === 'IMPORT_MERGE_IGNORED')?.message).toMatch(/^Override merge needs/);
   });
 });

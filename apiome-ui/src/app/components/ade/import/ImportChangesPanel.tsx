@@ -16,8 +16,10 @@
  *    tab is opened;
  *  - a "No changes from v…" state, a loading state, and an `ErrorState` with retry — the footer's
  *    **Continue to import** stays available in every one of them;
- *  - a **Merge strategy** choice (#591): **Replace with this import** (the default) or **Additive
- *    merge**, which keeps everything in the latest version and adds what the spec newly defines.
+ *  - a **Merge strategy** choice: **Replace with this import** (the default), **Additive merge**
+ *    (#591), which keeps everything in the latest version and adds what the spec newly defines, or
+ *    **Override merge** (#592), which does the same but takes the spec's definitions where both
+ *    define something.
  *
  * A view only: the dialog owns the request and the {@link ProjectDeltaState}.
  */
@@ -74,7 +76,8 @@ export interface ImportChangesPanelProps {
 }
 
 /**
- * The merge-strategy choice (#591): replace (default) or additive merge, each with a one-line hint.
+ * The merge-strategy choice: replace (default), additive (#591) or override (#592), each with a
+ * one-line hint.
  *
  * @param props.value The chosen strategy.
  * @param props.onChange Called with the new strategy.
@@ -84,6 +87,7 @@ function MergeChoice({ value, onChange }: { value: ImportMergeChoice; onChange: 
   const options: Array<{ value: ImportMergeChoice; label: string; hint: string }> = [
     { value: 'replace', label: IMPORT_WIZARD_COPY.changesMergeReplace, hint: IMPORT_WIZARD_COPY.changesMergeReplaceHint },
     { value: 'additive', label: IMPORT_WIZARD_COPY.changesMergeAdditive, hint: IMPORT_WIZARD_COPY.changesMergeAdditiveHint },
+    { value: 'override', label: IMPORT_WIZARD_COPY.changesMergeOverride, hint: IMPORT_WIZARD_COPY.changesMergeOverrideHint },
   ];
   return (
     <fieldset className="imp-changes__merge" data-testid="import-changes-merge">
@@ -177,12 +181,19 @@ function ChangesView({
 
       {onMergeChoiceChange ? <MergeChoice value={mergeChoice} onChange={onMergeChoiceChange} /> : null}
 
-      {mergeChoice === 'additive' && counts.removed > 0 ? (
-        // #591: an additive merge keeps what the latest version has, so "removed" rows stay.
+      {mergeChoice !== 'replace' && counts.removed > 0 ? (
+        // #591 / #592: a merge keeps what the latest version has, so "removed" rows stay.
         <Alert variant="info" data-testid="import-changes-merge-kept">
-          <span className="font-semibold">{IMPORT_WIZARD_COPY.changesMergeRemovedKept}</span> — the {counts.removed}{' '}
+          <span className="font-semibold">
+            {mergeChoice === 'override'
+              ? IMPORT_WIZARD_COPY.changesMergeRemovedKeptOverride
+              : IMPORT_WIZARD_COPY.changesMergeRemovedKeptAdditive}
+          </span>{' '}
+          — the {counts.removed}{' '}
           {counts.removed === 1 ? 'item' : 'items'} listed as <span className="font-semibold">Removed</span>{' '}
-          {counts.removed === 1 ? 'stays' : 'stay'} in the new version {versionLabel ? `as they are in ${versionLabel}` : 'as they are'}.
+          {counts.removed === 1 ? 'stays' : 'stay'} in the new version{' '}
+          {counts.removed === 1 ? 'as it is' : 'as they are'}
+          {versionLabel ? ` in ${versionLabel}` : ''}.
         </Alert>
       ) : null}
 

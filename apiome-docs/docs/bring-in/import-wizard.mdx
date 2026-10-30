@@ -128,13 +128,25 @@ again gives the next free one too. Nothing existing changes. To use a different 
   - A path both have keeps its operations; methods only the spec has (a new `POST`, say) are added.
   - Schemas, paths and security schemes only the latest version has are kept as they are, and the
     spec's new ones are added.
+- **Override merge** — like **Additive merge**, nothing is removed and the spec's new items are
+  added, but wherever both define the same thing, the spec's definition wins:
+  - A property both have takes the spec's definition as a whole (for example `maxLength: 100`
+    replaces a stored `maxLength: 50`). Properties only the latest version has are kept.
+  - A schema both have takes the spec's description.
+  - An operation both have (same path and method) takes the spec's definition. The path's other
+    operations are kept.
+  - A security scheme both have takes the spec's definition.
+
+Pick **Additive merge** when the project holds edits you want to keep, and **Override merge** when
+the spec is the source of truth for what it defines but doesn't define everything.
 
 <Screenshot id="import-wizard-changes-additive" alt="The Changes step with Merge strategy set to Additive merge and a note that the item listed as Removed stays in the new version" caption="With Additive merge, the item listed as Removed stays in the new version." />
 
-With **Additive merge** selected, a note says that the items listed as **Removed** stay in the new
+With either merge selected, a note says that the items listed as **Removed** stay in the new
 version. **Done** adds a **Merge** row, for example *Additive — 2 schemas merged (3 properties
-added); 4 schemas and 5 paths kept from the latest version*. A **Dry run (preview only)** shows the
-same row without saving anything.
+added); 4 schemas and 5 paths kept from the latest version*, or for an override *Override — 2
+schemas merged (1 property added, 2 updated), 1 operation updated; …*. A **Dry run (preview only)**
+shows the same row without saving anything.
 
 If nothing changed, the step says **No changes from v2.4.0** (with your version); importing still
 records a new version. If the comparison cannot be computed, **“Try again”** asks again, and
@@ -142,8 +154,9 @@ records a new version. If the comparison cannot be computed, **“Try again”**
 
 To try it, import `apiome-ui/examples/openapi/30-openapi-3.0-petstore.yaml`, then edit a copy (remove
 an operation, add a path) and import it again with the same **Slug** and a new **Version**. Import the
-copy once with each **Merge strategy** to compare: with **Additive merge**, the removed operation is
-still in the new version.
+copy once with each **Merge strategy** to compare: with **Additive merge** or **Override merge**, the
+removed operation is still in the new version, and with **Override merge** a changed property takes
+the copy's definition.
 
 ### File Upload
 

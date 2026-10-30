@@ -56,11 +56,11 @@ import {
 } from '../repository-merge';
 import { mergeOpenApiDocumentIntoCatalogTargets } from '../rest-spec-import-merge';
 import {
-  planAdditiveClasses,
-  planAdditivePaths,
-  type AdditiveMergeStats,
+  planMergeClasses,
+  planMergePaths,
+  type ImportMergeStats,
   type ImportMergeStrategy,
-} from '../import-additive-merge';
+} from '../import-merge';
 import { dbClassToNormalized } from './db-class-normalize';
 
 export type ImportJobState = 'queued' | 'running' | 'pending-approval' | 'committing' | 'completed' | 'failed' | 'canceled' | 'rolled-back';
@@ -157,9 +157,11 @@ export interface ImportJobInput {
      */
     onVersionConflict?: 'create-version';
     /**
-     * How an import into an existing project combines with the project's latest version (#591).
-     * `additive` keeps everything the latest version has and adds what the spec newly defines
-     * (schemas, properties, paths, operations, security schemes); see `lib/import-additive-merge.ts`.
+     * How an import into an existing project combines with the project's latest version. Both keep
+     * what the latest version has and the spec leaves out, and add what the spec newly defines
+     * (schemas, properties, paths, operations, security schemes). Where both define something,
+     * `additive` (#591) keeps the existing definition and `override` (#592) takes the spec's; see
+     * `lib/import-merge.ts`.
      * Omitted, the new version holds only what the spec defines. Ignored for a first import and for
      * a registered-repository import, whose federation decides what is carried.
      */
@@ -270,8 +272,8 @@ interface JobState {
   normalizedClasses?: NormalizedClass[];
   /** Multi-repository merge state (REPO-5.7), set for a repository-file import into a project. */
   merge?: JobRepositoryMerge;
-  /** Additive merge state (#591), set when `options.mergeStrategy` is `additive` and it applies. */
-  additiveMerge?: JobAdditiveMerge;
+  /** Merge state (#591, #592), set when `options.mergeStrategy` is set and it applies. */
+  importMerge?: JobImportMerge;
   summary?: {
     classesCreated: number;
     propertiesCreated: number;
@@ -293,8 +295,8 @@ interface JobState {
     skippedDuplicateVersion?: boolean;
     /** Set when the requested version label was taken and a sub-version was created instead (#590). */
     versionLabelAdjusted?: { requested: string; used: string };
-    /** Set when the import was merged additively into the project's latest version (#591). */
-    additiveMerge?: AdditiveMergeStats;
+    /** Set when the import was merged into the project's latest version (#591 additive, #592 override). */
+    importMerge?: ImportMergeStats;
     /** Per-phase / per-DB-op timing breakdown for diagnosing slow imports (see finalizeBenchmark). */
     benchmark?: {
       totalMs: number;
@@ -330,62 +332,72 @@ interface JobRepositoryMerge {
   projectId: string | null;
 }
 
-/** What an additive merge (#591) carries between planning and writing. */
-interface JobAdditiveMerge {
+/** What a merge strategy (#591 additive, #592 override) carries between planning and writing. */
+interface JobImportMerge {
+  /** The strategy that runs. */
+  strategy: ImportMergeStrategy;
   /** The project's latest version, which the import merges into. */
   parentVersionId: string;
   /** The latest version's classes the import does not define; copied into the new version as stored. */
   carriedClassNames: string[];
-  /** The paths to write: the latest version's (with any new operations) and the spec's new ones. */
+  /** The paths to write: the latest version's (merged with the spec's) and the spec's new ones. */
   paths: ParsedPath[];
-  /** Security schemes the latest version defines; the spec's same-named ones do not replace them. */
+  /** Security schemes the latest version defines (an additive merge keeps them over the spec's). */
   parentSchemeNames: Set<string>;
 }
 
 const jobs = new Map<string, JobState>();
 
+/** The log's name for each strategy. */
+const MERGE_STRATEGY_NAME: Readonly<Record<ImportMergeStrategy, string>> = {
+  additive: 'Additive merge',
+  override: 'Override merge',
+};
+
 /**
- * Plan an additive merge (#591) of the import into the project's latest version, before anything
- * is written.
+ * Plan a merge (#591 additive, #592 override) of the import into the project's latest version,
+ * before anything is written.
  *
- * No-op unless `options.mergeStrategy` is `additive`. Ignored, with a warning, when there is no
- * latest version (a first import) or for a registered-repository import, whose federation
- * (REPO-5.7) decides what is carried. Otherwise reads the latest version's classes, paths and
- * security-scheme names, replaces each same-named class in `norm.classes` with its additive merge,
- * and stores what to carry on `job.additiveMerge`.
+ * No-op unless `options.mergeStrategy` is set. Ignored, with a warning, when there is no latest
+ * version (a first import) or for a registered-repository import, whose federation (REPO-5.7)
+ * decides what is carried. Otherwise reads the latest version's classes, paths and security-scheme
+ * names, replaces each same-named class in `norm.classes` with its merge (see `lib/import-merge.ts`),
+ * and stores what to carry on `job.importMerge`.
  *
  * @param client - Query client (the import's, or a read client for a dry run).
- * @param job - The job; `job.additiveMerge` and `job.summary.additiveMerge` are set when the merge applies.
+ * @param job - The job; `job.importMerge` and `job.summary.importMerge` are set when the merge applies.
  * @param parentVersionId - The project's latest version, or null.
  * @param norm - The normalized model; its `classes` are replaced by the merged list.
  * @throws Error when the latest version's paths cannot be read — a merge never silently drops paths.
  */
-async function prepareAdditiveMerge(
+async function prepareImportMerge(
   client: PoolClient,
   job: JobState,
   parentVersionId: string | null,
   norm: { classes: NormalizedClass[] },
 ): Promise<void> {
   const input = job.input;
-  if (input.options.mergeStrategy !== 'additive') return;
+  const strategy = input.options.mergeStrategy;
+  if (strategy !== 'additive' && strategy !== 'override') return;
+  const name = MERGE_STRATEGY_NAME[strategy];
   if (input.repositorySource?.repositoryId?.trim()) {
     emit(
       job,
       'warn',
-      'ADDITIVE_MERGE_IGNORED',
-      'Additive merge does not apply to a repository file import: the repository federation decides what is carried forward.',
+      'IMPORT_MERGE_IGNORED',
+      `${name} does not apply to a repository file import: the repository federation decides what is carried forward.`,
     );
     return;
   }
   if (!parentVersionId) {
-    emit(job, 'warn', 'ADDITIVE_MERGE_IGNORED', 'Additive merge needs an existing version to merge into; importing as a new project.');
+    emit(job, 'warn', 'IMPORT_MERGE_IGNORED', `${name} needs an existing version to merge into; importing as a new project.`);
     return;
   }
 
   const parentClasses = (JSON.parse(await getClassesWithPropertiesAndTagsTx(client, parentVersionId)) as unknown[]).map(
     dbClassToNormalized,
   );
-  const classPlan = planAdditiveClasses(parentClasses, norm.classes);
+  const classPlan = planMergeClasses(parentClasses, norm.classes, strategy);
   norm.classes = classPlan.classes;
   job.normalizedClasses = classPlan.classes;
 
@@ -394,7 +406,7 @@ async function prepareAdditiveMerge(
     await client.query('SELECT pathname FROM apiome.version_path WHERE version_id = $1', [parentVersionId])
   ).rows.map((r: { pathname: string }) => String(r.pathname));
   const parentPaths = await loadCarriedPaths(parentVersionId, parentPathnames);
-  const pathPlan = planAdditivePaths(parentPaths, incomingPaths);
+  const pathPlan = planMergePaths(parentPaths, incomingPaths, strategy);
   const parentSchemeNames = new Set<string>(
     (
       await client.query('SELECT scheme_name FROM apiome.version_security_scheme WHERE version_id = $1', [
@@ -403,47 +415,52 @@ async function prepareAdditiveMerge(
     ).rows.map((r: { scheme_name: string }) => String(r.scheme_name)),
   );
 
-  job.additiveMerge = {
+  job.importMerge = {
+    strategy,
     parentVersionId,
     carriedClassNames: classPlan.carriedClassNames,
     paths: pathPlan.paths,
     parentSchemeNames,
   };
-  const stats: AdditiveMergeStats = {
+  const stats: ImportMergeStats = {
+    strategy,
     schemasMerged: classPlan.schemasMerged,
     propertiesAdded: classPlan.propertiesAdded,
+    propertiesUpdated: classPlan.propertiesUpdated,
     schemasCarried: classPlan.carriedClassNames.length,
     pathsCarried: pathPlan.pathsCarried,
     operationsAdded: pathPlan.operationsAdded,
+    operationsUpdated: pathPlan.operationsUpdated,
   };
-  if (job.summary) job.summary.additiveMerge = stats;
+  if (job.summary) job.summary.importMerge = stats;
   emit(
     job,
     'info',
-    'ADDITIVE_MERGE',
-    `Additive merge: ${stats.schemasMerged} schema(s) merged (${stats.propertiesAdded} property(ies) added), ` +
-      `${stats.schemasCarried} schema(s) and ${stats.pathsCarried} path(s) kept from the latest version, ` +
-      `${stats.operationsAdded} operation(s) added to existing paths.`,
+    'IMPORT_MERGE',
+    `${name}: ${stats.schemasMerged} schema(s) merged (${stats.propertiesAdded} property(ies) added, ` +
+      `${stats.propertiesUpdated} updated), ${stats.schemasCarried} schema(s) and ${stats.pathsCarried} path(s) ` +
+      `kept from the latest version, ${stats.operationsAdded} operation(s) added and ${stats.operationsUpdated} ` +
+      'updated on existing paths.',
     { ...stats },
   );
 }
 
 /**
- * Copy what an additive merge (#591) carries into the new version: the latest version's classes the
+ * Copy what a merge (#591, #592) carries into the new version: the latest version's classes the
  * import does not define, and its security schemes. Runs in the caller's transaction; a no-op
- * without an additive merge.
+ * without a merge.
  *
  * @param client - The import's transaction client.
- * @param job - The job, with `job.additiveMerge` from {@link prepareAdditiveMerge}.
+ * @param job - The job, with `job.importMerge` from {@link prepareImportMerge}.
  * @param versionId - The new version.
  */
-async function applyAdditiveMergeForJob(client: PoolClient, job: JobState, versionId: string): Promise<void> {
-  const merge = job.additiveMerge;
+async function applyImportMergeForJob(client: PoolClient, job: JobState, versionId: string): Promise<void> {
+  const merge = job.importMerge;
   if (!merge) return;
   const queryable = client as unknown as Queryable;
   const copied = await copyClassesTx(queryable, merge.parentVersionId, versionId, merge.carriedClassNames);
   await copySecuritySchemesTx(queryable, merge.parentVersionId, versionId);
-  emit(job, 'info', 'ADDITIVE_MERGE_CARRIED', `Kept ${copied} schema(s) from the latest version.`, { classesCarried: copied });
+  emit(job, 'info', 'IMPORT_MERGE_CARRIED', `Kept ${copied} schema(s) from the latest version.`, { classesCarried: copied });
 }
 
 /**
@@ -707,14 +724,15 @@ async function importJobPaths(job: JobState, versionId: string): Promise<void> {
   const input = job.input;
   const isOpenApi = input.sourceKind === 'openapi' && Boolean(input.document);
   const incoming = isOpenApi ? extractPaths(input.document) : [];
-  const additive = job.additiveMerge;
-  // Additive merge (#591): the latest version's security schemes were copied and are kept.
+  const merge = job.importMerge;
+  // Additive merge (#591): the latest version's security schemes were copied and are kept. An
+  // override merge (#592) writes the spec's, which replace the copied same-named ones.
   const securitySchemes = (isOpenApi ? extractSecuritySchemes(input.document) : []).filter(
-    (scheme) => !additive?.parentSchemeNames.has(scheme.scheme_name),
+    (scheme) => merge?.strategy !== 'additive' || !merge.parentSchemeNames.has(scheme.scheme_name),
   );
   const carried = job.merge?.carriedPaths ?? [];
-  // Additive merge (#591): the merged list already holds the spec's paths and the kept ones.
-  const paths = additive ? additive.paths : [...incoming, ...carried];
+  // A merge (#591, #592): the merged list already holds the spec's paths and the kept ones.
+  const paths = merge ? merge.paths : [...incoming, ...carried];
   if (paths.length === 0 && securitySchemes.length === 0) return;
   const carriedNote = carried.length > 0 ? ` (${carried.length} carried forward from other repository files)` : '';
   emit(
@@ -1239,8 +1257,8 @@ async function verifyImport(
   }
 
   // Check for extra classes in database that weren't expected
-  // Additive merge (#591): classes kept from the latest version are expected extras.
-  const carriedNames = new Set(job.additiveMerge?.carriedClassNames ?? []);
+  // A merge (#591, #592): classes kept from the latest version are expected extras.
+  const carriedNames = new Set(job.importMerge?.carriedClassNames ?? []);
   for (const dbClass of dbClasses) {
     const wasExpected = normalizedClasses.some(nc => nc.name === dbClass.name) || carriedNames.has(dbClass.name);
     if (!wasExpected) {
@@ -1455,14 +1473,14 @@ export async function startImport(input: ImportJobInput) {
             await releaseClient(readClient);
           }
         }
-        // A dry run previews an additive merge (#591) with the classes and paths it would write.
-        if (input.options.mergeStrategy === 'additive') {
+        // A dry run previews a merge (#591, #592) with the classes and paths it would write.
+        if (input.options.mergeStrategy) {
           const readClient = await getTransactionClient();
           try {
             const dryProjectId =
               existingDry || (await getProjectIdBySlugTx(readClient, input.tenantId, input.project.slug)) || null;
             const dryParent = dryProjectId ? await getLatestVersionUuidForProjectTx(readClient, dryProjectId) : null;
-            await prepareAdditiveMerge(readClient, job, dryParent, norm);
+            await prepareImportMerge(readClient, job, dryParent, norm);
           } finally {
             await releaseClient(readClient);
           }
@@ -1579,7 +1597,7 @@ export async function startImport(input: ImportJobInput) {
           parentVersionUuidInc,
           norm.classes.map((c) => c.name),
         );
-        await prepareAdditiveMerge(client!, job, parentVersionUuidInc, norm);
+        await prepareImportMerge(client!, job, parentVersionUuidInc, norm);
         if (existingInc) await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingInc);
         const resVer = JSON.parse(
           await withRetry(
@@ -1703,11 +1721,11 @@ export async function startImport(input: ImportJobInput) {
           }
         }
 
-        if (job.additiveMerge) {
-          // Additive merge (#591): the kept classes and security schemes, in one short transaction.
+        if (job.importMerge) {
+          // A merge (#591, #592): the kept classes and security schemes, in one short transaction.
           await benchTime(job.bench, 'db:beginTransaction', () => beginTransaction(client!));
           try {
-            await applyAdditiveMergeForJob(client!, job, versionId);
+            await applyImportMergeForJob(client!, job, versionId);
             await benchTime(job.bench, 'db:commitTransaction', () => commitTransaction(client!));
           } catch (mergeErr) {
             try {
@@ -1802,7 +1820,7 @@ export async function startImport(input: ImportJobInput) {
         parentVersionUuidTx,
         norm.classes.map((c) => c.name),
       );
-      await prepareAdditiveMerge(client!, job, parentVersionUuidTx, norm);
+      await prepareImportMerge(client!, job, parentVersionUuidTx, norm);
       if (existingTx) await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingTx);
       const resVer = JSON.parse(
         await withRetry(
@@ -1890,8 +1908,8 @@ export async function startImport(input: ImportJobInput) {
 
       // Multi-repository merge (REPO-5.7): carried classes and provenance, in the import's transaction.
       await applyRepositoryMergeForJob(client, job, projectId, versionId);
-      // Additive merge (#591): the kept classes and security schemes, in the import's transaction.
-      await applyAdditiveMergeForJob(client, job, versionId);
+      // A merge (#591, #592): the kept classes and security schemes, in the import's transaction.
+      await applyImportMergeForJob(client, job, versionId);
 
       // Verification phase - sanity check imported data matches schema
       if (job.canceled) throw new Error('Import canceled');

@@ -1,8 +1,8 @@
 /**
- * Import Done step: the additive merge an import made (#591).
+ * Import Done step: the merge an import made (#591 additive, #592 override).
  *
- * When the import was merged additively into the project's latest version, the Done panel adds a
- * **Merge** row saying what was merged, added and kept. An import without the merge shows no such row.
+ * When the import was merged into the project's latest version, the Done panel adds a **Merge** row
+ * saying what was merged, added, updated and kept. An import without a merge shows no such row.
  */
 
 import React from 'react';
@@ -38,26 +38,58 @@ function completed(summary: Record<string, unknown> = {}) {
   };
 }
 
-describe('import Done: additive merge (#591)', () => {
+describe('import Done: merge (#591, #592)', () => {
   it('says what was merged, added and kept', async () => {
     getImportStatus.mockResolvedValue(
       completed({
-        additiveMerge: { schemasMerged: 2, propertiesAdded: 3, schemasCarried: 4, pathsCarried: 5, operationsAdded: 1 },
+        importMerge: {
+          strategy: 'additive',
+          schemasMerged: 2,
+          propertiesAdded: 3,
+          propertiesUpdated: 0,
+          schemasCarried: 4,
+          pathsCarried: 5,
+          operationsAdded: 1,
+          operationsUpdated: 0,
+        },
       }),
     );
     render(<ImportCompletePanel jobId="job-1" />);
     await waitFor(() =>
-      expect(screen.getByTestId('import-complete-additive-merge')).toHaveTextContent(
+      expect(screen.getByTestId('import-complete-merge')).toHaveTextContent(
         'Additive — 2 schemas merged (3 properties added), 1 operation added; 4 schemas and 5 paths kept from the latest version',
       ),
     );
     expect(screen.getByText('Merge')).toBeInTheDocument();
   });
 
+  it('says what an override merge updated (#592)', async () => {
+    getImportStatus.mockResolvedValue(
+      completed({
+        importMerge: {
+          strategy: 'override',
+          schemasMerged: 1,
+          propertiesAdded: 0,
+          propertiesUpdated: 2,
+          schemasCarried: 1,
+          pathsCarried: 0,
+          operationsAdded: 0,
+          operationsUpdated: 1,
+        },
+      }),
+    );
+    render(<ImportCompletePanel jobId="job-3" />);
+    await waitFor(() =>
+      expect(screen.getByTestId('import-complete-merge')).toHaveTextContent(
+        'Override — 1 schema merged (0 properties added, 2 updated), 1 operation updated; 1 schema and 0 paths kept from the latest version',
+      ),
+    );
+  });
+
   it('shows no merge row for an import that replaced the version', async () => {
     getImportStatus.mockResolvedValue(completed());
     render(<ImportCompletePanel jobId="job-2" />);
     await screen.findByText(/Shop/);
-    expect(screen.queryByTestId('import-complete-additive-merge')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('import-complete-merge')).not.toBeInTheDocument();
   });
 });
