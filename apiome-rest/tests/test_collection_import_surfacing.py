@@ -25,8 +25,9 @@ client = TestClient(app)
 
 _EXAMPLES = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples"
 
-#: The three collection formats this ticket surfaces, keyed by registry key.
-_FORMATS = ("har", "insomnia", "bruno")
+#: The collection formats surfaced as source cards, keyed by registry key (MFI-32.6), plus Postman
+#: since it runs on the same engine (MFI-32.7) — each example folder is named after its key.
+_FORMATS = ("har", "insomnia", "bruno", "postman")
 
 
 @pytest.fixture(autouse=True)

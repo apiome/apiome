@@ -4,6 +4,61 @@
     "channels": [],
     "description": "Folders inside folders — the grouping an importer must flatten into operation groups.",
     "extras": {
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "products"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "sku"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/products/{sku}"
+          ],
+          "template": "/products/{sku}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "carts"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "cartId"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "items"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/carts/{cartId}/items"
+          ],
+          "template": "/carts/{cartId}/items"
+        }
+      ],
+      "postman": {
+        "capability_limits": [],
+        "folders": [
+          "Cart",
+          "Catalogue",
+          "Catalogue / Categories",
+          "Catalogue / Products"
+        ],
+        "requests": 5
+      },
       "postman_collection_version": "2.0",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
       "postman_variables": [
@@ -12,7 +67,15 @@
           "secret": false,
           "value": "https://api.example.com/store"
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /categories": 1,
+        "GET /products": 1,
+        "GET /products/{sku}": 1,
+        "POST /carts": 1,
+        "POST /carts/{cartId}/items": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -37,7 +100,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Storefront",
         "name": "Storefront",
         "operations": [
@@ -46,11 +111,30 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "categories"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/categories"
+                ],
+                "template": "/categories"
+              },
               "postman_folder_path": [
                 "Catalogue",
                 "Categories"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "List categories",
+              "source_location": "Catalogue / Categories / List categories"
             },
             "http_method": "GET",
             "http_path": "/categories",
@@ -60,18 +144,39 @@
             "name": "List categories",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Catalogue / Categories"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "products"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/products"
+                ],
+                "template": "/products"
+              },
               "postman_folder_path": [
                 "Catalogue",
                 "Products"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "List products",
+              "source_location": "Catalogue / Products / List products"
             },
             "http_method": "GET",
             "http_path": "/products",
@@ -87,12 +192,17 @@
                 "description": null,
                 "extras": {
                   "postman_sample": "tools",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "tools"
+                  ]
                 },
                 "key": "GET /products#query.category",
                 "location": "query",
                 "name": "category",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -102,18 +212,44 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Catalogue / Products"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "products"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "sku"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/products/{sku}"
+                ],
+                "template": "/products/{sku}"
+              },
               "postman_folder_path": [
                 "Catalogue",
                 "Products"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Get product",
+              "source_location": "Catalogue / Products / Get product"
             },
             "http_method": "GET",
             "http_path": "/products/{sku}",
@@ -128,7 +264,9 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "GET /products/{sku}#path.sku",
                 "location": "path",
@@ -143,17 +281,38 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Catalogue / Products"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "carts"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/carts"
+                ],
+                "template": "/carts"
+              },
               "postman_folder_path": [
                 "Cart"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Create cart",
+              "source_location": "Cart / Create cart"
             },
             "http_method": "POST",
             "http_path": "/carts",
@@ -163,13 +322,39 @@
             "name": "Create cart",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Cart"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "carts"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "cartId"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "items"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/carts/{cartId}/items"
+                ],
+                "template": "/carts/{cartId}/items"
+              },
               "postman_folder_path": [
                 "Cart"
               ],
@@ -179,7 +364,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Add item",
+              "source_location": "Cart / Add item"
             },
             "http_method": "POST",
             "http_path": "/carts/{cartId}/items",
@@ -187,17 +377,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": null,
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{ \"sku\": \"WID-0001\", \"quantity\": 1 }",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Item"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of POST /carts/{cartId}/items."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /carts/{cartId}/items#request",
@@ -205,7 +394,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Item",
+                  "name": "PostItemRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -222,7 +411,29 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /carts/{cartId}/items#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "POST /carts/{cartId}/items#path.cartId",
                 "location": "path",
@@ -237,7 +448,9 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Cart"
+            ]
           }
         ]
       }
@@ -251,8 +464,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of POST /carts/{cartId}/items."
+          "provenance": "inferred"
         },
         "fields": [
           {
@@ -262,7 +474,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Item.quantity",
+            "key": "PostItemRequest.quantity",
             "name": "quantity",
             "type": {
               "extras": {},
@@ -278,7 +490,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Item.sku",
+            "key": "PostItemRequest.sku",
             "name": "sku",
             "type": {
               "extras": {},
@@ -288,10 +500,10 @@
             }
           }
         ],
-        "key": "Item",
+        "key": "PostItemRequest",
         "key_type": null,
         "kind": "record",
-        "name": "Item",
+        "name": "PostItemRequest",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -311,11 +523,11 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:b7f1daf2bd2625ad74b5849c7805f690ec0ee028f9bb2a43ed37b879f5dd74a1",
+  "fingerprint": "sha256:79f1bc5780b881508abaaf379bd4639a73e76d7e3b4d7bfa151538b4a6215452",
   "lint": {
     "findings": 10,
     "grade": "C",
-    "report_fingerprint": "347a40d60e02eebeb9044282b9dcb75394e91a51ff199f541b78a0b005267f8a",
+    "report_fingerprint": "df70cb35df788d89344f79c54add668e0212162877e1232730dcb9db0ef2432b",
     "score": 72,
     "severity_counts": {
       "error": 0,

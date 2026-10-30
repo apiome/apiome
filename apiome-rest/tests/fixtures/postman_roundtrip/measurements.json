@@ -49,8 +49,58 @@
       ],
       [
         "type",
+        "DeletePetResponse404",
+        "added"
+      ],
+      [
+        "type",
+        "GetPetResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "GetPetResponse404",
+        "added"
+      ],
+      [
+        "type",
         "Pet",
-        "changed"
+        "removed"
+      ],
+      [
+        "type",
+        "PostPetRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse201",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse400",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse422",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetResponse400",
+        "added"
       ]
     ],
     "unexplained": [
@@ -63,6 +113,56 @@
         "service",
         "default",
         "removed"
+      ],
+      [
+        "type",
+        "DeletePetResponse404",
+        "added"
+      ],
+      [
+        "type",
+        "GetPetResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "GetPetResponse404",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse201",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse400",
+        "added"
+      ],
+      [
+        "type",
+        "PostPetResponse422",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "PutPetResponse400",
+        "added"
       ]
     ],
     "overclaims": []
@@ -122,12 +222,47 @@
       ],
       [
         "type",
-        "Item",
-        "changed"
+        "GetItemResponse200",
+        "added"
       ],
       [
         "type",
-        "Session",
+        "GetItemResponse404",
+        "added"
+      ],
+      [
+        "type",
+        "GetSearchResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "Item",
+        "removed"
+      ],
+      [
+        "type",
+        "PostItemRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostItemResponse201",
+        "added"
+      ],
+      [
+        "type",
+        "PostItemResponse400",
+        "added"
+      ],
+      [
+        "type",
+        "PostSessionRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostSessionResponse200",
         "added"
       ]
     ],
@@ -149,7 +284,42 @@
       ],
       [
         "type",
-        "Session",
+        "GetItemResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "GetItemResponse404",
+        "added"
+      ],
+      [
+        "type",
+        "GetSearchResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "PostItemRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostItemResponse201",
+        "added"
+      ],
+      [
+        "type",
+        "PostItemResponse400",
+        "added"
+      ],
+      [
+        "type",
+        "PostSessionRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostSessionResponse200",
         "added"
       ]
     ],
@@ -231,7 +401,7 @@
       [
         "type",
         "Notification",
-        "changed"
+        "removed"
       ],
       [
         "type",
@@ -241,7 +411,17 @@
       [
         "type",
         "Payment",
-        "changed"
+        "removed"
+      ],
+      [
+        "type",
+        "PostNotificationRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostPaymentRequest",
+        "added"
       ],
       [
         "type",
@@ -284,6 +464,16 @@
         "service",
         "default",
         "removed"
+      ],
+      [
+        "type",
+        "PostNotificationRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostPaymentRequest",
+        "added"
       ]
     ],
     "overclaims": []
@@ -317,6 +507,16 @@
         "changed"
       ],
       [
+        "service",
+        "Orders API",
+        "changed"
+      ],
+      [
+        "type",
+        "GetOrderResponse200",
+        "added"
+      ],
+      [
         "type",
         "NewOrder",
         "removed"
@@ -324,15 +524,46 @@
       [
         "type",
         "Order",
-        "changed"
+        "removed"
       ],
       [
         "type",
         "OrderItem",
         "removed"
+      ],
+      [
+        "type",
+        "PostOrderRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostOrderResponse201",
+        "added"
       ]
     ],
-    "unexplained": [],
+    "unexplained": [
+      [
+        "service",
+        "Orders API",
+        "changed"
+      ],
+      [
+        "type",
+        "GetOrderResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "PostOrderRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostOrderResponse201",
+        "added"
+      ]
+    ],
     "overclaims": []
   },
   "01-simple-api.apib": {
@@ -359,17 +590,58 @@
         "changed"
       ],
       [
+        "service",
+        "Task API",
+        "changed"
+      ],
+      [
+        "type",
+        "GetTaskResponse200",
+        "added"
+      ],
+      [
         "type",
         "NewTask",
         "removed"
       ],
       [
         "type",
+        "PostTaskRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostTaskResponse201",
+        "added"
+      ],
+      [
+        "type",
         "Task",
-        "changed"
+        "removed"
       ]
     ],
-    "unexplained": [],
+    "unexplained": [
+      [
+        "service",
+        "Task API",
+        "changed"
+      ],
+      [
+        "type",
+        "GetTaskResponse200",
+        "added"
+      ],
+      [
+        "type",
+        "PostTaskRequest",
+        "added"
+      ],
+      [
+        "type",
+        "PostTaskResponse201",
+        "added"
+      ]
+    ],
     "overclaims": []
   }
 }

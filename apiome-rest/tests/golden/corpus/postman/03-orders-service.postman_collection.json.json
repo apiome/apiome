@@ -4,6 +4,51 @@
     "channels": [],
     "description": "Typical everyday Postman Collection v2.1 example: CRUD requests for an orders service with headers, JSON request bodies, a collection variable for the base URL, and a path variable on the item requests.",
     "extras": {
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "DELETE",
+          "sample_urls": [
+            "/orders/{orderId}"
+          ],
+          "template": "/orders/{orderId}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "orders"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "orderId"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/orders/{orderId}"
+          ],
+          "template": "/orders/{orderId}"
+        }
+      ],
+      "postman": {
+        "capability_limits": [],
+        "folders": [],
+        "requests": 4
+      },
       "postman_collection_version": "2.1",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       "postman_variables": [
@@ -12,7 +57,14 @@
           "secret": false,
           "value": "https://api.example.com"
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "DELETE /orders/{orderId}": 1,
+        "GET /orders": 1,
+        "GET /orders/{orderId}": 1,
+        "POST /orders": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -37,7 +89,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Orders API",
         "name": "Orders API",
         "operations": [
@@ -46,8 +100,32 @@
             "deprecated": false,
             "description": "Cancel an order that has not shipped yet.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "DELETE",
+                "sample_urls": [
+                  "/orders/{orderId}"
+                ],
+                "template": "/orders/{orderId}"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Cancel order",
+              "source_location": "Cancel order"
             },
             "http_method": "DELETE",
             "http_path": "/orders/{orderId}",
@@ -62,7 +140,10 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "postman_sample": "o-1001",
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "DELETE /orders/{orderId}#path.orderId",
                 "location": "path",
@@ -84,6 +165,20 @@
             "deprecated": false,
             "description": "List orders, optionally filtered by status.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/orders"
+                ],
+                "template": "/orders"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -91,7 +186,12 @@
                   "key": "Accept",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "List orders",
+              "source_location": "List orders"
             },
             "http_method": "GET",
             "http_path": "/orders",
@@ -106,13 +206,38 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /orders#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
                   "postman_sample": "placed",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "placed"
+                  ]
                 },
                 "key": "GET /orders#query.status",
                 "location": "query",
                 "name": "status",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -129,6 +254,25 @@
             "deprecated": false,
             "description": "Fetch a single order by id.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "orders"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "orderId"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/orders/{orderId}"
+                ],
+                "template": "/orders/{orderId}"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -136,7 +280,12 @@
                   "key": "Accept",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Get order",
+              "source_location": "Get order"
             },
             "http_method": "GET",
             "http_path": "/orders/{orderId}",
@@ -151,7 +300,30 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /orders/{orderId}#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_sample": "o-1001",
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "GET /orders/{orderId}#path.orderId",
                 "location": "path",
@@ -173,6 +345,20 @@
             "deprecated": false,
             "description": "Place a new order.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "orders"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/orders"
+                ],
+                "template": "/orders"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -180,7 +366,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Place order",
+              "source_location": "Place order"
             },
             "http_method": "POST",
             "http_path": "/orders",
@@ -188,17 +379,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": "json",
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{\n  \"customerId\": \"c-77\",\n  \"items\": [\n    { \"sku\": \"SKU-1\", \"quantity\": 2 }\n  ]\n}",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Order"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of POST /orders."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /orders#request",
@@ -206,7 +396,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Order",
+                  "name": "PostOrderRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -216,7 +406,28 @@
               }
             ],
             "name": "Place order",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /orders#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           }
@@ -232,8 +443,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of POST /orders."
+          "provenance": "inferred"
         },
         "fields": [
           {
@@ -243,7 +453,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Order.customerId",
+            "key": "PostOrderRequest.customerId",
             "name": "customerId",
             "type": {
               "extras": {},
@@ -259,7 +469,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Order.items",
+            "key": "PostOrderRequest.items",
             "name": "items",
             "type": {
               "extras": {},
@@ -274,10 +484,10 @@
             }
           }
         ],
-        "key": "Order",
+        "key": "PostOrderRequest",
         "key_type": null,
         "kind": "record",
-        "name": "Order",
+        "name": "PostOrderRequest",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -297,11 +507,11 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:eb23da4b95b7bb335f53d58d8a75b7e3898c07ba77d2e86b7ccc7ec7eebe73c9",
+  "fingerprint": "sha256:136844daec26ce9823295d753fc921f4c0c881aab9dfb055f34e1705c4aaa347",
   "lint": {
     "findings": 5,
     "grade": "A",
-    "report_fingerprint": "47338c92cb302a636fc87f724605a5d9cf5fdab77350a61678a91aea6f801588",
+    "report_fingerprint": "416ad1d2e24911e20dc78db2c8387ae93c95f9d66469fadcfbced14b689e9fa2",
     "score": 92,
     "severity_counts": {
       "error": 0,

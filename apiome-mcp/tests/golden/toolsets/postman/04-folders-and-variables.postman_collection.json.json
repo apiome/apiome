@@ -16,6 +16,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "month"
+        ],
         "type": "object"
       },
       "name": "Usage_report",
@@ -23,7 +26,14 @@
     },
     {
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "accept": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accept"
+        ],
         "type": "object"
       },
       "name": "List_users",
@@ -32,6 +42,9 @@
     {
       "inputSchema": {
         "properties": {
+          "content-type": {
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
@@ -40,6 +53,7 @@
           }
         },
         "required": [
+          "content-type",
           "email",
           "role"
         ],

@@ -4,6 +4,44 @@
     "channels": [],
     "description": "Root of the set: every URL resolves through the sibling environment file.",
     "extras": {
+      "inferred_auth_schemes": [
+        "apiKey"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "stock"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "sku"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/stock/{sku}"
+          ],
+          "template": "/stock/{sku}"
+        }
+      ],
+      "postman": {
+        "capability_limits": [
+          {
+            "construct": "postman.secret_variable",
+            "count": 1,
+            "locations": [
+              "apiKey"
+            ],
+            "note": "A secret variable (by its name, or a value the scrub gate flags) is listed by name; its value is withheld."
+          }
+        ],
+        "folders": [],
+        "requests": 2
+      },
       "postman_collection_version": "2.0",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
       "postman_variables": [
@@ -21,7 +59,20 @@
           "key": "apiKey",
           "secret": true
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /stock/{sku}": 1,
+        "POST /reservations": 1
+      },
+      "security_schemes": {
+        "apiKey": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "in": "header",
+          "name": "X-API-Key",
+          "type": "apiKey"
+        }
+      }
     },
     "format": "postman",
     "identity": {
@@ -46,7 +97,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Inventory (set root)",
         "name": "Inventory (set root)",
         "operations": [
@@ -55,6 +108,25 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "stock"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "sku"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/stock/{sku}"
+                ],
+                "template": "/stock/{sku}"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -62,7 +134,12 @@
                   "key": "X-Api-Key",
                   "value": "{{apiKey}}"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Check stock",
+              "source_location": "Check stock"
             },
             "http_method": "GET",
             "http_path": "/stock/{sku}",
@@ -77,11 +154,12 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
-                "key": "GET /stock/{sku}#path.sku",
-                "location": "path",
-                "name": "sku",
+                "key": "GET /stock/{sku}#header.x-api-key",
+                "location": "header",
+                "name": "x-api-key",
                 "required": true,
                 "type": {
                   "extras": {},
@@ -96,13 +174,39 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /stock/{sku}#path.sku",
+                "location": "path",
+                "name": "sku",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": "AMS",
+                "deprecated": false,
+                "description": null,
+                "extras": {
                   "postman_sample": "{{warehouse}}",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "{{warehouse}}"
+                  ]
                 },
                 "key": "GET /stock/{sku}#query.warehouse",
                 "location": "query",
                 "name": "warehouse",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -119,6 +223,20 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "reservations"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/reservations"
+                ],
+                "template": "/reservations"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -126,7 +244,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Reserve stock",
+              "source_location": "Reserve stock"
             },
             "http_method": "POST",
             "http_path": "/reservations",
@@ -134,17 +257,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": null,
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{ \"sku\": \"WID-0001\", \"quantity\": 1 }",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Reservation"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of POST /reservations."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /reservations#request",
@@ -152,7 +274,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Reservation",
+                  "name": "PostReservationRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -162,7 +284,28 @@
               }
             ],
             "name": "Reserve stock",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /reservations#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           }
@@ -178,8 +321,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of POST /reservations."
+          "provenance": "inferred"
         },
         "fields": [
           {
@@ -189,7 +331,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Reservation.quantity",
+            "key": "PostReservationRequest.quantity",
             "name": "quantity",
             "type": {
               "extras": {},
@@ -205,7 +347,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Reservation.sku",
+            "key": "PostReservationRequest.sku",
             "name": "sku",
             "type": {
               "extras": {},
@@ -215,10 +357,10 @@
             }
           }
         ],
-        "key": "Reservation",
+        "key": "PostReservationRequest",
         "key_type": null,
         "kind": "record",
-        "name": "Reservation",
+        "name": "PostReservationRequest",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -238,11 +380,11 @@
     "confidence": 0.98,
     "format": "postman-2.0"
   },
-  "fingerprint": "sha256:1f64f5295b4b6905d87fa0b5342eacb34e2560e825463e619bfe5fad25441e7a",
+  "fingerprint": "sha256:b2b813c70f81e6e63009d721efafb31eb514bddec4c2c91d2449d93bb2289c53",
   "lint": {
     "findings": 7,
     "grade": "B",
-    "report_fingerprint": "e5f07906c153029c9df9f26a208d89474b869a9242a88aa411d560ae0e2ab9b9",
+    "report_fingerprint": "5988842f7b7955b7f260ab1eec54b618b637f5896aad7dae2890ae80b85081ca",
     "score": 84,
     "severity_counts": {
       "error": 0,

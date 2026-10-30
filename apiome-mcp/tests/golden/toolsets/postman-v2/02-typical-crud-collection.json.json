@@ -12,7 +12,8 @@
           }
         },
         "required": [
-          "orderId"
+          "orderId",
+          "reason"
         ],
         "type": "object"
       },
@@ -20,9 +21,12 @@
       "operation": "DELETE /orders/{orderId}"
     },
     {
-      "description": "Returns the caller's orders, newest first.\n\nReturns with no body.",
+      "description": "Returns the caller's orders, newest first.\n\nReturns HTTP 200 application/json (GetOrderResponse200).",
       "inputSchema": {
         "properties": {
+          "accept": {
+            "type": "string"
+          },
           "limit": {
             "type": "string"
           },
@@ -30,11 +34,36 @@
             "type": "string"
           }
         },
+        "required": [
+          "limit",
+          "status",
+          "accept"
+        ],
         "type": "object"
       },
       "name": "List_orders",
       "operation": "GET /orders",
-      "output": {}
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "nextCursor": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor"
+          ],
+          "type": "object"
+        },
+        "shape": "GetOrderResponse200",
+        "status": "200"
+      }
     },
     {
       "inputSchema": {
@@ -54,6 +83,9 @@
     {
       "inputSchema": {
         "properties": {
+          "content-type": {
+            "type": "string"
+          },
           "customerId": {
             "type": "string"
           },
@@ -63,6 +95,7 @@
           }
         },
         "required": [
+          "content-type",
           "customerId",
           "lines"
         ],

@@ -4,6 +4,16 @@
     "channels": [],
     "description": "Composition Postman Collection v2.1 example: requests grouped into nested folders (Users, and Admin containing a Reports subfolder) that all reuse the collection-level baseUrl and apiVersion variables.",
     "extras": {
+      "path_inferences": [],
+      "postman": {
+        "capability_limits": [],
+        "folders": [
+          "Admin",
+          "Admin / Reports",
+          "Users"
+        ],
+        "requests": 4
+      },
       "postman_collection_version": "2.1",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       "postman_variables": [
@@ -17,7 +27,14 @@
           "secret": false,
           "value": "v2"
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /admin/audit": 1,
+        "GET /admin/reports/usage": 1,
+        "GET /users": 1,
+        "POST /users/invitations": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -42,7 +59,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Workspace API",
         "name": "Workspace API",
         "operations": [
@@ -51,10 +70,34 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "admin"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "audit"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/admin/audit"
+                ],
+                "template": "/admin/audit"
+              },
               "postman_folder_path": [
                 "Admin"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Audit log",
+              "source_location": "Admin / Audit log"
             },
             "http_method": "GET",
             "http_path": "/admin/audit",
@@ -64,18 +107,49 @@
             "name": "Audit log",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Admin"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "admin"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "reports"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "usage"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/admin/reports/usage"
+                ],
+                "template": "/admin/reports/usage"
+              },
               "postman_folder_path": [
                 "Admin",
                 "Reports"
               ],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Usage report",
+              "source_location": "Admin / Reports / Usage report"
             },
             "http_method": "GET",
             "http_path": "/admin/reports/usage",
@@ -91,12 +165,17 @@
                 "description": null,
                 "extras": {
                   "postman_sample": "2026-06",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "2026-06"
+                  ]
                 },
                 "key": "GET /admin/reports/usage#query.month",
                 "location": "query",
                 "name": "month",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -106,13 +185,29 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Admin / Reports"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "users"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/users"
+                ],
+                "template": "/users"
+              },
               "postman_folder_path": [
                 "Users"
               ],
@@ -122,7 +217,12 @@
                   "key": "Accept",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "List users",
+              "source_location": "Users / List users"
             },
             "http_method": "GET",
             "http_path": "/users",
@@ -130,15 +230,57 @@
             "kind": "request_response",
             "messages": [],
             "name": "List users",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /users#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Users"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "users"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "invitations"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/users/invitations"
+                ],
+                "template": "/users/invitations"
+              },
               "postman_folder_path": [
                 "Users"
               ],
@@ -148,7 +290,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Invite user",
+              "source_location": "Users / Invite user"
             },
             "http_method": "POST",
             "http_path": "/users/invitations",
@@ -156,17 +303,16 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "postman_body_language": "json",
                   "postman_body_mode": "raw",
                   "postman_body_raw": "{\n  \"email\": \"kai@example.com\",\n  \"role\": \"member\"\n}",
-                  "postman_body_schema": {
-                    "$ref": "#/components/schemas/Invitation"
-                  },
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example request body of POST /users/invitations."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /users/invitations#request",
@@ -174,7 +320,7 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": "Invitation",
+                  "name": "PostInvitationRequest",
                   "nullable": false
                 },
                 "payload_schema": null,
@@ -184,9 +330,32 @@
               }
             ],
             "name": "Invite user",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /users/invitations#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Users"
+            ]
           }
         ]
       }
@@ -200,8 +369,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "provenance": "inferred",
-          "provenance_evidence": "Schema inferred from the example request body of POST /users/invitations."
+          "provenance": "inferred"
         },
         "fields": [
           {
@@ -211,7 +379,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Invitation.email",
+            "key": "PostInvitationRequest.email",
             "name": "email",
             "type": {
               "extras": {},
@@ -227,7 +395,7 @@
             "description": null,
             "extras": {},
             "field_number": null,
-            "key": "Invitation.role",
+            "key": "PostInvitationRequest.role",
             "name": "role",
             "type": {
               "extras": {},
@@ -237,10 +405,10 @@
             }
           }
         ],
-        "key": "Invitation",
+        "key": "PostInvitationRequest",
         "key_type": null,
         "kind": "record",
-        "name": "Invitation",
+        "name": "PostInvitationRequest",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -260,11 +428,11 @@
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:8b8698c5b209bc7cec2f193a0408fe452b858f503c4b25729ff7c9018f1df38a",
+  "fingerprint": "sha256:29fe5e5603d1ea8c49f9fdb3ce9d7bbbfbdb1c7333c82766de48dbae0d515254",
   "lint": {
     "findings": 9,
     "grade": "C",
-    "report_fingerprint": "589b4153d65f5f4b6ff0772dc8de527ca2b44e0e749d48bac0e8b624bd6742e5",
+    "report_fingerprint": "360c4d4d883d3a06e3871cf356b293f3c5afc63556de30ece62ebfa3e8f8361c",
     "score": 76,
     "severity_counts": {
       "error": 0,

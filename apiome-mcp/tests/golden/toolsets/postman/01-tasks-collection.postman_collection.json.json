@@ -3,7 +3,14 @@
   "tools": [
     {
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "accept": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accept"
+        ],
         "type": "object"
       },
       "name": "List_tasks",
@@ -12,12 +19,16 @@
     {
       "inputSchema": {
         "properties": {
+          "accept": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           }
         },
         "required": [
-          "id"
+          "id",
+          "accept"
         ],
         "type": "object"
       },
@@ -27,6 +38,9 @@
     {
       "inputSchema": {
         "properties": {
+          "content-type": {
+            "type": "string"
+          },
           "done": {
             "type": "boolean"
           },
@@ -38,6 +52,7 @@
           }
         },
         "required": [
+          "content-type",
           "done",
           "dueDate",
           "title"

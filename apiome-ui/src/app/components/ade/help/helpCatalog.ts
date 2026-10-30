@@ -585,6 +585,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['timeline', 'mock', 'test bench', 'discussion', 'repository', 'changelog'],
   },
   {
+    id: 'postman-import',
+    title: 'Import a Postman collection',
+    summary: 'Catalog a Postman Collection v2.0 or v2.1 and its environments as one REST API.',
+    page: 'apiome-docs/docs/bring-in/postman-import.md',
+    section: 'reference',
+    keywords: ['v2.1', 'environments', 'requests', 'inferred schemas', 'openapi conversion'],
+  },
+  {
     id: 'version-control',
     title: 'Git-like version control',
     summary: 'How Apiome versions map to Git commits, tags, forks, branches and merges.',

@@ -16,6 +16,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "category"
+        ],
         "type": "object"
       },
       "name": "List_products",
@@ -50,6 +53,9 @@
           "cartId": {
             "type": "string"
           },
+          "content-type": {
+            "type": "string"
+          },
           "quantity": {
             "type": "integer"
           },
@@ -59,6 +65,7 @@
         },
         "required": [
           "cartId",
+          "content-type",
           "quantity",
           "sku"
         ],

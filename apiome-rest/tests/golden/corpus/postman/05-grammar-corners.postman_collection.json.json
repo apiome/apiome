@@ -4,6 +4,62 @@
     "channels": [],
     "description": "Stress Postman Collection v2.1 example covering less common corners: disabled query parameters and headers, colon-style path variables, urlencoded and GraphQL body modes, saved response examples with status codes, an unnamed folder passthrough, and HEAD/OPTIONS requests.",
     "extras": {
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "search"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/search",
+            "/search"
+          ],
+          "template": "/search"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "documents"
+            },
+            {
+              "index": 1,
+              "kind": "param",
+              "value": "docId"
+            },
+            {
+              "index": 2,
+              "kind": "literal",
+              "value": "reindex"
+            }
+          ],
+          "method": "POST",
+          "sample_urls": [
+            "/documents/{docId}/reindex"
+          ],
+          "template": "/documents/{docId}/reindex"
+        }
+      ],
+      "postman": {
+        "capability_limits": [
+          {
+            "construct": "postman.body_mode",
+            "count": 2,
+            "locations": [
+              "GraphQL sidecar query",
+              "Reindex document"
+            ],
+            "note": "Form-data, URL-encoded, GraphQL and file bodies are not read; only raw bodies give a request schema."
+          }
+        ],
+        "folders": [],
+        "requests": 5
+      },
       "postman_collection_version": "2.1",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       "postman_variables": [
@@ -12,7 +68,15 @@
           "secret": false,
           "value": "https://gateway.example.com"
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /search": 2,
+        "HEAD /indices/documents": 1,
+        "OPTIONS /indices/documents": 1,
+        "POST /documents/{docId}/reindex": 1,
+        "POST /graphql": 1
+      }
     },
     "format": "postman",
     "identity": {
@@ -37,7 +101,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Search Gateway",
         "name": "Search Gateway",
         "operations": [
@@ -46,6 +112,21 @@
             "deprecated": false,
             "description": "Full-text search; the fuzzy toggle is saved but disabled.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "search"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/search",
+                  "/search"
+                ],
+                "template": "/search"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -58,7 +139,12 @@
                   "key": "X-Debug-Trace",
                   "value": "1"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 2,
+              "source_files": [],
+              "source_label": "Search documents",
+              "source_location": "Search documents"
             },
             "http_method": "GET",
             "http_path": "/search",
@@ -66,13 +152,15 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200",
                   "postman_body_raw": "{\n  \"total\": 2,\n  \"hits\": [\n    { \"id\": \"d-1\", \"score\": 0.98 },\n    { \"id\": \"d-2\", \"score\": 0.71 }\n  ]\n}",
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example 200 response body of GET /search."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "GET /search#response.200",
@@ -80,22 +168,24 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": null,
+                  "name": "GetSearchResponse200",
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "400",
                   "postman_body_raw": "{\n  \"error\": \"unbalanced quotes in q\"\n}",
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example 400 response body of GET /search."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "GET /search#response.400",
@@ -103,13 +193,13 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": null,
+                  "name": "GetSearchResponse400",
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "400"
               }
             ],
             "name": "Search documents",
@@ -120,13 +210,39 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 2
+                },
+                "key": "GET /search#header.accept",
+                "location": "header",
+                "name": "accept",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
                   "postman_sample": "true",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 2,
+                  "samples": [
+                    "true",
+                    "true"
+                  ]
                 },
                 "key": "GET /search#query.highlight",
                 "location": "query",
                 "name": "highlight",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -141,12 +257,18 @@
                 "description": null,
                 "extras": {
                   "postman_sample": "archive",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 2,
+                  "samples": [
+                    "archive",
+                    "archive"
+                  ]
                 },
                 "key": "GET /search#query.q",
                 "location": "query",
                 "name": "q",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -163,8 +285,32 @@
             "deprecated": false,
             "description": "Existence probe inside an unnamed folder.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "indices"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "documents"
+                  }
+                ],
+                "method": "HEAD",
+                "sample_urls": [
+                  "/indices/documents"
+                ],
+                "template": "/indices/documents"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Index health",
+              "source_location": "Index health"
             },
             "http_method": "HEAD",
             "http_path": "/indices/documents",
@@ -181,8 +327,32 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "indices"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "documents"
+                  }
+                ],
+                "method": "OPTIONS",
+                "sample_urls": [
+                  "/indices/documents"
+                ],
+                "template": "/indices/documents"
+              },
               "postman_folder_path": [],
-              "postman_headers": []
+              "postman_headers": [],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Allowed methods",
+              "source_location": "Allowed methods"
             },
             "http_method": "OPTIONS",
             "http_path": "/indices/documents",
@@ -199,6 +369,30 @@
             "deprecated": false,
             "description": "Urlencoded body mode with a colon-style path variable.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "documents"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "param",
+                    "value": "docId"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "literal",
+                    "value": "reindex"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/documents/{docId}/reindex"
+                ],
+                "template": "/documents/{docId}/reindex"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -206,7 +400,12 @@
                   "key": "Content-Type",
                   "value": "application/x-www-form-urlencoded"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Reindex document",
+              "source_location": "Reindex document"
             },
             "http_method": "POST",
             "http_path": "/documents/{docId}/reindex",
@@ -221,7 +420,30 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /documents/{docId}/reindex#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_sample": "d-1",
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "POST /documents/{docId}/reindex#path.docId",
                 "location": "path",
@@ -243,6 +465,20 @@
             "deprecated": false,
             "description": "GraphQL body mode; the gateway proxies it to the stats sidecar.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "graphql"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/graphql"
+                ],
+                "template": "/graphql"
+              },
               "postman_folder_path": [],
               "postman_headers": [
                 {
@@ -250,7 +486,12 @@
                   "key": "Content-Type",
                   "value": "application/json"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "GraphQL sidecar query",
+              "source_location": "GraphQL sidecar query"
             },
             "http_method": "POST",
             "http_path": "/graphql",
@@ -258,7 +499,28 @@
             "kind": "request_response",
             "messages": [],
             "name": "GraphQL sidecar query",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /graphql#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
             "tags": []
           }
@@ -266,7 +528,99 @@
       }
     ],
     "title": "Search Gateway",
-    "types": [],
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetSearchResponse200.hits",
+            "name": "hits",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": null,
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetSearchResponse200.total",
+            "name": "total",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetSearchResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetSearchResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "GetSearchResponse400.error",
+            "name": "error",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "GetSearchResponse400",
+        "key_type": null,
+        "kind": "record",
+        "name": "GetSearchResponse400",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
     "version": null
   },
   "corpus_path": "postman/05-grammar-corners.postman_collection.json",
@@ -275,22 +629,22 @@
     "operations": 5,
     "servers": 1,
     "services": 1,
-    "types": 0
+    "types": 2
   },
   "detection": {
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:e82de1dcc5fa065023a62940e251996e24ad5efc937ba5fda4c4514948bbd1f6",
+  "fingerprint": "sha256:c14eb576242860472d6b8709a17aa240410c9329dde5cea8bff3acd4796043f2",
   "lint": {
-    "findings": 4,
-    "grade": "A",
-    "report_fingerprint": "aed74a56b32a476737c5cf1cef97597659af6e0aad11e35f9c1c220338a30de1",
-    "score": 93,
+    "findings": 9,
+    "grade": "B",
+    "report_fingerprint": "9c7c47e2a87cafd09d693788414de3332bd02616b3df7a0affcbc0b442ee8864",
+    "score": 82,
     "severity_counts": {
       "error": 0,
-      "info": 3,
-      "warning": 1
+      "info": 6,
+      "warning": 3
     }
   },
   "snapshot_version": 1

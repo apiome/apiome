@@ -4,20 +4,29 @@
     {
       "inputSchema": {
         "properties": {
+          "accept": {
+            "type": "string"
+          },
           "date": {
             "type": "string"
           },
           "merchantId": {
+            "default": "MER-000001",
             "type": "string"
           }
         },
+        "required": [
+          "date",
+          "merchantId",
+          "accept"
+        ],
         "type": "object"
       },
       "name": "Settlement_report",
       "operation": "GET /reports/settlement"
     },
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 201 application/json (PostAuthorizationResponse201).",
       "inputSchema": {
         "properties": {
           "amount": {},
@@ -25,11 +34,19 @@
             "type": "string"
           },
           "card": {},
+          "content-type": {
+            "type": "string"
+          },
+          "idempotency-key": {
+            "type": "string"
+          },
           "merchantId": {
             "type": "string"
           }
         },
         "required": [
+          "content-type",
+          "idempotency-key",
           "amount",
           "captureMode",
           "card",
@@ -39,7 +56,28 @@
       },
       "name": "Authorize_a_payment",
       "operation": "POST /authorizations",
-      "output": {}
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "authorizationId": {
+              "type": "string"
+            },
+            "authorizedAmount": {},
+            "result": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "authorizationId",
+            "authorizedAmount",
+            "result"
+          ],
+          "type": "object"
+        },
+        "shape": "PostAuthorizationResponse201",
+        "status": "201"
+      }
     },
     {
       "inputSchema": {
@@ -48,12 +86,16 @@
           "authorizationId": {
             "type": "string"
           },
+          "content-type": {
+            "type": "string"
+          },
           "finalCapture": {
             "type": "boolean"
           }
         },
         "required": [
           "authorizationId",
+          "content-type",
           "amount",
           "finalCapture"
         ],
@@ -79,7 +121,14 @@
     },
     {
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "content-type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type"
+        ],
         "type": "object"
       },
       "name": "Get_access_token",

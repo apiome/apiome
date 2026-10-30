@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react';
 import { Upload, FileCode, CheckCircle2, AlertTriangle, Loader2, FileJson, ExternalLink } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { convertPostmanJsonToOpenAPIString } from '../../../utils/postman-to-openapi';
+import { convertPostmanWithAdapter } from '../../../utils/postman-import-adapter';
+import { FEATURE_LEGACY_POSTMAN_IMPORT } from '../../../../../lib/feature-flags';
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
 import { TAB_LIST_CLASS, tabTriggerClass } from '../../ui/tabStyles';
 
@@ -85,9 +87,14 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
     setConverted(false);
 
     try {
-      const result = convertPostmanJsonToOpenAPIString(jsonContent, {
-        baseUrl: baseUrl.trim() || undefined
-      });
+      // MFI-32.7: the REST Postman import adapter converts the collection (schemas inferred,
+      // credentials scrubbed, warnings); the in-browser converter is the retired fallback.
+      const result = FEATURE_LEGACY_POSTMAN_IMPORT
+        ? convertPostmanJsonToOpenAPIString(jsonContent, { baseUrl: baseUrl.trim() || undefined })
+        : await convertPostmanWithAdapter(jsonContent, {
+            baseUrl: baseUrl.trim() || undefined,
+            filename: sourceName,
+          });
 
       if (!result.success) {
         setConvertResult({
@@ -153,7 +160,7 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
               Import Postman Collection
             </h4>
             <p className="text-xs text-warn-fg">
-              Upload a Postman Collection v2.1 JSON file or paste its contents. It will be converted to OpenAPI 3.1 so you can import paths and schemas into Apiome.
+              Upload a Postman Collection v2.0 or v2.1 JSON file or paste its contents. It is converted to OpenAPI 3.1 so you can import its paths and schemas into Apiome: schemas are inferred from example bodies, and saved credentials are removed.
             </p>
             <a
               href="https://learning.postman.com/docs/collections/collections-overview/"

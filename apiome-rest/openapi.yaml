@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.415.0
+  version: 1.416.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -61024,6 +61024,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for autodetectadocumentsimportformatresponse422.
+  /v1/import/{tenant_slug}/postman/openapi:
+    post:
+      tags:
+      - import-sources
+      summary: Convert a Postman collection to OpenAPI
+      description: Read a Postman Collection v2.0 or v2.1 with the Postman import adapter
+        — schemas inferred from example bodies, credentials scrubbed — and return it
+        as an OpenAPI 3.1 document, with a warning for each thing the conversion leaves
+        out. Nothing is stored. Requires ``imports:create``.
+      operationId: postman_to_openapi_v1_import__tenant_slug__postman_openapi_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Converta Postmancollectionto Open Apiauthorization schema.
+          - type: 'null'
+            description: Converta Postmancollectionto Open Apiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Converta Postmancollectionto Open Apixapikey schema.
+          - type: 'null'
+            description: Converta Postmancollectionto Open Apixapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostmanToOpenApiRequest'
+              description: Request body for converta postmancollectionto open apirequest.
+        description: Request body for convert a postman collection to openapi.
+      responses:
+        '200':
+          description: Successful response for convert a postman collection to openapi.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostmanToOpenApiResponse'
+                description: Response payload for converta postmancollectionto open
+                  apiresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for converta postmancollectionto open
+                  apiresponse422.
   /v1/formats/matrix:
     get:
       tags:
@@ -122836,6 +122905,65 @@ components:
       - name
       title: PolicyTeam
       description: The catch-all team.
+    PostmanToOpenApiRequest:
+      properties:
+        document:
+          type: string
+          maxLength: 10485760
+          minLength: 1
+          title: Document
+          description: The Postman Collection v2.0 or v2.1 JSON, as text.
+          example: example
+        filename:
+          anyOf:
+          - type: string
+            description: Request body for postman to open api.
+          - type: 'null'
+            description: Request body for postman to open api.
+          title: Filename
+          description: The file name, for messages only.
+        base_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: Request body for postman to open api.
+          - type: 'null'
+            description: Request body for postman to open api.
+          title: Base Url
+          description: When given, the OpenAPI document's only server (replaces the collection's
+            `baseUrl`).
+      type: object
+      required:
+      - document
+      title: PostmanToOpenApiRequest
+      description: A Postman collection to convert.
+    PostmanToOpenApiResponse:
+      properties:
+        source_kind:
+          type: string
+          title: Source Kind
+          description: The import adapter that read the collection.
+          default: postman
+          example: example
+        openapi:
+          additionalProperties: true
+          type: object
+          title: Openapi
+          description: The OpenAPI 3.1 document.
+        warnings:
+          items:
+            type: string
+          type: array
+          title: Warnings
+          description: One sentence per declared limit (scripts, withheld credentials,
+            merged requests …).
+          maxItems: 1000
+      type: object
+      required:
+      - openapi
+      title: PostmanToOpenApiResponse
+      description: The OpenAPI document a collection converts to, with what the conversion
+        could not keep.
     PrBackFileRef:
       properties:
         path:

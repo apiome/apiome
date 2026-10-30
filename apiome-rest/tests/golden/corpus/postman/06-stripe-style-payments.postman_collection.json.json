@@ -4,6 +4,85 @@
     "channels": [],
     "description": "Real-world shaped Postman Collection v2.1 example: a hand-authored reconstruction of the shape of the Stripe API (customers and charges under /v1, form-urlencoded write requests, bearer-key auth header). No third-party text copied.",
     "extras": {
+      "inferred_auth_schemes": [
+        "bearer"
+      ],
+      "path_inferences": [
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "charges"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v1/charges/{id}"
+          ],
+          "template": "/v1/charges/{id}"
+        },
+        {
+          "generalized_segments": [
+            {
+              "index": 0,
+              "kind": "literal",
+              "value": "v1"
+            },
+            {
+              "index": 1,
+              "kind": "literal",
+              "value": "customers"
+            },
+            {
+              "index": 2,
+              "kind": "param",
+              "value": "id"
+            }
+          ],
+          "method": "GET",
+          "sample_urls": [
+            "/v1/customers/{id}"
+          ],
+          "template": "/v1/customers/{id}"
+        }
+      ],
+      "postman": {
+        "capability_limits": [
+          {
+            "construct": "postman.secret_variable",
+            "count": 1,
+            "locations": [
+              "secretKey"
+            ],
+            "note": "A secret variable (by its name, or a value the scrub gate flags) is listed by name; its value is withheld."
+          },
+          {
+            "construct": "postman.body_mode",
+            "count": 2,
+            "locations": [
+              "Create charge",
+              "Create customer"
+            ],
+            "note": "Form-data, URL-encoded, GraphQL and file bodies are not read; only raw bodies give a request schema."
+          }
+        ],
+        "folders": [
+          "Charges",
+          "Customers"
+        ],
+        "requests": 5
+      },
       "postman_collection_version": "2.1",
       "postman_schema_url": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       "postman_variables": [
@@ -16,7 +95,22 @@
           "key": "secretKey",
           "secret": true
         }
-      ]
+      ],
+      "provenance": "inferred",
+      "sample_counts": {
+        "GET /v1/charges/{id}": 1,
+        "GET /v1/customers": 1,
+        "GET /v1/customers/{id}": 1,
+        "POST /v1/charges": 1,
+        "POST /v1/customers": 1
+      },
+      "security_schemes": {
+        "bearer": {
+          "description": "Stub recorded at import: the scheme type only — no credential material was kept.",
+          "scheme": "bearer",
+          "type": "http"
+        }
+      }
     },
     "format": "postman",
     "identity": {
@@ -41,7 +135,9 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "provenance": "inferred"
+        },
         "key": "Payments API (Stripe-style)",
         "name": "Payments API (Stripe-style)",
         "operations": [
@@ -50,6 +146,30 @@
             "deprecated": false,
             "description": "Retrieve a charge by identifier.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "charges"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/charges/{id}"
+                ],
+                "template": "/v1/charges/{id}"
+              },
               "postman_folder_path": [
                 "Charges"
               ],
@@ -59,7 +179,12 @@
                   "key": "Authorization",
                   "value": "Bearer {{secretKey}}"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Retrieve charge",
+              "source_location": "Charges / Retrieve charge"
             },
             "http_method": "GET",
             "http_path": "/v1/charges/{id}",
@@ -74,7 +199,30 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/charges/{id}#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_sample": "ch_000000000000",
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "GET /v1/charges/{id}#path.id",
                 "location": "path",
@@ -89,13 +237,34 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Charges"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": "List customers, newest first.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "customers"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/customers"
+                ],
+                "template": "/v1/customers"
+              },
               "postman_folder_path": [
                 "Customers"
               ],
@@ -105,7 +274,12 @@
                   "key": "Authorization",
                   "value": "Bearer {{secretKey}}"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "List customers",
+              "source_location": "Customers / List customers"
             },
             "http_method": "GET",
             "http_path": "/v1/customers",
@@ -120,13 +294,38 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/customers#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
                   "postman_sample": "3",
-                  "postman_style": "query"
+                  "postman_style": "query",
+                  "provenance": "inferred",
+                  "sample_count": 1,
+                  "samples": [
+                    "3"
+                  ]
                 },
                 "key": "GET /v1/customers#query.limit",
                 "location": "query",
                 "name": "limit",
-                "required": false,
+                "required": true,
                 "type": {
                   "extras": {},
                   "item": null,
@@ -136,13 +335,39 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Customers"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": "Retrieve a customer by identifier.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "customers"
+                  },
+                  {
+                    "index": 2,
+                    "kind": "param",
+                    "value": "id"
+                  }
+                ],
+                "method": "GET",
+                "sample_urls": [
+                  "/v1/customers/{id}"
+                ],
+                "template": "/v1/customers/{id}"
+              },
               "postman_folder_path": [
                 "Customers"
               ],
@@ -152,7 +377,12 @@
                   "key": "Authorization",
                   "value": "Bearer {{secretKey}}"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Retrieve customer",
+              "source_location": "Customers / Retrieve customer"
             },
             "http_method": "GET",
             "http_path": "/v1/customers/{id}",
@@ -167,7 +397,30 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
-                  "postman_style": "path"
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "GET /v1/customers/{id}#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "postman_sample": "cus_000000000000",
+                  "postman_style": "path",
+                  "provenance": "inferred",
+                  "sample_count": 1
                 },
                 "key": "GET /v1/customers/{id}#path.id",
                 "location": "path",
@@ -182,13 +435,34 @@
               }
             ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Customers"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": "Charge a customer's default payment method.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "charges"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/charges"
+                ],
+                "template": "/v1/charges"
+              },
               "postman_folder_path": [
                 "Charges"
               ],
@@ -203,7 +477,12 @@
                   "key": "Content-Type",
                   "value": "application/x-www-form-urlencoded"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Create charge",
+              "source_location": "Charges / Create charge"
             },
             "http_method": "POST",
             "http_path": "/v1/charges",
@@ -211,13 +490,15 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/json"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200",
                   "postman_body_raw": "{\n  \"id\": \"ch_000000000000\",\n  \"object\": \"charge\",\n  \"amount\": 2000,\n  \"currency\": \"usd\",\n  \"paid\": true,\n  \"status\": \"succeeded\"\n}",
                   "provenance": "inferred",
-                  "provenance_evidence": "Schema inferred from the example 200 response body of POST /v1/charges."
+                  "sample_count": 1
                 },
                 "headers": [],
                 "key": "POST /v1/charges#response.200",
@@ -225,25 +506,87 @@
                 "payload": {
                   "extras": {},
                   "item": null,
-                  "name": null,
+                  "name": "PostChargeResponse200",
                   "nullable": false
                 },
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "Create charge",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/charges#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/charges#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Charges"
+            ]
           },
           {
             "channel_ref": null,
             "deprecated": false,
             "description": "Create a customer object.",
             "extras": {
+              "inference_evidence": {
+                "generalized_segments": [
+                  {
+                    "index": 0,
+                    "kind": "literal",
+                    "value": "v1"
+                  },
+                  {
+                    "index": 1,
+                    "kind": "literal",
+                    "value": "customers"
+                  }
+                ],
+                "method": "POST",
+                "sample_urls": [
+                  "/v1/customers"
+                ],
+                "template": "/v1/customers"
+              },
               "postman_folder_path": [
                 "Customers"
               ],
@@ -258,7 +601,12 @@
                   "key": "Content-Type",
                   "value": "application/x-www-form-urlencoded"
                 }
-              ]
+              ],
+              "provenance": "inferred",
+              "sample_count": 1,
+              "source_files": [],
+              "source_label": "Create customer",
+              "source_location": "Customers / Create customer"
             },
             "http_method": "POST",
             "http_path": "/v1/customers",
@@ -266,15 +614,174 @@
             "kind": "request_response",
             "messages": [],
             "name": "Create customer",
-            "parameters": [],
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/customers#header.authorization",
+                "location": "header",
+                "name": "authorization",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "provenance": "inferred",
+                  "sample_count": 1
+                },
+                "key": "POST /v1/customers#header.content-type",
+                "location": "header",
+                "name": "content-type",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "Customers"
+            ]
           }
         ]
       }
     ],
     "title": "Payments API (Stripe-style)",
-    "types": [],
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "provenance": "inferred"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.amount",
+            "name": "amount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "integer",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.currency",
+            "name": "currency",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.object",
+            "name": "object",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.paid",
+            "name": "paid",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "boolean",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "PostChargeResponse200.status",
+            "name": "status",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PostChargeResponse200",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostChargeResponse200",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
     "version": null
   },
   "corpus_path": "postman/06-stripe-style-payments.postman_collection.json",
@@ -283,22 +790,22 @@
     "operations": 5,
     "servers": 1,
     "services": 1,
-    "types": 0
+    "types": 1
   },
   "detection": {
     "confidence": 0.98,
     "format": "postman"
   },
-  "fingerprint": "sha256:f13a6c5c0de14655ac2924921756b3794c73f31483377b73c99a78168ec316f4",
+  "fingerprint": "sha256:48ae8debaed1a46e9156055d8fcd08f03eeec54e70b922eb5496bf91656efa12",
   "lint": {
-    "findings": 2,
-    "grade": "A",
-    "report_fingerprint": "ab8fcb309432da9509b7e4f031af3a23a4db121ec6230264ff0f6f09a6a1731a",
-    "score": 98,
+    "findings": 9,
+    "grade": "B",
+    "report_fingerprint": "0993229742caf873b12ca656b90d82c02fe29b117471ea1dff6d0f18cdf55e1d",
+    "score": 88,
     "severity_counts": {
       "error": 0,
-      "info": 2,
-      "warning": 0
+      "info": 8,
+      "warning": 1
     }
   },
   "snapshot_version": 1
