@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.541.0] - 2026-10-30
+
+### Added
+- **JSON Schema validate + round-trip (MFX-21.4, #4129).** New `app.jsonschema_roundtrip`:
+  - `check_emitted_jsonschema(emit_result)` — each document passes the metaschema of the draft it declares (JTD
+    documents: the RFC 8927 rules), then `unresolved_references` looks every `$ref` up across the emitted files with
+    `referencing` (nested `$id` bases, draft-04 `id`; names under `properties` / `$defs` and data under `enum` /
+    `examples` / `default` are not references). A reference into the export — a `#/$defs` pointer, a per-type
+    `<Type>.schema.json`, relative or under `id_base` — must resolve; an absolute URI outside the export is not checked.
+    Rules: `jsonschema.metaschema`, `jsonschema.jtd`, `jsonschema.unresolved-ref`.
+  - `reimport_document(text)` — parse + normalize through `JsonSchemaImportSource` (malformed shapes become
+    `INPUT_MALFORMED`).
+  - `round_trip_jsonschema(api, *, opts, emit_result)` — validate, re-import, and for a one-document export take the
+    canonical diff and `reconcile` it with the fidelity report computed for the export's options. `status` is
+    `invalid` / `unparseable` / `valid` (per-type or JTD: validated, not diffed) / `lossy` / `lossless`.
+- **Export gate.** `json-schema` now rejects dangling references and documents that do not import again
+  (`jsonschema.reimport`); findings carry the rule as `keyword`, the file and the JSON pointer.
+- **Round-trip fixture.** `tests/fixtures/jsonschema_roundtrip/measurements.json` pins the draft-07 rebuilds and
+  cross-format measurements (`APIOME_REGEN_JSONSCHEMA_ROUNDTRIP=1` regenerates it).
+
 ## [1.540.0] - 2026-10-30
 
 ### Added

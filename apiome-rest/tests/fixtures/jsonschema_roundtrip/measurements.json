@@ -1,0 +1,740 @@
+{
+  "01-simple-person.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "02-product-types.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "03-multiple-defs.json draft-07": {
+    "status": "lossy",
+    "diff": [
+      [
+        "type",
+        "Address Book",
+        "changed"
+      ],
+      [
+        "type",
+        "Address_Book",
+        "added"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "Address_Book",
+        "added"
+      ]
+    ],
+    "overclaims": []
+  },
+  "04-draft07-definitions.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "05-allof-inheritance.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "06-oneof-polymorphism.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "07-anyof-flexible.json draft-07": {
+    "status": "lossy",
+    "diff": [
+      [
+        "type",
+        "CacheConfig",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "CacheConfig",
+        "changed"
+      ]
+    ],
+    "overclaims": [
+      "CacheConfig"
+    ]
+  },
+  "08-if-then-else.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "09-advanced-features.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "10-comprehensive-ecommerce.json draft-07": {
+    "status": "lossy",
+    "diff": [
+      [
+        "type",
+        "E-Commerce Platform",
+        "changed"
+      ],
+      [
+        "type",
+        "E-Commerce_Platform",
+        "added"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "E-Commerce_Platform",
+        "added"
+      ]
+    ],
+    "overclaims": []
+  },
+  "11-geojson-feature.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "12-nonconforming-examples.json draft-07": {
+    "status": "lossless",
+    "diff": [],
+    "unexplained": [],
+    "overclaims": []
+  },
+  "30-openapi-3.0-petstore.yaml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "DELETE /pets/{petId}",
+        "removed"
+      ],
+      [
+        "operation",
+        "GET /pets",
+        "removed"
+      ],
+      [
+        "operation",
+        "GET /pets/{petId}",
+        "removed"
+      ],
+      [
+        "operation",
+        "POST /pets",
+        "removed"
+      ],
+      [
+        "operation",
+        "PUT /pets/{petId}",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "Pet",
+        "changed"
+      ],
+      [
+        "type",
+        "Sample Pet Store API (OpenAPI 3.0)",
+        "added"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Sample Pet Store API (OpenAPI 3.0)",
+        "added"
+      ]
+    ],
+    "overclaims": [
+      "Category",
+      "Pet"
+    ]
+  },
+  "22-advanced-oneof-polymorphism.yaml": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "POST /notifications",
+        "removed"
+      ],
+      [
+        "operation",
+        "POST /payments",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Address",
+        "changed"
+      ],
+      [
+        "type",
+        "Advanced Composition - oneOf Polymorphism Example",
+        "added"
+      ],
+      [
+        "type",
+        "Attachment",
+        "changed"
+      ],
+      [
+        "type",
+        "AudioDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "BankTransferPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CreditCardPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CryptocurrencyPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "Document",
+        "changed"
+      ],
+      [
+        "type",
+        "EmailNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "ImageDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "Notification",
+        "changed"
+      ],
+      [
+        "type",
+        "PayPalPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "Payment",
+        "changed"
+      ],
+      [
+        "type",
+        "PushNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "RetryPolicy",
+        "changed"
+      ],
+      [
+        "type",
+        "SMSNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "TextDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "VideoDocument",
+        "changed"
+      ],
+      [
+        "type",
+        "WebhookNotification",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "default",
+        "removed"
+      ],
+      [
+        "type",
+        "Advanced Composition - oneOf Polymorphism Example",
+        "added"
+      ]
+    ],
+    "overclaims": [
+      "Address",
+      "Attachment",
+      "AudioDocument",
+      "BankTransferPayment",
+      "CreditCardPayment",
+      "CryptocurrencyPayment",
+      "Document",
+      "EmailNotification",
+      "ImageDocument",
+      "Notification",
+      "PayPalPayment",
+      "Payment",
+      "PushNotification",
+      "RetryPolicy",
+      "SMSNotification",
+      "TextDocument",
+      "VideoDocument",
+      "WebhookNotification"
+    ]
+  },
+  "02-grpc-service.proto": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "example.catalog.v1.ProductService.CreateProduct",
+        "removed"
+      ],
+      [
+        "operation",
+        "example.catalog.v1.ProductService.GetProduct",
+        "removed"
+      ],
+      [
+        "operation",
+        "example.catalog.v1.ProductService.ListProducts",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "example.catalog.v1.ProductService",
+        "removed"
+      ],
+      [
+        "type",
+        "AttributesEntry",
+        "added"
+      ],
+      [
+        "type",
+        "CreateProductRequest",
+        "added"
+      ],
+      [
+        "type",
+        "Dimensions",
+        "added"
+      ],
+      [
+        "type",
+        "GetProductRequest",
+        "added"
+      ],
+      [
+        "type",
+        "ListProductsRequest",
+        "added"
+      ],
+      [
+        "type",
+        "ListProductsResponse",
+        "added"
+      ],
+      [
+        "type",
+        "Product",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1.CreateProductRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Dimensions",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.GetProductRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsResponse",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product.AttributesEntry",
+        "removed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "example.catalog.v1.ProductService",
+        "removed"
+      ],
+      [
+        "type",
+        "AttributesEntry",
+        "added"
+      ],
+      [
+        "type",
+        "CreateProductRequest",
+        "added"
+      ],
+      [
+        "type",
+        "Dimensions",
+        "added"
+      ],
+      [
+        "type",
+        "GetProductRequest",
+        "added"
+      ],
+      [
+        "type",
+        "ListProductsRequest",
+        "added"
+      ],
+      [
+        "type",
+        "ListProductsResponse",
+        "added"
+      ],
+      [
+        "type",
+        "Product",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1",
+        "added"
+      ],
+      [
+        "type",
+        "example.catalog.v1.CreateProductRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Dimensions",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.GetProductRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsRequest",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.ListProductsResponse",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product",
+        "removed"
+      ],
+      [
+        "type",
+        "example.catalog.v1.Product.AttributesEntry",
+        "removed"
+      ]
+    ],
+    "overclaims": []
+  },
+  "01-user-record.avsc": {
+    "status": "lossy",
+    "diff": [
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "type",
+        "Status",
+        "added"
+      ],
+      [
+        "type",
+        "User",
+        "added"
+      ],
+      [
+        "type",
+        "com.example.user.Status",
+        "removed"
+      ],
+      [
+        "type",
+        "com.example.user.User",
+        "removed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "type",
+        "Status",
+        "added"
+      ],
+      [
+        "type",
+        "User",
+        "added"
+      ],
+      [
+        "type",
+        "com.example.user.Status",
+        "removed"
+      ],
+      [
+        "type",
+        "com.example.user.User",
+        "removed"
+      ]
+    ],
+    "overclaims": []
+  },
+  "06-union-types.graphql": {
+    "status": "lossy",
+    "diff": [
+      [
+        "operation",
+        "Query.paymentMethods",
+        "removed"
+      ],
+      [
+        "operation",
+        "Query.search",
+        "removed"
+      ],
+      [
+        "operation",
+        "Query.timeline",
+        "removed"
+      ],
+      [
+        "root",
+        "",
+        "changed"
+      ],
+      [
+        "service",
+        "Query",
+        "removed"
+      ],
+      [
+        "type",
+        "BankAccount",
+        "changed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "CommentEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "CreditCard",
+        "changed"
+      ],
+      [
+        "type",
+        "Crypto",
+        "changed"
+      ],
+      [
+        "type",
+        "FollowEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "GraphQL Schema",
+        "added"
+      ],
+      [
+        "type",
+        "LikeEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "PayPal",
+        "changed"
+      ],
+      [
+        "type",
+        "PaymentMethod",
+        "changed"
+      ],
+      [
+        "type",
+        "Post",
+        "changed"
+      ],
+      [
+        "type",
+        "PostEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "Product",
+        "changed"
+      ],
+      [
+        "type",
+        "SearchResult",
+        "changed"
+      ],
+      [
+        "type",
+        "TimelineItem",
+        "changed"
+      ],
+      [
+        "type",
+        "User",
+        "changed"
+      ]
+    ],
+    "unexplained": [
+      [
+        "service",
+        "Query",
+        "removed"
+      ],
+      [
+        "type",
+        "GraphQL Schema",
+        "added"
+      ],
+      [
+        "type",
+        "PaymentMethod",
+        "changed"
+      ],
+      [
+        "type",
+        "SearchResult",
+        "changed"
+      ],
+      [
+        "type",
+        "TimelineItem",
+        "changed"
+      ]
+    ],
+    "overclaims": [
+      "BankAccount",
+      "Category",
+      "CommentEvent",
+      "CreditCard",
+      "Crypto",
+      "FollowEvent",
+      "LikeEvent",
+      "PayPal",
+      "PaymentMethod",
+      "Post",
+      "PostEvent",
+      "Product",
+      "SearchResult",
+      "TimelineItem",
+      "User"
+    ]
+  }
+}

@@ -811,16 +811,40 @@ async def _validate_zosconnect(
 async def _validate_jsonschema(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted JSON Schema document by re-parsing it."""
-    from .jsonschema_emitter import validate_jsonschema_document
+    """Re-validate an emitted JSON Schema export (MFX-21.1; MFX-21.4, #4129).
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
-        try:
-            validate_jsonschema_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    Each document must pass the metaschema of the draft it declares (a JTD document, the RFC 8927 rules),
+    every ``$ref`` into the export must resolve, and each document must import again through the JSON
+    Schema import source (:mod:`app.jsonschema_roundtrip`). Findings carry the rule as ``keyword``
+    (``jsonschema.metaschema``, ``jsonschema.unresolved-ref``, ``jsonschema.reimport``…).
+    """
+    from .import_source import ImportSourceError
+    from .jsonschema_emitter import _jtd_document
+    from .jsonschema_roundtrip import check_emitted_jsonschema, reimport_document
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The JSON Schema export wrote no file.")])
+
+    def _run() -> List[ValidationFinding]:
+        problems = check_emitted_jsonschema(emit_result)
+        if not problems:
+            for emitted in emit_result.files:
+                if _jtd_document(str(emitted.content)) is not None:
+                    continue
+                try:
+                    reimport_document(str(emitted.content), source_label=emitted.path)
+                except ImportSourceError as exc:
+                    problems.append(
+                        {"rule": "jsonschema.reimport", "message": f"The document does not import: {exc}",
+                         "file": emitted.path, "path": None}
+                    )
+        return [
+            ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+            for p in problems
+        ]
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_jtd(
