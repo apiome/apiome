@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Additive merge — when an import adds a new version to an existing project, the **Changes** step's **Merge strategy** can keep everything in the latest version and add only what the spec newly defines (schemas, properties, paths, operations). Nothing is removed or overwritten, and **Done** says what was merged and kept
   - Version already taken — importing into an existing project at a **Version** it already has no longer fails: the import is added as the next free sub-version (`2.5.0b`, `2.5.0c` …). The **Changes** step says which one, and **Done** lists it
   - References that won't resolve — the **Preview** step now warns when a schema you tick references a schema the spec doesn't define, or a URL Apiome doesn't fetch, naming each one. The import still runs and keeps the reference as written
   - Property conflicts — the **Preview** step now warns when the schemas you tick use one property name with different definitions (for example `status` as two different enums), listing every definition and the schemas that use it. The import still runs: each definition becomes its own library property (`status`, `status_1`)

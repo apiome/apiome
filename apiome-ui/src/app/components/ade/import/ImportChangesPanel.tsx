@@ -15,7 +15,9 @@
  *    inactive tab, and the viewer loads Monaco on demand, so the editor costs nothing until the
  *    tab is opened;
  *  - a "No changes from v…" state, a loading state, and an `ErrorState` with retry — the footer's
- *    **Continue to import** stays available in every one of them.
+ *    **Continue to import** stays available in every one of them;
+ *  - a **Merge strategy** choice (#591): **Replace with this import** (the default) or **Additive
+ *    merge**, which keeps everything in the latest version and adds what the spec newly defines.
  *
  * A view only: the dialog owns the request and the {@link ProjectDeltaState}.
  */
@@ -28,6 +30,7 @@ import { Button } from '../../ui/Button';
 import { EmptyState } from '../../ui/EmptyState';
 import { ErrorState } from '../../ui/ErrorState';
 import { Input } from '../../ui/Input';
+import { RadioGroup, RadioGroupItem } from '../../ui/RadioGroup';
 import { LoadingState } from '../../ui/LoadingState';
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from '../../ui/Tabs';
 import { JsonDiffViewer } from '../../ui/code/JsonDiffViewer';
@@ -46,7 +49,7 @@ import {
   type ProjectDeltaState,
 } from '../../../utils/import-project-delta';
 import type { ImportVersionPlan } from '../../../utils/import-version-label';
-import { IMPORT_WIZARD_COPY, noChangesTitle } from './importWizardModel';
+import { IMPORT_WIZARD_COPY, noChangesTitle, type ImportMergeChoice } from './importWizardModel';
 
 /** Badge tone for each grade; an ungraded change shows no badge. */
 const SEVERITY_VARIANT: Readonly<Record<ProjectDeltaSeverity, 'danger' | 'warn' | 'ok'>> = {
@@ -64,6 +67,45 @@ export interface ImportChangesPanelProps {
   pageSize?: number;
   /** The version label the import will create (#590); says so when the requested one is taken. */
   versionPlan?: ImportVersionPlan | null;
+  /** The chosen merge strategy (#591); the choice is shown only when a change handler is given. */
+  mergeChoice?: ImportMergeChoice;
+  /** Called when the reader picks a merge strategy (#591). */
+  onMergeChoiceChange?: (choice: ImportMergeChoice) => void;
+}
+
+/**
+ * The merge-strategy choice (#591): replace (default) or additive merge, each with a one-line hint.
+ *
+ * @param props.value The chosen strategy.
+ * @param props.onChange Called with the new strategy.
+ * @returns A fieldset with one radio per strategy.
+ */
+function MergeChoice({ value, onChange }: { value: ImportMergeChoice; onChange: (choice: ImportMergeChoice) => void }) {
+  const options: Array<{ value: ImportMergeChoice; label: string; hint: string }> = [
+    { value: 'replace', label: IMPORT_WIZARD_COPY.changesMergeReplace, hint: IMPORT_WIZARD_COPY.changesMergeReplaceHint },
+    { value: 'additive', label: IMPORT_WIZARD_COPY.changesMergeAdditive, hint: IMPORT_WIZARD_COPY.changesMergeAdditiveHint },
+  ];
+  return (
+    <fieldset className="imp-changes__merge" data-testid="import-changes-merge">
+      <legend className="imp-changes__merge-legend">{IMPORT_WIZARD_COPY.changesMergeLegend}</legend>
+      <RadioGroup value={value} onValueChange={(v) => onChange(v as ImportMergeChoice)}>
+        {options.map((o) => (
+          <RadioGroupItem
+            key={o.value}
+            value={o.value}
+            name="import-merge-strategy"
+            data-testid={`import-changes-merge-${o.value}`}
+            label={
+              <span>
+                {o.label}
+                <span className="imp-changes__merge-hint">{o.hint}</span>
+              </span>
+            }
+          />
+        ))}
+      </RadioGroup>
+    </fieldset>
+  );
 }
 
 /** One summary-bar count: symbol, number, word. */
@@ -81,10 +123,14 @@ function ChangesView({
   delta,
   pageSize,
   versionPlan,
+  mergeChoice = 'replace',
+  onMergeChoiceChange,
 }: {
   delta: ProjectDelta;
   pageSize: number;
   versionPlan?: ImportVersionPlan | null;
+  mergeChoice?: ImportMergeChoice;
+  onMergeChoiceChange?: (choice: ImportMergeChoice) => void;
 }) {
   const [tab, setTab] = useState('summary');
   const [filter, setFilter] = useState<ProjectDeltaFilter>('all');
@@ -126,6 +172,17 @@ function ChangesView({
           already has version <code className="mono">{versionPlan.requested}</code>, so this import is added as{' '}
           <code className="mono">{versionPlan.label}</code>, a new sub-version. Nothing existing changes. To use a
           different number, go <span className="font-semibold">Back</span> and change <span className="font-semibold">Version</span> on Preview.
+        </Alert>
+      ) : null}
+
+      {onMergeChoiceChange ? <MergeChoice value={mergeChoice} onChange={onMergeChoiceChange} /> : null}
+
+      {mergeChoice === 'additive' && counts.removed > 0 ? (
+        // #591: an additive merge keeps what the latest version has, so "removed" rows stay.
+        <Alert variant="info" data-testid="import-changes-merge-kept">
+          <span className="font-semibold">{IMPORT_WIZARD_COPY.changesMergeRemovedKept}</span> — the {counts.removed}{' '}
+          {counts.removed === 1 ? 'item' : 'items'} listed as <span className="font-semibold">Removed</span>{' '}
+          {counts.removed === 1 ? 'stays' : 'stay'} in the new version {versionLabel ? `as they are in ${versionLabel}` : 'as they are'}.
         </Alert>
       ) : null}
 
@@ -251,22 +308,35 @@ export function ImportChangesPanel({
   onRetry,
   pageSize = PROJECT_DELTA_PAGE_SIZE,
   versionPlan,
+  mergeChoice,
+  onMergeChoiceChange,
 }: ImportChangesPanelProps) {
   if (state.status === 'checking') {
     return <LoadingState message="Comparing with the latest version…" />;
   }
   if (state.status === 'error') {
     return (
-      <ErrorState
-        title={IMPORT_WIZARD_COPY.changesErrorTitle}
-        description={`${state.message} You can still continue to import.`}
-        onRetry={onRetry}
-        data-testid="import-changes-error"
-      />
+      <div className="imp-changes">
+        <ErrorState
+          title={IMPORT_WIZARD_COPY.changesErrorTitle}
+          description={`${state.message} You can still continue to import.`}
+          onRetry={onRetry}
+          data-testid="import-changes-error"
+        />
+        {onMergeChoiceChange ? <MergeChoice value={mergeChoice ?? 'replace'} onChange={onMergeChoiceChange} /> : null}
+      </div>
     );
   }
   if (state.status === 'ready') {
-    return <ChangesView delta={state.delta} pageSize={pageSize} versionPlan={versionPlan} />;
+    return (
+      <ChangesView
+        delta={state.delta}
+        pageSize={pageSize}
+        versionPlan={versionPlan}
+        mergeChoice={mergeChoice}
+        onMergeChoiceChange={onMergeChoiceChange}
+      />
+    );
   }
   return null;
 }

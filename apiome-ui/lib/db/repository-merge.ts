@@ -424,7 +424,7 @@ export async function copyClassesTx(
 }
 
 /** Copy the parent's security schemes the new version does not define (carried paths use them). */
-async function copySecuritySchemesTx(client: Queryable, fromVersionId: string, toVersionId: string): Promise<void> {
+export async function copySecuritySchemesTx(client: Queryable, fromVersionId: string, toVersionId: string): Promise<void> {
   await client.query(
     `INSERT INTO apiome.version_security_scheme
        (version_id, scheme_name, scheme_type, in_location, param_name, http_scheme, description, data)

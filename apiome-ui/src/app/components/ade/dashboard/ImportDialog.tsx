@@ -78,6 +78,7 @@ import {
   detectAndDescribe,
   urlTestAction,
   IMPORT_WIZARD_COPY,
+  type ImportMergeChoice,
   type ImportWizardStep,
 } from '../import';
 
@@ -156,6 +157,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [projectDelta, setProjectDelta] = useState<ProjectDeltaState>({ status: 'idle' });
   /** Bumped per comparison request (and on Back / reset) so a stale answer is ignored. */
   const deltaRequestRef = useRef(0);
+  /** The Changes step's merge strategy (#591): `replace` (default) or `additive`. */
+  const [mergeChoice, setMergeChoice] = useState<ImportMergeChoice>('replace');
   /** The mockup's *Recent import jobs* side-sheet (HIVE-6.4). */
   const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false);
 
@@ -378,6 +381,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setJobsDrawerOpen(false);
     deltaRequestRef.current += 1;
     setProjectDelta({ status: 'idle' });
+    setMergeChoice('replace');
     dryRunRef.current = false;
   };
 
@@ -563,6 +567,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
     const request = ++deltaRequestRef.current;
     setProjectDelta({ status: 'checking' });
+    // A new comparison (another project or spec) starts from the default strategy (#591).
+    if (fromPreview) setMergeChoice('replace');
     const next = await fetchProjectDelta({
       document: analysisResult.document,
       project_slug: importProjectSlug(),
@@ -637,6 +643,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         // #590: an import the Changes step showed lands in an existing project; if its label is taken
         // by the time it commits, the importer picks the next free sub-version rather than failing.
         ...(versionPlan ? { onVersionConflict: 'create-version' as const } : {}),
+        // #591: the Changes step's merge strategy; only offered there, so only sent when it was shown.
+        ...(showsChangesStep(projectDelta) && mergeChoice === 'additive' ? { mergeStrategy: 'additive' as const } : {}),
       }
     });
 
@@ -868,6 +876,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           state={projectDelta}
           onRetry={() => void checkProjectDelta(false)}
           versionPlan={versionPlan}
+          mergeChoice={mergeChoice}
+          onMergeChoiceChange={setMergeChoice}
         />
       );
     }
