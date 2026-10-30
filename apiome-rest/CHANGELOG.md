@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.555.0] - 2026-10-30
+
+### Added
+- **Webhook-instant refresh (RAR-6.3, #3540).** A verified push on a tracked branch whose delivery lists the files
+  its commits touched (GitHub and GitLab `commits[].added/modified/removed`) now refreshes the tracked files among them
+  right away, instead of waiting for the next sweep tick. The webhook route answers the provider first, then runs
+  `app.repository_webhook_refresh.refresh_pushed_files` as a background task: it rescans the pushed branch and
+  enqueues spec-faithful refresh jobs through the sweep's `enqueue_stale_files_for_branch`, limited to those paths
+  (`path_filter` now also takes a set), so the freshness comparator, the tenant polling quota, the per-repository
+  refresh lock, `APIOME_REFRESH_ENABLED`, the per-repository opt-out and the auto-pause all still apply, and the
+  EPIC-4 executor's divergence guard still runs. A completed refresh with nothing deferred advances the cadence anchor;
+  anything else leaves the repository due (the REPO-4.3 behaviour), so the sweep is the fallback, as it is for a
+  Bitbucket push, a force push or a truncated commit list (`ParsedWebhookEvent.changed_paths` is `None`). New
+  `Database.list_repository_import_spec_paths`; workflow-audit action `repository.webhook.instant_refresh`; the accepted
+  audit row gains `instantRefreshFiles`. The receipt body is unchanged. OpenAPI 1.419.0 (version only).
+
 ## [1.554.0] - 2026-10-30
 
 ### Added
