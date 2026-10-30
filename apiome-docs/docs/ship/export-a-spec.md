@@ -89,6 +89,7 @@ way the last column says.
 | Thrift | The Thrift compiler, plus thriftpy2 | Checked by thriftpy2 and Apiome's Thrift reader |
 | Cap'n Proto | `capnp compile` | Not compiled; the export says it was not re-validated |
 | FlatBuffers | `flatc` | Read back by Apiome's FlatBuffers reader |
+| CORBA IDL | `omniidl` (`corba` profile) or `idlc` (`dds` profile) | Read back by Apiome's CORBA IDL reader |
 | FHIR | The HL7 FHIR validator | Checked by Apiome's structural FHIR rules |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 
@@ -168,8 +169,14 @@ unchanged.
 ### OMG IDL (CORBA or DDS) from any source
 
 Exporting to **CORBA IDL** writes one `<Name>.idl` file in OMG IDL 4.2 that reference IDL compilers
-accept: omniidl for the CORBA parts and Cyclone DDS `idlc` for the annotated data types. Before you
-download it, Apiome reads the export back with its CORBA IDL importer.
+accept: omniidl for the CORBA parts and Cyclone DDS `idlc` for the annotated data types.
+
+Each export is checked before you download it:
+
+1. **The profile's IDL compiler** checks it when the server has that compiler: `omniidl` for a
+   `corba` export, `idlc` for a `dds` export. A compile error fails the export and quotes the
+   compiler's message and line (`idl.compile`).
+2. Apiome's CORBA IDL importer reads it back (`idl.reimport`). Without the compiler, this is the check.
 
 - **Profile.** The **profile** option picks what is written. `corba` (the default) writes interfaces
   and exceptions. `dds` writes only the data types a DDS topic can use: no interfaces, no exceptions

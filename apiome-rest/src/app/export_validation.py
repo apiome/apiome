@@ -603,16 +603,37 @@ async def _validate_oncrpc(
 async def _validate_corbaidl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted CORBA / OMG IDL ``.idl`` document by re-parsing it."""
-    from .corbaidl_emitter import validate_corbaidl_document
+    """Re-validate an emitted OMG IDL ``.idl`` document (MFX-28.1; MFX-28.3, #4170).
 
-    errors: List[str] = []
+    The file's profile picks its reference compiler (:func:`app.omg_idl_compile.idl_compiler_for`):
+    ``omniidl`` for CORBA, Cyclone DDS ``idlc`` for DDS. When the toolchain has it, the compiler checks the
+    file through the toolchain runner and each of its error lines is a finding (``idl.compile``); the
+    file is always re-parsed by Apiome's OMG IDL reader too (``idl.reimport``). Without the compiler, the
+    re-parse alone checks it.
+    """
+    from .corbaidl_emitter import validate_corbaidl_document
+    from .omg_idl_compile import OmgIdlCompileError, compile_omg_idl, idl_compiler_available, idl_compiler_for
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The OMG IDL export wrote no file.")])
+    findings: List[ValidationFinding] = []
     for emitted in emit_result.files:
+        text = str(emitted.content)
+        compiler = idl_compiler_for(text)
+        if idl_compiler_available(compiler):
+            try:
+                await compile_omg_idl(emitted.path, text, compiler=compiler)
+            except OmgIdlCompileError as exc:
+                if not exc.unavailable:
+                    findings.extend(
+                        ValidationFinding(message=line, file=emitted.path, keyword="idl.compile")
+                        for line in (exc.diagnostics or [str(exc)])
+                    )
         try:
-            validate_corbaidl_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+            await asyncio.to_thread(validate_corbaidl_document, text)
+        except Exception as exc:  # noqa: BLE001 — any reader failure means "not valid", never a crash
+            findings.append(ValidationFinding(message=str(exc), file=emitted.path, keyword="idl.reimport"))
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_odata(

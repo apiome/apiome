@@ -1,0 +1,16 @@
+---
+slug: omg-idl-compiler-check
+title: CORBA IDL exports are checked by an IDL compiler
+description: A CORBA IDL export is now checked by omniidl or Cyclone DDS idlc.
+authors: [apiome]
+---
+
+A **CORBA IDL** export is now checked by the IDL compiler its profile targets before you download it.
+[How CORBA IDL exports are checked](/ship/export-a-spec#omg-idl-corba-or-dds-from-any-source).
+
+{/* truncate */}
+
+- **The right compiler.** A `corba` export is checked by omniORB's `omniidl`, a `dds` export by
+  Eclipse Cyclone DDS `idlc`.
+- **Compiler detail.** A compile error fails the export and quotes the compiler's own message and line.
+- **Without the compiler**, Apiome's CORBA IDL importer reads the export back, as before.

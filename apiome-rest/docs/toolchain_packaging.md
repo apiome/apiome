@@ -46,6 +46,8 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `spectral` | OpenAPI/AsyncAPI lint (`@stoplight/spectral-cli`, CLX-2.2) | `6.16.1` | node | npm into tools prefix + wrapper |
 | `vacuum` | OpenAPI lint (`daveshanley/vacuum`, CLX-2.2) | `0.29.9` | native | GitHub release tarball |
 | `redocly` | OpenAPI lint/resolve (`@redocly/cli`, CLX-2.2) | `2.39.0` | node | npm into tools prefix + wrapper |
+| `omniidl` | omniORB IDL compiler: with no back-end it checks an emitted **CORBA**-profile `.idl` (MFX-28.3, `app.omg_idl_compile`). Optional: without it an OMG IDL export is re-parsed by the OMG IDL reader | `4.3` (Debian package) | native | `apt-get install omniidl` in the runtime stage |
+| `idlc` | Eclipse Cyclone DDS IDL compiler: checks an emitted **DDS**-profile `.idl` (MFX-28.3, `app.omg_idl_compile`). Optional: without it an OMG IDL export is re-parsed by the OMG IDL reader | `0.10` (Debian `cyclonedds-tools`) | native | `apt-get install cyclonedds-tools` in the runtime stage |
 | `capnp` | Cap'n Proto compiler: `capnp compile` re-validates an emitted `.capnp` schema (`app.capnproto_compile`, MFX-30.2). Optional: without it a Cap'n Proto export is reported *not re-validated* | `1.0.1` | native | built from the capnproto.org release tarball (static `capnp_tool` target) |
 
 All of them land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
@@ -176,6 +178,7 @@ that format uses. A missing tool never fails an export; each validator falls bac
 | `thrift` | `thrift` | `app.thrift_roundtrip.compile_problems` | MFX-25.1 / 25.4 | thriftpy2 + built-in Thrift reader |
 | `capnproto` | `capnp` | `app.capnproto_compile.compile_capnp_schema` | MFX-30.2 | *skipped* (not re-validated) |
 | `flatbuffers` | `flatc` | `app.flatbuffers_compile.compile_fbs_schema` | MFX-30.1 | built-in FlatBuffers reader |
+| `corbaidl` | `omniidl` (CORBA) / `idlc` (DDS) | `app.omg_idl_compile.compile_omg_idl` | MFX-28.3 | built-in OMG IDL reader |
 | `fhir` | `fhir-validator` | `app.fhir_validation.validate_with_fhir_validator` | MFX-26.1 | structural FHIR rules |
 | `asyncapi-3` | `asyncapi-parser` | `app.asyncapi_roundtrip.round_trip_asyncapi` | MFX-11.4 | *skipped* (not re-validated) |
 

@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.548.0] - 2026-10-30
+
+### Added
+- **OMG IDL export validated by an IDL compiler (MFX-28.3, #4170).** New `app.omg_idl_compile`:
+  `idl_compiler_for(text)` picks the profile's reference compiler — `omniidl` (CORBA; run with no back-end, it only
+  checks) or Cyclone DDS `idlc` (DDS) — from the emitter's header, else from annotations; `compile_omg_idl(path,
+  content)` runs it in a scratch directory through the toolchain runner (sandboxed, time-bounded) and returns its
+  error lines as diagnostics (the closing `N errors.` tally dropped).
+- **New optional bundled tools** `omniidl` (`APIOME_OMNIIDL_BIN`) and `idlc` (`APIOME_IDLC_BIN`), installed in the
+  runtime image from the Debian `omniidl` and `cyclonedds-tools` packages with a build-time smoke check.
+- **Export gate.** `corbaidl` runs the profile's compiler when available (`idl.compile` findings carrying the
+  compiler's text) and always re-parses with the OMG IDL reader (`idl.reimport`); without the compiler, the re-parse
+  alone checks it.
+
 ## [1.547.0] - 2026-10-30
 
 ### Added

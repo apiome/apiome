@@ -373,12 +373,19 @@ WORKDIR /app
 # libpq5 for psycopg; libstdc++6 for native tools (buf/rover/drafter); libgmp10 for dhall
 # (FMT-8.5); default-jre-headless
 # for the AMF jar wrapper (MFI-5.2). smithy's CLI ships its own runtime, so it needs no JRE.
+# omniidl + cyclonedds-tools (idlc): the OMG IDL compilers that check an emitted .idl (MFX-28.3) — the
+# Debian packages, smoke-tested below; both are optional tools (without them the reader re-parses).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libpq5 \
       libstdc++6 \
       libgmp10 \
       default-jre-headless \
+      omniidl \
+      cyclonedds-tools \
     && rm -rf /var/lib/apt/lists/* \
+    && mkdir /tmp/idl-smoke && printf 'module Smoke { struct S { long id; }; };\n' > /tmp/idl-smoke/s.idl \
+    && (cd /tmp/idl-smoke && omniidl s.idl && idlc s.idl) \
+    && rm -rf /tmp/idl-smoke \
     && useradd --create-home --uid 1000 appuser
 
 # Node.js runtime for the tsx spec-import worker. Copy the binary from the Node build stage
