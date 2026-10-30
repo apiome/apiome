@@ -389,8 +389,19 @@ The fidelity report lists what FHIR logical models cannot express, construct by 
 
 Exporting to **OData** writes the service's metadata as **CSDL JSON 4.01** (`<Namespace>.csdl.json`),
 the canonical form. Set the **output** option to `xml` for CSDL XML (`<Namespace>.edmx`), or `both`
-for the two. Each export is checked against the OASIS CSDL JSON schema, or the CSDL XML schemas,
-then read back by the OData importer.
+for the two. Each export is checked before you download it, with the same checks an OData import runs:
+
+1. The OASIS **CSDL JSON** schema, or for CSDL XML the OASIS **EDMX / EDM** XML schemas. Each
+   violation is listed on its own, with the JSON pointer where it is (`/Demo/Product/ID/$Type`).
+2. **References and keys.** Every `$Type`, base type, entity set and navigation target must name a
+   declared element, and every `$Key` property must exist. A schema accepts
+   `"$Type": "Demo.Missing"`; this check does not.
+3. The document imports again. With `both`, the two documents must describe the same model.
+
+A failed check names the file, the pointer and the rule (`odata.csdl-schema`,
+`odata.csdl-xml-schema`, `odata.unresolved-reference`, `odata.key`, `odata.outputs-disagree`,
+`odata.reimport`). An item imported from OData exports and re-imports as it was read; its types are
+written in one namespace, and every reference is re-qualified to match.
 
 - **Entity and complex types.** An object an HTTP operation sends or returns is a resource and
   becomes an `EntityType` with an entity set. Any other object becomes a `ComplexType`. An item

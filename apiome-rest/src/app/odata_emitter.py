@@ -484,6 +484,25 @@ class _ODataWriter:
     def _qualified(self, type_: Type) -> str:
         return f"{self.namespace}.{self._names[type_.key]}"
 
+    def _stored_type(self, name: Optional[str]) -> Optional[str]:
+        """An OData source's own type name (``Example.Sales.InvoiceLine``) as this document writes it.
+
+        Every type is written in one namespace (:attr:`namespace`), so a source name qualified with another
+        namespace is re-qualified by the declared type it names — by key, else by its unique local name
+        (MFX-16.3: a re-emitted name must resolve). A primitive (``Edm.*``) is kept.
+
+        Returns:
+            The emitted name, or ``None`` when the item declares no such type (the caller falls back).
+        """
+        if not name:
+            return None
+        if name.startswith("Edm."):
+            return name
+        target = self._lookup(name) or self._types_by_name.get(name.split(".")[-1])
+        if target is None or self._kinds.get(target.key) == "inline":
+            return None
+        return self._qualified(target)
+
     def _ref(self, ref: Optional[TypeRef], fmt: Optional[str] = None, *, depth: int = 0) -> Tuple[str, bool, bool]:
         """``(type, collection, entity)`` for a reference: a CSDL type name, whether it is a collection, and
         whether it names an entity type (a navigation property)."""
@@ -582,7 +601,12 @@ class _ODataWriter:
                 continue
             type_expr = str(nav.get("type") or "")
             collection = type_expr.startswith("Collection(")
-            target = type_expr[len("Collection("):-1] if collection else type_expr
+            target = self._stored_type(type_expr[len("Collection("):-1] if collection else type_expr)
+            if target is None:
+                self.losses.record(LossKind.NA, "navigation-target-undeclared",
+                                   f"Navigation property {nav['name']!r} of {type_.key!r} names {type_expr!r}, which "
+                                   "the item does not declare; it is not written.", pointer=type_.key)
+                continue
             value: Dict[str, Any] = {"$Kind": "NavigationProperty", "$Type": target}
             if collection:
                 value["$Collection"] = True
@@ -593,9 +617,16 @@ class _ODataWriter:
 
     def _property(self, field: CanonicalField) -> Dict[str, Any]:
         stored = field.extras.get("odata_type") if self._odata_source else None
-        if isinstance(stored, str) and stored:
-            collection = stored.startswith("Collection(")
-            type_name, entity = (stored[len("Collection("):-1] if collection else stored), False
+        collection = isinstance(stored, str) and stored.startswith("Collection(")
+        stored_name = (stored[len("Collection("):-1] if collection else stored) if isinstance(stored, str) else None
+        type_name = self._stored_type(stored_name) if stored_name else None
+        if stored_name and type_name is None:
+            # Filed on the owning type: the property's type changes, so the type does not round-trip as it was.
+            self.losses.record(LossKind.INFERRED, "stored-type-undeclared",
+                               f"{field.key!r} was typed {stored_name!r}, which the item does not declare; it is "
+                               "written from its canonical type instead.", pointer=field.key.rsplit(".", 1)[0])
+        if type_name is not None:
+            entity = False
             if type_name in _LEGACY_EDM:
                 self.losses.record(LossKind.INFERRED, "primitive-coerced",
                                    f"CSDL 4 has no {type_name}; {field.key!r} is written as {_LEGACY_EDM[type_name]}.",
