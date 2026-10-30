@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   their fingerprint. **Live discovery:** `FhirImportSource.discover(base_url)` reads `<base>/metadata` over the
   SSRF-guarded live-fetch client, and `fhir` is a catalog **Live refresh** adapter (`CatalogRefreshUpdate.adapter`).
   **Lint:** new `fhir` rule pack (`app.fhir_lint`) — `fhir.profile-status`, `-url`, `-version`, `-base`,
-  `fhir.element-short`, `fhir.capability-version`, `-profile`, `-search`. Declared read versions: R4, R5, R6
+  `fhir.element-short`, `fhir.capability-version`, `-profile`, `-search` — seeded into the built-in style guide by
+  migration V341, with transparency entries and scanner-evaluation fixtures for the two blocking rules. Declared read versions: R4, R5, R6
   (partial; ballot). Fixtures `fhir/07`–`10` (an R5 server, an R6-ballot server, one profile in R4 and R5). OpenAPI
   1.420.0 (field descriptions only).
 

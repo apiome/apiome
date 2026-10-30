@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/fhir-profile-base",
+  "source_format": "fhir",
+  "description": "FHIR R4 Patient constraint profile with exactly one blocking defect: derivation is constraint but there is no baseDefinition.",
+  "document": "{\n  \"resourceType\": \"StructureDefinition\",\n  \"id\": \"lab-patient\",\n  \"url\": \"https://profiles.example.org/fhir/StructureDefinition/lab-patient\",\n  \"name\": \"LabPatient\",\n  \"status\": \"active\",\n  \"fhirVersion\": \"4.0.1\",\n  \"kind\": \"resource\",\n  \"abstract\": false,\n  \"type\": \"Patient\",\n  \"derivation\": \"constraint\",\n  \"differential\": {\n    \"element\": [\n      {\n        \"id\": \"Patient.identifier\",\n        \"path\": \"Patient.identifier\",\n        \"short\": \"Medical record number\",\n        \"min\": 1,\n        \"max\": \"*\",\n        \"type\": [\n          {\n            \"code\": \"Identifier\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+}

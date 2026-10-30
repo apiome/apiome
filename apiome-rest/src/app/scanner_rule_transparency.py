@@ -271,6 +271,34 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="catalog/odata-entity-key",
         docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "fhir.profile-url": _meta(
+        "fhir.profile-url",
+        ENGINE_SCHEMA,
+        rationale="A FHIR profile is referenced, validated against and declared in a server's "
+        "CapabilityStatement by its canonical url; a profile without one cannot be used by anything.",
+        reference="https://hl7.org/fhir/R4/structuredefinition.html",
+        remediation="Give the StructureDefinition a canonical `url`, typically "
+        "`<publisher base>/StructureDefinition/<id>`, and keep it stable across versions.",
+        false_positive_guidance="Not a false positive: StructureDefinition.url is required (1..1) in "
+        "every FHIR release.",
+        scan_modes=("lint",),
+        fixture_id="catalog/fhir-profile-url",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "fhir.profile-base": _meta(
+        "fhir.profile-base",
+        ENGINE_SCHEMA,
+        rationale="A constraint profile narrows another definition; without a baseDefinition there "
+        "is nothing for its differential to constrain, so validators cannot apply it.",
+        reference="https://hl7.org/fhir/R4/structuredefinition-definitions.html#StructureDefinition.baseDefinition",
+        remediation="Set `baseDefinition` to the canonical url of the profile or base resource it "
+        "constrains (for example `http://hl7.org/fhir/StructureDefinition/Patient`).",
+        false_positive_guidance="Not a false positive: FHIR requires a baseDefinition whenever "
+        "derivation is `constraint` (invariant sdf-4).",
+        scan_modes=("lint",),
+        fixture_id="catalog/fhir-profile-base",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
     "avro.invalid-default": _meta(
         "avro.invalid-default",
         ENGINE_SCHEMA,
