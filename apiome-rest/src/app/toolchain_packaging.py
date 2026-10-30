@@ -360,6 +360,30 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         runtime="native",
     ),
     BundledTool(
+        key="omniidl",
+        executable="omniidl",
+        # The Debian `omniidl` package (omniORB 4.3); the image installs the distribution's build.
+        version="4.3",
+        description="omniORB IDL compiler: `omniidl` with no back-end checks an emitted CORBA-profile .idl "
+        "(MFX-28.3). Optional: without it the export is re-parsed by the OMG IDL reader.",
+        env_override_key="APIOME_OMNIIDL_BIN",
+        version_probe_args=("-V",),
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="idlc",
+        executable="idlc",
+        # The Debian `cyclonedds-tools` package (Eclipse Cyclone DDS 0.10).
+        version="0.10",
+        description="Eclipse Cyclone DDS IDL compiler: `idlc` checks an emitted DDS-profile .idl (MFX-28.3). "
+        "Optional: without it the export is re-parsed by the OMG IDL reader.",
+        env_override_key="APIOME_IDLC_BIN",
+        version_probe_args=("-v",),
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
         key="flatc",
         executable="flatc",
         version="25.12.19",

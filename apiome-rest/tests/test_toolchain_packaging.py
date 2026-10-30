@@ -56,6 +56,8 @@ _EXPECTED_KEYS = {
     "openapi-changes",
     "capnp",
     "thrift",
+    "omniidl",
+    "idlc",
     "flatc",
 }
 
