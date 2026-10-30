@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.540.0] - 2026-10-30
+
+### Added
+- **Smithy validate + round-trip (MFX-20.3, #3916).** The `smithy` target now has an emitted-artifact validator (it
+  was *not applicable* before). New `app.smithy_roundtrip`:
+  - `validate_emitted_smithy(emit_result)` runs `smithy validate` on each emitted file on its own (the IDL and JSON
+    AST of `output: both` would collide if loaded together); every `ERROR` and `DANGER` event blocks
+    (`BLOCKING_SEVERITIES`, the events that fail a `smithy build`), `WARNING` / `NOTE` do not. Without the CLI (or
+    when it goes missing mid-run) the built-in reader / JSON AST reader parses the model. A CLI that is installed but
+    gives no answer is a problem, not a pass.
+  - `reimport_built_model(emit_result)` builds the model with `smithy ast` (falling back to the reader when the CLI
+    is unavailable) and imports it; `round_trip_smithy(api, *, emit_result)` validates, re-imports, takes the canonical
+    diff against the source and reconciles it with the fidelity report (`invalid` / `unparseable` / `lossy` /
+    `lossless`, with `unexplained`, `overclaims`, `explained`, `diverges`).
+- `smithy_ast.validate_smithy_members(members, *, strict=False)` — `strict=True` raises instead of returning `[]`
+  when the CLI gave no answer; the import keeps the best-effort default.
+- **Export gate.** `export_validation._validate_smithy`: blocking events reject with the validator id as `keyword`
+  and the shape as `path`; a built model that does not import rejects with `smithy.reimport`.
+- **Round-trip fixture.** `tests/fixtures/smithy_roundtrip/openapi-petstore.json` (`APIOME_REGEN_SMITHY_ROUNDTRIP=1`
+  regenerates it); CLI paths replay the recorded CLI 1.53.0 `smithy validate` output.
+
 ## [1.539.0] - 2026-10-30
 
 ### Added

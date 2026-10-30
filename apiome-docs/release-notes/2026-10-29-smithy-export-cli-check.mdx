@@ -1,0 +1,16 @@
+---
+slug: smithy-export-cli-check
+title: Smithy exports are validated by the Smithy CLI
+description: A Smithy export must pass the Smithy CLI's validators and import again.
+authors: [apiome]
+---
+
+A **Smithy** export is now validated by the Smithy CLI and imported again before you download it.
+[How Smithy exports are checked](/ship/export-a-spec#smithy-from-any-source).
+
+{/* truncate */}
+
+- **Smithy CLI.** Each file is checked with the validators a `smithy build` runs. An `ERROR` or
+  `DANGER` event fails the export and names its validator, shape, line and column; warnings do not.
+  Without the CLI on the server, Apiome's Smithy reader reads the model instead.
+- **Re-imports.** A model that does not import again fails the export with `smithy.reimport`.

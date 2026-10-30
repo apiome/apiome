@@ -354,20 +354,30 @@ def read_validation_events(output: Optional[str], staging_dir: Path) -> Optional
     return events
 
 
-def validate_smithy_members(members: Mapping[str, str]) -> List[Dict[str, Any]]:
+def validate_smithy_members(members: Mapping[str, str], *, strict: bool = False) -> List[Dict[str, Any]]:
     """Run ``smithy validate`` (with the ``smithy-linters`` validators) over a model (MFI-17.3).
 
-    Best effort: the import never depends on it, so a missing CLI, a timeout or unreadable output
-    yields no events. Without the linters repository the core validators still run.
+    Best effort by default: the import never depends on it, so a missing CLI, a timeout or
+    unreadable output yields no events. Without the linters repository the core validators still run.
 
     Args:
         members: The model files, path → text (``.smithy`` or JSON AST ``.json``; others ignored).
+        strict: Raise instead of returning ``[]`` when the CLI gave no answer. The export gate
+            (MFX-20.3) must not mistake "the CLI did not run" for "the CLI found nothing".
 
     Returns:
         The validation events (:func:`read_validation_events`).
+
+    Raises:
+        ToolchainError: With ``strict``, when the CLI is missing (``ToolNotAvailableError``) or failed
+            to run (a timeout, a resource limit…).
+        ValueError: With ``strict``, when the CLI printed no events table, or ``members`` holds no
+            model file.
     """
     models = model_members(members)
     if not models:
+        if strict:
+            raise ValueError("no Smithy model file to validate")
         return []
     staging_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-models-"))
     work_dir = Path(tempfile.mkdtemp(prefix="apiome-smithy-work-"))
@@ -412,10 +422,14 @@ def validate_smithy_members(members: Mapping[str, str]) -> List[Dict[str, Any]]:
             # The CLI exits non-zero when an event is DANGER or ERROR; the CSV is still on stdout.
             stdout = exc.stdout
         except ToolchainError as exc:
+            if strict:
+                raise
             logger.warning("smithy validate did not run; the model is imported without lint events: %s", exc)
             return []
         events = read_validation_events(stdout, staging_dir)
         if events is None:
+            if strict:
+                raise ValueError("smithy validate printed no events table")
             logger.warning("smithy validate printed no events table; the model is imported without lint events")
             return []
         return events
