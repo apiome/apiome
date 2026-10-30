@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.550.0] - 2026-10-30
+
+### Added
+- **FlatBuffers and Cap'n Proto fidelity packs (MFX-30.3, #4180).** Both packs build the schema with the
+  emitter's writer and file each writer loss on its construct beside the capability verdicts (new shared
+  `writer_loss_rulepack.filed_writer_verdicts(api, losses, rules)`), so the report matches the export:
+  - FlatBuffers: operations/channels a critical DROP plus the root types-only advisory; constraints APPROX;
+    maps APPROX (`<Map>Entry` key/value vectors); synthesized field ids SYNTH (new `synthesized-field-id`
+    loss; a `.fbs` source keeps its own); wrapper tables SYNTH; renames, aliases and structs-as-tables
+    APPROX (info); unsupported defaults and value-less fields DROP.
+  - Cap'n Proto: an operation of a non-`.capnp` source APPROX as an interface method (new
+    `operation-as-method` loss); error responses DROP; constraints APPROX; maps APPROX; synthesized
+    ordinals and file id SYNTH.
+- **Constraints written as comments.** New `app.constraint_text` renders constraints as one line
+  (`constraints: >= 1; max length 40`; width formats such as `int32` omitted). The FlatBuffers (`//`) and
+  Cap'n Proto (`#`) emitters write it above each constrained field (`constraints-as-comment`); with
+  `include_comments: false` it is left out and recorded as `constraints-dropped`.
+
+### Changed
+- Both packs no longer emit the generic "constraints → doc comment" APPROX or "synthesized field number"
+  SYNTH capability verdicts; the writer's own losses replace them.
+- **Compile findings.** A `flatc` / `capnp` error in the export gate is now one finding per compiler line with
+  the emitted file, line and column and the rule (`flatc.compile`, `capnp.compile`).
+- Goldens: flatbuffers and capnproto cells of the round-trip and conformance matrices; three Cap'n Proto
+  silent-loss pairs (arazzo, flatbuffers, wadl) are now reported and left the ledger.
+
 ## [1.549.0] - 2026-10-30
 
 ### Added

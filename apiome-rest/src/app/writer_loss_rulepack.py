@@ -15,14 +15,14 @@ So the report predicts exactly what the export reports, and the two cannot drift
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Set, Tuple
 
 from .canonical_model import CanonicalApi, CanonicalField, Channel, Operation, Type, TypeKind
 from .emitter import Loss, LossKind
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessReport, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
-__all__ = ["WriterLossRulePack", "losses_by_construct"]
+__all__ = ["WriterLossRulePack", "filed_writer_verdicts", "losses_by_construct"]
 
 
 class WriterLossRulePack(CapabilityRulePack):
@@ -156,4 +156,37 @@ def losses_by_construct(api: CanonicalApi, losses: List[Loss]) -> Dict[str, List
         if loss.pointer == "channels":
             continue
         filed.setdefault(owners.get(loss.pointer or "", ROOT_CONSTRUCT_KEY), []).append(loss)
+    return filed
+
+
+def filed_writer_verdicts(
+    api: CanonicalApi, losses: List[Loss], rules: Mapping[str, Tuple[LossinessKind, LossinessSeverity]]
+) -> Dict[str, List[FidelityVerdict]]:
+    """A pack's verdicts for a writer's losses, filed under their constructs — MFX-30.3 (#4180).
+
+    For a pack that keeps its capability verdicts and adds the writer's losses beside them (FlatBuffers,
+    Cap'n Proto): each loss whose subject ``rules`` maps becomes one verdict of that kind and severity,
+    its message the loss detail and its ``target_mapping`` the subject; a subject ``rules`` leaves out is
+    one the pack reports another way. A loss recorded twice is filed once.
+
+    Args:
+        api: The model the writer wrote.
+        losses: The writer's losses.
+        rules: Loss subject → (verdict kind, severity).
+
+    Returns:
+        Construct key (:data:`~app.fidelity_rulepack.ROOT_CONSTRUCT_KEY` for the root) → its verdicts.
+    """
+    filed: Dict[str, List[FidelityVerdict]] = {}
+    for key, construct_losses in losses_by_construct(api, losses).items():
+        seen: Set[Tuple[str, str]] = set()
+        for loss in construct_losses:
+            rule = rules.get(loss.subject)
+            if rule is None or (loss.subject, loss.detail) in seen:
+                continue
+            seen.add((loss.subject, loss.detail))
+            kind, severity = rule
+            filed.setdefault(key, []).append(
+                FidelityVerdict(kind=kind, severity=severity, message=loss.detail, target_mapping=loss.subject)
+            )
     return filed

@@ -87,6 +87,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -531,11 +532,28 @@ async def _validate_capnproto(
                 "The 'capnp' toolchain is unavailable in this runtime; the emitted Cap'n Proto "
                 "schema was not re-validated.",
             )
-        findings = [_finding_from_message(line) for line in exc.diagnostics] or [
-            _finding_from_message(str(exc))
-        ]
+        file = emit_result.files[0].path if len(emit_result.files) == 1 else None
+        findings = [_compile_finding(line, file=file, keyword="capnp.compile")
+                    for line in (exc.diagnostics or [str(exc)])]
         return _rejected(target, findings)
     return _passed(target)
+
+
+#: ``<file>:<line>:<column>:`` (capnp) or ``<file>:<line>: <column>:`` (flatc) in a compiler's error line.
+_COMPILER_POSITION_RE = re.compile(r":(\d+):\s*(\d+):")
+
+
+def _compile_finding(line: str, *, file: Optional[str], keyword: str) -> ValidationFinding:
+    """One compiler error line as a finding — MFX-30.3 (#4180): the compiler's text, with the emitted file,
+    the line and column it names, and the rule (``flatc.compile``, ``capnp.compile``)."""
+    position = _COMPILER_POSITION_RE.search(line)
+    return ValidationFinding(
+        message=line.strip(),
+        file=file,
+        line=int(position.group(1)) if position else None,
+        column=int(position.group(2)) if position else None,
+        keyword=keyword,
+    )
 
 
 # emitter ``format`` key → the validator that re-parses its output through the matching MFI
@@ -1279,7 +1297,8 @@ async def _validate_flatbuffers(
             if exc.unavailable:
                 return await _run_text_validator(target, emit_result, parse_flatbuffers)
             findings.extend(
-                _finding_from_message(line, file=emitted.path) for line in (exc.diagnostics or [str(exc)])
+                _compile_finding(line, file=emitted.path, keyword="flatc.compile")
+                for line in (exc.diagnostics or [str(exc)])
             )
     return _passed(target) if not findings else _rejected(target, findings)
 
