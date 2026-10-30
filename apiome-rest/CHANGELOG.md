@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.533.0] - 2026-10-29
+
+### Changed
+- **COBOL copybook fidelity pack (MFX-23.2, #4140).** `CobolCopybookFidelityRulePack` lays the copybook out for the
+  report's options (opt-in `apply_options`) and files every synthesis on the canonical key it came from:
+  - **SYNTH** — default `PIC X(n)` lengths (warn), `<NAME>-COUNT` counters, COBOL data-name renames;
+  - **APPROX** — an unbounded list's default maximum (warn), a list made fixed inside a table, unions as
+    `REDEFINES`, `pattern` / `format` kept as comment lines, floats as decimals with DISPLAY usage, unmapped
+    scalars, and every optional field (no native null: present, spaces / zeros when absent);
+  - **DROP** — maps, a union whose members cannot share storage, recursion, value-less fields; operations and
+    channels critically, with the types-only advisory (the writer's `services-dropped` loss carries its text);
+  - the base "synthesized field number" SYNTH no longer fires (a copybook is positional), and the non-null note is
+    replaced by the optional-field note.
+- **Writer:** a `pattern` or `format` is written as `* pattern: …` / `* format: …` comment lines above its item
+  (split to stay within column 72; `*>` in free format); a union whose member holds `OCCURS DEPENDING ON` is dropped
+  instead of written as an illegal `REDEFINES`.
+- Goldens: the `cobolcopybook` cells of both matrices (`cobolcopybook → cobolcopybook` is now `ok`).
+
 ## [1.532.0] - 2026-10-29
 
 ### Changed

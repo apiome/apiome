@@ -16,11 +16,11 @@ free format (``fixed_format=False``: no column limits, ``*>`` comments).
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
-from .canonical_model import ApiParadigm, CanonicalApi, OperationKind
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, OperationKind, Type
 from .cobolcopybook_parser import parse_cobolcopybook
 from .cobolcopybook_plan import CopybookPlanOptions, plan_copybook
 from .emitter import (
@@ -35,8 +35,8 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessSeverity
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = [
     "CobolCopybookEmitOptions",
@@ -97,26 +97,116 @@ def _fixed_format_entry(prefix: str, head: str, clauses: List[str]) -> List[str]
 
 
 class CobolCopybookFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for COBOL copybook export (the full pack is MFX-23.2).
+    """Fidelity rules for COBOL copybook export — MFX-23.1 (#4139), MFX-23.2 (#4140).
 
-    Beside the types-only drops, a document of another format is noted on the root (MFX-23.1): it is laid
-    out as copybook records and reads back as a copybook item, keyed by its ``01`` record.
+    A copybook is fixed-width and positional, so most of what it says is synthesized. The pack builds
+    the copybook as it will be emitted — for the options the report is computed for
+    (:meth:`apply_options`) — and files each thing the layout invented or degraded on the type or field
+    it came from (its canonical key is the source path), with the message naming the COBOL item:
+
+    * **types-only** — every operation and channel is a critical ``DROP``, and a source that has any
+      carries the critical root advisory with counts (:func:`~app.fidelity_rulepack.types_only_advisory`);
+    * **SYNTH** — a default ``PIC X(n)`` length for unbounded text (warn), a ``-COUNT`` counter for a
+      variable table, a data name respelled to COBOL's rules (``name-mangled``);
+    * **APPROX** — an unbounded list's synthesized maximum (``OCCURS … DEPENDING ON``), a list inside a
+      table made fixed, a union written as ``REDEFINES``, a ``pattern`` / ``format`` kept only as a comment
+      line, a float written as a decimal, a scalar with no COBOL type; and every **optional** field — a
+      copybook has no null, so an absent value is written as spaces or zeros by convention;
+    * **DROP** — a map, a union whose members cannot share storage (one holds ``OCCURS DEPENDING ON``), a
+      reference back to a containing record, a field whose type holds no value;
+    * a document of another format is noted on the root.
+
+    A copybook item re-exported from its own layout synthesizes nothing, so it reports only what its
+    source says.
     """
 
     target_label = "COBOL copybook"
 
-    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """A note when a document of another format is rewritten as a copybook."""
-        if api.format == "cobolcopybook":
-            return []
-        return [
-            FidelityVerdict.approx(
-                message=f"The {api.format or 'source'} document is laid out as COBOL copybook records and reads "
-                "back as a copybook item; names, lengths and tables follow COBOL's rules",
-                severity=LossinessSeverity.INFO,
-                target_mapping="document → COBOL copybook",
+    #: Writer loss subject → (verdict kind, severity).
+    _WRITER_LOSSES = {
+        "length-synthesized": (LossinessKind.SYNTH, LossinessSeverity.WARN),
+        "counter-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "name-mangled": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "occurs-synthesized": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "occurs-fixed": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "union-as-redefines": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "pattern-as-comment": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "format-as-comment": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "float-as-decimal": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unmapped-scalar": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "map-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "union-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "recursion-cut": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "field-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+    }
+    #: Set by :meth:`evaluate`.
+    _filed: Dict[str, List[FidelityVerdict]] = {}
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for these emit options (invalid options fall back to the defaults)."""
+        try:
+            self._options = CobolCopybookEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = CobolCopybookEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Lay the copybook out once (as it will be emitted), file its losses by construct, then walk the model."""
+        writer = _CobolCopybookWriter(api, getattr(self, "_options", None) or CobolCopybookEmitOptions())
+        try:
+            writer.render()
+        except EmitPreconditionError:
+            pass  # a model with no record is refused at export; there is no layout to report
+        constructs = {""} | {t.key for t in api.types} | {f.key for t in api.types for f in t.fields}
+        self._filed = {}
+        seen = set()
+        for loss in writer.losses.records():
+            rule = self._WRITER_LOSSES.get(loss.subject)
+            if rule is None or (loss.subject, loss.detail) in seen:
+                continue
+            seen.add((loss.subject, loss.detail))
+            kind, severity = rule
+            self._filed.setdefault(_owning_construct(loss.pointer or "", constructs), []).append(
+                FidelityVerdict(kind=kind, severity=severity, message=loss.detail, target_mapping=loss.subject)
             )
-        ]
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The types-only advisory, and a note when a document of another format is rewritten as a copybook."""
+        verdicts: List[FidelityVerdict] = []
+        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            verdicts.append(advisory)
+        if api.format != "cobolcopybook":
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is laid out as COBOL copybook records and "
+                    "reads back as a copybook item; names, lengths and tables follow COBOL's rules",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="document → COBOL copybook",
+                )
+            )
+        return verdicts + self._filed.get("", [])
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        return super().type_verdicts(type_) + self._filed.get(type_.key, [])
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        return super().field_verdicts(field) + self._filed.get(field.key, [])
+
+    def _nullability_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """An optional field: a fixed-width record always holds it, so absence is only a convention."""
+        if field.type.nullable is False:
+            return None
+        return FidelityVerdict.approx(
+            message="A copybook record has no null: an optional field is always present, and an absent value is "
+            "written as spaces (text) or zeros (numbers) — agree that convention with the record's readers",
+            severity=LossinessSeverity.INFO,
+            target_mapping="optional → always present (spaces / zeros when absent)",
+        )
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """A copybook identifies a field by its position, which the layout keeps: no number is involved."""
+        return None
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -131,6 +221,14 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
             "the event channel is dropped",
             target_mapping="channel → dropped (types-only export)",
         )
+
+
+def _owning_construct(pointer: str, constructs: set) -> str:
+    """The construct a writer loss belongs to: its own key, else the longest key it extends, else the root."""
+    if pointer in constructs:
+        return pointer
+    owners = [key for key in constructs if key and pointer.startswith(f"{key}.")]
+    return max(owners, key=len) if owners else ""
 
 
 class CobolCopybookEmitOptions(EmitOptions):
@@ -255,12 +353,12 @@ class _CobolCopybookWriter:
             if index:
                 lines.append("")
             self._render_field(tree, lines=lines, indent=0)
-        if self._api.services or self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "services-dropped",
-                "COBOL copybook export is types-only; services and channels are omitted",
-            )
+        # The engine labels the report with the emitter's label, so the emit loss reads the same.
+        advisory = types_only_advisory(
+            self._api, target_label=CobolCopybookEmitter.label, keep_in="OpenAPI or AsyncAPI"
+        )
+        if advisory is not None:
+            self.losses.record(LossKind.NA, "services-dropped", advisory.message)
         self.tracker.record(self._api.identity.name or "cobolcopybook", Provenance.SOURCE)
         return "\n".join(lines).rstrip() + "\n"
 
@@ -305,6 +403,8 @@ class _CobolCopybookWriter:
                 # A fixed table (MFX-23.1): `OCCURS n TO n TIMES` is only legal with DEPENDING ON.
                 clauses.append(f"OCCURS {high} TIMES")
         head = f"{level:02d}  {name}"
+        for comment in node.get("comments") or []:
+            lines.extend(self._comment(str(comment)))
         lines.extend(self._entry(head, clauses, indent))
 
         for condition in node.get("conditions") or []:
@@ -317,6 +417,18 @@ class _CobolCopybookWriter:
             for child in children:
                 if isinstance(child, dict):
                     self._render_field(child, lines=lines, indent=indent + 1)
+
+    def _comment(self, text: str) -> List[str]:
+        """A comment above an entry (a constraint a picture cannot hold): ``*`` in column 7, or ``*>``.
+
+        In fixed format the text is split so every line ends by column 72; a line break in the text
+        never starts a new entry.
+        """
+        text = " ".join(text.split())
+        if not self._options.fixed_format:
+            return [f"*> {text}"]
+        width = _CODE_AREA_END - len("      * ")
+        return [f"      * {text[i:i + width]}" for i in range(0, len(text), width)] or ["      *"]
 
     def _entry(self, head: str, clauses: List[str], indent: int) -> List[str]:
         """One entry: wrapped inside the code area (fixed format), or on one line (free format)."""

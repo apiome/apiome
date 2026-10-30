@@ -537,7 +537,10 @@ Any other item is laid out like this:
   `maxItems`, else **default_occurs** (10). A list inside another list is a fixed table of its maximum,
   because `DEPENDING ON` is not allowed there.
 - **Unions** are written as items that share storage: each member after the largest one
-  `REDEFINES` it.
+  `REDEFINES` it. A union with a member holding a list that varies in size is left out, because COBOL
+  cannot overlay an `OCCURS DEPENDING ON` table.
+- **Rules a picture cannot hold** — a `pattern`, a `format` such as `email` — are written as comment lines
+  just above the item (`* pattern: ^[A-Z]{3}$`).
 - **Left out:** maps, operations and channels — a copybook describes record layouts only.
 
 Options:
@@ -549,6 +552,24 @@ Options:
 - **fixed_format** — on by default: code in columns 8–72, a long entry continued on the next line, and
   `*` comments in column 7. Turn it off for free format: no column limits and `*>` comments.
 - **include_comments** — on by default; turn it off to leave out the header comment.
+
+A copybook is fixed-width and positional, so the fidelity report lists — on each field, by its path in
+the source — everything the layout had to invent or change, computed for the options you pick:
+
+| In the source | In the report |
+|---|---|
+| Operations, services and channels | Dropped (critical). An item that has any also gets a **types-only** warning counting them — export it to OpenAPI or AsyncAPI as well to keep them |
+| Text with no `maxLength` | Synthesized (warning): the default `PIC X(n)` |
+| A list that varies in size | Synthesized (note): the `<NAME>-COUNT` counter. With no `maxItems`, also approximated (warning): the default maximum |
+| A name changed to COBOL's rules (`order_id` → `ORDER-ID`) | Synthesized (note), naming the COBOL name |
+| A union | Approximated (warning): `REDEFINES`. Dropped when a member varies in size |
+| A `pattern`, a `format` | Approximated: a comment line, which nothing checks |
+| An optional field | Approximated (note): a record has no null — the field is always present, and an absent value is written as spaces or zeros, a convention to agree with the record's readers |
+| A list inside a list, a float with `display` usage, a type with no COBOL form | Approximated (warning) |
+| A map, a record that contains itself, a field whose type holds no value | Dropped |
+| A document of another format | Approximated (note): it reads back as a copybook item |
+
+An item imported from a copybook is written back as it was, so its report lists nothing invented.
 
 ### WSDL and XSD from any source
 

@@ -380,7 +380,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -2625,7 +2625,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -4855,7 +4855,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -7390,9 +7390,9 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 4,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 9,
       "matched_count": 4,
       "overclaims": [
         {
@@ -9873,7 +9873,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -11867,7 +11867,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -13852,10 +13852,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 9,
+      "loss_approx": 5,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 8,
       "matched_count": 1,
       "overclaims": [
         {
@@ -15482,10 +15482,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 13,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 5,
-      "loss_synth": 0,
+      "loss_synth": 14,
       "matched_count": 1,
       "overclaims": [
         {
@@ -17729,7 +17729,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -19106,10 +19106,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
+      "loss_approx": 5,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 8,
       "matched_count": 1,
       "overclaims": [
         {
@@ -21112,10 +21112,10 @@
       "diff_count": 10,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 11,
-      "loss_drop": 3,
+      "loss_approx": 3,
+      "loss_drop": 4,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 17,
       "matched_count": 4,
       "overclaims": [
         {
@@ -24223,10 +24223,10 @@
       "diff_count": 10,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 2,
-      "loss_drop": 4,
+      "loss_approx": 8,
+      "loss_drop": 5,
       "loss_ok": 3,
-      "loss_synth": 6,
+      "loss_synth": 12,
       "matched_count": 5,
       "overclaims": [
         {
@@ -27230,7 +27230,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_drop": 3,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -29047,10 +29047,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 1,
+      "loss_approx": 2,
+      "loss_drop": 2,
       "loss_ok": 1,
-      "loss_synth": 3,
+      "loss_synth": 6,
       "matched_count": 2,
       "overclaims": [
         {
@@ -31113,10 +31113,10 @@
       "diff_count": 10,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 15,
+      "loss_drop": 3,
       "loss_ok": 5,
-      "loss_synth": 0,
+      "loss_synth": 8,
       "matched_count": 3,
       "overclaims": [
         {
@@ -34263,10 +34263,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 19,
+      "loss_approx": 9,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 0,
+      "loss_synth": 19,
       "matched_count": 1,
       "overclaims": [
         {
@@ -36799,7 +36799,7 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 13,
+      "loss_approx": 7,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -38139,10 +38139,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
-      "loss_drop": 2,
+      "loss_approx": 2,
+      "loss_drop": 3,
       "loss_ok": 1,
-      "loss_synth": 6,
+      "loss_synth": 11,
       "matched_count": 3,
       "overclaims": [
         {
@@ -39655,7 +39655,7 @@
       "diff_count": 0,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
+      "loss_approx": 0,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -41540,10 +41540,10 @@
       "diff_count": 14,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 4,
+      "loss_approx": 17,
+      "loss_drop": 5,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 27,
       "matched_count": 5,
       "overclaims": [
         {
@@ -45278,7 +45278,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 1,
+      "loss_drop": 2,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -47121,10 +47121,10 @@
       "diff_count": 11,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
-      "loss_drop": 4,
+      "loss_approx": 1,
+      "loss_drop": 5,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -50298,10 +50298,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 20,
+      "loss_approx": 16,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 13,
+      "loss_synth": 16,
       "matched_count": 1,
       "overclaims": [
         {
@@ -52587,7 +52587,7 @@
       "loss_approx": 7,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 8,
+      "loss_synth": 15,
       "matched_count": 1,
       "overclaims": [
         {
@@ -54612,10 +54612,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 14,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 5,
-      "loss_synth": 13,
+      "loss_synth": 17,
       "matched_count": 1,
       "overclaims": [
         {
@@ -57798,10 +57798,10 @@
       "diff_count": 13,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 37,
+      "loss_approx": 11,
       "loss_drop": 0,
       "loss_ok": 11,
-      "loss_synth": 0,
+      "loss_synth": 36,
       "matched_count": 1,
       "overclaims": [
         {
@@ -62034,10 +62034,10 @@
       "diff_count": 13,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 2,
-      "loss_drop": 5,
+      "loss_approx": 17,
+      "loss_drop": 6,
       "loss_ok": 5,
-      "loss_synth": 12,
+      "loss_synth": 19,
       "matched_count": 6,
       "overclaims": [
         {
@@ -65956,10 +65956,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 16,
+      "loss_approx": 14,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 0,
+      "loss_synth": 23,
       "matched_count": 1,
       "overclaims": [
         {
@@ -68939,10 +68939,10 @@
       "diff_count": 12,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 50,
+      "loss_approx": 10,
       "loss_drop": 0,
       "loss_ok": 10,
-      "loss_synth": 0,
+      "loss_synth": 50,
       "matched_count": 1,
       "overclaims": [
         {
@@ -72619,10 +72619,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 24,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 24,
       "matched_count": 1,
       "overclaims": [
         {
@@ -74297,7 +74297,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -76569,10 +76569,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 10,
-      "loss_drop": 3,
+      "loss_approx": 5,
+      "loss_drop": 4,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 11,
       "matched_count": 4,
       "overclaims": [
         {
@@ -78911,10 +78911,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 22,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 21,
       "matched_count": 1,
       "overclaims": [
         {
@@ -80619,10 +80619,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 14,
+      "loss_approx": 9,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 2,
+      "loss_synth": 21,
       "matched_count": 1,
       "overclaims": [
         {
@@ -83644,10 +83644,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
+      "loss_approx": 15,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 5,
       "matched_count": 1,
       "overclaims": [
         {
@@ -85729,7 +85729,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -87746,10 +87746,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 11,
-      "loss_drop": 2,
+      "loss_approx": 9,
+      "loss_drop": 3,
       "loss_ok": 4,
-      "loss_synth": 16,
+      "loss_synth": 12,
       "matched_count": 3,
       "overclaims": [
         {
@@ -90554,7 +90554,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -93346,10 +93346,10 @@
       "diff_count": 14,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 14,
-      "loss_drop": 5,
+      "loss_approx": 9,
+      "loss_drop": 6,
       "loss_ok": 6,
-      "loss_synth": 20,
+      "loss_synth": 33,
       "matched_count": 6,
       "overclaims": [
         {
@@ -97239,10 +97239,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 50,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 50,
       "matched_count": 1,
       "overclaims": [
         {
@@ -101405,11 +101405,11 @@
       "diff_count": 38,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 73,
-      "loss_drop": 0,
+      "loss_approx": 76,
+      "loss_drop": 1,
       "loss_ok": 36,
-      "loss_synth": 0,
-      "matched_count": 1,
+      "loss_synth": 392,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "POCD_HD000040.AD",
@@ -101664,7 +101664,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: added type 'CLINICAL-DOCUMENT.CLINICAL-DOCUMENT', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CD', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.IVL_TS', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL', removed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS' (observed: unexplained: added type 'CLINICAL-DOCUMENT.CLINICAL-DOCUMENT', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CD', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.IVL_TS', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL', removed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
+      "reason": "unexplained: added type 'CLINICAL-DOCUMENT.CLINICAL-DOCUMENT', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CD', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.IVL_TS', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL', removed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS' (observed: unexplained: added type 'CLINICAL-DOCUMENT.CLINICAL-DOCUMENT', removed type 'POCD_HD000040.AD', removed type 'POCD_HD000040.Act', removed type 'POCD_HD000040.AssignedAuthor', removed type 'POCD_HD000040.AssignedCustodian', removed type 'POCD_HD000040.AssignedPerson', removed type 'POCD_HD000040.Author', removed type 'POCD_HD000040.BL', removed type 'POCD_HD000040.CE', removed type 'POCD_HD000040.CS', removed type 'POCD_HD000040.ClinicalDocument', removed type 'POCD_HD000040.ClinicalDocumentComponent', removed type 'POCD_HD000040.Consumable', removed type 'POCD_HD000040.Custodian', removed type 'POCD_HD000040.DocumentationOf', removed type 'POCD_HD000040.Entry', removed type 'POCD_HD000040.II', removed type 'POCD_HD000040.INT', removed type 'POCD_HD000040.IVL_TS', removed type 'POCD_HD000040.LanguageCommunication', removed type 'POCD_HD000040.ManufacturedMaterial', removed type 'POCD_HD000040.ManufacturedProduct', removed type 'POCD_HD000040.PN', removed type 'POCD_HD000040.PQ', removed type 'POCD_HD000040.Patient', removed type 'POCD_HD000040.PatientRole', removed type 'POCD_HD000040.RecordTarget', removed type 'POCD_HD000040.RepresentedCustodianOrganization', removed type 'POCD_HD000040.RepresentedOrganization', removed type 'POCD_HD000040.Section', removed type 'POCD_HD000040.ServiceEvent', removed type 'POCD_HD000040.StructuredBody', removed type 'POCD_HD000040.StructuredBodyComponent', removed type 'POCD_HD000040.SubstanceAdministration', removed type 'POCD_HD000040.TEL', removed type 'POCD_HD000040.TS'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
       "source_format": "hl7v3",
       "status": "xfail",
       "unexplained": [
@@ -101707,11 +101707,6 @@
           "change": "removed",
           "entity": "type",
           "key": "POCD_HD000040.BL"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "POCD_HD000040.CD"
         },
         {
           "change": "removed",
@@ -110866,10 +110861,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 4,
+      "loss_approx": 2,
+      "loss_drop": 5,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -113420,10 +113415,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 2,
+      "loss_approx": 1,
+      "loss_drop": 3,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 3,
       "matched_count": 3,
       "overclaims": [
         {
@@ -115865,10 +115860,10 @@
       "diff_count": 11,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 9,
+      "loss_approx": 30,
       "loss_drop": 0,
       "loss_ok": 9,
-      "loss_synth": 0,
+      "loss_synth": 39,
       "matched_count": 1,
       "overclaims": [
         {
@@ -119387,10 +119382,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 35,
+      "loss_approx": 18,
       "loss_drop": 0,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 5,
       "matched_count": 1,
       "overclaims": [
         {
@@ -121360,10 +121355,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 5,
+      "loss_approx": 2,
+      "loss_drop": 6,
       "loss_ok": 1,
-      "loss_synth": 3,
+      "loss_synth": 5,
       "matched_count": 6,
       "overclaims": [
         {
@@ -125411,10 +125406,10 @@
       "diff_count": 20,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 37,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 18,
-      "loss_synth": 0,
+      "loss_synth": 46,
       "matched_count": 1,
       "overclaims": [
         {
@@ -131764,10 +131759,10 @@
       "diff_count": 14,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 23,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 12,
-      "loss_synth": 0,
+      "loss_synth": 44,
       "matched_count": 1,
       "overclaims": [
         {
@@ -136136,7 +136131,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -138424,10 +138419,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
+      "loss_approx": 7,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 7,
+      "loss_synth": 6,
       "matched_count": 1,
       "overclaims": [
         {
@@ -139843,11 +139838,11 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 0,
+      "loss_approx": 24,
+      "loss_drop": 1,
       "loss_ok": 3,
-      "loss_synth": 14,
-      "matched_count": 1,
+      "loss_synth": 18,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Address",
@@ -139871,7 +139866,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: removed type 'Address', removed type 'LanguageMap', added type 'TYPICAL-CONTEXT.TYPICAL-CONTEXT', removed type 'TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: removed type 'Address', removed type 'LanguageMap', added type 'TYPICAL-CONTEXT.TYPICAL-CONTEXT', removed type 'TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
+      "reason": "unexplained: removed type 'Address', removed type 'LanguageMap', added type 'TYPICAL-CONTEXT.TYPICAL-CONTEXT', removed type 'TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: removed type 'Address', removed type 'LanguageMap', added type 'TYPICAL-CONTEXT.TYPICAL-CONTEXT'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
       "source_format": "jsonld",
       "status": "xfail",
       "unexplained": [
@@ -139889,11 +139884,6 @@
           "change": "added",
           "entity": "type",
           "key": "TYPICAL-CONTEXT.TYPICAL-CONTEXT"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "TypicalContext"
         }
       ]
     },
@@ -141853,10 +141843,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 8,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 3,
-      "loss_synth": 11,
+      "loss_synth": 14,
       "matched_count": 1,
       "overclaims": [
         {
@@ -143800,10 +143790,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 0,
+      "loss_approx": 3,
+      "loss_drop": 1,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 4,
       "matched_count": 1,
       "overclaims": [
         {
@@ -145380,10 +145370,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 8,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 12,
       "matched_count": 1,
       "overclaims": [
         {
@@ -146813,7 +146803,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 5,
+      "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -149243,10 +149233,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 6,
-      "loss_drop": 2,
+      "loss_approx": 5,
+      "loss_drop": 3,
       "loss_ok": 2,
-      "loss_synth": 5,
+      "loss_synth": 7,
       "matched_count": 3,
       "overclaims": [
         {
@@ -151542,10 +151532,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 2,
-      "loss_drop": 1,
+      "loss_approx": 6,
+      "loss_drop": 2,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 7,
       "matched_count": 2,
       "overclaims": [
         {
@@ -153753,10 +153743,10 @@
       "diff_count": 13,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 5,
-      "loss_drop": 5,
+      "loss_approx": 8,
+      "loss_drop": 6,
       "loss_ok": 5,
-      "loss_synth": 0,
+      "loss_synth": 15,
       "matched_count": 6,
       "overclaims": [
         {
@@ -157801,10 +157791,10 @@
       "diff_count": 14,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 13,
-      "loss_drop": 6,
+      "loss_approx": 12,
+      "loss_drop": 7,
       "loss_ok": 3,
-      "loss_synth": 9,
+      "loss_synth": 14,
       "matched_count": 7,
       "overclaims": [
         {
@@ -161860,10 +161850,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 63,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 116,
       "matched_count": 1,
       "overclaims": [
         {
@@ -164756,10 +164746,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 21,
+      "loss_approx": 10,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 1,
       "overclaims": [
         {
@@ -168297,10 +168287,10 @@
       "diff_count": 33,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 85,
+      "loss_approx": 9,
       "loss_drop": 0,
       "loss_ok": 31,
-      "loss_synth": 0,
+      "loss_synth": 154,
       "matched_count": 1,
       "overclaims": [
         {
@@ -177129,7 +177119,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 6,
+      "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -180116,10 +180106,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 2,
-      "loss_drop": 3,
+      "loss_approx": 5,
+      "loss_drop": 4,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 5,
       "matched_count": 4,
       "overclaims": [
         {
@@ -183571,10 +183561,10 @@
       "diff_count": 17,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 5,
-      "loss_drop": 9,
+      "loss_approx": 9,
+      "loss_drop": 10,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 17,
       "matched_count": 10,
       "overclaims": [
         {
@@ -187989,10 +187979,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 6,
+      "loss_synth": 10,
       "matched_count": 1,
       "overclaims": [
         {
@@ -189708,10 +189698,10 @@
       "diff_count": 10,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 9,
-      "loss_drop": 4,
+      "loss_approx": 5,
+      "loss_drop": 5,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -192564,10 +192554,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 6,
-      "loss_drop": 1,
+      "loss_approx": 3,
+      "loss_drop": 2,
       "loss_ok": 3,
-      "loss_synth": 4,
+      "loss_synth": 6,
       "matched_count": 2,
       "overclaims": [
         {
@@ -195017,10 +195007,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
+      "loss_approx": 12,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 6,
+      "loss_synth": 7,
       "matched_count": 1,
       "overclaims": [
         {
@@ -196516,10 +196506,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 8,
-      "loss_drop": 2,
+      "loss_approx": 5,
+      "loss_drop": 3,
       "loss_ok": 2,
-      "loss_synth": 6,
+      "loss_synth": 10,
       "matched_count": 3,
       "overclaims": [
         {
@@ -198981,10 +198971,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
+      "loss_approx": 10,
       "loss_drop": 0,
       "loss_ok": 7,
-      "loss_synth": 9,
+      "loss_synth": 0,
       "matched_count": 1,
       "overclaims": [
         {
@@ -202174,10 +202164,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 20,
+      "loss_approx": 15,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 14,
+      "loss_synth": 16,
       "matched_count": 1,
       "overclaims": [
         {
@@ -205036,10 +205026,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 33,
+      "loss_approx": 14,
       "loss_drop": 0,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 23,
       "matched_count": 1,
       "overclaims": [
         {
@@ -206910,8 +206900,8 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 3,
+      "loss_approx": 1,
+      "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 3,
       "matched_count": 4,
@@ -209373,10 +209363,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 4,
+      "loss_approx": 2,
+      "loss_drop": 5,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -212341,11 +212331,11 @@
       "diff_count": 13,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 3,
+      "loss_approx": 15,
+      "loss_drop": 5,
       "loss_ok": 7,
-      "loss_synth": 0,
-      "matched_count": 4,
+      "loss_synth": 29,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "example.catalog.v1.CreateProductRequest",
@@ -212397,7 +212387,7 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: removed service 'example.catalog.v1.ProductService', added type 'CREATE-PRODUCT-REQUEST.CREATE-PRODUCT-REQUEST', removed type 'example.catalog.v1.CreateProductRequest', removed type 'example.catalog.v1.Dimensions', removed type 'example.catalog.v1.GetProductRequest', removed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.ListProductsResponse', removed type 'example.catalog.v1.Product', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry' (observed: unexplained: removed service 'example.catalog.v1.ProductService', added type 'CREATE-PRODUCT-REQUEST.CREATE-PRODUCT-REQUEST', removed type 'example.catalog.v1.CreateProductRequest', removed type 'example.catalog.v1.Dimensions', removed type 'example.catalog.v1.GetProductRequest', removed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.ListProductsResponse', removed type 'example.catalog.v1.Product', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry')",
+      "reason": "unexplained: removed service 'example.catalog.v1.ProductService', added type 'CREATE-PRODUCT-REQUEST.CREATE-PRODUCT-REQUEST', removed type 'example.catalog.v1.CreateProductRequest', removed type 'example.catalog.v1.Dimensions', removed type 'example.catalog.v1.GetProductRequest', removed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.ListProductsResponse', removed type 'example.catalog.v1.Product', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry' (observed: unexplained: removed service 'example.catalog.v1.ProductService', added type 'CREATE-PRODUCT-REQUEST.CREATE-PRODUCT-REQUEST', removed type 'example.catalog.v1.CreateProductRequest', removed type 'example.catalog.v1.Dimensions', removed type 'example.catalog.v1.GetProductRequest', removed type 'example.catalog.v1.ListProductsRequest', removed type 'example.catalog.v1.ListProductsResponse', removed type 'example.catalog.v1.Product.AttributesEntry'; overclaim: OK 'example.catalog.v1.CreateProductRequest', OK 'example.catalog.v1.Dimensions', OK 'example.catalog.v1.GetProductRequest', OK 'example.catalog.v1.ListProductsRequest', OK 'example.catalog.v1.ListProductsResponse', OK 'example.catalog.v1.Product', OK 'example.catalog.v1.Product.AttributesEntry')",
       "source_format": "protobuf",
       "status": "xfail",
       "unexplained": [
@@ -212435,11 +212425,6 @@
           "change": "removed",
           "entity": "type",
           "key": "example.catalog.v1.ListProductsResponse"
-        },
-        {
-          "change": "removed",
-          "entity": "type",
-          "key": "example.catalog.v1.Product"
         },
         {
           "change": "removed",
@@ -216251,10 +216236,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 2,
+      "loss_approx": 10,
+      "loss_drop": 3,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 15,
       "matched_count": 3,
       "overclaims": [
         {
@@ -219264,10 +219249,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 24,
+      "loss_approx": 20,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 16,
+      "loss_synth": 24,
       "matched_count": 1,
       "overclaims": [
         {
@@ -221733,10 +221718,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 8,
-      "loss_drop": 3,
+      "loss_approx": 2,
+      "loss_drop": 4,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 11,
       "matched_count": 4,
       "overclaims": [
         {
@@ -224272,10 +224257,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 9,
+      "loss_approx": 11,
       "loss_drop": 0,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 9,
       "matched_count": 1,
       "overclaims": [
         {
@@ -226143,10 +226128,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 15,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 14,
+      "loss_synth": 11,
       "matched_count": 1,
       "overclaims": [
         {
@@ -229578,10 +229563,10 @@
       "diff_count": 27,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 60,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 25,
-      "loss_synth": 0,
+      "loss_synth": 141,
       "matched_count": 1,
       "overclaims": [
         {
@@ -236515,10 +236500,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 10,
+      "loss_approx": 13,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 8,
+      "loss_synth": 13,
       "matched_count": 1,
       "overclaims": [
         {
@@ -238554,10 +238539,10 @@
       "diff_count": 11,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 6,
-      "loss_drop": 2,
+      "loss_approx": 8,
+      "loss_drop": 3,
       "loss_ok": 6,
-      "loss_synth": 11,
+      "loss_synth": 12,
       "matched_count": 3,
       "overclaims": [
         {
@@ -242006,10 +241991,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 4,
+      "loss_approx": 2,
+      "loss_drop": 5,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -244502,10 +244487,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 8,
+      "loss_drop": 3,
       "loss_ok": 1,
-      "loss_synth": 7,
+      "loss_synth": 11,
       "matched_count": 3,
       "overclaims": [
         {
@@ -246493,10 +246478,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 23,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 5,
-      "loss_synth": 21,
+      "loss_synth": 30,
       "matched_count": 1,
       "overclaims": [
         {
@@ -249730,10 +249715,10 @@
       "diff_count": 17,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 29,
-      "loss_drop": 6,
+      "loss_approx": 72,
+      "loss_drop": 7,
       "loss_ok": 8,
-      "loss_synth": 36,
+      "loss_synth": 48,
       "matched_count": 7,
       "overclaims": [
         {
@@ -254704,10 +254689,10 @@
       "diff_count": 11,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 15,
-      "loss_drop": 4,
+      "loss_approx": 18,
+      "loss_drop": 5,
       "loss_ok": 4,
-      "loss_synth": 12,
+      "loss_synth": 21,
       "matched_count": 5,
       "overclaims": [
         {
@@ -258944,10 +258929,10 @@
       "diff_count": 17,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 18,
+      "loss_approx": 24,
       "loss_drop": 0,
       "loss_ok": 15,
-      "loss_synth": 0,
+      "loss_synth": 58,
       "matched_count": 1,
       "overclaims": [
         {
@@ -264028,10 +264013,10 @@
       "diff_count": 10,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 3,
+      "loss_approx": 8,
+      "loss_drop": 4,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 16,
       "matched_count": 4,
       "overclaims": [
         {
@@ -266993,10 +266978,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 4,
+      "loss_approx": 2,
+      "loss_drop": 5,
       "loss_ok": 1,
-      "loss_synth": 2,
+      "loss_synth": 6,
       "matched_count": 5,
       "overclaims": [
         {
@@ -269505,10 +269490,10 @@
       "diff_count": 4,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 19,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 2,
-      "loss_synth": 0,
+      "loss_synth": 19,
       "matched_count": 1,
       "overclaims": [
         {
@@ -271235,7 +271220,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_drop": 4,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -273998,10 +273983,10 @@
       "diff_count": 17,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 43,
-      "loss_drop": 4,
+      "loss_approx": 35,
+      "loss_drop": 5,
       "loss_ok": 10,
-      "loss_synth": 28,
+      "loss_synth": 42,
       "matched_count": 5,
       "overclaims": [
         {
@@ -279275,7 +279260,7 @@
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
       "loss_approx": 1,
-      "loss_drop": 4,
+      "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
       "matched_count": 0,
@@ -281824,10 +281809,10 @@
       "diff_count": 8,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 23,
+      "loss_approx": 6,
       "loss_drop": 0,
       "loss_ok": 6,
-      "loss_synth": 25,
+      "loss_synth": 40,
       "matched_count": 1,
       "overclaims": [
         {
@@ -285087,10 +285072,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 7,
-      "loss_drop": 3,
+      "loss_approx": 3,
+      "loss_drop": 4,
       "loss_ok": 3,
-      "loss_synth": 0,
+      "loss_synth": 10,
       "matched_count": 4,
       "overclaims": [
         {
@@ -287812,10 +287797,10 @@
       "diff_count": 3,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 2,
       "matched_count": 1,
       "overclaims": [
         {
@@ -289373,10 +289358,10 @@
       "diff_count": 7,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_approx": 5,
+      "loss_drop": 4,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 4,
       "matched_count": 4,
       "overclaims": [
         {
@@ -291746,10 +291731,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 4,
-      "loss_drop": 3,
+      "loss_approx": 1,
+      "loss_drop": 4,
       "loss_ok": 2,
-      "loss_synth": 3,
+      "loss_synth": 0,
       "matched_count": 4,
       "overclaims": [
         {
@@ -295095,10 +295080,10 @@
       "diff_count": 15,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_approx": 20,
+      "loss_drop": 4,
       "loss_ok": 9,
-      "loss_synth": 0,
+      "loss_synth": 42,
       "matched_count": 4,
       "overclaims": [
         {
@@ -299831,10 +299816,10 @@
       "diff_count": 13,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 3,
+      "loss_approx": 16,
+      "loss_drop": 4,
       "loss_ok": 7,
-      "loss_synth": 0,
+      "loss_synth": 28,
       "matched_count": 4,
       "overclaims": [
         {
@@ -303471,10 +303456,10 @@
       "diff_count": 5,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 3,
-      "loss_drop": 1,
+      "loss_approx": 1,
+      "loss_drop": 2,
       "loss_ok": 1,
-      "loss_synth": 0,
+      "loss_synth": 3,
       "matched_count": 2,
       "overclaims": [
         {
@@ -305222,10 +305207,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 8,
-      "loss_drop": 4,
+      "loss_approx": 3,
+      "loss_drop": 5,
       "loss_ok": 2,
-      "loss_synth": 5,
+      "loss_synth": 9,
       "matched_count": 5,
       "overclaims": [
         {
@@ -307276,10 +307261,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 16,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 21,
       "matched_count": 1,
       "overclaims": [
         {
@@ -309690,10 +309675,10 @@
       "diff_count": 6,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 28,
+      "loss_approx": 24,
       "loss_drop": 0,
       "loss_ok": 4,
-      "loss_synth": 16,
+      "loss_synth": 21,
       "matched_count": 1,
       "overclaims": [
         {
@@ -312372,10 +312357,10 @@
       "diff_count": 9,
       "emit_format": "cobolcopybook",
       "emit_key": "cobolcopybook",
-      "loss_approx": 1,
-      "loss_drop": 2,
+      "loss_approx": 3,
+      "loss_drop": 3,
       "loss_ok": 4,
-      "loss_synth": 0,
+      "loss_synth": 2,
       "matched_count": 3,
       "overclaims": [
         {

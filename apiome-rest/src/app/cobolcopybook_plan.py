@@ -25,7 +25,11 @@ contains itself is cut at the second visit (recorded).
   a synthesized ``<NAME>-COUNT`` item written just before it (max: ``maxItems`` else the default
   occurrences); inside another table, where ``DEPENDING ON`` is not allowed, a list is a fixed table
   of its maximum;
-* a union → one item per member, each after the first ``REDEFINES`` the first, largest first;
+* a union → one item per member, each after the first ``REDEFINES`` the first, largest first — unless a
+  member holds an ``OCCURS DEPENDING ON`` table, which COBOL cannot overlay: then the union is dropped
+  (MFX-23.2);
+* a ``pattern`` or ``format`` a picture cannot enforce → a ``pattern: …`` / ``format: …`` comment line
+  above the item (MFX-23.2);
 * a map, or a type with no value, is dropped (recorded).
 
 **Names** are COBOL data names: upper case, letters, digits and single hyphens, at most 30
@@ -249,7 +253,8 @@ class _Planner:
                 self._filler()]
             return [node]
         if target.kind is TypeKind.UNION:
-            return [self._union(name, target, owner, path=path, in_table=in_table)]
+            union = self._union(name, target, owner, path=path, in_table=in_table)
+            return [union] if union is not None else []
         if target.kind is TypeKind.ENUM:
             return [self._enum(name, target)]
         if target.kind is TypeKind.MAP:
@@ -301,8 +306,14 @@ class _Planner:
         node["occurs_min"], node["occurs_max"], node["depending_on"] = max(low, 0), high, counter
         return [_node(counter, picture=self._integer_picture(4, signed=True), usage=self._binary()), node]
 
-    def _union(self, name: str, union: Type, owner: str, *, path: Set[str], in_table: bool) -> Dict[str, Any]:
-        """A union as a group of members that share storage: each after the first ``REDEFINES`` it."""
+    def _union(
+        self, name: str, union: Type, owner: str, *, path: Set[str], in_table: bool
+    ) -> Optional[Dict[str, Any]]:
+        """A union as a group of members that share storage: each after the first ``REDEFINES`` it.
+
+        Returns ``None`` (the union is dropped) when a member holds a variable table: ``REDEFINES`` cannot
+        overlay an item that contains ``OCCURS DEPENDING ON``.
+        """
         group = _node(name)
         members: List[Dict[str, Any]] = []
         for member in union.union_members:
@@ -316,6 +327,10 @@ class _Planner:
         if not members:
             group["children"] = [self._filler()]
             return group
+        if len(members) > 1 and any(_has_odo(m) for m in members):
+            self._loss(LossKind.NA, "union-dropped", owner, f"The union {union.key!r} is left out: a member holds a "
+                       "table that varies in size (OCCURS DEPENDING ON), and COBOL cannot overlay it with REDEFINES.")
+            return None
         members.sort(key=lambda m: -(_size(m) or 0))
         for member in members[1:]:
             member["redefines"] = members[0]["name"]
@@ -345,6 +360,24 @@ class _Planner:
     # --- scalars -------------------------------------------------------------
 
     def _scalar(self, name: str, scalar: str, constraints: Optional[Constraints], owner: str) -> List[Dict[str, Any]]:
+        """An elementary item for a canonical scalar, with its ``pattern`` / ``format`` as comment lines."""
+        nodes = self._scalar_item(name, scalar, constraints, owner)
+        c = constraints or Constraints()
+        if nodes and (c.pattern or c.format):
+            comments = nodes[0].setdefault("comments", [])
+            if c.pattern:
+                comments.append(f"pattern: {c.pattern}")
+                self._loss(LossKind.INFERRED, "pattern-as-comment", owner, f"The pattern {c.pattern!r} of {owner!r} "
+                           "is written as a comment line: a COBOL picture cannot check it.")
+            if c.format:
+                comments.append(f"format: {c.format}")
+                self._loss(LossKind.INFERRED, "format-as-comment", owner, f"The format {c.format!r} of {owner!r} is "
+                           "written as a comment line; the picture only sizes the value.")
+        return nodes
+
+    def _scalar_item(
+        self, name: str, scalar: str, constraints: Optional[Constraints], owner: str
+    ) -> List[Dict[str, Any]]:
         """An elementary item for a canonical scalar."""
         c = constraints or Constraints()
         key = scalar.lower()
@@ -421,6 +454,11 @@ def _node(name: str, *, picture: Optional[str] = None, usage: Optional[str] = No
     """A copybook tree node, in the shape of :func:`app.cobolcopybook_parser.field_template`."""
     return {"level": 0, "name": name, "picture": picture, "usage": usage, "occurs_min": None, "occurs_max": None,
             "depending_on": None, "redefines": None, "conditions": [], "children": []}
+
+
+def _has_odo(node: Dict[str, Any]) -> bool:
+    """Whether an item is, or holds, a table that varies in size (``DEPENDING ON``)."""
+    return bool(node.get("depending_on")) or any(_has_odo(child) for child in node.get("children") or [])
 
 
 def _depth(node: Dict[str, Any]) -> int:

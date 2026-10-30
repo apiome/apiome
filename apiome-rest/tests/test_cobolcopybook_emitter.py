@@ -444,3 +444,137 @@ def test_a_float_item_imports_as_a_float() -> None:
     api = _copybook_item_from("       01  REC.\n           05  RATE COMP-2.\n           05  CODE PIC X(1).\n")
     rate = next(f for t in api.types for f in t.fields if f.name == "RATE")
     assert rate.type.name == "double"
+
+
+# ===========================================================================
+# Fidelity pack — MFX-23.2 (#4140)
+# ===========================================================================
+
+
+def _report(api: CanonicalApi, **options):
+    from app.fidelity_engine import compute_lossiness_for_emitter
+
+    return compute_lossiness_for_emitter(api, CobolCopybookEmitter, options=options or None)
+
+
+def _items(report, key: str, mapping: str):
+    return [i for i in report.items if i.construct_key == key and i.target_mapping == mapping]
+
+
+def test_every_synthesized_length_counter_and_rename_is_listed_with_its_source_path() -> None:
+    from app.lossiness import LossinessKind
+
+    api = _shop()
+    emitted = {(loss.subject, loss.pointer) for loss in _emit(api).losses
+               if loss.subject in ("length-synthesized", "counter-synthesized", "name-mangled")}
+    report = _report(api)
+    synthesized = {(i.target_mapping, i.construct_key) for i in report.items if i.kind is LossinessKind.SYNTH}
+    assert emitted and emitted <= synthesized
+    (length,) = _items(report, "Purchase.note", "length-synthesized")
+    assert "PIC X(255)" in length.message and "'Purchase.note'" in length.message
+    (counter,) = _items(report, "Purchase.lines", "counter-synthesized")
+    assert "LINES-X-COUNT" in counter.message
+    (rename,) = _items(report, "Purchase.customer_name", "name-mangled")
+    assert "'CUSTOMER-NAME'" in rename.message
+
+
+def test_an_operation_bearing_source_carries_the_critical_types_only_advisory() -> None:
+    from app.canonical_model import Channel, Operation, OperationKind, Service
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    api = _shop()
+    api.services.append(Service(key="Shop", name="Shop", operations=[
+        Operation(key="Shop.get", name="get", kind=OperationKind.REQUEST_RESPONSE)]))
+    api.channels.append(Channel(key="orders", name="orders", address="orders"))
+    report = _report(api)
+    advisory = next(i for i in report.items if i.target_mapping == "types-only")
+    assert (advisory.construct_key, advisory.kind, advisory.severity) == ("", LossinessKind.DROP,
+                                                                          LossinessSeverity.CRITICAL)
+    assert "1 service(s) with 1 operation(s) and 1 channel(s)" in advisory.message
+    for key in ("Shop.get", "orders"):
+        item = next(i for i in report.items if i.construct_key == key)
+        assert (item.kind, item.severity) == (LossinessKind.DROP, LossinessSeverity.CRITICAL)
+    assert any(loss.detail == advisory.message for loss in _emit(api).losses)
+
+
+def test_an_unbounded_list_is_approximated_and_its_counter_synthesized() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_shop())
+    (maximum,) = _items(report, "Purchase.grid", "occurs-synthesized")
+    assert (maximum.kind, maximum.severity) == (LossinessKind.APPROX, LossinessSeverity.WARN)
+    (counter,) = _items(report, "Purchase.grid", "counter-synthesized")
+    assert counter.kind is LossinessKind.SYNTH
+    # A bounded list that varies in size only synthesizes its counter.
+    assert not _items(report, "Purchase.lines", "occurs-synthesized")
+
+
+def test_unions_maps_recursion_and_optional_fields() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    report = _report(_shop())
+    assert _items(report, "Purchase.payment", "union-as-redefines")[0].kind is LossinessKind.APPROX
+    assert _items(report, "Purchase.attrs", "map-dropped")[0].kind is LossinessKind.DROP
+    assert _items(report, "Purchase.parent", "recursion-cut")[0].kind is LossinessKind.DROP
+    (optional,) = _items(report, "Purchase.note", "optional → always present (spaces / zeros when absent)")
+    assert (optional.kind, optional.severity) == (LossinessKind.APPROX, LossinessSeverity.INFO)
+    assert not _items(report, "Purchase.orderId", "optional → always present (spaces / zeros when absent)")
+    assert not [i for i in report.items if i.target_mapping == "synthesized field number"]
+
+
+def test_a_union_whose_member_varies_in_size_is_dropped() -> None:
+    from app.lossiness import LossinessKind
+
+    api = _api(
+        _record("R", _field("R", "id", TypeRef(name="i32")), _field("R", "u", TypeRef(name="U"))),
+        _record("A", _field("A", "items", TypeRef(item=TypeRef(name="i32")))),
+        _record("B", _field("B", "code", TypeRef(name="string"), constraints=Constraints(max_length=4))),
+        Type(key="U", name="U", kind=TypeKind.UNION, union_members=["A", "B"]),
+    )
+    entries = _entries(_text(api))
+    assert entries == ["01 R", "05 ID PIC S9(9) COMP"]
+    (item,) = _items(_report(api), "R.u", "union-dropped")
+    assert item.kind is LossinessKind.DROP and "OCCURS DEPENDING ON" in item.message
+
+
+def test_patterns_and_formats_become_comment_lines() -> None:
+    from app.lossiness import LossinessKind, LossinessSeverity
+
+    long_pattern = "^[A-Z]{3}-" + "[0-9]" * 20 + "$"
+    api = _api(_record("R",
+                       _field("R", "code", TypeRef(name="string"), constraints=Constraints(max_length=10,
+                                                                                           pattern=long_pattern)),
+                       _field("R", "mail", TypeRef(name="string"), constraints=Constraints(max_length=60,
+                                                                                           format="email"))))
+    text = _text(api)
+    lines = text.splitlines()
+    code_at = next(i for i, line in enumerate(lines) if "05  CODE" in line)
+    assert lines[code_at - 2].startswith("      * pattern: ^[A-Z]{3}-")
+    assert all(len(line) <= 72 for line in lines)
+    assert "      * format: email\n           05  MAIL PIC X(60)." in text
+    assert "*> format: email\n05  MAIL PIC X(60)." in _text(api, fixed_format=False)
+    report = _report(api)
+    (pattern,) = _items(report, "R.code", "pattern-as-comment")
+    assert (pattern.kind, pattern.severity) == (LossinessKind.APPROX, LossinessSeverity.WARN)
+    assert _items(report, "R.mail", "format-as-comment")[0].severity is LossinessSeverity.INFO
+    assert parse_cobolcopybook(text).root.children[0].name == "CODE-X"
+
+
+def test_the_report_follows_the_options() -> None:
+    (length,) = _items(_report(_shop(), default_string_length=80), "Purchase.note", "length-synthesized")
+    assert "PIC X(80)" in length.message
+    (fallback,) = _items(_report(_shop(), default_string_length=0), "Purchase.note", "length-synthesized")
+    assert "PIC X(255)" in fallback.message  # invalid options fall back to the defaults
+    assert _items(_report(_shop(), numeric_usage="display"), "Purchase.ratio", "float-as-decimal")
+
+
+def test_a_copybook_item_reports_nothing_invented() -> None:
+    from app.lossiness import LossinessKind
+
+    report = _report(_copybook_item(_EXAMPLES / "04-warehouse-stress.cpy"))
+    assert [i for i in report.items if i.kind is not LossinessKind.OK] == []
+
+
+def test_a_model_without_records_still_gets_a_report() -> None:
+    report = _report(_api(Type(key="E", name="E", kind=TypeKind.ENUM)))
+    assert any(i.target_mapping == "document → COBOL copybook" for i in report.items)
