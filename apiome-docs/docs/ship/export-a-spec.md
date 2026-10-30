@@ -223,9 +223,20 @@ The report predicts exactly what the export writes:
 ### TypeSpec from any source
 
 Exporting to **TypeSpec** writes one `.tsp` file that compiles with the TypeSpec compiler Apiome
-ships (`tsp` 0.65 with `@typespec/http`), whatever the item was imported from. Each export is
-compiled before it is offered; without the compiler on the server it is read back by the TypeSpec
-importer instead.
+ships (`tsp` 0.65 with `@typespec/http`), whatever the item was imported from.
+
+Each export is checked before it is offered:
+
+1. It is compiled to OpenAPI with `@typespec/openapi3`. A compile error fails the export and names
+   the file, line, column and error code (`unknown-identifier`).
+2. The OpenAPI the compile writes is imported the way an uploaded OpenAPI would be. If it does not
+   import, the export fails (`typespec.openapi-import`).
+
+Without the compiler on the server, the `.tsp` is read back by the TypeSpec importer instead.
+
+Compiling to OpenAPI also shows what choosing TypeSpec costs compared with exporting straight to
+**OpenAPI**: `@typespec/openapi3` names each operation `<Interface>_<operation>`
+(`PetService_listPets`), writes a plain `integer` as `int32`, and makes a request body required.
 
 - **Document.** The title becomes `@service({ title: "…" })` on the namespace, and the description
   becomes its doc comment. The version becomes `@info({ version: "…" })` (from `@typespec/openapi`),

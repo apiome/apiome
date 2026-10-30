@@ -1,0 +1,18 @@
+---
+slug: typespec-export-compile-check
+title: TypeSpec exports are compiled and their OpenAPI checked
+description: A TypeSpec export must compile, and its OpenAPI must import.
+authors: [apiome]
+---
+
+A **TypeSpec** export is now compiled to OpenAPI with the TypeSpec compiler, and the OpenAPI it
+writes must import, before the export is offered.
+[How TypeSpec exports are checked](/ship/export-a-spec#typespec-from-any-source).
+
+{/* truncate */}
+
+- **Compiles.** A compile error fails the export and names its file, line, column and code.
+- **Imports.** The compiled OpenAPI is imported like an uploaded one; if it does not import, the
+  export fails with `typespec.openapi-import`.
+- **What TypeSpec changes.** The Export guide lists what the compiled OpenAPI differs on compared
+  with a direct OpenAPI export: operation names, `int32` integers and required request bodies.
