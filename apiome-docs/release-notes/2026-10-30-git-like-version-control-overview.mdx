@@ -1,0 +1,20 @@
+---
+slug: git-like-version-control-overview
+title: "New docs page: Git-like version control"
+description: One page mapping Git commits, tags, forks, branches and merges to Apiome.
+authors: [apiome]
+---
+
+A new overview page, [Git-like version control](/build/version-control), explains how a project's
+versions work like a Git history, and what you can do with them today.
+
+{/* truncate */}
+
+- **A table of Git terms** (commit, log, diff, tag, fork, branch, merge, revert) with their Apiome
+  equivalent and where to find it in the web app, the CLI or the API.
+- **What works today**: version tags and forks from the CLI and API, publishing and freezing, the
+  compatibility gate in CI, comparing versions, sunset schedules and the activity timeline.
+- **What is switched off**: the web app's branch, merge, rollback, fork, tag and lock controls are
+  built but hidden behind `FEATURE_GITLIKE`.
+- **What isn't like Git**: there is no push or pull, a tag keeps no move history, and a fork copies
+  classes but not paths.

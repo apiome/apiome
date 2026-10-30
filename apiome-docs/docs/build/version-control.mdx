@@ -1,0 +1,73 @@
+---
+title: Git-like version control
+description: How Apiome versions map to Git commits, tags, forks, branches and merges.
+sidebar_position: 1.25
+tags: [versions, branches, merge, tags, fork]
+---
+
+A project's versions form a history much like a Git repository's. Each version is a **revision**
+with a parent, a published version is frozen like a released commit, and **tags** are named
+pointers to a version. Branches, merges and rollbacks build on the same history graph:
+
+```text
+  main:  o---o---o---o  (tip)
+              \
+  feature:     o---o---o  (branch tip)
+                     \
+                      merge → new revision (2 parents)
+```
+
+Most of this works today in the web app, the CLI and the API. The **branch, merge and rollback
+controls in the web app are switched off**. See [Turning on the Git-like controls](#turning-on-the-git-like-controls).
+
+## Git concepts in Apiome
+
+| In Git | In Apiome | Where | Available |
+| --- | --- | --- | --- |
+| Commit | A new version (a revision of the project) | **New version** on [Versions](./versions.mdx); [Cut a version](../ship/cut-a-version.md) | Yes |
+| Log, history | The revision graph, its ancestors and the merge base of two revisions | [Revision history and merge base](./revision-history.md) (API) | Yes |
+| Reflog, audit | Who published, merged, tagged or changed protection | [Project activity timeline](./project-timeline.md) | Yes |
+| Diff | Compare two versions: documents, breaking changes, migration guide | **Compare** in [Version dialogs](./version-dialogs.mdx#compare); [Compare published versions](../ship/compare-published-versions.md) (CLI) | Yes |
+| Tag | Version tags (`stable`, `prod` …), which can be immutable or protected | [`apiome tags`](./versions.mdx#list-version-tags-from-the-cli) (CLI) and the [version tags API](../reference/rest/version-tags.md); **Tag this revision** in the web app is switched off | CLI and API |
+| Fork | Copy a version into another project, recording where it came from | [`apiome versions fork`](./versions.mdx#fork-a-version-into-another-project-from-the-cli) and `POST /v1/versions/{tenant}/{project}/fork`; **Fork to another project…** in the web app is switched off | CLI and API |
+| Release, protect | Publish a version; freeze its schema; unpublish it with a reason | [Publish a version](../ship/publish-a-version.md), [Freeze a version's schema](../ship/publish-a-version.md#freeze-a-versions-schema) | Yes |
+| CI merge gate | Fail a build when a new version breaks the previous one | [Version compatibility gate](../reference/ci/version-compatibility-gate.md) | Yes |
+| End of life | Deprecate a version and schedule its sunset | **Schedule sunset** in [Version dialogs](./version-dialogs.mdx#schedule-sunset); [Sunset timeline](../ship/sunset-timeline.mdx) | Yes |
+| Branch | Start a named branch at a revision | **Branch from here** | Switched off |
+| Merge | Preview and apply a merge of two branches, resolving conflicts path by path | **Merge branches…** | Switched off |
+| Revert, reset | Move a branch back to an earlier revision | **Rollback branch to this revision…** | Switched off |
+| Branch protection | Lock a revision against deletion | **Lock revision (delete policy)** | Switched off |
+
+## What is not like Git
+
+- **No push or pull.** A project lives in Apiome, not in a clone. To bring changes in from a Git
+  repository or send them back, use [Sources](./versions.mdx#sources) and [Sync back to
+  repositories](./versions.mdx#sync-back-to-repositories) on the Versions page.
+- **A tag keeps only where it points now.** Apiome records who created a tag, not who moved it, so
+  there is no move history.
+- **A fork copies classes, not paths.** Its summary says how many paths the source has.
+- **A version created on its own is a root.** The first version of a project, a **New version** and
+  an import have no parent, so two such versions have no merge base. See [How revisions
+  link](./revision-history.md#how-revisions-link).
+
+## Turning on the Git-like controls
+
+<Flag name="FEATURE_GITLIKE" />
+
+The **Branch from here**, **Merge branches…**, **Rollback branch to this revision…**, **Fork to
+another project…**, **Tag this revision** and **Lock revision (delete policy)** controls are built
+but switched off. `FEATURE_GITLIKE` is a constant in `apiome-ui/lib/feature-flags.ts`, `false` in
+every shipped build. Turning them on takes a code change and a rebuild. [Version
+dialogs](./version-dialogs.mdx#git-like-features) lists each control and what it does.
+
+The CLI and the API don't depend on this switch: forking and tagging work there today.
+
+## Related
+
+- [Versions](./versions.mdx): the timeline, its tabs and the CLI and API.
+- [Version dialogs](./version-dialogs.mdx): every dialog, including the Git-like controls.
+- [Revision history and merge base](./revision-history.md)
+- [Project activity timeline](./project-timeline.md)
+- [Publish a version](../ship/publish-a-version.md)
+- [Version compatibility gate](../reference/ci/version-compatibility-gate.md)
+- CLI: [`versions`](../reference/cli/versions.md), [`tags`](../reference/cli/tags.md)
