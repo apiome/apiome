@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.398.0
+  version: 1.399.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -75643,8 +75643,8 @@ paths:
 
         failure counters keyed by the IXH-6.4 taxonomy code — plus the complete documented
 
-        tag set every key is drawn from, and the export health summary (X8) — success and
-        failure
+        tag set every key is drawn from, and the export health summary (X8) — success
+        and failure
 
         rate, per-target failures, the whole-job p95 and the failure-rate alert. Aggregates
         are
@@ -75652,8 +75652,8 @@ paths:
         in-process: per replica, reset on restart (same posture as ``/v1/ops/metrics``);
         durable
 
-        per-job timing evidence lives in each job''s ``PHASE_TIMING`` events in the shared
-        job store.'
+        per-job timing evidence lives in each job''s ``PHASE_TIMING`` events in the
+        shared job store.'
       operationId: ops_import_export_v1_ops_import_export_get
       parameters:
       - name: tenant_slug
@@ -103979,6 +103979,44 @@ components:
       - id
       title: GraphNodeRef
       description: Where the entity sits in the dependency graph.
+    GuardConstruct:
+      properties:
+        construct_key:
+          type: string
+          title: Construct Key
+          description: The canonical key of the construct (its source path).
+          example: example
+        kind:
+          $ref: '#/components/schemas/LossinessKind'
+          description: What happens to it (drop / approx / synth).
+        message:
+          type: string
+          title: Message
+          description: The fidelity report's explanation, ready to display.
+          example: Example validation message.
+        target_mapping:
+          anyOf:
+          - type: string
+            description: Guard Construct schema.
+          - type: 'null'
+            description: Guard Construct schema.
+          title: Target Mapping
+          description: How it lands in the target, if it does.
+      additionalProperties: false
+      type: object
+      required:
+      - construct_key
+      - kind
+      - message
+      title: GuardConstruct
+      description: 'One construct a guard names: a critical loss of the fidelity report
+        (MFX-24.3, #4147).
+
+
+        The per-construct *why* behind :attr:`TranscodeGuard.critical_constructs`
+        — so a severe conversion
+
+        says which union, map or value is lost, not just how many.'
     HTTPValidationError:
       properties:
         detail:
@@ -147051,6 +147089,15 @@ components:
           title: Reasons
           description: 'The structured *why*: one line per contributing factor, drawn
             from the paradigm mismatch and the fidelity report.'
+          maxItems: 1000
+        critical_details:
+          items:
+            $ref: '#/components/schemas/GuardConstruct'
+          type: array
+          title: Critical Details
+          description: Each critical construct other than the operations and channels
+            counted above, with the report's explanation — the per-construct detail
+            of a severe conversion (MFX-24.3).
           maxItems: 1000
       additionalProperties: false
       type: object

@@ -1,0 +1,19 @@
+---
+slug: edi-fidelity-report
+title: The X12 guide's report says exactly what changed
+description: X12 guide exports report every invented length or code and confirm critical losses.
+authors: [apiome]
+---
+
+The **X12 implementation guide** export now gives a loud, field-by-field account of how your types
+were turned into segments — and stops to ask before it drops whole values.
+[What the report lists](/ship/export-a-spec#x12-implementation-guide-from-any-source).
+
+{/* truncate */}
+
+- **Critical losses need confirming.** A union, a map or an object that contains itself has no place in
+  a segment; the export asks you to confirm and names each one.
+- **Synthesized:** default element lengths, segment IDs made from names, and codes made for enum values
+  that are not valid X12 codes — the guide shows each code with its value (`ONH (ON-HOLD)`).
+- **Guide notes:** patterns, formats and bounds an element type cannot enforce are written as notes on
+  the element.

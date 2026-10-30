@@ -21,6 +21,12 @@ decimal point); a float → ``decimal`` with no scale; ``date`` → ``date``; ``
 timestamp → two elements, its date and its time. A field the source marks required is mandatory
 (``M``), any other optional (``O``).
 
+**Guide notes and codes** (MFX-24.3). A rule an element type cannot enforce — a ``pattern``, a ``format``,
+numeric bounds, a ``multipleOf`` that is not the scale, a set of allowed values — is kept as a note on the
+element. An enum value that is not a valid code (upper-case letters and digits, at most
+``max_code_length`` long) gets a synthesized code, and the element maps it back to the value
+(``code_values``). Every such change is recorded.
+
 **An imported X12 transaction** keeps its own segment IDs and element references: a record whose fields
 are named like element references (``BEG01``, ``N103``) is split into one segment per prefix, its
 segments ordered as the interchange had them (``x12_transactions``), and a reference the sample left
@@ -90,6 +96,8 @@ class GuideElement:
         codes: The code list of a ``code`` element.
         scale: Implied decimal places of a ``decimal`` (``None``: an explicit decimal point).
         source: The canonical key it comes from (``""`` for a not-used position).
+        notes: Rules the element type cannot enforce, as guide notes (``pattern: ^[A-Z]+$``).
+        code_values: Synthesized code → the source value it stands for (renamed codes only).
     """
 
     ref: str
@@ -101,6 +109,8 @@ class GuideElement:
     codes: List[str] = field(default_factory=list)
     scale: Optional[int] = None
     source: str = ""
+    notes: List[str] = field(default_factory=list)
+    code_values: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -178,10 +188,12 @@ class GuideOptions:
     Attributes:
         default_length: Maximum length of text with no ``maxLength``.
         reserved_ids: Segment IDs the standard reserves (its envelope: ``ST``, ``SE`` …).
+        max_code_length: The longest code an enum value may be used as directly.
     """
 
     default_length: int = 80
     reserved_ids: frozenset = frozenset()
+    max_code_length: int = 3
 
 
 class _SegmentIds:
@@ -377,6 +389,19 @@ class _Planner:
     # --- elements ----------------------------------------------------------------
 
     def _element(self, f: CanonicalField, ref: TypeRef, *, position: int, segment_id: str) -> List[GuideElement]:
+        """The element(s) of one scalar field, with the rules their type cannot enforce as notes."""
+        elements = self._element_of(f, ref, position=position, segment_id=segment_id)
+        if elements and f.constraints is not None:
+            notes = _constraint_notes(f.constraints, elements[0])
+            if notes:
+                elements[0].notes = notes
+                self._loss(LossKind.INFERRED, "constraint-as-note", f.key, f"{f.key!r} has rules its element type "
+                           f"cannot enforce; they are written as guide notes: {'; '.join(notes)}.")
+        return elements
+
+    def _element_of(
+        self, f: CanonicalField, ref: TypeRef, *, position: int, segment_id: str
+    ) -> List[GuideElement]:
         """The element(s) of one scalar field (a timestamp is two); ``[]`` when it is dropped."""
         usage = "M" if f.type.nullable is False else "O"
         c = f.constraints or Constraints()
@@ -398,8 +423,16 @@ class _Planner:
                                 scale, f.key)
 
         if target is not None and target.kind is TypeKind.ENUM:
-            codes = [str(m.value if m.value is not None else m.name) for m in target.enum_values] or ["X"]
-            return [make("code", min(len(code) for code in codes), max(len(code) for code in codes), codes=codes)]
+            values = [str(m.value if m.value is not None else m.name) for m in target.enum_values] or ["X"]
+            codes, renamed = _codes_for(values, self._options.max_code_length)
+            element = make("code", min(len(code) for code in codes), max(len(code) for code in codes), codes=codes)
+            element.code_values = renamed
+            if renamed:
+                pairs = ", ".join(f"{value!r} → {code}" for code, value in renamed.items())
+                self._loss(LossKind.INFERRED, "code-renamed", f.key, f"Values of {f.key!r} that are not valid codes "
+                           f"(upper-case letters and digits, at most {self._options.max_code_length} long) get "
+                           f"synthesized codes: {pairs}.")
+            return [element]
         if target is not None and target.kind in (TypeKind.UNION, TypeKind.MAP):
             what = "union" if target.kind is TypeKind.UNION else "map"
             self._loss(LossKind.NA, f"{what}-dropped", f.key, f"{f.key!r} is a {what}; a segment holds flat values "
@@ -417,6 +450,15 @@ class _Planner:
             return [make("integer", 1, _INTEGER_DIGITS[key])]
         if key in _DECIMALS or key in _FLOATS:
             scale = _scale_of(c.multiple_of) if key in _DECIMALS else None
+            if key in _FLOATS:
+                self._loss(LossKind.INFERRED, "float-as-real", f.key, f"{f.key!r} is a floating-point number; it is "
+                           "written as a real (explicit decimal point) of at most 15 digits.")
+            elif scale is None:
+                self._loss(LossKind.INFERRED, "decimal-as-real", f.key, f"{f.key!r} is a decimal of unknown scale; "
+                           "it is written as a real (explicit decimal point), so its precision is not fixed.")
+            else:
+                self._loss(LossKind.INFERRED, "decimal-implied", f.key, f"{f.key!r} is written with {scale} implied "
+                           "decimal places: the value is sent without its decimal point.")
             return [make("decimal", 1, _DECIMAL_DIGITS, scale=scale)]
         if key in _DATES or fmt == "date":
             return [make("date", 8, 8)]
@@ -475,6 +517,57 @@ class _Planner:
             return
         self._noted.add((subject, detail))
         self._losses.record(kind, subject, detail, pointer=pointer or None)
+
+
+_CODE_RE = re.compile(r"^[A-Z0-9]+$")
+
+
+def _codes_for(values: List[str], max_length: int) -> Tuple[List[str], Dict[str, str]]:
+    """Codes for enum values: each value itself when it is a valid code, else a synthesized one.
+
+    Returns:
+        ``(codes in value order, {synthesized code: value})`` — the map holds renamed values only.
+    """
+    codes: List[str] = []
+    renamed: Dict[str, str] = {}
+    keep = {v for v in values if _CODE_RE.match(v) and len(v) <= max_length}
+    used = set(keep)
+    for value in values:
+        if value in keep:
+            codes.append(value)
+            continue
+        base = re.sub(r"[^A-Z0-9]", "", value.upper())[:max_length] or "C"
+        candidate, n = base, 1
+        while candidate in used:
+            digits = str(n)
+            candidate = base[: max(max_length - len(digits), 0)] + digits
+            n += 1
+        used.add(candidate)
+        codes.append(candidate)
+        renamed[candidate] = value
+    return codes, renamed
+
+
+def _constraint_notes(c: Constraints, element: GuideElement) -> List[str]:
+    """The rules ``element``'s type cannot enforce, as guide-note lines."""
+    notes: List[str] = []
+    if c.pattern:
+        notes.append(f"pattern: {c.pattern}")
+    if c.format and c.format.lower() not in ("date", "time", "date-time", "uuid"):
+        notes.append(f"format: {c.format}")
+    for label, value in (("minimum", c.minimum), ("maximum", c.maximum), ("exclusive minimum", c.exclusive_minimum),
+                         ("exclusive maximum", c.exclusive_maximum)):
+        if value is not None:
+            notes.append(f"{label}: {_number(value)}")
+    if c.multiple_of is not None and not (element.kind == "decimal" and element.scale is not None):
+        notes.append(f"multiple of: {_number(c.multiple_of)}")
+    if c.enum and element.kind != "code":
+        notes.append("values: " + ", ".join(str(v) for v in c.enum))
+    return notes
+
+
+def _number(value: float) -> str:
+    return str(int(value)) if float(value).is_integer() else repr(float(value))
 
 
 def _scale_of(multiple_of: Optional[float]) -> Optional[int]:

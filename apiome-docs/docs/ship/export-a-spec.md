@@ -593,6 +593,12 @@ How the types are laid out:
   one element, repeated. The item's top-level objects sit directly in the transaction set, between the
   `ST` header and the `SE` trailer, and positions number the whole structure `0100`, `0200` …
 - **Usage.** A required field is mandatory (`M`), any other optional (`O`).
+- **Notes.** A rule an element type cannot enforce — a `pattern`, a `format` such as `email`, a minimum or
+  maximum, a set of allowed values — is written as a note on the element (in the JSON, the CSV and the
+  Markdown guide).
+- **Codes.** An enum value is used as a code when it is upper-case letters and digits no longer than
+  **max_code_length** (3). Any other value gets a code made from it — `ON-HOLD` becomes `ONH` — and the
+  guide shows the value next to it.
 - **Left out:** unions and maps (a segment holds flat values only), an object that contains itself,
   operations and channels. Each is listed in the export's losses.
 
@@ -617,8 +623,30 @@ Options:
 - **version** — the 6-digit X12 version (`005010`, `004010` …). By default an imported X12 item's own,
   else `005010`.
 - **default_element_length** — the maximum of a text element whose source has no `maxLength` (80).
+- **max_code_length** — the longest enum value used as a code as it is (3).
 
 A model with no object at all is refused: there is nothing to lay out.
+
+X12 is the most constrained target, so its fidelity report lists every change on the field it came
+from, computed for the options you pick:
+
+| In the source | In the report |
+|---|---|
+| A union, a map, an object that contains itself, more than 99 values in one object | Dropped (**critical**) |
+| Operations, services and channels | Dropped (**critical**), with a **types-only** warning counting them |
+| Text with no `maxLength` | Synthesized (warning): the default element length |
+| An enum value that is not a valid code | Synthesized (warning): the code made for it |
+| A segment ID made from a name, a marker element for an object with no plain value | Synthesized (note) |
+| A list of lists | Approximated (warning): flattened into one list |
+| A rule kept only as a guide note | Approximated (warning) |
+| A decimal with no known scale | Approximated (warning): `R`, so its precision is not fixed |
+| A decimal with implied places (`N2`), a float (`R`), a timestamp split into date and time | Approximated (note) |
+
+**Critical losses need confirming.** When a type would lose a union, a map or other values
+outright, the export is a *severe* conversion: the Export dialog, `POST …/dispatch` and export jobs
+ask you to confirm before they run, and the warning names each construct and why (in the guard's
+`reasons`, and in full in `critical_details`). An item with operations is warned that only its schemas
+export, and still lists those constructs.
 
 ### WSDL and XSD from any source
 
