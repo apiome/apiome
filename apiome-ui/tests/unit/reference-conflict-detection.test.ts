@@ -1,7 +1,7 @@
 /**
  * Unit tests for reference conflict detection (#584): broken or ambiguous references.
  */
-import { detectReferenceConflicts } from '../../src/app/utils/reference-conflict-detection';
+import { detectReferenceConflicts, findReferenceConflicts } from '../../src/app/utils/reference-conflict-detection';
 
 describe('detectReferenceConflicts (#584)', () => {
   test('returns empty when no document', () => {
@@ -401,5 +401,53 @@ describe('detectReferenceConflicts (#584)', () => {
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0].schemaName).toBe('Considered');
     expect(conflicts[0].detail).toContain('Missing');
+  });
+});
+
+describe('findReferenceConflicts (#584)', () => {
+  const doc = {
+    components: {
+      schemas: {
+        Order: {
+          type: 'object',
+          properties: {
+            customer: { $ref: '#/components/schemas/Customer' },
+            lines: { type: 'array', items: { $ref: '#/components/schemas/LineItem' } },
+            again: { $ref: '#/components/schemas/LineItem' },
+            money: { $ref: 'https://schemas.example.com/money.json' },
+          },
+        },
+        Invoice: { type: 'object', properties: { order: { $ref: '#/components/schemas/Order' } } },
+        Tag: { type: 'object', properties: { name: { type: 'string' } } },
+      },
+    },
+  };
+
+  test('lists each schema with its broken and external references, deduplicated', () => {
+    expect(findReferenceConflicts({ document: doc, schemaNames: ['Order', 'Invoice', 'Tag'] })).toEqual([
+      {
+        schema: 'Order',
+        broken: ['Customer', 'LineItem'],
+        external: ['https://schemas.example.com/money.json'],
+        notSelected: [],
+      },
+    ]);
+  });
+
+  test('a defined but unselected target is reported only when the selection is given', () => {
+    expect(findReferenceConflicts({ document: doc, schemaNames: ['Invoice'] })).toEqual([]);
+    expect(
+      findReferenceConflicts({ document: doc, schemaNames: ['Invoice'], selectedSchemaNames: ['Invoice'] })
+    ).toEqual([{ schema: 'Invoice', broken: [], external: [], notSelected: ['Order'] }]);
+  });
+
+  test('agrees with detectReferenceConflicts', () => {
+    const input = { document: doc, schemaNames: ['Order', 'Invoice'], selectedSchemaNames: ['Order', 'Invoice'] };
+    const kinds = findReferenceConflicts(input).flatMap((c) => [
+      ...(c.broken.length ? ['broken'] : []),
+      ...(c.external.length ? ['external'] : []),
+      ...(c.notSelected.length ? ['notSelected'] : []),
+    ]);
+    expect(detectReferenceConflicts(input)).toHaveLength(kinds.length);
   });
 });

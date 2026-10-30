@@ -28,7 +28,9 @@ import '@xyflow/react/dist/style.css';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/Collapsible';
 import { ImportOptionsForm } from './ImportOptionsForm';
 import { PropertyConflictsAlert } from './PropertyConflictsAlert';
+import { ReferenceConflictsAlert } from './ReferenceConflictsAlert';
 import { findPropertyConflicts } from '../../../utils/property-conflict-detection';
+import { findReferenceConflicts } from '../../../utils/reference-conflict-detection';
 import { TAB_LIST_CLASS, tabTriggerClass } from '../../ui/tabStyles';
 import { CODE_BLOCK_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
 import { SVG_TEXT_SIZE } from '@/app/components/ui/svgTypography';
@@ -607,6 +609,15 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
       }),
     [analysis.document, schemas]
   );
+  /** The selected schemas' references that will not resolve after import: undefined targets, URLs (#584). */
+  const referenceConflicts = useMemo(
+    () =>
+      findReferenceConflicts({
+        document: analysis.document,
+        schemaNames: schemas.filter((s) => s.selected).map((s) => s.name),
+      }),
+    [analysis.document, schemas]
+  );
   /** What the last toggle did beyond the click itself (auto-selected, or refused), announced politely. */
   const [selectionNote, setSelectionNote] = useState<string | null>(null);
 
@@ -1017,6 +1028,8 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
 
       {/* Property conflicts among the selected schemas (#583): a warning, never a block */}
       <PropertyConflictsAlert conflicts={propertyConflicts} />
+      {/* References that will not resolve after import (#584): a warning, never a block */}
+      <ReferenceConflictsAlert conflicts={referenceConflicts} />
 
       {/* Relationship Diagram (#578) */}
       {panelView === 'chart' && (

@@ -1,0 +1,17 @@
+---
+slug: import-reference-conflicts
+title: Import warns about references that won't resolve
+description: The Preview step names undefined and external references before you import.
+authors: [apiome]
+---
+
+The import wizard's **Preview** step now warns when a schema you tick holds a reference that won't
+resolve in the project afterwards. [How it works](/bring-in/import-wizard#references-that-wont-resolve).
+
+{/* truncate */}
+
+- **Not defined in this document.** A `$ref` to a schema the spec doesn't define is named on the
+  schema that holds it.
+- **Not fetched.** A `$ref` to a URL is named too, because Apiome doesn't download it.
+- **The import still runs**, and keeps each reference as written. Fix the spec and import again to
+  resolve them.
