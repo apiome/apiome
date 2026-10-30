@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.534.0] - 2026-10-29
+
+### Added
+- **X12 implementation-guide emitter (MFX-24.1, #4145).** New export target `x12-guide` ("X12 implementation
+  guide"), available for any source with a record type: the item's types laid out as an X12 transaction set,
+  written as `<Name>.x12-guide.json` (transaction set, segment dictionary, structure with positions / loops / usage
+  / maximum use), `<Name>.x12-segments.csv` (segment dictionary) and `<Name>.x12-guide.md` (human-readable guide).
+  - Shared standard-neutral core `app.edi_guide` (for UN/EDIFACT, MFX-24.2): records → segments of their scalar
+    fields; nested records → child segments; lists of records → loops (max use from `maxItems`); lists of scalars →
+    repeated one-element segments; top-level records sit directly in the transaction set; unions, maps, recursion
+    and value-less fields dropped (recorded); segment IDs made from names, unique and never an envelope ID.
+  - `app.x12_guide_emitter`: element types `AN` / `ID` (code sets from enums, `Y`/`N` for booleans) / `N0` /
+    `Nn` (scale from `multipleOf`) / `R` / `DT` / `TM` (a timestamp is a DT + TM pair), lengths from
+    `maxLength` / integer width or the synthesized default (recorded), usage `M` / `O` from requiredness, the
+    `ST` / `SE` envelope; an imported X12 item keeps its segment IDs, element refs, interchange order and
+    not-used (`X`) positions. Options `transaction_set`, `version`, `default_element_length`.
+  - `validate_x12_guide` / `validate_x12_guide_document` check a guide's structure (IDs, contiguous refs, types,
+    lengths, usage, code lists, the envelope, defined segments, loop heads, maximum use).
+  - Minimal fidelity pack (types-only drops with the critical advisory, root layout note); the full pack is MFX-24.3.
+- Registry follow-ups: RC6 target list and export guide table (54 targets), projection coverage, supported-formats
+  page, format counts (README, docs, `formatCounts.ts` in apiome-ui / apiome-browse), export target tiers page, and
+  the `x12-guide` cells of both golden matrices.
+
 ## [1.533.0] - 2026-10-29
 
 ### Changed

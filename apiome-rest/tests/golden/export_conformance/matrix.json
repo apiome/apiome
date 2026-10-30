@@ -455,6 +455,12 @@
       "tier": "lossy"
     },
     {
+      "family": "a2a",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
       "drift": [
         "removed agent Travel Concierge",
         "added operation Build itinerary.Build itinerary",
@@ -949,6 +955,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "acp",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "drift": [
@@ -1447,6 +1459,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "drift": [
@@ -2040,6 +2058,18 @@
     },
     {
       "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "api-blueprint",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -2609,6 +2639,12 @@
     },
     {
       "family": "apigee",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "apigee",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -3104,6 +3140,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "arazzo",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "drift": [
@@ -3631,6 +3673,18 @@
     },
     {
       "family": "arrow",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "arrow",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -4141,6 +4195,18 @@
     },
     {
       "family": "asn1",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "asn1",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -4601,6 +4667,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "asyncapi",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "family": "asyncapi",
@@ -5120,6 +5192,18 @@
     },
     {
       "family": "avro",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "avro",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -5635,6 +5719,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 15,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -6232,6 +6328,18 @@
     },
     {
       "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "aws-apigateway",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -6791,6 +6899,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "azure-apim",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "family": "azure-apim",
@@ -7383,6 +7497,18 @@
     },
     {
       "family": "bruno",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "bruno",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -7896,6 +8022,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 14,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -8423,6 +8561,18 @@
     },
     {
       "family": "cddl",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cddl",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -8939,6 +9089,18 @@
     },
     {
       "family": "cics-bms",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cics-bms",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -9440,6 +9602,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "cloudevents",
@@ -9948,6 +10122,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -10466,6 +10652,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 20,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -11034,6 +11232,12 @@
     },
     {
       "family": "consul",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "consul",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -11549,6 +11753,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -12079,6 +12295,18 @@
     },
     {
       "family": "cue",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cue",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -12591,6 +12819,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "dbt",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "dbt",
@@ -13115,6 +13355,18 @@
     },
     {
       "family": "dhall",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "dhall",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -13628,6 +13880,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "dicom",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 36,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -14221,6 +14485,18 @@
     },
     {
       "family": "discovery",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "discovery",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -14734,6 +15010,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "dtd",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 15,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "dtd",
@@ -15254,6 +15542,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 49,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -15780,6 +16080,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 23,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -16344,6 +16656,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "family": "envoy-xds",
@@ -16935,6 +17253,18 @@
     },
     {
       "family": "fhir",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fhir",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -17455,6 +17785,18 @@
     },
     {
       "family": "fix",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 21,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -17971,6 +18313,18 @@
     },
     {
       "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix-orchestra",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -18480,6 +18834,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -19053,6 +19419,12 @@
     },
     {
       "family": "gateway-api",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "gateway-api",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -19567,6 +19939,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "graphql",
@@ -20137,6 +20521,12 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "haproxy",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
     },
     {
       "family": "haproxy",
@@ -20730,6 +21120,18 @@
     },
     {
       "family": "har",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "har",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -21255,6 +21657,18 @@
     },
     {
       "family": "hl7v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 49,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -21768,6 +22182,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 132,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -22361,6 +22787,18 @@
     },
     {
       "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "hoppscotch",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -22951,6 +23389,18 @@
     },
     {
       "family": "http-file",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "http-file",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -23479,6 +23929,18 @@
     },
     {
       "family": "idoc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 34,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "idoc",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -23992,6 +24454,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -24585,6 +25059,18 @@
     },
     {
       "family": "insomnia",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "insomnia",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -25113,6 +25599,18 @@
     },
     {
       "family": "iso20022",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 36,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso20022",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -25638,6 +26136,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 22,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -26211,6 +26721,12 @@
     },
     {
       "family": "istio",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "istio",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -26714,6 +27230,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -27224,6 +27752,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "jsonld",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "jsonld",
@@ -27744,6 +28284,18 @@
     },
     {
       "family": "jtd",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "jtd",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -28252,6 +28804,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -28764,6 +29328,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -29337,6 +29913,12 @@
     },
     {
       "family": "kong",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "kong",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -29852,6 +30434,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "llm-tools",
@@ -30376,6 +30970,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -30904,6 +31510,18 @@
       "tier": "lossy"
     },
     {
+      "family": "matter",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 16,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
       "drift": [
         "added operation Off.Off",
         "removed operation OnOffService.Off",
@@ -31428,6 +32046,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "mcp",
@@ -31959,6 +32589,18 @@
     },
     {
       "family": "nacha",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 62,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "nacha",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -32472,6 +33114,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "natural-ddm",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "natural-ddm",
@@ -32994,6 +33648,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 92,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -33561,6 +34227,12 @@
     },
     {
       "family": "nginx",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "nginx",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -34146,6 +34818,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -34737,6 +35421,18 @@
     },
     {
       "family": "odata-v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 22,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -35240,6 +35936,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -35756,6 +36464,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -36284,6 +37004,18 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
+        "approx": 2,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
         "approx": 1,
         "drop": 0,
         "synth": 4
@@ -36794,6 +37526,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "openapi",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "openapi",
@@ -37310,6 +38054,18 @@
     {
       "family": "openrpc",
       "loss_counts": {
+        "approx": 3,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
         "approx": 2,
         "drop": 0,
         "synth": 6
@@ -37820,6 +38576,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "owl",
@@ -38344,6 +39112,18 @@
     },
     {
       "family": "pkl",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "pkl",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -38857,6 +39637,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "pli",
+      "loss_counts": {
+        "approx": 14,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -39441,6 +40233,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -40034,6 +40838,18 @@
     },
     {
       "family": "postman-v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman-v2",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -40549,6 +41365,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -41077,6 +41905,18 @@
       "tier": "lossy"
     },
     {
+      "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
       "drift": [
         "added operation GetOrder.GetOrder",
         "removed operation example.orders.v1.OrderService.GetOrder",
@@ -41603,6 +42443,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -42188,6 +43040,18 @@
     },
     {
       "family": "raml",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "raml",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -42704,6 +43568,18 @@
     },
     {
       "family": "relaxng",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "relaxng",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -43214,6 +44090,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -43745,6 +44633,18 @@
     },
     {
       "family": "sepa",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 59,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "sepa",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -44252,6 +45152,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "shacl",
@@ -44768,6 +45680,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -45367,6 +46291,18 @@
     },
     {
       "family": "soapui",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "soapui",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -45876,6 +46812,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -46390,6 +47338,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -46979,6 +47939,18 @@
     },
     {
       "family": "swagger",
+      "loss_counts": {
+        "approx": 24,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -47564,6 +48536,18 @@
     },
     {
       "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger-1.2",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -48084,6 +49068,18 @@
     },
     {
       "family": "swift-mt",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 36,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swift-mt",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -48591,6 +49587,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -49192,6 +50200,18 @@
     },
     {
       "family": "thunder-client",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "thunder-client",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -49708,6 +50728,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "tradacoms",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 18,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "tradacoms",
@@ -50275,6 +51307,12 @@
     },
     {
       "family": "traefik",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "traefik",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -50790,6 +51828,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 20,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "trpc",
@@ -51369,6 +52419,12 @@
     },
     {
       "family": "tyk",
+      "reason": "An X12 implementation guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "x12-guide"
+    },
+    {
+      "family": "tyk",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -51894,6 +52950,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -52479,6 +53547,18 @@
     },
     {
       "family": "typespec",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "typespec",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -52992,6 +54072,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "vsam-idcams",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "vsam-idcams",
@@ -53585,6 +54677,18 @@
     },
     {
       "family": "wadl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wadl",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -54094,6 +55198,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "wit",
@@ -54622,6 +55738,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 22,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "drift": [
@@ -55154,6 +56282,18 @@
       "tier": "lossy"
     },
     {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
       "drift": [
         "added operation cancelOrder.cancelOrder",
         "removed operation http://example.com/orders.OrderInterface.cancelOrder",
@@ -55679,6 +56819,18 @@
     },
     {
       "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "xmlrpc",
       "reason": null,
       "status": "ok",
       "target": "xmlrpc"
@@ -56186,6 +57338,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "xregistry",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "xregistry",
@@ -56705,6 +57869,18 @@
     },
     {
       "family": "xsd",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 14,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "xsd",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -57216,6 +58392,18 @@
       "status": "lossy",
       "target": "wsdl",
       "tier": "lossy"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -57807,6 +58995,18 @@
     },
     {
       "family": "zosconnect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "x12-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "zosconnect",
       "reason": "XML-RPC export needs an RPC operation (one with no HTTP method or path); this source has none.",
       "status": "refused",
       "target": "xmlrpc"
@@ -57832,8 +59032,8 @@
   ],
   "counts": {
     "ok": 35,
-    "lossy": 3644,
-    "refused": 1823,
+    "lossy": 3736,
+    "refused": 1839,
     "silent-loss": 222,
     "crash": 0,
     "skipped": 0
@@ -58000,6 +59200,7 @@
     "wadl",
     "wit",
     "wsdl",
+    "x12-guide",
     "xmlrpc",
     "xsd",
     "zosconnect"

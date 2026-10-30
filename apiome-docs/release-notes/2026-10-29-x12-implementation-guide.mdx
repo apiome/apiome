@@ -1,0 +1,20 @@
+---
+slug: x12-implementation-guide
+title: Export your types as an X12 implementation guide
+description: A new X12 implementation guide export lays out segments, elements, codes and loops.
+authors: [apiome]
+---
+
+A new export target, **X12 implementation guide**, lays out an item's types as an X12 transaction set —
+the guide trading partners build their interchanges from — whatever the item was imported from.
+[How the guide is laid out](/ship/export-a-spec#x12-implementation-guide-from-any-source).
+
+{/* truncate */}
+
+- **Three files.** A machine-readable JSON guide, a CSV segment dictionary and a Markdown guide,
+  downloaded together as a `.zip`.
+- **Segments and loops.** Objects become segments, nested objects child segments, lists of objects
+  loops; each element gets an X12 type (`AN`, `ID`, `N0`, `R`, `DT`, `TM`), a length and its usage.
+- **Code sets.** Enumerations become `ID` elements with their values as the code list.
+- **Options.** Pick the transaction set (`850`, `810`, `837` …), the X12 version and the default text
+  length.

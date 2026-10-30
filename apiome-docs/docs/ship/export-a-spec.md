@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**53<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**54<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -54,7 +54,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **53<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **54<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -571,6 +571,55 @@ the source — everything the layout had to invent or change, computed for the o
 
 An item imported from a copybook is written back as it was, so its report lists nothing invented.
 
+### X12 implementation guide from any source
+
+Exporting to **X12 implementation guide** describes the item's types as an X12 transaction set, for
+onboarding trading partners. It is not an interchange: it is the guide partners build their
+interchanges from. You get three files, downloaded together as a `.zip`:
+
+- `<Name>.x12-guide.json` — the machine-readable guide: the transaction set, every segment with its
+  elements, and the structure (positions, loops, usage and maximum use);
+- `<Name>.x12-segments.csv` — the segment dictionary, one row per element, for spreadsheet tools;
+- `<Name>.x12-guide.md` — the same guide for people to read.
+
+How the types are laid out:
+
+- **Segments.** Each object becomes a segment of its plain values, in field order. Its segment ID is
+  made from its name — `PurchaseOrder` is `PUR`, `OrderLine` is `ORD` — unique in the guide and never
+  an envelope ID (`ST`, `SE`, `GS` …). Elements are referred to by segment and position: `PUR01`,
+  `PUR02` …
+- **Loops.** An object inside another object follows it as a child segment. A list of objects is a loop
+  that repeats up to `maxItems` (`>1` when there is no limit), and a list of plain values is a segment of
+  one element, repeated. The item's top-level objects sit directly in the transaction set, between the
+  `ST` header and the `SE` trailer, and positions number the whole structure `0100`, `0200` …
+- **Usage.** A required field is mandatory (`M`), any other optional (`O`).
+- **Left out:** unions and maps (a segment holds flat values only), an object that contains itself,
+  operations and channels. Each is listed in the export's losses.
+
+| In the source | In the guide |
+|---|---|
+| Text | `AN`, `maxLength` (or the **default_element_length**, 80) as its maximum; a UUID `AN` 36/36 |
+| An enumeration, a boolean | `ID` with a code list — the enum's values, or `Y`/`N` |
+| An integer | `N0`, as many digits as its width allows (3, 5, 10 or 18) |
+| A decimal | `N2` (implied decimal places) when `multipleOf` gives its scale (`0.01`), else `R` |
+| A float | `R` |
+| A date | `DT` (`CCYYMMDD`) |
+| A time | `TM` (`HHMM` to `HHMMSSDD`) |
+| A timestamp | Two elements: its date (`DT`) and its time (`TM`) |
+
+An item imported from X12 keeps its segment IDs, its element references and the order of its
+interchange, and a position the sample left empty is marked *not used* (`X`).
+
+Options:
+
+- **transaction_set** — the set's 3-digit ID (`850`, `810`, `837` …). By default an imported X12
+  item's own, else `850`.
+- **version** — the 6-digit X12 version (`005010`, `004010` …). By default an imported X12 item's own,
+  else `005010`.
+- **default_element_length** — the maximum of a text element whose source has no `maxLength` (80).
+
+A model with no object at all is refused: there is nothing to lay out.
+
 ### WSDL and XSD from any source
 
 Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the
@@ -986,6 +1035,7 @@ server has it, and otherwise by reading it back with the API Blueprint importer.
 | WADL | REST | Any source |
 | WIT (WebAssembly) | RPC | Any source |
 | WSDL | REST | Any source |
+| X12 implementation guide | Data schema | Any source with a record type |
 | XML-RPC | RPC | A source with an RPC operation |
 | XSD | Data schema | Any source |
 | z/OS Connect | REST | A source imported as z/OS Connect |

@@ -117,7 +117,7 @@ server is greyed out in the app with the missing tool named, whatever its tier.
 
 {/* export-target-tiers:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_export_target_tiers_doc.py */}
 
-Each of the 53 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
+Each of the 54 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
 
 | Target | Kind | From a REST API | From an RPC service | From an event API | From types only |
 | --- | --- | --- | --- | --- | --- |
@@ -171,6 +171,7 @@ Each of the 53 targets, measured against four small sources: **From a REST API**
 | WADL | REST | `lossy` | `lossy` | `lossy` | `lossy` |
 | WIT (WebAssembly) | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | WSDL | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| X12 implementation guide | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | XML-RPC | RPC | not offered | `lossy` | not offered | not offered |
 | XSD | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | z/OS Connect | REST | not offered | not offered | not offered | not offered |
